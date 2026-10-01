@@ -14,6 +14,10 @@ node_modules/
 saralvidhya-mvp/public/generated_resources/
 saralvidhya-medha/public/generated_resources/
 
+# Production content — goes directly to GCS, never to git
+saralvidhya-production/content/
+
+
 # Secret / credential files - NEVER commit these
 saralvidhya-medha/firebase-service-account.json
 **/firebase-service-account.json
