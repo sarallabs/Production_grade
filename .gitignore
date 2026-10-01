@@ -18,6 +18,7 @@ saralvidhya-medha/public/generated_resources/
 saralvidhya-medha/firebase-service-account.json
 **/firebase-service-account.json
 **/service-account*.json
+CREDENTIALS_PRIVATE/
 
 # Built/compiled bundles (contain embedded API keys)
 saralvidhya-mvp/dist-deploy/
