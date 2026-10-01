@@ -15,14 +15,14 @@ export default function AssessmentComplete() {
       case 'beginner':
         return {
           title: 'BEGINNER',
-          imgSrc: '/personas/beginner.png',
+          imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png`,
           message: 'Every expert was once a beginner. You are at the start of an incredible journey.',
           color: '#10B981'
         };
       case 'advanced':
         return {
           title: 'ADVANCED',
-          imgSrc: '/personas/advanced.png',
+          imgSrc: `${import.meta.env.BASE_URL}personas/advanced.png`,
           message: 'Outstanding. You are ready to tackle the toughest challenges and achieve mastery.',
           color: '#F59E0B'
         };
@@ -30,7 +30,7 @@ export default function AssessmentComplete() {
       default:
         return {
           title: 'INTERMEDIATE',
-          imgSrc: '/personas/intermediate.png',
+          imgSrc: `${import.meta.env.BASE_URL}personas/intermediate.png`,
           message: 'You have a solid foundation. Now, it is time to sharpen those skills and dive deeper.',
           color: '#3B82F6'
         };

@@ -5,8 +5,11 @@ export type FlowStep = typeof FLOW_STEPS[number];
 
 export const FOCUS_STEP_LABELS = new Proxy<Record<number, string>>({}, {
   get(target, prop) {
-    const isMoocs = sessionStorage.getItem('sv_moocs_mode') === 'true';
+    if (typeof prop === 'symbol') return Reflect.get(target, prop);
     const index = Number(prop);
+    if (isNaN(index)) return Reflect.get(target, prop);
+
+    const isMoocs = sessionStorage.getItem('sv_moocs_mode') === 'true';
     const labels = isMoocs
       ? {
           0: 'Welcome',
@@ -24,7 +27,7 @@ export const FOCUS_STEP_LABELS = new Proxy<Record<number, string>>({}, {
           3: 'Flashcards',
           4: 'Assessment',
         };
-    return labels[index];
+    return labels[index as keyof typeof labels];
   }
 });
 

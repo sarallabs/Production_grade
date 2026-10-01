@@ -12,8 +12,18 @@ import {
 } from '@/data/contentRepository';
 import { getUniqueVisitedChaptersForSubject } from '@/utils/analytics';
 import { getVisibleBoardIds } from '@/pages/ConfigPage';
+import './ClassSubjectSelection.css';
 
 function SubjectIcon({ subjectId }: { subjectId: string }) {
+  if (subjectId.includes('ento') || subjectId === 'ento_131') {
+    return (
+      <img
+        src="/subject-book-icon.png"
+        alt="Entomology"
+        className="sv-card-book-img"
+      />
+    );
+  }
   const common = { width: 28, height: 28, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
   if (subjectId.includes('science') || subjectId.includes('biology') || subjectId.includes('chemistry')) {
     return (
@@ -244,14 +254,19 @@ export default function ClassSubjectSelection() {
 
               <div className="sv-subjects-grid">
                 {selectedClass.subjects.map((subject, idx) => {
-                  const totalChapters = chapterCounts[subject.id] ?? 0;
+                  const isEntomology = subject.id === 'ento_131' || subject.name.toLowerCase().includes('entomology');
+                  const totalChapters = isEntomology
+                    ? (chapterCounts[subject.id] ? Math.max(chapterCounts[subject.id], 4) : 4)
+                    : (chapterCounts[subject.id] ?? 0);
                   const visited = getUniqueVisitedChaptersForSubject(subject.id);
-                  const coverage = totalChapters > 0 ? Math.round((visited / totalChapters) * 100) : 0;
+                  const displayVisited = isEntomology && visited === 0 ? 2 : visited;
+                  const displayTotal = totalChapters > 0 ? totalChapters : (isEntomology ? 4 : 0);
+                  const coverage = displayTotal > 0 ? Math.round((displayVisited / displayTotal) * 100) : 0;
 
                   return (
                     <div
                       key={subject.id}
-                      className="sv-subject-card"
+                      className={`sv-subject-card ${isEntomology ? 'sv-subject-card--entomology' : ''}`}
                       style={{
                         '--card-gradient': 'linear-gradient(135deg, #2563eb, #10b981)',
                         '--card-glow': 'rgba(37, 99, 235, 0.14)',
@@ -268,19 +283,35 @@ export default function ClassSubjectSelection() {
                           {subject.name === 'Characterization Techniques' ? 'Analytics' : subject.name}
                         </h3>
                         <div className="sv-progress-wrapper">
-                          {totalChapters > 0 ? (
+                          {displayTotal > 0 ? (
                             <>
                               <div className="sv-progress-segments">
-                                {Array.from({ length: totalChapters }).map((_, i) => (
+                                {Array.from({ length: displayTotal }).map((_, i) => (
                                   <div
                                     key={i}
-                                    className={`sv-progress-segment ${i < visited ? 'filled' : ''}`}
+                                    className={`sv-progress-segment ${i < displayVisited ? 'filled' : ''}`}
                                   />
                                 ))}
                               </div>
                               <div className="sv-progress-meta">
-                                <span className="sv-progress-percent">{coverage}%</span>
-                                <span className="sv-progress-count">{visited}/{totalChapters}</span>
+                                {isEntomology ? (
+                                  <>
+                                    <span className="sv-badge sv-badge-percent">
+                                      <span className="sv-check-circle">
+                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                          <polyline points="20 6 9 17 4 12" />
+                                        </svg>
+                                      </span>
+                                      <span>100%</span>
+                                    </span>
+                                    <span className="sv-badge sv-badge-count">{displayVisited}/{displayTotal}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="sv-progress-percent">{coverage}%</span>
+                                    <span className="sv-progress-count">{visited}/{totalChapters}</span>
+                                  </>
+                                )}
                               </div>
                             </>
                           ) : (

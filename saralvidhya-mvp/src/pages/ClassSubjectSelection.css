@@ -1,0 +1,163 @@
+/* ClassSubjectSelection.css — Custom Styles for Subjects and Entomology Card */
+
+.sv-subject-card--entomology {
+  background: #253930 !important;
+  border: none !important;
+  border-radius: 26px !important;
+  padding: 20px 26px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 22px !important;
+  box-shadow: 0 10px 28px rgba(15, 25, 20, 0.22) !important;
+  transition: transform 0.22s ease, box-shadow 0.22s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+  min-height: 138px !important;
+  box-sizing: border-box !important;
+  cursor: pointer;
+}
+
+.sv-subject-card--entomology:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 16px 36px rgba(15, 25, 20, 0.3) !important;
+}
+
+/* Hide old gradient accent circle on Entomology card */
+.sv-subject-card--entomology .sv-card-accent {
+  display: none !important;
+}
+
+/* Icon container */
+.sv-subject-card--entomology .sv-card-icon {
+  width: 98px !important;
+  height: 98px !important;
+  min-width: 98px !important;
+  min-height: 98px !important;
+  border-radius: 22px !important;
+  background: #FFF6F0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  box-shadow: none !important;
+  padding: 6px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+  transition: transform 0.22s ease !important;
+}
+
+.sv-subject-card--entomology:hover .sv-card-icon {
+  transform: scale(1.03) !important;
+}
+
+.sv-card-book-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Card Body */
+.sv-subject-card--entomology .sv-card-body {
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  min-width: 0 !important;
+}
+
+/* Title */
+.sv-subject-card--entomology .sv-card-title {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  margin: 0 0 14px 0 !important;
+  letter-spacing: -0.2px !important;
+  line-height: 1.15 !important;
+}
+
+/* Progress Wrapper */
+.sv-subject-card--entomology .sv-progress-wrapper {
+  margin-top: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+/* Progress Segments Bar */
+.sv-subject-card--entomology .sv-progress-segments {
+  display: flex !important;
+  gap: 8px !important;
+  height: 7px !important;
+  width: 100% !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment {
+  flex: 1 !important;
+  height: 7px !important;
+  border-radius: 9999px !important;
+  transition: background 0.3s ease !important;
+}
+
+/* Segment colors precisely extracted from reference screenshot */
+.sv-subject-card--entomology .sv-progress-segment:nth-child(1) {
+  background: #C69E86 !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment:nth-child(2) {
+  background: #E5C3B0 !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment:nth-child(3) {
+  background: #F7E5D9 !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment:nth-child(4) {
+  background: #FFFFFF !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment:nth-child(n+5) {
+  background: #FFFFFF !important;
+}
+
+/* Meta / Badges */
+.sv-subject-card--entomology .sv-progress-meta {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+}
+
+.sv-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+}
+
+.sv-badge-percent {
+  padding: 4px 12px 4px 5px !important;
+  gap: 6px !important;
+}
+
+.sv-check-circle {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  background: #192720 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.sv-badge-count {
+  padding: 5px 14px !important;
+  letter-spacing: 0.3px !important;
+}
+

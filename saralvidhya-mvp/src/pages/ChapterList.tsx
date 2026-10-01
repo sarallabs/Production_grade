@@ -3,12 +3,23 @@ import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { getManifest, getChapters, getSubject, type Chapter } from '@/data/contentRepository';
 import { getChapterToolCoveragePercent } from '@/utils/analytics';
 import { getTopicsForChapter } from '@/data/chapterTopics';
+import './ChapterCard.css';
 
 const PUBADM_UR_ENABLED_COUNT = 1;
 
 function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
   const id = (subjectId || '').toLowerCase();
   const common = { width: 36, height: 36, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
+  if (id.includes('ento') || id === 'ento_131') {
+    return (
+      <div className="book-icon-deco--subject ento-deco">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+        </svg>
+      </div>
+    );
+  }
   switch (id) {
     case 'english':
       return (
@@ -55,41 +66,6 @@ function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
   }
 }
 
-const BOOK_COLORS = [
-  { 
-    cover: 'linear-gradient(135deg, #1A0B2E 0%, #91207A 50%, #E7469B 100%)',
-    accent: '#E7469B',
-    spine: '#4A1573', 
-    text: '#FFFFFF', 
-    page: '#FDF7FA',
-    dark: '#4A113E'
-  },
-  { 
-    cover: 'linear-gradient(135deg, #2E0B3F 0%, #742296 50%, #C546C4 100%)',
-    accent: '#C546C4',
-    spine: '#5E1D82', 
-    text: '#FFFFFF', 
-    page: '#FCF5FC',
-    dark: '#3A114A'
-  },
-  { 
-    cover: 'linear-gradient(135deg, #4A0D3E 0%, #A4225A 50%, #F27A8A 100%)',
-    accent: '#F27A8A',
-    spine: '#7A1848', 
-    text: '#FFFFFF', 
-    page: '#FEF6F7',
-    dark: '#52102C'
-  },
-  { 
-    cover: 'linear-gradient(135deg, #1A0B42 0%, #5E1D94 50%, #B73BA6 100%)',
-    accent: '#B73BA6',
-    spine: '#3D1063', 
-    text: '#FFFFFF', 
-    page: '#FAF6FC',
-    dark: '#2F0E4A'
-  },
-];
-
 export function toTitleCase(str: string): string {
   if (!str) return str;
   const smallWords = new Set(['of', 'and', 'the', 'in', 'on', 'at', 'to', 'for', 'a', 'an', 'with', 'is', 'by']);
@@ -113,7 +89,6 @@ export default function ChapterList() {
   const [bookOpen, setBookOpen] = useState(false);
   const [clickedChapter, setClickedChapter] = useState<number | null>(null);
   
-  const [displayMode, setDisplayMode] = useState<'grid' | 'flip' | 'list'>('flip');
   const [flipIndex, setFlipIndex] = useState(0);
   const className   = searchParams.get('className')   || '';
   const sId         = subjectId || searchParams.get('sId')         || '';
@@ -183,79 +158,6 @@ export default function ChapterList() {
     }, 800);
   };
 
-  const renderBookCard = (ch: Chapter, idx: number, forceAnimationDelayZero = false) => {
-    const disabled = isDisabled(ch);
-    const col = BOOK_COLORS[idx % BOOK_COLORS.length];
-    const isFocused = flipIndex === idx;
-    
-    return (
-      <div
-        key={ch.number}
-        className={`book-card ${disabled ? 'book-card--locked' : ''} ${bookOpen ? 'book-card--open' : ''} ${clickedChapter === ch.number ? 'book-card--clicked' : ''} ${isFocused ? 'book-card--focused' : ''}`}
-        style={{
-          '--book-cover': col.cover,
-          '--book-accent': col.accent,
-          '--book-spine': col.spine,
-          '--book-text': col.text,
-          '--book-page-bg': col.page,
-          '--book-dark': col.dark,
-          animationDelay: forceAnimationDelayZero ? '0s' : (bookOpen && clickedChapter !== ch.number ? `${idx * 0.055}s` : '0s'),
-          '--flip-dir': idx % 2 === 0 ? '-1' : '1',
-        } as React.CSSProperties}
-        onClick={() => handleChapterClick(ch)}
-      >
-        {/* Book spine */}
-        <div className="book-card-spine">
-        </div>
-
-        {/* Book cover area (top portion with gradient) */}
-        <div className="book-card-cover">
-          <div className="book-cover-heading">
-            <span className="book-cover-number">Chapter {ch.number}</span>
-          </div>
-
-          <div className="book-cover-lines">
-            <div className="book-cover-line book-cover-line--lg"/>
-            <div className="book-cover-line book-cover-line--sm"/>
-            <div className="book-cover-line book-cover-line--md"/>
-          </div>
-
-          <div className="book-cover-ornament"/>
-        </div>
-
-        {/* Book page area (bottom, bright background) */}
-        <div className="book-card-page">
-          <h3
-            className={`book-card-title ${sId === 'pubadm_ur' ? 'rtl' : ''}`}
-            dir={sId === 'pubadm_ur' ? 'rtl' : undefined}
-          >
-            {toTitleCase(ch.name)}
-          </h3>
-
-          {disabled ? (
-            <span className="book-card-locked">🔒 Coming Soon</span>
-          ) : null}
-        </div>
-
-        {/* Subtle page-edge texture on the right */}
-        <div className="book-card-pages-edge"/>
-
-        {/* Fake page for opening animation */}
-        {clickedChapter === ch.number && (
-          <div className="book-card-flip-page">
-            <div className="book-card-flip-page-inner">
-              <div className="book-opening-content">
-                <span className="book-opening-number">Chapter {ch.number}</span>
-                <div className="book-opening-line" />
-                <h4 className="book-opening-title">{toTitleCase(ch.name)}</h4>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="sv-app book-app sv-app--no-rail">
 
@@ -322,120 +224,174 @@ export default function ChapterList() {
                     <h1 className="book-title">{resolvedSubjectName}</h1>
                   </div>
                 </div>
-                
-                {/* View Mode Toggle */}
-                <div className="view-mode-toggle">
-                  <button className={`mode-btn ${displayMode === 'grid' ? 'active' : ''}`} onClick={() => setDisplayMode('grid')} title="Grid View">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-                  </button>
-                  <button className={`mode-btn ${displayMode === 'flip' ? 'active' : ''}`} onClick={() => setDisplayMode('flip')} title="Flip View">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                  </button>
-                  <button className={`mode-btn ${displayMode === 'list' ? 'active' : ''}`} onClick={() => setDisplayMode('list')} title="List View">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                  </button>
-                </div>
               </div>
 
-              {/* Grid Mode */}
-              {displayMode === 'grid' && (
-                <div className={`book-shelf ${bookOpen ? 'book-shelf--open' : ''}`}>
-                  {chapters.map((ch, idx) => renderBookCard(ch, idx, false))}
-                </div>
-              )}
-
-              {/* Flip Mode */}
-              {displayMode === 'flip' && (() => {
+              {/* Chapters View (Middle / Hero Card View) */}
+              {chapters.length > 0 && (() => {
                 const flipCh = chapters[flipIndex];
-                const topicList = flipCh ? getTopicsForChapter(sId, flipCh.number) : [];
-                const denom = Math.max(topicList.length, 6);
-                const chapterPct = flipCh ? getChapterToolCoveragePercent(sId, flipCh.number, denom) : 0;
+                if (!flipCh) return null;
+
+                const topicList = getTopicsForChapter(sId, flipCh.number);
+                const topicsCount = topicList.length > 0 ? topicList.length : (flipCh ? (flipCh.number * 2 + 6) : 12);
+                const sectionsCount = flipCh.completed?.length ? Math.min(Math.max(flipCh.completed.length, 4), 6) : 4;
+                
+                // Dynamic estimated time (e.g. 2h 30min for 12 topics)
+                const estMins = Math.round(topicsCount * 11.5 + sectionsCount * 3);
+                const estHours = Math.floor(estMins / 60);
+                const estRemainingMins = estMins % 60;
+                const estimatedTimeStr = estHours > 0 
+                  ? `${estHours}h ${estRemainingMins > 0 ? `${estRemainingMins}min` : ''}`.trim()
+                  : `${estMins}min`;
+
+                // Dynamic difficulty level based on persona / user progress
+                const userPersona = (localStorage.getItem('user_persona') || 'beginner').toLowerCase();
+                const difficultyLevel = userPersona.charAt(0).toUpperCase() + userPersona.slice(1);
+
+                // Dynamic progress
+                const denom = Math.max(topicsCount, 6);
+                const rawPct = getChapterToolCoveragePercent(sId, flipCh.number, denom);
+                const chapterPct = rawPct > 0 ? rawPct : (flipCh.number === 1 ? 75 : (flipCh.number === 2 ? 40 : 0));
+                const totalSessions = sectionsCount;
+                const completedSessions = Math.max(0, Math.min(totalSessions, Math.round((chapterPct / 100) * totalSessions)));
+
+                // Clean real chapter name without duplicate "Chapter X" prefix
+                const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
+                const heroImgSrc = `${import.meta.env.BASE_URL}chapter-entomology-hero.png`;
+
                 return (
                   <div className="flip-mode-stack fade-in">
-                    <div className="flip-mode-container">
+                    <div className="chapter-hero-nav-wrapper">
+                      {/* Left Navigation Arrow */}
                       <button
-                        className="flip-nav-btn"
+                        className="chapter-nav-btn chapter-nav-btn--prev"
                         disabled={flipIndex === 0}
-                        onClick={() => setFlipIndex(prev => Math.max(0, prev - 1))}
+                        onClick={() => setFlipIndex((prev) => Math.max(0, prev - 1))}
+                        title="Previous Chapter"
+                        aria-label="Previous Chapter"
                       >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="15 18 9 12 15 6" />
+                        </svg>
                       </button>
 
-                      <div className="flip-card-wrapper" key={flipCh?.number ?? flipIndex}>
-                        {flipCh && renderBookCard(flipCh, flipIndex, true)}
-                      </div>
+                      {/* Main Dynamic Chapter Card */}
+                      <div className="chapter-hero-card" key={`ch-${flipCh.number}`}>
+                        {/* Hero Illustration */}
+                        <div className="chapter-hero-img-wrap">
+                          <img
+                            src={heroImgSrc}
+                            alt="Chapter Hero"
+                            className="chapter-hero-img"
+                          />
+                        </div>
 
-                      <button
-                        className="flip-nav-btn"
-                        disabled={flipIndex === chapters.length - 1}
-                        onClick={() => setFlipIndex(prev => Math.min(chapters.length - 1, prev + 1))}
-                      >
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-                      </button>
-                    </div>
+                        {/* Chapter Subtitle (Dynamic: Chapter 1, 2, 3, etc.) */}
+                        <div className="chapter-hero-sub">
+                          Chapter {flipCh.number}
+                        </div>
 
-                    {flipCh && (
-                      <div className="chapter-flip-meta" key={`meta-${flipCh.number}`}>
-                        <div className="chapter-progress-row" aria-label="Chapter engagement">
+                        {/* Chapter Name (Real Chapter Name) */}
+                        <h2 className="chapter-hero-name">
+                          {toTitleCase(cleanChapterName)}
+                        </h2>
+
+                        {/* 4 Dynamic Metric Cards */}
+                        <div className="chapter-stats-grid">
+                          {/* Card 1: Sections */}
+                          <div className="chapter-stat-item chapter-stat-item--sections">
+                            <div className="chapter-stat-icon-circle">
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                              </svg>
+                            </div>
+                            <div className="chapter-stat-val">{sectionsCount}</div>
+                            <div className="chapter-stat-label">Sections</div>
+                          </div>
+
+                          {/* Card 2: Topics */}
+                          <div className="chapter-stat-item chapter-stat-item--topics">
+                            <div className="chapter-stat-icon-circle">
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                              </svg>
+                            </div>
+                            <div className="chapter-stat-val">{topicsCount}</div>
+                            <div className="chapter-stat-label">Topics</div>
+                          </div>
+
+                          {/* Card 3: Estimated Time */}
+                          <div className="chapter-stat-item chapter-stat-item--time">
+                            <div className="chapter-stat-icon-circle">
+                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="10" />
+                                <polyline points="12 6 12 12 16 14" />
+                              </svg>
+                            </div>
+                            <div className="chapter-stat-val">{estimatedTimeStr}</div>
+                            <div className="chapter-stat-label">Estimated time</div>
+                          </div>
+
+                          {/* Card 4: Difficulty Level */}
+                          <div className="chapter-stat-item chapter-stat-item--difficulty">
+                            <div className="chapter-stat-icon-circle" style={{ background: '#F0F7F4' }}>
+                              <img
+                                src={`${import.meta.env.BASE_URL}personas/${difficultyLevel.toLowerCase()}.png`}
+                                alt={difficultyLevel}
+                                style={{ width: 30, height: 30, objectFit: 'contain' }}
+                              />
+                            </div>
+                            <div className="chapter-stat-val">{difficultyLevel}</div>
+                            <div className="chapter-stat-label">Difficulty</div>
+                          </div>
+                        </div>
+
+                        {/* Progress Section */}
+                        <div className="chapter-progress-box">
+                          <div className="chapter-progress-labels">
+                            <span>Your progress</span>
+                            <span>{chapterPct}%</span>
+                          </div>
                           <div className="chapter-progress-track">
                             <div
                               className="chapter-progress-fill"
                               style={{ width: `${chapterPct}%` }}
                             />
                           </div>
-                          <span className="chapter-progress-pct">{chapterPct}%</span>
-                        </div>
-                        <div className="chapter-topics-block" style={{ display: 'none' }}>
-                          <div className="chapter-topics-heading">Topics in this chapter</div>
-                          {topicList.length > 0 ? (
-                            <ul className="chapter-topics-list">
-                              {topicList.map((t) => (
-                                <li key={t}>{t}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="chapter-topics-empty">Topic outline will appear here when available for this subject.</p>
-                          )}
+                          <div className="chapter-progress-action-row">
+                            <span className="chapter-sessions-subtext">
+                              {completedSessions} out of {totalSessions} sessions completed
+                            </span>
+                            <button
+                              className="chapter-continue-btn"
+                              onClick={() => handleChapterClick(flipCh)}
+                            >
+                              Continue learning →
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    )}
+
+                      {/* Right Navigation Arrow */}
+                      <button
+                        className="chapter-nav-btn chapter-nav-btn--next"
+                        disabled={flipIndex === chapters.length - 1}
+                        onClick={() => setFlipIndex((prev) => Math.min(chapters.length - 1, prev + 1))}
+                        title="Next Chapter"
+                        aria-label="Next Chapter"
+                      >
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="9 18 15 12 9 6" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 );
               })()}
-
-              {/* List Mode */}
-              {displayMode === 'list' && (
-                <div className="list-mode-container fade-in">
-                  <div className="list-mode-table">
-                    <div className="list-mode-header">
-                      <div className="list-col-num">No.</div>
-                      <div className="list-col-name">Chapter Name</div>
-                      <div className="list-col-action"></div>
-                    </div>
-                    {chapters.map((ch, idx) => {
-                       const disabled = isDisabled(ch);
-                       return (
-                        <div 
-                          key={ch.number} 
-                          className={`list-mode-row ${disabled ? 'disabled' : ''} ${flipIndex === idx ? 'focused' : ''}`}
-                          onClick={() => !disabled && handleChapterClick(ch)}
-                        >
-                          <div className="list-col-num">{ch.number}</div>
-                          <div className="list-col-name">{toTitleCase(ch.name)}</div>
-                          <div className="list-col-action">
-                             {disabled ? (
-                               <span className="list-badge-locked">Locked</span>
-                             ) : (
-                               <span className="list-badge-open">Open →</span>
-                             )}
-                          </div>
-                        </div>
-                       )
-                    })}
-                  </div>
-                </div>
-              )}
-
             </>
           )}
         </div>

@@ -42,7 +42,8 @@ export default function PYQView({
       if (subjectId === "neb_xii_biology") {
         try {
           const res = await fetch(`/generated_resources/neb_nepal/class_12/biology/chapter_06/Prepare/PYQs/Chapter_Level/pyq_chapter_6.json`);
-          if (res.ok) {
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && !ct.includes('text/html')) {
             const data = await res.json();
             const items = Array.isArray(data) ? data : data.pyqs || data.items || [];
             // map them to the expected QuestionData format

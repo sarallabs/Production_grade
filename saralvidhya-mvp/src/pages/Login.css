@@ -1,0 +1,206 @@
+/* Login.css — Custom Saral Vidhya Login Screen matching reference design */
+
+.sv-login-page {
+  min-height: 100vh;
+  width: 100vw;
+  background: linear-gradient(135deg, #FFF4EE 0%, #E4E6DD 25%, #C9D8CD 50%, #94BCAC 75%, #7AA694 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  position: relative;
+}
+
+.sv-login-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(40px, 7vw, 100px);
+  width: 100%;
+  max-width: 1100px;
+}
+
+/* Left Brand Section */
+.sv-login-brand {
+  flex: 0 1 480px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sv-brand-logo-img {
+  width: 100%;
+  max-width: 440px;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.04));
+  transition: transform 0.3s ease;
+}
+
+.sv-brand-logo-img:hover {
+  transform: translateY(-2px);
+}
+
+/* Right Card Section */
+.sv-login-card {
+  flex: 0 1 470px;
+  width: 100%;
+  max-width: 470px;
+  min-height: 380px;
+  background: #3A584C;
+  border-radius: 30px;
+  padding: 56px 52px 48px;
+  box-sizing: border-box;
+  box-shadow: 0 20px 48px rgba(35, 54, 46, 0.22);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sv-login-card:hover {
+  box-shadow: 0 24px 56px rgba(35, 54, 46, 0.28);
+}
+
+.sv-login-title {
+  color: #ffffff;
+  font-size: 36px;
+  font-weight: 700;
+  margin: 0 0 34px 0;
+  line-height: 1.15;
+  letter-spacing: -0.3px;
+  text-align: left;
+}
+
+.sv-login-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.sv-input-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.sv-password-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 52px 0 22px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.38);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 15px;
+  outline: none;
+  box-sizing: border-box;
+  letter-spacing: 0.3px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.sv-password-input::placeholder {
+  color: #7A9B8F;
+  opacity: 1;
+}
+
+.sv-password-input:focus {
+  border-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.sv-password-toggle-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  padding: 6px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.15s ease;
+  line-height: 1;
+}
+
+.sv-password-toggle-btn:hover {
+  color: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.sv-login-button {
+  width: 160px;
+  height: 40px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  border-radius: 9999px;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto 0 auto;
+  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.sv-login-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.85);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.sv-login-button:active:not(:disabled) {
+  transform: translateY(0);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sv-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sv-login-error {
+  color: #FFB3BA;
+  font-size: 13.5px;
+  margin: 14px 0 0 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 860px) {
+  .sv-login-wrapper {
+    flex-direction: column;
+    gap: 36px;
+  }
+
+  .sv-login-brand {
+    flex: 0 1 auto;
+    max-width: 320px;
+  }
+
+  .sv-login-card {
+    flex: 0 1 auto;
+    max-width: 400px;
+    padding: 44px 36px 38px;
+    min-height: auto;
+  }
+
+  .sv-login-title {
+    font-size: 30px;
+    margin-bottom: 26px;
+  }
+}
