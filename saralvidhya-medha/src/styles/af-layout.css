@@ -1,0 +1,49 @@
+/* af-layout.css — Auto-split from app-flow.css */
+
+
+
+/* Breadcrumbs */
+.breadcrumb-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+
+.breadcrumb-sep {
+  color: var(--text-secondary);
+  opacity: 0.5;
+  font-size: 1.1em;
+}
+
+
+.breadcrumb-item.link {
+  cursor: pointer;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+
+.breadcrumb-item.link:hover {
+  text-decoration: underline;
+}
+
+
+/* System overrides to use ENTIRE left place and break out of any hidden center constraints */
+#root,
+.layout,
+.main-content {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+
+/* Profile page title */
+.page>h1 {
+  text-align: center;
+}

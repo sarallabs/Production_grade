@@ -1,0 +1,60 @@
+/* markdown.css — Auto-split from index.css */
+
+
+
+.mm-fc-answer .markdown-body,
+.mm-fc-answer .markdown-view {
+  font-size: 0.83rem;
+  color: #065f46;
+}
+
+
+/* MARKDOWN TABLE STYLES */
+.markdown-view table,
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+
+.markdown-view th,
+.markdown-body th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  text-align: left;
+  padding: 12px 16px;
+  color: #1e293b;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+
+.markdown-view td,
+.markdown-body td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  vertical-align: top;
+}
+
+
+.markdown-view tr:last-child td,
+.markdown-body tr:last-child td {
+  border-bottom: none;
+}
+
+
+.markdown-view tr:nth-child(even),
+.markdown-body tr:nth-child(even) {
+  background-color: #fcfcfd;
+}
+
+
+.markdown-view tr:hover,
+.markdown-body tr:hover {
+  background-color: #f1f5f9;
+}

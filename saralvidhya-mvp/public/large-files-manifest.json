@@ -1,0 +1,116 @@
+{
+  "version": "1.0",
+  "threshold": "24MB",
+  "totalFiles": 17,
+  "generatedAt": "2026-09-30T11:09:39.527Z",
+  "note": "These files are stored in Google Drive and fetched on-demand",
+  "files": [
+    {
+      "path": "angrau/chapter_01/Podcasts/Digestive system Long Podcast.m4a",
+      "size": 82.24,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.364Z"
+    },
+    {
+      "path": "angrau/chapter_01/Podcasts/Digestive system Short Podcast.m4a",
+      "size": 37.58,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.365Z"
+    },
+    {
+      "path": "angrau/chapter_02/Podcasts/Metamorphosis Long Podcast.m4a",
+      "size": 42.64,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.371Z"
+    },
+    {
+      "path": "angrau/chapter_03/flashcards.md",
+      "size": 29.11,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.372Z"
+    },
+    {
+      "path": "angrau/chapter_03/Podcasts/Long Podcast Weathering.m4a",
+      "size": 83.44,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.373Z"
+    },
+    {
+      "path": "angrau/chapter_03/Podcasts/Short Podcast Weathering.m4a",
+      "size": 49.81,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.373Z"
+    },
+    {
+      "path": "angrau/chapter_03/Practice/Revise (Flashcards)/flashcards_revise.md",
+      "size": 29.11,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.374Z"
+    },
+    {
+      "path": "angrau/chapter_03/prep_flashcards.md",
+      "size": 29.11,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.375Z"
+    },
+    {
+      "path": "angrau/chapter_04/Podcasts/Long Podcast Pollination.m4a",
+      "size": 142.79,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.377Z"
+    },
+    {
+      "path": "angrau/chapter_04/Podcasts/Short Podcast Pollination.m4a",
+      "size": 37.72,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.377Z"
+    },
+    {
+      "path": "angrau/metamorphosis podcast plus transcripts/Metamorphosis Long Podcast.m4a",
+      "size": 42.64,
+      "extension": ".m4a",
+      "createdAt": "2026-09-30T11:09:39.384Z"
+    },
+    {
+      "path": "master_minds/ca_final/advanced_financial_management/chapter_02 (derivatives_options)/beginner/podcasts/08_Derivative_Options_Beginner_Long.mp3",
+      "size": 24.13,
+      "extension": ".mp3",
+      "createdAt": "2026-09-30T11:09:39.423Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_advanced.md",
+      "size": 31.07,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.487Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_intermediate.md",
+      "size": 24.87,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.487Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/quick_summary_advanced.md",
+      "size": 28.06,
+      "extension": ".md",
+      "createdAt": "2026-09-30T11:09:39.491Z"
+    },
+    {
+      "path": "Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/beginner/long_podcast.mp3",
+      "size": 61.02,
+      "extension": ".mp3",
+      "createdAt": "2026-09-30T11:09:39.497Z"
+    },
+    {
+      "path": "Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/intermediate/long_podcast.mp3",
+      "size": 51.58,
+      "extension": ".mp3",
+      "createdAt": "2026-09-30T11:09:39.498Z"
+    }
+  ],
+  "instructions": {
+    "description": "Files larger than 24MB are stored in Google Drive",
+    "action": "Use GoogleDriveService to fetch these files",
+    "example": "const url = await getGoogleDriveUrl(\"path/to/file.mp3\")"
+  }
+}

@@ -1,0 +1,66 @@
+/* af-responsive.css — Auto-split from app-flow.css */
+
+
+
+@media (max-width: 720px) {
+  .glb-podium {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+@media (max-width: 720px) {
+  .flashcards-rich {
+    padding: 20px;
+  }
+
+  .flashcards-stage {
+    flex-direction: column;
+  }
+
+  .flashcard-nav-button {
+    width: 100%;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .ask-bot-view {
+    padding: 12px;
+    min-height: 300px;
+  }
+  .ask-chat-window {
+    padding: 12px;
+    gap: 12px;
+  }
+  .chat-bubble {
+    font-size: 0.95rem;
+    max-width: 95%;
+  }
+  .chat-input-container {
+    flex-direction: column;
+    border-radius: 16px;
+    padding: 12px;
+  }
+  .chat-input-textarea {
+    min-height: 60px;
+  }
+  .chat-mic-btn, .chat-send-btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .flashcards-view-inner {
+    padding: 0 16px;
+  }
+  .flashcard-card {
+    font-size: 1.1rem;
+    padding: 20px;
+  }
+}
+
+
+@media (max-width: 768px) {
+  .fm-active-content {
+    padding: 20px 18px;
+  }
+}

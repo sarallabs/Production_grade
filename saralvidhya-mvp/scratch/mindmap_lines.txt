@@ -1,0 +1,29 @@
+290:  const [mindmapTopicContent, setMindmapTopicContent] = useState<string | null>(null);
+291:  const [mindmapDetailedContent, setMindmapDetailedContent] = useState<string | null>(null);
+292:  const [mindmapModalTab, setMindmapModalTab] = useState<'quick' | 'detailed'>('quick');
+740:  // Masterminds mindmap concept panel state
+749:  if (activeTool === "mindmap" && mmActiveNodeId && mmConceptRaw) {
+774:    if (activeTool === "mindmap") {
+1027:    } else if (activeTool === "mindmap") {
+1028:      getResourceContent(internalSubId, chapterNumber, "mindmap.md", persona)
+1200:      case "mindmap": {
+1203:        let mindmapTree: any = null;
+1206:            mindmapTree = JSON.parse(content);
+1208:            console.error("Failed to parse mindmap tree JSON", e);
+1216:        if (mindmapTree && mindmapTree.children) {
+1217:          const topics = mindmapTree.children;
+1394:        const hardcodedMindmap = `mindmap
+1510:          <div className="mindmap-container" style={{ position: 'relative' }}>
+1521:                      className={`mm-tab-btn ${mindmapModalTab === 'quick' ? 'active' : ''}`}
+1533:                      className={`mm-tab-btn ${mindmapModalTab === 'detailed' ? 'active' : ''}`}
+1556:                  <MarkdownView content={mindmapModalTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent} />
+1779:    mindmap: "Mindmap",
+1845:      case "summary": case "podcasts": case "videos": case "mindmap": 
+1940:                    mindmap: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
+1956:                      case "mindmap":
+2236:                            {renderNode("mindmap", "Mindmap", "#16a34a")}
+2519:                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "podcasts"
+2540:                  display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
+2546:                  paddingTop: activeTool === "mindmap" ? "2px" : 0,
+2548:                    activeTool === "flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed"
+2565:                      ["summary", "detailed", "flashcards", "revision_flashcards", "assessment"].includes(activeTool) ? null : activeTool === "mindmap" ? (
