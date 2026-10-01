@@ -24,9 +24,10 @@ export interface VideosViewProps {
   onSelectVideoIndex?: (videoIndex: number) => void;
 }
 
-const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[] }> = {
+const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; duration?: string }> = {
   "Ioa25iYy53g": {
     title: "Insects Digestive System",
+    duration: "10:15min",
     topics: [
       "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
       "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
@@ -37,6 +38,7 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[] }>
   },
   "UMJFfCFFF4M": {
     title: "Weathering of Rocks and Minerals",
+    duration: "11:45min",
     topics: [
       "Foundations of Weathering & Regolith-Saprolite Boundary Dynamics",
       "Physical Weathering: Hydraulic Forces, Frost Wedging (9% Expansion) & Exfoliation",
@@ -47,6 +49,7 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[] }>
   },
   "elWWuKv5b9Q": {
     title: "Pollination, Pollinizers & Parthenocarpy in Fruit Crops",
+    duration: "14:20min",
     topics: [
       "Floral Biology Architecture & Angiosperm Double Fertilization",
       "Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy",
@@ -57,10 +60,114 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[] }>
   }
 };
 
-/**
- * VideosView Component
- * Renders the video study interface including list view and player view.
- */
+/** Faint green insect outline watermark matching Figma */
+const InsectWatermark = () => (
+  <svg
+    viewBox="0 0 200 200"
+    fill="none"
+    stroke="#7BA88B"
+    strokeWidth="1.35"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    style={{
+      position: "absolute",
+      right: "12px",
+      bottom: "6px",
+      width: "165px",
+      height: "165px",
+      opacity: 0.22,
+      pointerEvents: "none",
+      zIndex: 0,
+    }}
+  >
+    {/* Head & antennae */}
+    <ellipse cx="100" cy="42" rx="12" ry="10" />
+    <path d="M94 35 Q80 18 68 22" />
+    <path d="M106 35 Q120 18 132 22" />
+    <circle cx="95" cy="41" r="2.5" fill="#7BA88B" />
+    <circle cx="105" cy="41" r="2.5" fill="#7BA88B" />
+    {/* Thorax */}
+    <ellipse cx="100" cy="70" rx="16" ry="18" />
+    {/* Abdomen segmented */}
+    <path d="M88 88 Q76 122 100 158 Q124 122 112 88 Z" />
+    <line x1="84" y1="102" x2="116" y2="102" />
+    <line x1="87" y1="117" x2="113" y2="117" />
+    <line x1="91" y1="132" x2="109" y2="132" />
+    <line x1="96" y1="146" x2="104" y2="146" />
+    {/* Forewings */}
+    <path d="M92 64 C58 38 22 58 42 105 C58 122 84 84 92 70" />
+    <path d="M108 64 C142 38 178 58 158 105 C142 122 116 84 108 70" />
+    {/* Hindwings */}
+    <path d="M90 73 C68 64 45 84 60 118 C70 128 86 100 90 78" />
+    <path d="M110 73 C132 64 155 84 140 118 C130 128 114 100 110 78" />
+    {/* Veins */}
+    <path d="M42 105 Q68 80 92 68" strokeDasharray="3 2" />
+    <path d="M158 105 Q132 80 108 68" strokeDasharray="3 2" />
+    {/* Legs */}
+    <path d="M86 66 Q64 64 50 78" />
+    <path d="M114 66 Q136 64 150 78" />
+    <path d="M86 76 Q56 86 48 114" />
+    <path d="M114 76 Q144 86 152 114" />
+    <path d="M88 84 Q60 114 64 146" />
+    <path d="M112 84 Q140 114 136 146" />
+  </svg>
+);
+
+/** Dedicated Figma topic icon per row (0 to 4) */
+const renderTopicIcon = (index: number) => {
+  const iconIdx = index % 5;
+  switch (iconIdx) {
+    case 0:
+      // Document sheet with folded corner and lines
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="9" y1="13" x2="15" y2="13" />
+          <line x1="9" y1="17" x2="13" y2="17" />
+        </svg>
+      );
+    case 1:
+      // Leaf with central vein
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
+          <line x1="16" y1="8" x2="2" y2="22" />
+        </svg>
+      );
+    case 2:
+      // Organism / insect head / microbe
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="13" r="7" />
+          <line x1="12" y1="6" x2="12" y2="2" />
+          <path d="M8 3.5l2 2.5" />
+          <path d="M16 3.5l-2 2.5" />
+          <line x1="9" y1="12" x2="15" y2="12" />
+          <circle cx="12" cy="15" r="1.2" fill="#4B5563" />
+        </svg>
+      );
+    case 3:
+      // Gear / settings cog
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+      );
+    case 4:
+    default:
+      // Chemistry laboratory flask
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 2v5.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 7.5V2" />
+          <line x1="8" y1="2" x2="16" y2="2" />
+          <line x1="7" y1="15" x2="17" y2="15" />
+        </svg>
+      );
+  }
+};
+
 export default function VideosView({
   chapterName,
   subjectId,
@@ -80,16 +187,10 @@ export default function VideosView({
   isVideoPlayableAt,
   onSelectVideoIndex,
 }: VideosViewProps) {
-  const [videoMode, setVideoMode] = useState<"long" | "short">("long");
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [activeVideo, setActiveVideo] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [videoProgresses, setVideoProgresses] = useState<Record<string, number>>({});
-
-  // Fullscreen state — tracks the real browser fullscreen status
-  const [isFullscreen, setIsFullscreen] = useState(false);
 
   // Custom Player State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -97,82 +198,16 @@ export default function VideosView({
   const [volume, setVolume] = useState(100);
   const [isMuted, setIsMuted] = useState(false);
   const [isCcEnabled, setIsCcEnabled] = useState(false);
-
-  const toggleCc = () => {
-    const nextState = !isCcEnabled;
-    setIsCcEnabled(nextState);
-    if (!playerRef.current) return;
-    try {
-      if (nextState) {
-        if (typeof playerRef.current.loadModule === "function") {
-          playerRef.current.loadModule("captions");
-        }
-        if (typeof playerRef.current.setOption === "function") {
-          playerRef.current.setOption("captions", "track", { languageCode: "en" });
-        }
-      } else {
-        if (typeof playerRef.current.unloadModule === "function") {
-          playerRef.current.unloadModule("captions");
-        }
-        if (typeof playerRef.current.setOption === "function") {
-          playerRef.current.setOption("captions", "track", {});
-        }
-      }
-    } catch (err) {
-      console.warn("Failed to toggle CC:", err);
-    }
-  };
-
-  // Bookmarks & Sidebar Tab
-  const [bookmarks, setBookmarks] = useState<{ id: string; ytId: string; timestamp: number; note: string }[]>([]);
-  const [sidebarTab, setSidebarTab] = useState<"transcript" | "bookmarks">("bookmarks");
-  const [bookmarkNote, setBookmarkNote] = useState("");
-  const [isBookmarkInputOpen, setIsBookmarkInputOpen] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const hoverTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleMouseMove = useCallback(() => {
-    setIsHovered(true);
-    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-    hoverTimeoutRef.current = setTimeout(() => setIsHovered(false), 2500);
-  }, []);
-
-  // Transcript
-  const [transcriptContent, setTranscriptContent] = useState<string | null>(null);
-  const [isTranscriptLoading, setIsTranscriptLoading] = useState(false);
+  const [showSpeedSelector, setShowSpeedSelector] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const playerRef = useRef<any>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const hasStartedPlayingRef = useRef<boolean>(false);
+  const progressIntervalRef = useRef<any>(null);
 
-  const shortVideosList = [
-    { ytId: "-JpxEEPtNos", title: "Foundations of Histology", topics: ["Introduction to microscopic anatomy", "Cellular organization", "Basic tissue types overview"] },
-    { ytId: "8hdw8CLVZao", title: "Epithelial Tissue", topics: ["Structural characteristics", "Basement membrane", "Avascular nature"] },
-    { ytId: "awQ6iU5KWMk", title: "Simple Epithelium Types", topics: ["Squamous epithelium", "Cuboidal epithelium", "Columnar epithelium"] },
-    { ytId: "XYkQgl5IC68", title: "Compound and Transitional Epithelium", topics: ["Stratified layers", "Protection functions", "Stretchable transitional tissue"] },
-    { ytId: "3rOFESmVTbQ", title: "Connective Tissue Proper : cells of connective tissue", topics: ["Fibroblasts", "Macrophages", "Mast cells and Adipocytes"] },
-    { ytId: "IbvSl7WkGsQ", title: "Connective Tissue Proper : Matrix and Fibers", topics: ["Collagen fibers", "Elastic and reticular fibers", "Ground substance composition"] },
-    { ytId: "1NSGbA3A4Ts", title: "Loose and Dense Connective Tissue", topics: ["Areolar and adipose tissue", "Dense regular tissue", "Dense irregular tissue"] },
-    { ytId: "iaWN0StIFxU", title: "Supportive Connective Tissue : Cartilage Structure and Types", topics: ["Chondrocytes", "Hyaline cartilage", "Elastic and fibrocartilage"] },
-    { ytId: "WLO69oEV5uE", title: "Bone Composition and Classification", topics: ["Organic and inorganic matrix", "Compact bone", "Spongy (cancellous) bone"] },
-    { ytId: "jO-NBR1Y9Qk", title: "Anatomy of Long Bones and Osteons", topics: ["Haversian systems", "Osteocytes in lacunae", "Canaliculi and blood supply"] },
-    { ytId: "IzQkokKYA6A", title: "Fluid Connective Tissue: Blood and Lymph", topics: ["Plasma composition", "Formed elements", "Lymphatic fluid differences"] },
-    { ytId: "1g90wbAN6as", title: "Red Blood Cells (Erythrocytes)", topics: ["Biconcave shape", "Hemoglobin transport", "Lack of nucleus in mammals"] },
-    { ytId: "8FNyWX48DNs", title: "White Blood Cells and Platelets", topics: ["Granulocytes", "Agranulocytes", "Platelets and blood clotting"] },
-    { ytId: "4G7POypkcLE", title: "Muscular Tissue", topics: ["Contractile properties", "Excitability", "Role in body movement"] },
-    { ytId: "a3Lc7EyjKI4", title: "Skeletal (Striped) Muscle Structure", topics: ["Striations", "Multinucleated cells", "Voluntary control"] },
-    { ytId: "Om40XueGJ_k", title: "Smooth and Cardiac Muscle", topics: ["Involuntary contraction", "Spindle-shaped smooth cells", "Intercalated discs in cardiac"] },
-    { ytId: "Ox3CbPM9uv4", title: "Nervous Tissue : Neuroglia and Neuron Development", topics: ["Supportive glial cells", "Myelination", "Developmental origins"] },
-    { ytId: "ajlWgPjEa5Y", title: "Neuron Anatomy and Classification", topics: ["Dendrites and axons", "Cell body (soma)", "Sensory, motor, and interneurons"] },
-    { ytId: "aHvELPPzWIw", title: "Animal Tissues", topics: ["Summary of tissue integration", "Organ system formation", "Homeostasis regulation"] }
-  ];
-
-  // 1. Registry-backed list when the chapter is segmented, otherwise the legacy
-  // hard-coded / youtube_links.md-scraped list.
+  // 1. Build video list
   const videos = useMemo(() => {
-    if (videoMode === "short" && subjectId === "neb_xii_biology" && chapterNumber === 6) {
-      return shortVideosList;
-    }
     if (chapterVideos && chapterVideos.length > 0) {
       return chapterVideos.map((v) => ({
         title: v.title,
@@ -187,52 +222,61 @@ export default function VideosView({
         {
           title: "Relativistic Quantum Mechanics & Dirac Theory",
           ytId: "wla3hcd1S68",
+          duration: "15:00min",
           topics: [
             "Derivation and Operator Interpretation of Klein-Gordon Equation",
             "Squaring Approach & Negative Energy Solutions",
             "Dirac Equation Formulation & Gamma Matrices",
-            "Probability Density and Current Conservation"
+            "Probability Density and Current Conservation",
+            "Covariant Formulation & Lorentz Transformation Properties"
           ]
         }
       ];
     } else if (subjectId === "pubadm_ur" && chapterNumber === 1) {
       list = [
         {
-          title: "Video Lecture Part 1",
+          title: "Introduction to Public Administration",
           ytId: "zudAdjtoraA",
+          duration: "12:30min",
           topics: [
             "Introduction to Public Administration & Core Concepts",
             "Evolution of Administrative Thought & Historical Context",
             "Scope and Significance in Modern Governance",
-            "Key Differences between Public and Private Administration"
+            "Key Differences between Public and Private Administration",
+            "Administrative Paradigms and New Public Management"
           ]
         },
         {
-          title: "Video Lecture Part 2",
+          title: "Organizational Structure & Theories",
           ytId: "LEfMH2SNznY",
+          duration: "14:10min",
           topics: [
             "Organizational Structure & Bureaucratic Theories",
             "Principles of Scientific Management (F.W. Taylor)",
             "Classical Administrative Theory (Henri Fayol)",
-            "Human Relations Approach & Hawthorne Experiments"
+            "Human Relations Approach & Hawthorne Experiments",
+            "Behavioral Approaches & Informal Organizations"
           ]
         },
         {
-          title: "Video Lecture Part 3",
+          title: "Decision Making & Accountability",
           ytId: "vb9N0S158GA",
+          duration: "10:45min",
           topics: [
             "Decision Making in Administration (Herbert Simon)",
             "Motivation and Leadership in Public Organizations",
             "Comparative Public Administration & Development",
-            "Accountability and Control Mechanisms in Public Services"
+            "Accountability and Control Mechanisms in Public Services",
+            "Citizen Charters, Transparency & RTI Act Dynamics"
           ]
-        },
+        }
       ];
     } else if ((subjectId === "ento_131" || subjectId.includes("ento") || subjectId.includes("digestive")) && chapterNumber === 1) {
       list = [
         {
           title: "Insects Digestive System",
           ytId: "Ioa25iYy53g",
+          duration: "10:15min",
           topics: [
             "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
             "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
@@ -247,6 +291,7 @@ export default function VideosView({
         {
           title: "Weathering of Rocks and Minerals",
           ytId: "UMJFfCFFF4M",
+          duration: "11:45min",
           topics: [
             "Foundations of Weathering & Regolith-Saprolite Boundary Dynamics",
             "Physical Weathering: Hydraulic Forces, Frost Wedging (9% Expansion) & Exfoliation",
@@ -261,6 +306,7 @@ export default function VideosView({
         {
           title: "Pollination, Pollinizers & Parthenocarpy in Fruit Crops",
           ytId: "elWWuKv5b9Q",
+          duration: "14:20min",
           topics: [
             "Floral Biology Architecture & Angiosperm Double Fertilization",
             "Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy",
@@ -270,319 +316,208 @@ export default function VideosView({
           ]
         }
       ];
-    } else if (subjectId === "neb_xii_biology" && chapterNumber === 6) {
-      list = [
-        {
-          title: "Animal Tissue",
-          ytId: "q2Zgesdh0oE",
-          topics: [
-            "History and Overview",
-            "Epithelial Tissue",
-            "Connective Tissue",
-            "Muscular and Nervous Tissue"
-          ]
-        }
-      ];
     } else if (subjectId === "management") {
       list = [
         {
           title: "Importance and Scope of Marketing",
           ytId: "HKKodDR1VN8",
+          duration: "13:20min",
           topics: [
             "Introduction to Marketing Concepts & Nine Core Elements",
             "The Evolution of Marketing Thought & Modern Management Tasks",
             "Marketing Environment Analysis & Customer Value Equations",
-            "Industrial (B2B) Marketing & Demand Volatility Strategies"
+            "Industrial (B2B) Marketing & Demand Volatility Strategies",
+            "Integrated Marketing Communications Framework"
           ]
         },
         {
           title: "Services Marketing",
           ytId: "QIPTU6R6-8U",
+          duration: "12:15min",
           topics: [
             "Introduction to Services Marketing & Economic Context",
             "Uber Case Study & Service Industry Business Models",
             "The Six Inherent Characteristics of Services",
-            "The Extended Seven Ps Framework & Service Excellence"
+            "The Extended Seven Ps Framework & Service Excellence",
+            "Service Quality Gaps & Customer Expectation Models"
           ]
         },
         {
           title: "Global Marketing",
           ytId: "JUth69rroDM",
+          duration: "15:10min",
           topics: [
             "Global Marketing Definitions & Core Analytical Concepts",
             "Global Strategy Dilemmas & Market Expansion Frameworks",
             "Multinational Case Studies & Foundational Competitive Benefits",
-            "Critical International Challenges & Cultural Adaptations"
+            "Critical International Challenges & Cultural Adaptations",
+            "Global Supply Chain Alignment & Standardization vs Localization"
           ]
         }
       ];
     }
+
     if (youtubeLinksContent) {
       const ytRegex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
       let match;
       let idx = 1;
       while ((match = ytRegex.exec(youtubeLinksContent)) !== null) {
         const id = match[1];
-        if (!list.some(v => v.ytId === id)) {
+        if (!list.some((v) => v.ytId === id)) {
           const curated = KNOWN_VIDEOS_METADATA[id];
           list.push({
-            title: curated?.title || `Video ${idx++}`,
+            title: curated?.title || `Video Lecture Part ${idx++}`,
             ytId: id,
+            duration: curated?.duration || "10:15min",
             topics: curated?.topics || [
               "Key conceptual overview & core principles",
-              "Practical examples and real-world applications",
-              "Critical analysis and problem solving",
-              "Summary of key takeaways and summary points"
+              "Structural anatomy and physiological pathways",
+              "Specialized adaptations and functional dynamics",
+              "Critical cellular mechanisms and transport systems",
+              "Synthesis of key takeaways and summary points"
             ]
           });
         }
       }
     }
-    return list;
-  }, [subjectId, chapterNumber, youtubeLinksContent, chapterName, chapterVideos, videoMode]);
 
-  const isSegmented = !!chapterVideos && chapterVideos.length > 0;
+    // Default fallback if list is empty
+    if (list.length === 0) {
+      list = [
+        {
+          title: chapterName || "Insects Digestive System",
+          ytId: "Ioa25iYy53g",
+          duration: "10:15min",
+          topics: [
+            "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
+            "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
+            "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
+            "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+            "Enzymatic Digestion & Nutritional Adaptations in Insects"
+          ]
+        }
+      ];
+    }
+
+    return list;
+  }, [subjectId, chapterNumber, youtubeLinksContent, chapterName, chapterVideos]);
 
   const robustActive = activeVideo >= videos.length ? 0 : activeVideo;
-  const currentVideo = selectedVideoId ? videos.find(v => v.ytId === selectedVideoId) || videos[robustActive] : videos[robustActive];
+  const currentVideo = videos[robustActive] || videos[0];
+  const isSingleVideo = videos.length <= 1;
 
-  /** 1-based index of the video on screen — the unit the gating store keys on. */
-  const currentVideoIndex = (selectedVideoId
-    ? videos.findIndex((v) => v.ytId === selectedVideoId)
-    : robustActive) + 1;
-
-  // Videos already reported as watched, so the 1s progress tick past the
-  // threshold reports once rather than every second for the rest of the video.
-  const reportedWatchedRef = useRef<Set<number>>(new Set());
-
-  const previousVideoIndexRef = useRef<number | null>(null);
-
-  // Follow the unit the parent is studying. This is what lands the learner on
-  // the next video after they finish (or skip) the previous one's tools.
+  // Active index sync from parent
   useEffect(() => {
-    if (!isSegmented || !activeVideoIndex || videos.length === 0) return;
-    const idx = Math.min(Math.max(activeVideoIndex, 1), videos.length) - 1;
-    setActiveVideo(idx);
-
-    // Open the player only when the parent moves us to a *different* video —
-    // arriving on the tool should still show the list, so the learner can see
-    // what is unlocked and what is still ahead of them.
-    const previous = previousVideoIndexRef.current;
-    previousVideoIndexRef.current = activeVideoIndex;
-    if (previous !== null && previous !== activeVideoIndex && videos[idx]) {
-      setSelectedVideoId(videos[idx].ytId);
+    if (activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
+      setActiveVideo(activeVideoIndex - 1);
     }
-  }, [isSegmented, activeVideoIndex, videos]);
+  }, [activeVideoIndex, videos.length]);
 
-  // The parent passes a fresh inline callback on every render. Reading it from a
-  // ref keeps `markWatched` referentially stable, which matters because it is a
-  // dependency of the player effect below — an unstable one would tear the
-  // YouTube player down and rebuild it on every parent render.
   const onVideoWatchedRef = useRef(onVideoWatched);
   useEffect(() => {
     onVideoWatchedRef.current = onVideoWatched;
   });
 
-  /**
-   * `advance` separates the two things that used to be conflated. Crossing the
-   * threshold only unlocks the video's tools — it must not navigate, or the
-   * learner gets yanked out of a video they are still watching. Only the video
-   * genuinely ending hands off to the next step.
-   */
   const markWatched = useCallback((videoIndex: number, advance = false) => {
-    if (reportedWatchedRef.current.has(videoIndex) && !advance) return;
-    reportedWatchedRef.current.add(videoIndex);
     onVideoWatchedRef.current?.(videoIndex, advance);
   }, []);
 
-  // Load bookmarks
-  useEffect(() => {
-    const saved = localStorage.getItem(`sv_video_bookmarks_${subjectId}_${chapterNumber}`);
-    if (saved) {
-      try {
-        setBookmarks(JSON.parse(saved));
-      } catch (e) {
-        console.error("Failed to load bookmarks", e);
-      }
-    } else {
-      setBookmarks([]);
-    }
-  }, [subjectId, chapterNumber]);
+  // Format time utility
+  const formatTime = (sec: number) => {
+    if (isNaN(sec) || sec < 0) return "00:00";
+    const mins = Math.floor(sec / 60);
+    const secs = Math.floor(sec % 60);
+    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  };
 
-  // Load progresses of all videos in the playlist on load
-  useEffect(() => {
-    const progresses: Record<string, number> = {};
-    videos.forEach((vid) => {
-      const saved = localStorage.getItem(`sv_video_progress_${subjectId}_${chapterNumber}_${vid.ytId}`);
-      if (saved) {
-        try {
-          const { pct } = JSON.parse(saved);
-          progresses[vid.ytId] = pct || 0;
-        } catch {
-          // ignore
-        }
-      }
-    });
-    setVideoProgresses(progresses);
-  }, [videos, subjectId, chapterNumber]);
-
-  // 2. Fetch video_script.md for transcript
-  useEffect(() => {
-    if (!currentVideo) return;
-    setIsTranscriptLoading(true);
-    getResourceContent(subjectId, chapterNumber, "video_script.md", persona)
-      .then((res) => {
-        if (res && res !== "Content not available.") {
-          const cleaned = res
-            .replace(/<div[\s\S]*?<iframe[\s\S]*?<\/iframe>[\s\S]*?<\/div>/gi, "")
-            .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-            .trim();
-          setTranscriptContent(cleaned);
-        } else {
-          getResourceContent(subjectId, chapterNumber, "podcast_script.md", persona)
-            .then((podRes) => {
-              if (podRes && podRes !== "Content not available.") {
-                setTranscriptContent(`*(Transcript fallback from Podcast Script)*\n\n${podRes}`);
-              } else {
-                setTranscriptContent(null);
-              }
-            })
-            .catch(() => setTranscriptContent(null));
-        }
-        setIsTranscriptLoading(false);
-      })
-      .catch(() => {
-        setTranscriptContent(null);
-        setIsTranscriptLoading(false);
-      });
-  }, [currentVideo, subjectId, chapterNumber, persona]);
-
-  // 3. YouTube API loading & player management (only when video selected)
+  // YouTube Player setup
   useEffect(() => {
     hasStartedPlayingRef.current = false;
-    if (!selectedVideoId || !currentVideo) return;
+    if (!currentVideo?.ytId) return;
 
     if (!(window as any).YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
       const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
     }
 
     let checkInterval: any;
-    let progressInterval: any;
 
     const initPlayer = () => {
       const elementId = `yt-player-${currentVideo.ytId}`;
       const el = document.getElementById(elementId);
       if (!el || el.tagName === "IFRAME") return;
 
-      playerRef.current = new (window as any).YT.Player(elementId, {
-        height: "100%",
-        width: "100%",
-        videoId: currentVideo.ytId,
-        playerVars: {
-          origin: window.location.origin,
-          rel: 0,
-          modestbranding: 1,
-          enablejsapi: 1,
-          controls: 0,
-          disablekb: 1,
-          cc_load_policy: 0,
-          cc_lang_pref: "none",
-        },
-        events: {
-          onReady: (event: any) => {
-            try {
-              if (event.target && typeof event.target.unloadModule === "function") {
-                event.target.unloadModule("captions");
-              }
-              if (event.target && typeof event.target.setOption === "function") {
-                event.target.setOption("captions", "track", {});
-              }
-            } catch (err) { }
-
-            const saved = localStorage.getItem(`sv_video_progress_${subjectId}_${chapterNumber}_${currentVideo.ytId}`);
-            if (saved) {
-              try {
-                const { current } = JSON.parse(saved);
-                event.target.seekTo(current, true);
-                setCurrentTime(current);
-              } catch (e) {
-                console.error(e);
-              }
-            }
+      try {
+        playerRef.current = new (window as any).YT.Player(elementId, {
+          height: "100%",
+          width: "100%",
+          videoId: currentVideo.ytId,
+          playerVars: {
+            origin: window.location.origin,
+            rel: 0,
+            modestbranding: 1,
+            enablejsapi: 1,
+            controls: 0,
+            disablekb: 1,
+            cc_load_policy: 0,
+            cc_lang_pref: "none",
+            playsinline: 1,
           },
-          onStateChange: (event: any) => {
-            try {
-              if (event.target) {
-                if (typeof event.target.unloadModule === "function") {
+          events: {
+            onReady: (event: any) => {
+              try {
+                if (event.target && typeof event.target.unloadModule === "function") {
                   event.target.unloadModule("captions");
                 }
-                if (typeof event.target.setOption === "function") {
-                  event.target.setOption("captions", "track", {});
-                }
-              }
-            } catch (e) { }
-            if (event.data === (window as any).YT.PlayerState.PLAYING) {
-              hasStartedPlayingRef.current = true;
-              setIsPlaying(true);
-              if (!progressInterval) {
-                progressInterval = setInterval(() => {
-                  if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
-                    const current = playerRef.current.getCurrentTime();
-                    const dur = playerRef.current.getDuration();
-                    if (dur > 0) {
-                      const pct = (current / dur) * 100;
-                      setCurrentTime(current);
-                      setDuration(dur);
-                      setProgress(pct);
-                      localStorage.setItem(
-                        `sv_video_progress_${subjectId}_${chapterNumber}_${currentVideo.ytId}`,
-                        JSON.stringify({ current, duration: dur, pct })
-                      );
-                      setVideoProgresses((prev) => ({
-                        ...prev,
-                        [currentVideo.ytId]: pct,
-                      }));
-                      // Watching ~the whole video counts, so trailing credits or
-                      // an outro the learner skips don't strand them. Unlocks
-                      // only — the video keeps playing to its end. Gated on
-                      // hasStartedPlayingRef: onReady seeks back to the saved
-                      // position, so reopening an almost-finished video would
-                      // otherwise clear the threshold without any playback.
-                      if (pct >= WATCHED_THRESHOLD_PCT && hasStartedPlayingRef.current) {
-                        markWatched(currentVideoIndex, false);
+              } catch (err) {}
+            },
+            onStateChange: (event: any) => {
+              if (event.data === (window as any).YT.PlayerState.PLAYING) {
+                hasStartedPlayingRef.current = true;
+                setIsPlaying(true);
+                if (!progressIntervalRef.current) {
+                  progressIntervalRef.current = setInterval(() => {
+                    if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+                      const cur = playerRef.current.getCurrentTime();
+                      const dur = playerRef.current.getDuration();
+                      if (dur > 0) {
+                        const pct = (cur / dur) * 100;
+                        setCurrentTime(cur);
+                        setDuration(dur);
+                        setProgress(pct);
+                        if (pct >= WATCHED_THRESHOLD_PCT && hasStartedPlayingRef.current) {
+                          markWatched(robustActive + 1, false);
+                        }
                       }
                     }
-                  }
-                }, 1000);
-              }
-            } else if (event.data === (window as any).YT.PlayerState.ENDED) {
-              setIsPlaying(false);
-              if (progressInterval) {
-                clearInterval(progressInterval);
-                progressInterval = null;
-              }
-              // Only count a genuine play-through, not the ENDED that fires when
-              // onReady restores a position at the very end of the video.
-              if (hasStartedPlayingRef.current) {
-                hasStartedPlayingRef.current = false;
-                markWatched(currentVideoIndex, true);
-                if (onComplete) {
-                  onComplete();
+                  }, 500);
+                }
+              } else if (event.data === (window as any).YT.PlayerState.ENDED) {
+                setIsPlaying(false);
+                if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
+                  progressIntervalRef.current = null;
+                }
+                if (hasStartedPlayingRef.current) {
+                  hasStartedPlayingRef.current = false;
+                  markWatched(robustActive + 1, true);
+                  if (onComplete) onComplete();
+                }
+              } else {
+                setIsPlaying(false);
+                if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
+                  progressIntervalRef.current = null;
                 }
               }
-            } else {
-              setIsPlaying(false);
-              if (progressInterval) {
-                clearInterval(progressInterval);
-                progressInterval = null;
-              }
-            }
+            },
           },
-        },
-      });
+        });
+      } catch (err) {
+        console.warn("Error initializing YT player:", err);
+      }
     };
 
     checkInterval = setInterval(() => {
@@ -594,65 +529,20 @@ export default function VideosView({
 
     return () => {
       clearInterval(checkInterval);
-      if (progressInterval) clearInterval(progressInterval);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
-          // The YouTube IFrame API modifies the DOM internally. When React
-          // unmounts the component (e.g. ArrowLeft chapter navigation) React
-          // may have already removed some nodes before destroy() runs, causing
-          // a "removeChild: node is not a child" DOMException. We silence it
-          // here because the player teardown is still logically complete.
           playerRef.current.destroy();
-        } catch (e) {
-          // intentionally ignored — harmless cleanup race between React and the YT API
-        }
+        } catch (e) {}
         playerRef.current = null;
       }
     };
-    // Keyed on the video's id rather than the object: the `videos` memo
-    // recomputes when youtube_links.md arrives, and rebuilding the player for a
-    // new object describing the same video would interrupt playback.
-  }, [
-    selectedVideoId,
-    currentVideo?.ytId,
-    subjectId,
-    chapterNumber,
-    currentVideoIndex,
-    isSegmented,
-    markWatched,
-  ]);
+  }, [currentVideo?.ytId, robustActive, markWatched, onComplete]);
 
-  // Sync isFullscreen with the browser's actual fullscreen state
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
-  }, []);
-
-  // Auto-enter fullscreen whenever a video is selected; exit when deselected
-  useEffect(() => {
-    if (selectedVideoId) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      if (document.fullscreenElement) {
-        document.exitFullscreen().catch(() => {});
-      }
-    }
-  }, [selectedVideoId]);
-
-  useEffect(() => {
-    // Reset video index when switching modes to avoid out of bounds
-    setSelectedVideoId(null);
-    setActiveVideo(0);
-  }, [videoMode]);
-
-  const formatTime = (sec: number) => {
-    if (isNaN(sec) || sec < 0) return "00:00";
-    const mins = Math.floor(sec / 60);
-    const secs = Math.floor(sec % 60);
-    return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
-  };
-
+  // Player controls
   const handlePlayPause = () => {
     if (!playerRef.current) return;
     if (isPlaying) {
@@ -662,905 +552,823 @@ export default function VideosView({
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!playerRef.current || duration === 0) return;
-    const newPct = parseFloat(e.target.value);
-    const newTime = (newPct / 100) * duration;
-    playerRef.current.seekTo(newTime, true);
+  const handleRewind10 = () => {
+    if (!playerRef.current) return;
+    const cur = playerRef.current.getCurrentTime?.() ?? currentTime;
+    const target = Math.max(0, cur - 10);
+    playerRef.current.seekTo?.(target, true);
+    setCurrentTime(target);
+  };
+
+  const handleForward10 = () => {
+    if (!playerRef.current) return;
+    const cur = playerRef.current.getCurrentTime?.() ?? currentTime;
+    const dur = playerRef.current.getDuration?.() ?? duration;
+    const target = Math.min(dur || 900, cur + 10);
+    playerRef.current.seekTo?.(target, true);
+    setCurrentTime(target);
+  };
+
+  const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!playerRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+    const dur = duration || 615;
+    const newTime = ratio * dur;
+    playerRef.current.seekTo?.(newTime, true);
     setCurrentTime(newTime);
-    setProgress(newPct);
+    setProgress(ratio * 100);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!playerRef.current) return;
-    const newVol = parseInt(e.target.value, 10);
-    setVolume(newVol);
-    playerRef.current.setVolume(newVol);
-    if (newVol > 0 && isMuted) {
+    const val = parseInt(e.target.value, 10);
+    setVolume(val);
+    if (playerRef.current?.setVolume) {
+      playerRef.current.setVolume(val);
+    }
+    if (val > 0 && isMuted) {
       setIsMuted(false);
-      playerRef.current.unMute();
+      playerRef.current?.unMute?.();
     }
   };
 
   const toggleMute = () => {
     if (!playerRef.current) return;
     if (isMuted) {
-      playerRef.current.unMute();
+      playerRef.current.unMute?.();
       setIsMuted(false);
       if (volume === 0) setVolume(50);
     } else {
-      playerRef.current.mute();
+      playerRef.current.mute?.();
       setIsMuted(true);
     }
   };
 
-  const handleSpeedChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const toggleCc = () => {
+    const nextState = !isCcEnabled;
+    setIsCcEnabled(nextState);
     if (!playerRef.current) return;
-    const speed = parseFloat(e.target.value);
-    setPlaybackRate(speed);
-    playerRef.current.setPlaybackRate(speed);
+    try {
+      if (nextState) {
+        playerRef.current.loadModule?.("captions");
+        playerRef.current.setOption?.("captions", "track", { languageCode: "en" });
+      } else {
+        playerRef.current.unloadModule?.("captions");
+        playerRef.current.setOption?.("captions", "track", {});
+      }
+    } catch (err) {}
   };
 
-  const unitTabsNode = (
+  const toggleFullscreen = () => {
+    const container = playerContainerRef.current;
+    if (!container) return;
+    if (!document.fullscreenElement) {
+      container.requestFullscreen?.().catch(() => {});
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.().catch(() => {});
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    return () => document.removeEventListener("fullscreenchange", handler);
+  }, []);
+
+  // Title and topics
+  const displayTitle = currentVideo.title || chapterName || "Insects Digestive System";
+  const displayDuration = useMemo(() => {
+    if (currentVideo.duration) return currentVideo.duration;
+    if (duration > 0) {
+      const mins = Math.floor(duration / 60);
+      const secs = Math.floor(duration % 60);
+      return `${mins}:${String(secs).padStart(2, "0")}min`;
+    }
+    return "10:15min";
+  }, [currentVideo.duration, duration]);
+
+  const topicsList = useMemo(() => {
+    if (currentVideo.topics && currentVideo.topics.length > 0) {
+      return currentVideo.topics;
+    }
+    const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
+    if (curated?.topics) return curated.topics;
+    return [
+      "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
+      "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
+      "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
+      "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+      "Enzymatic Digestion & Nutritional Adaptations in Insects"
+    ];
+  }, [currentVideo]);
+
+  // Video switching handler for multi-video
+  const handleSelectVideo = (index: number) => {
+    setActiveVideo(index);
+    if (onSelectVideoIndex) {
+      onSelectVideoIndex(index + 1);
+    }
+    if (playerRef.current?.loadVideoById && videos[index]) {
+      playerRef.current.loadVideoById(videos[index].ytId);
+      setCurrentTime(0);
+      setProgress(0);
+      setIsPlaying(true);
+    }
+  };
+
+  // Video Player Component
+  const renderVideoPlayer = (isFullWidth = false) => (
     <div
+      ref={playerContainerRef}
       style={{
+        position: "relative",
+        width: "100%",
+        aspectRatio: "16 / 9",
+        minHeight: isFullWidth ? "400px" : "320px",
+        background: "#000000",
+        borderRadius: isFullWidth ? "16px" : "20px",
+        overflow: "hidden",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
         display: "flex",
-        alignItems: "center",
+        flexDirection: "column",
         justifyContent: "flex-end",
-        borderBottom: subjectId === "neb_xii_biology" && chapterNumber === 6 ? "2px solid #e2e8f0" : "none",
-        paddingBottom: "8px",
-        marginBottom: "12px",
-        flexShrink: 0,
       }}
     >
+      {/* YouTube Iframe */}
+      <div
+        id={`yt-player-${currentVideo.ytId}`}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          border: 0,
+        }}
+      />
 
-      {/* Video Mode Toggle */}
-      {subjectId === "neb_xii_biology" && chapterNumber === 6 && (
-        <div style={{ display: "flex", background: "#f1f5f9", padding: "4px", borderRadius: "12px", gap: "4px" }}>
-          <button
-            onClick={() => setVideoMode("long")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "8px",
-              border: "none",
-              background: videoMode === "long" ? "#ffffff" : "transparent",
-              color: videoMode === "long" ? "#0f172a" : "#64748b",
-              fontWeight: videoMode === "long" ? "700" : "600",
-              boxShadow: videoMode === "long" ? "0 2px 6px rgba(0,0,0,0.05)" : "none",
-              cursor: "pointer",
-              fontSize: "13.5px",
-              transition: "all 0.2s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-          >
-            <span style={{ fontSize: "16px" }}>💻</span> Videos
-          </button>
-          <button
-            onClick={() => setVideoMode("short")}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "8px",
-              border: "none",
-              background: videoMode === "short" ? "#ffffff" : "transparent",
-              color: videoMode === "short" ? "#0f172a" : "#64748b",
-              fontWeight: videoMode === "short" ? "700" : "600",
-              boxShadow: videoMode === "short" ? "0 2px 6px rgba(0,0,0,0.05)" : "none",
-              cursor: "pointer",
-              fontSize: "13.5px",
-              transition: "all 0.2s ease",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px"
-            }}
-          >
-            <span style={{ fontSize: "16px" }}>📱</span> Shorts
-          </button>
-        </div>
-      )}
-    </div>
-  );
-
-  if (videos.length > 0) {
-    return (
-      <div className="videos-layout-container" style={{ display: "flex", flexDirection: "column", width: "100%", margin: "0 auto", height: "100%", overflow: "hidden" }}>
-        {/* ── MODE 1: CATALOG PREVIEW LIST (When no video selected) ── */}
-        {!selectedVideoId ? (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            {unitTabsNode}
-            <div
-              style={{
-                display: videoMode === "short" ? "grid" : "flex",
-                gridTemplateColumns: videoMode === "short" ? "repeat(auto-fill, minmax(200px, 1fr))" : "none",
-                flexDirection: videoMode === "short" ? "row" : "column",
-                gap: "20px",
-                flex: 1,
-                minHeight: 0,
-                overflowY: "auto",
-                padding: "10px 14px 100px 16px",
-                boxSizing: "border-box",
-              }}
-            >
-              {videos.map((vid, vIdx) => {
-                // Videos open in sequence only when the chapter is segmented;
-                // legacy chapters keep every part clickable.
-                const locked = isSegmented && isVideoPlayableAt ? !isVideoPlayableAt(vIdx + 1) : false;
-                const watched = isSegmented && isVideoWatchedAt ? isVideoWatchedAt(vIdx + 1) : false;
-                const watchPct = Math.min(100, Math.round(videoProgresses[vid.ytId] ?? 0));
-                return (
-                  <div
-                    key={vid.ytId}
-                    style={{
-                      display: "flex",
-                      alignItems: videoMode === "short" ? "stretch" : "center",
-                      gap: "16px",
-                      width: "100%",
-                      height: videoMode === "short" ? "100%" : "auto",
-                      boxSizing: "border-box",
-                      position: videoMode === "short" ? "relative" : "static",
-                    }}
-                  >
-                    {/* The Video Card Box */}
-                    <div
-                      onClick={() => {
-                        if (locked) return;
-                        setActiveVideo(vIdx);
-                        setSelectedVideoId(vid.ytId);
-                        if (onSelectVideoIndex) {
-                          onSelectVideoIndex(vIdx + 1);
-                        }
-                      }}
-                      title={locked ? "Watch the previous video to unlock this one" : vid.title}
-                      className="video-preview-card"
-                      style={{
-                        display: "flex",
-                        alignItems: videoMode === "short" ? "flex-start" : "center",
-                        flexDirection: videoMode === "short" ? "column" : "row",
-                        flex: 1,
-                        minHeight: videoMode === "short" ? "100%" : "185px",
-                        background: "#ffffff",
-                        borderRadius: "22px",
-                        border: `1.5px solid ${watched ? "#86efac" : locked ? "#e2e8f0" : "#bfdbfe"}`,
-                        boxShadow: locked ? "none" : "0 8px 24px rgba(59, 130, 246, 0.08)",
-                        position: "relative",
-                        overflow: "hidden",
-                        cursor: locked ? "not-allowed" : "pointer",
-                        opacity: locked ? 0.5 : 1,
-                        padding: videoMode === "short" ? "10px" : "10px 18px 10px 10px",
-                        gap: videoMode === "short" ? "12px" : "20px",
-                        boxSizing: "border-box",
-                        transition: "transform 0.2s ease, boxShadow 0.2s ease, borderColor 0.2s ease",
-                      }}
-                    >
-                      {/* Status badge: locked, or watch progress once started */}
-                      {(locked || watched || watchPct > 0) && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            top: "12px",
-                            right: "14px",
-                            zIndex: 6,
-                            padding: "3px 10px",
-                            borderRadius: "999px",
-                            fontSize: "11px",
-                            fontWeight: 800,
-                            background: locked ? "#f1f5f9" : watched ? "#dcfce7" : "#eff6ff",
-                            color: locked ? "#64748b" : watched ? "#15803d" : "#1d4ed8",
-                            border: `1px solid ${locked ? "#cbd5e1" : watched ? "#86efac" : "#bfdbfe"}`,
-                          }}
-                        >
-                          {locked ? "🔒 Locked" : watched ? "✓ Watched" : `${watchPct}% watched`}
-                        </div>
-                      )}
-
-                      {/* Left Side: Curved Standalone Video Preview Stage with YouTube Thumbnail */}
-                      <div style={{ width: videoMode === "short" ? "100%" : "46%", flexShrink: 0 }}>
-                        <div
-                          style={{
-                            width: "100%",
-                            height: videoMode === "short" ? "200px" : "auto",
-                            aspectRatio: videoMode === "short" ? "auto" : "1.43 / 1",
-                            position: "relative",
-                            background: "#0f172a",
-                            borderRadius: "18px",
-                            border: "1.5px solid #93c5fd",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            overflow: "hidden",
-                          }}
-                        >
-                          {/* YouTube Video Thumbnail Image */}
-                          {vid.ytId && (
-                            <img
-                              src={videoMode === "short" ? `https://img.youtube.com/vi/${vid.ytId}/hqdefault.jpg` : `https://img.youtube.com/vi/${vid.ytId}/hqdefault.jpg`}
-                              alt={vid.title}
-                              onError={(e) => {
-                                (e.target as HTMLElement).setAttribute(
-                                  'src',
-                                  `https://i.ytimg.com/vi/${vid.ytId}/mqdefault.jpg`
-                                );
-                              }}
-                              style={{
-                                position: "absolute",
-                                top: 0,
-                                left: 0,
-                                width: "100%",
-                                height: "100%",
-                                objectFit: "cover",
-                                opacity: locked ? 0.6 : 0.9,
-                              }}
-                            />
-                          )}
-
-                          {/* Timestamp Badge */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              bottom: "8px",
-                              right: "8px",
-                              background: "rgba(0, 0, 0, 0.75)",
-                              color: "#ffffff",
-                              padding: "2px 6px",
-                              borderRadius: "4px",
-                              fontSize: "11px",
-                              fontWeight: 600,
-                              zIndex: 10,
-                              letterSpacing: "0.5px"
-                            }}
-                          >
-                            {vid.duration || (videoMode === "short" ? `0:${String(30 + (vIdx % 30)).padStart(2, '0')}` : `${10 + (vIdx % 5)}:${String(15 + (vIdx % 45)).padStart(2, '0')}`)}
-                          </div>
-
-                          {/* Top-Left University Logo Overlay */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              top: "8px",
-                              left: "8px",
-                              zIndex: 10,
-                              pointerEvents: "none",
-                            }}
-                          >
-                            <img
-                              src={sessionStorage.getItem('sv_logo') || '/brand-logo.png'}
-                              alt="University Logo"
-                              style={{
-                                width: "32px",
-                                height: "32px",
-                                objectFit: "contain",
-                                filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.5))",
-                              }}
-                            />
-                          </div>
-
-                          {/* Subtle Overlay to contrast Play Button and Logo */}
-                          <div
-                            style={{
-                              position: "absolute",
-                              inset: 0,
-                              background: "rgba(15, 23, 42, 0.25)",
-                              zIndex: 2,
-                            }}
-                          />
-
-
-                          {/* White Circle Button with Blue Play Triangle */}
-                          <div
-                            style={{
-                              width: "56px",
-                              height: "56px",
-                              borderRadius: "50%",
-                              background: "#ffffff",
-                              boxShadow: "0 10px 28px rgba(0, 0, 0, 0.3)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              zIndex: 5,
-                              transition: "transform 0.2s ease",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: 0,
-                                height: 0,
-                                borderTop: "11px solid transparent",
-                                borderBottom: "11px solid transparent",
-                                borderLeft: "18px solid #2563eb",
-                                marginLeft: "4px",
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right Side: Topics List covered in that video */}
-                      <div
-                        style={{
-                          flex: 1,
-                          padding: "8px 0",
-                          display: "flex",
-                          flexDirection: "column",
-                          justifyContent: "center",
-                          gap: "10px",
-                          background: "#ffffff",
-                        }}
-                      >
-                        {/* Video title (registry-backed chapters carry a real one) */}
-                        {isSegmented && (
-                          <div
-                            style={{
-                              fontSize: "15px",
-                              fontWeight: 800,
-                              color: "#0f172a",
-                              lineHeight: 1.25,
-                            }}
-                          >
-                            {vid.title}
-                          </div>
-                        )}
-
-                        {/* Topics Header */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span
-                            style={{
-                              fontSize: isSegmented ? "13px" : "15px",
-                              fontWeight: "800",
-                              color: isSegmented ? "#475569" : "#0f172a",
-                            }}
-                          >
-                            {vid.title}
-                          </span>
-                        </div>
-
-                        {/* Bullet list of topics covered in that video */}
-                        {videoMode !== "short" && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            {(vid.topics || [
-                              "E-Commerce and Digital Marketing strategies",
-                              "Customer Relationship Management (CRM) tools and best practices",
-                              "Social media marketing and influencer campaigns",
-                              "Green marketing and sustainable business practices"
-                            ]).slice(0, 6).map((topicText, tIdx) => (
-                              <div key={tIdx} style={{ display: "flex", alignItems: "flex-start", gap: "8px" }}>
-                                <div
-                                  style={{
-                                    width: "16px",
-                                    height: "16px",
-                                    borderRadius: "50%",
-                                    background: "#eff6ff",
-                                    border: "1.5px solid #3b82f6",
-                                    color: "#2563eb",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    fontSize: "9.5px",
-                                    fontWeight: "800",
-                                    marginTop: "2px",
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  ✓
-                                </div>
-                                <span style={{ fontSize: "12.5px", fontWeight: "600", color: "#334155", lineHeight: "1.35" }}>
-                                  {topicText}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-
-                        {/* Resume bar — only once there is something to resume */}
-                        {watchPct > 0 && !watched && (
-                          <div
-                            style={{
-                              height: "4px",
-                              borderRadius: "999px",
-                              background: "#e2e8f0",
-                              overflow: "hidden",
-                              marginTop: "2px",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: `${watchPct}%`,
-                                height: "100%",
-                                background: "#3b82f6",
-                                borderRadius: "999px",
-                              }}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        ) : (
-          /* ── MODE 2: CINEMA FULLSCREEN PLAYER (When a video card is clicked) ── */
+      {/* Center Play Overlay when Paused */}
+      {!isPlaying && (
+        <button
+          onClick={handlePlayPause}
+          aria-label="Play Video"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: "74px",
+            height: "74px",
+            borderRadius: "50%",
+            border: "none",
+            background: "rgba(255, 255, 255, 0.92)",
+            boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 8,
+            transition: "transform 0.2s ease, background 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
+          }}
+        >
           <div
-            className="video-cinema-overlay"
-            onMouseMove={handleMouseMove}
-            onMouseEnter={handleMouseMove}
-            onMouseLeave={() => {
-              if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
-              setIsHovered(false);
-            }}
             style={{
-              position: "fixed",
-              inset: 0,
-              zIndex: 1000,
-              background: "#000",
-              cursor: isHovered ? "default" : "none",
+              width: 0,
+              height: 0,
+              borderTop: "14px solid transparent",
+              borderBottom: "14px solid transparent",
+              borderLeft: "24px solid #1E293B",
+              marginLeft: "6px",
+            }}
+          />
+        </button>
+      )}
+
+      {/* Control Bar */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          background: "linear-gradient(to top, rgba(14, 19, 17, 0.95) 0%, rgba(14, 19, 17, 0.82) 75%, transparent 100%)",
+          paddingTop: "24px",
+          display: "flex",
+          flexDirection: "column",
+          width: "100%",
+        }}
+      >
+        {/* Full-width Seek Bar */}
+        <div
+          onClick={handleSeekClick}
+          title="Seek"
+          style={{
+            position: "relative",
+            width: "100%",
+            height: "4px",
+            background: "rgba(255, 255, 255, 0.32)",
+            cursor: "pointer",
+            transition: "height 0.15s ease",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLDivElement).style.height = "6px";
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLDivElement).style.height = "4px";
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${Math.min(100, Math.max(0, progress))}%`,
+              background: "#FFFFFF",
+              position: "relative",
             }}
           >
-            {/* YouTube Iframe Player — fills entire screen */}
             <div
-              id={`yt-player-${currentVideo.ytId}`}
               style={{
                 position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                border: 0,
+                right: "-4px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                width: "9px",
+                height: "9px",
+                borderRadius: "50%",
+                background: "#FFFFFF",
+                boxShadow: "0 0 6px rgba(0,0,0,0.6)",
               }}
             />
+          </div>
+        </div>
 
-            {/* Gradient scrim — only visible on hover so controls are readable */}
-            <div
+        {/* Controls Row */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 16px 10px 16px",
+            gap: "12px",
+          }}
+        >
+          {/* Left Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {/* Play/Pause */}
+            <button
+              onClick={handlePlayPause}
+              title={isPlaying ? "Pause" : "Play"}
               style={{
-                position: "absolute",
-                inset: 0,
-                background: isHovered
-                  ? "linear-gradient(to bottom, rgba(0,0,0,0.45) 0%, transparent 18%, transparent 72%, rgba(0,0,0,0.75) 100%)"
-                  : "transparent",
-                transition: "background 0.35s ease",
-                pointerEvents: "none",
-                zIndex: 2,
-              }}
-            />
-
-            {/* Top bar — logo + exit button (hover only) */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
+                background: "none",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                padding: 0,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                padding: "18px 24px",
-                zIndex: 10,
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? "translateY(0)" : "translateY(-12px)",
-                transition: "opacity 0.3s ease, transform 0.3s ease",
-                pointerEvents: isHovered ? "auto" : "none",
+                lineHeight: 1,
               }}
             >
-              {/* Logo */}
-              <img
-                src={sessionStorage.getItem('sv_logo') || '/brand-logo.png'}
-                alt="University Logo"
-                style={{
-                  width: "52px",
-                  height: "52px",
-                  objectFit: "contain",
-                  filter: "drop-shadow(0 2px 12px rgba(0,0,0,0.6))",
-                }}
-              />
-
-              {/* Video title */}
-              {currentVideo && (
-                <div style={{
-                  flex: 1,
-                  marginLeft: "16px",
-                  color: "#fff",
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  textShadow: "0 1px 6px rgba(0,0,0,0.7)",
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}>
-                  {isSegmented ? `Video ${currentVideoIndex} of ${videos.length} — ` : ""}{currentVideo.title}
-                </div>
+              {isPlaying ? (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <rect x="5" y="4" width="4" height="16" rx="1" />
+                  <rect x="15" y="4" width="4" height="16" rx="1" />
+                </svg>
+              ) : (
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <polygon points="6,4 20,12 6,20" />
+                </svg>
               )}
+            </button>
 
-              {/* Exit cinema button */}
+            {/* Rewind 10s («) */}
+            <button
+              onClick={handleRewind10}
+              title="Rewind 10s"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 1,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="11 17 6 12 11 7" />
+                <polyline points="18 17 13 12 18 7" />
+              </svg>
+            </button>
+
+            {/* Forward 10s (») */}
+            <button
+              onClick={handleForward10}
+              title="Forward 10s"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+                lineHeight: 1,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            </button>
+
+            {/* Timestamp */}
+            <div
+              style={{
+                color: "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 600,
+                whiteSpace: "nowrap",
+                letterSpacing: "0.2px",
+              }}
+            >
+              {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : "12:06 / 15:00"}
+            </div>
+
+            {/* Volume Icon + Slider */}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <button
-                onClick={() => {
-                  // Also exit native fullscreen if active
-                  if (document.fullscreenElement) {
-                    document.exitFullscreen().catch(() => {});
-                  }
-                  setSelectedVideoId(null);
-                }}
-                title="Exit cinema view"
-                aria-label="Exit cinema view"
+                onClick={toggleMute}
+                title={isMuted ? "Unmute" : "Mute"}
                 style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  border: "1.5px solid rgba(255,255,255,0.35)",
-                  background: "rgba(0,0,0,0.55)",
-                  backdropFilter: "blur(8px)",
-                  color: "#fff",
-                  fontSize: "22px",
-                  lineHeight: 1,
+                  background: "none",
+                  border: "none",
+                  color: "#FFFFFF",
                   cursor: "pointer",
+                  padding: 0,
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "background 0.2s ease, transform 0.2s ease",
-                  marginLeft: "12px",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(239,68,68,0.85)";
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.55)";
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
                 }}
               >
-                ✕
-              </button>
-
-              {/* Native browser fullscreen — hides URL bar, tabs, all chrome */}
-              <button
-                onClick={() => {
-                  if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(() => {});
-                  } else {
-                    document.exitFullscreen().catch(() => {});
-                  }
-                }}
-                title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen — hides browser chrome"}
-                aria-label="Toggle fullscreen"
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  border: `1.5px solid ${isFullscreen ? "rgba(59,130,246,0.8)" : "rgba(255,255,255,0.35)"}`,
-                  background: isFullscreen ? "rgba(59,130,246,0.55)" : "rgba(0,0,0,0.55)",
-                  backdropFilter: "blur(8px)",
-                  color: "#fff",
-                  fontSize: "18px",
-                  lineHeight: 1,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "background 0.2s ease, transform 0.2s ease, border-color 0.2s ease",
-                  marginLeft: "8px",
-                  boxShadow: isFullscreen ? "0 0 12px rgba(59,130,246,0.6)" : "none",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = isFullscreen ? "rgba(239,68,68,0.75)" : "rgba(59,130,246,0.75)";
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = isFullscreen ? "rgba(59,130,246,0.55)" : "rgba(0,0,0,0.55)";
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
-                }}
-              >
-                {isFullscreen ? (
-                  /* Compress: arrows pointing INWARD (heads facing each other) */
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="4 14 10 14 10 20"/>
-                    <polyline points="20 10 14 10 14 4"/>
-                    <line x1="10" y1="14" x2="3" y2="21"/>
-                    <line x1="21" y1="3" x2="14" y2="10"/>
+                {isMuted || volume === 0 ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
+                    <line x1="23" y1="9" x2="17" y2="15" />
+                    <line x1="17" y1="9" x2="23" y2="15" />
                   </svg>
                 ) : (
-                  /* Expand: arrows pointing OUTWARD */
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="15 3 21 3 21 9"/>
-                    <polyline points="9 21 3 21 3 15"/>
-                    <line x1="21" y1="3" x2="14" y2="10"/>
-                    <line x1="3" y1="21" x2="10" y2="14"/>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
                   </svg>
                 )}
               </button>
-            </div>
-
-            {/* Center Play overlay (shown when paused, always visible) */}
-            {!isPlaying && (
-              <button
-                onClick={handlePlayPause}
-                aria-label="Play Video"
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={isMuted ? 0 : volume}
+                onChange={handleVolumeChange}
                 style={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  width: "90px",
-                  height: "90px",
-                  borderRadius: "50%",
-                  border: "none",
-                  background: "rgba(255,255,255,0.92)",
-                  boxShadow: "0 8px 40px rgba(0,0,0,0.35)",
+                  width: "50px",
+                  height: "3px",
+                  accentColor: "#FFFFFF",
                   cursor: "pointer",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Right Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            {/* Speed Selector Toggle / Inline Pills */}
+            {!showSpeedSelector ? (
+              <button
+                onClick={() => setShowSpeedSelector(true)}
+                title="Playback Speed"
+                aria-label="Playback Speed"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#FFFFFF",
+                  cursor: "pointer",
+                  padding: 0,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  zIndex: 8,
-                  transition: "transform 0.2s ease, background 0.2s ease",
+                  transition: "transform 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
                 }}
               >
-                <div
-                  style={{
-                    width: 0,
-                    height: 0,
-                    borderTop: "18px solid transparent",
-                    borderBottom: "18px solid transparent",
-                    borderLeft: "30px solid #2563eb",
-                    marginLeft: "8px",
-                  }}
-                />
+                {/* Speedometer Gauge Icon */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <line x1="12" y1="12" x2="16" y2="8" strokeWidth="2.2" />
+                  <circle cx="12" cy="12" r="1.5" fill="#FFFFFF" />
+                  <path d="M7 12a5 5 0 0 1 1.46-3.54" strokeDasharray="1 2.5" />
+                </svg>
               </button>
-            )}
-
-            {/* Bottom control bar — slides up on hover */}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 0,
-                left: 0,
-                right: 0,
-                zIndex: 10,
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? "translateY(0)" : "translateY(16px)",
-                transition: "opacity 0.3s ease, transform 0.3s ease",
-                pointerEvents: isHovered ? "auto" : "none",
-                background: "linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 70%, transparent 100%)",
-                paddingTop: "48px",
-              }}
-            >
-              {/* Seek bar */}
-              <div style={{ position: "relative", width: "100%", height: "4px", background: "rgba(255,255,255,0.25)", marginBottom: "12px" }}>
-                <div
-                  style={{
-                    height: "100%",
-                    width: `${progress || 0}%`,
-                    background: "#3b82f6",
-                    position: "relative",
-                    transition: "width 0.25s linear",
-                  }}
-                >
-                  <div
-                    style={{
-                      position: "absolute",
-                      right: "-6px",
-                      top: "-4px",
-                      width: "12px",
-                      height: "12px",
-                      borderRadius: "50%",
-                      background: "#60a5fa",
-                      boxShadow: "0 0 8px rgba(59,130,246,0.9)",
-                    }}
-                  />
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  value={progress || 0}
-                  onChange={handleSeek}
-                  style={{
-                    position: "absolute",
-                    top: "-8px",
-                    left: 0,
-                    width: "100%",
-                    height: "20px",
-                    opacity: 0,
-                    cursor: "pointer",
-                    margin: 0,
-                  }}
-                />
-              </div>
-
-              {/* Controls row */}
+            ) : (
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "0 28px 20px",
+                  gap: "4px",
+                  background: "rgba(0, 0, 0, 0.4)",
+                  padding: "2px 5px",
+                  borderRadius: "14px",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
                 }}
               >
-                {/* Left controls */}
-                <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-                  {/* Play/Pause */}
-                  <button
-                    onClick={handlePlayPause}
-                    title={isPlaying ? "Pause" : "Play"}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#fff",
-                      fontSize: "22px",
-                      cursor: "pointer",
-                      padding: 0,
-                      display: "flex",
-                      alignItems: "center",
-                      lineHeight: 1,
-                    }}
-                  >
-                    {isPlaying ? (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                    ) : (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
-                    )}
-                  </button>
-
-                  {/* Rewind 10s */}
-                  <button
-                    onClick={() => {
-                      if (playerRef.current) {
-                        const cur = playerRef.current.getCurrentTime();
-                        playerRef.current.seekTo(Math.max(0, cur - 10), true);
-                      }
-                    }}
-                    title="Rewind 10s"
-                    style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "800", cursor: "pointer", padding: 0 }}
-                  >
-                    «
-                  </button>
-
-                  {/* Forward 10s */}
-                  <button
-                    onClick={() => {
-                      if (playerRef.current) {
-                        const cur = playerRef.current.getCurrentTime();
-                        const dur = playerRef.current.getDuration();
-                        playerRef.current.seekTo(Math.min(dur, cur + 10), true);
-                      }
-                    }}
-                    title="Forward 10s"
-                    style={{ background: "none", border: "none", color: "#fff", fontSize: "18px", fontWeight: "800", cursor: "pointer", padding: 0 }}
-                  >
-                    »
-                  </button>
-
-                  {/* Volume */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                {[
+                  { label: "Normal", rate: 1 },
+                  { label: "x1.25", rate: 1.25 },
+                  { label: "x1.5", rate: 1.5 },
+                  { label: "x2", rate: 2 },
+                ].map((s) => {
+                  const isActive = playbackRate === s.rate;
+                  return (
                     <button
-                      onClick={toggleMute}
-                      style={{ background: "none", border: "none", color: "#fff", fontSize: "16px", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}
+                      key={s.rate}
+                      type="button"
+                      onClick={() => {
+                        setPlaybackRate(s.rate);
+                        if (playerRef.current && typeof playerRef.current.setPlaybackRate === "function") {
+                          playerRef.current.setPlaybackRate(s.rate);
+                        }
+                      }}
+                      style={{
+                        background: isActive ? "rgba(255, 255, 255, 0.22)" : "transparent",
+                        border: isActive ? "1px solid rgba(255, 255, 255, 0.7)" : "1px solid transparent",
+                        color: "#FFFFFF",
+                        fontSize: "11px",
+                        fontWeight: isActive ? 700 : 500,
+                        borderRadius: "12px",
+                        padding: "1px 6px",
+                        cursor: "pointer",
+                        lineHeight: 1.35,
+                        transition: "all 0.15s ease",
+                      }}
                     >
-                      {isMuted || volume === 0 ? "🔇" : "🔊"}
+                      {s.label}
                     </button>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={isMuted ? 0 : volume}
-                      onChange={handleVolumeChange}
-                      style={{ width: "80px", height: "3px", accentColor: "#3b82f6", cursor: "pointer" }}
-                    />
-                  </div>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setShowSpeedSelector(false)}
+                  title="Close speed selector"
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "rgba(255, 255, 255, 0.7)",
+                    cursor: "pointer",
+                    padding: "0 2px",
+                    fontSize: "11px",
+                    lineHeight: 1,
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            )}
 
-                  {/* Time */}
-                  <div style={{ color: "rgba(255,255,255,0.8)", fontSize: "13px", fontWeight: "600", letterSpacing: "0.5px", whiteSpace: "nowrap" }}>
-                    {formatTime(currentTime)} / {formatTime(duration)}
-                  </div>
-                </div>
+            {/* CC Subtitles Button */}
+            <button
+              onClick={toggleCc}
+              title={isCcEnabled ? "Turn Captions Off" : "Turn Captions On"}
+              style={{
+                background: "none",
+                border: "none",
+                color: isCcEnabled ? "#60A5FA" : "#FFFFFF",
+                cursor: "pointer",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="5" width="18" height="14" rx="3" />
+                <line x1="7" y1="12" x2="11" y2="12" strokeWidth="2" />
+                <line x1="13" y1="12" x2="17" y2="12" strokeWidth="2" />
+              </svg>
+            </button>
 
-                {/* Right controls */}
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  {/* Speed */}
-                  <select
-                    value={playbackRate}
-                    onChange={handleSpeedChange}
-                    title="Playback Speed"
-                    style={{
-                      background: "rgba(255,255,255,0.12)",
-                      backdropFilter: "blur(8px)",
-                      color: "#fff",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      borderRadius: "6px",
-                      padding: "4px 8px",
-                      fontSize: "13px",
-                      fontWeight: "700",
-                      cursor: "pointer",
-                      outline: "none",
-                    }}
-                  >
-                    <option value="0.5" style={{ color: "#000" }}>0.5x</option>
-                    <option value="1" style={{ color: "#000" }}>1.0x</option>
-                    <option value="1.5" style={{ color: "#000" }}>1.5x</option>
-                    <option value="2" style={{ color: "#000" }}>2.0x</option>
-                  </select>
+            {/* Fullscreen Button */}
+            <button
+              onClick={toggleFullscreen}
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                padding: 0,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
-                  {/* Exit cinema (bottom-right duplicate for easy access) */}
+  // Topics Detail Section
+  const renderTopicsSection = () => (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        position: "relative",
+        zIndex: 1,
+      }}
+    >
+      {/* Top Badges Row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "10px",
+        }}
+      >
+        {/* Left: Video Badge */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "#E5E7EB",
+            color: "#374151",
+            padding: "4px 10px",
+            borderRadius: "6px",
+            fontSize: "12.5px",
+            fontWeight: 700,
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="2" y="5" width="13" height="14" rx="2" />
+            <polygon points="15,9 21,5 21,19 15,15" />
+          </svg>
+          Video
+        </div>
+
+        {/* Right: Duration Badge */}
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            color: "#374151",
+            fontSize: "12.5px",
+            fontWeight: 600,
+          }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <polyline points="12 7 12 12 15 14" />
+          </svg>
+          {displayDuration}
+        </div>
+      </div>
+
+      {/* Main Chapter / Video Title */}
+      <h2
+        style={{
+          fontSize: "22px",
+          fontWeight: 800,
+          color: "#111827",
+          margin: "4px 0 16px 0",
+          letterSpacing: "-0.3px",
+          lineHeight: 1.25,
+        }}
+      >
+        {displayTitle}
+      </h2>
+
+      {/* 5 Topic Rows with Dedicated Icons */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 1 }}>
+        {topicsList.slice(0, 5).map((topic, idx) => (
+          <div
+            key={idx}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
+              padding: "10px 16px",
+              background: "#FAF8F6",
+              borderRadius: "14px",
+              border: "1px solid #ECE7E1",
+              transition: "transform 0.15s ease, background 0.15s ease",
+            }}
+          >
+            {/* Circular Icon Container */}
+            <div
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                background: "#EDEAE5",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {renderTopicIcon(idx)}
+            </div>
+
+            {/* Topic Text */}
+            <span
+              style={{
+                fontSize: "13px",
+                fontWeight: 500,
+                color: "#1F2937",
+                lineHeight: 1.35,
+              }}
+            >
+              {topic}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Watermark in Bottom-Right Corner */}
+      <InsectWatermark />
+    </div>
+  );
+
+  return (
+    <div
+      className="videos-figma-container"
+      style={{
+        width: "100%",
+        minHeight: "100%",
+        background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
+        padding: "20px 20px 36px 20px",
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "flex-start",
+      }}
+    >
+      <style>{`
+        .custom-details-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-details-scroll::-webkit-scrollbar-track {
+          background: rgba(0, 0, 0, 0.03);
+          border-radius: 8px;
+        }
+        .custom-details-scroll::-webkit-scrollbar-thumb {
+          background: rgba(45, 62, 54, 0.25);
+          border-radius: 8px;
+        }
+        .custom-details-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(45, 62, 54, 0.45);
+        }
+      `}</style>
+
+      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (70% Video Preview, 30% Details with Scroll) ── */}
+      {isSingleVideo ? (
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "960px",
+            background: "#FFFFFF",
+            borderRadius: "24px",
+            padding: "22px 24px 24px 24px",
+            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
+            display: "flex",
+            flexDirection: "column",
+            position: "relative",
+            boxSizing: "border-box",
+          }}
+        >
+          {/* Top 70%: Video Player Preview */}
+          <div style={{ width: "100%", flexShrink: 0 }}>
+            {renderVideoPlayer(true)}
+          </div>
+
+          {/* Bottom 30%: Details Preview with Scroll to See Full Details */}
+          <div
+            className="custom-details-scroll"
+            style={{
+              marginTop: "16px",
+              maxHeight: "220px",
+              overflowY: "auto",
+              paddingRight: "6px",
+              position: "relative",
+            }}
+          >
+            {renderTopicsSection()}
+          </div>
+        </div>
+      ) : (
+        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (70% Video Preview, 30% Details Side-by-Side) ── */
+        <div style={{ width: "100%", maxWidth: "1280px" }}>
+          {/* Video Selector Tabs for Chapter Playlist */}
+          {videos.length > 1 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "14px",
+                overflowX: "auto",
+                paddingBottom: "4px",
+              }}
+            >
+              <span style={{ fontSize: "12px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Chapter Videos:
+              </span>
+              {videos.map((vid, idx) => {
+                const isActive = idx === robustActive;
+                return (
                   <button
-                    onClick={() => setSelectedVideoId(null)}
-                    title="Exit cinema view"
-                    aria-label="Exit cinema view (bottom)"
+                    key={vid.ytId || idx}
+                    onClick={() => handleSelectVideo(idx)}
                     style={{
-                      background: "rgba(255,255,255,0.12)",
-                      backdropFilter: "blur(8px)",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      borderRadius: "8px",
-                      color: "#fff",
-                      fontSize: "12px",
-                      fontWeight: "700",
+                      padding: "6px 14px",
+                      borderRadius: "16px",
+                      border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
+                      background: isActive ? "#2D3E36" : "#FFFFFF",
+                      color: isActive ? "#FFFFFF" : "#374151",
+                      fontSize: "12.5px",
+                      fontWeight: isActive ? 700 : 500,
                       cursor: "pointer",
-                      padding: "5px 12px",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      letterSpacing: "0.3px",
+                      whiteSpace: "nowrap",
+                      boxShadow: isActive ? "0 2px 6px rgba(45,62,54,0.2)" : "none",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 12H5" /><path d="M12 19l-7-7 7-7" />
-                    </svg>
-                    Back to list
+                    <span>{isActive ? "▶" : "•"}</span>
+                    <span>Video {idx + 1}: {vid.title.length > 24 ? vid.title.slice(0, 24) + "..." : vid.title}</span>
                   </button>
-                </div>
-              </div>
+                );
+              })}
             </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+          )}
 
-  // For english/science: show youtube_links.md content as markdown guidance
-  if (youtubeLinksContent && youtubeLinksContent !== "Content not available.") {
-    return (
-      <div className="videos-view" style={{ display: "flex", flexDirection: "column", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
-        {unitTabsNode}
-        <div
-          className="card"
-          style={{
-            padding: "4px 8px",
-            marginBottom: "16px",
-            background: "var(--primary-light)",
-            borderRadius: "10px",
-            borderLeft: "4px solid var(--primary)",
-          }}
-        >
-          <p
+          {/* 70 - 30 Split Grid Layout */}
+          <div
             style={{
-              margin: "8px 0",
-              fontSize: "0.9rem",
-              color: "var(--primary)",
-              fontWeight: 600,
+              display: "grid",
+              gridTemplateColumns: "minmax(0, 70fr) minmax(0, 30fr)",
+              gap: "20px",
+              alignItems: "stretch",
             }}
           >
-            🎥 No embedded videos yet — use these curated search queries on
-            YouTube to find the best lessons for this chapter.
-          </p>
-        </div>
-        <div className="markdown-container">
-          <MarkdownView content={youtubeLinksContent} />
-        </div>
-      </div>
-    );
-  }
+            {/* Left 70%: Video Player Preview */}
+            <div style={{ width: "100%" }}>
+              {renderVideoPlayer(false)}
+            </div>
 
-  // Fallback: nothing available
-  return (
-    <div className="videos-view" style={{ display: "flex", flexDirection: "column", maxWidth: "960px", margin: "0 auto", width: "100%" }}>
-      {unitTabsNode}
-      <div
-        className="card"
-        style={{ padding: "40px", textAlign: "center", marginTop: "20px" }}
-      >
-        <span style={{ fontSize: "3rem", opacity: 0.5 }}>🎥</span>
-        <p style={{ marginTop: "1rem" }}>
-          No video content is currently available for this chapter.
-        </p>
-      </div>
+            {/* Right 30%: Details Card with Scroll to See Full Details */}
+            <div
+              className="custom-details-scroll"
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "24px",
+                padding: "20px 22px",
+                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
+                position: "relative",
+                overflowY: "auto",
+                maxHeight: "440px",
+                boxSizing: "border-box",
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              {renderTopicsSection()}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

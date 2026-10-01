@@ -127,24 +127,34 @@ let cachedCatalog: Catalog | null = null;
 
 export async function getCatalog(): Promise<Catalog> {
   if (cachedCatalog) return cachedCatalog;
-  const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) {
+      return { version: 1, boards: [] };
+    }
+    const data = (await res.json()) as Catalog;
+    cachedCatalog = data;
+    return data;
+  } catch {
     return { version: 1, boards: [] };
   }
-  const data = (await res.json()) as Catalog;
-  cachedCatalog = data;
-  return data;
 }
 
 export async function getManifest(): Promise<Manifest> {
   if (cachedManifest) return cachedManifest;
-  const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) {
+      return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+    }
+    const data = (await res.json()) as Manifest;
+    cachedManifest = data;
+    return data;
+  } catch {
     return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
   }
-  const data = (await res.json()) as Manifest;
-  cachedManifest = data;
-  return data;
 }
 
 export function resolveSubjectId(id: string): string {
@@ -309,7 +319,8 @@ async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
   if (cachedCoursesJson) return cachedCoursesJson;
   try {
     const res = await fetch(`${BASE}/courses.json`, { cache: 'no-cache' });
-    if (!res.ok) return {};
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) return {};
     const data = await res.json();
     cachedCoursesJson = data.courses || {};
     return cachedCoursesJson || {};

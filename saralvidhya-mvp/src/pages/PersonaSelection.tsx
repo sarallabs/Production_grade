@@ -7,25 +7,25 @@ const PERSONAS = [
     id: 'beginner',
     name: 'Beginner',
     desc: 'Focus on basics and clear fundamentals',
-    imgSrc: '/personas/beginner.png',
-    gradient: 'linear-gradient(135deg, #10B981, #34D399)',
-    glow: 'rgba(16, 185, 129, 0.15)'
+    imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png`,
+    gradient: 'linear-gradient(135deg, #7BA88B, #96C1A4)',
+    glow: 'rgba(123, 168, 139, 0.22)'
   },
   {
     id: 'intermediate',
     name: 'Intermediate',
     desc: 'Standard pacing and explanations',
-    imgSrc: '/personas/intermediate.png',
-    gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
-    glow: 'rgba(59, 130, 246, 0.15)'
+    imgSrc: `${import.meta.env.BASE_URL}personas/intermediate.png`,
+    gradient: 'linear-gradient(135deg, #4F7B64, #6B9C82)',
+    glow: 'rgba(79, 123, 100, 0.22)'
   },
   {
     id: 'advanced',
     name: 'Advanced',
     desc: 'Advanced concepts and deeper dives',
-    imgSrc: '/personas/advanced.png',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
-    glow: 'rgba(139, 92, 246, 0.15)'
+    imgSrc: `${import.meta.env.BASE_URL}personas/advanced.png`,
+    gradient: 'linear-gradient(135deg, #2D3E36, #415A4F)',
+    glow: 'rgba(45, 62, 54, 0.22)'
   },
 ];
 

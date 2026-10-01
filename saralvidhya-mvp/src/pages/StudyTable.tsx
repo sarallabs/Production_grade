@@ -341,13 +341,13 @@ export default function StudyTable() {
   };
 
   const PERSONAS: { key: DifficultyLevel; label: string; imgSrc: string }[] = [
-    { key: "beginner", label: "Beginner", imgSrc: "/personas/beginner.png" },
+    { key: "beginner", label: "Beginner", imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png` },
     {
       key: "intermediate",
       label: "Intermediate",
-      imgSrc: "/personas/intermediate.png",
+      imgSrc: `${import.meta.env.BASE_URL}personas/intermediate.png`,
     },
-    { key: "advanced", label: "Advanced", imgSrc: "/personas/advanced.png" },
+    { key: "advanced", label: "Advanced", imgSrc: `${import.meta.env.BASE_URL}personas/advanced.png` },
   ];
 
   const [chapterNumberState, setChapterNumberState] = useState<number>(() => {
@@ -2329,19 +2329,18 @@ export default function StudyTable() {
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
       case "detailed":
-        return { bg: "#dcfce7", gradient: "linear-gradient(90deg, #22c55e 0%, #15803d 100%)", shadow: "0 4px 12px rgba(21, 128, 61, 0.45)" };
       case "summary": case "podcasts": case "videos": case "mindmap": case "foundation":
-        return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)", shadow: "0 4px 12px rgba(34, 197, 94, 0.45)" };
-      case "revision_flashcards": case "assessment": case "qbank":
-        return { bg: "#faf5ff", gradient: "linear-gradient(90deg, #a855f7 0%, #9333ea 100%)", shadow: "0 4px 12px rgba(168, 85, 247, 0.45)" };
-      case "pyq": case "prep_exam":
-        return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #f43f5e 0%, #e11d48 100%)", shadow: "0 4px 12px rgba(244, 63, 94, 0.45)" };
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #2D3E36 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(45, 62, 54, 0.35)" };
+      case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
+        return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #DDB669 0%, #C49B4B 100%)", shadow: "0 4px 12px rgba(221, 182, 105, 0.35)" };
+      case "pyq": case "prep_exam": case "mocktest":
+        return { bg: "#fdf5f0", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
       case "swot":
         return { bg: "#fff7ed", gradient: "linear-gradient(90deg, #f97316 0%, #ea580c 100%)", shadow: "0 4px 12px rgba(249, 115, 22, 0.45)" };
       case "deep_dive": case "ask":
-        return { bg: "#fffbeb", gradient: "linear-gradient(90deg, #d97706 0%, #b45309 100%)", shadow: "0 4px 12px rgba(217, 119, 6, 0.45)" };
+        return { bg: "#faf5ff", gradient: "linear-gradient(90deg, #9C27B0 0%, #7B1FA2 100%)", shadow: "0 4px 12px rgba(156, 39, 176, 0.35)" };
       default:
-        return { bg: "#ffffff", gradient: "linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)", shadow: "0 4px 12px rgba(37, 99, 235, 0.45)" };
+        return { bg: "#ffffff", gradient: "linear-gradient(90deg, #2D3E36 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(45, 62, 54, 0.35)" };
     }
   };
   const activeToolTheme = getToolTheme(activeTool);
@@ -2418,224 +2417,254 @@ export default function StudyTable() {
                   const prepThemeBg = persona === 'intermediate' ? '#CB30E033' : persona === 'advanced' ? '#CB30E04D' : '#CB30E01A';
                   const detailedThemeBg = persona === 'intermediate' ? '#15803d4D' : persona === 'advanced' ? '#15803d66' : '#15803d33';
                   const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    videos: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    flashcards: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    assessment: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    summary: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    quick_study: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    key_takeaways: { main: "#16a34a", badge: "#16a34a", text: "#16a34a", bg: "#dcfce7" },
-                    detailed: { main: "#15803d", badge: "#15803d", text: "#15803d", bg: detailedThemeBg },
-                    detailed_notes: { main: "#15803d", badge: "#15803d", text: "#15803d", bg: detailedThemeBg },
-                    mindmap: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
-                    foundation: { main: "#0088FF", badge: "#0088FF", text: "#0088FF", bg: learnThemeBg },
+                    videos: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    assessment: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    summary: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    quick_study: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    key_takeaways: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    detailed: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    detailed_notes: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    mindmap: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    foundation: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    podcasts: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
 
+                    master_flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    revision_flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    revise: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    qbank: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
 
-                    master_flashcards: { main: "#CB30E0", badge: "#CB30E0", text: "#CB30E0", bg: prepThemeBg },
-                    revision_flashcards: { main: "#CB30E0", badge: "#CB30E0", text: "#CB30E0", bg: prepThemeBg },
-                    revise: { main: "#CB30E0", badge: "#CB30E0", text: "#CB30E0", bg: prepThemeBg },
-                    mocktest: { main: "#22C55E", badge: "#22C55E", text: "#16a34a", bg: "#f0fdf4" },
-                    prep_test: { main: "#22C55E", badge: "#22C55E", text: "#16a34a", bg: "#f0fdf4" },
-                    pre_final_test: { main: "#22C55E", badge: "#22C55E", text: "#16a34a", bg: "#f0fdf4" },
-                    certification_exam: { main: "#22C55E", badge: "#22C55E", text: "#16a34a", bg: "#f0fdf4" },
-                    qbank: { main: "#22C55E", badge: "#22C55E", text: "#16a34a", bg: "#f0fdf4" },
-                    pyq: { main: "#ec4899", badge: "#ec4899", text: "#ec4899", bg: "#fce7f3" },
-                    prep_exam: { main: "#ec4899", badge: "#ec4899", text: "#ec4899", bg: "#fce7f3" },
-                    swot: { main: "#f59e0b", badge: "#f59e0b", text: "#d97706", bg: "#fffbeb" },
-                    ask: { main: "#f59e0b", badge: "#f59e0b", text: "#d97706", bg: "#fffbeb" },
+                    pyq: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    prep_exam: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    prep_test: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    mocktest: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    pre_final_test: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    certification_exam: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+
+                    swot: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    ask: { main: "#9C27B0", badge: "#9C27B0", text: "#9C27B0", bg: "#faf5ff" },
                   };
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
                     switch (toolId) {
-                      case "key_takeaways":
+                      case "summary":
+                      case "quick_study":
+                      case "detailed":
+                      case "detailed_notes":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            {/* Key bow (ring) */}
-                            <circle cx="12" cy="13" r="6" stroke={color} strokeWidth="2.2" fill={color} fillOpacity="0.15" />
-                            <circle cx="12" cy="13" r="2.5" fill={color} opacity="0.7" />
-                            {/* Key shaft */}
-                            <line x1="17" y1="16" x2="27" y2="26" stroke={color} strokeWidth="2.2" strokeLinecap="round" />
-                            {/* Key teeth */}
-                            <line x1="22" y1="21" x2="22" y2="24" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                            <line x1="25" y1="24" x2="25" y2="27" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        );
-                      case "mindmap":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <g stroke={color} strokeWidth="1.5">
-                              <line x1="16" y1="6" x2="16" y2="2" />
-                              <line x1="16" y1="26" x2="16" y2="30" />
-                              <line x1="6" y1="16" x2="2" y2="16" />
-                              <line x1="26" y1="16" x2="30" y2="16" />
-                              <line x1="8.9" y1="8.9" x2="6.1" y2="6.1" />
-                              <line x1="23.1" y1="8.9" x2="25.9" y2="6.1" />
-                              <line x1="8.9" y1="23.1" x2="6.1" y2="25.9" />
-                              <line x1="23.1" y1="23.1" x2="25.9" y2="25.9" />
-                            </g>
-                            <g fill={color} opacity="0.6">
-                              <circle cx="16" cy="2" r="2" />
-                              <circle cx="16" cy="30" r="2" />
-                              <circle cx="2" cy="16" r="2" />
-                              <circle cx="30" cy="16" r="2" />
-                              <circle cx="6.1" cy="6.1" r="2" />
-                              <circle cx="25.9" cy="6.1" r="2" />
-                              <circle cx="6.1" cy="25.9" r="2" />
-                              <circle cx="25.9" cy="25.9" r="2" />
-                            </g>
-                            <circle cx="16" cy="16" r="10" stroke={color} strokeWidth="1.5" fill={color} fillOpacity="0.1" />
-                            <path d="M16 9C13 9 11 11 11 13C9 14 9 17 11 19C11 21 14 23 16 23C18 23 21 21 21 19C23 17 23 14 21 13C21 11 19 9 16 9Z" stroke={color} strokeWidth="1.5" />
-                            <path d="M16 9V23" stroke={color} strokeWidth="1.5" />
-                            <path d="M12 13C13 13 14 14 14 15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M20 13C19 13 18 14 18 15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M11 17C13 17 14 16 14 15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M21 17C19 17 18 16 18 15" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M13 20C14 19 15 19 15 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                            <path d="M19 20C18 19 17 19 17 18" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-                          </svg>
-                        );
-                      case "deep_dive":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                            <path d="M4 6h16M4 12h10M4 18h10" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                            <circle cx="17" cy="16" r="3.5" stroke={color} strokeWidth="1.5" />
-                            <line x1="19.5" y1="18.5" x2="22" y2="21" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        );
-                      case "pyq":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" fill={color} opacity="0.15" />
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke={color} strokeWidth="1.5" />
-                            <polyline points="14 2 14 8 20 8" stroke={color} strokeWidth="1.5" />
-                            <text x="7" y="16" fill={color} fontSize="6" fontWeight="bold" fontFamily="sans-serif">PYQ</text>
-                          </svg>
-                        );
-                      case "videos":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M4 10C4 8.89543 4.89543 8 6 8H26C27.1046 8 28 8.89543 28 10V24C28 25.1046 27.1046 26 26 26H6C4.89543 26 4 25.1046 4 24V10Z" fill={color} opacity="0.8" />
-                            <path d="M4 10C4 8.89543 4.89543 8 6 8H26C27.1046 8 28 8.89543 28 10V14H4V10Z" fill={color} />
-                            <polygon points="10,8 14,8 11,14 7,14" fill="#ffffff" opacity="0.9" />
-                            <polygon points="18,8 22,8 19,14 15,14" fill="#ffffff" opacity="0.9" />
-                            <polygon points="13,16 21,20 13,24" fill="#ffffff" />
+                          <svg width="36" height="34" viewBox="0 0 38 34" fill="none">
+                            {/* Book cover base */}
+                            <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill="#1D2A24" />
+                            <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill="#2D3E36" />
+                            {/* Left page */}
+                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke="#2D3E36" strokeWidth="1.6" strokeLinejoin="round" />
+                            {/* Right page */}
+                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke="#2D3E36" strokeWidth="1.6" strokeLinejoin="round" />
+                            {/* Cover edges visible underneath */}
+                            <path d="M3 9C2 9 2 24.5 3 25" stroke="#2D3E36" strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M35 9C36 9 36 24.5 35 25" stroke="#2D3E36" strokeWidth="2.5" strokeLinecap="round" />
+                            {/* Left page text lines */}
+                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="20" x2="13" y2="21" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            {/* Right page text lines */}
+                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="25" y1="21" x2="30.5" y2="20" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            {/* Center spine */}
+                            <line x1="19" y1="12" x2="19" y2="29" stroke="#2D3E36" strokeWidth="1.8" strokeLinecap="round" />
                           </svg>
                         );
                       case "podcasts":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 6C10.4772 6 6 10.4772 6 16V22C6 24.2091 7.79086 26 10 26H11V16H8C8 11.5817 11.5817 8 16 8C20.4183 8 24 11.5817 24 16H21V26H22C24.2091 26 26 24.2091 26 22V16C26 10.4772 21.5228 6 16 6Z" fill={color} opacity="0.8" />
-                            <rect x="6" y="16" width="5" height="10" rx="2" fill={color} />
-                            <rect x="21" y="16" width="5" height="10" rx="2" fill={color} />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Headband */}
+                            <path d="M7 17C7 10.9249 11.9249 6 18 6C24.0751 6 29 10.9249 29 17V20" stroke="#2D3E36" strokeWidth="3" strokeLinecap="round" />
+                            {/* Top cushion */}
+                            <path d="M12 7.5C13.8 6.5 16 6 18 6C20 6 22.2 6.5 24 7.5" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
+                            {/* Left earcup outer */}
+                            <rect x="5" y="16" width="6" height="11" rx="3" fill="#2D3E36" />
+                            {/* Left earcup inner cushion */}
+                            <rect x="9" y="17.5" width="2" height="8" rx="1" fill="#4F7B64" />
+                            {/* Right earcup outer */}
+                            <rect x="25" y="16" width="6" height="11" rx="3" fill="#2D3E36" />
+                            {/* Right earcup inner cushion */}
+                            <rect x="25" y="17.5" width="2" height="8" rx="1" fill="#4F7B64" />
+                            {/* Sound wave bars in center */}
+                            <line x1="15" y1="19" x2="15" y2="23" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="18" y1="17" x2="18" y2="25" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="21" y1="19" x2="21" y2="23" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         );
-                      case "summary":
-                      case "quick_study":
+                      case "videos":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 8C16 8 13 4 8 4C4.68629 4 2 6.68629 2 10V26C2 26 5 22 8 22C12 22 16 26 16 26" fill={color} opacity="0.6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M16 8C16 8 19 4 24 4C27.3137 4 30 6.68629 30 10V26C30 26 27 22 24 22C20 22 16 26 16 26" fill={color} opacity="0.3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="8" x2="16" y2="26" stroke={color} strokeWidth="2" strokeLinecap="round" />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Bottom slate */}
+                            <rect x="5" y="13" width="26" height="16" rx="3" fill="#2D3E36" />
+                            {/* Play button triangle */}
+                            <polygon points="16,17 23,21 16,25" fill="#FFFFFF" />
+                            {/* Top clapperboard bar */}
+                            <g transform="rotate(-6 5 12)">
+                              <rect x="5" y="6" width="26" height="6.5" rx="2" fill="#2D3E36" />
+                              {/* White diagonal stripes */}
+                              <polygon points="9,6 12,6 9,12.5 6,12.5" fill="#FFFFFF" />
+                              <polygon points="16,6 19,6 16,12.5 13,12.5" fill="#FFFFFF" />
+                              <polygon points="23,6 26,6 23,12.5 20,12.5" fill="#FFFFFF" />
+                              <polygon points="30,6 31,6 30,12.5 27,12.5" fill="#FFFFFF" />
+                            </g>
+                          </svg>
+                        );
+                      case "foundation":
+                      case "mindmap":
+                        return (
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Stepped platform tier 3 (bottom) */}
+                            <path d="M6 26L18 22L30 26L18 30L6 26Z" fill="#1E2B25" />
+                            <path d="M6 26L18 30V32L6 28V26Z" fill="#151E1A" />
+                            <path d="M30 26L18 30V32L30 28V26Z" fill="#23322B" />
+
+                            {/* Stepped platform tier 2 (middle) */}
+                            <path d="M8.5 22L18 19L27.5 22L18 25L8.5 22Z" fill="#2D3E36" />
+                            <path d="M8.5 22L18 25V26.5L8.5 23.5V22Z" fill="#1E2B25" />
+                            <path d="M27.5 22L18 25V26.5L27.5 23.5V22Z" fill="#3D5248" />
+
+                            {/* Stepped platform tier 1 (top) */}
+                            <path d="M11 18L18 16L25 18L18 20.5L11 18Z" fill="#4F7B64" />
+                            <path d="M11 18L18 20.5V21.5L11 19V18Z" fill="#3A5C4A" />
+                            <path d="M25 18L18 20.5V21.5L25 19V18Z" fill="#62947B" />
+
+                            {/* Sprout stem */}
+                            <path d="M18 17V8" stroke="#2D3E36" strokeWidth="2.2" strokeLinecap="round" />
+                            {/* Left Leaf */}
+                            <path d="M18 12C14 12 11 9 12 5C15 5 18 8 18 12Z" fill="#4F7B64" stroke="#2D3E36" strokeWidth="1.2" />
+                            {/* Right Leaf */}
+                            <path d="M18 10C22 10 25 7 24 3C21 3 18 6 18 10Z" fill="#7BA88B" stroke="#2D3E36" strokeWidth="1.2" />
                           </svg>
                         );
                       case "flashcards":
                       case "revision_flashcards":
                       case "revise":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <rect x="3" y="5" width="16" height="20" rx="3" fill="#F0ABFC" />
-                            <rect x="7" y="3" width="16" height="20" rx="3" fill="#E879F9" />
-                            <rect x="11" y="7" width="17" height="21" rx="3" fill="#C026D3" />
-                            <line x1="15" y1="13" x2="23" y2="13" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="15" y1="17" x2="20" y2="17" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" />
-                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="#FDE047" transform="scale(0.35) translate(40, -10)" />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Clipboard board */}
+                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
+                            {/* Top Clip */}
+                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill="#DDB669" />
+                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill="#C49B4B" />
+                            {/* Checkmarks & lines */}
+                            <path d="M10.5 11L12 12.5L15 9.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="11" x2="23" y2="11" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 16L12 17.5L15 14.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="16" x2="23" y2="16" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 21L12 22.5L15 19.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="21" x2="20" y2="21" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            {/* Clock badge at bottom right */}
+                            <circle cx="26" cy="24" r="5.5" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
+                            <polyline points="26,21.5 26,24 28,24" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       case "assessment":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <rect x="8" y="6" width="16" height="22" rx="3" fill="#F0ABFC" stroke="#C026D3" strokeWidth="2" strokeLinejoin="round" />
-                            <path d="M12 4H20V8H12V4Z" fill="#E879F9" stroke="#C026D3" strokeWidth="2" strokeLinejoin="round" />
-                            <path d="M12 16L15 19L20 13" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Notepad body */}
+                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
+                            {/* Spiral wire rings */}
+                            <rect x="8" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            <rect x="13" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            <rect x="18" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            <rect x="23" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            {/* Lines & checks on pad */}
+                            <path d="M9.5 13L11 14.5L14 11.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="13" x2="22" y2="13" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 18L11 19.5L14 16.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="18" x2="20" y2="18" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 23L11 24.5L14 21.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="23" x2="19" y2="23" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            {/* Angled pencil writing on pad */}
+                            <g transform="translate(19, 13) rotate(35)">
+                              <rect x="0" y="0" width="5" height="13" rx="1" fill="#DDB669" />
+                              <polygon points="0,13 5,13 2.5,18" fill="#F4DC9E" />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill="#2D3E36" />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill="#E8996C" />
+                            </g>
                           </svg>
                         );
                       case "qbank":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <rect x="6" y="10" width="16" height="18" rx="2" fill="#E879F9" stroke="#C026D3" strokeWidth="2" strokeLinejoin="round" />
-                            <rect x="10" y="6" width="16" height="18" rx="2" fill="#F0ABFC" stroke="#C026D3" strokeWidth="2" strokeLinejoin="round" />
-                            <path d="M18 12C18 12 21 12 21 14C21 16 18 17 18 19" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <circle cx="18" cy="22" r="1.5" fill="#ffffff" />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* 3D Glossy Speech bubble */}
+                            <path d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z" fill="#DDB669" />
+                            {/* Subtle highlight arc */}
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke="#FFF5D6" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+                            {/* White Question mark */}
+                            <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
+                            <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
+                          </svg>
+                        );
+                      case "pyq":
+                        return (
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Document outline */}
+                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" strokeLinejoin="round" />
+                            {/* Dog-ear fold */}
+                            <path d="M20 3V10H27" fill="#FDDBCB" stroke="#E8996C" strokeWidth="2" strokeLinejoin="round" />
+                            {/* Document text lines */}
+                            <line x1="12" y1="9" x2="16" y2="9" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="13" x2="22" y2="13" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="17" x2="20" y2="17" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="21" x2="16" y2="21" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            {/* PYQ Badge */}
+                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill="#E8996C" />
+                            <text x="23.5" y="27.8" fill="#FFFFFF" fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">PYQ</text>
                           </svg>
                         );
                       case "prep_exam":
                       case "prep_test":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M7 5C7 3.89543 7.89543 3 9 3H20L25 8V25C25 26.1046 24.1046 27 23 27H9C7.89543 27 7 26.1046 7 25V5Z" fill={color} fillOpacity="0.15" stroke={color} strokeWidth="2" />
-                            <line x1="11" y1="9" x2="17" y2="9" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                            <circle cx="11" cy="15" r="1.5" fill={color} />
-                            <line x1="14" y1="15" x2="20" y2="15" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                            <circle cx="11" cy="20" r="1.5" fill={color} />
-                            <line x1="14" y1="20" x2="20" y2="20" stroke={color} strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        );
                       case "mocktest":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M7 5C7 3.89543 7.89543 3 9 3H20L25 8V25C25 26.1046 24.1046 27 23 27H9C7.89543 27 7 26.1046 7 25V5Z" fill="#ffffff" stroke="#22C55E" strokeWidth="2" />
-                            <line x1="11" y1="9" x2="17" y2="9" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="11" y1="13" x2="21" y2="13" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" />
-                            <circle cx="18" cy="20" r="4.5" fill="#ffffff" stroke="#22C55E" strokeWidth="2" />
-                            <path d="M18 17.5V20L19.5 21" stroke="#22C55E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M9 18L11 20L14 16" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="15" y1="18" x2="16" y2="18" stroke="#22C55E" strokeWidth="2" strokeLinecap="round" />
-                          </svg>
-                        );
-                      case "certification_exam":
                       case "pre_final_test":
+                      case "certification_exam":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M5 8C5 6.34315 6.34315 5 8 5H16V25H8C6.34315 25 5 23.6569 5 22V8Z" fill="#ffffff" stroke="#22C55E" strokeWidth="2" />
-                            <path d="M27 8C27 6.34315 25.6569 5 24 5H16V25H24C25.6569 25 27 23.6569 27 22V8Z" fill="#ffffff" stroke="#22C55E" strokeWidth="2" />
-                            <circle cx="22" cy="21" r="3.5" fill="#22C55E" />
-                            <path d="M20.5 21L21.5 22L23.5 20" stroke="#ffffff" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M21 24.5L20 27L22 26L24 27L23 24.5" fill="#22C55E" />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Calendar body */}
+                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" />
+                            {/* Calendar header bar */}
+                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill="#E8996C" />
+                            {/* Spiral binder rings */}
+                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
+                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
+                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
+                            {/* Grid of date checkmarks */}
+                            <path d="M9.5 15L10.5 16L12.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 15L16.5 16L18.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M21.5 15L22.5 16L24.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 20L10.5 21L12.5 19" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 20L16.5 21L18.5 19" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            {/* Clock badge at bottom right */}
+                            <circle cx="27" cy="24" r="5.5" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" />
+                            <polyline points="27,21.5 27,24 29,24" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       case "ask":
                         return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <path d="M16 4C9.37258 4 4 8.70557 4 14.5C4 17.6534 5.56843 20.4705 8.04618 22.3789C7.8 24.5 6.5 26.5 6.5 26.5C6.5 26.5 9.5 26.2 12.2 24.5C13.4074 24.8258 14.6806 25 16 25C22.6274 25 28 20.2944 28 14.5C28 8.70557 22.6274 4 16 4Z" fill="#ffffff" stroke="#F59E0B" strokeWidth="2" strokeLinejoin="round" />
-                            <text x="13" y="15" fill="#F59E0B" fontSize="10" fontWeight="bold" fontFamily="sans-serif">?</text>
-                            <circle cx="21" cy="18" r="4" fill="#FEF3C7" stroke="#F59E0B" strokeWidth="1.5" />
-                            <circle cx="21" cy="17" r="1.2" fill="#F59E0B" />
-                            <path d="M19 20.8C19.5 20 22.5 20 23 20.8" stroke="#F59E0B" strokeWidth="1" strokeLinecap="round" />
-                          </svg>
-                        );
-                      case "swot":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <rect x="4" y="20" width="6" height="8" rx="1" fill="#FDE68A" />
-                            <rect x="13" y="12" width="6" height="16" rx="1" fill="#FCD34D" />
-                            <rect x="22" y="6" width="6" height="22" rx="1" fill="#F59E0B" />
-                            <path d="M4 16L12 8L20 14L30 2" stroke="#D97706" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                          </svg>
-                        );
-                      case "foundation":
-                        return (
-                          <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                            <circle cx="16" cy="16" r="12" stroke={color} strokeWidth="1.5" fill={color} fillOpacity="0.08" />
-                            <circle cx="16" cy="16" r="2.5" fill={color} />
-                            <polygon points="16,4 18,14 16,13.5 14,14" fill={color} opacity="0.9" />
-                            <polygon points="16,28 14,18 16,18.5 18,18" fill={color} opacity="0.4" />
-                            <polygon points="4,16 14,14 13.5,16 14,18" fill={color} opacity="0.4" />
-                            <polygon points="28,16 18,18 18.5,16 18,14" fill={color} opacity="0.9" />
-                            <text x="14.5" y="8" fill={color} fontSize="4" fontWeight="bold" fontFamily="sans-serif">N</text>
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            <defs>
+                              <radialGradient id="askAiGrad" cx="35%" cy="35%" r="65%">
+                                <stop offset="0%" stopColor="#BA68C8" />
+                                <stop offset="60%" stopColor="#9C27B0" />
+                                <stop offset="100%" stopColor="#7B1FA2" />
+                              </radialGradient>
+                            </defs>
+                            {/* Purple circular icon */}
+                            <circle cx="18" cy="17" r="13" fill="url(#askAiGrad)" />
+                            {/* Big 4-point sparkle star in center */}
+                            <path d="M17 9C17 13 13 15 9 15C13 15 17 17 17 21C17 17 21 15 25 15C21 15 17 13 17 9Z" fill="#FFEB3B" />
+                            {/* Small 4-point sparkle star on top right */}
+                            <path d="M24 8C24 10 22 11 20 11C22 11 24 12 24 14C24 12 26 11 28 11C26 11 24 10 24 8Z" fill="#FFF9C4" />
                           </svg>
                         );
                       default:
                         return (
-                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75">
+                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75">
                             <circle cx="12" cy="12" r="8" />
                           </svg>
                         );
@@ -2646,10 +2675,8 @@ export default function StudyTable() {
                     const isCompleted = unitCompleted.includes(toolId);
                     const locked = false;
 
-                    const currentChapterManifest = subjectChapters?.find(ch => ch.number === chapterNumber);
-
                     const active = activeTool === toolId;
-                    const theme = TOOL_THEMES[toolId] || { main: "#3b82f6", badge: "#3b82f6", text: "#2563eb", bg: "#eff6ff" };
+                    const theme = TOOL_THEMES[toolId] || { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" };
                     const themeColor = colorOverride || theme.main;
 
                     return (
@@ -2669,35 +2696,35 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '5px 12px',
+                          padding: '6px 12px',
                           borderRadius: '10px',
                           background: active ? '#ffffff' : 'transparent',
                           border: active ? `1.5px solid ${themeColor}` : '1.5px solid transparent',
                           boxShadow: active ? `0 2px 8px ${themeColor}25` : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
-                          opacity: active ? 1 : locked ? 0.35 : 0.38,
-                          filter: active ? 'none' : 'blur(1.5px) grayscale(0.25)',
-                          transition: 'all 0.2s ease, opacity 0.2s ease, filter 0.2s ease',
+                          opacity: active ? 1 : locked ? 0.35 : 0.88,
+                          filter: 'none',
+                          transition: 'all 0.2s ease',
                           position: 'relative',
-                          gap: '3px'
+                          gap: '4px'
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.opacity = '1';
-                          (e.currentTarget as HTMLDivElement).style.filter = 'none';
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.opacity = '0.38';
-                          (e.currentTarget as HTMLDivElement).style.filter = 'blur(1.5px) grayscale(0.25)';
+                          (e.currentTarget as HTMLDivElement).style.opacity = '0.88';
+                          (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '38px' }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
                           fontSize: '11px',
                           fontWeight: active ? 700 : 500,
-                          color: active ? themeColor : locked ? '#94A3B8' : '#334155',
+                          color: active ? themeColor : '#334155',
                           textAlign: 'center',
                           lineHeight: '1.2',
                           whiteSpace: 'nowrap'
@@ -2708,21 +2735,9 @@ export default function StudyTable() {
                     );
                   };
 
-                  const renderLine = (isActiveOrCompleted: boolean, color: string = '#3b82f6') => (
-                    <div style={{
-                      width: '28px',
-                      height: '1.5px',
-                      background: '#CBD5E1',
-                      marginTop: '18px',
-                      zIndex: 1,
-                      flexShrink: 0,
-                      transition: 'background 0.3s ease'
-                    }} />
-                  );
-
                   return (
                     <div
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', overflowX: 'auto', padding: '4px 8px', gap: '12px' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', overflowX: 'auto', padding: '6px 16px', gap: '16px' }}
                       onClick={(e) => e.stopPropagation()}
                     >
                       {/* LEFT SIDE: LOGO */}
@@ -2736,73 +2751,99 @@ export default function StudyTable() {
                         </div>
                       </div>
 
-                      {/* CENTER TOOL NODES */}
-                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', flex: 1, gap: '12px', padding: '0 12px' }}>
-                        {/* Divider */}
-                        <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
-
+                      {/* CENTER TOOL NODES (Figma Toolbar Box) */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          justifyContent: 'center',
+                          gap: '28px',
+                          padding: '10px 24px',
+                          border: '2px solid #5A6D7C',
+                          borderRadius: '12px',
+                          background: '#FFFFFF',
+                          boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+                          margin: '0 auto',
+                          flexShrink: 0,
+                        }}
+                      >
                         {/* 1. LEARN SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#dcfce7', color: '#16a34a', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ color: '#2D3E36', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
-                            {/* Three parallel tool sets exist in a segmented
-                                chapter — say which video's is on screen. */}
                             {isSegmented && (
                               <span
                                 title={activeVideo?.title}
-                                style={{ background: '#16a34a', color: '#fff', borderRadius: '6px', padding: '0 7px', fontSize: '11px', fontWeight: 800 }}
+                                style={{ background: '#2D3E36', color: '#fff', borderRadius: '6px', padding: '0 7px', fontSize: '11px', fontWeight: 800 }}
                               >
                                 Video {videoIndex}/{chapterVideos.length}
                               </span>
                             )}
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {renderNode("summary", "Read", "#16a34a")}
-                            {renderNode("podcasts", "Listen", "#16a34a")}
-                            {renderNode("videos", "Watch", "#16a34a")}
-                            {renderNode("mindmap", "Mindmap", "#16a34a")}
-                            {renderNode("key_takeaways", "Key Takeaways", "#16a34a")}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {renderNode("summary", "Read", "#2D3E36")}
+                            {renderNode("podcasts", "Listen", "#2D3E36")}
+                            {renderNode("videos", "Watch", "#2D3E36")}
+                            {renderNode("foundation", "Foundation", "#2D3E36")}
                           </div>
                         </div>
-
-                        {/* Divider */}
-                        <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 2. PRACTICE SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#f3e8ff', color: '#9333ea', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Practice</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#9333ea")}
-                            {renderNode("assessment", "Assessment", "#9333ea")}
-                            {renderNode("qbank", "Question Bank", "#9333ea")}
+                          <div style={{ color: '#DDB669', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                            Practice
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {renderNode("revision_flashcards", "Revise", "#DDB669")}
+                            {renderNode("assessment", "Assessment", "#DDB669")}
+                            {renderNode("qbank", "Question Bank", "#DDB669")}
                           </div>
                         </div>
-
-                        {/* Divider */}
-                        <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 3. PREPARE SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#fce7f3', color: '#ec4899', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Prepare</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {renderNode("pyq", "PYQ", "#ec4899")}
-                            {renderNode("prep_exam", "Preparation Exam", "#ec4899")}
+                          <div style={{ color: '#E8996C', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                            Prepare
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {renderNode("pyq", "PYQ", "#E8996C")}
+                            {renderNode("prep_exam", "Preparation Exam", "#E8996C")}
                           </div>
                         </div>
 
-                        {/* Divider */}
-                        <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
+                        {/* 4. AI & PIN SECTION */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '22px' }}>
+                          {renderNode("ask", "Ask me", "#9C27B0")}
 
-                        {/* 5. RESOURCES SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#fef3c7', color: '#92400e', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Resources</div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            {renderNode("ask", "Ask me", "#92400e")}
-                          </div>
+                          {/* Pin Button */}
+                          <button
+                            type="button"
+                            onClick={() => setIsToolbarOpen(prev => !prev)}
+                            title="Toggle Pin Toolbar"
+                            aria-label="Toggle Pin Toolbar"
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "50%",
+                              border: "1.8px solid #334155",
+                              background: "#FFFFFF",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              color: "#334155",
+                              marginBottom: "18px",
+                              marginLeft: "4px",
+                              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                              transition: "all 0.2s ease",
+                            }}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <line x1="12" y1="17" x2="12" y2="22" />
+                              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                            </svg>
+                          </button>
                         </div>
-
-                        {/* Divider */}
-                        <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
                       </div>
 
                       {/* Dropdown Ask AI Chatbot Popover (Fixed position) */}
@@ -2970,33 +3011,6 @@ export default function StudyTable() {
                             <line x1="21" y1="12" x2="9" y2="12" />
                           </svg>
                         </button>
-
-                        {/* Collapse Button */}
-                        <button
-                          type="button"
-                          onClick={() => setIsToolbarOpen(false)}
-                          title="Collapse Toolbar"
-                          aria-label="Collapse Toolbar"
-                          style={{
-                            width: "34px",
-                            height: "34px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #cbd5e1",
-                            background: "#f8fafc",
-                            color: "#64748b",
-                            cursor: "pointer",
-                            flexShrink: 0,
-                            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                            transition: "all 0.2s ease",
-                          }}
-                        >
-                          <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.4" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
-                          </svg>
-                        </button>
                       </div>
                     </div>
                   );
@@ -3119,20 +3133,22 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: center;
                       }
                       .sv-hdr-level-btn img {
-                        width: 100%; height: 100%; object-fit: cover;
-                        border-radius: 50%;
-                        filter: grayscale(0.6) opacity(0.55);
+                        width: 100%; height: 100%; object-fit: contain;
+                        border-radius: 8px;
+                        padding: 2px;
+                        box-sizing: border-box;
+                        filter: grayscale(0.5) opacity(0.65);
                         transition: filter 0.2s ease, transform 0.2s ease;
                       }
                       .sv-hdr-level-btn:hover img { filter: grayscale(0) opacity(1); transform: scale(1.08); }
                       /* Inactive — colored ring per level */
-                      .sv-hdr-level-btn.lvl-beginner     { border-color: #16a34a40; }
-                      .sv-hdr-level-btn.lvl-intermediate  { border-color: #d9770640; }
-                      .sv-hdr-level-btn.lvl-advanced      { border-color: #7c3aed40; }
+                      .sv-hdr-level-btn.lvl-beginner     { border-color: rgba(123, 168, 139, 0.5); background: #ffffff; }
+                      .sv-hdr-level-btn.lvl-intermediate  { border-color: rgba(79, 123, 100, 0.5); background: #ffffff; }
+                      .sv-hdr-level-btn.lvl-advanced      { border-color: rgba(45, 62, 54, 0.5); background: #ffffff; }
                       /* Active — vivid ring + full color image + lift */
-                      .sv-hdr-level-btn.lvl-beginner.active-lvl     { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.18); }
-                      .sv-hdr-level-btn.lvl-intermediate.active-lvl  { border-color: #d97706; box-shadow: 0 0 0 3px rgba(217,119,6,0.18); }
-                      .sv-hdr-level-btn.lvl-advanced.active-lvl      { border-color: #7c3aed; box-shadow: 0 0 0 3px rgba(124,58,237,0.18); }
+                      .sv-hdr-level-btn.lvl-beginner.active-lvl     { border-color: #7BA88B; box-shadow: 0 0 0 3px rgba(123, 168, 139, 0.25); background: #f2f7f4; }
+                      .sv-hdr-level-btn.lvl-intermediate.active-lvl  { border-color: #4F7B64; box-shadow: 0 0 0 3px rgba(79, 123, 100, 0.25); background: #eef5f1; }
+                      .sv-hdr-level-btn.lvl-advanced.active-lvl      { border-color: #2D3E36; box-shadow: 0 0 0 3px rgba(45, 62, 54, 0.25); background: #e9f0ec; }
                       .sv-hdr-level-btn.active-lvl img { filter: grayscale(0) opacity(1); transform: scale(1.06); }
                       /* RIGHT controls */
                       .sv-hdr-controls {
@@ -3172,19 +3188,19 @@ export default function StudyTable() {
                             className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
                             onClick={() => setPersona("beginner")}
                           >
-                            <img src="/personas/beginner.png" alt="Beginner" title="Beginner" />
+                            <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
                           </button>
                           <button id="studybar-level-intermediate" type="button"
                             className={`sv-hdr-level-btn lvl-intermediate${persona === "intermediate" ? " active-lvl" : ""}`}
                             onClick={() => setPersona("intermediate")}
                           >
-                            <img src="/personas/intermediate.png" alt="Intermediate" title="Intermediate" />
+                            <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
                           </button>
                           <button id="studybar-level-advanced" type="button"
                             className={`sv-hdr-level-btn lvl-advanced${persona === "advanced" ? " active-lvl" : ""}`}
                             onClick={() => setPersona("advanced")}
                           >
-                            <img src="/personas/advanced.png" alt="Advanced" title="Advanced" />
+                            <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
                           </button>
                         </div>
                       ) : <div style={{ flex: 1 }} />}
@@ -3226,7 +3242,7 @@ export default function StudyTable() {
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        {!isMoocMode && !["pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
+                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
                           <h1 className="st-page-title" style={{ margin: 0, fontSize: "1.6rem" }}>
                             {TOOL_LABELS[activeTool]}
                           </h1>
@@ -3276,17 +3292,19 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed"
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" ||
+                    activeTool === "videos"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos") ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
                     activeTool === "pre_final_test" ||
                     activeTool === "flashcards" ||
                     activeTool === "revision_flashcards" ||
-                    activeTool === "assessment"
+                    activeTool === "assessment" ||
+                    activeTool === "videos"
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
@@ -3296,12 +3314,11 @@ export default function StudyTable() {
                 overflowX: "hidden",
                 overflowY:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask" ||
-                    activeTool === "videos"
+                    activeTool === "ask"
                     ? "hidden"
                     : "auto",
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test")
+                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos")
                     ? "0px"
                     : activeTool === "ask"
                       ? "20px"
@@ -3313,12 +3330,12 @@ export default function StudyTable() {
                             ? "16px"
                             : activeTool === "deep_dive"
                               ? "8px"
-                              : activeTool === "videos" || activeTool === "summary" || activeTool === "detailed"
+                              : activeTool === "summary" || activeTool === "detailed"
                                 ? "0px"
                                 : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0px" : activeTool === "videos" ? "16px" : activeTool === "ask" ? "20px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0px" : activeTool === "videos" ? "16px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0px" : activeTool === "videos" ? "16px" : activeTool === "ask" ? "20px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : activeTool === "ask" ? "20px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : activeTool === "ask" ? "20px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
