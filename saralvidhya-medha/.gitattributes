@@ -1,0 +1,2 @@
+# Large podcast MP3s (Master Minds or NEB Nepal): add LFS per path with `git lfs track "<path>"` (see docs/git-lfs-master-minds.md).
+# Avoid blanket `public/generated_resources/master_minds/**/*.mp3` or `.../neb_nepal/**/*.mp3` rules here unless you want every MP3 in that tree in LFS (including small files).

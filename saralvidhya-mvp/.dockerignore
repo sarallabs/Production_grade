@@ -1,0 +1,91 @@
+### Dependencies & package manager caches
+node_modules
+npm-debug.log
+.npm
+
+# Build output (rebuilt in container)
+dist
+dist-deploy
+
+# Git
+.git
+.gitignore
+.gitattributes
+.githooks
+
+# ─── CREDENTIALS & SECRETS (NEVER BAKE INTO IMAGE) ───
+firebase-service-account.json
+*-service-account.json
+*.pem
+*.p12
+.env
+.env.*
+!.env.example
+
+# ─── Scratch / debug files ───
+fix.js
+fix.cjs
+fix[0-9]*.cjs
+fix_*.cjs
+out.js
+out.cjs
+temp.tsx
+restore.cjs
+convert_flashcards.cjs
+update_mindmaps.cjs
+update_podcasts.cjs
+test-models.cjs
+test-render.jsx
+cleanup-firebase-versions.cjs
+modify*.py
+check_*.py
+split_paragraphs.py
+validate_gemini_api_key.py
+update_manifest.py
+tsc-output.txt
+*.patch
+diff_backup.txt
+*.csv
+*.xlsx
+*.xls
+*.docx
+
+# Docs & metadata (not needed in image)
+README.md
+AGENTS.md
+CLAUDE.md
+Session_Documentation.md
+UPLOAD_AUDIO_GUIDE.md
+deploy_firebase.md
+docs/
+*.md
+!public/**/*.md
+
+# IDE / local tooling
+.vscode/
+.idea/
+.agents/
+.claude/
+.projectbrain.json
+.projectbrain_graph.json
+project_brain.py
+.wrangler/
+.vite-cache/
+.pytest_cache/
+__pycache__/
+scratch/
+tests/
+
+# Firebase / Cloudflare config (not used in Docker)
+.firebase/
+.firebaserc
+firebase.json
+functions/
+.cfignore
+
+# Large media already served via CDN
+public/generated_resources/**/*.mp3
+public/generated_resources/**/*.m4a
+public/generated_resources/**/*.wav
+public/generated_resources/**/*.ogg
+public/generated_resources/**/*.aac

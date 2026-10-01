@@ -1,0 +1,818 @@
+{
+  "version": "1.0",
+  "threshold": "5MB",
+  "totalFiles": 134,
+  "generatedAt": "2026-09-14T06:28:35.010Z",
+  "note": "These files are stored in Google Drive and fetched on-demand",
+  "files": [
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/01. Insect_Alimentary_Canal_Structural_Guide.png",
+      "size": 5.59,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.892Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/1. Foregut (Stomodaem)/Leaf Nodes/4. Insect_Ectodermal_Gut_Histology_Blueprint.png",
+      "size": 5.22,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.893Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/2. Midgut (Mesenteron)/Leaf Nodes/1. Insect_Midgut_Digestive_System.png",
+      "size": 5.92,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.893Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/2. Midgut (Mesenteron)/Leaf Nodes/2. Cellular_Engine_of_Insect_Digestion.png",
+      "size": 5.5,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.894Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/2. Midgut (Mesenteron)/Leaf Nodes/Cellular Types/Leaf Nodes/2. Insect_Midgut_Cellular_Repair_Diagram.png",
+      "size": 6.33,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.894Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/2. Midgut (Mesenteron)/Leaf Nodes/Cellular Types/Leaf Nodes/3. The_Insect_Gut_Factory.png",
+      "size": 5.94,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.894Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/3. Hindgut ( Proctodaeum )/Leaf Nodes/4. Anatomy_of_the_Insect_Hindgut.png",
+      "size": 5.22,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.895Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/1.Three Primary Regions/Insect_Digestive_System_Blueprint.png",
+      "size": 5.01,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.895Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/2. Salivary Glands/Leaf Nodes/1. Functions_of_Insect_Salivary_Glands.png",
+      "size": 6.22,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.896Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/2. Salivary Glands/Leaf Nodes/2. External_Digestion_in_Carnivorous_Insects.png",
+      "size": 5.23,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.896Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/2. Salivary Glands/Leaf Nodes/4. How_Insects_Bypass_Host_Defences.png",
+      "size": 5.06,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.896Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/01 Insect_Gut_Adaptations_for_Survival.png",
+      "size": 5.47,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.896Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/1. Filter Chamber/Leaf Nodes/1. Nature_s_Bypass_Filter_Chamber_Mechanism.png",
+      "size": 5.46,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.897Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/1. Filter Chamber/Leaf Nodes/2.2. Nature_s_Insect_Filter_Chamber.png",
+      "size": 5.44,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.897Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/2. Symbotic Digestion/01 Termite_Symbiotic_Wood_Digestion_Process.png",
+      "size": 5.58,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.898Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/2. Symbotic Digestion/Leaf Nodes/2.2. Termite_Wood_Digestion_Process.png",
+      "size": 6.23,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.899Z"
+    },
+    {
+      "path": "Entomology/chapter_01/Learn/Mindmaps/Digestive System Infographics/3. Specilized Physiological Adaptations/2. Symbotic Digestion/Leaf Nodes/3.2. Termite_and_Protozoa_Biological_Symbiosis.png",
+      "size": 5.58,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.899Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/advanced/infographic_card_008.png",
+      "size": 5.33,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.931Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/advanced/infographic_card_010.png",
+      "size": 5.39,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.932Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/beginner/infographic_card_002.png",
+      "size": 5.19,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.932Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/intermediate/infographic_card_012.png",
+      "size": 5.44,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.933Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/intermediate/infographic_card_013.png",
+      "size": 5.38,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.933Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/intermediate/infographic_card_014.png",
+      "size": 5.04,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.933Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_2_service_marketing/Learn/Flashcards/generated_infographics/intermediate/infographic_card_015.png",
+      "size": 5.29,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.933Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/1_definition_and_concept/leaf_nodes/Mastering_Systematic_International_Strategy_Guide.png",
+      "size": 6.25,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Adaptation/Adapting_Global_Business_Strategies.png",
+      "size": 6.15,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Adaptation/leaf_nodes/Cultural_Myopia_in_Global_Marketing.png",
+      "size": 6.13,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Adaptation/leaf_nodes/Global_Strategy_and_Cultural_Customisation.png",
+      "size": 6.19,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Adaptation/leaf_nodes/Local_Market_Responsiveness_Guide.png",
+      "size": 6.45,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Global_Marketing_Strategy_Dilemma.png",
+      "size": 6.09,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Globalization/leaf_nodes/Glocalisation_Strategy_and_Global_Quality.png",
+      "size": 5.61,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Globalization/leaf_nodes/Glocalization_Strategy_and_Market_Adaptation.png",
+      "size": 6.48,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Globalization/leaf_nodes/The_Art_of_Glocalization.png",
+      "size": 6.75,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Globalization/The_Art_of_Glocalization.png",
+      "size": 6.75,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.936Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Standardization/leaf_nodes/Maximizing_Global_Economies_of_Scale.png",
+      "size": 6.25,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Standardization/leaf_nodes/Strategic_Global_Business_Integration_Infographic.png",
+      "size": 5.55,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/2_strategy_delima/Standardization/leaf_nodes/The_Power_of_Global_Consistency.png",
+      "size": 5.62,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/case_studies.png",
+      "size": 5.71,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/Dominos/leaf_nodes/Adapting_Business_for_Local_Success.png",
+      "size": 5.74,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/Nike/leaf_nodes/Global_and_Regional_Branding_Strategy.png",
+      "size": 5.18,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/Nike/leaf_nodes/Global_Brand_Local_Market_Strategy.png",
+      "size": 6.37,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/Nike/leaf_nodes/Glocalization_Case_Study_in_India.png",
+      "size": 5.41,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/3_case_studies/Nike/Nike.png",
+      "size": 5.31,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.937Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/4_foundational_benifits/operational_growth/Operational-Growth.png",
+      "size": 5.74,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.938Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/Challenges_of_Going_Global.png",
+      "size": 5.73,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.938Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/external_risks/External_Risks_Global_Marketing_Infographic.png",
+      "size": 6.79,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.938Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/external_risks/leaf_nodes/Global_Integration_and_Economies_Scale.png",
+      "size": 6.73,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.938Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/external_risks/leaf_nodes/Navigating_Geopolitical_Disruption_and_Resilience.png",
+      "size": 7.18,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/external_risks/leaf_nodes/Navigating_Global_Volatile_Economic_Markets.png",
+      "size": 6.07,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/management_and_logistics/Global_Marketing_Management_Infographic.png",
+      "size": 6.05,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/management_and_logistics/leaf_nodes/Global_HRM_and_Marketing_Strategies.png",
+      "size": 6.59,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/management_and_logistics/leaf_nodes/Global_Legal_and_Regulatory_Compliance.png",
+      "size": 6.34,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/management_and_logistics/leaf_nodes/Global_Logistics_Supply_Chain_Challenges.png",
+      "size": 5.63,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/management_and_logistics/leaf_nodes/Global_Pricing_Sensitivity_Strategies.png",
+      "size": 6.03,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/socio-cultural_barriers/leaf_nodes/Cultural_Adaptation_in_Global_Marketing.png",
+      "size": 6.12,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/socio-cultural_barriers/leaf_nodes/Navigating_Marketing_Blunders_and_Transcreation.png",
+      "size": 5.48,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/socio-cultural_barriers/leaf_nodes/Transcreation_in_Global_Marketing_Strategy.png",
+      "size": 5.68,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/5_critical_challenges/socio-cultural_barriers/Navigating_Global_Branding_Cultural_Adaptation.png",
+      "size": 6.47,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_1/video_3_global_marketing/Learn/Mindmaps/global_marketing_infographics_vd-3/global_marketing.png",
+      "size": 5.62,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.939Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Detailed_Summary/detailed_summary_advanced.json",
+      "size": 10.86,
+      "extension": ".json",
+      "createdAt": "2026-09-14T06:28:34.940Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Detailed_Summary/detailed_summary_advanced.md",
+      "size": 5.44,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.940Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Detailed_Summary/detailed_summary_intermediate.json",
+      "size": 6.74,
+      "extension": ".json",
+      "createdAt": "2026-09-14T06:28:34.940Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/00 Marketing_Systems_and_STP_Framework.png",
+      "size": 5.94,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/1. Marketing Information System (MIS)/1. Marketing_Information_Systems_(MIS)_Architecture.png",
+      "size": 5.37,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/1. Marketing Information System (MIS)/1.1 Marketing_Information_Systems_Overview.png",
+      "size": 5.18,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/1. Marketing Information System (MIS)/1.2 Four_Marketing_Intelligence_Core_Engines.png",
+      "size": 5.62,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/1. Marketing Information System (MIS)/1.3 Proactive_Trend_Identification_in_MIS.png",
+      "size": 5.06,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/1. Marketing Information System (MIS)/1.5 MIS_Precision_Engine_Infographic.png",
+      "size": 5.73,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/2. Marketing Research Process/2. Six-Step_Marketing_Research_Roadmap.png",
+      "size": 5.36,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/2. Marketing Research Process/2.1 Problem_Definition_and_Research_Framework.png",
+      "size": 5,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/2. Marketing Research Process/2.3 Developing_a_Data_Research_Plan.png",
+      "size": 5.84,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/2. Marketing Research Process/2.6 Survey_Sampling_and_Contact_Methods.png",
+      "size": 5.25,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/3. Consumer Decision & Decision marketing/3.1 Determinants_of_Consumer_Behaviour.png",
+      "size": 5.37,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.944Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/3. Consumer Decision & Decision marketing/3.2 Consumer_Buying_Decision_Behaviour_Matrix.png",
+      "size": 5.63,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.944Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/4. Organizational Buying behaviour (B2B)/4.1 B2B_Market_Dynamics_and_Structure.png",
+      "size": 5.42,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.944Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/4. Organizational Buying behaviour (B2B)/4.3 Drivers_of_B2B_Procurement_Decisions.png",
+      "size": 5.31,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.944Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/5. STP Framework/5. Strategic_Marketing_Engine_STP_Framework.png",
+      "size": 5.13,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/_backups/5. STP Framework/5.3 Mastering_Market_Positioning_Guide.png",
+      "size": 5.22,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/00 Marketing_Systems_and_STP_Framework.png",
+      "size": 6,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/1. Marketing Information System (MIS)/1. Marketing_Information_Systems_(MIS)_Architecture.png",
+      "size": 5.49,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/1. Marketing Information System (MIS)/1.1 Marketing_Information_Systems_Overview.png",
+      "size": 5.53,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/1. Marketing Information System (MIS)/1.2 Four_Marketing_Intelligence_Core_Engines.png",
+      "size": 5.77,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/1. Marketing Information System (MIS)/1.3 Proactive_Trend_Identification_in_MIS.png",
+      "size": 5.47,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/1. Marketing Information System (MIS)/1.5 MIS_Precision_Engine_Infographic.png",
+      "size": 6.08,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2. Six-Step_Marketing_Research_Roadmap.png",
+      "size": 5.66,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2.1 Problem_Definition_and_Research_Framework.png",
+      "size": 5.46,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2.3 Developing_a_Data_Research_Plan.png",
+      "size": 6.08,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2.5 Five_Core_Primary_Research_Methodologies.png",
+      "size": 5.08,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.941Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2.6 Survey_Sampling_and_Contact_Methods.png",
+      "size": 5.61,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/2. Marketing Research Process/2.7 Market_Research_Data_Refinery_Process.png",
+      "size": 5.08,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/3. Consumer Decision & Decision marketing/3.1 Determinants_of_Consumer_Behaviour.png",
+      "size": 5.57,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/3. Consumer Decision & Decision marketing/3.2 Consumer_Buying_Decision_Behaviour_Matrix.png",
+      "size": 5.89,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/3. Consumer Decision & Decision marketing/3.3 Consumer_Buying_Decision_Process_Journey.png",
+      "size": 5.17,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/4. Organizational Buying behaviour (B2B)/4. Architecture_of_Enterprise_Purchasing_Guide.png",
+      "size": 5.31,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/4. Organizational Buying behaviour (B2B)/4.1 B2B_Market_Dynamics_and_Structure.png",
+      "size": 5.86,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/4. Organizational Buying behaviour (B2B)/4.2 5-Step_B2B_Procurement_Process.png",
+      "size": 5.17,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.942Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/4. Organizational Buying behaviour (B2B)/4.3 Drivers_of_B2B_Procurement_Decisions.png",
+      "size": 5.56,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/5. STP Framework/5. Strategic_Marketing_Engine_STP_Framework.png",
+      "size": 5.46,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/5. STP Framework/5.1 Market_Segmentation_Strategy_Overview.png",
+      "size": 5.31,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Infographics/5. STP Framework/5.3 Mastering_Market_Positioning_Guide.png",
+      "size": 5.22,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.943Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Mindmaps/Management Marketing -2.png",
+      "size": 7.08,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Quick_Summary/quick_summary_advanced.json",
+      "size": 10.86,
+      "extension": ".json",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Quick_Summary/quick_summary_advanced.md",
+      "size": 5.44,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Learn/Quick_Summary/quick_summary_intermediate.json",
+      "size": 6.74,
+      "extension": ".json",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Prepare/Revise/flashcards_revise.json",
+      "size": 14.35,
+      "extension": ".json",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_2/Prepare/Revise/flashcards_revise.md",
+      "size": 7.2,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.945Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/Chapter_3/Learn/Mindmaps/MM_UNIT_3_Mindmap.png",
+      "size": 7.36,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.948Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_4/Learn/Mindmaps/mindmap.png",
+      "size": 5.58,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.949Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_4/MM_UNIT_-4.md",
+      "size": 5.66,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.949Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/1. Integrated marketing Communications (IMC)/1.0 Integrated_Marketing_Communications_Strategic_Synergy.png",
+      "size": 5.4,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/1. Integrated marketing Communications (IMC)/1.2 Marketing_Communications_Mix_Ecosystem.png",
+      "size": 5.3,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/1. Integrated marketing Communications (IMC)/1.4 8-Step_Marketing_Communication_Process.png",
+      "size": 5.35,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/2. Advertising, Sales, Promtions & PR/2.1 Strategic_Advertising_Management_Blueprint.png",
+      "size": 5.68,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/2. Advertising, Sales, Promtions & PR/2.1.2 The_5_Ms_Advertising_Framework.png",
+      "size": 5.36,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/2. Advertising, Sales, Promtions & PR/2.2 Sales_Promotion_Strategy_Infographic.png",
+      "size": 5.74,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/2. Advertising, Sales, Promtions & PR/2.2.3 Sales_Promotion_Methods_and_Tools.png",
+      "size": 5.98,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/2. Advertising, Sales, Promtions & PR/2.3 Public_Relations_Strategic_Benefits_Guide.png",
+      "size": 5.25,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/3. Persoal Selling & Competiive Stratagies/3.0 Sales_Funnel_and_Strategic_Positioning.png",
+      "size": 5.07,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/3. Persoal Selling & Competiive Stratagies/3.1 The_7-Step_Personal_Selling_Journey.png",
+      "size": 5.65,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/3. Persoal Selling & Competiive Stratagies/3.1.3 The_7-Step_Personal_Selling_Journey.png",
+      "size": 5.48,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/3. Persoal Selling & Competiive Stratagies/3.2 Porter_s_Generic_Competitive_Strategies_Matrix.png",
+      "size": 5.78,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/4. Emerging trends & Stratagic Control/4.0 Marketing_Trends_and_Strategic_Control.png",
+      "size": 5.74,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/4. Emerging trends & Stratagic Control/4.1 The_Science_of_Viral_Marketing.png",
+      "size": 5.14,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.953Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/4. Emerging trends & Stratagic Control/4.2 Understanding_Ambush_Marketing_Strategies.png",
+      "size": 5.37,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.954Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/4. Emerging trends & Stratagic Control/4.3 Green_Marketing_and_Sustainable_Strategies.png",
+      "size": 5.1,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.954Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/Infographics/4. Emerging trends & Stratagic Control/4.4 Marketing_Audit_and_Ethics_Framework.png",
+      "size": 5.83,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.954Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/_backups/Learn/Mindmaps/MM_UNIT_5_Mind Map.png",
+      "size": 5.81,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.954Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/Learn/Mindmaps/MM_UNIT_5_Mind Map.png",
+      "size": 5.81,
+      "extension": ".png",
+      "createdAt": "2026-09-14T06:28:34.951Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/Learn/Quick_Summary/quick_summary_advanced.md",
+      "size": 7.41,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.951Z"
+    },
+    {
+      "path": "Nagarjuna_University/MBA/chapter_5/MM_UNIT_-5.md",
+      "size": 5.5,
+      "extension": ".md",
+      "createdAt": "2026-09-14T06:28:34.951Z"
+    },
+    {
+      "path": "Nagarjuna_University/physics/anu/chapter_04/beginner/long_podcast.mp3",
+      "size": 5.96,
+      "extension": ".mp3",
+      "createdAt": "2026-09-14T06:28:34.959Z"
+    },
+    {
+      "path": "Nagarjuna_University/physics/anu/chapter_05/advanced/long_podcast.mp3",
+      "size": 8.41,
+      "extension": ".mp3",
+      "createdAt": "2026-09-14T06:28:34.968Z"
+    },
+    {
+      "path": "Nagarjuna_University/physics/anu/chapter_05/beginner/long_podcast.mp3",
+      "size": 6.13,
+      "extension": ".mp3",
+      "createdAt": "2026-09-14T06:28:34.970Z"
+    },
+    {
+      "path": "Nagarjuna_University/physics/anu/chapter_05/intermediate/long_podcast.mp3",
+      "size": 6.43,
+      "extension": ".mp3",
+      "createdAt": "2026-09-14T06:28:34.973Z"
+    }
+  ],
+  "instructions": {
+    "description": "Files larger than 5MB are stored in Google Drive",
+    "action": "Use GoogleDriveService to fetch these files",
+    "example": "const url = await getGoogleDriveUrl(\"path/to/file.mp3\")"
+  }
+}

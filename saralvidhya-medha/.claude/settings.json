@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "projectbrain": {
+      "command": "projectbrain-mcp",
+      "args": ["C:\\Users\\Abhi\\saralvidhya-mvp"],
+      "type": "stdio"
+    }
+  }
+}

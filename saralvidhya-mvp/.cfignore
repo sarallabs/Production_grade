@@ -1,0 +1,14 @@
+# Files excluded from Cloudflare Pages deployment (exceed 25 MB per-file limit).
+# The app handles 404s gracefully for missing content.
+
+# NEB Biology Ch06 — base64-embedded image summaries (>25 MB each)
+public/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_advanced.md
+public/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_intermediate.md
+public/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/quick_summary_advanced.md
+
+# Telangana Physics Ch01 — long podcast MP3s (>25 MB each)
+public/generated_resources/Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/beginner/long_podcast.mp3
+public/generated_resources/Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/intermediate/long_podcast.mp3
+
+# Master Minds CA Final — long podcast MP3 (>25 MB)
+public/generated_resources/master_minds/ca_final/advanced_financial_management/chapter_02 (derivatives_options)/beginner/podcasts/08_Derivative_Options_Beginner_Long.mp3

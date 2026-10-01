@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Reject Master Minds or NEB Nepal podcast MP3s larger than 5 MiB unless they are stored as Git LFS pointers.
+# Enable once per clone: git config core.hooksPath .githooks
+set -euo pipefail
+
+MAX_BYTES=$((5 * 1024 * 1024))
+LFS_SPEC_LINE="version https://git-lfs.github.com/spec/v1"
+
+is_curriculum_mp3() {
+  local path="$1"
+  [[ "$path" == public/generated_resources/master_minds/*.mp3 ]] && return 0
+  [[ "$path" == public/generated_resources/neb_nepal/*.mp3 ]] && return 0
+  return 1
+}
+
+first_line_of_staged() {
+  local path="$1"
+  # Staged blob only (ignore if missing or not a blob)
+  local ty
+  ty="$(git cat-file -t ":$path" 2>/dev/null || true)"
+  [[ "$ty" == blob ]] || return 1
+  git show ":$path" 2>/dev/null | LC_ALL=C head -n 1 | tr -d '\r'
+}
+
+is_lfs_pointer_staged() {
+  local path="$1"
+  local first
+  first="$(first_line_of_staged "$path" || true)"
+  [[ "$first" == "$LFS_SPEC_LINE" ]]
+}
+
+failed=0
+while IFS= read -r -d '' path; do
+  is_curriculum_mp3 "$path" || continue
+
+  ty="$(git cat-file -t ":$path" 2>/dev/null || true)"
+  [[ "$ty" == blob ]] || continue
+
+  size="$(git cat-file -s ":$path" 2>/dev/null || echo 0)"
+  if [[ "$size" -le "$MAX_BYTES" ]]; then
+    continue
+  fi
+
+  if is_lfs_pointer_staged "$path"; then
+    continue
+  fi
+
+  failed=1
+  echo "Error: Master Minds or NEB Nepal MP3 is larger than 5 MiB but is not a Git LFS pointer:" >&2
+  echo "  $path (${size} bytes staged)" >&2
+  echo "" >&2
+  echo "Fix:" >&2
+  echo "  1. Install Git LFS: https://git-lfs.com/  then run: git lfs install" >&2
+  echo "  2. Track this file with LFS, e.g.:" >&2
+  echo "       git lfs track \"$path\"" >&2
+  echo "  3. Stage again:" >&2
+  echo "       git add .gitattributes \"$path\"" >&2
+  echo "" >&2
+  echo "See docs/git-lfs-master-minds.md for the full workflow." >&2
+done < <(git diff --cached -z --name-only --diff-filter=d)
+
+exit "$failed"
