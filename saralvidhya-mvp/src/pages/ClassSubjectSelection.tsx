@@ -18,7 +18,7 @@ function SubjectIcon({ subjectId }: { subjectId: string }) {
   if (subjectId.includes('ento') || subjectId === 'ento_131') {
     return (
       <img
-        src="/subject-book-icon.png"
+        src={`${import.meta.env.BASE_URL}subject-entomology-icon.png`}
         alt="Entomology"
         className="sv-card-book-img"
       />

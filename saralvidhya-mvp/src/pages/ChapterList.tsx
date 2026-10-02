@@ -12,12 +12,11 @@ function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
   const common = { width: 36, height: 36, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
   if (id.includes('ento') || id === 'ento_131') {
     return (
-      <div className="book-icon-deco--subject ento-deco">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-        </svg>
-      </div>
+      <img
+        src={`${import.meta.env.BASE_URL}subject-entomology-icon.png`}
+        alt="Entomology"
+        className="subject-header-illustration"
+      />
     );
   }
   switch (id) {
@@ -216,10 +215,16 @@ export default function ChapterList() {
             <>
               {/* Page header */}
               <div className={`book-header ${bookOpen ? 'book-header--visible' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
-                <div className="book-header-left" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                  <div className="book-icon-deco book-icon-deco--subject">
-                    <SubjectHeaderIcon subjectId={sId} />
-                  </div>
+                <div className="book-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  {(sId.toLowerCase().includes('ento') || sId === 'ento_131' || resolvedSubjectName.toLowerCase().includes('ento')) ? (
+                    <div className="subject-header-img-wrap">
+                      <SubjectHeaderIcon subjectId={sId} />
+                    </div>
+                  ) : (
+                    <div className="book-icon-deco book-icon-deco--subject">
+                      <SubjectHeaderIcon subjectId={sId} />
+                    </div>
+                  )}
                   <div>
                     <h1 className="book-title">{resolvedSubjectName}</h1>
                   </div>
@@ -256,7 +261,37 @@ export default function ChapterList() {
 
                 // Clean real chapter name without duplicate "Chapter X" prefix
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
-                const heroImgSrc = `${import.meta.env.BASE_URL}chapter-entomology-hero.png`;
+                const lowerName = cleanChapterName.toLowerCase();
+                const isDigestive =
+                  lowerName.includes('digestive') ||
+                  flipCh.number === 1 ||
+                  flipIndex === 0;
+                const isMetamorphosis =
+                  lowerName.includes('metamorphosis') ||
+                  lowerName.includes('morphology') ||
+                  flipCh.number === 2 ||
+                  flipCh.number === 11 ||
+                  flipIndex === 1;
+                const isPollination =
+                  lowerName.includes('pollination') ||
+                  lowerName.includes('floral') ||
+                  flipCh.number === 3 ||
+                  flipIndex === 2;
+                const isWeathering =
+                  lowerName.includes('weathering') ||
+                  lowerName.includes('soil') ||
+                  flipCh.number === 4 ||
+                  flipIndex === 3;
+
+                const heroImgSrc = isDigestive
+                  ? `${import.meta.env.BASE_URL}chapter-digestive-hero.png`
+                  : isMetamorphosis
+                  ? `${import.meta.env.BASE_URL}chapter-metamorphosis-hero.png`
+                  : isPollination
+                  ? `${import.meta.env.BASE_URL}chapter-pollination-hero.png`
+                  : isWeathering
+                  ? `${import.meta.env.BASE_URL}chapter-weathering-hero.png`
+                  : `${import.meta.env.BASE_URL}chapter-entomology-hero.png`;
 
                 return (
                   <div className="flip-mode-stack fade-in">
