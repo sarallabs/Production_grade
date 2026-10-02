@@ -207,18 +207,23 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
   if (!content) return null;
 
   return (
-    <div style={{ userSelect: 'none', height: '600px', width: '100%', border: '1px solid var(--border)', borderRadius: '8px' }}>
+    <div style={{ userSelect: 'none', height: '600px', width: '100%', border: '1px solid #EFE4DC', borderRadius: '12px', overflow: 'hidden' }}>
       {/* Toolbar */}
       <div style={{
         display:'flex', alignItems:'center', justifyContent:'space-between',
         padding:'8px 16px',
-        borderBottom:'1px solid var(--border)',
-        background:'var(--surface)',
-        borderRadius:'8px 8px 0 0',
+        borderBottom:'1px solid #EFE4DC',
+        background:'#FAF1EB',
       }}>
-        <span style={{fontSize:'0.78rem',color:'var(--text-secondary)'}}>
-          {toolbarHint ?? '🗺️ Mindmap · Click a topic for Quick Study'}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: 2,
+            background: '#4F7B64', flexShrink: 0,
+          }} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4F7B64', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            {toolbarHint ?? 'Mindmap · Click a topic for Quick Study'}
+          </span>
+        </div>
       </div>
 
       {/* Canvas */}
@@ -226,32 +231,49 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
         jmnode {
           font-size: 13px !important;
           font-weight: 500 !important;
-          padding: 10px 14px !important;
+          padding: 10px 16px !important;
           border-radius: 8px !important;
-          background-color: var(--surface) !important;
-          color: var(--text-primary) !important;
-          border: 1px solid var(--border) !important;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
+          background-color: #7BA88B !important;
+          color: #FFFFFF !important;
+          border: 1px solid #6B977B !important;
+          box-shadow: 0 2px 5px rgba(45, 62, 54, 0.12) !important;
           transition: all 0.2s ease !important;
         }
         jmnode:hover {
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06) !important;
+          box-shadow: 0 4px 10px rgba(45, 62, 54, 0.22) !important;
           transform: translateY(-1px);
         }
         jmnode[nodeid="root"] {
-          background-color: var(--primary) !important;
-          color: white !important;
+          background-color: #2D3E36 !important;
+          color: #FFFFFF !important;
           font-size: 15px !important;
-          font-weight: 600 !important;
-          border: none !important;
+          font-weight: 700 !important;
+          border-radius: 10px !important;
+          border: 1px solid #23322B !important;
           cursor: default !important;
+        }
+        jmnode[nodeid^="topic_"] {
+          background-color: #4F7B64 !important;
+          color: #FFFFFF !important;
+          font-size: 13.5px !important;
+          font-weight: 600 !important;
+          border-radius: 10px !important;
+          border: 1px solid #436A55 !important;
+        }
+        jmnode[nodeid^="concept_"] {
+          background-color: #7BA88B !important;
+          color: #FFFFFF !important;
+          font-size: 12.5px !important;
+          font-weight: 500 !important;
+          border-radius: 8px !important;
+          border: 1px solid #6B977B !important;
         }
         jmnode:not([nodeid="root"]) {
           cursor: pointer !important;
         }
         jmnode.selected {
-          background-color: #dbeafe !important;
-          border-color: var(--primary) !important;
+          background-color: #436A55 !important;
+          border-color: #2D3E36 !important;
         }
         .node-content {
           display: flex;
@@ -271,10 +293,13 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
           width: 24px;
           height: 24px;
           border-radius: 6px;
-          color: var(--text-secondary);
-          opacity: 0.3;
-          cursor: not-allowed;
-          pointer-events: none;
+          color: #FFFFFF;
+          opacity: 0.6;
+          cursor: pointer;
+        }
+        .action-icon:hover {
+          opacity: 1;
+          background: rgba(255, 255, 255, 0.2);
         }
       `}</style>
       <div
@@ -283,8 +308,8 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
         style={{
           width: '100%',
           height: 'calc(100% - 40px)',
-          background:'#FAFBFF',
-          borderRadius:'0 0 8px 8px',
+          background: '#FFF6F1',
+          borderRadius: '0 0 12px 12px',
         }}
       />
     </div>
