@@ -779,8 +779,58 @@ export default function StudyTable() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
-  const [isToolbarOpen, setIsToolbarOpen] = useState(true);
-  const [isToolbarPinned, setIsToolbarPinned] = useState(false);
+  const [isToolbarPinned, setIsToolbarPinned] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sv_study_toolbar_pinned") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const [isToolbarOpen, setIsToolbarOpen] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem("sv_study_toolbar_pinned");
+      return stored !== null ? stored === "true" : true;
+    } catch {
+      return true;
+    }
+  });
+  const toolbarCollapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearToolbarCollapseTimer = useCallback(() => {
+    if (toolbarCollapseTimerRef.current != null) {
+      clearTimeout(toolbarCollapseTimerRef.current);
+      toolbarCollapseTimerRef.current = null;
+    }
+  }, []);
+
+  const handleToolbarMouseEnter = useCallback(() => {
+    clearToolbarCollapseTimer();
+    setIsToolbarOpen(true);
+  }, [clearToolbarCollapseTimer]);
+
+  const handleToolbarMouseLeave = useCallback(() => {
+    if (isToolbarPinned) return;
+    clearToolbarCollapseTimer();
+    toolbarCollapseTimerRef.current = setTimeout(() => {
+      setIsToolbarOpen(false);
+    }, 250);
+  }, [isToolbarPinned, clearToolbarCollapseTimer]);
+
+  const toggleToolbarPin = useCallback(() => {
+    setIsToolbarPinned((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sv_study_toolbar_pinned", String(next));
+      } catch {
+        // ignore storage errors
+      }
+      if (next) {
+        setIsToolbarOpen(true);
+      }
+      return next;
+    });
+  }, []);
+
   const railCollapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -1187,7 +1237,7 @@ export default function StudyTable() {
         const detailedHeadings = activeTool === "detailed" && typeof content === "string" ? parseDetailedHeadings(content) : [];
 
         return (
-          <div className="markdown-container" style={{ position: 'relative' }}>
+          <div className="markdown-container" style={{ position: 'relative', maxWidth: '1040px', margin: '0 auto', width: '100%', paddingLeft: '24px', paddingRight: '24px', boxSizing: 'border-box' }}>
             <style>{`
               @keyframes highlightFlash {
                 0% { background-color: rgba(255, 235, 59, 0.6); }
@@ -2330,17 +2380,17 @@ export default function StudyTable() {
     switch (toolId) {
       case "detailed":
       case "summary": case "podcasts": case "videos": case "mindmap": case "foundation":
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #2D3E36 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(45, 62, 54, 0.35)" };
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
-        return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #DDB669 0%, #C49B4B 100%)", shadow: "0 4px 12px rgba(221, 182, 105, 0.35)" };
+        return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
       case "pyq": case "prep_exam": case "mocktest":
-        return { bg: "#fdf5f0", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
+        return { bg: "#f4f8f6", gradient: "linear-gradient(90deg, #6F9A7F 0%, #587F67 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
       case "swot":
-        return { bg: "#fff7ed", gradient: "linear-gradient(90deg, #f97316 0%, #ea580c 100%)", shadow: "0 4px 12px rgba(249, 115, 22, 0.45)" };
+        return { bg: "#fff7ed", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
       case "deep_dive": case "ask":
-        return { bg: "#faf5ff", gradient: "linear-gradient(90deg, #9C27B0 0%, #7B1FA2 100%)", shadow: "0 4px 12px rgba(156, 39, 176, 0.35)" };
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #547163 0%, #3D5348 100%)", shadow: "0 4px 12px rgba(84, 113, 99, 0.35)" };
       default:
-        return { bg: "#ffffff", gradient: "linear-gradient(90deg, #2D3E36 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(45, 62, 54, 0.35)" };
+        return { bg: "#ffffff", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
     }
   };
   const activeToolTheme = getToolTheme(activeTool);
@@ -2384,6 +2434,8 @@ export default function StudyTable() {
           {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
             <div
               className="study-toolbar-wrapper"
+              onMouseEnter={handleToolbarMouseEnter}
+              onMouseLeave={handleToolbarMouseLeave}
               style={{
                 position: "relative",
                 width: "100%",
@@ -2417,32 +2469,32 @@ export default function StudyTable() {
                   const prepThemeBg = persona === 'intermediate' ? '#CB30E033' : persona === 'advanced' ? '#CB30E04D' : '#CB30E01A';
                   const detailedThemeBg = persona === 'intermediate' ? '#15803d4D' : persona === 'advanced' ? '#15803d66' : '#15803d33';
                   const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    videos: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    assessment: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    summary: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    quick_study: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    key_takeaways: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    detailed: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    detailed_notes: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    mindmap: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    foundation: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
-                    podcasts: { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" },
+                    videos: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    assessment: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    summary: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    quick_study: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    key_takeaways: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    detailed: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    detailed_notes: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    mindmap: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
-                    master_flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    revision_flashcards: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    revise: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    qbank: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
+                    master_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    revision_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    revise: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    qbank: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
 
-                    pyq: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
-                    prep_exam: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
-                    prep_test: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
-                    mocktest: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
-                    pre_final_test: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
-                    certification_exam: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf5f0" },
+                    pyq: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    prep_exam: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    prep_test: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    mocktest: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    pre_final_test: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    certification_exam: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
 
-                    swot: { main: "#DDB669", badge: "#DDB669", text: "#DDB669", bg: "#fdf8ee" },
-                    ask: { main: "#9C27B0", badge: "#9C27B0", text: "#9C27B0", bg: "#faf5ff" },
+                    swot: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    ask: { main: "#547163", badge: "#547163", text: "#547163", bg: "#f0f7f4" },
                   };
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
@@ -2454,58 +2506,58 @@ export default function StudyTable() {
                         return (
                           <svg width="36" height="34" viewBox="0 0 38 34" fill="none">
                             {/* Book cover base */}
-                            <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill="#1D2A24" />
-                            <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill="#2D3E36" />
+                            <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill="#1E3227" />
+                            <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill="#4F7B64" />
                             {/* Left page */}
-                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke="#2D3E36" strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke="#4F7B64" strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Right page */}
-                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke="#2D3E36" strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke="#4F7B64" strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Cover edges visible underneath */}
-                            <path d="M3 9C2 9 2 24.5 3 25" stroke="#2D3E36" strokeWidth="2.5" strokeLinecap="round" />
-                            <path d="M35 9C36 9 36 24.5 35 25" stroke="#2D3E36" strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M3 9C2 9 2 24.5 3 25" stroke="#4F7B64" strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M35 9C36 9 36 24.5 35 25" stroke="#4F7B64" strokeWidth="2.5" strokeLinecap="round" />
                             {/* Left page text lines */}
-                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="7.5" y1="20" x2="13" y2="21" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="20" x2="13" y2="21" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
                             {/* Right page text lines */}
-                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="25" y1="21" x2="30.5" y2="20" stroke="#2D3E36" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="25" y1="21" x2="30.5" y2="20" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
                             {/* Center spine */}
-                            <line x1="19" y1="12" x2="19" y2="29" stroke="#2D3E36" strokeWidth="1.8" strokeLinecap="round" />
+                            <line x1="19" y1="12" x2="19" y2="29" stroke="#4F7B64" strokeWidth="1.8" strokeLinecap="round" />
                           </svg>
                         );
                       case "podcasts":
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Headband */}
-                            <path d="M7 17C7 10.9249 11.9249 6 18 6C24.0751 6 29 10.9249 29 17V20" stroke="#2D3E36" strokeWidth="3" strokeLinecap="round" />
+                            <path d="M7 17C7 10.9249 11.9249 6 18 6C24.0751 6 29 10.9249 29 17V20" stroke="#4F7B64" strokeWidth="3" strokeLinecap="round" />
                             {/* Top cushion */}
-                            <path d="M12 7.5C13.8 6.5 16 6 18 6C20 6 22.2 6.5 24 7.5" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M12 7.5C13.8 6.5 16 6 18 6C20 6 22.2 6.5 24 7.5" stroke="#7BA88B" strokeWidth="2" strokeLinecap="round" />
                             {/* Left earcup outer */}
-                            <rect x="5" y="16" width="6" height="11" rx="3" fill="#2D3E36" />
+                            <rect x="5" y="16" width="6" height="11" rx="3" fill="#4F7B64" />
                             {/* Left earcup inner cushion */}
-                            <rect x="9" y="17.5" width="2" height="8" rx="1" fill="#4F7B64" />
+                            <rect x="9" y="17.5" width="2" height="8" rx="1" fill="#7BA88B" />
                             {/* Right earcup outer */}
-                            <rect x="25" y="16" width="6" height="11" rx="3" fill="#2D3E36" />
+                            <rect x="25" y="16" width="6" height="11" rx="3" fill="#4F7B64" />
                             {/* Right earcup inner cushion */}
-                            <rect x="25" y="17.5" width="2" height="8" rx="1" fill="#4F7B64" />
+                            <rect x="25" y="17.5" width="2" height="8" rx="1" fill="#7BA88B" />
                             {/* Sound wave bars in center */}
-                            <line x1="15" y1="19" x2="15" y2="23" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="18" y1="17" x2="18" y2="25" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="21" y1="19" x2="21" y2="23" stroke="#2D3E36" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="15" y1="19" x2="15" y2="23" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="18" y1="17" x2="18" y2="25" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="21" y1="19" x2="21" y2="23" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         );
                       case "videos":
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Bottom slate */}
-                            <rect x="5" y="13" width="26" height="16" rx="3" fill="#2D3E36" />
+                            <rect x="5" y="13" width="26" height="16" rx="3" fill="#4F7B64" />
                             {/* Play button triangle */}
                             <polygon points="16,17 23,21 16,25" fill="#FFFFFF" />
                             {/* Top clapperboard bar */}
                             <g transform="rotate(-6 5 12)">
-                              <rect x="5" y="6" width="26" height="6.5" rx="2" fill="#2D3E36" />
+                              <rect x="5" y="6" width="26" height="6.5" rx="2" fill="#4F7B64" />
                               {/* White diagonal stripes */}
                               <polygon points="9,6 12,6 9,12.5 6,12.5" fill="#FFFFFF" />
                               <polygon points="16,6 19,6 16,12.5 13,12.5" fill="#FFFFFF" />
@@ -2524,9 +2576,9 @@ export default function StudyTable() {
                             <path d="M30 26L18 30V32L30 28V26Z" fill="#23322B" />
 
                             {/* Stepped platform tier 2 (middle) */}
-                            <path d="M8.5 22L18 19L27.5 22L18 25L8.5 22Z" fill="#2D3E36" />
-                            <path d="M8.5 22L18 25V26.5L8.5 23.5V22Z" fill="#1E2B25" />
-                            <path d="M27.5 22L18 25V26.5L27.5 23.5V22Z" fill="#3D5248" />
+                            <path d="M8.5 22L18 19L27.5 22L18 25L8.5 22Z" fill="#3D5A4A" />
+                            <path d="M8.5 22L18 25V26.5L8.5 23.5V22Z" fill="#293D32" />
+                            <path d="M27.5 22L18 25V26.5L27.5 23.5V22Z" fill="#486857" />
 
                             {/* Stepped platform tier 1 (top) */}
                             <path d="M11 18L18 16L25 18L18 20.5L11 18Z" fill="#4F7B64" />
@@ -2534,11 +2586,11 @@ export default function StudyTable() {
                             <path d="M25 18L18 20.5V21.5L25 19V18Z" fill="#62947B" />
 
                             {/* Sprout stem */}
-                            <path d="M18 17V8" stroke="#2D3E36" strokeWidth="2.2" strokeLinecap="round" />
+                            <path d="M18 17V8" stroke="#4F7B64" strokeWidth="2.2" strokeLinecap="round" />
                             {/* Left Leaf */}
-                            <path d="M18 12C14 12 11 9 12 5C15 5 18 8 18 12Z" fill="#4F7B64" stroke="#2D3E36" strokeWidth="1.2" />
+                            <path d="M18 12C14 12 11 9 12 5C15 5 18 8 18 12Z" fill="#4F7B64" stroke="#3A5C4A" strokeWidth="1.2" />
                             {/* Right Leaf */}
-                            <path d="M18 10C22 10 25 7 24 3C21 3 18 6 18 10Z" fill="#7BA88B" stroke="#2D3E36" strokeWidth="1.2" />
+                            <path d="M18 10C22 10 25 7 24 3C21 3 18 6 18 10Z" fill="#7BA88B" stroke="#4F7B64" strokeWidth="1.2" />
                           </svg>
                         );
                       case "flashcards":
@@ -2547,44 +2599,44 @@ export default function StudyTable() {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Clipboard board */}
-                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
+                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
                             {/* Top Clip */}
-                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill="#DDB669" />
-                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill="#C49B4B" />
+                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill="#E8996C" />
+                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill="#D47B4B" />
                             {/* Checkmarks & lines */}
-                            <path d="M10.5 11L12 12.5L15 9.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="11" x2="23" y2="11" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 16L12 17.5L15 14.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="16" x2="23" y2="16" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 21L12 22.5L15 19.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="21" x2="20" y2="21" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 11L12 12.5L15 9.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="11" x2="23" y2="11" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 16L12 17.5L15 14.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="16" x2="23" y2="16" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 21L12 22.5L15 19.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="21" x2="20" y2="21" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="26" cy="24" r="5.5" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
-                            <polyline points="26,21.5 26,24 28,24" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="26" cy="24" r="5.5" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
+                            <polyline points="26,21.5 26,24 28,24" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       case "assessment":
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Notepad body */}
-                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFDF5" stroke="#DDB669" strokeWidth="2" />
+                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
                             {/* Spiral wire rings */}
-                            <rect x="8" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="13" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="18" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="23" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            <rect x="8" y="4" width="2" height="5" rx="1" fill="#D47B4B" />
+                            <rect x="13" y="4" width="2" height="5" rx="1" fill="#D47B4B" />
+                            <rect x="18" y="4" width="2" height="5" rx="1" fill="#D47B4B" />
+                            <rect x="23" y="4" width="2" height="5" rx="1" fill="#D47B4B" />
                             {/* Lines & checks on pad */}
-                            <path d="M9.5 13L11 14.5L14 11.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="13" x2="22" y2="13" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 18L11 19.5L14 16.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="18" x2="20" y2="18" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 23L11 24.5L14 21.5" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="23" x2="19" y2="23" stroke="#DDB669" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 13L11 14.5L14 11.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="13" x2="22" y2="13" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 18L11 19.5L14 16.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="18" x2="20" y2="18" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 23L11 24.5L14 21.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="23" x2="19" y2="23" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
                             {/* Angled pencil writing on pad */}
                             <g transform="translate(19, 13) rotate(35)">
-                              <rect x="0" y="0" width="5" height="13" rx="1" fill="#DDB669" />
-                              <polygon points="0,13 5,13 2.5,18" fill="#F4DC9E" />
-                              <polygon points="1.5,16 3.5,16 2.5,18" fill="#2D3E36" />
+                              <rect x="0" y="0" width="5" height="13" rx="1" fill="#E8996C" />
+                              <polygon points="0,13 5,13 2.5,18" fill="#FDDBCB" />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill="#4F7B64" />
                               <rect x="0" y="-3" width="5" height="3" rx="0.8" fill="#E8996C" />
                             </g>
                           </svg>
@@ -2593,9 +2645,9 @@ export default function StudyTable() {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* 3D Glossy Speech bubble */}
-                            <path d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z" fill="#DDB669" />
+                            <path d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z" fill="#E8996C" />
                             {/* Subtle highlight arc */}
-                            <path d="M9 11C11 8 14.5 7 18 7" stroke="#FFF5D6" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke="#FFF0E6" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
                             {/* White Question mark */}
                             <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                             <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
@@ -2605,16 +2657,16 @@ export default function StudyTable() {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Document outline */}
-                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" strokeLinejoin="round" />
                             {/* Dog-ear fold */}
-                            <path d="M20 3V10H27" fill="#FDDBCB" stroke="#E8996C" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M20 3V10H27" fill="#D4E5DC" stroke="#6F9A7F" strokeWidth="2" strokeLinejoin="round" />
                             {/* Document text lines */}
-                            <line x1="12" y1="9" x2="16" y2="9" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="13" x2="22" y2="13" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="17" x2="20" y2="17" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="21" x2="16" y2="21" stroke="#E8996C" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="9" x2="16" y2="9" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="13" x2="22" y2="13" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="17" x2="20" y2="17" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="21" x2="16" y2="21" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
                             {/* PYQ Badge */}
-                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill="#E8996C" />
+                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill="#6F9A7F" />
                             <text x="23.5" y="27.8" fill="#FFFFFF" fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">PYQ</text>
                           </svg>
                         );
@@ -2626,40 +2678,40 @@ export default function StudyTable() {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Calendar body */}
-                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" />
+                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" />
                             {/* Calendar header bar */}
-                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill="#E8996C" />
+                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill="#6F9A7F" />
                             {/* Spiral binder rings */}
-                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
-                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
-                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#E8996C" strokeWidth="1" />
+                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
+                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
+                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
                             {/* Grid of date checkmarks */}
-                            <path d="M9.5 15L10.5 16L12.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 15L16.5 16L18.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M21.5 15L22.5 16L24.5 14" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M9.5 20L10.5 21L12.5 19" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 20L16.5 21L18.5 19" stroke="#E8996C" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 15L10.5 16L12.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 15L16.5 16L18.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M21.5 15L22.5 16L24.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 20L10.5 21L12.5 19" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 20L16.5 21L18.5 19" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="27" cy="24" r="5.5" fill="#FFF8F5" stroke="#E8996C" strokeWidth="2" />
-                            <polyline points="27,21.5 27,24 29,24" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="27" cy="24" r="5.5" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" />
+                            <polyline points="27,21.5 27,24 29,24" stroke="#6F9A7F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       case "ask":
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             <defs>
-                              <radialGradient id="askAiGrad" cx="35%" cy="35%" r="65%">
-                                <stop offset="0%" stopColor="#BA68C8" />
-                                <stop offset="60%" stopColor="#9C27B0" />
-                                <stop offset="100%" stopColor="#7B1FA2" />
+                              <radialGradient id="saralAiGrad" cx="35%" cy="35%" r="70%">
+                                <stop offset="0%" stopColor="#9BB5A7" />
+                                <stop offset="55%" stopColor="#789A89" />
+                                <stop offset="100%" stopColor="#547163" />
                               </radialGradient>
                             </defs>
-                            {/* Purple circular icon */}
-                            <circle cx="18" cy="17" r="13" fill="url(#askAiGrad)" />
-                            {/* Big 4-point sparkle star in center */}
-                            <path d="M17 9C17 13 13 15 9 15C13 15 17 17 17 21C17 17 21 15 25 15C21 15 17 13 17 9Z" fill="#FFEB3B" />
-                            {/* Small 4-point sparkle star on top right */}
-                            <path d="M24 8C24 10 22 11 20 11C22 11 24 12 24 14C24 12 26 11 28 11C26 11 24 10 24 8Z" fill="#FFF9C4" />
+                            {/* Sage circular background matching screenshot 1 */}
+                            <circle cx="18" cy="17" r="13" fill="url(#saralAiGrad)" />
+                            {/* Big 4-point sparkle star in center (pure white) */}
+                            <path d="M17 9C17 12.8 13.5 15 9.5 15C13.5 15 17 17.2 17 21C17 17.2 20.5 15 24.5 15C20.5 15 17 12.8 17 9Z" fill="#FFFFFF" />
+                            {/* Small 4-point sparkle star on top right (pure white) */}
+                            <path d="M24.5 8C24.5 9.8 22.8 11 21 11C22.8 11 24.5 12.2 24.5 14C24.5 12.2 26.2 11 28 11C26.2 11 24.5 9.8 24.5 8Z" fill="#FFFFFF" />
                           </svg>
                         );
                       default:
@@ -2769,76 +2821,86 @@ export default function StudyTable() {
                       >
                         {/* 1. LEARN SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#2D3E36', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
                             {isSegmented && (
                               <span
                                 title={activeVideo?.title}
-                                style={{ background: '#2D3E36', color: '#fff', borderRadius: '6px', padding: '0 7px', fontSize: '11px', fontWeight: 800 }}
+                                style={{ background: '#4F7B64', color: '#fff', borderRadius: '6px', padding: '0 7px', fontSize: '11px', fontWeight: 800 }}
                               >
                                 Video {videoIndex}/{chapterVideos.length}
                               </span>
                             )}
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("summary", "Read", "#2D3E36")}
-                            {renderNode("podcasts", "Listen", "#2D3E36")}
-                            {renderNode("videos", "Watch", "#2D3E36")}
-                            {renderNode("foundation", "Foundation", "#2D3E36")}
+                            {renderNode("summary", "Read", "#4F7B64")}
+                            {renderNode("podcasts", "Listen", "#4F7B64")}
+                            {renderNode("videos", "Watch", "#4F7B64")}
+                            {renderNode("foundation", "Foundation", "#4F7B64")}
                           </div>
                         </div>
 
                         {/* 2. PRACTICE SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#DDB669', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#E8996C', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Practice
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#DDB669")}
-                            {renderNode("assessment", "Assessment", "#DDB669")}
-                            {renderNode("qbank", "Question Bank", "#DDB669")}
+                            {renderNode("revision_flashcards", "Revise", "#E8996C")}
+                            {renderNode("assessment", "Assessment", "#E8996C")}
+                            {renderNode("qbank", "Question Bank", "#E8996C")}
                           </div>
                         </div>
 
                         {/* 3. PREPARE SECTION */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#E8996C', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#6F9A7F', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Prepare
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("pyq", "PYQ", "#E8996C")}
-                            {renderNode("prep_exam", "Preparation Exam", "#E8996C")}
+                            {renderNode("pyq", "PYQ", "#6F9A7F")}
+                            {renderNode("prep_exam", "Preparation Exam", "#6F9A7F")}
                           </div>
                         </div>
 
                         {/* 4. AI & PIN SECTION */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '22px' }}>
-                          {renderNode("ask", "Ask me", "#9C27B0")}
+                          {renderNode("ask", "Saral", "#547163")}
 
-                          {/* Pin Button */}
+                          {/* Pin Button (Tilted Pushpin from Figma) */}
                           <button
                             type="button"
-                            onClick={() => setIsToolbarOpen(prev => !prev)}
-                            title="Toggle Pin Toolbar"
-                            aria-label="Toggle Pin Toolbar"
+                            onClick={toggleToolbarPin}
+                            title={isToolbarPinned ? "Unpin toolbar (auto-hide on mouse leave)" : "Pin toolbar (keep open)"}
+                            aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
                             style={{
                               width: "36px",
                               height: "36px",
                               borderRadius: "50%",
-                              border: "1.8px solid #334155",
-                              background: "#FFFFFF",
+                              border: "1.8px solid #1E293B",
+                              background: isToolbarPinned ? "#1E293B" : "#FFFFFF",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
                               cursor: "pointer",
-                              color: "#334155",
+                              color: isToolbarPinned ? "#FFFFFF" : "#1E293B",
                               marginBottom: "18px",
                               marginLeft: "4px",
-                              boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                              boxShadow: isToolbarPinned ? "0 2px 8px rgba(30, 41, 59, 0.25)" : "0 1px 3px rgba(0,0,0,0.06)",
                               transition: "all 0.2s ease",
                             }}
                           >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill={isToolbarPinned ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              strokeWidth="1.8"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{ transform: "rotate(-45deg)" }}
+                            >
                               <line x1="12" y1="17" x2="12" y2="22" />
                               <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
                             </svg>
@@ -3021,28 +3083,45 @@ export default function StudyTable() {
             </div>
           )}
 
-          {/* Elegant Centered Pull-Tab (Floating absolute, zero layout shift) */}
+          {/* Top Hover Trigger Area & Centered Pull-Tab */}
           {!isToolbarOpen && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
-            <div
-              onMouseEnter={() => setIsToolbarOpen(true)}
-              title="Hover to open Study Tools"
-              style={{
-                position: "absolute",
-                top: "0",
-                left: "50%",
-                transform: "translateX(-50%) translate3d(0, 0, 0)",
-                width: "120px",
-                height: "10px",
-                borderBottomLeftRadius: "12px",
-                borderBottomRightRadius: "12px",
-                background: activeToolTheme.gradient,
-                boxShadow: activeToolTheme.shadow,
-                cursor: "pointer",
-                zIndex: 99,
-                willChange: "transform, opacity",
-                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-              }}
-            />
+            <>
+              {/* Full-width top hover trigger strip */}
+              <div
+                onMouseEnter={handleToolbarMouseEnter}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "20px",
+                  zIndex: 98,
+                  cursor: "pointer",
+                }}
+              />
+              {/* Elegant Centered Pull-Tab (Floating absolute, zero layout shift) */}
+              <div
+                onMouseEnter={handleToolbarMouseEnter}
+                onClick={handleToolbarMouseEnter}
+                title="Hover or click to open Study Tools"
+                style={{
+                  position: "absolute",
+                  top: "0",
+                  left: "50%",
+                  transform: "translateX(-50%) translate3d(0, 0, 0)",
+                  width: "120px",
+                  height: "10px",
+                  borderBottomLeftRadius: "12px",
+                  borderBottomRightRadius: "12px",
+                  background: activeToolTheme.gradient,
+                  boxShadow: activeToolTheme.shadow,
+                  cursor: "pointer",
+                  zIndex: 99,
+                  willChange: "transform, opacity",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+              />
+            </>
           )}
 
           {/* ── BODY ── */}
@@ -3061,7 +3140,7 @@ export default function StudyTable() {
                     ? "4px 12px 0 12px"
                     : activeTool === "assessment"
                       ? "12px 12px 0 12px"
-                      : (activeTool === "mocktest" || activeTool === "pre_final_test")
+                      : (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask")
                         ? "0px"
                         : "16px 12px",
               display: "flex",
@@ -3073,7 +3152,7 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && (
               <div
                 style={{
                   display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
@@ -3158,8 +3237,8 @@ export default function StudyTable() {
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
-                        padding: 6px 16px; border-radius: 20px;
-                        font-size: 0.82rem; font-weight: 600; cursor: pointer;
+                        padding: 8px 26px; border-radius: 20px;
+                        font-size: 0.84rem; font-weight: 600; cursor: pointer;
                         border: 1.5px solid #cbd5e1;
                         background: #ffffff; color: #475569;
                         transition: all 0.18s ease; white-space: nowrap;
@@ -3293,10 +3372,10 @@ export default function StudyTable() {
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
                     activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" ||
-                    activeTool === "videos"
+                    activeTool === "videos" || activeTool === "ask"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask") ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
@@ -3304,7 +3383,8 @@ export default function StudyTable() {
                     activeTool === "flashcards" ||
                     activeTool === "revision_flashcards" ||
                     activeTool === "assessment" ||
-                    activeTool === "videos"
+                    activeTool === "videos" ||
+                    activeTool === "ask"
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
@@ -3318,24 +3398,22 @@ export default function StudyTable() {
                     ? "hidden"
                     : "auto",
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos")
+                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask")
                     ? "0px"
-                    : activeTool === "ask"
-                      ? "20px"
-                      : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                        ? "0px"
-                        : activeTool === "assessment"
-                          ? "12px"
-                          : activeTool === "podcasts"
-                            ? "16px"
-                            : activeTool === "deep_dive"
-                              ? "8px"
-                              : activeTool === "summary" || activeTool === "detailed"
-                                ? "0px"
-                                : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : activeTool === "ask" ? "20px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : activeTool === "ask" ? "20px" : "16px",
+                    : (activeTool === "flashcards" || activeTool === "revision_flashcards")
+                      ? "0px"
+                      : activeTool === "assessment"
+                        ? "12px"
+                        : activeTool === "podcasts"
+                          ? "16px"
+                          : activeTool === "deep_dive"
+                            ? "8px"
+                            : activeTool === "summary" || activeTool === "detailed"
+                              ? "0px"
+                              : "20px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
@@ -3345,7 +3423,7 @@ export default function StudyTable() {
 
 
             {/* Floating guided flow navigation controls */}
-            {isMoocMode && guidedFlowIdx !== -1 && !isFocusModeActive && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
+            {isMoocMode && guidedFlowIdx !== -1 && !isFocusModeActive && activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && (
 
               <div
                 style={{
