@@ -154,24 +154,34 @@ let cachedCatalog: Catalog | null = null;
 
 export async function getCatalog(): Promise<Catalog> {
   if (cachedCatalog) return cachedCatalog;
-  const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) {
+      return { version: 1, boards: [] };
+    }
+    const data = (await res.json()) as Catalog;
+    cachedCatalog = data;
+    return data;
+  } catch {
     return { version: 1, boards: [] };
   }
-  const data = (await res.json()) as Catalog;
-  cachedCatalog = data;
-  return data;
 }
 
 export async function getManifest(): Promise<Manifest> {
   if (cachedManifest) return cachedManifest;
-  const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
-  if (!res.ok) {
+  try {
+    const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) {
+      return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+    }
+    const data = (await res.json()) as Manifest;
+    cachedManifest = data;
+    return data;
+  } catch {
     return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
   }
-  const data = (await res.json()) as Manifest;
-  cachedManifest = data;
-  return data;
 }
 
 export function resolveSubjectId(id: string): string {
@@ -190,6 +200,57 @@ export function resolveSubjectId(id: string): string {
 export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
   const targetId = resolveSubjectId(subjectId);
   const subject = manifest.subjects.find((s) => s.id === targetId || s.id === subjectId);
+
+  if (targetId === 'ento_131' || targetId.includes('ento')) {
+    const entoChapters: Chapter[] = [
+      {
+        number: 1,
+        name: 'Insect Digestive System & Anatomy',
+        dir: 'chapter_1',
+        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
+        resourceCount: 7,
+      },
+      {
+        number: 2,
+        name: 'Insect Morphology & Structural Taxonomy',
+        dir: 'chapter_2',
+        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'mindmap'],
+        resourceCount: 6,
+      },
+      {
+        number: 3,
+        name: 'Soil Ecology & Environmental Weathering',
+        dir: 'chapter_3',
+        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
+        resourceCount: 7,
+      },
+      {
+        number: 4,
+        name: 'Floral Biology & Pollination Mechanisms',
+        dir: 'chapter_4',
+        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
+        resourceCount: 7,
+      },
+      {
+        number: 11,
+        name: 'Metamorphosis & Diapause',
+        dir: 'chapter_11',
+        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
+        resourceCount: 7,
+      },
+    ];
+
+    const map = new Map<number, Chapter>();
+    for (const ch of entoChapters) {
+      map.set(ch.number, ch);
+    }
+    for (const ch of subject?.chapters || []) {
+      const realName = ch.name === 'Chapter 11' ? 'Metamorphosis & Diapause' : ch.name;
+      map.set(ch.number, { ...ch, name: realName });
+    }
+    return Array.from(map.values()).sort((a, b) => a.number - b.number);
+  }
+
   if (!subject?.chapters) return [];
   // Deduplicate by chapter number, prioritizing entries with resources
   const map = new Map<number, Chapter>();
@@ -343,7 +404,8 @@ async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
   if (cachedCoursesJson) return cachedCoursesJson;
   try {
     const res = await fetch(`${BASE}/courses.json`, { cache: 'no-cache' });
-    if (!res.ok) return {};
+    const ct = res.headers.get('content-type') || '';
+    if (!res.ok || ct.includes('text/html')) return {};
     const data = await res.json();
     cachedCoursesJson = data.courses || {};
     return cachedCoursesJson || {};
