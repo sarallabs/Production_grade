@@ -1,0 +1,1120 @@
+{
+  "subjects": [
+    {
+      "id": "english",
+      "name": "English",
+      "path": "cbse/class_10/english",
+      "boardId": "cbse",
+      "boardName": "Central Board of Secondary Education",
+      "classId": "class_10",
+      "className": "Class X",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "A letter to god",
+          "dir": "chapter_01",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 2,
+          "name": "Nelson mandela: long walk to freedom",
+          "dir": "chapter_02",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 3,
+          "name": "Two stories about flying",
+          "dir": "chapter_03",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 4,
+          "name": "From the diary of anne frank",
+          "dir": "chapter_04",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 5,
+          "name": "Glimpses of india",
+          "dir": "chapter_05",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 6,
+          "name": "Mijbil the otter",
+          "dir": "chapter_06",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 7,
+          "name": "Madam rides the bus",
+          "dir": "chapter_07",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 8,
+          "name": "The sermon at benares",
+          "dir": "chapter_08",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 9,
+          "name": "The proposal",
+          "dir": "chapter_09",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        }
+      ]
+    },
+    {
+      "id": "science",
+      "name": "Science",
+      "path": "cbse/class_10/science",
+      "boardId": "cbse",
+      "boardName": "Central Board of Secondary Education",
+      "classId": "class_10",
+      "className": "Class X",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Chemical reactions and equations",
+          "dir": "chapter_01",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 2,
+          "name": "Acids, bases and salts",
+          "dir": "chapter_02",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 3,
+          "name": "Metals and non-metals",
+          "dir": "chapter_03",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 4,
+          "name": "Carbon and its compounds",
+          "dir": "chapter_04",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 5,
+          "name": "Life processes",
+          "dir": "chapter_05",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 6,
+          "name": "Control and coordination",
+          "dir": "chapter_06",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 7,
+          "name": "How do organisms reproduce?",
+          "dir": "chapter_07",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 8,
+          "name": "Heredity",
+          "dir": "chapter_08",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 9,
+          "name": "Light – reflection and refraction",
+          "dir": "chapter_09",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 12
+        },
+        {
+          "number": 10,
+          "name": "Human eye and colourful world",
+          "dir": "chapter_10",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 11,
+          "name": "Electricity",
+          "dir": "chapter_11",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 12,
+          "name": "Magnetic effects of electric current",
+          "dir": "chapter_12",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 13,
+          "name": "Our environment",
+          "dir": "chapter_13",
+          "completed": [
+            "mindmap",
+            "study_guide",
+            "learning_path",
+            "flashcards",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "question_bank",
+            "course_offerings"
+          ],
+          "resourceCount": 10
+        }
+      ]
+    },
+    {
+      "id": "maths",
+      "name": "Maths",
+      "path": "cbse/class_10/maths",
+      "boardId": "cbse",
+      "boardName": "Central Board of Secondary Education",
+      "classId": "class_10",
+      "className": "Class X",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Real numbers",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap",
+            "podcast_script"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 2,
+          "name": "Polynomials",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap",
+            "podcast_script"
+          ],
+          "resourceCount": 10
+        }
+      ]
+    },
+    {
+      "id": "pubadm_ur",
+      "name": "Public Administration (Urdu Medium)",
+      "path": "manuu/pubadm_ur",
+      "boardId": "manuu",
+      "boardName": "Maulana Azad National Urdu University",
+      "classId": "ma_public_administration",
+      "className": "Public Administration",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Chapter 1",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "study_guide",
+            "flashcards",
+            "mindmap",
+            "summary",
+            "detailed_view",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "neb_x_science",
+      "name": "Science and Technology",
+      "path": "neb_nepal/class_10/Science and Technology",
+      "boardId": "neb_nepal",
+      "boardName": "The National Exams Board, Nepal",
+      "classId": "class_10",
+      "className": "Class X",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Scientific study",
+          "dir": "chapter_01",
+          "completed": [
+            "summary",
+            "study_guide",
+            "question_bank",
+            "quiz",
+            "learning_path",
+            "detailed_view",
+            "podcast_script",
+            "youtube_links",
+            "course_offerings",
+            "mindmap",
+            "flashcards"
+          ],
+          "resourceCount": 11
+        }
+      ]
+    },
+    {
+      "id": "neb_xii_biology",
+      "name": "Biology",
+      "path": "neb_nepal/class_12/biology",
+      "boardId": "neb_nepal",
+      "boardName": "The National Exams Board, Nepal",
+      "classId": "class_12",
+      "className": "Class XII",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Biology chapter 1",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Biology chapter 2",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 6,
+          "name": "Animal tissue",
+          "dir": "chapter_06",
+          "completed": [
+            "question_bank",
+            "mindmap",
+            "flashcards",
+            "quiz",
+            "pyq",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 8
+        }
+      ]
+    },
+    {
+      "id": "neb_xii_chemistry",
+      "name": "Chemistry",
+      "path": "neb_nepal/class_12/chemistry",
+      "boardId": "neb_nepal",
+      "boardName": "The National Exams Board, Nepal",
+      "classId": "class_12",
+      "className": "Class XII",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Volumetric analysis",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Chemistry chapter 2",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "ti_11th_chemistry",
+      "name": "Chemistry",
+      "path": "Telangana_Intermediate/Inter 1st year/11th_chemistry",
+      "boardId": "telangana_intermediate",
+      "boardName": "Telangana State Board of Intermediate Education",
+      "classId": "inter_1st_year",
+      "className": "Inter First Year",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Mole concept",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "flashcards",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Chemical arithmatics",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "ti_11th_physics",
+      "name": "Physics",
+      "path": "Telangana_Intermediate/Inter 1st year/11th_physics",
+      "boardId": "telangana_intermediate",
+      "boardName": "Telangana State Board of Intermediate Education",
+      "classId": "inter_1st_year",
+      "className": "Inter First Year",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Units and measurements",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Motion in a straight line",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "ti_12th_chemistry",
+      "name": "Chemistry",
+      "path": "Telangana_Intermediate/Inter 2nd year/12th_chemistry",
+      "boardId": "telangana_intermediate",
+      "boardName": "Telangana State Board of Intermediate Education",
+      "classId": "inter_2nd_year",
+      "className": "Inter Second Year",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Occurrence and extraction of metals",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Hydrogen and s-block elements",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "ti_12th_physics",
+      "name": "Physics",
+      "path": "Telangana_Intermediate/Inter 2nd year/12th_physics",
+      "boardId": "telangana_intermediate",
+      "boardName": "Telangana State Board of Intermediate Education",
+      "classId": "inter_2nd_year",
+      "className": "Inter Second Year",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Ray optics and optical instruments",
+          "dir": "chapter_01",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        },
+        {
+          "number": 2,
+          "name": "Wave optics",
+          "dir": "chapter_02",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap"
+          ],
+          "resourceCount": 9
+        }
+      ]
+    },
+    {
+      "id": "advanced_financial_management",
+      "name": "Advanced Financial Management",
+      "path": "master_minds/ca_final/advanced_financial_management",
+      "boardId": "master_minds",
+      "boardName": "Master Minds CA Academy",
+      "classId": "ca_final",
+      "className": "CA Final",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Derivatives - futures",
+          "dir": "chapter_01 (derivatives_futures)",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap",
+            "podcast_script"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 2,
+          "name": "Derivatives options",
+          "dir": "chapter_02 (derivatives_options)",
+          "completed": [
+            "summary",
+            "question_bank",
+            "quiz",
+            "detailed_view",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap",
+            "flashcards",
+            "podcast_script"
+          ],
+          "resourceCount": 10
+        },
+        {
+          "number": 15,
+          "name": "Mutual funds",
+          "dir": "chapter_15 (mutual_funds)",
+          "completed": [
+            "question_bank",
+            "detailed_view",
+            "summary",
+            "flashcards",
+            "quiz",
+            "short_podcast",
+            "long_podcast",
+            "video_script",
+            "mindmap",
+            "podcast_script"
+          ],
+          "resourceCount": 10
+        }
+      ]
+    },
+    {
+      "id": "management",
+      "name": "Management",
+      "path": "Nagarjuna_University/MBA",
+      "boardId": "anu_university",
+      "boardName": "Acharya Nagarjuna University",
+      "classId": "mba",
+      "className": "MBA",
+      "chapters": []
+    },
+    {
+      "id": "anu_physics",
+      "name": "Quantum Mechanics",
+      "path": "Nagarjuna_University/physics",
+      "boardId": "anu_university",
+      "boardName": "Acharya Nagarjuna University",
+      "classId": "science",
+      "className": "M.Sc",
+      "chapters": []
+    },
+    {
+      "id": "anu_characterization",
+      "name": "Characterization Techniques",
+      "path": "Nagarjuna_University/physics",
+      "boardId": "anu_university",
+      "boardName": "Acharya Nagarjuna University",
+      "classId": "science",
+      "className": "M.Sc",
+      "chapters": []
+    },
+    {
+      "id": "ento_131",
+      "name": "Entomology",
+      "path": "angrau",
+      "boardId": "angrau_university",
+      "boardName": "Acharya N.G. Ranga Agricultural University",
+      "classId": "bsc_agri",
+      "className": "B.Sc. Agriculture",
+      "chapters": [
+        {
+          "number": 1,
+          "name": "Digestive system",
+          "dir": "chapter_01",
+          "completed": [
+            "videos",
+            "flashcards",
+            "assessment",
+            "summary",
+            "quick_study",
+            "detailed",
+            "detailed_notes",
+            "revise",
+            "mocktest",
+            "prep_test",
+            "pre_final_test",
+            "certification_exam",
+            "qbank",
+            "ask",
+            "podcasts",
+            "question_bank",
+            "quiz",
+            "detailed_view",
+            "youtube_links",
+            "mindmap",
+            "key_takeaways",
+            "study_plan",
+            "unified_question_bank",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 26
+        },
+        {
+          "number": 2,
+          "name": "Metamorphosis",
+          "dir": "chapter_02",
+          "completed": [
+            "videos",
+            "flashcards",
+            "assessment",
+            "summary",
+            "quick_study",
+            "detailed",
+            "detailed_notes",
+            "revise",
+            "mocktest",
+            "prep_test",
+            "pre_final_test",
+            "certification_exam",
+            "qbank",
+            "ask",
+            "podcasts",
+            "question_bank",
+            "quiz",
+            "detailed_view",
+            "youtube_links",
+            "mindmap",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 23
+        },
+        {
+          "number": 3,
+          "name": "Weathering",
+          "dir": "chapter_03",
+          "completed": [
+            "videos",
+            "flashcards",
+            "assessment",
+            "summary",
+            "quick_study",
+            "detailed",
+            "detailed_notes",
+            "revise",
+            "mocktest",
+            "prep_test",
+            "pre_final_test",
+            "certification_exam",
+            "qbank",
+            "ask",
+            "podcasts",
+            "foundation",
+            "question_bank",
+            "quiz",
+            "detailed_view",
+            "youtube_links",
+            "mindmap",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 24
+        },
+        {
+          "number": 4,
+          "name": "Pollination",
+          "dir": "chapter_04",
+          "completed": [
+            "videos",
+            "flashcards",
+            "assessment",
+            "summary",
+            "quick_study",
+            "detailed",
+            "detailed_notes",
+            "revise",
+            "mocktest",
+            "prep_test",
+            "pre_final_test",
+            "certification_exam",
+            "qbank",
+            "ask",
+            "podcasts",
+            "foundation",
+            "question_bank",
+            "quiz",
+            "detailed_view",
+            "youtube_links",
+            "mindmap",
+            "podcast_script",
+            "long_podcast",
+            "short_podcast"
+          ],
+          "resourceCount": 24
+        }
+      ]
+    }
+  ],
+  "resourceTabs": [
+    [
+      "summary.md",
+      "Summary"
+    ],
+    [
+      "study_guide.md",
+      "Study Guide"
+    ],
+    [
+      "question_bank.md",
+      "Question Bank"
+    ],
+    [
+      "flashcards",
+      "Flashcards"
+    ],
+    [
+      "mindmap.md",
+      "Mindmap"
+    ],
+    [
+      "learning_path.md",
+      "Learning Path"
+    ],
+    [
+      "detailed_view.md",
+      "Detailed Notes"
+    ],
+    [
+      "podcast_script.md",
+      "Podcast Script"
+    ],
+    [
+      "youtube_links.md",
+      "YouTube Links"
+    ],
+    [
+      "course_offerings.md",
+      "Course Info"
+    ]
+  ]
+}

@@ -11,6 +11,7 @@ import {
   getResourceContent,
   getSubjectBaseUrl,
   DifficultyLevel,
+  GCS_BACKEND_SUBJECTS,
 } from "@/data/contentRepository";
 import {
   useAudioProgress,
@@ -178,7 +179,26 @@ export default function PodcastsView({
   // Collapse track grid immediately when an initialMcIndex is supplied (coming from mindmap)
   const [isTrackGridExpanded, setIsTrackGridExpanded] = useState(initialMcIndex == null);
 
-  const MICROCASTS = useMemo(() => isNebBiologyChap6 ? [
+  const MICROCASTS = useMemo(() => {
+    // GCS subjects use canonical microcast naming
+    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      // Use hardcoded titles from the original MVP but canonical filenames
+      const gcsTitles: Record<string, Record<number, string[]>> = {
+        ento_131: {
+          1: ["Anatomy of the three-part insect gut", "Inside the Insect Foregut and Gizzard", "How Insect Digestion Activates Bt Toxins", "How insects recycle water from waste", "How insects digest wood and sap"],
+          2: ["Three Categories of Insect Metamorphosis", "Identify Insect Larvae to Protect Crops", "Insect pupal structures and escape tactics", "Blister beetles live multiple larval lives", "Controlling Pests with Hormones and Diapause", "Predicting insect diapause for crop protection"],
+          3: ["How weathering transforms bedrock into regolith", "Mechanical forces breaking down Indian landscapes", "How life turns solid rock into soil", "Mathematical Forces Turning Rock into Soil"],
+          4: ["Floral architecture and double fertilization", "Self-Pollination Mechanisms in Indian Crops", "How Indian crops force cross pollination", "How nature pollinates India's crops", "Choosing and Arranging Orchard Pollinizers", "How Parthenocarpy Creates Seedless Fruit"],
+        },
+      };
+      const titles = gcsTitles[subjectId]?.[chapterNumber] ?? [];
+      return titles.map((title, i) => ({
+        title: `${i + 1}. ${title}`,
+        audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
+        txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
+      }));
+    }
+    return isNebBiologyChap6 ? [
     { title: "1. Histology pioneers and the first tissues", audio: "MC1_Histology_pioneers_and_the_first_tissues.mp3", txt: "MC1_Histology_pioneers_and_the_first_tissues.txt" },
     { title: "2. How Avascular Epithelium Survives and Stays Intact", audio: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.mp3", txt: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.txt" },
     { title: "3. Simple Epithelium Types and Functions", audio: "MC3_Simple_Epithelium_Types_and_Functions.mp3", txt: "MC3_Simple_Epithelium_Types_and_Functions.txt" },
@@ -218,9 +238,14 @@ export default function PodcastsView({
     { title: "6. How Parthenocarpy Creates Seedless Fruit", audio: "6. How Parthenocarpy Creates Seedless Fruit.m4a", txt: "6. How Parthenocarpy Creates Seedless Fruit.txt" }
   ] : [
     { title: "1. Topic Overview", audio: "MC1.mp3", txt: "MC1.txt" }
-  ], [isNebBiologyChap6, chapterNumber]);
+  ];
+  }, [isNebBiologyChap6, chapterNumber, subjectId]);
 
-  const DETAILED_LISTENS = useMemo(() => isNebBiologyChap6 ? [
+  const DETAILED_LISTENS = useMemo(() => {
+    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      return [{ title: "1. Chapter Complete Coverage", audio: "long_podcast.m4a", txt: "long_podcast.md" }];
+    }
+    return isNebBiologyChap6 ? [
     { title: "1. Animal Tissue Complete Coverage", audio: "DL_Animal Tissue Podcast.mp3", txt: "DL_Animal Tissue Podcast.txt" }
   ] : isAngrauChap1 ? [
     { title: "1. Digestive System Complete Coverage", audio: "Digestive system Long Podcast.m4a", txt: "Digestive system Long Podcast.txt" }
@@ -232,9 +257,14 @@ export default function PodcastsView({
     { title: "1. Pollination Complete Coverage", audio: "Long Podcast Pollination.m4a", txt: "Long Podcast Pollination.txt" }
   ] : [
     { title: "1. Chapter Complete Coverage", audio: "DL.mp3", txt: "DL.txt" }
-  ], [isNebBiologyChap6, chapterNumber]);
+  ];
+  }, [isNebBiologyChap6, chapterNumber, subjectId]);
 
-  const QUICK_LISTENS = useMemo(() => isNebBiologyChap6 ? [
+  const QUICK_LISTENS = useMemo(() => {
+    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      return [{ title: "1. Chapter Quick Recap", audio: "short_podcast.m4a", txt: "short_podcast.md" }];
+    }
+    return isNebBiologyChap6 ? [
     { title: "1. The Four Pillars of Animal Tissue", audio: "QL_The_Four_Pillars_of_Animal_Tissue.mp3", txt: "QL_The_Four_Pillars_of_Animal_Tissue.txt" }
   ] : isAngrauChap1 ? [
     { title: "1. Digestive System Quick Recap", audio: "Digestive system Short Podcast.m4a", txt: "Digestive system Short Podcast.txt" }
@@ -246,7 +276,8 @@ export default function PodcastsView({
     { title: "1. Pollination Quick Recap", audio: "Short Podcast Pollination.m4a", txt: "Short Podcast Pollination.txt" }
   ] : [
     { title: "1. Chapter Quick Recap", audio: "QL.mp3", txt: "QL.txt" }
-  ], [isNebBiologyChap6, chapterNumber]);
+  ];
+  }, [isNebBiologyChap6, chapterNumber, subjectId]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -476,6 +507,38 @@ export default function PodcastsView({
 
   /** Resolve filenames per subject naming convention */
   const getFileNames = (track: string) => {
+    // ── GCS Cloud Run subjects: canonical naming ──
+    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      const gcsBasePath = `${subjectBaseUrl}/${chapterDir}/podcasts`;
+      if (track === "dl") {
+        const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0];
+        return {
+          audio: `${gcsBasePath}/${dl.audio}`,
+          transcript: `${gcsBasePath}/${dl.txt}`,
+        };
+      }
+      if (track === "ql") {
+        const ql = QUICK_LISTENS[selectedQl] || QUICK_LISTENS[0];
+        return {
+          audio: `${gcsBasePath}/${ql.audio}`,
+          transcript: `${gcsBasePath}/${ql.txt}`,
+        };
+      }
+      if (track === "mc") {
+        const mc = MICROCASTS[selectedMc] || MICROCASTS[0];
+        return {
+          audio: `${gcsBasePath}/${mc.audio}`,
+          transcript: `${gcsBasePath}/${mc.txt}`,
+        };
+      }
+      // Fallback for old "long"/"short" track keys
+      const fileName = track === "long" ? "long_podcast" : "short_podcast";
+      return {
+        audio: `${gcsBasePath}/${fileName}.m4a`,
+        transcript: `${gcsBasePath}/${fileName}.md`,
+      };
+    }
+
     if (subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts) {
       const nebBasePath = `${subjectBaseUrl}/${chapterDir}/Podcasts`;
       if (track === "dl") {
@@ -589,7 +652,7 @@ export default function PodcastsView({
       .catch(() => {
         setAvailable(false);
       });
-  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc]);
+  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl]);
 
   const isTrackMount = useRef(true);
   // ── Reset player when track selection changes ──
@@ -606,7 +669,7 @@ export default function PodcastsView({
       setAudioDuration(0);
       audio.load();
     }
-  }, [selectedTrack, selectedMc]);
+  }, [selectedTrack, selectedMc, selectedDl, selectedQl]);
 
   // ── Reset player when persona changes ──
   useEffect(() => {
@@ -757,6 +820,9 @@ export default function PodcastsView({
   const handlePlay = () => {
     const audio = audioRef.current;
     if (audio) {
+      if (audio.error) {
+        audio.load();
+      }
       audio.play().catch((e) => console.warn("Play failed:", e));
       // State update handled by the 'play' event listener
     }
@@ -1392,7 +1458,8 @@ export default function PodcastsView({
             <audio
               ref={audioRef}
               src={currentFiles.audio}
-              preload="auto"
+              crossOrigin="anonymous"
+              preload="metadata"
               onLoadedMetadata={(e) => {
                 const d = (e.target as HTMLAudioElement).duration;
                 if (d && isFinite(d)) { audioDurationRef.current = d; setAudioDuration(d); }

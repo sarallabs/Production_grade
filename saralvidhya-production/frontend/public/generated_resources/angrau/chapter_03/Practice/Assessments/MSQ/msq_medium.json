@@ -1,0 +1,147 @@
+{
+  "chapter": "Lecture 5: Weathering of Rocks and Minerals \u2014 Types, Physical & Biological Agents",
+  "subject": "agricultural_chemistry_and_soil_science",
+  "difficulty": "medium",
+  "question_type": "multiple_select",
+  "total_questions": 10,
+  "questions": [
+    {
+      "number": 1,
+      "stem": "In evaluating rock permeability and lithological weathering rates, which statements are correct? (Select all that apply)",
+      "options": {
+        "A": "Permeability is the most critical single lithological factor governing weathering rates.",
+        "B": "Porous coarse-textured Sandstone weathers more rapidly than dense Basalt.",
+        "C": "Polymineralic Basalt weathers more rapidly than massive crystalline Granite.",
+        "D": "Coarse gravel deposits weather faster than fine volcanic ash because gravels have larger pores.",
+        "E": "Fine volcanic ash weathers rapidly due to massive internal porosity and surface area."
+      },
+      "correct_answers": "A, B, C, E",
+      "bloom_level": "Analyze",
+      "rationale": "Permeability controls weathering; Sandstone > Basalt > Granite in decay rate; volcanic ash weathers faster than gravels. Statement D is false because water flows between rather than through gravels. (Key Takeaway: Lithological permeability and grain porosity govern weathering velocity.)"
+    },
+    {
+      "number": 2,
+      "stem": "What quantitative thermal expansion relationships exist among rock-forming minerals and rock types? (Select all that apply)",
+      "options": {
+        "A": "Cubical expansion of Quartz is precisely twice (2.0x) that of Feldspars.",
+        "B": "Linear expansion of Granite is half (0.5x) that of Sandstone.",
+        "C": "Dark-colored ferromagnesian minerals absorb heat faster than light-colored minerals.",
+        "D": "Feldspar cubical expansion is four times greater than quartz.",
+        "E": "Differential mineral expansion produces internal microfractures along crystal boundaries."
+      },
+      "correct_answers": "A, B, C, E",
+      "bloom_level": "Apply",
+      "rationale": "Quartz cubical expansion = 2x Feldspar; Granite linear = 0.5x Sandstone; dark rocks heat faster; thermal differential causes microfractures. Statement D is inverted. (Key Takeaway: Differential mineral expansion generates internal shear stresses along grain boundaries.)"
+    },
+    {
+      "number": 3,
+      "stem": "Which quantitative stream velocity thresholds and sediment transport relationships are scientifically correct? (Select all that apply)",
+      "options": {
+        "A": "15 cm/s current transports fine sand.",
+        "B": "30 cm/s current transports gravel.",
+        "C": "1.2 m/s current transports heavy stones and pebbles.",
+        "D": "9.0 m/s current transports boulders weighing several tonnes.",
+        "E": "Mechanical rock disintegration is vastly greater near a river's source than at its mouth."
+      },
+      "correct_answers": "A, B, C, D, E (All options correct)",
+      "bloom_level": "Analyze",
+      "rationale": "All 4 fluvial velocity thresholds (15 cm/s, 30 cm/s, 1.2 m/s, 9.0 m/s) and the headwater disintegration gradient are verified physical principles. (Key Takeaway: Fluvial sediment carrying power scales precisely with current velocity.)"
+    },
+    {
+      "number": 4,
+      "stem": "What physical and quantitative facts characterize Frost Wedging (Cryofracturing)? (Select all that apply)",
+      "options": {
+        "A": "Liquid water expands by precisely 9 percent (9%) upon freezing into ice.",
+        "B": "Confined freezing water generates a lateral bursting pressure of 1465 Mg m\u207b\u00b2 (1465 tonnes/m\u00b2).",
+        "C": "It is most effective in alpine and temperate regions with frequent diurnal freeze-thaw cycles.",
+        "D": "Ice contraction upon freezing pulls rock joint walls together.",
+        "E": "Frost wedging generates extensive scree and talus deposits at cliff bases."
+      },
+      "correct_answers": "A, B, C, E",
+      "bloom_level": "Apply",
+      "rationale": "Water expands 9% upon freezing, exerting 1465 Mg m\u207b\u00b2 bursting pressure in alpine freeze-thaw zones, creating talus slopes. Ice expands rather than contracts. (Key Takeaway: Confined 9% ice expansion generates 1465 Mg m\u207b\u00b2 bursting pressure in freeze-thaw environments.)"
+    },
+    {
+      "number": 5,
+      "stem": "Which statements accurately explain Eolian (Wind) Weathering and Sandblasting mechanics? (Select all that apply)",
+      "options": {
+        "A": "The sediment-carrying capacity of wind increases proportional to the 6th power of its velocity (v\u2076 law).",
+        "B": "Heavy abrasive quartz sand grains saltate primarily within the lowest 1 meter above the ground.",
+        "C": "Differential vertical sandblasting sculpts Mushroom Rocks in arid desert landscapes.",
+        "D": "Mushroom Rocks are prominent in the Aravalis and Thar Desert of Rajasthan.",
+        "E": "Wind carrying capacity is strictly inversely proportional to wind speed."
+      },
+      "correct_answers": "A, B, C, D",
+      "bloom_level": "Analyze",
+      "rationale": "Wind carrying capacity follows the v\u2076 law; saltating sand in the bottom 1m undercuts pedestals, forming mushroom rocks in the Aravalis/Thar. Statement E is false. (Key Takeaway: Wind carrying capacity follows the v^6 power law, sculpting desert mushroom rocks.)"
+    },
+    {
+      "number": 6,
+      "stem": "How do living organisms drive chemical decomposition of minerals in Biological Weathering? (Select all that apply)",
+      "options": {
+        "A": "Plant roots secrete low-molecular-weight organic acids (citric, oxalic, malic).",
+        "B": "Root-secreted organic chelating ligands bind and extract metal cations (Fe\u00b3\u207a, Al\u00b3\u207a, Ca\u00b2\u207a) from silicate lattices.",
+        "C": "Microbial respiration elevates soil pore CO\u2082 partial pressure, forming carbonic acid (H\u2082CO\u2083).",
+        "D": "Subterranean termites and ants secrete biochemical formic acid (HCOOH).",
+        "E": "Living plant roots absorb pure solid granite crystals directly into leaf tissue."
+      },
+      "correct_answers": "A, B, C, D",
+      "bloom_level": "Analyze",
+      "rationale": "Root acids, chelating ligands, microbial carbonic acid, and termite/ant formic acid drive chemical mineral decomposition. Plants cannot absorb solid rock crystals. (Key Takeaway: Biological chemical decomposition is driven by root exudates, microbial carbonic acid, and insect formic acid.)"
+    },
+    {
+      "number": 7,
+      "stem": "Which activities illustrate the role of Fauna (animals and humans) in rock and mineral weathering? (Select all that apply)",
+      "options": {
+        "A": "Anthropogenic civil engineering (rock blasting, mining, quarrying for highways and dams)",
+        "B": "Burrowing fauna fracturing rock horizons and aerating subsoils",
+        "C": "Animal metabolic excreta reacting chemically with mineral surfaces",
+        "D": "Termites constructing subterranean galleries and transporting deep mineral particles to topsoil",
+        "E": "Fauna converting atmospheric nitrogen directly into liquid lava"
+      },
+      "correct_answers": "A, B, C, D",
+      "bloom_level": "Analyze",
+      "rationale": "Human blasting/mining, animal burrowing, excreta reactions, and termite pedoturbation are verified faunal weathering mechanisms. Lava creation is volcanic. (Key Takeaway: Faunal weathering encompasses anthropogenic blasting, burrowing fracture, and termite pedoturbation.)"
+    },
+    {
+      "number": 8,
+      "stem": "In the context of soil genesis, how does the weathering feedback loop operate? (Select all that apply)",
+      "options": {
+        "A": "Physical disintegration fragments rock, expanding total specific surface area.",
+        "B": "Expanded surface area accelerates chemical hydrolysis and dissolution kinetics.",
+        "C": "Released nutrient cations support biological colonization by pioneer plants and microbes.",
+        "D": "Biological acid secretion further accelerates chemical and mechanical breakdown.",
+        "E": "The feedback loop causes all soil to vanish into deep space."
+      },
+      "correct_answers": "A, B, C, D",
+      "bloom_level": "Analyze",
+      "rationale": "Physical fragmentation -> surface area expansion -> chemical hydrolysis -> nutrient release -> biological colonization -> further breakdown forms the self-reinforcing feedback loop. (Key Takeaway: Weathering processes form a self-reinforcing feedback cycle driving soil genesis.)"
+    },
+    {
+      "number": 9,
+      "stem": "Which of the following are essential soil plant nutrients released through primary mineral weathering? (Select all that apply)",
+      "options": {
+        "A": "Potassium (K\u207a) from orthoclase feldspar and micas",
+        "B": "Calcium (Ca\u00b2\u207a) and Magnesium (Mg\u00b2\u207a) from plagioclase, pyroxenes, and amphiboles",
+        "C": "Phosphorus (as orthophosphate, H\u2082PO\u2084\u207b) from apatite",
+        "D": "Pure radioactive plutonium (Pu\u00b2\u00b3\u2079)"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Weathering of primary silicates and apatite supplies essential plant nutrients (K, Ca, Mg, P). Plutonium is a synthetic transuranic element. (Key Takeaway: Primary mineral weathering is the original natural source of essential plant nutrients.)"
+    },
+    {
+      "number": 10,
+      "stem": "What geomorphic and lithological outcomes result from Exfoliation on crystalline rock outcrops? (Select all that apply)",
+      "options": {
+        "A": "Formation of rounded, dome-shaped inselbergs and exfoliation domes",
+        "B": "Concentric peeling of curved rock sheets parallel to the surface",
+        "C": "Accumulation of curved spalled rock fragments at the base of slopes",
+        "D": "Instantaneous transmutation of basalt into pure limestone"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Exfoliation produces rounded domes, curved spalling sheets, and basal talus debris in massive granite and basalt. Transmutation into limestone is impossible. (Key Takeaway: Exfoliation shapes rounded granite/basalt domes and spalls curved rock sheets.)"
+    }
+  ]
+}

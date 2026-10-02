@@ -1,0 +1,210 @@
+{
+  "metadata": {
+    "source_file": "4.Blister beetles live multiple larval lives.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\chapter_11_metamorphosis\\Podcast\\4.Blister beetles live multiple larval lives.m4a",
+    "file_size_bytes": 3767237,
+    "duration_seconds": 117.03,
+    "duration_formatted": "00:01:57",
+    "word_count": 257,
+    "character_count": 1688,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:01:02.991246",
+    "total_segments": 24
+  },
+  "full_text": "This is the brief on hypermetamorphosis. Well, today we're pulling from Dr. Chirikuri Srinivasa Rao's Angrow Fundamentals of Entomology Lectures. We're exploring an extreme evolutionary plot twist where an insect doesn't just change from larva to adult, but actually shapeshifts into completely different larval bodies along the way. Imagine starting school as an active track athlete and suddenly transforming into a soft, sedentary bookworm halfway through the year. Sounds crazy, right? First, let's lay down the facts. 1. Hypermetamorphosis defined. Specialization of complete metamorphosis passing through two or more distinct larval types in successive instars. Parasitoid life history. Active host-seeking, followed by sedentary feeding in a host cell. 2. We see this incredible journey in our Indian 2. Life cycle of blister beetles, Melode. Stage 1. Egg, in soil near grasshopper egg pods or bee nests. Stage 2. Triungulin first instar, slender Campodeiform larva with three claws, climbs flowers to hitchhike on bees, or burrows in soil to feed on grasshopper eggs. Finally, once inside the host, the drama continues. Stage 3. Grub 24th instars. Soft, fleshy, scarabiform grub, gorging on host stores. Stage 4. Coarctate, pseudopupa, 5th instar. Rigid, dark, dormant, overwintering shell. Stages 5-7. Active 6 larva, exerate pupa. Adult cantharidin beetle. In short, hypermetamorphosis packs multiple, wildly different body plans into a single Insects youth, perfectly tailored for finding a host and then gorging on its resources. Next time you see a beautifully banded blister beetle resting on a flower, ask yourself just how many different lives it had to live to get there.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 3.12,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:03",
+      "text": "This is the brief on hypermetamorphosis."
+    },
+    {
+      "id": 1,
+      "start": 3.58,
+      "end": 9.52,
+      "start_formatted": "00:00:03",
+      "end_formatted": "00:00:09",
+      "text": "Well, today we're pulling from Dr. Chirikuri Srinivasa Rao's Angrow Fundamentals of Entomology"
+    },
+    {
+      "id": 2,
+      "start": 9.52,
+      "end": 9.98,
+      "start_formatted": "00:00:09",
+      "end_formatted": "00:00:09",
+      "text": "Lectures."
+    },
+    {
+      "id": 3,
+      "start": 10.26,
+      "end": 15.28,
+      "start_formatted": "00:00:10",
+      "end_formatted": "00:00:15",
+      "text": "We're exploring an extreme evolutionary plot twist where an insect doesn't just change"
+    },
+    {
+      "id": 4,
+      "start": 15.28,
+      "end": 20.96,
+      "start_formatted": "00:00:15",
+      "end_formatted": "00:00:20",
+      "text": "from larva to adult, but actually shapeshifts into completely different larval bodies along"
+    },
+    {
+      "id": 5,
+      "start": 20.96,
+      "end": 21.34,
+      "start_formatted": "00:00:20",
+      "end_formatted": "00:00:21",
+      "text": "the way."
+    },
+    {
+      "id": 6,
+      "start": 22,
+      "end": 27,
+      "start_formatted": "00:00:22",
+      "end_formatted": "00:00:27",
+      "text": "Imagine starting school as an active track athlete and suddenly transforming into a soft,"
+    },
+    {
+      "id": 7,
+      "start": 27.3,
+      "end": 29.36,
+      "start_formatted": "00:00:27",
+      "end_formatted": "00:00:29",
+      "text": "sedentary bookworm halfway through the year."
+    },
+    {
+      "id": 8,
+      "start": 29.36,
+      "end": 32.68,
+      "start_formatted": "00:00:29",
+      "end_formatted": "00:00:32",
+      "text": "Sounds crazy, right? First, let's lay down the facts."
+    },
+    {
+      "id": 9,
+      "start": 33.34,
+      "end": 40.1,
+      "start_formatted": "00:00:33",
+      "end_formatted": "00:00:40",
+      "text": "1. Hypermetamorphosis defined. Specialization of complete metamorphosis passing through two or more"
+    },
+    {
+      "id": 10,
+      "start": 40.1,
+      "end": 46.5,
+      "start_formatted": "00:00:40",
+      "end_formatted": "00:00:46",
+      "text": "distinct larval types in successive instars. Parasitoid life history. Active host-seeking,"
+    },
+    {
+      "id": 11,
+      "start": 46.86,
+      "end": 53.16,
+      "start_formatted": "00:00:46",
+      "end_formatted": "00:00:53",
+      "text": "followed by sedentary feeding in a host cell. 2. We see this incredible journey in our Indian"
+    },
+    {
+      "id": 12,
+      "start": 53.16,
+      "end": 57.44,
+      "start_formatted": "00:00:53",
+      "end_formatted": "00:00:57",
+      "text": "2. Life cycle of blister beetles, Melode."
+    },
+    {
+      "id": 13,
+      "start": 58.26,
+      "end": 62.96,
+      "start_formatted": "00:00:58",
+      "end_formatted": "00:01:02",
+      "text": "Stage 1. Egg, in soil near grasshopper egg pods or bee nests."
+    },
+    {
+      "id": 14,
+      "start": 63.62,
+      "end": 69.3,
+      "start_formatted": "00:01:03",
+      "end_formatted": "00:01:09",
+      "text": "Stage 2. Triungulin first instar, slender Campodeiform larva with three claws,"
+    },
+    {
+      "id": 15,
+      "start": 69.84,
+      "end": 74.42,
+      "start_formatted": "00:01:09",
+      "end_formatted": "00:01:14",
+      "text": "climbs flowers to hitchhike on bees, or burrows in soil to feed on grasshopper eggs."
+    },
+    {
+      "id": 16,
+      "start": 75.1,
+      "end": 77.94,
+      "start_formatted": "00:01:15",
+      "end_formatted": "00:01:17",
+      "text": "Finally, once inside the host, the drama continues."
+    },
+    {
+      "id": 17,
+      "start": 77.94,
+      "end": 85.36,
+      "start_formatted": "00:01:17",
+      "end_formatted": "00:01:25",
+      "text": "Stage 3. Grub 24th instars. Soft, fleshy, scarabiform grub, gorging on host stores."
+    },
+    {
+      "id": 18,
+      "start": 85.98,
+      "end": 92.4,
+      "start_formatted": "00:01:25",
+      "end_formatted": "00:01:32",
+      "text": "Stage 4. Coarctate, pseudopupa, 5th instar. Rigid, dark, dormant, overwintering shell."
+    },
+    {
+      "id": 19,
+      "start": 93.12,
+      "end": 98.82,
+      "start_formatted": "00:01:33",
+      "end_formatted": "00:01:38",
+      "text": "Stages 5-7. Active 6 larva, exerate pupa. Adult cantharidin beetle."
+    },
+    {
+      "id": 20,
+      "start": 99.54,
+      "end": 104.72,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:44",
+      "text": "In short, hypermetamorphosis packs multiple, wildly different body plans into a single"
+    },
+    {
+      "id": 21,
+      "start": 104.72,
+      "end": 109.3,
+      "start_formatted": "00:01:44",
+      "end_formatted": "00:01:49",
+      "text": "Insects youth, perfectly tailored for finding a host and then gorging on its resources."
+    },
+    {
+      "id": 22,
+      "start": 109.88,
+      "end": 113.22,
+      "start_formatted": "00:01:49",
+      "end_formatted": "00:01:53",
+      "text": "Next time you see a beautifully banded blister beetle resting on a flower,"
+    },
+    {
+      "id": 23,
+      "start": 113.74,
+      "end": 116.9,
+      "start_formatted": "00:01:53",
+      "end_formatted": "00:01:56",
+      "text": "ask yourself just how many different lives it had to live to get there."
+    }
+  ]
+}

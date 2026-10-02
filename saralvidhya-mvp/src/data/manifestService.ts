@@ -4,6 +4,28 @@ export const BASE = '/generated_resources';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/assets` : '';
 
 /**
+ * Cloud Run backend base URL (GCS-backed canonical content).
+ * Set VITE_GCS_API_BASE in .env to override for local dev.
+ */
+export const GCS_API_BASE =
+  import.meta.env.VITE_GCS_API_BASE ||
+  'https://saralvidhya-api-193782571555.asia-south1.run.app';
+
+/**
+ * Maps MVP subject IDs → {university}/{subject} path in the Cloud Run API.
+ * Add entries here as more subjects are migrated to GCS.
+ */
+export const GCS_SUBJECT_MAP: Record<string, string> = {
+  ento_131: 'angrau/entomology',
+};
+
+/**
+ * Subject IDs whose content is served by the GCS Cloud Run backend.
+ * These bypass /generated_resources and hit the canonical API instead.
+ */
+export const GCS_BACKEND_SUBJECTS = new Set(Object.keys(GCS_SUBJECT_MAP));
+
+/**
  * Subjects whose live study content is served by the FastAPI backend
  * (Supabase-backed).
  */
@@ -206,6 +228,12 @@ export function getSubjectResourcePath(subjectId: string): string {
 }
 
 export function getSubjectBaseUrl(subjectId: string): string {
+  // GCS subjects are served by the Cloud Run API — return its base path.
+  // PodcastsView appends `/${chapterDir}/podcasts/filename.m4a` which maps
+  // directly to the canonical API route: /api/content/{uni}/{subj}/{ch}/podcasts/...
+  if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
+    return `${GCS_API_BASE}/api/content/${GCS_SUBJECT_MAP[subjectId]}`;
+  }
   return `${BASE}/${getSubjectResourcePath(subjectId)}`;
 }
 

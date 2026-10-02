@@ -1,0 +1,78 @@
+# Lecture 5: Weathering of Rocks and Minerals — Academic Mindmap
+
+> **Subject:** ANGRAU | **Chapter:** Lec-5 Weathering  
+> **Depth:** $D_{max} = 4$ | **Topology:** Pruned High-Density Conceptual Architecture  
+> **Source Documents:** `Lec_5_Weathering_Docx.md` & `Lec_5_Weathering (ppt).md`
+
+---
+
+## 1. Visual Mindmap (Mermaid)
+
+```mermaid
+mindmap
+  root((Lecture 5: Weathering of Rocks and Minerals))
+    ["1. Fundamentals & Regolith Genesis"]
+      ["Definition & Mineral Dynamics"]
+        Mechanical Disintegration without chemical alteration
+        Chemical Decomposition breaking complex minerals into simpler compounds
+        ["Regolith Formation (Unconsolidated weathered mantle above bedrock)"]
+        ["Transformation & Synthesis (Destruction + Clay/Oxide mineral synthesis)"]
+      The Three Core Weathering Processes
+        ["Physical Weathering (Mechanical disintegration into smaller fragments)"]
+        ["Chemical Weathering (Decomposition via chemical alteration)"]
+        ["Biological Weathering (Simultaneous disintegration and decomposition)"]
+        ["Synergistic Reaction Chain (Continuous feedback & surface area amplification)"]
+    ["2. Physical Weathering (Mechanical Agents)"]
+      ["Agent 1 - Rock Permeability & Structure"]
+        Permeability as Primary Rate Factor
+        ["Rock Resistance Hierarchy (Porous Sandstone > Basalt > Granite)"]
+        ["Grain Size Dynamics (Fast-weathering Volcanic Ash vs Slow-percolating Gravels)"]
+      ["Agent 2 - Temperature Variations & Exfoliation"]
+        ["Diurnal Thermal Stresses (Daytime heating and nighttime cooling cycles)"]
+        ["Differential Mineral Expansion (Quartz cubical = 2x Feldspar | Granite linear = 0.5x Sandstone)"]
+        ["Thermal Absorption (Dark rocks heat faster than light rocks)"]
+        ["Exfoliation Mechanism (Concentric onion peeling in Basalt and Granite domes)"]
+      ["Agent 3 - Water Action, Glaciers & Frost Wedging"]
+        ["Hydraulic Transport Thresholds (15cm/s sand, 30cm/s gravel, 1.2m/s stones, 9.0m/s boulders)"]
+        ["River Erosion Gradient (Disintegration greater near source than mouth)"]
+        ["Frost Wedging Dynamics (9% ice expansion exerting 1465 Mg/m2 bursting pressure)"]
+        ["Glacial Bedrock Action (Moving glaciers cutting, crushing and grinding bedrock)"]
+      ["Agent 4 - Wind Action & Sandblasting"]
+        Altitude and Latitude Velocity Dependence
+        ["Exponential Carrying Power Law (Transport capacity proportional to v6 / r6)"]
+        ["Desert Sandblasting Abrasion (Suspended sand etching exposed rocks)"]
+        ["Landform Sculpting (Mushroom rocks in Aravalis and Thar Desert)"]
+      Agent 5 - Atmospheric Electric Phenomena
+        High-Voltage Lightning Discharges
+        Localized Extreme Thermal Shock fracturing massive rock outcrops
+    ["3. Biological Weathering (Living Agents)"]
+      ["Role of Flora (Plants & Microbes)"]
+        ["Mechanical Root Wedging (Growing roots exerting disruptive pressure in rock joints)"]
+        ["Subsurface Percolation Channels (Deep tap roots opening water/air pathways)"]
+        ["Biochemical Rhizosphere Secretions (Root organic acids and chelators solubilizing minerals)"]
+        ["Microbial Humus Activity (Humic and carbonic acids driving mineral decomposition)"]
+      ["Role of Fauna (Humans, Animals & Insects)"]
+        ["Anthropogenic Disintegration (Human blasting and excavation for dams, roads & buildings)"]
+        ["Burrowing Animals & Excreta (Tunnels weakening rock structure + chemical action of excreta)"]
+        ["Termite & Ant Pedoturbation (Subterranean galleries transporting lower-to-upper soil horizons)"]
+        ["Biogenic Formic Acid (Acid secretions directly corroding mineral surfaces)"]
+    ["4. Synthesis & Quantitative Summary"]
+      Continuous Genesis Feedback Loop
+        Physical fracturing exponentially expanding reactive surface area
+        Accelerated chemical decomposition and microbial colonization
+      Master Metric Reference Matrix
+        ["Water velocities (15 cm/s to 9.0 m/s load thresholds)"]
+        ["Frost wedging (9% expansion & 1465 Mg/m2 pressure)"]
+        ["Thermal expansion ratios (Quartz 2x Feldspars | Granite 0.5x Sandstone)"]
+        ["Wind carrying power (Proportional to velocity 6th power)"]
+```
+
+---
+
+## 2. Structural Overview
+
+This mindmap organizes the full academic scope of **Lecture 5: Weathering of Rocks and Minerals** across four major pillars:
+1. **Fundamentals & Regolith Genesis**: Definitions, constructive and destructive dynamics, three primary weathering processes, and continuous synergistic feedback loops.
+2. **Physical Weathering (Mechanical Disintegration)**: Exhaustive breakdown of all 5 physical agents (Rock Permeability, Temperature/Exfoliation, Water/Frost Wedging, Wind Abrasion, and Lightning Disintegration) with quantitative thresholds ($15\text{ cm/s}$ to $9.0\text{ m/s}$, $9\%$ frost expansion, $1465\text{ Mg m}^{-2}$, $v^6$ power law, and mineral expansion coefficients).
+3. **Biological Weathering (Living Agents)**: Dual-action biogeochemical mechanisms driven by Flora (root wedging, deep percolation channels, organic acids, microbial humus) and Fauna (human engineering, burrowing animals, termite/ant pedoturbation, and biogenic formic acid).
+4. **Synthesis & Quantitative Summary**: Continuous regolith genesis cycle, surface-area expansion dynamics, and master quantitative comparison metrics.

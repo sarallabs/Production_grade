@@ -11,7 +11,10 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
-  getChapterVideos
+  getChapterVideos,
+  GCS_BACKEND_SUBJECTS,
+  GCS_API_BASE,
+  GCS_SUBJECT_MAP,
 } from './manifestService';
 
 function mapBackendQuestions(data: any[]): AssessmentQuestion[] {
@@ -137,6 +140,22 @@ export async function getAssessments(
   level: DifficultyLevel = 'intermediate',
   videoDir?: string,
 ): Promise<AssessmentQuestion[]> {
+
+  // ── GCS Cloud Run subjects ──
+  if (GCS_BACKEND_SUBJECTS.has(subject)) {
+    const subjectPath = GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(subject, chapterNumber);
+    const difficulty = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
+    const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+
+    const mcqRes = await fetchAndParseFirst(
+      [`${base}/practice/mcq?difficulty=${difficulty}`], 'mcq_');
+    const msqRes = await fetchAndParseFirst(
+      [`${base}/practice/msq?difficulty=${difficulty}`], 'msq_');
+    const combined = [...mcqRes, ...msqRes];
+    return combined.length > 0 ? combined : MOCK_ASSESSMENT_QUESTIONS;
+  }
+
   if (BACKEND_SUBJECTS.has(subject)) {
     try {
       const diff = DIFFICULTY_MAP[level] || 'Medium';
@@ -246,6 +265,23 @@ export async function getChapterExamQuestions(
   chapterNumber: number,
   kind: ChapterExamKind,
 ): Promise<(MCQQuestion | MSQQuestion)[]> {
+
+  // ── GCS Cloud Run subjects ──
+  if (GCS_BACKEND_SUBJECTS.has(subject)) {
+    const subjectPath = GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(subject, chapterNumber);
+    const kindPath = kind === 'mock' ? 'practice/mock_test'
+      : kind === 'pre_final' ? 'prepare/pre_final_exam'
+      : 'prepare/certification_exam';
+    const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${kindPath}`;
+    const questions = await fetchAndParseFirst([url], `${kind}_`);
+    if (questions.length > 0) {
+      return questions.filter((q): q is MCQQuestion | MSQQuestion =>
+        q.type === 'mcq' || q.type === 'msq');
+    }
+    return [];
+  }
+
   const videos = await getChapterVideos(subject, chapterNumber);
   const chDir = getChapterDir(subject, chapterNumber);
   const subjectBase = getSubjectBaseUrl(subject);

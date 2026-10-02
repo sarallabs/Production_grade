@@ -64,22 +64,31 @@ export default function MarkdownView({ content }: Props) {
         urlTransform={(value: string) => value}
         components={{
           img(props) {
-            const cleanSrc = props.src ? props.src.replace(/base64,\s+/g, 'base64,') : props.src;
+            let cleanSrc = props.src ? props.src.replace(/base64,\s+/g, 'base64,') : props.src;
+            if (cleanSrc && !cleanSrc.startsWith('http://') && !cleanSrc.startsWith('https://') && !cleanSrc.startsWith('data:')) {
+              if (cleanSrc.startsWith('../Mindmaps/')) {
+                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/${cleanSrc.replace('../Mindmaps/', 'Mindmaps/')}`;
+              } else if (cleanSrc.startsWith('../../extracted_images/')) {
+                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_02/${cleanSrc.replace('../../', '')}`;
+              } else if (cleanSrc.startsWith('/api/')) {
+                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app${cleanSrc}`;
+              }
+            }
             return (
-              <div style={{ display: 'flex', justifyContent: 'center', margin: '24px 0' }}>
+              <span style={{ display: 'flex', justifyContent: 'center', margin: '24px 0' }}>
                 <img
                   {...props}
                   src={cleanSrc}
                   style={{ maxWidth: '100%', borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   onError={(e) => {
-                    // Hide broken images (missing extracted_images etc.) silently — no ugly alt text
+                    // Hide broken images silently — no ugly alt text
                     const el = e.currentTarget as HTMLImageElement;
                     el.style.display = 'none';
                     const parent = el.parentElement;
                     if (parent) parent.style.display = 'none';
                   }}
                 />
-              </div>
+              </span>
             );
           },
           a(props) {
