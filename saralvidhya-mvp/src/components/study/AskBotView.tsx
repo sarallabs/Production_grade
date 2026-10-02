@@ -8,19 +8,27 @@ import {
   type SpeechSession,
 } from "@/services/speechService";
 import type { DifficultyLevel } from "@/data/contentRepository";
+import "./AskBotView.css";
 
 const ASK_LANGUAGES = [
-  { code: "ur-PK", label: "اردو", flag: "IN" },
   { code: "en-IN", label: "English", flag: "🇬🇧" },
   { code: "hi-IN", label: "हिन्दी", flag: "🇮🇳" },
   { code: "te-IN", label: "తెలుగు", flag: "🇮🇳" },
+  { code: "ur-PK", label: "اردو", flag: "🇵🇰" },
   { code: "or-IN", label: "ଓଡ଼ିଆ", flag: "🇮🇳" },
 ];
 
-/**
- * AskBotView allows users to interact with an AI assistant to ask questions
- * about the study material, using text or voice input.
- */
+const DEFAULT_HISTORY_ITEMS = [
+  "How to kill cockroach?",
+  "How long can a cockroach live without food or water?",
+  "What is the life cycle of a cockroach?",
+  "Explain respiratory system of Periplaneta americana",
+  "How do cockroaches breathe?",
+  "What are the mouthparts of cockroach?",
+  "Economic importance of insect pests",
+  "Difference between male and female cockroach",
+];
+
 export default function AskBotView({
   chapterName,
   subjectId,
@@ -40,10 +48,28 @@ export default function AskBotView({
     () => `ask_chat_${subjectId}_${_chapterNumber}_${_difficulty}`,
     [subjectId, _chapterNumber, _difficulty],
   );
-  const draftStorageKey = useMemo(
-    () => `ask_draft_${subjectId}_${_chapterNumber}_${_difficulty}`,
-    [subjectId, _chapterNumber, _difficulty],
+  const historyStorageKey = useMemo(
+    () => `ask_history_${subjectId}_${_chapterNumber}`,
+    [subjectId, _chapterNumber],
   );
+
+  // Sidebar Open/Closed state (Screen 3 vs Screens 1 & 2)
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+
+  // History questions list
+  const [historyItems, setHistoryItems] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(historyStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {
+      // fallback
+    }
+    return DEFAULT_HISTORY_ITEMS;
+  });
+
   const [messages, setMessages] = useState<
     { role: "user" | "bot"; text: string; loading?: boolean }[]
   >(() => {
@@ -53,21 +79,20 @@ export default function AskBotView({
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed)
         ? parsed
-          .filter(
-            (m: any) =>
-              m &&
-              typeof m.text === "string" &&
-              (m.role === "user" || m.role === "bot"),
-          )
-          .slice(-30)
+            .filter(
+              (m: any) =>
+                m &&
+                typeof m.text === "string" &&
+                (m.role === "user" || m.role === "bot"),
+            )
+            .slice(-30)
         : [];
     } catch {
       return [];
     }
   });
-  const [input, setInput] = useState(
-    () => localStorage.getItem(draftStorageKey) || "",
-  );
+
+  const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -76,73 +101,68 @@ export default function AskBotView({
     subjectId === "pubadm_ur" ? "ur-PK" : "en-IN",
   );
   const [, setMicError] = useState<string | null>(null);
+
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
   const askedViaMicRef = useRef(false);
   const isStartingMicRef = useRef(false);
-  const [isHoldingMic, setIsHoldingMic] = useState(false);
+  const isHoldingMicRef = useRef(false);
   const [showWave, setShowWave] = useState(false);
-  const [showClickWave, setShowClickWave] = useState(false);
-  const [audioLevel, setAudioLevel] = useState(0);
-  const [barHeights, setBarHeights] = useState<number[]>(new Array(13).fill(4));
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animFrameRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const waveBarRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  // We track latest input so stopMic can grab it cleanly
   const currentInputRef = useRef("");
+
   useEffect(() => {
     currentInputRef.current = input;
   }, [input]);
 
   const isStreamingMic = hasWebSpeechSupport();
 
+  // Persist chat
   useEffect(() => {
-    // Persist chat so transient remounts don't wipe conversation.
     const cleaned = messages.filter((m) => !m.loading).slice(-30);
     localStorage.setItem(chatStorageKey, JSON.stringify(cleaned));
   }, [messages, chatStorageKey]);
 
+  // Persist history
   useEffect(() => {
-    localStorage.setItem(draftStorageKey, input);
-  }, [input, draftStorageKey]);
+    localStorage.setItem(historyStorageKey, JSON.stringify(historyItems));
+  }, [historyItems, historyStorageKey]);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messages.length > 0) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [messages]);
 
   // Cleanup speech session + TTS on unmount
   useEffect(() => {
     return () => {
       if (speechSessionRef.current) {
-        speechSessionRef.current.stop().catch(() => { });
+        speechSessionRef.current.stop().catch(() => {});
         speechSessionRef.current = null;
       }
       googleTtsStop();
     };
   }, []);
 
-  const isHoldingMicRef = useRef(false);
-
-  // ── Mic: Universal Speech-to-Text (Web Speech API + MediaRecorder fallback) ──
+  // ── Speech Recording ────────────────────────────────────────────────────────
   const handleMicMouseDown = async (e: React.MouseEvent | React.TouchEvent) => {
     if (isTranscribing) return;
     e.preventDefault();
     isHoldingMicRef.current = true;
-    setIsHoldingMic(true);
     setShowWave(true);
-    setInput(""); // Clear text input immediately when mic is pressed
+    setInput("");
 
     isStartingMicRef.current = true;
-    // Open analyser stream for waveform (separate from speech recognition stream)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
-      // If user already released mic before stream opened, stop immediately
       if (!isHoldingMicRef.current) {
         stream.getTracks().forEach((t) => t.stop());
         return;
@@ -158,9 +178,8 @@ export default function AskBotView({
       source.connect(analyser);
       analyserRef.current = analyser;
       const data = new Uint8Array(analyser.frequencyBinCount);
-      const bases = [
-        0.4, 0.6, 0.8, 1.0, 0.9, 0.7, 1.0, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4,
-      ];
+      const bases = [0.4, 0.6, 0.8, 1.0, 0.9, 0.7, 1.0, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4];
+
       const tick = () => {
         if (!analyserRef.current) return;
         analyser.getByteFrequencyData(data);
@@ -175,7 +194,7 @@ export default function AskBotView({
           if (level > 0.05) {
             const slice = Array.from(data.slice(i * step, (i + 1) * step));
             const bandAvg = slice.reduce((a, b) => a + b, 0) / slice.length;
-            h = Math.max(4, Math.min(60, base * (bandAvg / 100) * 60));
+            h = Math.max(6, Math.min(55, base * (bandAvg / 100) * 55));
           } else {
             h = Math.round(base * 6);
           }
@@ -185,7 +204,7 @@ export default function AskBotView({
       };
       animFrameRef.current = requestAnimationFrame(tick);
     } catch {
-      // Mic permission denied — show static bars
+      // Permission denied
     }
 
     try {
@@ -200,10 +219,8 @@ export default function AskBotView({
   const handleMicMouseUp = async () => {
     if (!isHoldingMicRef.current) return;
     isHoldingMicRef.current = false;
-    setIsHoldingMic(false);
     setShowWave(false);
 
-    // Stop analyser
     if (animFrameRef.current) {
       cancelAnimationFrame(animFrameRef.current);
       animFrameRef.current = null;
@@ -214,7 +231,6 @@ export default function AskBotView({
       streamRef.current = null;
     }
 
-    // Wait for speech session to be ready if startMic hasn't completed yet
     let waited = 0;
     while (isStartingMicRef.current && waited < 3000) {
       await new Promise((r) => setTimeout(r, 50));
@@ -224,61 +240,35 @@ export default function AskBotView({
     await stopMic(true);
   };
 
-  const handleAskClick = () => {
-    setShowClickWave(true);
-    setTimeout(() => setShowClickWave(false), 600);
-    handleSendText();
-  };
-
   const startMic = async () => {
     setMicError(null);
     try {
-      console.log("Starting microphone for language:", selectedLang);
       const session = await startSpeechSession({
         language: selectedLang,
         onInterim: (text) => {
           if (speechSessionRef.current === session) {
             setInput(text);
-            setMicError(null); // Clear error when receiving input
           }
         },
         onError: (err) => {
           if (speechSessionRef.current === session) {
-            console.warn("Speech session error:", err);
             setMicError(err);
             setIsListening(false);
           }
         },
         onEnd: () => {
           if (speechSessionRef.current === session) {
-            console.log("Speech session ended");
             setIsListening(false);
           }
         },
       });
       speechSessionRef.current = session;
       setIsListening(true);
-      console.log(
-        "Microphone started successfully, streaming:",
-        session.isStreaming,
-      );
     } catch (e: any) {
-      console.error("Could not start speech session:", e);
-      const errMsg =
-        e.message ||
-        "Could not start microphone. Please check permissions and try again.";
+      const errMsg = e.message || "Could not start microphone.";
       setMicError(errMsg);
       setIsListening(false);
       setIsTranscribing(false);
-
-      // Show error in chat as a bot message
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          text: errMsg,
-        },
-      ]);
     }
   };
 
@@ -287,36 +277,18 @@ export default function AskBotView({
     setIsListening(false);
 
     if (!isStreamingMic) {
-      // MediaRecorder path: transcription happens on stop — show spinner
       setIsTranscribing(true);
     }
 
     let transcript = "";
     try {
-      console.log("Stopping microphone and transcribing...");
       transcript = await speechSessionRef.current.stop();
-      console.log("Transcription successful:", transcript);
-      setMicError(null);
     } catch (e: any) {
       console.error("Transcription error:", e);
-      const errMsg =
-        e.message || "Could not transcribe audio. Please try again.";
-      setMicError(errMsg);
-
-      // Show error in chat
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "bot",
-          text: errMsg,
-        },
-      ]);
     }
     speechSessionRef.current = null;
-
     setIsTranscribing(false);
 
-    // Web Speech API often misses the final word in its return string. We fall back to the live input ref safely.
     const finalTranscript =
       transcript || (isStreamingMic ? currentInputRef.current : "");
 
@@ -326,12 +298,10 @@ export default function AskBotView({
         askedViaMicRef.current = true;
         handleSend(finalTranscript);
       }
-    } else if (!finalTranscript && !isStreamingMic) {
-      setInput("");
     }
   };
 
-  // ── TTS: Google Translate TTS for bot answers ──
+  // ── TTS: Text-to-Speech ────────────────────────────────────────────────────
   const cleanForSpeech = (text: string): string => {
     return text
       .replace(/#{1,6}\s*/g, "")
@@ -341,8 +311,6 @@ export default function AskBotView({
       .replace(/```[\s\S]*?```/g, "")
       .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
       .replace(/[>*_~`#]/g, "")
-      .replace(/⚠️|📖|📚|💙|🚫|🙏|👋/g, "")
-      .replace(/---+/g, "")
       .trim();
   };
 
@@ -350,7 +318,6 @@ export default function AskBotView({
     const cleanText = cleanForSpeech(text);
     if (!cleanText) return;
 
-    // Toggle off if already speaking this message
     if (speakingIdx === msgIndex) {
       googleTtsStop();
       setSpeakingIdx(null);
@@ -365,12 +332,7 @@ export default function AskBotView({
     );
   };
 
-  const stopSpeech = () => {
-    googleTtsStop();
-    setSpeakingIdx(null);
-  };
-
-  // Auto-read bot response when question was asked via mic
+  // Auto-speak answer if user asked via mic
   useEffect(() => {
     if (!askedViaMicRef.current) return;
     const lastMsg = messages[messages.length - 1];
@@ -379,33 +341,37 @@ export default function AskBotView({
       const idx = messages.length - 1;
       setTimeout(() => speakText(lastMsg.text, idx), 300);
     }
-  }, [messages]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [messages]);
 
-  // ── Send question ──
-  const handleSend = async (question: string) => {
-    if (!question.trim() || isSending) return;
+  // ── Send Question ─────────────────────────────────────────────────────────
+  const handleSend = async (questionText: string) => {
+    const textToSend = questionText.trim();
+    if (!textToSend || isSending) return;
 
-    // Stop mic if listening
     if (isListening && speechSessionRef.current) {
-      speechSessionRef.current.stop().catch(() => { });
+      speechSessionRef.current.stop().catch(() => {});
       speechSessionRef.current = null;
       setIsListening(false);
     }
 
-    const userMsg = question.trim();
+    // Add to history if not present
+    setHistoryItems((prev) => {
+      const filtered = prev.filter((item) => item !== textToSend);
+      return [textToSend, ...filtered].slice(0, 15);
+    });
+
     setIsSending(true);
     setInput("");
 
-    // Add user message + bot loading placeholder
     setMessages((prev) => [
       ...prev,
-      { role: "user", text: userMsg },
+      { role: "user", text: textToSend },
       { role: "bot", text: "", loading: true },
     ]);
 
     try {
       const result = await askGemini(
-        userMsg,
+        textToSend,
         subjectId,
         chapterName,
         _chapterNumber,
@@ -413,7 +379,6 @@ export default function AskBotView({
         selectedLang,
         _className,
       );
-      // Replace the loading placeholder with the real answer
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = { role: "bot", text: result.answer };
@@ -421,10 +386,13 @@ export default function AskBotView({
       });
     } catch (err: any) {
       const errMsg = err?.message || "";
-      const isQuota = errMsg.includes("429") || errMsg.toLowerCase().includes("quota") || errMsg.toLowerCase().includes("rate limit");
+      const isQuota =
+        errMsg.includes("429") ||
+        errMsg.toLowerCase().includes("quota") ||
+        errMsg.toLowerCase().includes("rate limit");
       const userFriendlyMsg = isQuota
-        ? "⚠️ Gemini free-tier rate limit reached. Please wait a few seconds and try again."
-        : `⚠️ Sorry, I could not connect to the AI. ${errMsg.replace(/\[GoogleGenerativeAI Error\]:\s*/i, "").slice(0, 200) || "Please check your connection and try again."}`;
+        ? "⚠️ Rate limit reached. Please wait a moment and ask again."
+        : "⚠️ Sorry, I could not connect to Saral AI. Please try again.";
 
       setMessages((prev) => {
         const updated = [...prev];
@@ -434,252 +402,292 @@ export default function AskBotView({
         };
         return updated;
       });
-      console.error("Ask Gemini failed:", err);
     } finally {
       setIsSending(false);
     }
   };
 
-  const handleSendText = () => handleSend(input);
+  const handleSelectHistoryItem = (itemText: string) => {
+    // If the conversation already has this question, scroll to it, or ask it directly
+    handleSend(itemText);
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    localStorage.removeItem(chatStorageKey);
+    setInput("");
+  };
 
   return (
-    <div
-      className="ask-bot-view"
-      role="region"
-      aria-label="Ask AI Assistant"
-      style={{ position: "relative" }}
-    >
-      {/* Voice wave overlay — covers the whole ask view when mic held */}
-      {showWave && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "rgba(255,255,255,0.92)",
-            backdropFilter: "blur(10px)",
-            zIndex: 20,
-            borderRadius: "12px",
-            gap: "16px",
-            pointerEvents: "none",
-          }}
-        >
-          <div className="voice-wave-container">
-            {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((_, i) => (
-              <div
-                key={i}
-                className="voice-wave-bar"
-                ref={(el) => {
-                  waveBarRefs.current[i] = el;
-                }}
-                style={{ height: "4px" }}
-              />
-            ))}
-          </div>
-          <span
-            style={{ fontSize: "0.95rem", color: "#7c3aed", fontWeight: 700 }}
-          >
-            🎙️ Listening… speak now
-          </span>
-        </div>
-      )}
-      <div className="ask-header">
-        <div className="ask-header-row">
-          <div>
-            {!isStreamingMic && (
-              <p
-                style={{ fontSize: "0.85em", color: "#666", marginTop: "4px" }}
-              >
-                🦊 Firefox Mode: Audio will be transcribed when you stop
-                recording
-              </p>
-            )}
-          </div>
-          <div className="mic-top-center">
-            <button
-              className={`btn-mic-top ${isListening ? "recording" : ""} ${isTranscribing ? "transcribing" : ""} ${isHoldingMic ? "holding" : ""}`}
-              onPointerDown={(e) => {
-                e.preventDefault();
-                handleMicMouseDown(e as any);
-              }}
-              onPointerUp={() => handleMicMouseUp()}
-              onPointerLeave={() => {
-                if (isHoldingMicRef.current) handleMicMouseUp();
-              }}
-              disabled={isSending || isTranscribing}
-              title={
-                isListening
-                  ? "Stop and send"
-                  : isTranscribing
-                    ? "Transcribing…"
-                    : "Start voice input (press and hold)"
-              }
-              aria-label={
-                isListening
-                  ? "Stop listening and send"
-                  : isTranscribing
-                    ? "Transcribing audio"
-                    : "Start voice input (press and hold)"
-              }
-            >
-              {isTranscribing ? "⏳" : isListening ? "⏹️" : "🎙️"}
-            </button>
-          </div>
-          <div className="lang-selector">
-            <label htmlFor="ask-lang">🌐</label>
-            <select
-              id="ask-lang"
-              value={selectedLang}
-              onChange={(e) => setSelectedLang(e.target.value)}
-            >
-              {ASK_LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {l.flag} {l.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-      <div
-        className="ask-chat-window"
-        role="log"
-        aria-live="polite"
-        aria-label="Chat messages"
+    <div className="saral-ai-container" role="region" aria-label="Saral AI Assistant">
+      {/* ── Left History Sidebar (Screen 3) ─────────────────────────────────── */}
+      <aside
+        className={`saral-history-sidebar ${!isHistoryOpen ? "collapsed" : ""}`}
+        aria-hidden={!isHistoryOpen}
       >
-        {messages.length === 0 && (
-          <div className="chat-placeholder">
-            <p>
-              👋 Hi there! I'm Saral Vidhya, your academic tutor for {_className}{" "}
-              {subjectName}. We're currently looking at "{chapterName}."
-            </p>
-            <p
-              style={{ fontSize: "0.85em", opacity: 0.7, marginTop: "0.5rem" }}
+        <div className="saral-history-header">
+          <h2 className="saral-history-title">History</h2>
+          <button
+            className="saral-history-new-btn"
+            onClick={handleNewChat}
+            title="Start new conversation"
+          >
+            + New
+          </button>
+        </div>
+
+        <div className="saral-history-list">
+          {historyItems.map((item, idx) => (
+            <button
+              key={`${item}-${idx}`}
+              className="saral-history-item"
+              onClick={() => handleSelectHistoryItem(item)}
+              title={item}
             >
-              How can I help you today? Do you have any questions about the
-              chapter, its themes, characters, or anything else related to your
-              studies? Feel free to ask! 😊
-            </p>
+              {item}
+            </button>
+          ))}
+        </div>
+
+        {/* Decorative concentric quarter circles in bottom left */}
+        <svg
+          className="saral-sidebar-decor-rings"
+          viewBox="0 0 160 160"
+          aria-hidden="true"
+        >
+          <path
+            d="M 0,25 A 135,135 0 0,1 135,160 L 110,160 A 110,110 0 0,0 0,50 Z"
+            fill="#E2EBE5"
+            opacity="0.8"
+          />
+          <path
+            d="M 0,60 A 100,100 0 0,1 100,160 L 76,160 A 76,76 0 0,0 0,84 Z"
+            fill="#D4E2D9"
+            opacity="0.75"
+          />
+          <path
+            d="M 0,95 A 65,65 0 0,1 65,160 L 44,160 A 44,44 0 0,0 0,116 Z"
+            fill="#C5D7CC"
+            opacity="0.7"
+          />
+          <path
+            d="M 0,126 A 34,34 0 0,1 34,160 L 0,160 Z"
+            fill="#B5CCBE"
+            opacity="0.6"
+          />
+        </svg>
+      </aside>
+
+      {/* ── Sidebar Toggle Tab (◀ / ▶) ──────────────────────────────────────── */}
+      <button
+        className={`saral-sidebar-toggle-btn ${
+          isHistoryOpen ? "sidebar-open" : "pinned-edge"
+        }`}
+        onClick={() => setIsHistoryOpen(!isHistoryOpen)}
+        title={isHistoryOpen ? "Hide history" : "Show history"}
+        aria-label={isHistoryOpen ? "Close history sidebar" : "Open history sidebar"}
+      >
+        {isHistoryOpen ? (
+          <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">
+            <path d="M6.5 12L8 10.5L3.5 6L8 1.5L6.5 0L0.5 6L6.5 12Z" />
+          </svg>
+        ) : (
+          <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">
+            <path d="M1.5 0L0 1.5L4.5 6L0 10.5L1.5 12L7.5 6L1.5 0Z" />
+          </svg>
+        )}
+      </button>
+
+      {/* ── Main Chat Area (Gradient Pane) ──────────────────────────────────── */}
+      <main className="saral-chat-main">
+        {/* Voice recording wave animation overlay */}
+        {showWave && (
+          <div className="saral-voice-overlay" aria-live="assertive">
+            <div className="saral-wave-bars">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((_, i) => (
+                <div
+                  key={i}
+                  className="saral-wave-bar"
+                  ref={(el) => {
+                    waveBarRefs.current[i] = el;
+                  }}
+                />
+              ))}
+            </div>
+            <span style={{ fontSize: "1rem", color: "#2B483A", fontWeight: 700 }}>
+              🎙️ Listening… release to send
+            </span>
           </div>
         )}
-        {messages.map((m, i) => (
-          <div
-            key={i}
-            className={`chat-bubble ${m.role}`}
-            role="article"
-            aria-label={m.role === "user" ? "Your question" : "AI response"}
-          >
-            {m.loading ? (
-              <div
-                className="chat-text"
-                style={{
-                  fontSize: "1.2rem",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                }}
-                aria-label="AI is thinking"
-              >
-                <span
-                  className="gear-spin"
-                  style={{ display: "inline-block", fontSize: "1.8rem" }}
-                >
-                  ⚙️
-                </span>{" "}
-                <span style={{ opacity: 0.8 }}>Generating answer...</span>
+
+        {/* ── Center Welcome Card: Screen 1 & Screen 3 (Empty State) ────────── */}
+        {messages.length === 0 && (
+          <div className="saral-welcome-card-wrapper">
+            <div className="saral-welcome-card">
+              <img
+                src={`${import.meta.env.BASE_URL}logo-clean.png`}
+                alt="Saral Vidhya"
+                className="saral-welcome-logo"
+              />
+              <div className="saral-welcome-text">
+                <h3 className="saral-welcome-title">Hi there! I'm Saral,</h3>
+                <p className="saral-welcome-subtitle">
+                  Let's have a conversation... on what??
+                </p>
               </div>
-            ) : m.role === "bot" ? (
-              <>
-                <div className="chat-text bot-markdown" dir="auto">
-                  <MarkdownView content={m.text} />
-                </div>
-                <div className="tts-controls">
-                  {speakingIdx !== i ? (
-                    <button
-                      className="btn-tts"
-                      onClick={() => speakText(m.text, i)}
-                      title="Read aloud"
-                      aria-label="Read this answer aloud"
-                    >
-                      ▶
-                    </button>
-                  ) : (
-                    <button
-                      className="btn-tts speaking"
-                      onClick={stopSpeech}
-                      title="Stop reading"
-                      aria-label="Stop reading"
-                    >
-                      ⏹
-                    </button>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="chat-text" dir="auto">
-                {m.text}
-              </div>
-            )}
+            </div>
           </div>
-        ))}
-        <div ref={chatEndRef} />
-      </div>
-      <div className="ask-input-area">
-        <input
-          type="text"
-          className="ask-question-input"
-          placeholder={
-            isTranscribing
-              ? "Transcribing your speech…"
-              : isListening
-                ? isStreamingMic
-                  ? "Listening… click ⏹ to stop and send"
-                  : "Recording… click ⏹ to stop and transcribe"
-                : "Type your question…"
-          }
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              handleSendText();
-            }
-          }}
-          disabled={isSending}
-          aria-label="Question input"
-        />
-        <button
-          className={`btn-send ${showClickWave ? "wave-active" : ""}`}
-          onClick={handleAskClick}
-          disabled={isSending || !input.trim()}
-          aria-label="Send question"
-        >
-          {isSending ? "..." : "Ask"}
-        </button>
-      </div>
-      {(isListening || isTranscribing) && (
-        <div className="listening-indicator" aria-live="assertive">
-          {isTranscribing ? (
-            <>
-              <span className="pulse-dot transcribing"></span> Transcribing your
-              speech… please wait
-            </>
-          ) : isStreamingMic ? (
-            <>
-              <span className="pulse-dot"></span> Listening… speak now, then
-              click ⏹ to stop &amp; send
-            </>
-          ) : (
-            <>
-              <span className="pulse-dot recording"></span> Recording… click ⏹
-              to stop and transcribe (works in all browsers)
-            </>
-          )}
+        )}
+
+        {/* ── Chat Messages Flow: Screen 2 (Active State) ────────────────────── */}
+        {messages.length > 0 && (
+          <div
+            className="saral-messages-scroll"
+            role="log"
+            aria-live="polite"
+            aria-label="Chat messages"
+          >
+            {messages.map((m, i) => (
+              <React.Fragment key={i}>
+                {m.role === "user" ? (
+                  <div
+                    className="saral-msg-user"
+                    role="article"
+                    aria-label="Your question"
+                  >
+                    {m.text}
+                  </div>
+                ) : (
+                  <div
+                    className="saral-msg-bot"
+                    role="article"
+                    aria-label="Saral response"
+                  >
+                    {m.loading ? (
+                      <div className="saral-loading-bubble" aria-label="Thinking">
+                        <div className="saral-loading-dot"></div>
+                        <div className="saral-loading-dot"></div>
+                        <div className="saral-loading-dot"></div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="saral-bot-content" dir="auto">
+                          <MarkdownView content={m.text} />
+                        </div>
+                        <button
+                          className={`saral-bot-tts-btn ${
+                            speakingIdx === i ? "speaking" : ""
+                          }`}
+                          onClick={() => speakText(m.text, i)}
+                          title={speakingIdx === i ? "Stop reading" : "Read aloud"}
+                          aria-label={
+                            speakingIdx === i ? "Stop reading" : "Read response aloud"
+                          }
+                        >
+                          {speakingIdx === i ? "⏹" : "▶"}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </React.Fragment>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
+        )}
+
+        {/* ── Bottom Input Bar: Screens 1, 2, 3 ─────────────────────────────── */}
+        <div className="saral-input-bar-wrapper">
+          <div className="saral-input-bar">
+            {/* Left Sparkle Badge */}
+            <div className="saral-sparkle-badge" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M10 2C10 6.5 6.5 10 2 10C6.5 10 10 13.5 10 18C10 13.5 13.5 10 18 10C13.5 10 10 6.5 10 2Z"
+                  fill="#FFFFFF"
+                />
+                <path
+                  d="M17 11C17 13.5 15 15 13 15C15 15 17 16.5 17 19C17 16.5 19 15 21 15C19 15 17 13.5 17 11Z"
+                  fill="#FFFFFF"
+                />
+              </svg>
+            </div>
+
+            {/* Input field */}
+            <input
+              type="text"
+              className="saral-text-input"
+              placeholder={
+                isTranscribing
+                  ? "Transcribing your voice…"
+                  : isListening
+                  ? "Listening… release to send"
+                  : "Type your question here..."
+              }
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend(input);
+                }
+              }}
+              disabled={isSending}
+              aria-label="Type your question here"
+            />
+
+            {/* Action buttons (Mic + Send) */}
+            <div className="saral-input-actions">
+              {/* Mic Button */}
+              <button
+                type="button"
+                className={`saral-action-btn ${isListening ? "recording" : ""}`}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  handleMicMouseDown(e as any);
+                }}
+                onPointerUp={() => handleMicMouseUp()}
+                onPointerLeave={() => {
+                  if (isHoldingMicRef.current) handleMicMouseUp();
+                }}
+                disabled={isSending || isTranscribing}
+                title="Press & hold to speak"
+                aria-label="Voice input"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                  <line x1="12" y1="19" x2="12" y2="23"></line>
+                  <line x1="8" y1="23" x2="16" y2="23"></line>
+                </svg>
+              </button>
+
+              {/* Send Button */}
+              <button
+                type="button"
+                className="saral-action-btn"
+                onClick={() => handleSend(input)}
+                disabled={isSending || !input.trim()}
+                title="Send question"
+                aria-label="Send question"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </div>
-      )}
+      </main>
     </div>
   );
 }
