@@ -100,12 +100,15 @@ export default function AskBotView({
   const [selectedLang, setSelectedLang] = useState(
     subjectId === "pubadm_ur" ? "ur-PK" : "en-IN",
   );
-  const [, setMicError] = useState<string | null>(null);
+  const [micError, setMicError] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
+  const sessionStartingPromiseRef = useRef<Promise<SpeechSession> | null>(null);
+  const isListeningRef = useRef(false);
   const askedViaMicRef = useRef(false);
-  const isStartingMicRef = useRef(false);
+  const pointerDownTimeRef = useRef(0);
+  const listeningStartedAtRef = useRef(0);
   const isHoldingMicRef = useRef(false);
   const [showWave, setShowWave] = useState(false);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -141,6 +144,8 @@ export default function AskBotView({
   // Cleanup speech session + TTS on unmount
   useEffect(() => {
     return () => {
+      isListeningRef.current = false;
+      cleanupAnalyser();
       if (speechSessionRef.current) {
         speechSessionRef.current.stop().catch(() => {});
         speechSessionRef.current = null;
@@ -149,27 +154,34 @@ export default function AskBotView({
     };
   }, []);
 
-  // ── Speech Recording ────────────────────────────────────────────────────────
-  const handleMicMouseDown = async (e: React.MouseEvent | React.TouchEvent) => {
-    if (isTranscribing) return;
-    e.preventDefault();
-    isHoldingMicRef.current = true;
-    setShowWave(true);
-    setInput("");
+  // ── Speech Recording & Visualizer ───────────────────────────────────────────
+  const cleanupAnalyser = () => {
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    analyserRef.current = null;
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
 
-    isStartingMicRef.current = true;
+  const startAnalyserStream = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) return;
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
         video: false,
       });
-      if (!isHoldingMicRef.current) {
+      if (!isListeningRef.current) {
         stream.getTracks().forEach((t) => t.stop());
         return;
       }
       streamRef.current = stream;
       const AudioCtx =
         window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
       const ctx = new AudioCtx();
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
@@ -181,7 +193,7 @@ export default function AskBotView({
       const bases = [0.4, 0.6, 0.8, 1.0, 0.9, 0.7, 1.0, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4];
 
       const tick = () => {
-        if (!analyserRef.current) return;
+        if (!analyserRef.current || !isListeningRef.current) return;
         analyser.getByteFrequencyData(data);
         const voiceData = Array.from(data.slice(2, 30));
         const avg = voiceData.reduce((a, b) => a + b, 0) / voiceData.length;
@@ -204,99 +216,147 @@ export default function AskBotView({
       };
       animFrameRef.current = requestAnimationFrame(tick);
     } catch {
-      // Permission denied
+      // Visualizer stream error is non-fatal for speech recognition
     }
-
-    try {
-      if (isHoldingMicRef.current) {
-        await startMic();
-      }
-    } finally {
-      isStartingMicRef.current = false;
-    }
-  };
-
-  const handleMicMouseUp = async () => {
-    if (!isHoldingMicRef.current) return;
-    isHoldingMicRef.current = false;
-    setShowWave(false);
-
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    analyserRef.current = null;
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-
-    let waited = 0;
-    while (isStartingMicRef.current && waited < 3000) {
-      await new Promise((r) => setTimeout(r, 50));
-      waited += 50;
-    }
-
-    await stopMic(true);
   };
 
   const startMic = async () => {
+    if (isListeningRef.current || isTranscribing) return;
     setMicError(null);
+    isListeningRef.current = true;
+    listeningStartedAtRef.current = Date.now();
+    setIsListening(true);
+    setShowWave(true);
+    setInput("");
+    currentInputRef.current = "";
+
+    // Start background audio visualizer without blocking speech recognition
+    startAnalyserStream();
+
     try {
-      const session = await startSpeechSession({
+      const sessionPromise = startSpeechSession({
         language: selectedLang,
         onInterim: (text) => {
-          if (speechSessionRef.current === session) {
-            setInput(text);
-          }
+          currentInputRef.current = text;
+          setInput(text);
         },
         onError: (err) => {
-          if (speechSessionRef.current === session) {
-            setMicError(err);
-            setIsListening(false);
+          console.warn("Speech recognition error:", err);
+          if (err === "not-allowed" || err === "permission-denied") {
+            setMicError("Microphone access denied. Please click the microphone/lock icon in your browser address bar to allow microphone access.");
+          } else if (err !== "no-speech" && err !== "aborted") {
+            setMicError(`Microphone error: ${err}`);
           }
+          isListeningRef.current = false;
+          setIsListening(false);
+          setShowWave(false);
+          cleanupAnalyser();
         },
         onEnd: () => {
-          if (speechSessionRef.current === session) {
-            setIsListening(false);
+          if (isListeningRef.current && !isHoldingMicRef.current) {
+            stopMic(true);
           }
         },
       });
+
+      sessionStartingPromiseRef.current = sessionPromise;
+      const session = await sessionPromise;
       speechSessionRef.current = session;
-      setIsListening(true);
+      sessionStartingPromiseRef.current = null;
     } catch (e: any) {
+      console.error("Failed to start speech session:", e);
       const errMsg = e.message || "Could not start microphone.";
       setMicError(errMsg);
+      isListeningRef.current = false;
       setIsListening(false);
-      setIsTranscribing(false);
+      setShowWave(false);
+      cleanupAnalyser();
+      sessionStartingPromiseRef.current = null;
+      speechSessionRef.current = null;
     }
   };
 
   const stopMic = async (autoSend = false) => {
-    if (!speechSessionRef.current) return;
+    if (!isListeningRef.current && !speechSessionRef.current && !sessionStartingPromiseRef.current) return;
+    isListeningRef.current = false;
     setIsListening(false);
+    setShowWave(false);
+    cleanupAnalyser();
 
     if (!isStreamingMic) {
       setIsTranscribing(true);
     }
 
-    let transcript = "";
-    try {
-      transcript = await speechSessionRef.current.stop();
-    } catch (e: any) {
-      console.error("Transcription error:", e);
+    let session = speechSessionRef.current;
+    if (!session && sessionStartingPromiseRef.current) {
+      try {
+        session = await sessionStartingPromiseRef.current;
+      } catch {
+        session = null;
+      }
     }
     speechSessionRef.current = null;
+    sessionStartingPromiseRef.current = null;
+
+    let transcript = "";
+    if (session) {
+      try {
+        transcript = await session.stop();
+      } catch (e: any) {
+        console.error("Transcription error:", e);
+      }
+    }
     setIsTranscribing(false);
 
-    const finalTranscript =
-      transcript || (isStreamingMic ? currentInputRef.current : "");
+    const finalTranscript = (transcript || currentInputRef.current || input).trim();
 
     if (finalTranscript) {
       setInput(finalTranscript);
       if (autoSend) {
         askedViaMicRef.current = true;
         handleSend(finalTranscript);
+      }
+    }
+  };
+
+  const handleMicPointerDown = (e: React.PointerEvent) => {
+    if (isSending || isTranscribing) return;
+    e.preventDefault();
+
+    if (isListeningRef.current) {
+      // If already recording and tapped after 300ms, stop & send
+      if (Date.now() - listeningStartedAtRef.current > 300) {
+        stopMic(true);
+      }
+      return;
+    }
+
+    pointerDownTimeRef.current = Date.now();
+    isHoldingMicRef.current = true;
+    startMic();
+  };
+
+  const handleMicPointerUp = (e: React.PointerEvent) => {
+    if (isSending || isTranscribing) return;
+    e.preventDefault();
+
+    if (isHoldingMicRef.current) {
+      isHoldingMicRef.current = false;
+      const elapsed = Date.now() - pointerDownTimeRef.current;
+      if (elapsed > 450) {
+        // User held down to speak: Stop & send on release
+        stopMic(true);
+      }
+      // If elapsed <= 450ms, this was a tap to toggle on: keep recording!
+    }
+  };
+
+  const handleMicPointerLeave = () => {
+    if (isHoldingMicRef.current) {
+      isHoldingMicRef.current = false;
+      const elapsed = Date.now() - pointerDownTimeRef.current;
+      if (elapsed > 450) {
+        stopMic(true);
       }
     }
   };
@@ -502,7 +562,13 @@ export default function AskBotView({
       <main className="saral-chat-main">
         {/* Voice recording wave animation overlay */}
         {showWave && (
-          <div className="saral-voice-overlay" aria-live="assertive">
+          <div
+            className="saral-voice-overlay"
+            aria-live="assertive"
+            onClick={() => stopMic(true)}
+            style={{ cursor: "pointer" }}
+            title="Click anywhere to stop & send"
+          >
             <div className="saral-wave-bars">
               {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((_, i) => (
                 <div
@@ -514,8 +580,11 @@ export default function AskBotView({
                 />
               ))}
             </div>
-            <span style={{ fontSize: "1rem", color: "#2B483A", fontWeight: 700 }}>
-              🎙️ Listening… release to send
+            <span style={{ fontSize: "1.05rem", color: "#2B483A", fontWeight: 700 }}>
+              🎙️ Listening… Speak your question
+            </span>
+            <span style={{ fontSize: "0.85rem", color: "#4F7B64", fontWeight: 500 }}>
+              Click anywhere or click ⏹ to stop & send
             </span>
           </div>
         )}
@@ -598,6 +667,41 @@ export default function AskBotView({
 
         {/* ── Bottom Input Bar: Screens 1, 2, 3 ─────────────────────────────── */}
         <div className="saral-input-bar-wrapper">
+          {micError && (
+            <div
+              style={{
+                marginBottom: "10px",
+                padding: "8px 14px",
+                background: "#FEF2F2",
+                border: "1px solid #F87171",
+                borderRadius: "12px",
+                color: "#991B1B",
+                fontSize: "13px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+              }}
+            >
+              <span>⚠️ {micError}</span>
+              <button
+                type="button"
+                onClick={() => setMicError(null)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#991B1B",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  lineHeight: 1,
+                  padding: "0 4px",
+                }}
+                title="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <div className="saral-input-bar">
             {/* Left Sparkle Badge */}
             <div className="saral-sparkle-badge" aria-hidden="true">
@@ -621,7 +725,7 @@ export default function AskBotView({
                 isTranscribing
                   ? "Transcribing your voice…"
                   : isListening
-                  ? "Listening… release to send"
+                  ? "Listening… speak now (click ⏹ to stop & send)"
                   : "Type your question here..."
               }
               value={input}
@@ -642,33 +746,38 @@ export default function AskBotView({
               <button
                 type="button"
                 className={`saral-action-btn ${isListening ? "recording" : ""}`}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  handleMicMouseDown(e as any);
-                }}
-                onPointerUp={() => handleMicMouseUp()}
-                onPointerLeave={() => {
-                  if (isHoldingMicRef.current) handleMicMouseUp();
-                }}
+                onPointerDown={handleMicPointerDown}
+                onPointerUp={handleMicPointerUp}
+                onPointerLeave={handleMicPointerLeave}
                 disabled={isSending || isTranscribing}
-                title="Press & hold to speak"
-                aria-label="Voice input"
+                title={
+                  isListening
+                    ? "Click or release to stop and send"
+                    : "Click or hold to speak"
+                }
+                aria-label={isListening ? "Stop listening and send" : "Voice input"}
               >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#FFFFFF"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
+                {isListening ? (
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
+                    <rect x="4" y="4" width="16" height="16" rx="3" ry="3" />
+                  </svg>
+                ) : (
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#FFFFFF"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                    <line x1="12" y1="19" x2="12" y2="23"></line>
+                    <line x1="8" y1="23" x2="16" y2="23"></line>
+                  </svg>
+                )}
               </button>
 
               {/* Send Button */}
