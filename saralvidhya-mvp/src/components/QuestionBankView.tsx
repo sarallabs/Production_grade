@@ -93,7 +93,8 @@ export default function QuestionBankView({
           getResourceContent(subjectId, chapterNumber, 'question_bank.md', persona)
             .then(async (markdown) => {
               if (markdown && markdown.trim().length > 0 && !markdown.includes('Content not available')) {
-                return parseQuestionBankMarkdown(markdown, subjectId, subject.name, chapterNumber, chapterLabel);
+                const parsed = parseQuestionBankMarkdown(markdown, subjectId, subject.name, chapterNumber, chapterLabel);
+                if (parsed.length > 0) return parsed;
               }
               const pooled = await getChapterExamQuestions(subjectId, chapterNumber, 'certification');
               return pooled.map((q, idx): QuestionBankEntry => ({

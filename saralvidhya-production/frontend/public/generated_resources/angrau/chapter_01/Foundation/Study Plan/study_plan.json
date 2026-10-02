@@ -1,0 +1,287 @@
+{
+  "title": "Study Plan: Insect Digestive System",
+  "course": "ANGRAU ENTO-131 Fundamentals of Entomology-I",
+  "chapter": 13,
+  "total_blueprints": 4,
+  "blueprints": {
+    "5_day_standard": {
+      "target_persona": "Rookie / Beginner",
+      "daily_time_budget_mins": 52,
+      "total_time_mins": 260,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Three Primary Regions & Histological Wall Architecture",
+          "total_mins": 50,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Quick Study",
+              "duration_mins": 12
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 18
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_mins": 5
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Foregut Mechanics, Proventricular Specializations & Salivary Glands",
+          "total_mins": 50,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 22
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Easy MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Midgut Cytology, Goblet Cell V-ATPase, Bt Cry Lysis & Peritrophic Membrane",
+          "total_mins": 54,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 24
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 7
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Hindgut Osmoregulation, Malpighian Tubules, Cryptonephry & 6 Rectal Pads",
+          "total_mins": 52,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 22
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 7
+            },
+            {
+              "resource": "Easy MSQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Specialized Adaptations (Sap Filter Chamber, Termite Paunch) & Summative Review",
+          "total_mins": 54,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Question Bank 2-Mark & 5-Mark",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Mock Test Chapter 13",
+              "duration_mins": 19
+            }
+          ]
+        }
+      ]
+    },
+    "3_day_sprint": {
+      "target_persona": "Intermediate",
+      "daily_time_budget_mins": 73,
+      "total_time_mins": 220,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Foregut Architecture, Proventriculus, Wall Histology & Salivary Glands",
+          "total_mins": 73,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Quick Study",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 30
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Midgut Cytology, Goblet Cell Physiology, Bt Mode of Action & Peritrophic Membrane",
+          "total_mins": 72,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 30
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_mins": 12
+            },
+            {
+              "resource": "Question Bank v1 & v2",
+              "duration_mins": 15
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Hindgut Osmoregulation, Malpighian Tubules, Filter Chamber, Termites & Mock Exam",
+          "total_mins": 75,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 25
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Question Bank",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Mock Test Chapter 13",
+              "duration_mins": 30
+            }
+          ]
+        }
+      ]
+    },
+    "2_day_fast_track": {
+      "target_persona": "Advanced / Honors & ICAR JRF",
+      "daily_time_budget_mins": 102,
+      "total_time_mins": 205,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Full Anatomy, Proventriculus, Midgut Cytology, Goblet Cell V-ATPase & Bt Toxic Action",
+          "total_mins": 100,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study Advanced",
+              "duration_mins": 45
+            },
+            {
+              "resource": "Flashcards Advanced",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_mins": 15
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Hindgut Cryptonephry, 6 Rectal Pads, Filter Chamber, Termite Paunch & Certification Exam",
+          "total_mins": 105,
+          "steps": [
+            {
+              "resource": "Detailed Study Advanced",
+              "duration_mins": 35
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Question Bank Full",
+              "duration_mins": 20
+            },
+            {
+              "resource": "Pre-Final Exam",
+              "duration_mins": 40
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

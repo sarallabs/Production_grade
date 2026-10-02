@@ -136,11 +136,84 @@ export function parseQuestionBankMarkdown(
   chapterNumber: number,
   chapterName: string,
 ): QuestionBankEntry[] {
-  const parsed = parseUniversal(markdown);
+  const trimmed = (markdown || '').trim();
+
+  // 1. Structured JSON format (Cloud Run API / GCS question_bank.json)
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const data = JSON.parse(trimmed);
+      const rawList = Array.isArray(data) ? data : (data.questions || data.items || data.data || []);
+      if (Array.isArray(rawList) && rawList.length > 0) {
+        return rawList.map((q: any, idx: number): QuestionBankEntry => {
+          const qText = q.question || q.q || q.title || '';
+          const shortAns = q.short_answer_2mark || q.shortAnswer || q.short_answer || q.answer || '';
+          const longAnsPoints = q.long_answer_5mark_points || q.longAnswer || q.long_answer || q.explanation || '';
+          const longAns = Array.isArray(longAnsPoints)
+            ? longAnsPoints.join('\n\n')
+            : String(longAnsPoints || '');
+
+          return {
+            id: q.id || `${subjectId}-${chapterNumber}-${idx}`,
+            subjectId,
+            subjectName,
+            chapterNumber,
+            chapterName,
+            question: qText,
+            shortAnswer: shortAns,
+            longAnswer: longAns || shortAns,
+          };
+        });
+      }
+    } catch (e) {
+      console.warn('Failed to parse question bank JSON:', e);
+    }
+  }
+
+  // 2. Dual-Answer Markdown format (## Q1... **2-Mark Short Answer:**... **5-Mark Comprehensive Long Answer:**)
+  if (/##\s*Q\d+[\.:\s]/i.test(trimmed) && /\*\*2-Mark Short Answer:\*\*/i.test(trimmed)) {
+    const qBlocks = trimmed.split(/\n(?=##\s+Q\d+[\.:\s])/i);
+    const dualEntries: QuestionBankEntry[] = [];
+
+    qBlocks.forEach((block, idx) => {
+      const qMatch = block.match(/^##\s+Q\d+[\.:\s]+([^\n]+)/i);
+      if (!qMatch) return;
+      const question = qMatch[1].trim();
+
+      let shortAnswer = '';
+      const shortMatch = block.match(/\*\*2-Mark Short Answer:\*\*([\s\S]*?)(?=\*\*5-Mark Comprehensive Long Answer:\*\*|---|##|$)/i);
+      if (shortMatch) {
+        shortAnswer = shortMatch[1].trim();
+      }
+
+      let longAnswer = '';
+      const longMatch = block.match(/\*\*5-Mark Comprehensive Long Answer:\*\*([\s\S]*?)(?=---|##|$)/i);
+      if (longMatch) {
+        longAnswer = longMatch[1].trim();
+      }
+
+      dualEntries.push({
+        id: `${subjectId}-${chapterNumber}-${idx}`,
+        subjectId,
+        subjectName,
+        chapterNumber,
+        chapterName,
+        question,
+        shortAnswer,
+        longAnswer: longAnswer || shortAnswer,
+      });
+    });
+
+    if (dualEntries.length > 0) {
+      return dualEntries;
+    }
+  }
+
+  // 3. Fallback: Universal line-by-line parser for legacy CBSE / Urdu formats
+  const parsed = parseUniversal(trimmed);
 
   // Extract MCQ answer key — handles "1. b) On the crest...", "1. C", "1. (b) text"
   const answerKeyMap: Record<number, string> = {};
-  const akSection = markdown.match(/answer\s+key[\s\S]*?(?=\n#{1,4}|\n\*\*2\.|\n---\n#{1,4}|$)/i);
+  const akSection = trimmed.match(/answer\s+key[\s\S]*?(?=\n#{1,4}|\n\*\*2\.|\n---\n#{1,4}|$)/i);
   if (akSection) {
     for (const line of akSection[0].split('\n')) {
       // Check for inline MCQ answers like "1(b), 2(d), 3(b)"

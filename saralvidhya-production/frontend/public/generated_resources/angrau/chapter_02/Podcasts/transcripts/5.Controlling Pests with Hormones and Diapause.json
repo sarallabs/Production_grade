@@ -1,0 +1,234 @@
+{
+  "metadata": {
+    "source_file": "5.Controlling Pests with Hormones and Diapause.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\chapter_11_metamorphosis\\Podcast\\5.Controlling Pests with Hormones and Diapause.m4a",
+    "file_size_bytes": 3679086,
+    "duration_seconds": 114.29,
+    "duration_formatted": "00:01:54",
+    "word_count": 292,
+    "character_count": 1850,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:01:07.258024",
+    "total_segments": 27
+  },
+  "full_text": "This is the brief on insect metamorphosis and diapause. You know, morphogenesis allows a single insect, take the magnificent hawkmoth for example, to live three completely different lives, and understanding this timeline is literally the ultimate toolbox for Indiana agriculture. First, let's look at the hormones driving this incredible journey. It relies on a simple three-part system. Brain hormones trigger ectosone, which tells the insect, hey, it's time to shed your skin and grow. But the true master here is juvenile hormone. Think of it as a biological youth switch. High levels keep the bug completely trapped in the larval stage. Then, a sudden drop in those levels allows it to finally mature into a pupa and eventually an adult. Second, we must consider diapause. Sometimes, this rapid hormonal development hits a programmed pause. Now this is not quiescence. Quiescence is just a direct reaction to bad weather, kind of like a student dozing off because a classroom gets a bit stuffy. But diapause? That's an internal alarm clock. It's exactly like a student deliberately scheduling rest before a grueling exam season. This pause can be obligatory, written right into the silkworm's genes, or facultative, triggered by stress in pests like the cotton pink ballworm. Finally, what does this all mean for a farmer in the field? Well, understanding these life cycles dictates our crop protection. Farmers absolutely must strategically time their sprays for the vulnerable active larval stage. Spraying during a dormant diapause just wastes chemicals and money. We even use synthetic hormone mimics to trick that youth switch, causing fatal deformations without relying on heavy traditional pesticides. Ultimately, mastering the internal clocks and hormones of these insects is the most powerful tool we have to outsmart them in our fields.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 4,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:04",
+      "text": "This is the brief on insect metamorphosis and diapause."
+    },
+    {
+      "id": 1,
+      "start": 4,
+      "end": 18.7,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:18",
+      "text": "You know, morphogenesis allows a single insect, take the magnificent hawkmoth for example, to live three completely different lives, and understanding this timeline is literally the ultimate toolbox for Indiana agriculture."
+    },
+    {
+      "id": 2,
+      "start": 19.26,
+      "end": 22.88,
+      "start_formatted": "00:00:19",
+      "end_formatted": "00:00:22",
+      "text": "First, let's look at the hormones driving this incredible journey."
+    },
+    {
+      "id": 3,
+      "start": 23.42,
+      "end": 25.84,
+      "start_formatted": "00:00:23",
+      "end_formatted": "00:00:25",
+      "text": "It relies on a simple three-part system."
+    },
+    {
+      "id": 4,
+      "start": 25.84,
+      "end": 32.14,
+      "start_formatted": "00:00:25",
+      "end_formatted": "00:00:32",
+      "text": "Brain hormones trigger ectosone, which tells the insect, hey, it's time to shed your skin and grow."
+    },
+    {
+      "id": 5,
+      "start": 32.72,
+      "end": 35.14,
+      "start_formatted": "00:00:32",
+      "end_formatted": "00:00:35",
+      "text": "But the true master here is juvenile hormone."
+    },
+    {
+      "id": 6,
+      "start": 35.74,
+      "end": 37.84,
+      "start_formatted": "00:00:35",
+      "end_formatted": "00:00:37",
+      "text": "Think of it as a biological youth switch."
+    },
+    {
+      "id": 7,
+      "start": 38.4,
+      "end": 41.68,
+      "start_formatted": "00:00:38",
+      "end_formatted": "00:00:41",
+      "text": "High levels keep the bug completely trapped in the larval stage."
+    },
+    {
+      "id": 8,
+      "start": 42.22,
+      "end": 48.08,
+      "start_formatted": "00:00:42",
+      "end_formatted": "00:00:48",
+      "text": "Then, a sudden drop in those levels allows it to finally mature into a pupa and eventually an adult."
+    },
+    {
+      "id": 9,
+      "start": 48.62,
+      "end": 50.84,
+      "start_formatted": "00:00:48",
+      "end_formatted": "00:00:50",
+      "text": "Second, we must consider diapause."
+    },
+    {
+      "id": 10,
+      "start": 51.04,
+      "end": 55.18,
+      "start_formatted": "00:00:51",
+      "end_formatted": "00:00:55",
+      "text": "Sometimes, this rapid hormonal development hits a programmed pause."
+    },
+    {
+      "id": 11,
+      "start": 55.84,
+      "end": 57.36,
+      "start_formatted": "00:00:55",
+      "end_formatted": "00:00:57",
+      "text": "Now this is not quiescence."
+    },
+    {
+      "id": 12,
+      "start": 57.88,
+      "end": 62.96,
+      "start_formatted": "00:00:57",
+      "end_formatted": "00:01:02",
+      "text": "Quiescence is just a direct reaction to bad weather, kind of like a student dozing off"
+    },
+    {
+      "id": 13,
+      "start": 62.96,
+      "end": 64.68,
+      "start_formatted": "00:01:02",
+      "end_formatted": "00:01:04",
+      "text": "because a classroom gets a bit stuffy."
+    },
+    {
+      "id": 14,
+      "start": 65.14,
+      "end": 66.2,
+      "start_formatted": "00:01:05",
+      "end_formatted": "00:01:06",
+      "text": "But diapause?"
+    },
+    {
+      "id": 15,
+      "start": 66.42,
+      "end": 68.18,
+      "start_formatted": "00:01:06",
+      "end_formatted": "00:01:08",
+      "text": "That's an internal alarm clock."
+    },
+    {
+      "id": 16,
+      "start": 68.66,
+      "end": 72.98,
+      "start_formatted": "00:01:08",
+      "end_formatted": "00:01:12",
+      "text": "It's exactly like a student deliberately scheduling rest before a grueling exam season."
+    },
+    {
+      "id": 17,
+      "start": 73.48,
+      "end": 78.38,
+      "start_formatted": "00:01:13",
+      "end_formatted": "00:01:18",
+      "text": "This pause can be obligatory, written right into the silkworm's genes, or facultative,"
+    },
+    {
+      "id": 18,
+      "start": 78.38,
+      "end": 81.88,
+      "start_formatted": "00:01:18",
+      "end_formatted": "00:01:21",
+      "text": "triggered by stress in pests like the cotton pink ballworm."
+    },
+    {
+      "id": 19,
+      "start": 82.26,
+      "end": 84.84,
+      "start_formatted": "00:01:22",
+      "end_formatted": "00:01:24",
+      "text": "Finally, what does this all mean for a farmer in the field?"
+    },
+    {
+      "id": 20,
+      "start": 84.84,
+      "end": 88.68,
+      "start_formatted": "00:01:24",
+      "end_formatted": "00:01:28",
+      "text": "Well, understanding these life cycles dictates our crop protection."
+    },
+    {
+      "id": 21,
+      "start": 89.38,
+      "end": 94.48,
+      "start_formatted": "00:01:29",
+      "end_formatted": "00:01:34",
+      "text": "Farmers absolutely must strategically time their sprays for the vulnerable active larval stage."
+    },
+    {
+      "id": 22,
+      "start": 95.18,
+      "end": 98.48,
+      "start_formatted": "00:01:35",
+      "end_formatted": "00:01:38",
+      "text": "Spraying during a dormant diapause just wastes chemicals and money."
+    },
+    {
+      "id": 23,
+      "start": 99.02,
+      "end": 102.26,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:42",
+      "text": "We even use synthetic hormone mimics to trick that youth switch,"
+    },
+    {
+      "id": 24,
+      "start": 102.62,
+      "end": 106.28,
+      "start_formatted": "00:01:42",
+      "end_formatted": "00:01:46",
+      "text": "causing fatal deformations without relying on heavy traditional pesticides."
+    },
+    {
+      "id": 25,
+      "start": 106.96,
+      "end": 110.62,
+      "start_formatted": "00:01:46",
+      "end_formatted": "00:01:50",
+      "text": "Ultimately, mastering the internal clocks and hormones of these insects"
+    },
+    {
+      "id": 26,
+      "start": 110.62,
+      "end": 113.98,
+      "start_formatted": "00:01:50",
+      "end_formatted": "00:01:53",
+      "text": "is the most powerful tool we have to outsmart them in our fields."
+    }
+  ]
+}

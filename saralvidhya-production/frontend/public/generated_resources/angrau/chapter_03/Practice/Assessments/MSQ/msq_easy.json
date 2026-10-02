@@ -1,0 +1,141 @@
+{
+  "chapter": "Lecture 5: Weathering of Rocks and Minerals \u2014 Types, Physical & Biological Agents",
+  "subject": "agricultural_chemistry_and_soil_science",
+  "difficulty": "easy",
+  "question_type": "multiple_select",
+  "total_questions": 10,
+  "questions": [
+    {
+      "number": 1,
+      "stem": "Which of the following are recognized as the three fundamental processes of rock weathering in nature? (Select all that apply)",
+      "options": {
+        "A": "Physical (Mechanical) Weathering",
+        "B": "Chemical Weathering (Decomposition)",
+        "C": "Biological Weathering (Living Agents)",
+        "D": "Tectonic Plate Subduction"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Recall",
+      "rationale": "Weathering operates via physical, chemical, and biological processes. Plate subduction is a deep crustal tectonic process. (Key Takeaway: The three fundamental weathering processes are physical, chemical, and biological.)"
+    },
+    {
+      "number": 2,
+      "stem": "Which of the following are primary agents of Physical (Mechanical) Weathering? (Select all that apply)",
+      "options": {
+        "A": "Diurnal temperature fluctuations",
+        "B": "Freezing water (Frost wedging)",
+        "C": "Flowing water hydraulic forces",
+        "D": "Wind-driven sandblasting",
+        "E": "Atmospheric lightning discharges"
+      },
+      "correct_answers": "A, B, C, D, E (All options correct)",
+      "bloom_level": "Recall",
+      "rationale": "Temperature cycling, frost wedging, hydraulic forces, wind abrasion, and lightning are all recognized physical weathering agents. (Key Takeaway: Physical weathering agents encompass temperature, frost, water, wind, and lightning.)"
+    },
+    {
+      "number": 3,
+      "stem": "What secondary minerals are synthesized during the weathering of primary rock minerals? (Select all that apply)",
+      "options": {
+        "A": "Silicate clay minerals (Kaolinite, Smectite)",
+        "B": "Hydrous iron and aluminum oxides (Gibbsite, Goethite)",
+        "C": "Secondary carbonates (Calcite)",
+        "D": "High-temperature unweathered magmatic olivine"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Recall",
+      "rationale": "Clays, hydrous oxides, and secondary carbonates are secondary minerals synthesized during weathering. Magmatic olivine is an unstable primary mineral. (Key Takeaway: Secondary minerals include clays, sesquioxides, and carbonates.)"
+    },
+    {
+      "number": 4,
+      "stem": "Which organisms act as primary biological agents of rock weathering? (Select all that apply)",
+      "options": {
+        "A": "Higher plants and trees",
+        "B": "Burrowing rodents and earthworms",
+        "C": "Subterranean termites and ants",
+        "D": "Rhizosphere microorganisms (bacteria, fungi)",
+        "E": "Deep-sea hydrothermal vent tube worms living on ocean ridges"
+      },
+      "correct_answers": "A, B, C, D",
+      "bloom_level": "Understand",
+      "rationale": "Plants, burrowers, termites/ants, and soil microbes are active terrestrial weathering agents. Hydrothermal vent worms do not participate in terrestrial soil genesis. (Key Takeaway: Terrestrial biological weathering is driven by flora, fauna, insects, and soil microbes.)"
+    },
+    {
+      "number": 5,
+      "stem": "What mechanical changes are brought about by Physical Weathering? (Select all that apply)",
+      "options": {
+        "A": "Cracking and fracturing of rock boulders",
+        "B": "Crumbling and crushing into gravel and sand",
+        "C": "Reduction in clast dimensions",
+        "D": "Alteration of silicate molecular chemical formulas"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Physical weathering causes mechanical fracturing and size reduction without altering mineral molecular chemical formulas. (Key Takeaway: Physical weathering causes mechanical size reduction with zero chemical formula alteration.)"
+    },
+    {
+      "number": 6,
+      "stem": "Which of the following characteristics accurately describe Regolith? (Select all that apply)",
+      "options": {
+        "A": "It is an unconsolidated mantle of weathered rock debris",
+        "B": "It rests above solid unaltered parent bedrock",
+        "C": "It is formed through the combined physical and chemical breakdown of rocks",
+        "D": "It consists of pure refined synthetic metal"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Recall",
+      "rationale": "Regolith is the unconsolidated mantle of weathered rock residue resting above solid bedrock. It contains natural minerals, not synthetic metal. (Key Takeaway: Regolith is the unconsolidated weathered debris layer above parent bedrock.)"
+    },
+    {
+      "number": 7,
+      "stem": "Which physical forces enable flowing river water to disintegrate bedrock? (Select all that apply)",
+      "options": {
+        "A": "Hydraulic impact and collision of moving water",
+        "B": "Abrasive scouring by suspended gravel and sand bedload",
+        "C": "Grinding of tumbling boulders along the riverbed",
+        "D": "Complete dissolution of pure quartz crystals in seconds"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Hydraulic collision, suspended sand abrasion, and tumbling boulder grinding disintegrate river channels. Quartz does not dissolve instantly. (Key Takeaway: Hydraulic impact and sediment abrasion are the primary fluvial disintegration mechanisms.)"
+    },
+    {
+      "number": 8,
+      "stem": "Which of the following statements about Exfoliation (Onion Weathering) are scientifically accurate? (Select all that apply)",
+      "options": {
+        "A": "Outer rock sheets peel away from the parent monolith",
+        "B": "It is driven by differential thermal expansion between heated outer surfaces and cooler inner rock layers",
+        "C": "It is common in massive Basalt and Granite rock outcrops",
+        "D": "It occurs exclusively under permanent glacial ice sheets"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Exfoliation is thermal spalling of outer curved rock sheets in massive granite and basalt outcrops. It is not a subglacial process. (Key Takeaway: Thermal stress drives concentric exfoliation in massive granite and basalt.)"
+    },
+    {
+      "number": 9,
+      "stem": "What roles do plant roots play in transforming rock into soil? (Select all that apply)",
+      "options": {
+        "A": "Mechanical root wedging into microscopic rock joints",
+        "B": "Creating deep macropore channels for water percolation",
+        "C": "Secreting biochemical organic acids that dissolve minerals",
+        "D": "Preventing all chemical weathering from occurring"
+      },
+      "correct_answers": "A, B, C",
+      "bloom_level": "Understand",
+      "rationale": "Plant roots wedge joints open, create percolation macropores, and secrete corrosive organic acids. (Key Takeaway: Plant roots execute mechanical wedging, create percolation channels, and exude organic acids.)"
+    },
+    {
+      "number": 10,
+      "stem": "Which living organisms are responsible for Pedoturbation (biological soil mixing)? (Select all that apply)",
+      "options": {
+        "A": "Subterranean termites",
+        "B": "Burrowing ants",
+        "C": "Earthworms",
+        "D": "Burrowing rodents"
+      },
+      "correct_answers": "A, B, C, D (All options correct)",
+      "bloom_level": "Recall",
+      "rationale": "Termites, ants, earthworms, and burrowing rodents all actively mix soil and transport mineral particles vertically. (Key Takeaway: Pedoturbation is executed by termites, ants, earthworms, and burrowing animals.)"
+    }
+  ]
+}

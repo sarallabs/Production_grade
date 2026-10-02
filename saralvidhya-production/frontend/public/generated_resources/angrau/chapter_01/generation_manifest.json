@@ -1,0 +1,67 @@
+{
+  "chapter_no": 13,
+  "chapter_name": "Insects Digestive System",
+  "subject": "Entomology",
+  "source_files": [
+    "Docs/PPTx/Ento-131-Presentation-13 (digestive system) - CHERUKURI.pptx",
+    "Docs/PDF/digestive_system.pdf",
+    "Assets/Entomology/Chapter_13_Digestive_System/Learn/Mindmaps/Digestive System Mindmaps.jpeg"
+  ],
+  "status": "COMPLETED",
+  "generated_modules": {
+    "learn": {
+      "detailed_summary": [
+        "Learn/Detailed_Summary/detailed_summary_beginner.md",
+        "Learn/Detailed_Summary/detailed_summary_intermediate.md",
+        "Learn/Detailed_Summary/detailed_summary_advanced.md"
+      ],
+      "quick_summary": [
+        "Learn/Quick_Summary/quick_summary_beginner.md",
+        "Learn/Quick_Summary/quick_summary_intermediate.md",
+        "Learn/Quick_Summary/quick_summary_advanced.md"
+      ],
+      "flashcards": [
+        "Learn/Flashcards/flashcards_beginner.md",
+        "Learn/Flashcards/flashcards_intermediate.md",
+        "Learn/Flashcards/flashcards_advanced.md"
+      ],
+      "assessments": {
+        "mcq": [
+          "Learn/Assessments/MCQ/mcq_easy.md",
+          "Learn/Assessments/MCQ/mcq_medium.md",
+          "Learn/Assessments/MCQ/mcq_hard.md"
+        ],
+        "msq": [
+          "Learn/Assessments/MSQ/msq_easy.md",
+          "Learn/Assessments/MSQ/msq_medium.md",
+          "Learn/Assessments/MSQ/msq_hard.md"
+        ]
+      }
+    },
+    "prepare": {
+      "flashcards": "Prepare/Flashcards/flashcards_prep_master.md",
+      "mock_test": "Prepare/Mock_Test/mock_test_chapter_13.md"
+    },
+    "examination": {
+      "pre_final_exam": "Examination/pre_final_exam.md",
+      "final_examination": "Examination/final_examination.md",
+      "certification_exam": "Examination/certification_exam.md",
+      "exam_rubric_and_keys": "Examination/exam_rubric_and_keys.json",
+      "manifest": "Examination/examination_manifest.json"
+    },
+    "extras": {
+      "key_takeaways": {
+        "md": "key_takeaways.md",
+        "json": "key_takeaways.json"
+      },
+      "study_plan": {
+        "md": "study_plan.md",
+        "json": "study_plan.json"
+      },
+      "question_bank_unified": {
+        "md": "question_bank.md",
+        "json": "question_bank.json"
+      }
+    }
+  }
+}

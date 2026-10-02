@@ -82,23 +82,37 @@ export default function FlashcardsView({
   const safeFront = currentCard?.front || (currentCard as any)?.question || '';
   const cleanTitle = typeof safeFront === 'string' ? safeFront.replace(/^(?:Flashcards|Flash Cards)\n*-\s*/i, '') : safeFront;
 
-  // Build cleaned back text: strip infographic prompts and mermaid code blocks
-  let rawBack = (currentCard?.back || (currentCard as any)?.answer || '');
+  // Build cleaned back text: strip infographic prompts, images, and mermaid code blocks
+  let rawBack = (currentCard?.back || (currentCard as any)?.answer || (currentCard as any)?.definition || '');
   // Remove Infographic Prompt metadata
   rawBack = rawBack.replace(/(?:^|\n)\s*>?\s*\*\*Infographic Prompt:\*\*[\s\S]*/gi, '');
   // Strip mermaid code blocks (```mermaid ... ```) — flashcards should show images, not diagrams
   rawBack = rawBack.replace(/```mermaid[\s\S]*?```/gi, '');
   // Strip embedded base64 <img> tags (they'll be shown in the infographic panel instead)
   rawBack = rawBack.replace(/<img[^>]+src=["']data:image\/[^;]+;base64,[^"']+["'][^>]*>/gi, '');
+  // Strip markdown images (![alt](url) or ![alt](data:image/...))
+  rawBack = rawBack.replace(/!\[.*?\]\([^\)]+\)/gi, '');
   const safeBack = rawBack.trim();
 
-  // If card has no infographicUrl, try to extract an embedded base64 <img> from the back text
+  // If card has no infographicUrl, try to extract an embedded base64 <img> or markdown image
   let extractedImgUrl: string | undefined;
   if (!currentCard?.infographicUrl) {
-    const imgMatch = (currentCard?.back || (currentCard as any)?.answer || '')
-      .match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
-    if (imgMatch) {
-      extractedImgUrl = imgMatch[1];
+    const rawImg = (currentCard as any)?.img || (currentCard as any)?.image;
+    if (typeof rawImg === 'string' && rawImg.trim()) {
+      const mdMatch = rawImg.match(/!\[.*?\]\((.+?)\)/);
+      extractedImgUrl = mdMatch ? mdMatch[1].trim() : rawImg.trim();
+    }
+    if (!extractedImgUrl) {
+      const origText = (currentCard?.back || (currentCard as any)?.answer || (currentCard as any)?.definition || '');
+      const imgMatch = origText.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
+      if (imgMatch) {
+        extractedImgUrl = imgMatch[1];
+      } else {
+        const mdMatch = origText.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+        if (mdMatch) {
+          extractedImgUrl = mdMatch[1];
+        }
+      }
     }
   }
 
@@ -353,6 +367,13 @@ export default function FlashcardsView({
             ];
 
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
+            if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
+              if (finalUrl.startsWith('../Mindmaps/')) {
+                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
+              } else if (finalUrl.startsWith('/api/')) {
+                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app${finalUrl}`;
+              }
+            }
             if (isPhysics) {
               const urlLower = (finalUrl || '').toLowerCase();
               if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {

@@ -5,7 +5,10 @@ import {
   DifficultyLevel,
   getManifest,
   getChapterDir,
-  getSubjectBaseUrl
+  getSubjectBaseUrl,
+  GCS_BACKEND_SUBJECTS,
+  GCS_API_BASE,
+  GCS_SUBJECT_MAP,
 } from './manifestService';
 
 export interface FlashCard {
@@ -28,6 +31,65 @@ export async function getFlashcards(
   videoDir?: string,
 ): Promise<FlashCard[]> {
   await getManifest();
+
+  // ── GCS Cloud Run subjects ──
+  if (GCS_BACKEND_SUBJECTS.has(subject)) {
+    const subjectPath = GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(subject, chapterNumber);
+    const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/practice/flashcards?persona=${level}`;
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        const cards = Array.isArray(data) ? data : (data.flashcards || data.cards || []);
+        if (cards.length > 0) {
+          return cards.map((c: any) => {
+            let infoUrl = c.infographicUrl || c.infographic || c.image;
+            if (!infoUrl && c.img) {
+              const m = typeof c.img === 'string' ? c.img.match(/!\[.*?\]\((.+?)\)/) : null;
+              infoUrl = m ? m[1].trim() : (typeof c.img === 'string' && c.img.startsWith('data:') ? c.img.trim() : undefined);
+            }
+            if (!infoUrl && typeof c.answer === 'string') {
+              const m = c.answer.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
+                     || c.answer.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+              if (m) infoUrl = m[1].trim();
+            }
+            if (!infoUrl && typeof c.back === 'string') {
+              const m = c.back.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
+                     || c.back.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+              if (m) infoUrl = m[1].trim();
+            }
+            if (!infoUrl && typeof c.definition === 'string') {
+              const m = c.definition.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
+                     || c.definition.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+              if (m) infoUrl = m[1].trim();
+            }
+            // Resolve relative URLs to GCS_API_BASE
+            if (infoUrl && !infoUrl.startsWith('http://') && !infoUrl.startsWith('https://') && !infoUrl.startsWith('data:')) {
+              if (infoUrl.startsWith('/api/')) {
+                infoUrl = `${GCS_API_BASE}${infoUrl}`;
+              } else if (infoUrl.includes('generated_infographics')) {
+                const cleanRel = infoUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
+                infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cleanRel}`;
+              } else if (infoUrl.startsWith('/')) {
+                infoUrl = `${GCS_API_BASE}${infoUrl}`;
+              } else {
+                infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${infoUrl}`;
+              }
+            }
+            return {
+              front: c.front ?? c.question ?? c.term ?? '',
+              back:  c.back  ?? c.answer  ?? c.definition ?? '',
+              infographicUrl: infoUrl,
+            };
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('[GCS] Failed to fetch flashcards', url, e);
+    }
+    return [{ front: 'No flashcards available yet.', back: 'Content coming soon.' }];
+  }
 
   if (BACKEND_SUBJECTS.has(subject)) {
     try {

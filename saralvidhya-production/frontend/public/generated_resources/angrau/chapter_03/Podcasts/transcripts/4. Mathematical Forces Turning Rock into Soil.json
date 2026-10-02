@@ -1,0 +1,178 @@
+{
+  "metadata": {
+    "source_file": "4. Mathematical Forces Turning Rock into Soil.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Lec-5 Weathering\\podcast\\4. Mathematical Forces Turning Rock into Soil.m4a",
+    "file_size_bytes": 3594671,
+    "duration_seconds": 111.66,
+    "duration_formatted": "00:01:51",
+    "word_count": 293,
+    "character_count": 1901,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:00:17.273612",
+    "total_segments": 20
+  },
+  "full_text": "This is the brief on rock weathering synthesis and metrics. It's absolutely amazing how massive ancient landscapes, from Himalayan peaks to the Deccan Plateau, are broken down by invisible mathematical forces to create the very soil we stand on. So first, how does breaking a rock actually create soil? Well, it's the Genesis feedback loop. Physical fracturing exponentially expands reactive surface area. Think about crushing a black of jaggery. Doesn't it dissolve much faster in tiny pieces? Exactly. Multiplied surface area accelerates chemical decomposition and microbial activity in soil genesis. Second, let's look at the exact mathematical thresholds of the forces doing the breaking, starting with water and ice. For the Ganges River, we use hydraulic thresholds. 15 centimeters for fine sand, 30 centimeters for gravel, 1.2 meters for stones, and 9.0 meters for boulders, where the river source is greater than the mouth. That's why disintegration is far greater at the steep mountain source. Up in the Himalayas, we see frost wedging. Water expands 9% upon freezing, exerting 1465 MGM2, that's 1465 tons per square meter, bursting pressure in rock crevices. Could you imagine a force of over 1400 tons pressing against a single square meter of rock? Finally, extreme temperatures and desert winds have strict mathematical laws too. Consider thermal expansion ratios in deck and rocks. Quartz cubical expansion equals 2x feldspars, and granite linear expansion equals 0.5x sandstone. And for wind carrying power in the Thar Desert, sediment transport capacity is proportional to 6 power velocity, the V6 law. How mind-blowing is that V6 law? Just a slight breeze increase means an exponential explosion in sandblasting power. Whether it's freezing Himalayan ice or blasting desert wind, these exact mathematical metrics are the invisible engines turning solid rock into life-sustaining soil.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 3.42,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:03",
+      "text": "This is the brief on rock weathering synthesis and metrics."
+    },
+    {
+      "id": 1,
+      "start": 3.94,
+      "end": 14.94,
+      "start_formatted": "00:00:03",
+      "end_formatted": "00:00:14",
+      "text": "It's absolutely amazing how massive ancient landscapes, from Himalayan peaks to the Deccan Plateau, are broken down by invisible mathematical forces to create the very soil we stand on."
+    },
+    {
+      "id": 2,
+      "start": 15.42,
+      "end": 19.08,
+      "start_formatted": "00:00:15",
+      "end_formatted": "00:00:19",
+      "text": "So first, how does breaking a rock actually create soil?"
+    },
+    {
+      "id": 3,
+      "start": 19.56,
+      "end": 21.56,
+      "start_formatted": "00:00:19",
+      "end_formatted": "00:00:21",
+      "text": "Well, it's the Genesis feedback loop."
+    },
+    {
+      "id": 4,
+      "start": 22.26,
+      "end": 25.58,
+      "start_formatted": "00:00:22",
+      "end_formatted": "00:00:25",
+      "text": "Physical fracturing exponentially expands reactive surface area."
+    },
+    {
+      "id": 5,
+      "start": 25.86,
+      "end": 27.72,
+      "start_formatted": "00:00:25",
+      "end_formatted": "00:00:27",
+      "text": "Think about crushing a black of jaggery."
+    },
+    {
+      "id": 6,
+      "start": 27.72,
+      "end": 36.92,
+      "start_formatted": "00:00:27",
+      "end_formatted": "00:00:36",
+      "text": "Doesn't it dissolve much faster in tiny pieces? Exactly. Multiplied surface area accelerates chemical decomposition and microbial activity in soil genesis."
+    },
+    {
+      "id": 7,
+      "start": 37.52,
+      "end": 43.46,
+      "start_formatted": "00:00:37",
+      "end_formatted": "00:00:43",
+      "text": "Second, let's look at the exact mathematical thresholds of the forces doing the breaking, starting with water and ice."
+    },
+    {
+      "id": 8,
+      "start": 44.06,
+      "end": 56.36,
+      "start_formatted": "00:00:44",
+      "end_formatted": "00:00:56",
+      "text": "For the Ganges River, we use hydraulic thresholds. 15 centimeters for fine sand, 30 centimeters for gravel, 1.2 meters for stones, and 9.0 meters for boulders, where the river source is greater than the mouth."
+    },
+    {
+      "id": 9,
+      "start": 56.36,
+      "end": 59.68,
+      "start_formatted": "00:00:56",
+      "end_formatted": "00:00:59",
+      "text": "That's why disintegration is far greater at the steep mountain source."
+    },
+    {
+      "id": 10,
+      "start": 60.82,
+      "end": 62.78,
+      "start_formatted": "00:01:00",
+      "end_formatted": "00:01:02",
+      "text": "Up in the Himalayas, we see frost wedging."
+    },
+    {
+      "id": 11,
+      "start": 63.38,
+      "end": 71.98,
+      "start_formatted": "00:01:03",
+      "end_formatted": "00:01:11",
+      "text": "Water expands 9% upon freezing, exerting 1465 MGM2, that's 1465 tons per square meter, bursting pressure in rock crevices."
+    },
+    {
+      "id": 12,
+      "start": 72.7,
+      "end": 76.64,
+      "start_formatted": "00:01:12",
+      "end_formatted": "00:01:16",
+      "text": "Could you imagine a force of over 1400 tons pressing against a single square meter of rock?"
+    },
+    {
+      "id": 13,
+      "start": 77.3,
+      "end": 80.84,
+      "start_formatted": "00:01:17",
+      "end_formatted": "00:01:20",
+      "text": "Finally, extreme temperatures and desert winds have strict mathematical laws too."
+    },
+    {
+      "id": 14,
+      "start": 81.56,
+      "end": 83.8,
+      "start_formatted": "00:01:21",
+      "end_formatted": "00:01:23",
+      "text": "Consider thermal expansion ratios in deck and rocks."
+    },
+    {
+      "id": 15,
+      "start": 83.8,
+      "end": 90.12,
+      "start_formatted": "00:01:23",
+      "end_formatted": "00:01:30",
+      "text": "Quartz cubical expansion equals 2x feldspars, and granite linear expansion equals 0.5x sandstone."
+    },
+    {
+      "id": 16,
+      "start": 90.54,
+      "end": 97.0,
+      "start_formatted": "00:01:30",
+      "end_formatted": "00:01:36",
+      "text": "And for wind carrying power in the Thar Desert, sediment transport capacity is proportional to 6 power velocity, the V6 law."
+    },
+    {
+      "id": 17,
+      "start": 97.48,
+      "end": 99.12,
+      "start_formatted": "00:01:37",
+      "end_formatted": "00:01:39",
+      "text": "How mind-blowing is that V6 law?"
+    },
+    {
+      "id": 18,
+      "start": 99.6,
+      "end": 103.08,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:43",
+      "text": "Just a slight breeze increase means an exponential explosion in sandblasting power."
+    },
+    {
+      "id": 19,
+      "start": 103.64,
+      "end": 111.46,
+      "start_formatted": "00:01:43",
+      "end_formatted": "00:01:51",
+      "text": "Whether it's freezing Himalayan ice or blasting desert wind, these exact mathematical metrics are the invisible engines turning solid rock into life-sustaining soil."
+    }
+  ]
+}

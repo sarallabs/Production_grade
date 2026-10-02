@@ -1,0 +1,154 @@
+{
+  "metadata": {
+    "source_file": "3.Insect pupal structures and escape tactics.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\chapter_11_metamorphosis\\Podcast\\3.Insect pupal structures and escape tactics.m4a",
+    "file_size_bytes": 3557319,
+    "duration_seconds": 110.5,
+    "duration_formatted": "00:01:50",
+    "word_count": 267,
+    "character_count": 1735,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:00:58.178173",
+    "total_segments": 17
+  },
+  "full_text": "This is the brief on insect pupal classifications and emergence. During metamorphosis, the seemingly quiet pupal stage, like a butterfly's chrysalis or a bumbixmori silk cocoon, actually hides incredible structural engineering and highly specialized escape room tactics, you see. Understanding this is absolutely crucial for managing familiar Indian agricultural pests like our local fruit flies. So how exactly are these pupa built, And how on earth do the adults break out of them? First, let's look at the structural types. We have the exerate, or free type, where appendages project freely from the body wall in individual sheaths, as seen in Coleoptera and Hymenoptera, like our busy honeybees. Then there's the obtect, or glued type. Here, appendages are cemented tightly to the cuticle by a secreted exudate, forming a rigid mummy capsule, much like a butterfly chrysalis or that bombix mori cocoon. Finally, the coarctate type. This is an exerate pupa enclosed inside a dark, barrel-shaped puparium made of hardened penultimate larval skin, seen in Cyclorapha, like Musca and Bactricera, our very own Indian fruit fly. Second, how do they escape? Well, Decticous pupa have articulated, heavily sclerotized, chewing mandibles operated by the ferrate adult to cut open the cocoon, which we see in Neuroptera and Trichoptera. Adecticous pupa, however, entirely lack mandibles. Instead, they escape via clever cocoon cutters, cocoonase enzymes, or the hydraulic eversion of a frontal pleudolum sac to literally pop the puparium tap right off. Ultimately, whether an insect is glued tight Whether you're in a chrysalis or hydraulically popping a puparium cap, its unique structural design perfectly dictates its ultimate grand exit.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 4.04,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:04",
+      "text": "This is the brief on insect pupal classifications and emergence."
+    },
+    {
+      "id": 1,
+      "start": 4.8,
+      "end": 10.62,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:10",
+      "text": "During metamorphosis, the seemingly quiet pupal stage, like a butterfly's chrysalis or a"
+    },
+    {
+      "id": 2,
+      "start": 10.62,
+      "end": 16.74,
+      "start_formatted": "00:00:10",
+      "end_formatted": "00:00:16",
+      "text": "bumbixmori silk cocoon, actually hides incredible structural engineering and highly specialized"
+    },
+    {
+      "id": 3,
+      "start": 16.74,
+      "end": 22.84,
+      "start_formatted": "00:00:16",
+      "end_formatted": "00:00:22",
+      "text": "escape room tactics, you see. Understanding this is absolutely crucial for managing familiar"
+    },
+    {
+      "id": 4,
+      "start": 22.84,
+      "end": 29.22,
+      "start_formatted": "00:00:22",
+      "end_formatted": "00:00:29",
+      "text": "Indian agricultural pests like our local fruit flies. So how exactly are these pupa built,"
+    },
+    {
+      "id": 5,
+      "start": 29.22,
+      "end": 31.82,
+      "start_formatted": "00:00:29",
+      "end_formatted": "00:00:31",
+      "text": "And how on earth do the adults break out of them?"
+    },
+    {
+      "id": 6,
+      "start": 32.62,
+      "end": 34.68,
+      "start_formatted": "00:00:32",
+      "end_formatted": "00:00:34",
+      "text": "First, let's look at the structural types."
+    },
+    {
+      "id": 7,
+      "start": 35.52,
+      "end": 46.1,
+      "start_formatted": "00:00:35",
+      "end_formatted": "00:00:46",
+      "text": "We have the exerate, or free type, where appendages project freely from the body wall in individual sheaths, as seen in Coleoptera and Hymenoptera, like our busy honeybees."
+    },
+    {
+      "id": 8,
+      "start": 46.72,
+      "end": 49.16,
+      "start_formatted": "00:00:46",
+      "end_formatted": "00:00:49",
+      "text": "Then there's the obtect, or glued type."
+    },
+    {
+      "id": 9,
+      "start": 49.16,
+      "end": 59.58,
+      "start_formatted": "00:00:49",
+      "end_formatted": "00:00:59",
+      "text": "Here, appendages are cemented tightly to the cuticle by a secreted exudate, forming a rigid mummy capsule, much like a butterfly chrysalis or that bombix mori cocoon."
+    },
+    {
+      "id": 10,
+      "start": 60.26,
+      "end": 73.98,
+      "start_formatted": "00:01:00",
+      "end_formatted": "00:01:13",
+      "text": "Finally, the coarctate type. This is an exerate pupa enclosed inside a dark, barrel-shaped puparium made of hardened penultimate larval skin, seen in Cyclorapha, like Musca and Bactricera, our very own Indian fruit fly."
+    },
+    {
+      "id": 11,
+      "start": 73.98,
+      "end": 80.34,
+      "start_formatted": "00:01:13",
+      "end_formatted": "00:01:20",
+      "text": "Second, how do they escape? Well, Decticous pupa have articulated, heavily sclerotized,"
+    },
+    {
+      "id": 12,
+      "start": 80.52,
+      "end": 85.94,
+      "start_formatted": "00:01:20",
+      "end_formatted": "00:01:25",
+      "text": "chewing mandibles operated by the ferrate adult to cut open the cocoon, which we see in Neuroptera"
+    },
+    {
+      "id": 13,
+      "start": 85.94,
+      "end": 92.1,
+      "start_formatted": "00:01:25",
+      "end_formatted": "00:01:32",
+      "text": "and Trichoptera. Adecticous pupa, however, entirely lack mandibles. Instead, they escape"
+    },
+    {
+      "id": 14,
+      "start": 92.1,
+      "end": 98.0,
+      "start_formatted": "00:01:32",
+      "end_formatted": "00:01:37",
+      "text": "via clever cocoon cutters, cocoonase enzymes, or the hydraulic eversion of a frontal pleudolum sac"
+    },
+    {
+      "id": 15,
+      "start": 98.0,
+      "end": 103.34,
+      "start_formatted": "00:01:37",
+      "end_formatted": "00:01:43",
+      "text": "to literally pop the puparium tap right off. Ultimately, whether an insect is glued tight"
+    },
+    {
+      "id": 16,
+      "start": 103.34,
+      "end": 110.02,
+      "start_formatted": "00:01:43",
+      "end_formatted": "00:01:50",
+      "text": "Whether you're in a chrysalis or hydraulically popping a puparium cap, its unique structural design perfectly dictates its ultimate grand exit."
+    }
+  ]
+}

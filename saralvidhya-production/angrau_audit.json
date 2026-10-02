@@ -1,0 +1,162 @@
+{
+  "chapters": {
+    "chapter_01": {
+      "metadata.json": true,
+      "_subfolders": [
+        "Examination",
+        "Foundation",
+        "Learn",
+        "Podcasts",
+        "Practice",
+        "Prepare",
+        "Reading",
+        "advanced",
+        "beginner",
+        "intermediate"
+      ],
+      "beginner": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "intermediate": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "advanced": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      }
+    },
+    "chapter_02": {
+      "metadata.json": true,
+      "_subfolders": [
+        "Foundation",
+        "Podcasts",
+        "Practice",
+        "Reading",
+        "advanced",
+        "beginner",
+        "generated_infographics",
+        "intermediate",
+        "medium"
+      ],
+      "beginner": {
+        "summary.md": true,
+        "flashcards.json": true,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "intermediate": {
+        "summary.md": true,
+        "flashcards.json": true,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "advanced": {
+        "summary.md": true,
+        "flashcards.json": true,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      }
+    },
+    "chapter_03": {
+      "metadata.json": true,
+      "_subfolders": [
+        "Docs",
+        "Foundation",
+        "Podcasts",
+        "Practice",
+        "Preparation",
+        "Reading",
+        "advanced",
+        "beginner",
+        "intermediate"
+      ],
+      "beginner": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "intermediate": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "advanced": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      }
+    },
+    "chapter_04": {
+      "metadata.json": true,
+      "_subfolders": [
+        "Foundation",
+        "Podcasts",
+        "Practice",
+        "Preparation",
+        "Reading",
+        "advanced",
+        "beginner",
+        "intermediate"
+      ],
+      "beginner": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "intermediate": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      },
+      "advanced": {
+        "summary.md": true,
+        "flashcards.json": false,
+        "mindmap.json": false,
+        "quiz.json": false,
+        "podcast.mp3": false
+      }
+    }
+  },
+  "loose_folders": [
+    "digestive system missing artifacts",
+    "digestive system podcasts transcripts",
+    "metamorphosis podcast plus transcripts",
+    "metamorposis missing  content",
+    "mindmaps topic level",
+    "Pollination Detailed Study",
+    "pollination quick study",
+    "pollination transcrtips",
+    "weathering missing content",
+    "weathering transcripts"
+  ],
+  "summary": {
+    "total_needed": 60,
+    "present": 15,
+    "missing": 45,
+    "completion_pct": 25
+  }
+}
