@@ -5,7 +5,10 @@ export type QuestionType =
   | 'fill_blanks'
   | 'match_following'
   | 'sequencing'
-  | 'labelling';
+  | 'labelling'
+  | 'descriptive'
+  | 'short_answer'
+  | 'long_answer';
 
 export interface BaseQuestion {
   id: string;
@@ -62,6 +65,19 @@ export interface LabellingQuestion extends BaseQuestion {
   }[];
 }
 
+export interface DescriptiveQuestion extends BaseQuestion {
+  type: 'descriptive' | 'short_answer' | 'long_answer';
+  section?: string;
+  sectionName?: string;
+  marks?: number;
+  bloomLevel?: string;
+  mindmapPath?: string;
+  modelAnswer?: string;
+  rubric?: { marks: string; desc: string }[];
+  keywords?: string[];
+  hasAsciiDiagram?: boolean;
+}
+
 export type AssessmentQuestion =
   | MCQQuestion
   | MSQQuestion
@@ -69,4 +85,6 @@ export type AssessmentQuestion =
   | FillBlanksQuestion
   | MatchFollowingQuestion
   | SequencingQuestion
-  | LabellingQuestion;
+  | LabellingQuestion
+  | DescriptiveQuestion;
+

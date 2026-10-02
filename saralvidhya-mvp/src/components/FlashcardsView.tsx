@@ -353,7 +353,7 @@ export default function FlashcardsView({
             {currentIndex + 1}/{totalCards}
           </div>
 
-          {/* Question title moved inside flex container */}
+          {/* Progress badge */}
 
           {(() => {
             const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
@@ -383,39 +383,87 @@ export default function FlashcardsView({
 
             const hasImage = !!finalUrl && !imgFailed;
 
-            return (
-              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
-                {/* Text Content */}
+            if (!isFlipped) {
+              // ── FRONT FACE: Question only ─────────────────────────────────
+              return (
                 <div
-                  style={{
-                    fontSize: "19px",
-                    lineHeight: "1.65",
-                    color: "#334155",
-                    width: hasImage ? "calc(42% - 12px)" : "100%",
-                    flexShrink: 0,
-                    marginBottom: "12px",
-                    overflowY: "auto",
-                    paddingRight: hasImage ? "16px" : "0",
-                  }}
+                  style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '32px', cursor: 'pointer' }}
+                  onClick={() => setIsFlipped(true)}
                 >
-                  <div
+                  <div style={{
+                    fontSize: '26px',
+                    fontWeight: '800',
+                    color: '#0f172a',
+                    lineHeight: '1.35',
+                    textAlign: 'center',
+                    maxWidth: '82%',
+                  }}>
+                    <MarkdownView content={cleanTitle} />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setIsFlipped(true); }}
                     style={{
-                      fontSize: "24px",
-                      fontWeight: "800",
-                      color: "#0f172a",
-                      lineHeight: "1.32",
-                      marginBottom: "16px",
-                      marginTop: "4px"
+                      background: 'rgba(255,255,255,0.18)',
+                      border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(0,136,255,0.4)'}`,
+                      borderRadius: '999px',
+                      padding: '10px 28px',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: isPurpleTheme ? '#7e22ce' : '#1d4ed8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backdropFilter: 'blur(4px)',
+                      transition: 'all 0.18s ease',
                     }}
                   >
-                    <MarkdownView content={cleanTitle} />
+                    Click to reveal Answer
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            }
+
+            // ── BACK FACE: Answer + Infographic ──────────────────────────────
+            return (
+              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
+                {/* Answer text */}
+                <div
+                  style={{
+                    fontSize: '19px',
+                    lineHeight: '1.65',
+                    color: '#334155',
+                    width: hasImage ? 'calc(42% - 12px)' : '100%',
+                    flexShrink: 0,
+                    marginBottom: '12px',
+                    overflowY: 'auto',
+                    paddingRight: hasImage ? '16px' : '0',
+                  }}
+                >
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: isPurpleTheme ? '#9333ea' : '#0088ff',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    marginBottom: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    Answer.
                   </div>
                   <MarkdownView content={safeBack} />
                 </div>
-                
+
                 {/* Infographic */}
                 {hasImage && (
-                  <div style={{ width: "calc(58% - 12px)", flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflowY: 'auto' }}>
+                  <div style={{ width: 'calc(58% - 12px)', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflowY: 'auto' }}>
                     <img
                       src={finalUrl}
                       alt="Infographic"
@@ -423,18 +471,18 @@ export default function FlashcardsView({
                       onError={() => setImgFailed(true)}
                       title="Click to expand full screen"
                       style={{
-                        width: "100%",
-                        height: "auto",
-                        maxHeight: "100%",
-                        objectFit: "contain",
-                        borderRadius: "12px",
-                        backgroundColor: "#ffffff",
-                        padding: "12px",
-                        border: "1px solid #cbd5e1",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                        cursor: "zoom-in",
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        borderRadius: '12px',
+                        backgroundColor: '#ffffff',
+                        padding: '12px',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        cursor: 'zoom-in',
                         flexShrink: 0,
-                        transition: "transform 0.2s ease",
+                        transition: 'transform 0.2s ease',
                       }}
                     />
                   </div>

@@ -2387,7 +2387,7 @@ export default function StudyTable() {
                     master_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
                     revision_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
                     revise: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    qbank: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
+                    qbank: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#EEF5F1" },
 
                     pyq: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
                     prep_exam: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
@@ -2646,19 +2646,21 @@ export default function StudyTable() {
                           border: active ? `1.5px solid ${themeColor}` : '1.5px solid transparent',
                           boxShadow: active ? `0 2px 8px ${themeColor}25` : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
-                          opacity: active ? 1 : locked ? 0.35 : 0.88,
-                          filter: 'none',
+                          opacity: active ? 1 : locked ? 0.25 : 0.45,
+                          filter: active ? 'none' : 'grayscale(1)',
                           transition: 'all 0.2s ease',
                           position: 'relative',
                           gap: '4px'
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.opacity = '1';
+                          (e.currentTarget as HTMLDivElement).style.opacity = '0.85';
+                          (e.currentTarget as HTMLDivElement).style.filter = 'grayscale(0)';
                           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.opacity = '0.88';
+                          (e.currentTarget as HTMLDivElement).style.opacity = '0.45';
+                          (e.currentTarget as HTMLDivElement).style.filter = 'grayscale(1)';
                           (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
@@ -2668,7 +2670,7 @@ export default function StudyTable() {
                         <span style={{
                           fontSize: '11px',
                           fontWeight: active ? 700 : 500,
-                          color: active ? themeColor : '#334155',
+                          color: active ? themeColor : '#94a3b8',
                           textAlign: 'center',
                           lineHeight: '1.2',
                           whiteSpace: 'nowrap'
@@ -2703,7 +2705,7 @@ export default function StudyTable() {
                           justifyContent: 'center',
                           gap: '28px',
                           padding: '10px 24px',
-                          border: '2px solid #5A6D7C',
+                          border: 'none',
                           borderRadius: '12px',
                           background: '#FFFFFF',
                           boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
@@ -2740,7 +2742,7 @@ export default function StudyTable() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {renderNode("revision_flashcards", "Revise", "#E8996C")}
                             {renderNode("assessment", "Assessment", "#E8996C")}
-                            {renderNode("qbank", "Question Bank", "#E8996C")}
+                            {renderNode("qbank", "Question Bank", "#4F7B64")}
                           </div>
                         </div>
 
@@ -3071,6 +3073,7 @@ export default function StudyTable() {
                       }
                       /* Outer row — no border/bg, just flex */
                       .sv-hdr {
+                        position: relative;
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
@@ -3081,6 +3084,7 @@ export default function StudyTable() {
                         display: flex; align-items: center; gap: 0;
                         min-width: 0; flex-shrink: 0;
                         max-width: 380px;
+                        position: relative; z-index: 1;
                       }
                       .sv-hdr-crumb {
                         font-size: 0.82rem; font-weight: 500; color: #64748b;
@@ -3090,13 +3094,15 @@ export default function StudyTable() {
                       .sv-hdr-crumb .crumb-subject { color: #2563eb; font-weight: 700; }
                       .sv-hdr-crumb .crumb-sep { color: #94a3b8; margin: 0 5px; font-weight: 400; }
                       .sv-hdr-crumb .crumb-chapter { color: #4f46e5; font-weight: 700; }
-                      /* MIDDLE levels */
+                      /* MIDDLE levels — absolutely centered to the full bar */
                       .sv-hdr-levels {
+                        position: absolute;
+                        left: 50%; transform: translateX(-50%);
                         display: flex; gap: 8px; align-items: center; justify-content: center;
-                        flex: 1;
+                        z-index: 0;
                       }
                       .sv-hdr-level-btn {
-                        width: 44px; height: 44px; border-radius: 50%;
+                        width: 44px; height: 44px; border-radius: 10px;
                         padding: 0; border: 2.5px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s ease;

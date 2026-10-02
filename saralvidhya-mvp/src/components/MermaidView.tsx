@@ -192,9 +192,12 @@ function EyeIcon({ cx, cy, c }: { cx: number; cy: number; c: string }) {
 
 function EarIcon({ cx, cy, c }: { cx: number; cy: number; c: string }) {
   return (
-    <svg x={cx - 7} y={cy - 7} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
-      <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" />
+    <svg x={cx - 8} y={cy - 8} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 14a9 9 0 0 1 18 0" />
+      <rect x="2" y="14" width="4" height="6" rx="2" />
+      <rect x="18" y="14" width="4" height="6" rx="2" />
+      <path d="M22 17v1a4 4 0 0 1-4 4H12" />
+      <circle cx="12" cy="22" r="1" />
     </svg>
   );
 }
