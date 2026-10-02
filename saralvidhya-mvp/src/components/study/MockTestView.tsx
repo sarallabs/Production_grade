@@ -21,12 +21,19 @@ export interface MockQuestion {
   text: string;
   options?: string[];
   correctAnswers?: number[];
-  type?: "mcq" | "msq";
+  type?: "mcq" | "msq" | "short_answer" | "long_answer" | "descriptive";
   explanation?: string;
   shortAnswer?: string;
   longAnswer?: string;
   marks: number;
   section?: string;
+  sectionName?: string;
+  bloomLevel?: string;
+  mindmapPath?: string;
+  modelAnswer?: string;
+  rubric?: { marks: string; desc: string }[];
+  keywords?: string[];
+  hasAsciiDiagram?: boolean;
   chapter?: string;
   year?: number;
   unitNumber?: number;
@@ -362,6 +369,450 @@ export function getTemporaryHardcodedQuestions(subjectId: string, unitNumbers: n
 }
 
 /**
+ * DescriptiveQuestionCard Component
+ * Renders short-answer, explanatory, and essay questions with uniform Forest/Sage green theme,
+ * pre-filled model answer for demo, live word counter, keyword matching, and grading rubric.
+ */
+function DescriptiveQuestionCard({
+  question,
+  qIdx,
+  textAnswer,
+  onAnswerChange,
+  isSubmitted,
+  expandedRubric,
+  onToggleRubric,
+}: {
+  question: MockQuestion;
+  qIdx: number;
+  textAnswer: string;
+  onAnswerChange: (text: string) => void;
+  isSubmitted: boolean;
+  expandedRubric: boolean;
+  onToggleRubric: () => void;
+}) {
+  const sectionColors = {
+    part_a: { label: "Part A • Short Answer", bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
+    part_b: { label: "Part B • Analytical & Explanatory", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
+    part_c: { label: "Part C • Comprehensive Essay", bg: "#F4F8F6", text: "#2D3E36", border: "#C6DFD4" },
+  };
+
+  const sec = (question.section?.toLowerCase().includes("part_a") || question.sectionName?.toLowerCase().includes("part a"))
+    ? sectionColors.part_a
+    : (question.section?.toLowerCase().includes("part_b") || question.sectionName?.toLowerCase().includes("part b"))
+      ? sectionColors.part_b
+      : sectionColors.part_c;
+
+  const wordCount = textAnswer.trim() ? textAnswer.trim().split(/\s+/).length : 0;
+  const charCount = textAnswer.length;
+
+  const matchedKeywords = useMemo(() => {
+    if (!question.keywords || question.keywords.length === 0) return [];
+    const lower = textAnswer.toLowerCase();
+    return question.keywords.map((kw) => ({
+      keyword: kw,
+      matched: lower.includes(kw.toLowerCase()),
+    }));
+  }, [question.keywords, textAnswer]);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+      {/* Question Metadata Header */}
+      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
+          {/* Section Pill */}
+          <span
+            style={{
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.04em",
+              padding: "4px 10px",
+              borderRadius: "6px",
+              background: sec.bg,
+              color: sec.text,
+              border: `1px solid ${sec.border}`,
+            }}
+          >
+            {question.sectionName || sec.label}
+          </span>
+
+          {/* Marks Pill */}
+          <span
+            style={{
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              padding: "4px 10px",
+              borderRadius: "6px",
+              background: "#2D3E36",
+              color: "#FFFFFF",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+            }}
+          >
+            <span>★</span> {question.marks} {question.marks === 1 ? "Mark" : "Marks"}
+          </span>
+
+          {/* Bloom Level Pill */}
+          {question.bloomLevel && (
+            <span
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                padding: "4px 10px",
+                borderRadius: "6px",
+                background: "#F1F5F9",
+                color: "#475569",
+                border: "1px solid #E2E8F0",
+              }}
+            >
+              🧠 {question.bloomLevel}
+            </span>
+          )}
+        </div>
+
+        {/* Mindmap Breadcrumb */}
+        {question.mindmapPath && (
+          <div
+            style={{
+              fontSize: "0.76rem",
+              color: "#64748B",
+              fontWeight: 500,
+              background: "#F8FAF9",
+              padding: "3px 10px",
+              borderRadius: "6px",
+              border: "1px solid #E2ECE6",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              maxWidth: "100%",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span style={{ color: "#467360" }}>🗺️</span>
+            <span>{question.mindmapPath}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Question Text */}
+      <div
+        style={{
+          fontSize: "1.08rem",
+          fontWeight: 600,
+          color: "#1E2923",
+          lineHeight: "1.65",
+          background: "#FAFDFB",
+          padding: "16px 20px",
+          borderRadius: "12px",
+          border: "1px solid #E0EDE5",
+        }}
+      >
+        <MarkdownView content={question.text} />
+      </div>
+
+      {/* Student Answer Box */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+          <label
+            style={{
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              color: "#2D3E36",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#467360" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+            </svg>
+            Student Response / Written Answer
+          </label>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            {/* Demo Badge */}
+            <span
+              style={{
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                background: "#F0FDF4",
+                color: "#166534",
+                padding: "2px 8px",
+                borderRadius: "4px",
+                border: "1px solid #BBF7D0",
+              }}
+            >
+              ✓ Model answer pre-filled for demo
+            </span>
+
+            {/* Live Counter */}
+            <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+              {wordCount} words • {charCount} chars
+            </span>
+
+            {/* Quick Actions */}
+            {question.modelAnswer && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onAnswerChange(question.modelAnswer || "");
+                }}
+                title="Reset to official model answer"
+                style={{
+                  background: "transparent",
+                  border: "1px solid #CBD5E1",
+                  borderRadius: "5px",
+                  padding: "2px 8px",
+                  fontSize: "0.72rem",
+                  color: "#475569",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Reset
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onAnswerChange("");
+              }}
+              title="Clear answer field to test writing from scratch"
+              style={{
+                background: "transparent",
+                border: "1px solid #CBD5E1",
+                borderRadius: "5px",
+                padding: "2px 8px",
+                fontSize: "0.72rem",
+                color: "#94A3B8",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Textarea */}
+        <textarea
+          value={textAnswer}
+          onChange={(e) => onAnswerChange(e.target.value)}
+          placeholder="Type or format your descriptive answer here..."
+          rows={question.marks > 5 ? 12 : question.marks > 2 ? 8 : 5}
+          style={{
+            width: "100%",
+            boxSizing: "border-box",
+            borderRadius: "12px",
+            border: "1.5px solid #C6DFD4",
+            background: "#FFFFFF",
+            padding: "16px 18px",
+            fontSize: "0.95rem",
+            lineHeight: "1.65",
+            color: "#1E2923",
+            fontFamily: "inherit",
+            resize: "vertical",
+            outline: "none",
+            transition: "border 0.2s ease, box-shadow 0.2s ease",
+            boxShadow: "inset 0 1px 3px rgba(0, 0, 0, 0.02)",
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = "#467360";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(70, 115, 96, 0.12)";
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = "#C6DFD4";
+            e.currentTarget.style.boxShadow = "inset 0 1px 3px rgba(0, 0, 0, 0.02)";
+          }}
+        />
+      </div>
+
+      {/* Keywords Checklist */}
+      {matchedKeywords.length > 0 && (
+        <div
+          style={{
+            background: "#F8FAF9",
+            border: "1px solid #E2ECE6",
+            borderRadius: "10px",
+            padding: "10px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "6px",
+          }}
+        >
+          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#4A5D52", textTransform: "uppercase", letterSpacing: "0.03em" }}>
+            🔑 Key Evaluation Concepts & Technical Vocabulary:
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {matchedKeywords.map(({ keyword, matched }, kidx) => (
+              <span
+                key={kidx}
+                style={{
+                  fontSize: "0.75rem",
+                  fontWeight: 600,
+                  padding: "3px 9px",
+                  borderRadius: "6px",
+                  background: matched ? "#E8F5E9" : "#FFFFFF",
+                  color: matched ? "#166534" : "#64748B",
+                  border: matched ? "1px solid #86EFAC" : "1px solid #E2E8F0",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <span>{matched ? "✓" : "○"}</span>
+                <span>{keyword}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Rubric & Model Answer Toggle */}
+      {(question.rubric || question.modelAnswer) && (
+        <div
+          style={{
+            borderRadius: "10px",
+            border: "1.2px solid #D5DFD9",
+            overflow: "hidden",
+            background: "#FFFFFF",
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleRubric();
+            }}
+            style={{
+              width: "100%",
+              padding: "10px 16px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              background: expandedRubric ? "#EDF5F1" : "#FAFAF9",
+              border: "none",
+              borderBottom: expandedRubric ? "1.2px solid #D5DFD9" : "none",
+              color: "#2D3E36",
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              cursor: "pointer",
+              transition: "background 0.15s ease",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>📋</span>
+              <span>Grading Rubric & Model Solution Details</span>
+              {question.rubric && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    color: "#467360",
+                    background: "#DDEEE7",
+                    padding: "1px 7px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  {question.rubric.length} Criteria
+                </span>
+              )}
+            </span>
+            <span
+              style={{
+                transform: expandedRubric ? "rotate(180deg)" : "rotate(0deg)",
+                transition: "transform 0.2s ease",
+                fontSize: "0.8rem",
+                color: "#64748B",
+              }}
+            >
+              ▼
+            </span>
+          </button>
+
+          {expandedRubric && (
+            <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
+              {/* Rubric criteria */}
+              {question.rubric && question.rubric.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E2923" }}>
+                    Evaluation Mark Breakdown:
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {question.rubric.map((r, ridx) => (
+                      <div
+                        key={ridx}
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          gap: "10px",
+                          background: "#F9FBFA",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #E8F0EC",
+                          fontSize: "0.85rem",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.78rem",
+                            fontWeight: 700,
+                            color: "#166534",
+                            background: "#E8F5E9",
+                            padding: "2px 8px",
+                            borderRadius: "4px",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          +{r.marks} M
+                        </span>
+                        <span style={{ color: "#334155" }}>{r.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Model Answer Preview */}
+              {question.modelAnswer && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginTop: "4px" }}>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E2923" }}>
+                    Official Model Answer Key:
+                  </div>
+                  <div
+                    style={{
+                      background: "#F4F8F6",
+                      border: "1px solid #D5DFD9",
+                      borderRadius: "8px",
+                      padding: "14px 16px",
+                      fontSize: "0.9rem",
+                      lineHeight: "1.6",
+                      color: "#1E2923",
+                      maxHeight: "360px",
+                      overflowY: "auto",
+                    }}
+                  >
+                    <MarkdownView content={question.modelAnswer} />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * MockTestView Component
  * Displays a mock test for the selected units, allowing users to take a timed exam.
  */
@@ -423,7 +874,7 @@ export default function MockTestView({
   }, [completedUnitNumbers]);
 
   const [selectedUnitNumbers, setSelectedUnitNumbers] = useState<number[]>(() => {
-    return isPrepExam ? allUnits.map(c => c.number) : (completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1]);
+    return isPrepExam ? [chapterNumber] : (completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1]);
   });
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number>(10);
   const numSelectedUnits = selectedUnitNumbers.length;
@@ -433,7 +884,24 @@ export default function MockTestView({
   const [questions, setQuestions] = useState<MockQuestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [answers, setAnswers] = useState<Record<string, number[]>>({});
+  const [textAnswers, setTextAnswers] = useState<Record<string, string>>({});
+  const [expandedRubrics, setExpandedRubrics] = useState<Record<string, boolean>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const toggleRubric = (qId: string) => {
+    setExpandedRubrics((prev) => ({
+      ...prev,
+      [qId]: !prev[qId],
+    }));
+  };
+
+  const handleTextAnswerChange = (qId: string, val: string) => {
+    if (isSubmitted) return;
+    setTextAnswers((prev) => ({
+      ...prev,
+      [qId]: val,
+    }));
+  };
 
   const unitHeaderSubtitle = useMemo(() => {
     return selectedUnitNumbers
@@ -609,74 +1077,111 @@ export default function MockTestView({
               unitNum,
               isPreFinalTest ? "certification" : isPrepExam ? "pre_final" : "mock",
             );
-            if (isPreFinalTest && pooled.length === 0) {
-              pooled = await getChapterExamQuestions(subjectId, unitNum, "pre_final");
+            // For prep/pre-final exams: do NOT fall back to MCQ mock test.
+            // These exams are descriptive-only — if nothing loaded keep empty.
+            if (!isPrepExam && !isPreFinalTest) {
               if (pooled.length === 0) {
                 pooled = await getChapterExamQuestions(subjectId, unitNum, "mock");
               }
-            } else if (isPrepExam && pooled.length === 0) {
-              pooled = await getChapterExamQuestions(subjectId, unitNum, "mock");
+            } else if (isPreFinalTest && pooled.length === 0) {
+              pooled = await getChapterExamQuestions(subjectId, unitNum, "pre_final");
             }
-            mergedExam = pooled.map((q, idx) => ({
+            mergedExam = pooled.map((q: any, idx) => ({
               id: `exam-${unitNum}-${idx}`,
               text: q.q,
               options: q.options,
-              correctAnswers: Array.isArray(q.answer) ? q.answer : [q.answer],
+              correctAnswers: Array.isArray(q.answer) ? q.answer : (q.answer !== undefined ? [q.answer] : []),
               type: q.type,
               explanation: q.explanation || "",
-              marks: 1,
-              section: examTitle,
+              marks: q.marks !== undefined ? q.marks : 1,
+              section: q.section_name || q.section || examTitle,
+              sectionName: q.section_name || q.sectionName,
+              bloomLevel: q.bloom_level || q.bloomLevel,
+              mindmapPath: q.mindmap_path || q.mindmapPath,
+              modelAnswer: q.model_answer || q.modelAnswer,
+              rubric: q.rubric,
+              keywords: q.keywords,
+              hasAsciiDiagram: q.has_ascii_diagram || q.hasAsciiDiagram,
               chapter: chapterName,
+              unitNumber: unitNum,
             })) as MockQuestion[];
           } catch (err) {
             console.error(`Failed to load pooled exam for unit ${unitNum}`, err);
           }
 
-          let parsedQBank: MockQuestion[] = [];
-          try {
-            const markdown = await getResourceContent(subjectId, unitNum, "question_bank.md", persona as any);
-            if (markdown && markdown.trim().length > 0 && !markdown.includes("Content not available")) {
-              const qbEntries = parseQuestionBankMarkdown(markdown, subjectId, subjectName, unitNum, chapterName);
-              parsedQBank = qbEntries.map((q, idx) => ({
-                id: `qbank-${unitNum}-${idx}`,
-                text: q.question,
-                options: (q as any).options,
-                correctAnswers: (q as any).correctAnswers,
-                type: (q as any).type || "mcq",
-                explanation: (q as any).explanation || "",
-                marks: 1,
-                section: "Question Bank",
-                chapter: q.chapterName,
-              }));
-            }
-          } catch (err) {
-            console.error(`Failed to load question bank for unit ${unitNum}`, err);
-          }
-
           if (isPrepExam || isPreFinalTest) {
-            combined = [...combined, ...mergedExam, ...parsedQBank];
+            // Descriptive-only: no question bank MCQs, descriptive questions first.
+            const descriptive = mergedExam.filter(
+              (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
+            );
+            const others = mergedExam.filter(
+              (q) => !q.modelAnswer && q.type !== "short_answer" && q.type !== "long_answer" && q.type !== "descriptive"
+            );
+            combined = [...combined, ...descriptive, ...others];
           } else {
+            let parsedQBank: MockQuestion[] = [];
+            try {
+              const markdown = await getResourceContent(subjectId, unitNum, "question_bank.md", persona as any);
+              if (markdown && markdown.trim().length > 0 && !markdown.includes("Content not available")) {
+                const qbEntries = parseQuestionBankMarkdown(markdown, subjectId, subjectName, unitNum, chapterName);
+                parsedQBank = qbEntries.map((q, idx) => ({
+                  id: `qbank-${unitNum}-${idx}`,
+                  text: q.question,
+                  options: (q as any).options,
+                  correctAnswers: (q as any).correctAnswers,
+                  type: (q as any).type || "mcq",
+                  explanation: (q as any).explanation || "",
+                  marks: 1,
+                  section: "Question Bank",
+                  chapter: q.chapterName,
+                }));
+              }
+            } catch (err) {
+              console.error(`Failed to load question bank for unit ${unitNum}`, err);
+            }
             combined = [...combined, ...mergedExam, ...filteredMocked, ...parsedQBank];
           }
         }
 
-        const targetCount = isPreFinalTest ? 50 : selectedQuestionCount;
-        const validDbQuestions = combined.filter((q) => q.options && q.options.length > 0);
-        if (validDbQuestions.length > 0) {
-          combined = padToCount(validDbQuestions, subjectId, targetCount);
-        } else {
-          const temp = getTemporaryHardcodedQuestions(subjectId, unitsToFetch, chapterName);
-          combined = padToCount(temp, subjectId, targetCount);
+        const hasDescriptive = combined.some(
+          (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
+        );
+        // Only fall back to MCQ hardcoded questions for regular mock tests,
+        // never for prep exam or pre-final which are purely descriptive.
+        if (!hasDescriptive && !isPrepExam && !isPreFinalTest) {
+          const targetCount = selectedQuestionCount;
+          const validDbQuestions = combined.filter((q) => q.options && q.options.length > 0);
+          if (validDbQuestions.length > 0) {
+            combined = padToCount(validDbQuestions, subjectId, targetCount);
+          } else {
+            const temp = getTemporaryHardcodedQuestions(subjectId, unitsToFetch, chapterName);
+            combined = padToCount(temp, subjectId, targetCount);
+          }
         }
       }
 
       const finalQuestions = combined.map((q) => ({
         ...q,
-        section: examTitle,
+        section: q.section || examTitle,
       }));
 
       setQuestions(finalQuestions);
-      const totalSeconds = isPreFinalTest ? 3600 : Math.max(15 * 60, selectedQuestionCount * 120);
+
+      // Pre-fill student text answers with model answers for internal demo:
+      const initialTextAnswers: Record<string, string> = {};
+      finalQuestions.forEach((q) => {
+        if (q.modelAnswer) {
+          initialTextAnswers[q.id] = q.modelAnswer;
+        }
+      });
+      setTextAnswers(initialTextAnswers);
+
+      const hasDescriptive = finalQuestions.some(
+        (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
+      );
+      const totalSeconds = hasDescriptive
+        ? 120 * 60 // 2 hours for standard university examination
+        : (isPreFinalTest ? 3600 : Math.max(15 * 60, selectedQuestionCount * 120));
       setDurationSeconds(totalSeconds);
       setSecondsLeft(totalSeconds);
       setCurrentQuestionIdx(0);
@@ -730,6 +1235,11 @@ export default function MockTestView({
       delete copy[qId];
       return copy;
     });
+    setTextAnswers((prev) => {
+      const copy = { ...prev };
+      delete copy[qId];
+      return copy;
+    });
   };
 
   const toggleBookmark = (qId: string) => {
@@ -740,10 +1250,13 @@ export default function MockTestView({
   };
 
   const isCorrect = (q: MockQuestion) => {
-    const user = answers[q.id] || [];
-    const correct = q.correctAnswers || [];
-    if (user.length !== correct.length) return false;
-    return correct.every((val) => user.includes(val));
+    if (q.options && q.options.length > 0) {
+      const user = answers[q.id] || [];
+      const correct = q.correctAnswers || [];
+      if (user.length !== correct.length) return false;
+      return correct.every((val) => user.includes(val));
+    }
+    return !!(textAnswers[q.id] && textAnswers[q.id].trim().length > 0);
   };
 
   const formatTime = (secs: number) => {
@@ -752,7 +1265,12 @@ export default function MockTestView({
     return `${mins.toString().padStart(2, "0")}:${remainingSecs.toString().padStart(2, "0")}`;
   };
 
-  const answeredCount = questions.filter((q) => (answers[q.id] || []).length > 0).length;
+  const answeredCount = questions.filter((q) => {
+    if (q.options && q.options.length > 0) {
+      return (answers[q.id] || []).length > 0;
+    }
+    return !!(textAnswers[q.id] && textAnswers[q.id].trim().length > 0);
+  }).length;
   const timeTakenSecs = durationSeconds - secondsLeft;
   const correctCount = questions.filter((q) => isCorrect(q)).length;
 
@@ -1644,29 +2162,30 @@ export default function MockTestView({
     );
   }
 
-  if (isPreFinalTest) {
+  if (isPreFinalTest || isPrepExam) {
     const currentQ = questions[currentQuestionIdx] || questions[0];
     const userSelected = currentQ ? (answers[currentQ.id] || []) : [];
     const correct = currentQ ? (currentQ.correctAnswers || []) : [];
     const isQCorrect = isSubmitted && currentQ && isCorrect(currentQ);
 
     return (
-      <div className="mock-test-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f8fafc", position: "relative", overflowX: "hidden" }}>
+      <div className="mock-test-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f4f6f5", position: "relative", overflowX: "hidden" }}>
+        {/* Top Header Bar */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             padding: "14px 28px",
-            background: "#f0fdf4",
-            borderBottom: "1.5px solid #86efac",
-            boxShadow: "0 2px 8px rgba(34, 197, 94, 0.05)",
+            background: "#ffffff",
+            borderBottom: "1.5px solid #d5dfd9",
+            boxShadow: "0 2px 8px rgba(45, 62, 54, 0.04)",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
             <div
               style={{
-                background: "#22c55e",
+                background: "#2D3E36",
                 color: "#ffffff",
                 padding: "8px 16px",
                 borderRadius: "10px",
@@ -1675,7 +2194,7 @@ export default function MockTestView({
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
-                boxShadow: "0 2px 6px rgba(34, 197, 94, 0.3)",
+                boxShadow: "0 2px 6px rgba(45, 62, 54, 0.25)",
               }}
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1688,17 +2207,17 @@ export default function MockTestView({
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <div
                 style={{
-                  width: "36px",
-                  height: "36px",
-                  background: "#ffffff",
-                  border: "1.5px solid #86efac",
+                  width: "38px",
+                  height: "38px",
+                  background: "#edf5f1",
+                  border: "1.5px solid #c6dfd4",
                   borderRadius: "10px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#467360" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
                   <polyline points="9 15 11 17 15 13" />
@@ -1708,7 +2227,7 @@ export default function MockTestView({
                 <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#1e293b" }}>
                   {examTitle}
                 </h2>
-                <div style={{ fontSize: "0.82rem", color: "#16a34a", fontWeight: 600 }}>
+                <div style={{ fontSize: "0.82rem", color: "#467360", fontWeight: 600 }}>
                   {unitHeaderSubtitle}
                 </div>
               </div>
@@ -1756,11 +2275,11 @@ export default function MockTestView({
             position: "relative",
           }}
         >
-          {/* Scrollable Questions Column (Full Width when unhovered, 2-column frame when hovered) */}
+          {/* Scrollable Questions Column */}
           <div
             ref={questionsScrollRef}
             style={{
-              width: isNavigatorOpen ? "calc(100% - 296px)" : "100%",
+              width: isNavigatorOpen ? "calc(100% - 310px)" : "100%",
               maxWidth: "100%",
               display: "flex",
               flexDirection: "column",
@@ -1769,17 +2288,24 @@ export default function MockTestView({
               overflowY: "auto",
               scrollBehavior: "smooth",
               paddingRight: "8px",
-              paddingBottom: "220px",
+              paddingBottom: "120px",
               boxSizing: "border-box",
               transition: "width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
               willChange: "width",
-              transform: "translateZ(0)", // Enable GPU acceleration
+              transform: "translateZ(0)",
             }}
           >
             {questions.map((q, qIdx) => {
               const userSelected = answers[q.id] || [];
               const correct = q.correctAnswers || [];
               const isActive = qIdx === currentQuestionIdx;
+              const isDescriptive = !!(
+                q.modelAnswer ||
+                q.type === "short_answer" ||
+                q.type === "long_answer" ||
+                q.type === "descriptive" ||
+                (!q.options || q.options.length === 0)
+              );
 
               return (
                 <div
@@ -1793,135 +2319,149 @@ export default function MockTestView({
                     width: "100%",
                     background: "#ffffff",
                     borderRadius: "20px",
-                    border: isActive ? "2px solid #86efac" : "1.5px solid #e2e8f0",
-                    boxShadow: isActive ? "0 10px 32px rgba(34, 197, 94, 0.12)" : "0 2px 8px rgba(0, 0, 0, 0.03)",
+                    border: isActive ? "2px solid #7BA88B" : "1.5px solid #d5dfd9",
+                    boxShadow: isActive ? "0 10px 32px rgba(45, 62, 54, 0.08)" : "0 2px 8px rgba(0, 0, 0, 0.02)",
                     padding: "32px 40px",
                     display: "flex",
                     flexDirection: "column",
                     gap: "24px",
-                    opacity: isActive ? 1 : 0.45,
-                    transform: isActive ? "translate3d(0, 0, 0) scale(1)" : "translate3d(0, 0, 0) scale(0.985)",
+                    opacity: isActive ? 1 : 0.7,
+                    transform: isActive ? "translate3d(0, 0, 0) scale(1)" : "translate3d(0, 0, 0) scale(0.99)",
                     willChange: "transform, opacity",
-                    transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), border 0.3s ease, box-shadow 0.3s ease",
+                    transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, border 0.3s ease, box-shadow 0.3s ease",
                     cursor: isActive ? "default" : "pointer",
                     scrollMarginTop: "20px",
                     boxSizing: "border-box",
                   }}
                 >
-                  <div style={{ fontSize: "1.18rem", fontWeight: 700, color: "#0f172a", lineHeight: "1.55", display: "flex", gap: "8px" }}>
-                    <span style={{ whiteSpace: "nowrap" }}>{qIdx + 1}.</span>
-                    <MarkdownView content={q.text} />
-                  </div>
+                  {isDescriptive ? (
+                    <DescriptiveQuestionCard
+                      question={q}
+                      qIdx={qIdx}
+                      textAnswer={textAnswers[q.id] || ""}
+                      onAnswerChange={(val) => handleTextAnswerChange(q.id, val)}
+                      isSubmitted={isSubmitted}
+                      expandedRubric={!!expandedRubrics[q.id]}
+                      onToggleRubric={() => toggleRubric(q.id)}
+                    />
+                  ) : (
+                    <>
+                      <div style={{ fontSize: "1.18rem", fontWeight: 700, color: "#0f172a", lineHeight: "1.55", display: "flex", gap: "8px" }}>
+                        <span style={{ whiteSpace: "nowrap" }}>{qIdx + 1}.</span>
+                        <MarkdownView content={q.text} />
+                      </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    {(q.options || []).map((opt, optIdx) => {
-                      const isSelected = userSelected.includes(optIdx);
-                      const isOptCorrect = correct.includes(optIdx);
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {(q.options || []).map((opt, optIdx) => {
+                          const isSelected = userSelected.includes(optIdx);
+                          const isOptCorrect = correct.includes(optIdx);
 
-                      let optBg = "#ffffff";
-                      let optBorder = "1.5px solid #f1f5f9";
-                      let optColor = "#334155";
-                      let radioBorder = isSelected ? "#22c55e" : "#cbd5e1";
-                      let radioBg = isSelected ? "#22c55e" : "#ffffff";
-                      let badgeBg = "#f1f5f9";
-                      let badgeColor = "#475569";
+                          let optBg = "#ffffff";
+                          let optBorder = "1.5px solid #f1f5f9";
+                          let optColor = "#334155";
+                          let radioBorder = isSelected ? "#467360" : "#cbd5e1";
+                          let radioBg = isSelected ? "#467360" : "#ffffff";
+                          let badgeBg = "#f1f5f9";
+                          let badgeColor = "#475569";
 
-                      if (isSubmitted) {
-                        if (isOptCorrect) {
-                          optBg = "#ECFDF5";
-                          optBorder = "2px solid #10B981";
-                          optColor = "#065F46";
-                          radioBorder = "#10B981";
-                          radioBg = "#10B981";
-                          badgeBg = "#10B981";
-                          badgeColor = "#ffffff";
-                        } else if (isSelected) {
-                          optBg = "#FEF2F2";
-                          optBorder = "2px solid #EF4444";
-                          optColor = "#991B1B";
-                          radioBorder = "#EF4444";
-                          radioBg = "#EF4444";
-                          badgeBg = "#EF4444";
-                          badgeColor = "#ffffff";
-                        }
-                      } else if (isSelected) {
-                        optBg = "#f0fdf4";
-                        optBorder = "2px solid #22c55e";
-                        optColor = "#14532d";
-                        badgeBg = "#22c55e";
-                        badgeColor = "#ffffff";
-                      }
+                          if (isSubmitted) {
+                            if (isOptCorrect) {
+                              optBg = "#ECFDF5";
+                              optBorder = "2px solid #10B981";
+                              optColor = "#065F46";
+                              radioBorder = "#10B981";
+                              radioBg = "#10B981";
+                              badgeBg = "#10B981";
+                              badgeColor = "#ffffff";
+                            } else if (isSelected) {
+                              optBg = "#FEF2F2";
+                              optBorder = "2px solid #EF4444";
+                              optColor = "#991B1B";
+                              radioBorder = "#EF4444";
+                              radioBg = "#EF4444";
+                              badgeBg = "#EF4444";
+                              badgeColor = "#ffffff";
+                            }
+                          } else if (isSelected) {
+                            optBg = "#f0fdf4";
+                            optBorder = "2px solid #467360";
+                            optColor = "#14532d";
+                            badgeBg = "#467360";
+                            badgeColor = "#ffffff";
+                          }
 
-                      return (
-                        <div
-                          key={optIdx}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOptionClick(q.id, optIdx, q.type || "mcq");
-                          }}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "14px",
-                            padding: "14px 20px",
-                            borderRadius: "12px",
-                            background: optBg,
-                            border: optBorder,
-                            color: optColor,
-                            fontSize: "0.98rem",
-                            cursor: isSubmitted ? "default" : "pointer",
-                            transition: "all 0.15s ease",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "34px",
-                              height: "34px",
-                              borderRadius: q.type === "msq" ? "7px" : "50%",
-                              border: `2.5px solid ${radioBorder}`,
-                              background: radioBg,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {isSelected && (
-                              q.type === "msq" ? (
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                  <polyline points="20 6 9 17 4 12" />
-                                </svg>
-                              ) : (
-                                <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#ffffff" }} />
-                              )
-                            )}
-                          </div>
+                          return (
+                            <div
+                              key={optIdx}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOptionClick(q.id, optIdx, q.type === "msq" ? "msq" : "mcq");
+                              }}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "14px",
+                                padding: "14px 20px",
+                                borderRadius: "12px",
+                                background: optBg,
+                                border: optBorder,
+                                color: optColor,
+                                fontSize: "0.98rem",
+                                cursor: isSubmitted ? "default" : "pointer",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  width: "34px",
+                                  height: "34px",
+                                  borderRadius: q.type === "msq" ? "7px" : "50%",
+                                  border: `2.5px solid ${radioBorder}`,
+                                  background: radioBg,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {isSelected && (
+                                  q.type === "msq" ? (
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  ) : (
+                                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#ffffff" }} />
+                                  )
+                                )}
+                              </div>
 
-                          <div
-                            style={{
-                              width: "28px",
-                              height: "28px",
-                              borderRadius: "6px",
-                              background: badgeBg,
-                              color: badgeColor,
-                              fontWeight: "700",
-                              fontSize: "13px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              flexShrink: 0,
-                            }}
-                          >
-                            {String.fromCharCode(65 + optIdx)}
-                          </div>
+                              <div
+                                style={{
+                                  width: "28px",
+                                  height: "28px",
+                                  borderRadius: "6px",
+                                  background: badgeBg,
+                                  color: badgeColor,
+                                  fontWeight: "700",
+                                  fontSize: "13px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {String.fromCharCode(65 + optIdx)}
+                              </div>
 
-                          <div style={{ flex: 1, fontWeight: 500 }}>
-                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                              <div style={{ flex: 1, fontWeight: 500 }}>
+                                <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
 
                   {/* Bottom Action Controls */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px" }}>
@@ -1933,15 +2473,15 @@ export default function MockTestView({
                       style={{
                         padding: "8px 18px",
                         borderRadius: "10px",
-                        border: "1.1px solid #e2e8f0",
+                        border: "1.1px solid #cbd5e1",
                         background: "#ffffff",
-                        color: "#94a3b8",
+                        color: "#64748b",
                         fontSize: "0.88rem",
                         fontWeight: 600,
                         cursor: "pointer",
                       }}
                     >
-                      Clear Selection
+                      Clear Answer
                     </button>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
@@ -1955,7 +2495,7 @@ export default function MockTestView({
                           width: "38px",
                           height: "38px",
                           borderRadius: "10px",
-                          border: markedQuestions[q.id] ? "1.5px solid #f97316" : "1px solid #e2e8f0",
+                          border: markedQuestions[q.id] ? "1.5px solid #f97316" : "1px solid #cbd5e1",
                           background: markedQuestions[q.id] ? "#fff7ed" : "#ffffff",
                           color: markedQuestions[q.id] ? "#f97316" : "#64748b",
                           display: "flex",
@@ -1977,9 +2517,9 @@ export default function MockTestView({
                         style={{
                           padding: "8px 20px",
                           borderRadius: "10px",
-                          border: "1.5px solid #86efac",
-                          background: "#f0fdf4",
-                          color: "#16a34a",
+                          border: "1.5px solid #c6dfd4",
+                          background: "#edf5f1",
+                          color: "#2D3E36",
                           fontSize: "0.9rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -2002,12 +2542,12 @@ export default function MockTestView({
                           padding: "8px 24px",
                           borderRadius: "10px",
                           border: "none",
-                          background: "#22c55e",
+                          background: "#2D3E36",
                           color: "#ffffff",
                           fontSize: "0.9rem",
                           fontWeight: 700,
                           cursor: "pointer",
-                          boxShadow: "0 4px 12px rgba(34, 197, 94, 0.3)",
+                          boxShadow: "0 4px 12px rgba(45, 62, 54, 0.25)",
                         }}
                       >
                         {qIdx === questions.length - 1 ? "Submit →" : "Next →"}
@@ -2042,9 +2582,9 @@ export default function MockTestView({
               style={{
                 width: "8px",
                 height: "160px",
-                background: "#22c55e",
+                background: "#467360",
                 borderRadius: "4px 0 0 4px",
-                boxShadow: "-2px 0 10px rgba(34, 197, 94, 0.4)",
+                boxShadow: "-2px 0 10px rgba(70, 115, 96, 0.4)",
                 flexShrink: 0,
                 opacity: isNavigatorOpen ? 0 : 1,
                 pointerEvents: isNavigatorOpen ? "none" : "auto",
@@ -2057,21 +2597,23 @@ export default function MockTestView({
             {/* Question Navigator Card */}
             <div
               style={{
-                width: "280px",
+                width: "290px",
                 background: "#ffffff",
-                border: "1.5px solid #86efac",
+                border: "1.5px solid #d5dfd9",
                 borderRight: "none",
                 borderRadius: "18px 0 0 18px",
-                boxShadow: "-8px 12px 36px rgba(0, 0, 0, 0.15)",
+                boxShadow: "-8px 12px 36px rgba(45, 62, 54, 0.15)",
                 padding: "20px 22px",
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 gap: "16px",
                 willChange: "transform",
+                maxHeight: "82vh",
+                overflowY: "auto",
               }}
             >
-              <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "#0f172a" }}>
+              <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "#2D3E36" }}>
                 Question Navigator
               </div>
 
@@ -2082,7 +2624,7 @@ export default function MockTestView({
                   Not Answered
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#22c55e" }} />
+                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#467360" }} />
                   Answered
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
@@ -2090,34 +2632,36 @@ export default function MockTestView({
                   Marked
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#3b82f6" }} />
+                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#2D3E36" }} />
                   Current
                 </div>
               </div>
 
               {/* Questions Grid */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
-                {questions.slice(0, 25).map((q, idx) => {
+                {questions.map((q, idx) => {
                   const isCurrent = idx === currentQuestionIdx;
                   const isMarked = markedQuestions[q.id];
-                  const isAns = (answers[q.id] || []).length > 0;
+                  const isAns = (q.options && q.options.length > 0)
+                    ? (answers[q.id] || []).length > 0
+                    : !!(textAnswers[q.id] && textAnswers[q.id].trim().length > 0);
 
                   let btnBg = "#f8fafc";
                   let btnColor = "#334155";
                   let btnBorder = "1.5px solid #e2e8f0";
 
                   if (isCurrent) {
-                    btnBg = "#3b82f6";
+                    btnBg = "#2D3E36";
                     btnColor = "#ffffff";
-                    btnBorder = "1.5px solid #2563eb";
+                    btnBorder = "1.5px solid #1E2923";
                   } else if (isMarked) {
                     btnBg = "#f97316";
                     btnColor = "#ffffff";
                     btnBorder = "1.5px solid #ea580c";
                   } else if (isAns) {
-                    btnBg = "#22c55e";
+                    btnBg = "#467360";
                     btnColor = "#ffffff";
-                    btnBorder = "1.5px solid #16a34a";
+                    btnBorder = "1.5px solid #2D3E36";
                   }
 
                   return (
@@ -2143,34 +2687,126 @@ export default function MockTestView({
               </div>
 
               <button
+                onClick={() => {
+                  setTimerRunning(false);
+                  setIsSubmitted(true);
+                }}
                 style={{
                   marginTop: "auto",
                   width: "100%",
                   padding: "10px 14px",
                   borderRadius: "10px",
-                  border: "1.5px solid #86efac",
-                  background: "#ffffff",
-                  color: "#16a34a",
-                  fontWeight: 600,
-                  fontSize: "0.85rem",
+                  border: "1.5px solid #2D3E36",
+                  background: "#2D3E36",
+                  color: "#ffffff",
+                  fontWeight: 700,
+                  fontSize: "0.88rem",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "6px",
                   cursor: "pointer",
+                  boxShadow: "0 2px 8px rgba(45, 62, 54, 0.2)",
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={isGreenTheme ? "#16a34a" : "#c026d3"} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="8" y1="6" x2="21" y2="6" />
-                  <line x1="8" y1="12" x2="21" y2="12" />
-                  <line x1="8" y1="18" x2="21" y2="18" />
-                  <line x1="3" y1="6" x2="3.01" y2="6" />
-                  <line x1="3" y1="12" x2="3.01" y2="12" />
-                  <line x1="3" y1="18" x2="3.01" y2="18" />
-                </svg>
-                Review all questions
+                <span>Submit & Review</span>
+                <span>→</span>
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Floating Bottom Action Bar */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: "#ffffff",
+            borderTop: "1.5px solid #d5dfd9",
+            padding: "12px 32px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            boxShadow: "0 -4px 16px rgba(45, 62, 54, 0.06)",
+            zIndex: 90,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {isSubmitted ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: 700, fontSize: "0.95rem" }}>
+                <span>✓ Exam Completed</span>
+                <span style={{ color: "#64748B", fontWeight: 500, fontSize: "0.85rem" }}>• Model solutions and scoring rubrics unlocked for review</span>
+              </div>
+            ) : (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#2D3E36", fontWeight: 600, fontSize: "0.9rem" }}>
+                <span
+                  style={{
+                    background: "#edf5f1",
+                    color: "#2D3E36",
+                    padding: "4px 12px",
+                    borderRadius: "6px",
+                    fontWeight: 700,
+                    fontSize: "0.85rem",
+                  }}
+                >
+                  {answeredCount} of {questions.length} Answered
+                </span>
+                <span style={{ color: "#64748B", fontSize: "0.82rem" }}>
+                  (Click any question in Navigator or scroll to inspect)
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {isSubmitted ? (
+              <button
+                onClick={onComplete}
+                style={{
+                  background: "linear-gradient(135deg, #4F7B64 0%, #2D3E36 100%)",
+                  color: "#ffffff",
+                  padding: "10px 24px",
+                  borderRadius: "10px",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "0.92rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 14px rgba(45, 62, 54, 0.25)",
+                }}
+              >
+                <span>Finish & Continue</span>
+                <span>→</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setTimerRunning(false);
+                  setIsSubmitted(true);
+                }}
+                style={{
+                  background: "linear-gradient(135deg, #4F7B64 0%, #2D3E36 100%)",
+                  color: "#ffffff",
+                  padding: "10px 24px",
+                  borderRadius: "10px",
+                  border: "none",
+                  fontWeight: 700,
+                  fontSize: "0.92rem",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  boxShadow: "0 4px 14px rgba(45, 62, 54, 0.25)",
+                }}
+              >
+                <span>Submit {examTitle}</span>
+                <span>✓</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2277,6 +2913,13 @@ export default function MockTestView({
           const userSelected = answers[q.id] || [];
           const correct = q.correctAnswers || [];
           const isQCorrect = isSubmitted && isCorrect(q);
+          const isDescriptive = !!(
+            q.modelAnswer ||
+            q.type === "short_answer" ||
+            q.type === "long_answer" ||
+            q.type === "descriptive" ||
+            (!q.options || q.options.length === 0)
+          );
 
           return (
             <div
@@ -2299,110 +2942,124 @@ export default function MockTestView({
                 transition: "all 0.2s ease",
               }}
             >
-              <div
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  color: "#0f172a",
-                  marginBottom: "18px",
-                  lineHeight: "1.55",
-                  display: "flex",
-                  gap: "8px"
-                }}
-              >
-                <span style={{ whiteSpace: "nowrap" }}>{idx + 1}.</span>
-                <MarkdownView content={q.text} />
-              </div>
+              {isDescriptive ? (
+                <DescriptiveQuestionCard
+                  question={q}
+                  qIdx={idx}
+                  textAnswer={textAnswers[q.id] || ""}
+                  onAnswerChange={(val) => handleTextAnswerChange(q.id, val)}
+                  isSubmitted={isSubmitted}
+                  expandedRubric={!!expandedRubrics[q.id]}
+                  onToggleRubric={() => toggleRubric(q.id)}
+                />
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      color: "#0f172a",
+                      marginBottom: "18px",
+                      lineHeight: "1.55",
+                      display: "flex",
+                      gap: "8px",
+                    }}
+                  >
+                    <span style={{ whiteSpace: "nowrap" }}>{idx + 1}.</span>
+                    <MarkdownView content={q.text} />
+                  </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {(q.options || []).map((opt, optIdx) => {
-                  const isSelected = userSelected.includes(optIdx);
-                  const isOptCorrect = correct.includes(optIdx);
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {(q.options || []).map((opt, optIdx) => {
+                      const isSelected = userSelected.includes(optIdx);
+                      const isOptCorrect = correct.includes(optIdx);
 
-                  let optBg = "#ffffff";
-                  let optBorder = "1.5px solid #f1f5f9";
-                  let optColor = "#334155";
+                      let optBg = "#ffffff";
+                      let optBorder = "1.5px solid #f1f5f9";
+                      let optColor = "#334155";
 
-                  if (isSubmitted) {
-                    if (isOptCorrect) {
-                      optBg = "#ECFDF5";
-                      optBorder = "2px solid #10B981";
-                      optColor = "#065F46";
-                    } else if (isSelected) {
-                      optBg = "#FEF2F2";
-                      optBorder = "2px solid #EF4444";
-                      optColor = "#991B1B";
-                    }
-                  } else if (isSelected) {
-                    optBg = activeOptionBg;
-                    optBorder = activeOptionBorder;
-                    optColor = activeOptionColor;
-                  }
+                      if (isSubmitted) {
+                        if (isOptCorrect) {
+                          optBg = "#ECFDF5";
+                          optBorder = "2px solid #10B981";
+                          optColor = "#065F46";
+                        } else if (isSelected) {
+                          optBg = "#FEF2F2";
+                          optBorder = "2px solid #EF4444";
+                          optColor = "#991B1B";
+                        }
+                      } else if (isSelected) {
+                        optBg = activeOptionBg;
+                        optBorder = activeOptionBorder;
+                        optColor = activeOptionColor;
+                      }
 
-                  return (
-                    <div
-                      key={optIdx}
-                      onClick={() => handleOptionClick(q.id, optIdx, q.type || "mcq")}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "12px 18px",
-                        borderRadius: "12px",
-                        background: optBg,
-                        border: optBorder,
-                        color: optColor,
-                        fontSize: "0.95rem",
-                        cursor: isSubmitted ? "default" : "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: q.type === "msq" ? "4px" : "50%",
-                          border: isSubmitted
-                            ? isOptCorrect
-                              ? "2px solid #10B981"
-                              : "2px solid #EF4444"
-                            : `2px solid ${isSelected ? activeRadioBorder : "#cbd5e1"}`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: isSubmitted
-                            ? isOptCorrect
-                              ? "#10B981"
-                              : isSelected
-                                ? "#EF4444"
-                                : "#ffffff"
-                            : isSelected
-                              ? activeCardAccentColor
-                              : "#ffffff",
-                          flexShrink: 0,
-                        }}
-                      >
-                        {isSelected && (
-                          q.type === "msq" ? (
-                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="20 6 9 17 4 12" />
-                            </svg>
-                          ) : (
-                            <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff" }} />
-                          )
-                        )}
-                      </div>
+                      return (
+                        <div
+                          key={optIdx}
+                          onClick={() => handleOptionClick(q.id, optIdx, q.type || "mcq")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "12px 18px",
+                            borderRadius: "12px",
+                            background: optBg,
+                            border: optBorder,
+                            color: optColor,
+                            fontSize: "0.95rem",
+                            cursor: isSubmitted ? "default" : "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "18px",
+                              height: "18px",
+                              borderRadius: q.type === "msq" ? "4px" : "50%",
+                              border: isSubmitted
+                                ? isOptCorrect
+                                  ? "2px solid #10B981"
+                                  : "2px solid #EF4444"
+                                : `2px solid ${isSelected ? activeRadioBorder : "#cbd5e1"}`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              background: isSubmitted
+                                ? isOptCorrect
+                                  ? "#10B981"
+                                  : isSelected
+                                    ? "#EF4444"
+                                    : "#ffffff"
+                                : isSelected
+                                  ? activeCardAccentColor
+                                  : "#ffffff",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {isSelected && (
+                              q.type === "msq" ? (
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              ) : (
+                                <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff" }} />
+                              )
+                            )}
+                          </div>
 
-                      <span style={{ fontWeight: 700, marginRight: "4px" }}>
-                        {String.fromCharCode(65 + optIdx)}.
-                      </span>
-                      <div style={{ flex: 1, fontWeight: 500 }}>
-                        <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                          <span style={{ fontWeight: 700, marginRight: "4px" }}>
+                            {String.fromCharCode(65 + optIdx)}.
+                          </span>
+                          <div style={{ flex: 1, fontWeight: 500 }}>
+                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
 
               {isSubmitted && q.explanation && (
                 <div
