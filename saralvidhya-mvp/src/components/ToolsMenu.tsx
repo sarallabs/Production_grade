@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 export type ToolId =
   | "summary"
   | "detailed"
+  | "study_plan"
   | "key_takeaways"
   | "flashcards"
   | "podcasts"

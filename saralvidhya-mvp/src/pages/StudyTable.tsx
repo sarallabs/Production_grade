@@ -487,7 +487,7 @@ export default function StudyTable() {
   // before the sync effect corrects it.
   const [activeTool, setActiveToolState] = useState<ToolId>(() => {
     const fromUrl = searchParams.get("tool") as ToolId | null;
-    if (fromUrl === "foundation") return "summary";
+    if (fromUrl === "foundation") return "mindmap";
     return fromUrl || "summary";
   });
   const [isAskOpen, setIsAskOpen] = useState(false);
@@ -1057,37 +1057,14 @@ export default function StudyTable() {
           apply(taggedCards);
         })
         .catch(() => apply([]));
-    } else if (activeTool === "mindmap") {
+    } else if (activeTool === "mindmap" || activeTool === "foundation") {
       getResourceContent(internalSubId, chapterNumber, "mindmap.md", persona)
         .then(apply)
         .catch(() => apply(""));
-    } else if (activeTool === "foundation") {
-      // Foundation: load Mind Maps + Study Plan from Foundation/ folder (ANGRAU chapters 3 & 4)
-      const isAngrauFoundation = (internalSubId === "ento_131") && (chapterNumber === 3 || chapterNumber === 4);
-      if (isAngrauFoundation) {
-        const chDir = `chapter_0${chapterNumber}`;
-        const base = `/generated_resources/angrau/${chDir}/Foundation`;
-        const mmFile = chapterNumber === 3
-          ? `${base}/Mind%20Maps/Lec_5_Weathering_Mindmap.md`
-          : `${base}/Mind%20Maps/Pollination_Mindmap.md`;
-        const spFile = `${base}/Study%20Plan/study_plan.md`;
-        setFoundationLoading(true);
-        Promise.all([
-          fetch(mmFile, { cache: "no-cache" }).then(r => r.ok ? r.text() : "Mind map not available.").catch(() => "Mind map not available."),
-          fetch(spFile, { cache: "no-cache" }).then(r => r.ok ? r.text() : "Study plan not available.").catch(() => "Study plan not available."),
-        ]).then(([mm, sp]) => {
-          if (stale) return;
-          setFoundationMindmapContent(mm);
-          setFoundationStudyPlanContent(sp);
-          setFoundationLoading(false);
-        });
-        apply(""); // no regular content needed
-      } else {
-        // Fallback: behave like mindmap for other subjects
-        getResourceContent(internalSubId, chapterNumber, "mindmap.md", persona)
-          .then(apply)
-          .catch(() => apply(""));
-      }
+    } else if (activeTool === "study_plan") {
+      getResourceContent(internalSubId, chapterNumber, "study_plan.md", persona)
+        .then(apply)
+        .catch(() => apply("Study plan unavailable."));
     } else if (activeTool === "qbank" || activeTool === "assessment") {
       getResourceContent(
         internalSubId,
@@ -1258,7 +1235,8 @@ export default function StudyTable() {
           </div>
         );
       }
-      case "mindmap": {
+      case "mindmap":
+      case "foundation": {
         const isMmMasterminds = !!MASTERMINDS_MINDMAP_MAP[subjectId]?.[chapterNumber];
 
         let mindmapTree: any = null;
@@ -1960,88 +1938,11 @@ export default function StudyTable() {
           </div>
         );
       }
-      case "foundation": {
-        const isAngrauFoundation = (subjectId === "ento_131") && (chapterNumber === 3 || chapterNumber === 4);
-        if (!isAngrauFoundation) {
-          // Fallback: render as normal mindmap
-          const mermaidContent = typeof content === "string" ? content : "";
-          return (
-            <div className="mindmap-container" style={{ position: "relative" }}>
-              <MermaidView content={mermaidContent} onTopicClick={() => {}} nodeIcons={{}} />
-            </div>
-          );
-        }
-        if (foundationLoading) {
-          return <StudyToolLoadingWaitScreen />;
-        }
+      case "study_plan": {
+        const md = typeof content === "string" ? content : "Study plan not available.";
         return (
-          <div style={{ display: "flex", flexDirection: "column", height: "100%", minHeight: 0 }}>
-            {/* Toggle Header */}
-            <div style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: "12px 20px",
-              borderBottom: "1px solid #e2e8f0",
-              background: "linear-gradient(135deg, #f8fafc 0%, #f0f9ff 100%)",
-              flexShrink: 0,
-            }}>
-              {/* Pill Toggle */}
-              <div style={{
-                display: "flex",
-                background: "#e2e8f0",
-                borderRadius: "999px",
-                padding: "3px",
-                gap: "2px",
-              }}>
-                <button
-                  onClick={() => setFoundationTab("mindmap")}
-                  style={{
-                    padding: "6px 20px",
-                    borderRadius: "999px",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    transition: "all 0.18s ease",
-                    background: foundationTab === "mindmap" ? "#fff" : "transparent",
-                    color: foundationTab === "mindmap" ? "#2563eb" : "#64748b",
-                    boxShadow: foundationTab === "mindmap" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                  }}
-                >
-                  🧠 Mind Maps
-                </button>
-                <button
-                  onClick={() => setFoundationTab("study_plan")}
-                  style={{
-                    padding: "6px 20px",
-                    borderRadius: "999px",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    fontSize: "0.875rem",
-                    transition: "all 0.18s ease",
-                    background: foundationTab === "study_plan" ? "#fff" : "transparent",
-                    color: foundationTab === "study_plan" ? "#2563eb" : "#64748b",
-                    boxShadow: foundationTab === "study_plan" ? "0 1px 4px rgba(0,0,0,0.12)" : "none",
-                  }}
-                >
-                  📅 Study Plan
-                </button>
-              </div>
-            </div>
-            {/* Content Area */}
-            <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-              {foundationTab === "mindmap" ? (
-                <div style={{ padding: "20px" }}>
-                  <MarkdownView content={truncateMindmapToLevels(foundationMindmapContent || "", 2) || "Mind map not available."} />
-                </div>
-              ) : (
-                <div style={{ padding: "20px" }}>
-                  <MarkdownView content={foundationStudyPlanContent || "Study plan not available."} />
-                </div>
-              )}
-            </div>
+          <div className="markdown-container" style={{ position: 'relative', padding: '24px 32px' }}>
+            <MarkdownView content={md} />
           </div>
         );
       }
@@ -2262,9 +2163,10 @@ export default function StudyTable() {
   const TOOL_LABELS: Record<string, string> = {
     summary: "Study Table",
     detailed: "Study Table",
+    study_plan: "Study Plan",
     key_takeaways: "Key Takeaways",
     mindmap: "Mindmap",
-    foundation: "Foundation",
+    foundation: "Mindmap",
     flashcards: "Flashcards",
     podcasts: "Podcasts",
     videos: "Videos",
@@ -2329,7 +2231,7 @@ export default function StudyTable() {
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
       case "detailed":
-      case "summary": case "podcasts": case "videos": case "mindmap": case "foundation":
+      case "summary": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #2D3E36 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(45, 62, 54, 0.35)" };
       case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
         return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #DDB669 0%, #C49B4B 100%)", shadow: "0 4px 12px rgba(221, 182, 105, 0.35)" };
@@ -2517,29 +2419,18 @@ export default function StudyTable() {
                       case "foundation":
                       case "mindmap":
                         return (
-                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            {/* Stepped platform tier 3 (bottom) */}
-                            <path d="M6 26L18 22L30 26L18 30L6 26Z" fill="#1E2B25" />
-                            <path d="M6 26L18 30V32L6 28V26Z" fill="#151E1A" />
-                            <path d="M30 26L18 30V32L30 28V26Z" fill="#23322B" />
-
-                            {/* Stepped platform tier 2 (middle) */}
-                            <path d="M8.5 22L18 19L27.5 22L18 25L8.5 22Z" fill="#2D3E36" />
-                            <path d="M8.5 22L18 25V26.5L8.5 23.5V22Z" fill="#1E2B25" />
-                            <path d="M27.5 22L18 25V26.5L27.5 23.5V22Z" fill="#3D5248" />
-
-                            {/* Stepped platform tier 1 (top) */}
-                            <path d="M11 18L18 16L25 18L18 20.5L11 18Z" fill="#4F7B64" />
-                            <path d="M11 18L18 20.5V21.5L11 19V18Z" fill="#3A5C4A" />
-                            <path d="M25 18L18 20.5V21.5L25 19V18Z" fill="#62947B" />
-
-                            {/* Sprout stem */}
-                            <path d="M18 17V8" stroke="#2D3E36" strokeWidth="2.2" strokeLinecap="round" />
-                            {/* Left Leaf */}
-                            <path d="M18 12C14 12 11 9 12 5C15 5 18 8 18 12Z" fill="#4F7B64" stroke="#2D3E36" strokeWidth="1.2" />
-                            {/* Right Leaf */}
-                            <path d="M18 10C22 10 25 7 24 3C21 3 18 6 18 10Z" fill="#7BA88B" stroke="#2D3E36" strokeWidth="1.2" />
-                          </svg>
+                          <img
+                            src={`${import.meta.env.BASE_URL}mindmap_icon.svg`}
+                            alt="Mindmap"
+                            style={{
+                              width: '36px',
+                              height: '32px',
+                              objectFit: 'contain',
+                              filter: active ? 'drop-shadow(0 2px 5px rgba(61, 123, 96, 0.45))' : 'none',
+                              transition: 'transform 0.18s ease, filter 0.18s ease',
+                              transform: active ? 'scale(1.08)' : 'scale(1)'
+                            }}
+                          />
                         );
                       case "flashcards":
                       case "revision_flashcards":
@@ -2784,7 +2675,7 @@ export default function StudyTable() {
                             {renderNode("summary", "Read", "#2D3E36")}
                             {renderNode("podcasts", "Listen", "#2D3E36")}
                             {renderNode("videos", "Watch", "#2D3E36")}
-                            {renderNode("foundation", "Foundation", "#2D3E36")}
+                            {renderNode("mindmap", "Mindmap", "#2D3E36")}
                           </div>
                         </div>
 
@@ -3055,7 +2946,7 @@ export default function StudyTable() {
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "foundation" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "podcasts"
+                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "foundation" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan" || activeTool === "podcasts"
                   ? "0px 12px 0 12px"
                   : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                     ? "4px 12px 0 12px"
@@ -3084,14 +2975,14 @@ export default function StudyTable() {
                   marginTop: activeTool === "pyq" ? "-8px" : 0,
                   paddingTop: activeTool === "mindmap" ? "2px" : 0,
                   marginBottom:
-                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed"
+                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
                       ? "2px"
                       : "12px",
                   flexShrink: 0,
                 }}
               >
                 {/* ── MVP STUDY HEADER: pixel-perfect reference match ── */}
-                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways") ? (
+                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? (
                   <>
                     <style>{`
                       @keyframes sv-hdr-in {
@@ -3169,6 +3060,7 @@ export default function StudyTable() {
                       .sv-hdr-mode-btn.active-quick    { background: #3b82f6; border-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
                       .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
                       .sv-hdr-mode-btn.active-key      { background: #d97706; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 8px rgba(217,119,6,0.4); }
+                      .sv-hdr-mode-btn.active-plan     { background: #4f46e5; border-color: #4f46e5; color: #ffffff; box-shadow: 0 2px 8px rgba(79,70,229,0.4); }
                     `}</style>
 
                     <div className="sv-hdr">
@@ -3182,7 +3074,7 @@ export default function StudyTable() {
                       </div>
 
                       {/* MIDDLE: persona levels */}
-                      {activeTool !== "key_takeaways" ? (
+                      {activeTool !== "key_takeaways" && activeTool !== "study_plan" ? (
                         <div className="sv-hdr-levels">
                           <button id="studybar-level-beginner" type="button"
                             className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
@@ -3205,7 +3097,7 @@ export default function StudyTable() {
                         </div>
                       ) : <div style={{ flex: 1 }} />}
 
-                      {/* RIGHT: mode toggles — Quick | Detailed only */}
+                      {/* RIGHT: mode toggles — Essentials | In-depth | Study Plan */}
                       <div className="sv-hdr-controls">
                         <div className="sv-hdr-modes">
                           <button id="studybar-mode-quick" type="button"
@@ -3221,6 +3113,13 @@ export default function StudyTable() {
                           >
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
                             In-depth
+                          </button>
+                          <button id="studybar-mode-study-plan" type="button"
+                            className={`sv-hdr-mode-btn${activeTool === "study_plan" ? " active-plan" : ""}`}
+                            onClick={() => setActiveTool("study_plan")} title="Study Plan"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                            Study Plan
                           </button>
                           {/* Read Aloud — inline, right of mode buttons */}
                           <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
@@ -3242,12 +3141,12 @@ export default function StudyTable() {
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
+                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "study_plan", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
                           <h1 className="st-page-title" style={{ margin: 0, fontSize: "1.6rem" }}>
                             {TOOL_LABELS[activeTool]}
                           </h1>
                         )}
-                        {activeTool !== "podcasts" && activeTool !== "foundation" && (
+                        {activeTool !== "podcasts" && activeTool !== "foundation" && activeTool !== "study_plan" && (
                           activeTool === "mindmap" ? (
                             activeNodeTitle && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
@@ -3292,7 +3191,7 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" ||
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan" ||
                     activeTool === "videos"
                     ? "transparent"
                     : "#ffffff",
@@ -3308,7 +3207,7 @@ export default function StudyTable() {
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed"
+                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
                         ? "1px solid #22c55e4D"
                         : "1px solid #E2E8F0",
                 overflowX: "hidden",
@@ -3330,7 +3229,7 @@ export default function StudyTable() {
                             ? "16px"
                             : activeTool === "deep_dive"
                               ? "8px"
-                              : activeTool === "summary" || activeTool === "detailed"
+                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
                                 ? "0px"
                                 : "20px",
                 paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0px" : activeTool === "ask" ? "20px" : "16px",

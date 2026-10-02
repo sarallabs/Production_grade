@@ -183,11 +183,11 @@ router.get('/:uni/:subj/:chapter/read/:type', async (req: Request, res: Response
       return res.status(400).json({ error: `Invalid persona. Use: ${VALID_PERSONAS.join(', ')}` });
     const path = `${gcsBase(uni, subj, chapter)}/read/${type}/${persona}.md`;
     try { await serveFile(res, path); } catch (e: any) { res.status(500).json({ error: e.message }); }
-  } else if (['key_takeaways', 'glossary'].includes(type)) {
+  } else if (['key_takeaways', 'glossary', 'study_plan'].includes(type)) {
     const path = `${gcsBase(uni, subj, chapter)}/read/${type}.md`;
     try { await serveFile(res, path); } catch (e: any) { res.status(500).json({ error: e.message }); }
   } else {
-    res.status(400).json({ error: 'Invalid read type. Use: quick, detailed, key_takeaways, glossary' });
+    res.status(400).json({ error: 'Invalid read type. Use: quick, detailed, key_takeaways, glossary, study_plan' });
   }
 });
 
