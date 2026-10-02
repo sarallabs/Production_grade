@@ -410,25 +410,25 @@ export default function MockTestView({
   }, [subjectChapters]);
 
   const completedUnitNumbers = useMemo(() => {
-    if (isPreFinalTest) {
+    if (isPreFinalTest || isPrepExam) {
       return allUnits.map(c => c.number);
     }
     const completed = allUnits
       .map((c) => c.number)
       .filter((num) => isChapterComplete(subjectId, num) || num <= chapterNumber);
     return completed.length > 0 ? completed : [1];
-  }, [allUnits, subjectId, chapterNumber, isPreFinalTest]);
+  }, [allUnits, subjectId, chapterNumber, isPreFinalTest, isPrepExam]);
   const highestCompletedUnit = useMemo(() => {
     return Math.max(...completedUnitNumbers, 1);
   }, [completedUnitNumbers]);
 
   const [selectedUnitNumbers, setSelectedUnitNumbers] = useState<number[]>(() => {
-    return completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1];
+    return isPrepExam ? allUnits.map(c => c.number) : (completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1]);
   });
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number>(10);
   const numSelectedUnits = selectedUnitNumbers.length;
-  const option1Count = Math.max(10, numSelectedUnits * 5);
-  const option2Count = Math.max(20, numSelectedUnits * 10);
+  const option1Count = 10;
+  const option2Count = 20;
   const [showSetupScreen, setShowSetupScreen] = useState(true);
   const [questions, setQuestions] = useState<MockQuestion[]>([]);
   const [loading, setLoading] = useState(false);
@@ -773,6 +773,358 @@ export default function MockTestView({
   }
 
   if (showSetupScreen) {
+    if (isPrepExam) {
+      return (
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            minHeight: "100vh",
+            background: "#f4f6f5",
+            padding: "32px 24px",
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+            boxSizing: "border-box",
+          }}
+        >
+          {/* Back to Study Table */}
+          <div style={{ width: "100%", maxWidth: "1000px", marginBottom: "16px" }}>
+            <button
+              onClick={onQuit}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                background: "transparent",
+                border: "none",
+                color: "#64748b",
+                fontWeight: 600,
+                fontSize: "0.95rem",
+                cursor: "pointer",
+                padding: "6px 0",
+                transition: "color 0.2s ease",
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.color = "#1e293b")}
+              onMouseOut={(e) => (e.currentTarget.style.color = "#64748b")}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              Back to Study Table
+            </button>
+          </div>
+
+          {/* Main Card Container */}
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1.5px solid #d5dfd9",
+              borderRadius: "24px",
+              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)",
+              padding: "36px 44px",
+              maxWidth: "1000px",
+              width: "100%",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Header */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "28px",
+              }}
+            >
+              {/* Icon & Title */}
+              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                <div
+                  style={{
+                    width: "54px",
+                    height: "54px",
+                    background: "#ddeee7",
+                    border: "1.5px solid #bddacf",
+                    borderRadius: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2e6850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <circle cx="14.5" cy="14.5" r="4.2" fill="#ddeee7" stroke="#2e6850" strokeWidth="1.8" />
+                    <path d="m13 14.5 1.2 1.2 2.2-2.2" stroke="#2e6850" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 700, color: "#1e293b", letterSpacing: "-0.015em" }}>
+                  Preparation Exam
+                </h1>
+              </div>
+
+              {/* All the best! Pill */}
+              <div
+                style={{
+                  background: "#ffffff",
+                  border: "1.5px solid #cbd5e1",
+                  color: "#334155",
+                  borderRadius: "10px",
+                  padding: "7px 16px",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <path d="m9 12 2 2 4-4" />
+                </svg>
+                <span>All the best!</span>
+              </div>
+            </div>
+
+            {/* Units Stack (Full Width Cards) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "28px" }}>
+              {allUnits.map((unit) => {
+                const isSelected = selectedUnitNumbers.includes(unit.number);
+
+                const unitName = (() => {
+                  const raw = (unit.name || unit.title || "").trim();
+                  if (!raw || /^unit\s*[-:_]?\s*\d+$/i.test(raw)) {
+                    const defaults: Record<number, string> = {
+                      1: "Nature and Scope of Marketing",
+                      2: "Marketing Environment & Buyer Behavior",
+                      3: "Product & Price Decisions",
+                      4: "Place & Promotion Decisions",
+                      5: "Emerging Trends in Marketing",
+                    };
+                    return defaults[unit.number] || `Unit ${unit.number} Concepts`;
+                  }
+                  return raw;
+                })();
+
+                return (
+                  <div
+                    key={unit.number}
+                    onClick={() => toggleUnitSelection(unit.number)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "16px",
+                      padding: "16px 22px",
+                      borderRadius: "12px",
+                      border: isSelected ? "1.5px solid #7ea897" : "1px solid #d3ded7",
+                      background: "linear-gradient(90deg, #FAF7F2 0%, #FAF5EF 14%, #E0ECE5 36%, #8CB5A4 72%, #689684 100%)",
+                      cursor: "pointer",
+                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                      userSelect: "none",
+                      boxShadow: isSelected ? "0 4px 14px rgba(104, 150, 132, 0.16)" : "none",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = "translateY(-1.5px)";
+                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(104, 150, 132, 0.22)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = isSelected ? "0 4px 14px rgba(104, 150, 132, 0.16)" : "none";
+                    }}
+                  >
+                    {/* Checkbox */}
+                    <div
+                      style={{
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        transition: "all 0.15s ease",
+                        border: isSelected ? "2px solid #467360" : "1.8px solid #94a3b8",
+                        background: isSelected ? "#467360" : "#ffffff",
+                      }}
+                    >
+                      {isSelected && (
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
+
+                    {/* Unit Number & Title */}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <div
+                        style={{
+                          fontSize: "1.15rem",
+                          fontWeight: 700,
+                          color: "#1e293b",
+                          lineHeight: 1.25,
+                        }}
+                      >
+                        Unit {unit.number}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.92rem",
+                          fontWeight: 500,
+                          color: "#374151",
+                        }}
+                      >
+                        {unitName}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Bottom Row */}
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginTop: "12px",
+              }}
+            >
+              {/* No. of questions Card */}
+              <div
+                style={{
+                  background: "#467360",
+                  borderRadius: "12px",
+                  padding: "10px 18px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  boxShadow: "0 4px 14px rgba(70, 115, 96, 0.25)",
+                }}
+              >
+                {/* Document/list Icon */}
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "8px",
+                    background: "rgba(255, 255, 255, 0.18)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="M9 12h6" />
+                    <path d="M9 16h6" />
+                    <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
+                  </svg>
+                </div>
+
+                {/* Question count radio pills */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 500 }}>
+                    No. of questions
+                  </span>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                    {[option1Count, option2Count].map((count) => {
+                      const isChosen = selectedQuestionCount === count;
+                      return (
+                        <div
+                          key={count}
+                          onClick={() => setSelectedQuestionCount(count)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "14px",
+                              height: "14px",
+                              borderRadius: "50%",
+                              border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isChosen && (
+                              <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff" }} />
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              minWidth: "42px",
+                              height: "22px",
+                              padding: "0 10px",
+                              borderRadius: "6px",
+                              border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
+                              background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
+                              color: "#ffffff",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {count}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Start Button */}
+              <button
+                onClick={handleStartExam}
+                style={{
+                  background: "#467360",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "10px",
+                  padding: "13px 36px",
+                  fontSize: "1.05rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 14px rgba(70, 115, 96, 0.3)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#3c6453";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(70, 115, 96, 0.38)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#467360";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(70, 115, 96, 0.3)";
+                }}
+              >
+                <span>Start</span>
+                <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const themeColor = isGreenTheme ? "#22c55e" : "#c026d3";
     const themeDarkColor = isGreenTheme ? "#16a34a" : "#c026d3";
     const themeLightBg = isGreenTheme ? "#f0fdf4" : "#fdf4ff";
