@@ -82,23 +82,37 @@ export default function FlashcardsView({
   const safeFront = currentCard?.front || (currentCard as any)?.question || '';
   const cleanTitle = typeof safeFront === 'string' ? safeFront.replace(/^(?:Flashcards|Flash Cards)\n*-\s*/i, '') : safeFront;
 
-  // Build cleaned back text: strip infographic prompts and mermaid code blocks
-  let rawBack = (currentCard?.back || (currentCard as any)?.answer || '');
+  // Build cleaned back text: strip infographic prompts, images, and mermaid code blocks
+  let rawBack = (currentCard?.back || (currentCard as any)?.answer || (currentCard as any)?.definition || '');
   // Remove Infographic Prompt metadata
   rawBack = rawBack.replace(/(?:^|\n)\s*>?\s*\*\*Infographic Prompt:\*\*[\s\S]*/gi, '');
   // Strip mermaid code blocks (```mermaid ... ```) — flashcards should show images, not diagrams
   rawBack = rawBack.replace(/```mermaid[\s\S]*?```/gi, '');
   // Strip embedded base64 <img> tags (they'll be shown in the infographic panel instead)
   rawBack = rawBack.replace(/<img[^>]+src=["']data:image\/[^;]+;base64,[^"']+["'][^>]*>/gi, '');
+  // Strip markdown images (![alt](url) or ![alt](data:image/...))
+  rawBack = rawBack.replace(/!\[.*?\]\([^\)]+\)/gi, '');
   const safeBack = rawBack.trim();
 
-  // If card has no infographicUrl, try to extract an embedded base64 <img> from the back text
+  // If card has no infographicUrl, try to extract an embedded base64 <img> or markdown image
   let extractedImgUrl: string | undefined;
   if (!currentCard?.infographicUrl) {
-    const imgMatch = (currentCard?.back || (currentCard as any)?.answer || '')
-      .match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
-    if (imgMatch) {
-      extractedImgUrl = imgMatch[1];
+    const rawImg = (currentCard as any)?.img || (currentCard as any)?.image;
+    if (typeof rawImg === 'string' && rawImg.trim()) {
+      const mdMatch = rawImg.match(/!\[.*?\]\((.+?)\)/);
+      extractedImgUrl = mdMatch ? mdMatch[1].trim() : rawImg.trim();
+    }
+    if (!extractedImgUrl) {
+      const origText = (currentCard?.back || (currentCard as any)?.answer || (currentCard as any)?.definition || '');
+      const imgMatch = origText.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
+      if (imgMatch) {
+        extractedImgUrl = imgMatch[1];
+      } else {
+        const mdMatch = origText.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+        if (mdMatch) {
+          extractedImgUrl = mdMatch[1];
+        }
+      }
     }
   }
 
@@ -339,7 +353,7 @@ export default function FlashcardsView({
             {currentIndex + 1}/{totalCards}
           </div>
 
-          {/* Question title moved inside flex container */}
+          {/* Progress badge */}
 
           {(() => {
             const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
@@ -353,6 +367,13 @@ export default function FlashcardsView({
             ];
 
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
+            if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
+              if (finalUrl.startsWith('../Mindmaps/')) {
+                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
+              } else if (finalUrl.startsWith('/api/')) {
+                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app${finalUrl}`;
+              }
+            }
             if (isPhysics) {
               const urlLower = (finalUrl || '').toLowerCase();
               if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
@@ -362,39 +383,87 @@ export default function FlashcardsView({
 
             const hasImage = !!finalUrl && !imgFailed;
 
-            return (
-              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
-                {/* Text Content */}
+            if (!isFlipped) {
+              // ── FRONT FACE: Question only ─────────────────────────────────
+              return (
                 <div
-                  style={{
-                    fontSize: "19px",
-                    lineHeight: "1.65",
-                    color: "#334155",
-                    width: hasImage ? "calc(42% - 12px)" : "100%",
-                    flexShrink: 0,
-                    marginBottom: "12px",
-                    overflowY: "auto",
-                    paddingRight: hasImage ? "16px" : "0",
-                  }}
+                  style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '32px', cursor: 'pointer' }}
+                  onClick={() => setIsFlipped(true)}
                 >
-                  <div
+                  <div style={{
+                    fontSize: '26px',
+                    fontWeight: '800',
+                    color: '#0f172a',
+                    lineHeight: '1.35',
+                    textAlign: 'center',
+                    maxWidth: '82%',
+                  }}>
+                    <MarkdownView content={cleanTitle} />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setIsFlipped(true); }}
                     style={{
-                      fontSize: "24px",
-                      fontWeight: "800",
-                      color: "#0f172a",
-                      lineHeight: "1.32",
-                      marginBottom: "16px",
-                      marginTop: "4px"
+                      background: 'rgba(255,255,255,0.18)',
+                      border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(0,136,255,0.4)'}`,
+                      borderRadius: '999px',
+                      padding: '10px 28px',
+                      fontSize: '15px',
+                      fontWeight: 600,
+                      color: isPurpleTheme ? '#7e22ce' : '#1d4ed8',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      backdropFilter: 'blur(4px)',
+                      transition: 'all 0.18s ease',
                     }}
                   >
-                    <MarkdownView content={cleanTitle} />
+                    Click to reveal Answer
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            }
+
+            // ── BACK FACE: Answer + Infographic ──────────────────────────────
+            return (
+              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
+                {/* Answer text */}
+                <div
+                  style={{
+                    fontSize: '19px',
+                    lineHeight: '1.65',
+                    color: '#334155',
+                    width: hasImage ? 'calc(42% - 12px)' : '100%',
+                    flexShrink: 0,
+                    marginBottom: '12px',
+                    overflowY: 'auto',
+                    paddingRight: hasImage ? '16px' : '0',
+                  }}
+                >
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: isPurpleTheme ? '#9333ea' : '#0088ff',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.06em',
+                    marginBottom: '10px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}>
+                    Answer.
                   </div>
                   <MarkdownView content={safeBack} />
                 </div>
-                
+
                 {/* Infographic */}
                 {hasImage && (
-                  <div style={{ width: "calc(58% - 12px)", flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflowY: 'auto' }}>
+                  <div style={{ width: 'calc(58% - 12px)', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflowY: 'auto' }}>
                     <img
                       src={finalUrl}
                       alt="Infographic"
@@ -402,18 +471,18 @@ export default function FlashcardsView({
                       onError={() => setImgFailed(true)}
                       title="Click to expand full screen"
                       style={{
-                        width: "100%",
-                        height: "auto",
-                        maxHeight: "100%",
-                        objectFit: "contain",
-                        borderRadius: "12px",
-                        backgroundColor: "#ffffff",
-                        padding: "12px",
-                        border: "1px solid #cbd5e1",
-                        boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
-                        cursor: "zoom-in",
+                        width: '100%',
+                        height: 'auto',
+                        maxHeight: '100%',
+                        objectFit: 'contain',
+                        borderRadius: '12px',
+                        backgroundColor: '#ffffff',
+                        padding: '12px',
+                        border: '1px solid #cbd5e1',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        cursor: 'zoom-in',
                         flexShrink: 0,
-                        transition: "transform 0.2s ease",
+                        transition: 'transform 0.2s ease',
                       }}
                     />
                   </div>

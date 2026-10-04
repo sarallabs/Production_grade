@@ -1,0 +1,90 @@
+{
+  "chapter": "Chapter 13 \u2013 Insect Digestive System",
+  "course": "ANGRAU ENTO-131 Fundamentals of Entomology-I",
+  "scope": "5-Minute Rapid Pre-Exam Reactivation Glance",
+  "total_topics": 7,
+  "topics": [
+    {
+      "id": "KT-01",
+      "topic": "Three Primary Gut Regions & Embryological Origin",
+      "mindmap_node": "Insect Digestive System > Three Primary Regions",
+      "prerequisite_status": "Foundational L1 Concept",
+      "key_facts": [
+        "Tripartite division: Foregut (Stomodaeum), Midgut (Mesenteron), Hindgut (Proctodaeum).",
+        "Embryology: Foregut and Hindgut are ectodermal; Midgut is endodermal.",
+        "Cuticular intima shed at each moult in foregut and hindgut; midgut has naked microvilli.",
+        "Boundary landmarks: Cardiac (stomodaeal) valve anteriorly; Pyloric valve and Malpighian tubules posteriorly."
+      ]
+    },
+    {
+      "id": "KT-02",
+      "topic": "Histological Wall Layers",
+      "mindmap_node": "Insect Digestive System > Wall Layers",
+      "prerequisite_status": "Foundational L2 Concept",
+      "key_facts": [
+        "Five layers from lumen outward: Cuticular Intima (fore/hindgut only), Single-layer Epithelium, Basement Membrane, Circular Muscle Layer, Longitudinal Muscle Layer.",
+        "Peritoneal membrane encloses the tube externally with trachea and nerves."
+      ]
+    },
+    {
+      "id": "KT-03",
+      "topic": "Foregut Mechanics, Proventriculus & Salivary Glands",
+      "mindmap_node": "Insect Digestive System > Foregut / Stomodaeum",
+      "prerequisite_status": "Core L2-L3 Concept",
+      "key_facts": [
+        "Cibarium and pharynx form the cibarial sucking pump for fluid uptake.",
+        "Crop is an expandable, thin-walled food storage and pre-digestion chamber.",
+        "Proventriculus (Gizzard) in chewing insects has 6 sclerotised chitinous teeth/denticles for crushing food.",
+        "Proventriculus in honeybees has 4 triangular mobile lip-valves that strain pollen from nectar.",
+        "Salivary glands secrete amylase and invertase; blood-feeders secrete apyrase and nitrophorins."
+      ]
+    },
+    {
+      "id": "KT-04",
+      "topic": "Midgut Cytology, Goblet Cell Physiology & Bt Action",
+      "mindmap_node": "Insect Digestive System > Midgut / Mesenteron",
+      "prerequisite_status": "Advanced L3-L4 Mechanism",
+      "key_facts": [
+        "Ventriculus and gastric caeca multiply absorptive and enzyme-secreting surface area.",
+        "Three cell types: Columnar enterocytes (absorption), Regenerative stem cells/nidi (renewal), Goblet cells (ion transport).",
+        "Goblet cell V-type H+/K+ ATPase pumps K+ to generate luminal pH 9-11, dissolving leaf tannins.",
+        "Bt Cry protoxins dissolve at pH 11, are cleaved by proteases, bind cadherin/APN, forming lytic pores that rupture enterocytes."
+      ]
+    },
+    {
+      "id": "KT-05",
+      "topic": "Peritrophic Membrane Architecture & Barrier Dynamics",
+      "mindmap_node": "Insect Digestive System > Midgut > Peritrophic Membrane",
+      "prerequisite_status": "Core L3 Concept",
+      "key_facts": [
+        "Chitin-glycoprotein semi-permeable matrix.",
+        "Type I delaminated from entire midgut epithelium; Type II secreted by anterior cardia organ.",
+        "Functions: Mechanical microvilli protection, pathogen barrier, and endo/ectoperitrophic enzyme compartmentalization."
+      ]
+    },
+    {
+      "id": "KT-06",
+      "topic": "Hindgut Osmoregulation & Excretory Integration",
+      "mindmap_node": "Insect Digestive System > Hindgut & Excretory Integration",
+      "prerequisite_status": "Core L3-L4 Concept",
+      "key_facts": [
+        "Subdivisions: Pylorus, Ileum, Colon, Rectum.",
+        "Malpighian tubules filter hemolymph into potassium urate primary urine.",
+        "Cryptonephridial complex binds tubule ends to rectum in perinephric membrane to extract water in xeric pests.",
+        "6 longitudinal rectal pads/papillae with dense mitochondria and lateral canaliculi reabsorb 90% water to produce dry frass.",
+        "Uric acid precipitates as insoluble, non-toxic crystals with zero water loss."
+      ]
+    },
+    {
+      "id": "KT-07",
+      "topic": "Specialized Adaptations: Sap Filter Chamber & Termite Paunch",
+      "mindmap_node": "Insect Digestive System > Specialized Physiological Adaptations",
+      "prerequisite_status": "Advanced L4 Concept",
+      "key_facts": [
+        "Homopteran sap filter chamber wraps anterior midgut around posterior midgut/hindgut to shunt excess water by osmosis directly to honeydew, avoiding enzyme dilution.",
+        "Termite hindgut paunch harbors symbiotic Trichonympha flagellates that produce cellulase to ferment wood into acetate.",
+        "Proctodaeal trophallaxis re-inoculates nymphs with symbionts after cuticular ecdysis."
+      ]
+    }
+  ]
+}

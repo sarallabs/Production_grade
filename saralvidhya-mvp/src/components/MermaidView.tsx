@@ -87,15 +87,16 @@ function buildTree(raw: string): TNode | null {
   return root;
 }
 
-// ─── Design tokens — dark blue, sharp, professional ──────────────────────────
-const ACCENT = '#3B82F6'; // blue-500
-const ACCENT_DIM = '#93C5FD'; // blue-300
+// ─── Design tokens — Forest & Sage Palette (matches design) ──────────────────
+const ACCENT = '#4F7B64'; // medium forest green
+const ACCENT_DIM = '#7BA88B'; // sage green
 
-// Dark blue palette — not black
+// Palette matched directly to reference:
+// Root: #2D3E36 | Depth 1: #4F7B64 | Depth 2+: #7BA88B
 const STYLE = {
-  root: { fill: '#1d4ed8', stroke: '#1e3a5f', txt: '#ffffff', rx: 6, fw: 700, fs: 13.5 },
-  d1: { fill: '#5e61fdff', stroke: '#1d4ed8', txt: '#ffffff', rx: 5, fw: 600, fs: 12.5 },
-  d2: { fill: '#eff6ff', stroke: '#0470f5ff', txt: '#000205ff', rx: 4, fw: 700, fs: 11.5 },
+  root: { fill: '#2D3E36', stroke: '#23322B', txt: '#FFFFFF', rx: 10, fw: 700, fs: 14 },
+  d1: { fill: '#4F7B64', stroke: '#436A55', txt: '#FFFFFF', rx: 10, fw: 600, fs: 12.5 },
+  d2: { fill: '#7BA88B', stroke: '#6B977B', txt: '#FFFFFF', rx: 8, fw: 600, fs: 11.5 },
 };
 
 const CHAR_W = 7.5;
@@ -191,9 +192,12 @@ function EyeIcon({ cx, cy, c }: { cx: number; cy: number; c: string }) {
 
 function EarIcon({ cx, cy, c }: { cx: number; cy: number; c: string }) {
   return (
-    <svg x={cx - 7} y={cy - 7} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M6 8.5a6.5 6.5 0 1 1 13 0c0 6-6 6-6 10a3.5 3.5 0 1 1-7 0" />
-      <path d="M15 8.5a2.5 2.5 0 0 0-5 0v1a2 2 0 1 1 0 4" />
+    <svg x={cx - 8} y={cy - 8} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 14a9 9 0 0 1 18 0" />
+      <rect x="2" y="14" width="4" height="6" rx="2" />
+      <rect x="18" y="14" width="4" height="6" rx="2" />
+      <path d="M22 17v1a4 4 0 0 1-4 4H12" />
+      <circle cx="12" cy="22" r="1" />
     </svg>
   );
 }
@@ -221,8 +225,8 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
     >
       {/* ── Edges ── */}
       {edges.map(({ from, to }) => {
-        const edgeColor = to.depth === 1 ? '#8597b1ff' : '#cbd5e1';
-        const sw = to.depth === 1 ? 1.5 : 1;
+        const edgeColor = to.depth === 1 ? '#4F5D55' : '#68776D';
+        const sw = to.depth === 1 ? 1.6 : 1.2;
         return (
           <path
             key={`e${from.id}-${to.id}`}
@@ -230,7 +234,7 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
             fill="none"
             stroke={edgeColor}
             strokeWidth={sw}
-            strokeOpacity={0.7}
+            strokeOpacity={0.8}
           />
         );
       })}
@@ -256,8 +260,11 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
              earX = rightEdge + 16;
           }
 
-        const iconFill = '#3b82f6';
-        const iconBg = '#eff6ff';
+        const iconFill = '#4F7B64';
+        const iconBg = '#F3F8F5';
+
+        const hoverFill = isRoot ? '#23322B' : node.depth === 1 ? '#436A55' : '#6A967A';
+        const hoverStroke = isRoot ? '#18241E' : node.depth === 1 ? '#365544' : '#578267';
 
         return (
           <g key={`node-${node.id}`}>
@@ -268,14 +275,19 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
               width={node.w}
               height={node.h}
               rx={st.rx}
-              fill={isHovered && isClickable ? '#2563eb' : st.fill}
-              stroke={isHovered && isClickable ? '#1e40af' : st.stroke}
-              strokeWidth={isHovered ? 2.5 : 1.5}
+              fill={isHovered && isClickable ? hoverFill : st.fill}
+              stroke={isHovered && isClickable ? hoverStroke : st.stroke}
+              strokeWidth={isHovered ? 2 : 1}
               cursor={isClickable ? 'pointer' : 'default'}
               onClick={() => isClickable && onTopicClick?.(node.label, 'read')}
               onMouseEnter={() => setHoveredId(node.id)}
               onMouseLeave={() => setHoveredId(null)}
-              style={{ transition: 'all 0.2s ease-in-out', filter: isHovered ? 'drop-shadow(0 4px 6px rgba(0,0,0,0.15))' : 'drop-shadow(0 1px 3px rgba(0,0,0,0.05))' }}
+              style={{
+                transition: 'all 0.2s ease-in-out',
+                filter: isHovered
+                  ? 'drop-shadow(0 6px 12px rgba(45, 62, 54, 0.22))'
+                  : 'drop-shadow(0 2px 5px rgba(45, 62, 54, 0.12))',
+              }}
             />
 
             {/* Text */}
@@ -372,10 +384,10 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
 
   return (
     <div style={{
-      border: '1px solid #e2e8f0',
-      borderRadius: 10,
+      border: '1px solid #EFE4DC',
+      borderRadius: 12,
       overflow: 'hidden',
-      background: '#fff',
+      background: '#FFF6F1',
       fontFamily: "'Inter','SF Pro Display',system-ui,sans-serif",
     }}>
       {/* ── Toolbar ── */}
@@ -383,29 +395,29 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '7px 14px',
-        borderBottom: '1px solid #f1f5f9',
-        background: '#fafafa',
+        padding: '8px 16px',
+        borderBottom: '1px solid #EFE4DC',
+        background: '#FAF1EB',
       }}>
         {/* Left: label */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <div style={{
-            width: 6, height: 6, borderRadius: 2,
+            width: 7, height: 7, borderRadius: 2,
             background: ACCENT, flexShrink: 0,
           }} />
           <span style={{
-            fontSize: '0.7rem', fontWeight: 500,
-            color: '#94a3b8', letterSpacing: '0.04em', textTransform: 'uppercase',
+            fontSize: '0.72rem', fontWeight: 600,
+            color: '#4F7B64', letterSpacing: '0.04em', textTransform: 'uppercase',
           }}>
             Mind Map
           </span>
-          <span style={{ fontSize: '0.68rem', color: '#cbd5e1', marginLeft: 4 }}>
+          <span style={{ fontSize: '0.68rem', color: '#8A7F77', marginLeft: 4 }}>
             · Ctrl+scroll to zoom · click to read
           </span>
         </div>
 
         {/* Right: zoom controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           {[
             { l: '−', a: zoomOut, off: zoom <= MIN_Z },
             { l: `${Math.round(zoom * 100)}%`, a: reset, off: false },
@@ -417,11 +429,11 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
               disabled={b.off}
               style={{
                 minWidth: 28, height: 24, borderRadius: 5,
-                border: '1px solid #e2e8f0',
-                background: '#fff',
+                border: '1px solid #E2D5CC',
+                background: '#FFFFFF',
                 cursor: b.off ? 'not-allowed' : 'pointer',
                 fontSize: '0.75rem', fontWeight: 600,
-                color: b.off ? '#cbd5e1' : '#475569',
+                color: b.off ? '#CBBFB6' : '#45584E',
                 fontFamily: 'inherit',
               }}
             >{b.l}</button>
@@ -435,12 +447,12 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
         onWheel={onWheel}
         style={{
           overflowX: 'auto',
-          background: '#fafcff',
-          padding: '20px 16px 24px',
+          background: '#FFF6F1',
+          padding: '24px 20px 28px',
           cursor: zoom > 1 ? 'grab' : 'default',
-          // subtle dot grid
-          backgroundImage: 'radial-gradient(circle, #dde1ea 1px, transparent 1px)',
-          backgroundSize: '22px 22px',
+          // subtle warm dot grid
+          backgroundImage: 'radial-gradient(circle, #EBDDD4 1.2px, transparent 1.2px)',
+          backgroundSize: '24px 24px',
           textAlign: 'center',
         }}
       >

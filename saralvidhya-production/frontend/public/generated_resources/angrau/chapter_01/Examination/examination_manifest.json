@@ -1,0 +1,13 @@
+{
+  "chapter_no": 13,
+  "chapter_name": "Digestive System",
+  "subject": "Entomology",
+  "generated_files": {
+    "pre_final_exam": "Examination/pre_final_exam.md",
+    "final_examination": "Examination/final_examination.md",
+    "certification_exam": "Examination/certification_exam.md",
+    "exam_rubric_and_keys": "Examination/exam_rubric_and_keys.json"
+  },
+  "question_count_per_exam": 50,
+  "deduplication_status": "PASSED (100% Unique Questions Across All Papers)"
+}

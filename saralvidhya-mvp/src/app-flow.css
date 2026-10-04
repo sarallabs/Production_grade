@@ -558,7 +558,7 @@
   margin: 0;
   font-size: 2rem;
   font-weight: 800;
-  color: #1f1147;
+  color: #2D3E36;
 }
 
 .qbank-simple-subtitle {
@@ -586,14 +586,15 @@
   min-width: 36px;
   height: 36px;
   border-radius: 999px;
-  border: 1px solid #ddd6fe;
-  background: #f5f3ff;
-  color: #6d28d9;
+  border: 1px solid #B2CFC2;
+  background: #EEF5F1;
+  color: #2D3E36;
   font-size: 0.82rem;
   font-weight: 700;
   padding: 0 12px;
   cursor: pointer;
   white-space: nowrap;
+  transition: all 0.18s ease;
 }
 
 .qbank-go-row {
@@ -609,9 +610,15 @@
   font-size: 0.88rem;
   font-weight: 700;
   color: #fff;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  background: linear-gradient(135deg, #4F7B64, #2D3E36);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.24);
+  box-shadow: 0 4px 12px rgba(47, 79, 64, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.qbank-go-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(47, 79, 64, 0.32);
 }
 
 .qbank-go-btn--sm {
@@ -635,26 +642,32 @@
 
 .qbank-simple-subject {
   font-weight: 800;
-  color: #334155;
+  color: #2D3E36;
   margin-bottom: 10px;
 }
 
 .qbank-simple-chapter-pill.active {
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  background: linear-gradient(135deg, #4F7B64, #2D3E36);
   color: #fff;
   border-color: transparent;
-  box-shadow: 0 6px 14px rgba(124, 58, 237, 0.28);
+  box-shadow: 0 6px 14px rgba(47, 79, 64, 0.28);
 }
 
 .qbank-simple-question-card {
-  background: #faf9fd;
-  border: 1px solid #c4b5fd;
+  background: #f7fbf9;
+  border: 1px solid #B2CFC2;
   border-radius: 16px;
   padding: 24px 32px;
   margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 2px 8px rgba(47, 79, 64, 0.05);
   display: flex;
   gap: 24px;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.qbank-simple-question-card:hover {
+  box-shadow: 0 6px 20px rgba(47, 79, 64, 0.12);
+  transform: translateY(-1px);
 }
 
 /* Global leaderboard */

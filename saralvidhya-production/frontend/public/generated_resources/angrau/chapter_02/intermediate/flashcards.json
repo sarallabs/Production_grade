@@ -1,0 +1,292 @@
+{
+  "chapter": "Metamorphosis",
+  "subject": "Entomology",
+  "level": "intermediate",
+  "flashcards": [
+    {
+      "front": "What is morphogenesis in insect development?",
+      "back": "Morphogenesis refers to all post-embryonic changes that span from the egg stage to the adult stage, involving growth and moulting (in larval stages), differentiation (in pupal stages), and maturation and reproduction (in adult stages).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_001.png"
+    },
+    {
+      "front": "During which stage of morphogenesis does the growth phase primarily occur, and what processes does it involve?",
+      "back": "The growth phase occurs during the larval stages, involving voracious feeding and periodic moulting (shedding of the old cuticle) to accommodate a larger body.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_002.png"
+    },
+    {
+      "front": "During which stage of morphogenesis does differentiation occur, and what happens to the insect during this time?",
+      "back": "Differentiation occurs during the pupal stage, where the insect's internal and external tissues are extensively reorganized in preparation for adult life.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_003.png"
+    },
+    {
+      "front": "What does the maturation phase of morphogenesis involve, and during which stage does it take place?",
+      "back": "The maturation phase takes place during the adult stage, where the insect completes its reproductive development to become capable of mating and producing offspring.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_004.png"
+    },
+    {
+      "front": "How is metamorphosis defined in relation to morphogenesis?",
+      "back": "Metamorphosis is the term used for the dramatic transformation in body form that links the developmental phases together as an individual insect passes through markedly different physical forms from egg to adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_005.png"
+    },
+    {
+      "front": "What is the primary ecological advantage of holometabolous insects having totally different feeding habits between their larval and adult stages?",
+      "back": "It prevents the species from competing with itself (self-competition), as larvae and adults can exploit entirely different food sources and habitats.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_006.png"
+    },
+    {
+      "front": "What are the three developmental stages in the life cycle of an ametabolous (no metamorphosis) insect?",
+      "back": "The three stages are: egg, larva (or nymph), and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_007.png"
+    },
+    {
+      "front": "What type of development (direct or indirect) characterizes ametabolous insects, and what does this mean?",
+      "back": "Development is direct, meaning the young one develops straight into the adult form (gradually increasing in size through moults) without any intervening transformation stage.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_008.png"
+    },
+    {
+      "front": "How are the eggs of ametabolous insects laid in terms of protective coverings?",
+      "back": "The eggs are laid with no coverings (uncovered).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_009.png"
+    },
+    {
+      "front": "How does the young (immature) ametabolous insect resemble the adult form?",
+      "back": "The young looks like the adult in all characters, differing only in size and the potential absence of developed sexual organs.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_010.png"
+    },
+    {
+      "front": "What terms can be used to refer to the immature stage of an ametabolous insect?",
+      "back": "The immature stage can be referred to as either a larva or a nymph.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_011.png"
+    },
+    {
+      "front": "How do the food habits of immature and mature ametabolous insects compare?",
+      "back": "They share the exact same food habits throughout their entire lives.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_012.png"
+    },
+    {
+      "front": "Is there a pupal stage in ametabolous development?",
+      "back": "No, the pupal stage is completely absent; the larva/nymph directly becomes an adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_013.png"
+    },
+    {
+      "front": "What is the wing status of adult ametabolous insects?",
+      "back": "The adults of ametabolous insects are entirely wingless.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_014.png"
+    },
+    {
+      "front": "Which taxonomic group of insects is characterized by ametabolous development?",
+      "back": "All Apterygote (wingless, primitive) insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_015.png"
+    },
+    {
+      "front": "What percentage of all insects undergo ametabolous (no) metamorphosis?",
+      "back": "Fewer than 0.1% of all insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_016.png"
+    },
+    {
+      "front": "What are the three developmental stages in the life cycle of a hemimetabolous (incomplete metamorphosis) insect?",
+      "back": "The three stages are: egg, nymph, and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_017.png"
+    },
+    {
+      "front": "What type of development (direct or indirect) characterizes hemimetabolous insects, and what does this mean?",
+      "back": "Development is direct, meaning the nymph transforms straight into the adult form without passing through an intervening pupal stage.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_018.png"
+    },
+    {
+      "front": "How are the eggs of hemimetabolous insects typically laid and protected?",
+      "back": "The eggs are often covered by a protective egg case that holds them together.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_019.png"
+    },
+    {
+      "front": "How does a hemimetabolous nymph resemble the adult insect?",
+      "back": "The nymph resembles the adult in almost all characters except that its wings and sexual organs are not yet fully developed.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_020.png"
+    },
+    {
+      "front": "What is the specific term used for the immature stage of a hemimetabolous insect?",
+      "back": "The immature stage is consistently called a nymph.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_021.png"
+    },
+    {
+      "front": "How do the food habits of hemimetabolous nymphs and adults compare?",
+      "back": "Nymphs and adults share the same food habits and typically feed on the same host plants.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_022.png"
+    },
+    {
+      "front": "Is there a pupal stage in hemimetabolous development?",
+      "back": "No, the pupal stage is completely absent; the nymph directly becomes an adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_023.png"
+    },
+    {
+      "front": "How do wings develop in hemimetabolous insects?",
+      "back": "Wings develop gradually and externally on the outside of the body during the growth of the nymph (exopterygote development).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_024.png"
+    },
+    {
+      "front": "Which group of insect orders is characterized by hemimetabolous development?",
+      "back": "The lower insect orders, specifically classified as Exopterygote insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_025.png"
+    },
+    {
+      "front": "What percentage of all insects undergo hemimetabolous (incomplete) metamorphosis?",
+      "back": "About 12% of all insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_026.png"
+    },
+    {
+      "front": "What are the four developmental stages in the life cycle of a holometabolous (complete metamorphosis) insect?",
+      "back": "The four stages are: egg, larva, pupa, and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_027.png"
+    },
+    {
+      "front": "What type of development (direct or indirect) characterizes holometabolous insects, and what does this mean?",
+      "back": "Development is indirect, meaning the young larva must pass through a specialized pupal stage of transformation before it can become an adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_028.png"
+    },
+    {
+      "front": "How are the eggs of holometabolous insects sometimes protected?",
+      "back": "They are sometimes covered by protective hairs or scales.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_029.png"
+    },
+    {
+      "front": "How does a holometabolous larva resemble the adult insect?",
+      "back": "The larva does not resemble the adult at all; it is usually wormlike in form and differs completely in both morphological characters and feeding habits.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_030.png"
+    },
+    {
+      "front": "What is the specific term used for the immature stage of a holometabolous insect?",
+      "back": "The immature stage is called a larva (plural: larvae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_031.png"
+    },
+    {
+      "front": "How do the food habits of holometabolous larvae and adults compare?",
+      "back": "Their food habits are totally different from one another, allowing them to exploit completely different food sources and habitats.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_032.png"
+    },
+    {
+      "front": "Is a pupal stage present in holometabolous development?",
+      "back": "Yes, a distinct pupal stage is present between the larval and adult stages.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_033.png"
+    },
+    {
+      "front": "How and where do wings develop in holometabolous insects?",
+      "back": "Wings develop internally during the growth of the adult while it is still enclosed inside the pupa (endopterygote development).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_034.png"
+    },
+    {
+      "front": "Which group of insect orders is characterized by holometabolous development?",
+      "back": "The higher insect orders, specifically classified as Endopterygote insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_035.png"
+    },
+    {
+      "front": "What percentage of all insects undergo holometabolous (complete) metamorphosis?",
+      "back": "About 88% of all insects, making it the most widespread developmental pattern.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_036.png"
+    },
+    {
+      "front": "What is hyper-metamorphosis?",
+      "back": "Hyper-metamorphosis is a specialized variant of complete (holo) metamorphosis in which at least one of the larval instars is distinctly different from the others, functionally or morphologically, representing two or more different forms of larva or a switch in food habits.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_037.png"
+    },
+    {
+      "front": "In the hyper-metamorphic life cycle of a blister beetle, what is the active first-stage larva called, and what is its role?",
+      "back": "The active, mobile first-stage larva is called a triungulin. It serves as an active searcher or hitchhiker to locate food sources.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_038.png"
+    },
+    {
+      "front": "What is the 'coarctate stage' in the life cycle of a hyper-metamorphic insect?",
+      "back": "The coarctate stage is a hardened, non-feeding, dormant resting larval form that occurs after the active grub-like stages and before the final larval instar and pupation.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_039.png"
+    },
+    {
+      "front": "What family of insects serves as the classic representative example of hyper-metamorphosis?",
+      "back": "Blister beetles (family Meloidae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_040.png"
+    },
+    {
+      "front": "What is the physiological definition of diapause?",
+      "back": "Diapause is a state of arrested development in which the arrest is enforced by an internal physiological mechanism rather than by concurrently unfavourable environmental conditions.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_041.png"
+    },
+    {
+      "front": "How does physiological diapause differ from simple environmental quiescence?",
+      "back": "Quiescence is a direct, immediate halt in development in response to poor conditions (like cold or drought) that resumes immediately when conditions improve. Diapause is programmed internally and will persist even if environmental conditions temporarily improve.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_042.png"
+    },
+    {
+      "front": "What are the three core classification frameworks used to categorize insect diapause?",
+      "back": "1. By life stage (egg, larval, nymphal, adult)",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_043.png"
+    },
+    {
+      "front": "Which insect undergoes early-embryonic egg diapause?",
+      "back": "The Silkworm (Bombyx mori).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_044.png"
+    },
+    {
+      "front": "Which insect undergoes mid-embryonic egg diapause?",
+      "back": "The Locust (Schistocerca gregaria).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_045.png"
+    },
+    {
+      "front": "Which insect undergoes post-embryonic egg diapause?",
+      "back": "The Gypsy Moth (Lymantria dispar).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_046.png"
+    },
+    {
+      "front": "What are three representative insects that exhibit larval diapause?",
+      "back": "1. Bamboo borer (Omphisa fuscidentalis)",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_047.png"
+    },
+    {
+      "front": "Which insect serves as a classic example of pupal diapause?",
+      "back": "The Cabbage White butterfly (Pieris brassicae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_048.png"
+    },
+    {
+      "front": "Which insect serves as a classic example of adult diapause?",
+      "back": "The Colorado potato beetle (Leptinotarsa decemlineata).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_049.png"
+    },
+    {
+      "front": "What is obligatory diapause, and what is its primary scientific example?",
+      "back": "Obligatory diapause is a genetically programmed, hereditary, and species-specific arrest in development that occurs in every generation regardless of environmental conditions. Example: Eggs of the silkworm (Bombyx mori).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_050.png"
+    },
+    {
+      "front": "What is facultative diapause, and what is its primary scientific example?",
+      "back": "Facultative diapause is a flexible arrest in development that occurs only when induced by unfavorable biotic or abiotic environmental conditions. Example: Cotton pink bollworm.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_051.png"
+    },
+    {
+      "front": "What is 'critical day length' in the study of insect photoperiodic diapause?",
+      "back": "Critical day length is the specific day length threshold at which exactly 50% of an insect population has entered diapause.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_052.png"
+    },
+    {
+      "front": "How do long-day insects respond to day length thresholds to enter diapause?",
+      "back": "Long-day insects develop normally during long summer days and enter diapause when the day length falls below the critical day length threshold (typically in autumn).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_053.png"
+    },
+    {
+      "front": "How do short-day insects respond to day length thresholds to enter diapause?",
+      "back": "Short-day insects develop normally when there are only a few hours of sunlight (short days) and enter diapause when exposed to longer days (typically in spring/summer).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_054.png"
+    },
+    {
+      "front": "What role do 'token stimuli' play in the timing of insect diapause?",
+      "back": "Token stimuli are early environmental cues (like changing photoperiod) that allow insects to preemptively trigger and begin diapause before actual severe, lethal weather conditions arrive.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_055.png"
+    },
+    {
+      "front": "What is aestivation?",
+      "back": "Aestivation is summer diapause, where an insect remains active during the rainy season and becomes dormant (sleeps) during periods of drought and high summer heat.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_056.png"
+    },
+    {
+      "front": "What is hibernation?",
+      "back": "Hibernation is winter diapause, where an insect suspends development and remains dormant during cold winter conditions.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_057.png"
+    }
+  ]
+}

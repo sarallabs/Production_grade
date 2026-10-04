@@ -1,0 +1,162 @@
+{
+  "chapter": "Metamorphosis",
+  "subject": "Entomology",
+  "level": "beginner",
+  "flashcards": [
+    {
+      "front": "What is morphogenesis in insects?",
+      "back": "All post-embryonic changes that an insect undergoes from the egg stage to the adult stage, including growth, moulting, differentiation, maturation, and reproduction.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_001.png"
+    },
+    {
+      "front": "What is metamorphosis?",
+      "back": "The dramatic transformation in physical body form that links the developmental stages of an insect as it progresses from egg to adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_002.png"
+    },
+    {
+      "front": "What are the three main categories of insect metamorphosis?",
+      "back": "1. No metamorphosis (Ametabolous)",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_003.png"
+    },
+    {
+      "front": "What are the three developmental stages in the life cycle of an ametabolous (no metamorphosis) insect?",
+      "back": "Egg, larva (or nymph), and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_004.png"
+    },
+    {
+      "front": "How does development in ametabolous insects differ from holometabolous insects in terms of directness?",
+      "back": "Ametabolous development is direct (the young looks like a miniature adult and grows straight into it), whereas holometabolous development is indirect (the young passes through a pupal stage to transform).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_005.png"
+    },
+    {
+      "front": "What is unique about the adult stage of ametabolous insects?",
+      "back": "They are completely wingless.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_006.png"
+    },
+    {
+      "front": "Which primitive group of insects is characterized by having no metamorphosis (ametabolous development)?",
+      "back": "Apterygote insects (such as silverfish).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_007.png"
+    },
+    {
+      "front": "What percentage of all insects undergo no metamorphosis?",
+      "back": "Fewer than 0.1% of all insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_008.png"
+    },
+    {
+      "front": "What are the three developmental stages in the life cycle of a hemimetabolous (incomplete metamorphosis) insect?",
+      "back": "Egg, nymph, and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_009.png"
+    },
+    {
+      "front": "How do hemimetabolous nymphs look compared to their adult forms?",
+      "back": "They look highly similar to the adult in almost all features, except they lack fully developed wings and functioning reproductive organs.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_010.png"
+    },
+    {
+      "front": "How do the food habits of nymphs and adults compare in incomplete (hemimetabolous) metamorphosis?",
+      "back": "They share the exact same food habits and eat the same food sources.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_011.png"
+    },
+    {
+      "front": "How do wings develop in exopterygote (hemimetabolous) insects?",
+      "back": "They develop gradually and externally on the outside of the body during the nymph's growth stages.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_012.png"
+    },
+    {
+      "front": "What percentage of all insects undergo incomplete (hemimetabolous) metamorphosis?",
+      "back": "Roughly 12% of all insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_013.png"
+    },
+    {
+      "front": "What are the four distinct developmental stages in the life cycle of a holometabolous (complete metamorphosis) insect?",
+      "back": "Egg, larva, pupa, and adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_014.png"
+    },
+    {
+      "front": "How do holometabolous larvae look compared to their adult forms?",
+      "back": "They do not resemble the adult at all; they are usually worm-like and have completely different morphological features.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_015.png"
+    },
+    {
+      "front": "What is the major ecological advantage of the different feeding habits of holometabolous larvae and adults?",
+      "back": "Because their food habits are totally different, the larvae and adults do not compete with each other for the same food or habitat.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_016.png"
+    },
+    {
+      "front": "How do wings develop in endopterygote (holometabolous) insects?",
+      "back": "They develop internally inside the body, during the pupal stage, rather than externally.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_017.png"
+    },
+    {
+      "front": "What percentage of all insects undergo complete (holometabolous) metamorphosis?",
+      "back": "About 88% of all insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_018.png"
+    },
+    {
+      "front": "What is hyper-metamorphosis?",
+      "back": "A specialized type of complete metamorphosis where at least one of the larval instars is distinctly different from the others in form, function, or food habits.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_019.png"
+    },
+    {
+      "front": "What is the active, mobile first-stage larva in hyper-metamorphosis called?",
+      "back": "The triungulin.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_020.png"
+    },
+    {
+      "front": "What is the hardened, non-feeding, resting larval stage in hyper-metamorphosis called?",
+      "back": "The coarctate stage.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_021.png"
+    },
+    {
+      "front": "What is diapause?",
+      "back": "A state of arrested development in an insect that is enforced by an internal physiological mechanism rather than by immediate unfavorable environmental conditions.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_022.png"
+    },
+    {
+      "front": "How does diapause differ from quiescence?",
+      "back": "Quiescence is an immediate, direct response to bad conditions (the insect stops and restarts instantly with the weather). Diapause is internally programmed and starts before actual severe conditions arrive.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_023.png"
+    },
+    {
+      "front": "Which insect serves as an example of early-embryonic egg diapause?",
+      "back": "The silkworm (Bombyx mori).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_024.png"
+    },
+    {
+      "front": "Which insect serves as an example of pupal diapause?",
+      "back": "The cabbage white butterfly (Pieris brassicae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_025.png"
+    },
+    {
+      "front": "Which insect serves as an example of adult diapause?",
+      "back": "The Colorado potato beetle (Leptinotarsa decemlineata).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_026.png"
+    },
+    {
+      "front": "What is the difference between obligatory and facultative diapause?",
+      "back": "Obligatory diapause happens automatically in every generation regardless of the environment. Facultative diapause only happens if triggered by unfavorable environmental conditions.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_027.png"
+    },
+    {
+      "front": "What insect is a classic example of facultative diapause?",
+      "back": "The cotton pink bollworm.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_028.png"
+    },
+    {
+      "front": "What is 'critical day length' in relation to insect diapause?",
+      "back": "The specific day length threshold at which exactly 50% of an insect population enters diapause.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_029.png"
+    },
+    {
+      "front": "What is the difference between long-day and short-day insects?",
+      "back": "Long-day insects enter diapause when days get short (below the critical threshold). Short-day insects enter diapause when exposed to longer days.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_030.png"
+    },
+    {
+      "front": "What is the difference between aestivation and hibernation?",
+      "back": "Aestivation is summer diapause (dormancy during heat and drought). Hibernation is winter diapause (dormancy during cold).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_031.png"
+    }
+  ]
+}

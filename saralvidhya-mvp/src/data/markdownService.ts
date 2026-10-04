@@ -7,8 +7,40 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
-  SHARED_RESOURCE_FILES 
+  SHARED_RESOURCE_FILES,
+  GCS_BACKEND_SUBJECTS,
+  GCS_API_BASE,
+  GCS_SUBJECT_MAP,
 } from './manifestService';
+
+/**
+ * Maps resourceName + level → canonical Cloud Run API URL for GCS-backed subjects.
+ * Returns null when there is no direct mapping (falls through to path-based fetch).
+ */
+function getGcsApiUrl(
+  subjectId: string,
+  chDir: string,
+  resourceName: string,
+  level: DifficultyLevel,
+): string | null {
+  const subjectPath = GCS_SUBJECT_MAP[subjectId];
+  if (!subjectPath) return null;
+  const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+  const map: Record<string, string> = {
+    'summary.md':       `${base}/read/quick?persona=${level}`,
+    'detailed_view.md': `${base}/read/detailed?persona=${level}`,
+    'key_takeaways.md': `${base}/read/key_takeaways`,
+    'glossary.md':      `${base}/read/glossary`,
+    'mindmap.md':       `${base}/learn/mindmap`,
+    'mindmap.json':     `${base}/learn/mindmap`,
+    'study_plan.md':    `${base}/learn/study_plan`,
+    'question_bank.md':   `${base}/practice/question_bank`,
+    'question_bank.json': `${base}/practice/question_bank`,
+    'mock_test.md':       `${base}/practice/mock_test`,
+    'mock_test.json':     `${base}/practice/mock_test`,
+  };
+  return map[resourceName] ?? null;
+}
 
 export interface BackendStudyGuide {
   quick_study: string;
@@ -260,6 +292,42 @@ export async function getResourceContent(
   const chDir = getChapterDir(subject, chapterNumber);
   const subjectBase = getSubjectBaseUrl(subject);
 
+  // ── GCS Cloud Run subjects: use canonical API routes ──
+  if (GCS_BACKEND_SUBJECTS.has(subject)) {
+    const apiUrl = getGcsApiUrl(subject, chDir, resourceName, level);
+    if (apiUrl) {
+      try {
+        const res = await fetch(apiUrl);
+        if (res.ok) {
+          const ct = res.headers.get('content-type') || '';
+          if (!ct.includes('text/html')) {
+            let md = cleanAiPreamble(await res.text());
+            // Rewrite relative image paths to absolute API URLs
+            // ../../extracted_images/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/extracted_images/X
+            // ../Mindmaps/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/Mindmaps/X
+            const subjectPath = GCS_SUBJECT_MAP[subject];
+            const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+            // Replace ../../ first (two levels up), then ../ (one level up)
+            md = md.replace(
+              /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,
+              (_, alt, path) => `![${alt}](${apiBase}/${path})`
+            );
+            md = md.replace(
+              /!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g,
+              (_, alt, path) => `![${alt}](${apiBase}/${path})`
+            );
+            return md;
+          }
+        }
+      } catch (e) {
+        console.warn('[GCS] Failed to fetch', apiUrl, e);
+      }
+      return 'Content not available.';
+    }
+    // For unmapped resources (e.g. podcast transcripts) fall through to path-based fetch below.
+  }
+
+  // ── Legacy FastAPI backend subjects ──
   if (
     BACKEND_SUBJECTS.has(subject) &&
     (resourceName === 'summary.md' || resourceName === 'detailed_view.md')

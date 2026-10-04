@@ -1,0 +1,18 @@
+{
+  "instructions": "Map file paths to Google Drive file IDs. Follow these steps:\n1. Upload your audio files to a Google Drive folder\n2. Right-click each file and get the shareable link\n3. Extract the file ID from the link (the long alphanumeric string)\n4. Add the mapping below in format: 'path/to/file.mp3': 'FILE_ID'",
+  "mappings": {
+    "_comment": "Example format - replace with your actual Google Drive file IDs",
+    "cbse/class_10/english/chapter_01/beginner/long_podcast.mp3": "1a2b3c4d5e6f7g8h9i0j_REPLACE_WITH_ACTUAL_ID"
+  },
+  "driveFolder": {
+    "description": "Shared Google Drive folder containing all large audio files",
+    "folderId": "REPLACE_WITH_YOUR_DRIVE_FOLDER_ID",
+    "shareLink": "https://drive.google.com/drive/folders/REPLACE_WITH_YOUR_FOLDER_ID?usp=sharing"
+  },
+  "howToGetFileId": {
+    "step1": "Right-click the file in Google Drive > Share",
+    "step2": "Get the link URL",
+    "step3": "Extract the file ID from: https://drive.google.com/file/d/[FILE_ID]/view",
+    "step4": "Paste the FILE_ID in the mappings above"
+  }
+}

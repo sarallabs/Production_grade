@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "source_file": "3. How Insect Digestion Activates Bt Toxins.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\Chapter_13_Digestive_System\\Podcast\\3. How Insect Digestion Activates Bt Toxins.m4a",
+    "file_size_bytes": 3646217,
+    "duration_seconds": 113.27,
+    "duration_formatted": "00:01:53",
+    "word_count": 278,
+    "character_count": 1851,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T11:58:54.535641",
+    "total_segments": 21
+  },
+  "full_text": "This is the brief on insect midgut cytology and Bt action. You know, understanding the extreme internal environment of pests like the Indian cotton bullworm, Helicopherpa armigeria, is the absolute key to unlocking modern, targeted crop protection. First, let's look at the ventriculus and caeca. These are blind pouches expanding the absorptive area and secreting digestive enzymes. Inside, columnar enterocytes feature naked microvilli for nutrient absorption. Right alongside, regenerative stem cells, or basal nidi, constantly renew the digestive epithelium. And the goblet cells? Well, they use V-type H+, K+, ATPase pumps to generate a highly alkaline luminal pH of 9 to 11 to dissolve foliar tannins. It's literally a high-turnover chemical factory, constantly rebuilding its own walls while breaking down toxic plant defenses. Second, this extreme alkalinity is exactly how genetically modified cotton fights back. See, ingested crycrystals solubilize at pH 11 and are cleaved by gut proteases. The activated toxin then binds cadherin and aminopeptidase N receptors on the microvilli, forming pores that trigger cell lysis, gut rupture, and death. I mean, isn't that brilliant biological judo? We turn the pest's own extreme digestive chemistry right into the very mechanism of its destruction. Finally, you might be wondering, how does the insect protect its delicate tissues from this harsh environment? It uses the peritrophic membrane. Acting as a vital pathogen shield, it's formed either by type 1 delamination straight off the gut walls or from a specialized type 2 cardial ring. The insect midgut is a complex, specialized chemical battleground, and understanding its exact cellular vulnerabilities is our greatest asset in sustainable agriculture. When you master the biology of the pest, nature itself becomes the ultimate pesticide.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 4.36,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:04",
+      "text": "This is the brief on insect midgut cytology and Bt action."
+    },
+    {
+      "id": 1,
+      "start": 4.86,
+      "end": 9.8,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:09",
+      "text": "You know, understanding the extreme internal environment of pests like the Indian cotton"
+    },
+    {
+      "id": 2,
+      "start": 9.8,
+      "end": 16,
+      "start_formatted": "00:00:09",
+      "end_formatted": "00:00:16",
+      "text": "bullworm, Helicopherpa armigeria, is the absolute key to unlocking modern, targeted crop protection."
+    },
+    {
+      "id": 3,
+      "start": 16.62,
+      "end": 19.1,
+      "start_formatted": "00:00:16",
+      "end_formatted": "00:00:19",
+      "text": "First, let's look at the ventriculus and caeca."
+    },
+    {
+      "id": 4,
+      "start": 19.1,
+      "end": 24.1,
+      "start_formatted": "00:00:19",
+      "end_formatted": "00:00:24",
+      "text": "These are blind pouches expanding the absorptive area and secreting digestive enzymes."
+    },
+    {
+      "id": 5,
+      "start": 24.82,
+      "end": 29.54,
+      "start_formatted": "00:00:24",
+      "end_formatted": "00:00:29",
+      "text": "Inside, columnar enterocytes feature naked microvilli for nutrient absorption."
+    },
+    {
+      "id": 6,
+      "start": 30,
+      "end": 35.84,
+      "start_formatted": "00:00:30",
+      "end_formatted": "00:00:35",
+      "text": "Right alongside, regenerative stem cells, or basal nidi, constantly renew the digestive epithelium."
+    },
+    {
+      "id": 7,
+      "start": 36.3,
+      "end": 37.08,
+      "start_formatted": "00:00:36",
+      "end_formatted": "00:00:37",
+      "text": "And the goblet cells?"
+    },
+    {
+      "id": 8,
+      "start": 37.54,
+      "end": 47.7,
+      "start_formatted": "00:00:37",
+      "end_formatted": "00:00:47",
+      "text": "Well, they use V-type H+, K+, ATPase pumps to generate a highly alkaline luminal pH of 9 to 11 to dissolve foliar tannins."
+    },
+    {
+      "id": 9,
+      "start": 47.7,
+      "end": 54.8,
+      "start_formatted": "00:00:47",
+      "end_formatted": "00:00:54",
+      "text": "It's literally a high-turnover chemical factory, constantly rebuilding its own walls while breaking down toxic plant defenses."
+    },
+    {
+      "id": 10,
+      "start": 54.8,
+      "end": 60.8,
+      "start_formatted": "00:00:54",
+      "end_formatted": "00:01:00",
+      "text": "Second, this extreme alkalinity is exactly how genetically modified cotton fights back."
+    },
+    {
+      "id": 11,
+      "start": 61.34,
+      "end": 66.2,
+      "start_formatted": "00:01:01",
+      "end_formatted": "00:01:06",
+      "text": "See, ingested crycrystals solubilize at pH 11 and are cleaved by gut proteases."
+    },
+    {
+      "id": 12,
+      "start": 66.76,
+      "end": 71.82,
+      "start_formatted": "00:01:06",
+      "end_formatted": "00:01:11",
+      "text": "The activated toxin then binds cadherin and aminopeptidase N receptors on the microvilli,"
+    },
+    {
+      "id": 13,
+      "start": 72.24,
+      "end": 75.58,
+      "start_formatted": "00:01:12",
+      "end_formatted": "00:01:15",
+      "text": "forming pores that trigger cell lysis, gut rupture, and death."
+    },
+    {
+      "id": 14,
+      "start": 75.96,
+      "end": 78.16,
+      "start_formatted": "00:01:15",
+      "end_formatted": "00:01:18",
+      "text": "I mean, isn't that brilliant biological judo?"
+    },
+    {
+      "id": 15,
+      "start": 78.4,
+      "end": 83.58,
+      "start_formatted": "00:01:18",
+      "end_formatted": "00:01:23",
+      "text": "We turn the pest's own extreme digestive chemistry right into the very mechanism of its destruction."
+    },
+    {
+      "id": 16,
+      "start": 83.58,
+      "end": 89.22,
+      "start_formatted": "00:01:23",
+      "end_formatted": "00:01:29",
+      "text": "Finally, you might be wondering, how does the insect protect its delicate tissues from this harsh environment?"
+    },
+    {
+      "id": 17,
+      "start": 89.64,
+      "end": 91.26,
+      "start_formatted": "00:01:29",
+      "end_formatted": "00:01:31",
+      "text": "It uses the peritrophic membrane."
+    },
+    {
+      "id": 18,
+      "start": 91.72,
+      "end": 99.44,
+      "start_formatted": "00:01:31",
+      "end_formatted": "00:01:39",
+      "text": "Acting as a vital pathogen shield, it's formed either by type 1 delamination straight off the gut walls or from a specialized type 2 cardial ring."
+    },
+    {
+      "id": 19,
+      "start": 99.84,
+      "end": 108.68,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:48",
+      "text": "The insect midgut is a complex, specialized chemical battleground, and understanding its exact cellular vulnerabilities is our greatest asset in sustainable agriculture."
+    },
+    {
+      "id": 20,
+      "start": 109.14,
+      "end": 113.14,
+      "start_formatted": "00:01:49",
+      "end_formatted": "00:01:53",
+      "text": "When you master the biology of the pest, nature itself becomes the ultimate pesticide."
+    }
+  ]
+}

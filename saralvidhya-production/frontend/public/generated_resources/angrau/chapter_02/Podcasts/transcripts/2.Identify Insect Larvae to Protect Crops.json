@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "source_file": "2.Identify Insect Larvae to Protect Crops.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\chapter_11_metamorphosis\\Podcast\\2.Identify Insect Larvae to Protect Crops.m4a",
+    "file_size_bytes": 3505657,
+    "duration_seconds": 108.9,
+    "duration_formatted": "00:01:48",
+    "word_count": 291,
+    "character_count": 1865,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:00:53.750773",
+    "total_segments": 22
+  },
+  "full_text": "This is the brief on insect larval classifications. You know, during complete metamorphosis, insects enter an immature stage where they look and eat completely differently than their adult forms. So knowing exactly what kind of eating machine is sitting in your soil is absolutely the foundational toolbox for any of us protecting our crops. First, let's meet our heavy consumers, Erysiform and Scarbiiform larvae. Erysiform are your classic caterpillars, like the infamous Helicoverpa moth, equipped with real thoracic legs, plus these fleshy little prolegs acting like suction cups. Scarbiiform, on the other hand, are stout, C-shaped soil growers with zero prolegs, kind of like our sugarcane white grubs. Honestly, think of these hungry pests as the slow, heavy-duty agricultural tractors of the insect world, built purely to just stay put and consume massive amounts of your plants. Second, we pivot to the armored and agile hunters, Campodeiform and Eletiform larvae. If that first grub was a slow tractor, well, the flattened, long-legged Campodeiform like our helpful ladybird larvae is basically the sports car of the soil. Completely built for speed and predation, meanwhile the Eletiform or wireworm is more like a slender, hard-bodied armored tank. Finally, we come to the ultimate minimalists, the entirely legless vermiform larvae, which Which you'd probably just call maggots. Some have distinct heads, while others like fruit fly larvae are essentially headless with just simple mouth hooks. So you gotta ask, how does an insect cause so much agricultural impact with no legs and barely a head? Well sometimes, evolutionary simplicity is literally the most ruthlessly effective design. Whether it's a leggy predator or a totally legless maggot, identifying the specific shape of a larva is our absolute first line of defense in protecting our crops.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 3.5,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:03",
+      "text": "This is the brief on insect larval classifications."
+    },
+    {
+      "id": 1,
+      "start": 4.22,
+      "end": 9.38,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:09",
+      "text": "You know, during complete metamorphosis, insects enter an immature stage where they look and eat"
+    },
+    {
+      "id": 2,
+      "start": 9.38,
+      "end": 14.24,
+      "start_formatted": "00:00:09",
+      "end_formatted": "00:00:14",
+      "text": "completely differently than their adult forms. So knowing exactly what kind of eating machine"
+    },
+    {
+      "id": 3,
+      "start": 14.24,
+      "end": 18.84,
+      "start_formatted": "00:00:14",
+      "end_formatted": "00:00:18",
+      "text": "is sitting in your soil is absolutely the foundational toolbox for any of us protecting"
+    },
+    {
+      "id": 4,
+      "start": 18.84,
+      "end": 24.62,
+      "start_formatted": "00:00:18",
+      "end_formatted": "00:00:24",
+      "text": "our crops. First, let's meet our heavy consumers, Erysiform and Scarbiiform larvae."
+    },
+    {
+      "id": 5,
+      "start": 24.62,
+      "end": 35.12,
+      "start_formatted": "00:00:24",
+      "end_formatted": "00:00:35",
+      "text": "Erysiform are your classic caterpillars, like the infamous Helicoverpa moth, equipped with real thoracic legs, plus these fleshy little prolegs acting like suction cups."
+    },
+    {
+      "id": 6,
+      "start": 35.68,
+      "end": 42.84,
+      "start_formatted": "00:00:35",
+      "end_formatted": "00:00:42",
+      "text": "Scarbiiform, on the other hand, are stout, C-shaped soil growers with zero prolegs, kind of like our sugarcane white grubs."
+    },
+    {
+      "id": 7,
+      "start": 43.38,
+      "end": 53.44,
+      "start_formatted": "00:00:43",
+      "end_formatted": "00:00:53",
+      "text": "Honestly, think of these hungry pests as the slow, heavy-duty agricultural tractors of the insect world, built purely to just stay put and consume massive amounts of your plants."
+    },
+    {
+      "id": 8,
+      "start": 53.44,
+      "end": 59.82,
+      "start_formatted": "00:00:53",
+      "end_formatted": "00:00:59",
+      "text": "Second, we pivot to the armored and agile hunters, Campodeiform and Eletiform larvae."
+    },
+    {
+      "id": 9,
+      "start": 59.82,
+      "end": 64.6,
+      "start_formatted": "00:00:59",
+      "end_formatted": "00:01:04",
+      "text": "If that first grub was a slow tractor, well, the flattened, long-legged Campodeiform like"
+    },
+    {
+      "id": 10,
+      "start": 64.6,
+      "end": 68.96,
+      "start_formatted": "00:01:04",
+      "end_formatted": "00:01:08",
+      "text": "our helpful ladybird larvae is basically the sports car of the soil."
+    },
+    {
+      "id": 11,
+      "start": 68.96,
+      "end": 73.32,
+      "start_formatted": "00:01:08",
+      "end_formatted": "00:01:13",
+      "text": "Completely built for speed and predation, meanwhile the Eletiform or wireworm is more"
+    },
+    {
+      "id": 12,
+      "start": 73.32,
+      "end": 76.32,
+      "start_formatted": "00:01:13",
+      "end_formatted": "00:01:16",
+      "text": "like a slender, hard-bodied armored tank."
+    },
+    {
+      "id": 13,
+      "start": 76.32,
+      "end": 81.42,
+      "start_formatted": "00:01:16",
+      "end_formatted": "00:01:21",
+      "text": "Finally, we come to the ultimate minimalists, the entirely legless vermiform larvae, which"
+    },
+    {
+      "id": 14,
+      "start": 81.42,
+      "end": 83.64,
+      "start_formatted": "00:01:21",
+      "end_formatted": "00:01:23",
+      "text": "Which you'd probably just call maggots."
+    },
+    {
+      "id": 15,
+      "start": 83.64,
+      "end": 87.46,
+      "start_formatted": "00:01:23",
+      "end_formatted": "00:01:27",
+      "text": "Some have distinct heads, while others like fruit fly larvae are essentially headless"
+    },
+    {
+      "id": 16,
+      "start": 87.46,
+      "end": 89.52,
+      "start_formatted": "00:01:27",
+      "end_formatted": "00:01:29",
+      "text": "with just simple mouth hooks."
+    },
+    {
+      "id": 17,
+      "start": 89.52,
+      "end": 94.44,
+      "start_formatted": "00:01:29",
+      "end_formatted": "00:01:34",
+      "text": "So you gotta ask, how does an insect cause so much agricultural impact with no legs and"
+    },
+    {
+      "id": 18,
+      "start": 94.44,
+      "end": 95.78,
+      "start_formatted": "00:01:34",
+      "end_formatted": "00:01:35",
+      "text": "barely a head?"
+    },
+    {
+      "id": 19,
+      "start": 95.78,
+      "end": 100.82,
+      "start_formatted": "00:01:35",
+      "end_formatted": "00:01:40",
+      "text": "Well sometimes, evolutionary simplicity is literally the most ruthlessly effective design."
+    },
+    {
+      "id": 20,
+      "start": 100.82,
+      "end": 104.98,
+      "start_formatted": "00:01:40",
+      "end_formatted": "00:01:44",
+      "text": "Whether it's a leggy predator or a totally legless maggot, identifying the specific shape"
+    },
+    {
+      "id": 21,
+      "start": 104.98,
+      "end": 108.9,
+      "start_formatted": "00:01:44",
+      "end_formatted": "00:01:48",
+      "text": "of a larva is our absolute first line of defense in protecting our crops."
+    }
+  ]
+}
