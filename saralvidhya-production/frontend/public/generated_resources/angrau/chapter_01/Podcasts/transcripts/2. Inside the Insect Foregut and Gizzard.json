@@ -1,0 +1,146 @@
+{
+  "metadata": {
+    "source_file": "2. Inside the Insect Foregut and Gizzard.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\Chapter_13_Digestive_System\\Podcast\\2. Inside the Insect Foregut and Gizzard.m4a",
+    "file_size_bytes": 3447388,
+    "duration_seconds": 107.09,
+    "duration_formatted": "00:01:47",
+    "word_count": 268,
+    "character_count": 1778,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T11:58:50.309679",
+    "total_segments": 16
+  },
+  "full_text": "This is the brief on insect foregut mechanics and salivary glands. We're diving into entomology notes from Acharya N.G. Ranga Agricultural University to uncover how notorious Indian agricultural pests, like locusts and cockroaches, mechanically process food right out of the gate. First, we walk the anatomical intake line. Right up front, the siberium and pharynx act as a sucking pump mechanism drawing liquid food. This flows into the esophagus, just a simple muscular transport conduit, right down into the crop, which is a distensible, thin-walled reservoir for food storage. Then, the stomodial valve, or cardiac valve, regulates food entry into midgut, prevents reverse reflux. It's literally a factory conveyor belt ending at a strict, one-way security door. Second, the proventriculus, or gizzard, completely adapts to the insect's diet. I mean, why on earth would an Indian honeybee, Apis serrana indica, need a delicate sieve in its stomach, while a locust requires six heavy internal teeth? Well, to separate pure nectar from pollen, for solid feeders from Orthoptera and Blotidaea, we see a heavy cuticular intima developed into six strong sclerotized denticles, or teeth, for mechanical mastication. But nectar feeders like honeybees use four triangular, mobile lip valves forming a fine sieve to strain pollen grains from nectar, keeping nectar in crop honey's stomach. Finally, we have the salivary glands, which are paired acinar glands, secreting amylase and invertase. You know, it's basically a pre-wash chemical cycle, breaking down complex carbs before food even reaches the main digestive chamber. Ultimately, understanding this precise front-end digestive engineering is the crucial first step to outsmarting the agricultural pests threatening our crops.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 5.34,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:05",
+      "text": "This is the brief on insect foregut mechanics and salivary glands."
+    },
+    {
+      "id": 1,
+      "start": 5.74,
+      "end": 10.74,
+      "start_formatted": "00:00:05",
+      "end_formatted": "00:00:10",
+      "text": "We're diving into entomology notes from Acharya N.G. Ranga Agricultural University"
+    },
+    {
+      "id": 2,
+      "start": 10.74,
+      "end": 16.76,
+      "start_formatted": "00:00:10",
+      "end_formatted": "00:00:16",
+      "text": "to uncover how notorious Indian agricultural pests, like locusts and cockroaches,"
+    },
+    {
+      "id": 3,
+      "start": 17.1,
+      "end": 19.4,
+      "start_formatted": "00:00:17",
+      "end_formatted": "00:00:19",
+      "text": "mechanically process food right out of the gate."
+    },
+    {
+      "id": 4,
+      "start": 19.98,
+      "end": 23.04,
+      "start_formatted": "00:00:19",
+      "end_formatted": "00:00:23",
+      "text": "First, we walk the anatomical intake line."
+    },
+    {
+      "id": 5,
+      "start": 23.38,
+      "end": 28.22,
+      "start_formatted": "00:00:23",
+      "end_formatted": "00:00:28",
+      "text": "Right up front, the siberium and pharynx act as a sucking pump mechanism drawing liquid food."
+    },
+    {
+      "id": 6,
+      "start": 28.22,
+      "end": 37.82,
+      "start_formatted": "00:00:28",
+      "end_formatted": "00:00:37",
+      "text": "This flows into the esophagus, just a simple muscular transport conduit, right down into the crop, which is a distensible, thin-walled reservoir for food storage."
+    },
+    {
+      "id": 7,
+      "start": 38.38,
+      "end": 44.74,
+      "start_formatted": "00:00:38",
+      "end_formatted": "00:00:44",
+      "text": "Then, the stomodial valve, or cardiac valve, regulates food entry into midgut, prevents reverse reflux."
+    },
+    {
+      "id": 8,
+      "start": 45.3,
+      "end": 49.58,
+      "start_formatted": "00:00:45",
+      "end_formatted": "00:00:49",
+      "text": "It's literally a factory conveyor belt ending at a strict, one-way security door."
+    },
+    {
+      "id": 9,
+      "start": 50.08,
+      "end": 54.8,
+      "start_formatted": "00:00:50",
+      "end_formatted": "00:00:54",
+      "text": "Second, the proventriculus, or gizzard, completely adapts to the insect's diet."
+    },
+    {
+      "id": 10,
+      "start": 54.8,
+      "end": 64.16,
+      "start_formatted": "00:00:54",
+      "end_formatted": "00:01:04",
+      "text": "I mean, why on earth would an Indian honeybee, Apis serrana indica, need a delicate sieve in its stomach, while a locust requires six heavy internal teeth?"
+    },
+    {
+      "id": 11,
+      "start": 64.48,
+      "end": 77.28,
+      "start_formatted": "00:01:04",
+      "end_formatted": "00:01:17",
+      "text": "Well, to separate pure nectar from pollen, for solid feeders from Orthoptera and Blotidaea, we see a heavy cuticular intima developed into six strong sclerotized denticles, or teeth, for mechanical mastication."
+    },
+    {
+      "id": 12,
+      "start": 77.28,
+      "end": 86.18,
+      "start_formatted": "00:01:17",
+      "end_formatted": "00:01:26",
+      "text": "But nectar feeders like honeybees use four triangular, mobile lip valves forming a fine sieve to strain pollen grains from nectar, keeping nectar in crop honey's stomach."
+    },
+    {
+      "id": 13,
+      "start": 86.58,
+      "end": 92.34,
+      "start_formatted": "00:01:26",
+      "end_formatted": "00:01:32",
+      "text": "Finally, we have the salivary glands, which are paired acinar glands, secreting amylase and invertase."
+    },
+    {
+      "id": 14,
+      "start": 92.8,
+      "end": 99.22,
+      "start_formatted": "00:01:32",
+      "end_formatted": "00:01:39",
+      "text": "You know, it's basically a pre-wash chemical cycle, breaking down complex carbs before food even reaches the main digestive chamber."
+    },
+    {
+      "id": 15,
+      "start": 99.5,
+      "end": 106.8,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:46",
+      "text": "Ultimately, understanding this precise front-end digestive engineering is the crucial first step to outsmarting the agricultural pests threatening our crops."
+    }
+  ]
+}

@@ -1,0 +1,194 @@
+{
+  "metadata": {
+    "source_file": "1. Anatomy of the three-part insect gut.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\Chapter_13_Digestive_System\\Podcast\\1. Anatomy of the three-part insect gut.m4a",
+    "file_size_bytes": 3090935,
+    "duration_seconds": 96.01,
+    "duration_formatted": "00:01:36",
+    "word_count": 212,
+    "character_count": 1539,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T11:58:46.183561",
+    "total_segments": 22
+  },
+  "full_text": "This is the brief on insect digestive anatomy, drawing from Dr. Chirukari Srinivasa Rao's brilliant Angra lectures. To understand how devastating agricultural pests in India, like the Helicoverpa armigeria cotton bollworm or chewing grasshoppers, process their food, we must examine the highly specialized three-part tube of their digestive tract. Think of this gut like an industrial processing plant, where different zones literally require entirely different architectural blueprints. Now, why would parts of the same gut have completely different linings? Well, function dictates form. Which brings us to our first point, embryological origin. Foregut, stomodaeum, and hindgut, proctodaeum. Ectodermal origin, lined with cuticular intima that is shed at each larval molt. Ectysis. Midgut, mesenteron. Endodermal origin. Lacks cuticular intima to allow naked microviliar chemical digestion and nutrient absorption. Second, let's zoom in on the cross-section of this tube from the inside out to see how these tissues actually stack up. Histological wall layers, lumen outward. Cuticular intima, in foregut and hindgut only. Single-layered columnar epithelium. Active secretion absorption. Continuous basement membrane support. Circular muscle layer. Inner layer in foregut, outer layer in midgut. Longitudinal muscle layer, peristaltic contractions, connective tissue, peritoneal membrane sheath. Mastering this three-part anatomy reveals exactly how pests efficiently fuel their destruction, making it the absolute key to stopping them.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 8.46,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:08",
+      "text": "This is the brief on insect digestive anatomy, drawing from Dr. Chirukari Srinivasa Rao's brilliant Angra lectures."
+    },
+    {
+      "id": 1,
+      "start": 8.46,
+      "end": 18.24,
+      "start_formatted": "00:00:08",
+      "end_formatted": "00:00:18",
+      "text": "To understand how devastating agricultural pests in India, like the Helicoverpa armigeria cotton bollworm or chewing grasshoppers, process their food,"
+    },
+    {
+      "id": 2,
+      "start": 18.6,
+      "end": 23.6,
+      "start_formatted": "00:00:18",
+      "end_formatted": "00:00:23",
+      "text": "we must examine the highly specialized three-part tube of their digestive tract."
+    },
+    {
+      "id": 3,
+      "start": 23.6,
+      "end": 31.64,
+      "start_formatted": "00:00:23",
+      "end_formatted": "00:00:31",
+      "text": "Think of this gut like an industrial processing plant, where different zones literally require entirely different architectural blueprints."
+    },
+    {
+      "id": 4,
+      "start": 32.1,
+      "end": 35.5,
+      "start_formatted": "00:00:32",
+      "end_formatted": "00:00:35",
+      "text": "Now, why would parts of the same gut have completely different linings?"
+    },
+    {
+      "id": 5,
+      "start": 35.82,
+      "end": 37.64,
+      "start_formatted": "00:00:35",
+      "end_formatted": "00:00:37",
+      "text": "Well, function dictates form."
+    },
+    {
+      "id": 6,
+      "start": 37.88,
+      "end": 41.14,
+      "start_formatted": "00:00:37",
+      "end_formatted": "00:00:41",
+      "text": "Which brings us to our first point, embryological origin."
+    },
+    {
+      "id": 7,
+      "start": 41.64,
+      "end": 44.38,
+      "start_formatted": "00:00:41",
+      "end_formatted": "00:00:44",
+      "text": "Foregut, stomodaeum, and hindgut, proctodaeum."
+    },
+    {
+      "id": 8,
+      "start": 44.68,
+      "end": 49.48,
+      "start_formatted": "00:00:44",
+      "end_formatted": "00:00:49",
+      "text": "Ectodermal origin, lined with cuticular intima that is shed at each larval molt."
+    },
+    {
+      "id": 9,
+      "start": 49.86,
+      "end": 50.46,
+      "start_formatted": "00:00:49",
+      "end_formatted": "00:00:50",
+      "text": "Ectysis."
+    },
+    {
+      "id": 10,
+      "start": 51.04,
+      "end": 52.46,
+      "start_formatted": "00:00:51",
+      "end_formatted": "00:00:52",
+      "text": "Midgut, mesenteron."
+    },
+    {
+      "id": 11,
+      "start": 52.46,
+      "end": 59.52,
+      "start_formatted": "00:00:52",
+      "end_formatted": "00:00:59",
+      "text": "Endodermal origin. Lacks cuticular intima to allow naked microviliar chemical digestion and nutrient absorption."
+    },
+    {
+      "id": 12,
+      "start": 60.08,
+      "end": 66.42,
+      "start_formatted": "00:01:00",
+      "end_formatted": "00:01:06",
+      "text": "Second, let's zoom in on the cross-section of this tube from the inside out to see how these tissues actually stack up."
+    },
+    {
+      "id": 13,
+      "start": 66.7,
+      "end": 68.82,
+      "start_formatted": "00:01:06",
+      "end_formatted": "00:01:08",
+      "text": "Histological wall layers, lumen outward."
+    },
+    {
+      "id": 14,
+      "start": 69.4,
+      "end": 72.14,
+      "start_formatted": "00:01:09",
+      "end_formatted": "00:01:12",
+      "text": "Cuticular intima, in foregut and hindgut only."
+    },
+    {
+      "id": 15,
+      "start": 72.58,
+      "end": 74.42,
+      "start_formatted": "00:01:12",
+      "end_formatted": "00:01:14",
+      "text": "Single-layered columnar epithelium."
+    },
+    {
+      "id": 16,
+      "start": 74.74,
+      "end": 75.94,
+      "start_formatted": "00:01:14",
+      "end_formatted": "00:01:15",
+      "text": "Active secretion absorption."
+    },
+    {
+      "id": 17,
+      "start": 76.44,
+      "end": 78.22,
+      "start_formatted": "00:01:16",
+      "end_formatted": "00:01:18",
+      "text": "Continuous basement membrane support."
+    },
+    {
+      "id": 18,
+      "start": 78.42,
+      "end": 79.66,
+      "start_formatted": "00:01:18",
+      "end_formatted": "00:01:19",
+      "text": "Circular muscle layer."
+    },
+    {
+      "id": 19,
+      "start": 80.06,
+      "end": 82.36,
+      "start_formatted": "00:01:20",
+      "end_formatted": "00:01:22",
+      "text": "Inner layer in foregut, outer layer in midgut."
+    },
+    {
+      "id": 20,
+      "start": 82.46,
+      "end": 88.3,
+      "start_formatted": "00:01:22",
+      "end_formatted": "00:01:28",
+      "text": "Longitudinal muscle layer, peristaltic contractions, connective tissue, peritoneal membrane sheath."
+    },
+    {
+      "id": 21,
+      "start": 88.7,
+      "end": 95.9,
+      "start_formatted": "00:01:28",
+      "end_formatted": "00:01:35",
+      "text": "Mastering this three-part anatomy reveals exactly how pests efficiently fuel their destruction, making it the absolute key to stopping them."
+    }
+  ]
+}

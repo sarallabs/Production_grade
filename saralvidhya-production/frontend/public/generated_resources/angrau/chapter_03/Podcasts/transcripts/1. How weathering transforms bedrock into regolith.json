@@ -1,0 +1,202 @@
+{
+  "metadata": {
+    "source_file": "1. How weathering transforms bedrock into regolith.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Lec-5 Weathering\\podcast\\1. How weathering transforms bedrock into regolith.m4a",
+    "file_size_bytes": 3202991,
+    "duration_seconds": 99.5,
+    "duration_formatted": "00:01:39",
+    "word_count": 270,
+    "character_count": 1836,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:00:03.731714",
+    "total_segments": 23
+  },
+  "full_text": "This is The Brief on Fundamentals and Regolith Genesis. You know, when I look out across the deeply weathered regolith of our own Deccan Plateau, it absolutely blows my mind that these vast soils are just the result of solid bedrock transforming over time to sustain life. First, to understand how the Deccan Plateau actually formed, we've got to look at mineral dynamics, how rock literally breaks down. Imagine you're dismantling a brick wall. Smashing the bricks? That's mechanical disintegration. Decomposition – physical breakdown without chemical alteration. But if you just dissolve the mortar, that's chemical decomposition – breakdown of complex minerals into simpler compounds. And all this rubble creates the loose, rocky layer right above the hard earth known as regolith formation – unconsolidated weathered mantle overlying solid bedrock. But nature doesn't just destroy stuff, it rebuilds through transformation and synthesis – destruction of primary minerals plus synthesis of secondary clay minerals and oxides. Second, what environmental engines are actually driving these massive terrain changes? Well, we basically see three core forces at work. First up is physical, mechanical crumbling and mellowing. Next, we've got chemical, molecular decomposition. And lastly, biological, simultaneous disintegration and decomposition by organisms, kind of like tree roots just prying rocks right apart. Finally, you might be wondering, do these three weathering forces just take turns, or do they work together? Well, here is the absolute secret of the soil. They trigger a synergistic reaction chain. Physical fracturing exponentially increases surface area, accelerating chemical and biological decomposition. Ultimately, weathering isn't just the destruction of stone. It is the silent, continuous engine of life on Earth.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 3.76,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:03",
+      "text": "This is The Brief on Fundamentals and Regolith Genesis."
+    },
+    {
+      "id": 1,
+      "start": 4.4,
+      "end": 8.98,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:08",
+      "text": "You know, when I look out across the deeply weathered regolith of our own Deccan Plateau,"
+    },
+    {
+      "id": 2,
+      "start": 8.98,
+      "end": 17.54,
+      "start_formatted": "00:00:08",
+      "end_formatted": "00:00:17",
+      "text": "it absolutely blows my mind that these vast soils are just the result of solid bedrock transforming over time to sustain life."
+    },
+    {
+      "id": 3,
+      "start": 18.02,
+      "end": 24.98,
+      "start_formatted": "00:00:18",
+      "end_formatted": "00:00:24",
+      "text": "First, to understand how the Deccan Plateau actually formed, we've got to look at mineral dynamics, how rock literally breaks down."
+    },
+    {
+      "id": 4,
+      "start": 25.5,
+      "end": 29.98,
+      "start_formatted": "00:00:25",
+      "end_formatted": "00:00:29",
+      "text": "Imagine you're dismantling a brick wall. Smashing the bricks? That's mechanical disintegration."
+    },
+    {
+      "id": 5,
+      "start": 30,
+      "end": 32.96,
+      "start_formatted": "00:00:30",
+      "end_formatted": "00:00:32",
+      "text": "Decomposition – physical breakdown without chemical alteration."
+    },
+    {
+      "id": 6,
+      "start": 32.96,
+      "end": 37.64,
+      "start_formatted": "00:00:32",
+      "end_formatted": "00:00:37",
+      "text": "But if you just dissolve the mortar, that's chemical decomposition – breakdown of complex"
+    },
+    {
+      "id": 7,
+      "start": 37.64,
+      "end": 40,
+      "start_formatted": "00:00:37",
+      "end_formatted": "00:00:40",
+      "text": "minerals into simpler compounds."
+    },
+    {
+      "id": 8,
+      "start": 40,
+      "end": 43.86,
+      "start_formatted": "00:00:40",
+      "end_formatted": "00:00:43",
+      "text": "And all this rubble creates the loose, rocky layer right above the hard earth known as"
+    },
+    {
+      "id": 9,
+      "start": 43.86,
+      "end": 49.02,
+      "start_formatted": "00:00:43",
+      "end_formatted": "00:00:49",
+      "text": "regolith formation – unconsolidated weathered mantle overlying solid bedrock."
+    },
+    {
+      "id": 10,
+      "start": 49.02,
+      "end": 53.12,
+      "start_formatted": "00:00:49",
+      "end_formatted": "00:00:53",
+      "text": "But nature doesn't just destroy stuff, it rebuilds through transformation and synthesis"
+    },
+    {
+      "id": 11,
+      "start": 53.12,
+      "end": 58,
+      "start_formatted": "00:00:53",
+      "end_formatted": "00:00:58",
+      "text": "– destruction of primary minerals plus synthesis of secondary clay minerals and oxides."
+    },
+    {
+      "id": 12,
+      "start": 58,
+      "end": 62.54,
+      "start_formatted": "00:00:58",
+      "end_formatted": "00:01:02",
+      "text": "Second, what environmental engines are actually driving these massive terrain changes?"
+    },
+    {
+      "id": 13,
+      "start": 63.06,
+      "end": 65.6,
+      "start_formatted": "00:01:03",
+      "end_formatted": "00:01:05",
+      "text": "Well, we basically see three core forces at work."
+    },
+    {
+      "id": 14,
+      "start": 65.96,
+      "end": 68.46,
+      "start_formatted": "00:01:05",
+      "end_formatted": "00:01:08",
+      "text": "First up is physical, mechanical crumbling and mellowing."
+    },
+    {
+      "id": 15,
+      "start": 68.74,
+      "end": 70.98,
+      "start_formatted": "00:01:08",
+      "end_formatted": "00:01:10",
+      "text": "Next, we've got chemical, molecular decomposition."
+    },
+    {
+      "id": 16,
+      "start": 71.24,
+      "end": 78.54,
+      "start_formatted": "00:01:11",
+      "end_formatted": "00:01:18",
+      "text": "And lastly, biological, simultaneous disintegration and decomposition by organisms, kind of like tree roots just prying rocks right apart."
+    },
+    {
+      "id": 17,
+      "start": 79.06,
+      "end": 83.5,
+      "start_formatted": "00:01:19",
+      "end_formatted": "00:01:23",
+      "text": "Finally, you might be wondering, do these three weathering forces just take turns, or do they work together?"
+    },
+    {
+      "id": 18,
+      "start": 84.04,
+      "end": 86.14,
+      "start_formatted": "00:01:24",
+      "end_formatted": "00:01:26",
+      "text": "Well, here is the absolute secret of the soil."
+    },
+    {
+      "id": 19,
+      "start": 86.14,
+      "end": 88.34,
+      "start_formatted": "00:01:26",
+      "end_formatted": "00:01:28",
+      "text": "They trigger a synergistic reaction chain."
+    },
+    {
+      "id": 20,
+      "start": 88.86,
+      "end": 93.84,
+      "start_formatted": "00:01:28",
+      "end_formatted": "00:01:33",
+      "text": "Physical fracturing exponentially increases surface area, accelerating chemical and biological decomposition."
+    },
+    {
+      "id": 21,
+      "start": 94.5,
+      "end": 96.66,
+      "start_formatted": "00:01:34",
+      "end_formatted": "00:01:36",
+      "text": "Ultimately, weathering isn't just the destruction of stone."
+    },
+    {
+      "id": 22,
+      "start": 96.94,
+      "end": 99.34,
+      "start_formatted": "00:01:36",
+      "end_formatted": "00:01:39",
+      "text": "It is the silent, continuous engine of life on Earth."
+    }
+  ]
+}

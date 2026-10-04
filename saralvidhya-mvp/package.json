@@ -9,8 +9,8 @@
     "preview": "vite preview",
     "copy-resources": "node scripts/copy-resources.js",
     "generate-manifest": "node scripts/generate-manifest.js",
-    "deploy:cloudflare": "npm run build && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya",
-    "deploy:angrau": "node scripts/generate-manifest.js && vite build --mode angrau && node scripts/build-large-files-manifest.cjs && node scripts/cleanup-large-files.cjs && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya-angrau",
+    "deploy:cloudflare": "npm run build && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya --branch=main --commit-dirty=true",
+    "deploy:angrau": "node scripts/generate-manifest.js && vite build --mode angrau && node scripts/build-large-files-manifest.cjs && node scripts/cleanup-large-files.cjs && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya-angrau --branch=main --commit-dirty=true",
     "test:vitest": "vitest run",
     "test:pytest": "pytest",
     "test:all": "concurrently \"npm run test:vitest\" \"npm run test:pytest\""

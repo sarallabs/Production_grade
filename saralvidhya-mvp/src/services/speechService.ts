@@ -228,6 +228,7 @@ export async function startSpeechSession(
     recognition.maxAlternatives = 1;
 
     let finalTranscript = '';
+    let latestTranscript = '';
 
     recognition.onresult = (event: any) => {
       let interim = '';
@@ -240,11 +241,15 @@ export async function startSpeechSession(
           interim += t;
         }
       }
-      if (onInterim) onInterim((finalTranscript + interim).trim());
+      latestTranscript = (finalTranscript + interim).trim();
+      if (onInterim) onInterim(latestTranscript);
     };
 
     recognition.onerror = (event: any) => {
       console.warn('Web Speech error:', event.error);
+      if (event.error === 'no-speech') {
+        return;
+      }
       if (onError) onError(event.error);
     };
 
@@ -252,13 +257,19 @@ export async function startSpeechSession(
       if (onEnd) onEnd();
     };
 
-    recognition.start();
+    try {
+      recognition.start();
+    } catch (err: any) {
+      console.warn('Recognition start error:', err);
+    }
 
     return {
       isStreaming: true,
       stop: async () => {
-        recognition.stop();
-        return finalTranscript.trim();
+        try {
+          recognition.stop();
+        } catch {}
+        return (finalTranscript.trim() || latestTranscript).trim();
       },
     };
   }

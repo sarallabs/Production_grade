@@ -1,0 +1,518 @@
+{
+  "title": "Study Plan: Insect Metamorphosis and Diapause",
+  "course": "ANGRAU ENTO-131 Fundamentals of Entomology-I",
+  "chapter": 11,
+  "total_blueprints": 4,
+  "blueprints": {
+    "5_day_standard": {
+      "target_persona": "Rookie / Beginner",
+      "daily_time_budget_mins": 51,
+      "total_time_mins": 255,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Morphogenesis Framework & Three Metamorphosis Categories",
+          "total_mins": 50,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Quick Study",
+              "duration_mins": 12
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 18
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_mins": 5
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Immature Larval Classifications & Pupal Morphotypes",
+          "total_mins": 50,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 22
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Easy MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Hypermetamorphosis & Specialized Instars (Meloidae / Stylopidae)",
+          "total_mins": 52,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 22
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 7
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Endocrine Regulation: PTTH, Ecdysone & Juvenile Hormone Titers",
+          "total_mins": 50,
+          "steps": [
+            {
+              "resource": "Quick Study",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 20
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 7
+            },
+            {
+              "resource": "Easy MSQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Diapause vs Quiescence, Photoperiodism & Summative Chapter Assessment",
+          "total_mins": 53,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 14
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Question Bank 2-Mark & 5-Mark",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Mock Test Chapter 11",
+              "duration_mins": 19
+            }
+          ]
+        }
+      ]
+    },
+    "3_day_sprint": {
+      "target_persona": "Intermediate",
+      "daily_time_budget_mins": 73,
+      "total_time_mins": 220,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Morphogenesis, Metamorphosis Categories, Larval & Pupal Classifications",
+          "total_mins": 73,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Quick Study",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 30
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_mins": 8
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Hypermetamorphosis & Endocrine Regulation (PTTH, Ecdysone, Juvenile Hormone)",
+          "total_mins": 72,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 30
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_mins": 12
+            },
+            {
+              "resource": "Question Bank v1 & v2",
+              "duration_mins": 15
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Diapause vs Quiescence, Photoperiodism, Pest Overwintering & Mock Exam",
+          "total_mins": 75,
+          "steps": [
+            {
+              "resource": "Detailed Study",
+              "duration_mins": 25
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 5
+            },
+            {
+              "resource": "Question Bank",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Mock Test Chapter 11",
+              "duration_mins": 30
+            }
+          ]
+        }
+      ]
+    },
+    "2_day_fast_track": {
+      "target_persona": "Advanced / Honors & ICAR JRF",
+      "daily_time_budget_mins": 102,
+      "total_time_mins": 205,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Morphogenesis, Metamorphosis Typologies, Larval Classifications & Endocrine Control",
+          "total_mins": 100,
+          "steps": [
+            {
+              "resource": "Mindmap",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Detailed Study Advanced",
+              "duration_mins": 45
+            },
+            {
+              "resource": "Flashcards Advanced",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_mins": 15
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_mins": 15
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Hypermetamorphosis, Diapause vs Quiescence, Photoperiodic CDL & Certification Exam",
+          "total_mins": 105,
+          "steps": [
+            {
+              "resource": "Detailed Study Advanced",
+              "duration_mins": 35
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_mins": 10
+            },
+            {
+              "resource": "Question Bank Full",
+              "duration_mins": 20
+            },
+            {
+              "resource": "Pre-Final Exam",
+              "duration_mins": 40
+            }
+          ]
+        }
+      ]
+    },
+    "14_day_distributed": {
+      "target_persona": "Extended / Distributed (Part-Time / Distance Education)",
+      "daily_time_budget_mins": 22,
+      "total_time_mins": 319,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Morphogenesis & Developmental Stages",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Mindmap",
+              "duration_minutes": 10
+            },
+            {
+              "resource": "Quick Study",
+              "duration_minutes": 10
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Ametabolous Development (Apterygota)",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Hemimetabolous Development (Exopterygota)",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 7
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Holometabolous Development (Endopterygota)",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14
+            },
+            {
+              "resource": "Easy MCQ",
+              "duration_minutes": 8
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Eruciform & Scarabaeiform Larvae",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 5
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "topic": "Campodeiform, Elateriform & Vermiform Larvae",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_minutes": 8
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "topic": "Pupal Classifications (Exarate, Obtect, Coarctate)",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 7
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "topic": "Decticous vs Adecticous Mandibles",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "topic": "Hypermetamorphosis & Triungulin Cycle in Meloidae",
+          "daily_budget_minutes": 25,
+          "total_mins": 25,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_minutes": 10
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "topic": "Endocrine Regulation: PTTH & Prothoracic Ecdysone",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 7
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "topic": "Corpora Allata & Juvenile Hormone Titer Shifts",
+          "daily_budget_minutes": 24,
+          "total_mins": 24,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_minutes": 10
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "topic": "Diapause vs Quiescence & Photoperiodic CDL",
+          "daily_budget_minutes": 25,
+          "total_mins": 25,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_minutes": 10
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "topic": "Obligatory vs Facultative & Stage-Specific Dormancy",
+          "daily_budget_minutes": 25,
+          "total_mins": 25,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 10
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "topic": "Comprehensive Synthesis & Final Assessment",
+          "daily_budget_minutes": 30,
+          "total_mins": 30,
+          "schedule": [
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5
+            },
+            {
+              "resource": "Mock Test Chapter 11",
+              "duration_minutes": 25
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

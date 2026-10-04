@@ -1,0 +1,624 @@
+{
+  "title": "Study Plan: Weathering of Rocks and Minerals \u2014 Types, Physical & Biological Agents",
+  "course": "ANGRAU Fundamentals of Soil Science (AGRO-101 / SOILS-101)",
+  "lecture": 5,
+  "topic": "Weathering of Rocks and Minerals",
+  "total_blueprints": 4,
+  "blueprints": {
+    "5_day_standard": {
+      "target_persona": "Rookie / Undergraduate Semester",
+      "daily_time_budget_mins": 72,
+      "total_time_mins": 360,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Foundations of Weathering, Regolith Genesis & The Three Universal Modes",
+          "daily_budget_minutes": 70,
+          "total_mins": 70,
+          "schedule": [
+            {
+              "resource": "Mindmap",
+              "duration_minutes": 10,
+              "activity": "Visual Orientation"
+            },
+            {
+              "resource": "Quick Listen",
+              "duration_minutes": 15,
+              "activity": "Audio Briefing"
+            },
+            {
+              "resource": "Quick Summary",
+              "duration_minutes": 15,
+              "activity": "Core Reading"
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 8,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Easy MCQ",
+              "duration_minutes": 7,
+              "activity": "Formative Diagnostic"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Physical Disintegration I \u2014 Thermal Stresses, Mineral Albedo & Exfoliation Mechanics",
+          "daily_budget_minutes": 75,
+          "total_mins": 75,
+          "schedule": [
+            {
+              "resource": "Infographics Playbook",
+              "duration_minutes": 10,
+              "activity": "Visual Orientation"
+            },
+            {
+              "resource": "Video Watch Prompts",
+              "duration_minutes": 15,
+              "activity": "Video Watching"
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 25,
+              "activity": "Core Reading"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 10,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Easy MSQ",
+              "duration_minutes": 15,
+              "activity": "Formative Assessment"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Physical Disintegration II \u2014 Frost Wedging, Fluvial Action, Wind & Lightning",
+          "daily_budget_minutes": 75,
+          "total_mins": 75,
+          "schedule": [
+            {
+              "resource": "Quick Listen",
+              "duration_minutes": 15,
+              "activity": "Audio Lecture"
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 25,
+              "activity": "Core Reading"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 12,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_minutes": 11,
+              "activity": "Formative Assessment"
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_minutes": 12,
+              "activity": "Formative Assessment"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Biological Disintegration \u2014 Root Wedging, Fauna, Microbes & Organic Acids",
+          "daily_budget_minutes": 70,
+          "total_mins": 70,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 25,
+              "activity": "Core Reading"
+            },
+            {
+              "resource": "Glossary",
+              "duration_minutes": 15,
+              "activity": "Vocabulary Mastery"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 10,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_minutes": 10,
+              "activity": "Formative Assessment"
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_minutes": 10,
+              "activity": "Formative Assessment"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Surface Area Dynamics, Spaced Interleaved Revision & Summative Exams",
+          "daily_budget_minutes": 70,
+          "total_mins": 70,
+          "schedule": [
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Pre-Exam Rapid Scan"
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 15,
+              "activity": "Question Bank Review"
+            },
+            {
+              "resource": "Revision Flashcards",
+              "duration_minutes": 15,
+              "activity": "Spaced Interleaved Revision"
+            },
+            {
+              "resource": "Mock Test",
+              "duration_minutes": 35,
+              "activity": "Summative Exam Simulation"
+            }
+          ]
+        }
+      ]
+    },
+    "3_day_sprint": {
+      "target_persona": "Intermediate / Mid-term Review",
+      "daily_time_budget_mins": 77,
+      "total_time_mins": 230,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Foundations, Thermal Disintegration & Exfoliation Mechanics",
+          "daily_budget_minutes": 75,
+          "total_mins": 75,
+          "schedule": [
+            {
+              "resource": "Mindmap",
+              "duration_minutes": 10,
+              "activity": "Visual Orientation"
+            },
+            {
+              "resource": "Quick Summary",
+              "duration_minutes": 15,
+              "activity": "Core Reading"
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 30,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 10,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_minutes": 10,
+              "activity": "Diagnostic Drill"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Cryofracturing, Fluvial, Eolian & Biological Agents",
+          "daily_budget_minutes": 75,
+          "total_mins": 75,
+          "schedule": [
+            {
+              "resource": "Quick Listen",
+              "duration_minutes": 15,
+              "activity": "Audio Lecture"
+            },
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 30,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 10,
+              "activity": "Active Recall"
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_minutes": 10,
+              "activity": "Diagnostic Drill"
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 10,
+              "activity": "Question Bank Practice"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Surface Area Scaling, Spaced Repetition & Mock Exam",
+          "daily_budget_minutes": 80,
+          "total_mins": 80,
+          "schedule": [
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Pre-Exam Scan"
+            },
+            {
+              "resource": "Glossary",
+              "duration_minutes": 10,
+              "activity": "Terminology Drill"
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 15,
+              "activity": "Question Bank Mastery"
+            },
+            {
+              "resource": "Revision Flashcards",
+              "duration_minutes": 15,
+              "activity": "Spaced Revision"
+            },
+            {
+              "resource": "Mock Test",
+              "duration_minutes": 35,
+              "activity": "Summative Exam"
+            }
+          ]
+        }
+      ]
+    },
+    "2_day_fast_track": {
+      "target_persona": "Advanced / Pre-Exam & ICAR JRF",
+      "daily_time_budget_mins": 113,
+      "total_time_mins": 225,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Comprehensive Mechanistic Ingestion: Physical & Biological Breakdown",
+          "daily_budget_minutes": 110,
+          "total_mins": 110,
+          "schedule": [
+            {
+              "resource": "Mindmap",
+              "duration_minutes": 10,
+              "activity": "Visual Orientation"
+            },
+            {
+              "resource": "Detailed Audio Lecture",
+              "duration_minutes": 30,
+              "activity": "Audio Deep Dive"
+            },
+            {
+              "resource": "Detailed Study Advanced",
+              "duration_minutes": 40,
+              "activity": "Exhaustive Reading"
+            },
+            {
+              "resource": "Advanced Flashcards",
+              "duration_minutes": 15,
+              "activity": "Active Recall Drill"
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_minutes": 15,
+              "activity": "Advanced Assessment"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Quantitative Surface Area Math, Question Bank Mastery & High-Stakes Exams",
+          "daily_budget_minutes": 115,
+          "total_mins": 115,
+          "schedule": [
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Pre-Exam Reactivation"
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 20,
+              "activity": "Question Bank Drill"
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_minutes": 15,
+              "activity": "Advanced Assessment"
+            },
+            {
+              "resource": "Mock Test",
+              "duration_minutes": 35,
+              "activity": "Mock Simulation"
+            },
+            {
+              "resource": "Certification Exam",
+              "duration_minutes": 40,
+              "activity": "Certification Simulation"
+            }
+          ]
+        }
+      ]
+    },
+    "14_day_distributed": {
+      "target_persona": "Distributed / Distance Learner (Daily Micro-Habit)",
+      "daily_time_budget_mins": 23,
+      "total_time_mins": 322,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Weathering Definition & Master Geological Paradigm",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Mindmap",
+              "duration_minutes": 10,
+              "activity": "Visual Orientation"
+            },
+            {
+              "resource": "Quick Summary",
+              "duration_minutes": 10,
+              "activity": "Core Reading"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "True Soil vs. Regolith Mantle Genesis",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Concept Reactivation"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "The Three Universal Modes & Dynamic Feedback Loop",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 7,
+              "activity": "Active Recall"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Lithological Permeability, Texture & Decay Rate",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Easy MCQ",
+              "duration_minutes": 8,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Diurnal Thermal Stresses & Mineral Differential Expansion",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Beginner Flashcards",
+              "duration_minutes": 5,
+              "activity": "Active Recall"
+            }
+          ]
+        },
+        {
+          "day": 6,
+          "topic": "Exfoliation Onion-Skin Peeling & Flaking Mechanics",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Easy MSQ",
+              "duration_minutes": 8,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 7,
+          "topic": "Frost Wedging / Cryofracturing & Ice 9% Volume Expansion",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 7,
+              "activity": "Active Recall"
+            }
+          ]
+        },
+        {
+          "day": 8,
+          "topic": "Fluvial Current Velocity, Wave Action & Sediment Grinding",
+          "daily_budget_minutes": 20,
+          "total_mins": 20,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Concept Reactivation"
+            }
+          ]
+        },
+        {
+          "day": 9,
+          "topic": "Eolian Wind Saltation, Abrasion & Mushroom Rock Genesis",
+          "daily_budget_minutes": 25,
+          "total_mins": 25,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Medium MCQ",
+              "duration_minutes": 10,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 10,
+          "topic": "Higher Plant Root Wedging & Taproot Macropores",
+          "daily_budget_minutes": 22,
+          "total_mins": 22,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Intermediate Flashcards",
+              "duration_minutes": 7,
+              "activity": "Active Recall"
+            }
+          ]
+        },
+        {
+          "day": 11,
+          "topic": "Burrowing Fauna, Termites, Ants & Earthworms",
+          "daily_budget_minutes": 24,
+          "total_mins": 24,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Medium MSQ",
+              "duration_minutes": 10,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 12,
+          "topic": "Lichens, Mosses & Microbial Organic Acid Chelation",
+          "daily_budget_minutes": 25,
+          "total_mins": 25,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 15,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Hard MCQ",
+              "duration_minutes": 10,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 13,
+          "topic": "Specific Surface Area Dynamics (S \u221d 1/l) & Chemical Coupling",
+          "daily_budget_minutes": 28,
+          "total_mins": 28,
+          "schedule": [
+            {
+              "resource": "Detailed Study",
+              "duration_minutes": 14,
+              "activity": "In-depth Study"
+            },
+            {
+              "resource": "Hard MSQ",
+              "duration_minutes": 14,
+              "activity": "Diagnostic Check"
+            }
+          ]
+        },
+        {
+          "day": 14,
+          "topic": "Final Synthesis, Question Bank Review & Mock Examination",
+          "daily_budget_minutes": 30,
+          "total_mins": 30,
+          "schedule": [
+            {
+              "resource": "Key Takeaways",
+              "duration_minutes": 5,
+              "activity": "Pre-Exam Reactivation"
+            },
+            {
+              "resource": "Question Bank",
+              "duration_minutes": 10,
+              "activity": "High-Yield Q&A Review"
+            },
+            {
+              "resource": "Mock Test",
+              "duration_minutes": 15,
+              "activity": "Summative Benchmark"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

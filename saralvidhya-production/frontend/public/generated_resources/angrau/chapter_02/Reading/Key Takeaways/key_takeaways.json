@@ -1,0 +1,122 @@
+{
+  "chapter": "Chapter 11 \u2013 Metamorphosis and Diapause",
+  "course": "ANGRAU ENTO-131 Fundamentals of Entomology-I",
+  "scope": "5-Minute Rapid Pre-Exam Reactivation Glance",
+  "total_topics": 10,
+  "topics": [
+    {
+      "id": "KT-01",
+      "topic": "Morphogenesis Framework & Post-Embryonic Growth",
+      "mindmap_node": "Chapter 11: Metamorphosis > 1. Morphogenesis Framework",
+      "prerequisite_status": "Foundational L1 Concept",
+      "key_facts": [
+        "Morphogenesis encompasses growth, ecdysis, tissue differentiation, and reproductive maturation.",
+        "Four stages: Egg (embryogenesis), Immature (larva/nymph), Pupa (transitory remodeling), Adult (imago).",
+        "Instar is the physical form between moults; stadium is the elapsed time duration."
+      ]
+    },
+    {
+      "id": "KT-02",
+      "topic": "The Three Universal Metamorphosis Categories",
+      "mindmap_node": "Chapter 11: Metamorphosis > 2. Types of Metamorphosis",
+      "prerequisite_status": "Foundational L1-L2 Concept",
+      "key_facts": [
+        "Ametabolous: Primitive Apterygota (Silverfish); 3 stages (egg, young, adult); wingless; <0.1% of species.",
+        "Hemimetabolous: Exopterygota (Orthoptera, Hemiptera); 3 stages (egg, nymph, adult); external wing pads; ~12% of species.",
+        "Holometabolous: Endopterygota (Lepidoptera, Coleoptera, Diptera); 4 stages (egg, larva, pupa, adult); internal wing discs; ~88% of species."
+      ]
+    },
+    {
+      "id": "KT-03",
+      "topic": "Structural Classification of Insect Larvae",
+      "mindmap_node": "Chapter 11: Metamorphosis > 3. Immature & Pupal Classifications > 3.1 Larval Types",
+      "prerequisite_status": "Core L2-L3 Concept",
+      "key_facts": [
+        "Eruciform: Caterpillar-like, thoracic legs + 2-5 abdominal prolegs with crochets (Lepidoptera).",
+        "Scarabaeiform: C-shaped grub, well-developed head & thoracic legs, no prolegs (Scarabaeidae).",
+        "Campodeiform: Flattened, active predator with long thoracic legs and cerci (Carabidae, Neuroptera).",
+        "Elateriform: Wireworm-like, cylindrical, heavily sclerotized, short legs (Elateridae).",
+        "Vermiform: Apodous legless maggot with eucephalous, hemicephalous, or acephalous head capsules (Diptera)."
+      ]
+    },
+    {
+      "id": "KT-04",
+      "topic": "Structural Classification of Insect Pupae",
+      "mindmap_node": "Chapter 11: Metamorphosis > 3. Immature & Pupal Classifications > 3.2 Pupal Types",
+      "prerequisite_status": "Core L2-L3 Concept",
+      "key_facts": [
+        "Exarate: Appendages free and unattached to body (Coleoptera, Hymenoptera).",
+        "Obtect: Appendages glued tightly to body in a chrysalis (Lepidoptera).",
+        "Coarctate: Enclosed inside hardened barrel-shaped 4th/5th larval puparium (Diptera).",
+        "Decticous vs Adecticous: Functional articulated mandibles vs non-functional mandibles."
+      ]
+    },
+    {
+      "id": "KT-05",
+      "topic": "Hypermetamorphosis & Specialized Instars",
+      "mindmap_node": "Chapter 11: Metamorphosis > 4. Hypermetamorphosis",
+      "prerequisite_status": "Advanced L3-L4 Concept",
+      "key_facts": [
+        "Complete metamorphosis with two or more distinct larval forms during development.",
+        "Classical cycle in Meloidae (Blister beetles): Triungulin -> Grub-like larva -> Coarctate pseudopupa -> Active larva -> Pupa -> Adult.",
+        "Triungulin is an active, campodeiform, host-seeking first instar; coarctate is a dormant overwintering instar."
+      ]
+    },
+    {
+      "id": "KT-06",
+      "topic": "Endocrine Regulation of Metamorphosis",
+      "mindmap_node": "Chapter 11: Metamorphosis > 5. Endocrine Regulation",
+      "prerequisite_status": "Core L3-L4 Physiological Axis",
+      "key_facts": [
+        "PTTH (brain hormone) from protocerebrum NSCs stimulates prothoracic glands via corpora cardiaca.",
+        "Ecdysone from prothoracic glands triggers apolysis, epidermal mitosis, and cuticle secretion.",
+        "Juvenile Hormone (JH) from corpora allata dictates moult status: high JH = larva, low JH = pupa, zero JH = adult."
+      ]
+    },
+    {
+      "id": "KT-07",
+      "topic": "Diapause vs. Quiescence & Environmental Dormancy",
+      "mindmap_node": "Chapter 11: Metamorphosis > 6. Diapause & Dormancy > 6.1 Core Concepts",
+      "prerequisite_status": "Core L2-L3 Concept",
+      "key_facts": [
+        "Quiescence is an immediate, direct response to unfavorable conditions (resumes immediately upon warmth/water).",
+        "Diapause is an internally programmed, genetically governed physiological arrest triggered ahead of time by token stimuli.",
+        "Diapause development requires a physiological refractory period before development can resume."
+      ]
+    },
+    {
+      "id": "KT-08",
+      "topic": "Types of Diapause & Seasonal Variations",
+      "mindmap_node": "Chapter 11: Metamorphosis > 6. Diapause & Dormancy > 6.2 & 6.3 Diapause Types",
+      "prerequisite_status": "Core L3 Concept",
+      "key_facts": [
+        "Obligatory diapause is genetically fixed in every generation (univoltine species).",
+        "Facultative diapause is environmentally induced by token stimuli (multivoltine species).",
+        "Hibernation is winter dormancy (cold, short days); Aestivation is summer dormancy (heat, drought, long days)."
+      ]
+    },
+    {
+      "id": "KT-09",
+      "topic": "Photoperiodic Cues, Token Stimuli & Critical Day Length",
+      "mindmap_node": "Chapter 11: Metamorphosis > 6. Diapause & Dormancy > Token Stimuli",
+      "prerequisite_status": "Advanced L3-L4 Concept",
+      "key_facts": [
+        "Token stimuli (photoperiod) signal oncoming seasonal change with zero direct nutritional impact.",
+        "Critical Day Length (CDL) is the exact photoperiod inducing diapause in 50% of the population.",
+        "Long-day insects enter hibernation when day length drops below CDL; short-day insects enter aestivation above CDL."
+      ]
+    },
+    {
+      "id": "KT-10",
+      "topic": "Stage-Specific Diapause & Economic Crop Pests",
+      "mindmap_node": "Chapter 11: Metamorphosis > 6. Diapause & Dormancy > 6.4 Stage Specificity",
+      "prerequisite_status": "Applied L4 Agricultural Synthesis",
+      "key_facts": [
+        "Embryonic diapause: Bombyx mori silkworm, Schistocerca gregaria desert locust.",
+        "Larval diapause: Omphisa fuscidentalis bamboo borer, Scirpophaga incertulas rice stem borer, Pectinophora gossypiella pink bollworm.",
+        "Pupal diapause: Pieris brassicae cabbage white, Helicoverpa armigera gram pod borer.",
+        "Adult/imaginal diapause: Leptinotarsa decemlineata Colorado potato beetle, Aulacophora foveicollis red pumpkin beetle."
+      ]
+    }
+  ]
+}

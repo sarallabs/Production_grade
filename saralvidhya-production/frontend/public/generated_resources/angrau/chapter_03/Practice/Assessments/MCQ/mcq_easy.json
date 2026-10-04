@@ -1,0 +1,139 @@
+{
+  "chapter": "Lecture 5: Weathering of Rocks and Minerals \u2014 Types, Physical & Biological Agents",
+  "subject": "agricultural_chemistry_and_soil_science",
+  "difficulty": "easy",
+  "question_type": "multiple_choice",
+  "total_questions": 10,
+  "questions": [
+    {
+      "number": 1,
+      "stem": "What geological term describes the unconsolidated mantle of weathered rock debris resting above unaltered parent bedrock?",
+      "options": {
+        "A": "Pedon",
+        "B": "Regolith",
+        "C": "Solum",
+        "D": "Humus"
+      },
+      "correct_answer": "B) Regolith",
+      "bloom_level": "Recall",
+      "rationale": "Regolith is the unconsolidated residue of weathered rock resting on the Earth's surface above solid bedrock. (Key Takeaway: Regolith is the unconsolidated mantle of weathered rock material.)"
+    },
+    {
+      "number": 2,
+      "stem": "Which fundamental process of weathering brings about mechanical breakdown into smaller particles without changing chemical composition?",
+      "options": {
+        "A": "Chemical Weathering",
+        "B": "Physical Weathering",
+        "C": "Biological Decomposition",
+        "D": "Hydrolysis"
+      },
+      "correct_answer": "B) Physical Weathering",
+      "bloom_level": "Understand",
+      "rationale": "Physical weathering causes mechanical disintegration such as cracking and crushing with zero chemical composition change. (Key Takeaway: Physical weathering alters physical geometry only without changing mineral chemistry.)"
+    },
+    {
+      "number": 3,
+      "stem": "Among all physical weathering agents, which agent exerts the most pronounced and widespread disintegrating effect on Earth?",
+      "options": {
+        "A": "Atmospheric Electricity",
+        "B": "Action of Water",
+        "C": "Glacial Abrasion",
+        "D": "Wind Sandblasting"
+      },
+      "correct_answer": "B) Action of Water",
+      "bloom_level": "Recall",
+      "rationale": "Water is the pre-eminent physical weathering agent, acting continuously as a disintegrating, transporting, and abrasive medium. (Key Takeaway: Water is the most active and widespread physical weathering agent.)"
+    },
+    {
+      "number": 4,
+      "stem": "By what percentage does liquid water expand in volume upon freezing into crystalline ice?",
+      "options": {
+        "A": "3 percent",
+        "B": "6 percent",
+        "C": "9 percent",
+        "D": "15 percent"
+      },
+      "correct_answer": "C) 9 percent",
+      "bloom_level": "Recall",
+      "rationale": "Water expands by precisely 9 percent in volume when freezing into crystalline ice. (Key Takeaway: Phase transition to ice increases water volume by 9 percent.)"
+    },
+    {
+      "number": 5,
+      "stem": "What geomorphic term describes the concentric peeling away of outer curved rock shells from parent bedrock due to thermal stresses?",
+      "options": {
+        "A": "Carbonation",
+        "B": "Exfoliation",
+        "C": "Hydration",
+        "D": "Pedoturbation"
+      },
+      "correct_answer": "B) Exfoliation",
+      "bloom_level": "Understand",
+      "rationale": "Exfoliation (onion-skin weathering) is the peeling of outer curved rock sheets caused by differential expansion between heated surfaces and cool inner rock layers. (Key Takeaway: Exfoliation peels concentric outer shells from parent rock.)"
+    },
+    {
+      "number": 6,
+      "stem": "In which Indian geographic regions are classic wind-sculpted Mushroom Rocks prominently observed?",
+      "options": {
+        "A": "Western Ghats of Kerala",
+        "B": "Aravalis and Thar Desert of Rajasthan",
+        "C": "Sundarbans Delta of Bengal",
+        "D": "Himalayan Foothills of Uttarakhand"
+      },
+      "correct_answer": "B) Aravalis and Thar Desert of Rajasthan",
+      "bloom_level": "Recall",
+      "rationale": "Mushroom Rocks sculpted by differential eolian sandblasting are prominent in the Aravalis and Thar Desert of Rajasthan. (Key Takeaway: Eolian sandblasting creates mushroom rocks in arid desert regions.)"
+    },
+    {
+      "number": 7,
+      "stem": "What mechanical action is exerted by growing plant roots penetrating microscopic rock joints?",
+      "options": {
+        "A": "Chemical Hydrolysis",
+        "B": "Mechanical Root Wedging",
+        "C": "Differential Thermal Shock",
+        "D": "Eolian Saltation"
+      },
+      "correct_answer": "B) Mechanical Root Wedging",
+      "bloom_level": "Understand",
+      "rationale": "Expanding plant roots exert powerful radial turgor pressure that mechanically wedges rock joints apart. (Key Takeaway: Expanding root biomass acts as a mechanical wedge splitting rock joints.)"
+    },
+    {
+      "number": 8,
+      "stem": "What chemical acid is secreted by subterranean termites and ants that corrodes rock minerals?",
+      "options": {
+        "A": "Sulfuric Acid",
+        "B": "Formic Acid",
+        "C": "Nitric Acid",
+        "D": "Hydrochloric Acid"
+      },
+      "correct_answer": "B) Formic Acid",
+      "bloom_level": "Recall",
+      "rationale": "Termites and ants secrete biochemical formic acid (HCOOH), which chemically corrodes rock-forming minerals. (Key Takeaway: Termites and ants secrete formic acid that chemically corrodes rock minerals.)"
+    },
+    {
+      "number": 9,
+      "stem": "What is the sediment-transporting capacity of a river current moving at a velocity of 15 cm/s?",
+      "options": {
+        "A": "Multi-tonne boulders",
+        "B": "Heavy stones",
+        "C": "Gravel",
+        "D": "Fine sand"
+      },
+      "correct_answer": "D) Fine sand",
+      "bloom_level": "Recall",
+      "rationale": "A stream current moving at 15 cm/s (0.15 m/s) has the kinetic capacity to carry fine sand. (Key Takeaway: A stream current of 15 cm/s carries fine sand.)"
+    },
+    {
+      "number": 10,
+      "stem": "Why is weathering defined as a combination of destruction and synthesis?",
+      "options": {
+        "A": "It destroys parent rocks and synthesizes artificial chemical fertilizers.",
+        "B": "It destroys primary rock minerals and synthesizes new secondary minerals like clays and hydrous oxides.",
+        "C": "It eliminates soil organisms and creates atmospheric nitrogen.",
+        "D": "It dissolves riverbeds and forms mountain glaciers."
+      },
+      "correct_answer": "B) It destroys primary rock minerals and synthesizes new secondary minerals like clays and hydrous oxides.",
+      "bloom_level": "Understand",
+      "rationale": "Weathering destructively breaks down primary minerals and synthetically recombines released ions into secondary clays and sesquioxides. (Key Takeaway: Weathering unites destructive breakdown with secondary mineral synthesis.)"
+    }
+  ]
+}
