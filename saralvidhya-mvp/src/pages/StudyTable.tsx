@@ -2281,7 +2281,7 @@ export default function StudyTable() {
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
       case "detailed":
-      case "summary": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
+      case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
         return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
@@ -2428,6 +2428,45 @@ export default function StudyTable() {
                             <line x1="25" y1="21" x2="30.5" y2="20" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
                             {/* Center spine */}
                             <line x1="19" y1="12" x2="19" y2="29" stroke="#4F7B64" strokeWidth="1.8" strokeLinecap="round" />
+                          </svg>
+                        );
+                      case "key_takeaways":
+                        return (
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Document / Card Base */}
+                            <path
+                              d="M8 5C8 3.89543 8.89543 3 10 3H21L28 10V27C28 28.1046 27.1046 29 26 29H10C8.89543 29 8 28.1046 8 27V5Z"
+                              fill="#FFFDF8"
+                              stroke="#4F7B64"
+                              strokeWidth="1.8"
+                              strokeLinejoin="round"
+                            />
+                            {/* Dog-ear fold */}
+                            <path
+                              d="M21 3V10H28"
+                              fill="#D4E5DC"
+                              stroke="#4F7B64"
+                              strokeWidth="1.8"
+                              strokeLinejoin="round"
+                            />
+                            {/* Bullet lines */}
+                            <circle cx="12" cy="14" r="1.3" fill="#E8996C" />
+                            <line x1="15.5" y1="14" x2="24" y2="14" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <circle cx="12" cy="18" r="1.3" fill="#E8996C" />
+                            <line x1="15.5" y1="18" x2="22" y2="18" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <circle cx="12" cy="22" r="1.3" fill="#E8996C" />
+                            <line x1="15.5" y1="22" x2="20" y2="22" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            
+                            {/* Prominent Diagonal Golden Key Emblem */}
+                            <g transform="translate(13, 11) rotate(-35)">
+                              {/* Key Head */}
+                              <circle cx="7" cy="7" r="4.6" fill="#FFFDF8" stroke="#D97706" strokeWidth="2.2" />
+                              <circle cx="7" cy="7" r="2" fill="#D97706" />
+                              {/* Key Stem */}
+                              <path d="M11.6 7H22.5" stroke="#D97706" strokeWidth="2.4" strokeLinecap="round" />
+                              {/* Key Teeth */}
+                              <path d="M18.5 7V10.5M21.5 7V11.5" stroke="#D97706" strokeWidth="2" strokeLinecap="round" />
+                            </g>
                           </svg>
                         );
                       case "podcasts":
@@ -2728,6 +2767,7 @@ export default function StudyTable() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {renderNode("summary", "Read", "#4F7B64")}
+                            {renderNode("key_takeaways", "Takeaways", "#4F7B64")}
                             {renderNode("podcasts", "Listen", "#4F7B64")}
                             {renderNode("videos", "Watch", "#4F7B64")}
                             {renderNode("mindmap", "Mindmap", "#4F7B64")}
@@ -3028,7 +3068,7 @@ export default function StudyTable() {
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "foundation" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan" || activeTool === "podcasts"
+                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "foundation" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "podcasts"
                   ? "0px 12px 0 12px"
                   : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                     ? "4px 12px 0 12px"
@@ -3057,7 +3097,7 @@ export default function StudyTable() {
                   marginTop: activeTool === "pyq" ? "-8px" : 0,
                   paddingTop: activeTool === "mindmap" ? "2px" : 0,
                   marginBottom:
-                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
+                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
                       ? "2px"
                       : "12px",
                   flexShrink: 0,
@@ -3200,6 +3240,16 @@ export default function StudyTable() {
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
                             In-depth
                           </button>
+                          <button id="studybar-mode-key-takeaways" type="button"
+                            className={`sv-hdr-mode-btn${activeTool === "key_takeaways" ? " active-key" : ""}`}
+                            onClick={() => setActiveTool("key_takeaways")} title="Key Takeaways"
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="7.5" cy="15.5" r="4.5"/>
+                              <path d="M10.5 12.5L20 3m0 0l-3 3m3-3v3m-3 0h3"/>
+                            </svg>
+                            Key Takeaways
+                          </button>
                           <button id="studybar-mode-study-plan" type="button"
                             className={`sv-hdr-mode-btn${activeTool === "study_plan" ? " active-plan" : ""}`}
                             onClick={() => setActiveTool("study_plan")} title="Study Plan"
@@ -3232,7 +3282,7 @@ export default function StudyTable() {
                             {TOOL_LABELS[activeTool]}
                           </h1>
                         )}
-                        {activeTool !== "podcasts" && activeTool !== "foundation" && activeTool !== "study_plan" && (
+                        {activeTool !== "podcasts" && activeTool !== "foundation" && (
                           activeTool === "mindmap" ? (
                             activeNodeTitle && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
@@ -3277,7 +3327,7 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan" ||
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
                     activeTool === "videos" || activeTool === "ask"
                     ? "transparent"
                     : "#ffffff",
@@ -3294,7 +3344,7 @@ export default function StudyTable() {
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
+                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
                         ? "1px solid #22c55e4D"
                         : "1px solid #E2E8F0",
                 overflowX: "hidden",
@@ -3314,12 +3364,12 @@ export default function StudyTable() {
                           ? "16px"
                           : activeTool === "deep_dive"
                             ? "8px"
-                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan"
+                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
                               ? "0px"
                               : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >

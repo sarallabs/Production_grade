@@ -34,6 +34,7 @@ export interface ToolsMenuProps {
 // Full tools list
 const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string; disabled?: boolean }[] = [
   { id: "summary", icon: "📖", label: "Read", desc: "Read chapter notes" },
+  { id: "key_takeaways", icon: "🔑", label: "Takeaways", desc: "Key Takeaways" },
   { id: "podcasts", icon: "🎧", label: "Listen", desc: "Listen to audio" },
   { id: "videos", icon: "🎥", label: "Watch", desc: "Watch video lectures" },
   { id: "mindmap", icon: "🧠", label: "Mindmap", desc: "Visual mind map" },
