@@ -84,7 +84,7 @@ function Login() {
 
         {/* RIGHT SIDE: Deep Sage Green Card */}
         <div className="sv-login-card">
-          <h1 className="sv-login-title">Welcome!!</h1>
+          <h1 className="sv-login-title">Welcome</h1>
 
           <form onSubmit={handleStudentLogin} className="sv-login-form">
             <div className="sv-input-container">

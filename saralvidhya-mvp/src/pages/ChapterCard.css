@@ -126,20 +126,23 @@
   letter-spacing: -0.4px;
 }
 
-/* 4 Metric Cards Grid */
+/* Metric Cards Grid (Topics & Estimated Time) */
 .chapter-stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 22px;
   width: 100%;
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .chapter-stat-item {
   background: #FFFFFF;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 16px;
-  padding: 12px 8px;
+  border-radius: 18px;
+  padding: 14px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;

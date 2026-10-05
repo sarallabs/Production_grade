@@ -7,7 +7,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 32px 24px;
+  padding: 32px 0;
   box-sizing: border-box;
   overflow-x: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -17,24 +17,26 @@
 .sv-login-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: clamp(40px, 7vw, 100px);
+  justify-content: space-evenly;
   width: 100%;
-  max-width: 1100px;
+  padding: 0 24px;
+  box-sizing: border-box;
 }
 
 /* Left Brand Section */
 .sv-login-brand {
-  flex: 0 1 480px;
+  flex: 0 0 auto;
   display: flex;
   justify-content: center;
   align-items: center;
+  height: 380px;
 }
 
 .sv-brand-logo-img {
-  width: 100%;
-  max-width: 440px;
-  height: auto;
+  height: 100%;
+  max-height: 380px;
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
   display: block;
   user-select: none;
@@ -48,13 +50,13 @@
 
 /* Right Card Section */
 .sv-login-card {
-  flex: 0 1 470px;
-  width: 100%;
-  max-width: 470px;
-  min-height: 380px;
+  flex: 0 0 460px;
+  width: 460px;
+  max-width: 100%;
+  height: 380px;
   background: #3A584C;
   border-radius: 30px;
-  padding: 56px 52px 48px;
+  padding: 52px 48px 44px;
   box-sizing: border-box;
   box-shadow: 0 20px 48px rgba(35, 54, 46, 0.22);
   display: flex;
@@ -190,12 +192,20 @@
   .sv-login-brand {
     flex: 0 1 auto;
     max-width: 320px;
+    height: auto;
+  }
+
+  .sv-brand-logo-img {
+    height: auto;
+    max-height: 280px;
+    width: 100%;
   }
 
   .sv-login-card {
     flex: 0 1 auto;
     max-width: 400px;
     padding: 44px 36px 38px;
+    height: auto;
     min-height: auto;
   }
 
