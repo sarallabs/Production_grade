@@ -319,7 +319,7 @@ export default function StudyTable() {
   const subjectId = searchParams.get("sId") || searchParams.get("subjectId") || "english";
   const treeLogoSrc = subjectId?.startsWith('neb_')
     ? `${import.meta.env.BASE_URL}neb-logo.png`
-    : `${import.meta.env.BASE_URL}brand-logo.png`;
+    : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const isMoocMode = sessionStorage.getItem('sv_moocs_mode') === 'true';
 
   const className = searchParams.get("className") || "Class";
@@ -2284,13 +2284,13 @@ export default function StudyTable() {
       case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
-        return { bg: "#fdf8ee", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
+        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
       case "pyq": case "prep_exam": case "mocktest":
-        return { bg: "#f4f8f6", gradient: "linear-gradient(90deg, #6F9A7F 0%, #587F67 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
+        return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #DB2777 0%, #BE185D 100%)", shadow: "0 4px 12px rgba(219, 39, 119, 0.35)" };
       case "swot":
-        return { bg: "#fff7ed", gradient: "linear-gradient(90deg, #E8996C 0%, #D47B4B 100%)", shadow: "0 4px 12px rgba(232, 153, 108, 0.35)" };
+        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
       case "deep_dive": case "ask":
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #547163 0%, #3D5348 100%)", shadow: "0 4px 12px rgba(84, 113, 99, 0.35)" };
+        return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
       default:
         return { bg: "#ffffff", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
     }
@@ -2367,13 +2367,9 @@ export default function StudyTable() {
                   // chapter, so the rail shows that video's progress rather than
                   // a chapter-wide mix.
                   const unitCompleted = completedTools;
-                  const learnThemeBg = persona === 'intermediate' ? '#0088FF33' : persona === 'advanced' ? '#0088FF4D' : '#0088FF1A';
-                  const prepThemeBg = persona === 'intermediate' ? '#CB30E033' : persona === 'advanced' ? '#CB30E04D' : '#CB30E01A';
-                  const detailedThemeBg = persona === 'intermediate' ? '#15803d4D' : persona === 'advanced' ? '#15803d66' : '#15803d33';
                   const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
+                    // Learn (Forest Green)
                     videos: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    assessment: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
                     summary: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     quick_study: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     key_takeaways: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
@@ -2384,122 +2380,99 @@ export default function StudyTable() {
                     study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
-                    master_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    revision_flashcards: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    revise: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    qbank: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#EEF5F1" },
+                    // Practice (Purple)
+                    flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    master_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    revision_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    revise: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    assessment: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    qbank: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
 
-                    pyq: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
-                    prep_exam: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
-                    prep_test: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
-                    mocktest: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
-                    pre_final_test: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
-                    certification_exam: { main: "#6F9A7F", badge: "#6F9A7F", text: "#6F9A7F", bg: "#f4f8f6" },
+                    // Prepare (Pink)
+                    pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    mocktest: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    pre_final_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    certification_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
 
-                    swot: { main: "#E8996C", badge: "#E8996C", text: "#E8996C", bg: "#fdf8ee" },
-                    ask: { main: "#547163", badge: "#547163", text: "#547163", bg: "#f0f7f4" },
+                    // AI & Analytics
+                    swot: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    ask: { main: "#2D473B", badge: "#2D473B", text: "#2D473B", bg: "#f0fdf4" },
                   };
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
+                    const blackColor = "#1E293B";
+                    const blackMuted = "#475569";
+                    const blackSubtle = "#334155";
+
                     switch (toolId) {
                       case "summary":
                       case "quick_study":
                       case "detailed":
-                      case "detailed_notes":
+                      case "detailed_notes": {
+                        const bookCover = active ? "#4F7B64" : blackColor;
+                        const bookBase = active ? "#1E3227" : "#0F172A";
                         return (
                           <svg width="36" height="34" viewBox="0 0 38 34" fill="none">
                             {/* Book cover base */}
-                            <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill="#1E3227" />
-                            <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill="#4F7B64" />
+                            <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill={bookBase} />
+                            <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill={bookCover} />
                             {/* Left page */}
-                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke="#4F7B64" strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Right page */}
-                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke="#4F7B64" strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Cover edges visible underneath */}
-                            <path d="M3 9C2 9 2 24.5 3 25" stroke="#4F7B64" strokeWidth="2.5" strokeLinecap="round" />
-                            <path d="M35 9C36 9 36 24.5 35 25" stroke="#4F7B64" strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M3 9C2 9 2 24.5 3 25" stroke={bookCover} strokeWidth="2.5" strokeLinecap="round" />
+                            <path d="M35 9C36 9 36 24.5 35 25" stroke={bookCover} strokeWidth="2.5" strokeLinecap="round" />
                             {/* Left page text lines */}
-                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="7.5" y1="20" x2="13" y2="21" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="7.5" y1="20" x2="13" y2="21" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
                             {/* Right page text lines */}
-                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
-                            <line x1="25" y1="21" x2="30.5" y2="20" stroke="#4F7B64" strokeWidth="1.4" strokeLinecap="round" opacity="0.7" />
+                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="25" y1="21" x2="30.5" y2="20" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
                             {/* Center spine */}
-                            <line x1="19" y1="12" x2="19" y2="29" stroke="#4F7B64" strokeWidth="1.8" strokeLinecap="round" />
+                            <line x1="19" y1="12" x2="19" y2="29" stroke={bookCover} strokeWidth="1.8" strokeLinecap="round" />
                           </svg>
                         );
-                      case "key_takeaways":
-                        return (
-                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            {/* Document / Card Base */}
-                            <path
-                              d="M8 5C8 3.89543 8.89543 3 10 3H21L28 10V27C28 28.1046 27.1046 29 26 29H10C8.89543 29 8 28.1046 8 27V5Z"
-                              fill="#FFFDF8"
-                              stroke="#4F7B64"
-                              strokeWidth="1.8"
-                              strokeLinejoin="round"
-                            />
-                            {/* Dog-ear fold */}
-                            <path
-                              d="M21 3V10H28"
-                              fill="#D4E5DC"
-                              stroke="#4F7B64"
-                              strokeWidth="1.8"
-                              strokeLinejoin="round"
-                            />
-                            {/* Bullet lines */}
-                            <circle cx="12" cy="14" r="1.3" fill="#E8996C" />
-                            <line x1="15.5" y1="14" x2="24" y2="14" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <circle cx="12" cy="18" r="1.3" fill="#E8996C" />
-                            <line x1="15.5" y1="18" x2="22" y2="18" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <circle cx="12" cy="22" r="1.3" fill="#E8996C" />
-                            <line x1="15.5" y1="22" x2="20" y2="22" stroke="#4F7B64" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            
-                            {/* Prominent Diagonal Golden Key Emblem */}
-                            <g transform="translate(13, 11) rotate(-35)">
-                              {/* Key Head */}
-                              <circle cx="7" cy="7" r="4.6" fill="#FFFDF8" stroke="#D97706" strokeWidth="2.2" />
-                              <circle cx="7" cy="7" r="2" fill="#D97706" />
-                              {/* Key Stem */}
-                              <path d="M11.6 7H22.5" stroke="#D97706" strokeWidth="2.4" strokeLinecap="round" />
-                              {/* Key Teeth */}
-                              <path d="M18.5 7V10.5M21.5 7V11.5" stroke="#D97706" strokeWidth="2" strokeLinecap="round" />
-                            </g>
-                          </svg>
-                        );
-                      case "podcasts":
+                      }
+                      case "podcasts": {
+                        const podColor = active ? "#4F7B64" : blackColor;
+                        const podCushion = active ? "#7BA88B" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Headband */}
-                            <path d="M7 17C7 10.9249 11.9249 6 18 6C24.0751 6 29 10.9249 29 17V20" stroke="#4F7B64" strokeWidth="3" strokeLinecap="round" />
+                            <path d="M7 17C7 10.9249 11.9249 6 18 6C24.0751 6 29 10.9249 29 17V20" stroke={podColor} strokeWidth="3" strokeLinecap="round" />
                             {/* Top cushion */}
-                            <path d="M12 7.5C13.8 6.5 16 6 18 6C20 6 22.2 6.5 24 7.5" stroke="#7BA88B" strokeWidth="2" strokeLinecap="round" />
+                            <path d="M12 7.5C13.8 6.5 16 6 18 6C20 6 22.2 6.5 24 7.5" stroke={podCushion} strokeWidth="2" strokeLinecap="round" />
                             {/* Left earcup outer */}
-                            <rect x="5" y="16" width="6" height="11" rx="3" fill="#4F7B64" />
+                            <rect x="5" y="16" width="6" height="11" rx="3" fill={podColor} />
                             {/* Left earcup inner cushion */}
-                            <rect x="9" y="17.5" width="2" height="8" rx="1" fill="#7BA88B" />
+                            <rect x="9" y="17.5" width="2" height="8" rx="1" fill={podCushion} />
                             {/* Right earcup outer */}
-                            <rect x="25" y="16" width="6" height="11" rx="3" fill="#4F7B64" />
+                            <rect x="25" y="16" width="6" height="11" rx="3" fill={podColor} />
                             {/* Right earcup inner cushion */}
-                            <rect x="25" y="17.5" width="2" height="8" rx="1" fill="#7BA88B" />
+                            <rect x="25" y="17.5" width="2" height="8" rx="1" fill={podCushion} />
                             {/* Sound wave bars in center */}
-                            <line x1="15" y1="19" x2="15" y2="23" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="18" y1="17" x2="18" y2="25" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
-                            <line x1="21" y1="19" x2="21" y2="23" stroke="#4F7B64" strokeWidth="2" strokeLinecap="round" />
+                            <line x1="15" y1="19" x2="15" y2="23" stroke={podColor} strokeWidth="2" strokeLinecap="round" />
+                            <line x1="18" y1="17" x2="18" y2="25" stroke={podColor} strokeWidth="2" strokeLinecap="round" />
+                            <line x1="21" y1="19" x2="21" y2="23" stroke={podColor} strokeWidth="2" strokeLinecap="round" />
                           </svg>
                         );
-                      case "videos":
+                      }
+                      case "videos": {
+                        const vidColor = active ? "#4F7B64" : blackColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Bottom slate */}
-                            <rect x="5" y="13" width="26" height="16" rx="3" fill="#4F7B64" />
+                            <rect x="5" y="13" width="26" height="16" rx="3" fill={vidColor} />
                             {/* Play button triangle */}
                             <polygon points="16,17 23,21 16,25" fill="#FFFFFF" />
                             {/* Top clapperboard bar */}
                             <g transform="rotate(-6 5 12)">
-                              <rect x="5" y="6" width="26" height="6.5" rx="2" fill="#4F7B64" />
+                              <rect x="5" y="6" width="26" height="6.5" rx="2" fill={vidColor} />
                               {/* White diagonal stripes */}
                               <polygon points="9,6 12,6 9,12.5 6,12.5" fill="#FFFFFF" />
                               <polygon points="16,6 19,6 16,12.5 13,12.5" fill="#FFFFFF" />
@@ -2508,146 +2481,182 @@ export default function StudyTable() {
                             </g>
                           </svg>
                         );
+                      }
                       case "foundation":
-                      case "mindmap":
+                      case "mindmap": {
                         return (
                           <img
-                            src={`${import.meta.env.BASE_URL}mindmap_icon.svg`}
-                            alt="Mindmap"
+                            src={active ? `${import.meta.env.BASE_URL}mindmap_icon.png` : `${import.meta.env.BASE_URL}mindmap_icon_black.png`}
+                            alt="Mindmaps"
+                            style={{
+                              width: '34px',
+                              height: '32px',
+                              objectFit: 'contain',
+                              transition: 'all 0.18s ease',
+                            }}
+                          />
+                        );
+                      }
+                      case "key_takeaways": {
+                        return (
+                          <img
+                            src={active ? `${import.meta.env.BASE_URL}key_takeaways_icon.png` : `${import.meta.env.BASE_URL}key_takeaways_icon_black.png`}
+                            alt="Key Takeaways"
                             style={{
                               width: '36px',
                               height: '32px',
                               objectFit: 'contain',
-                              filter: active ? 'drop-shadow(0 2px 5px rgba(61, 123, 96, 0.45))' : 'none',
-                              transition: 'transform 0.18s ease, filter 0.18s ease',
-                              transform: active ? 'scale(1.08)' : 'scale(1)'
+                              transition: 'all 0.18s ease',
                             }}
                           />
                         );
+                      }
                       case "flashcards":
                       case "revision_flashcards":
-                      case "revise":
+                      case "revise": {
+                        const revColor = active ? "#7C3AED" : blackColor;
+                        const revAccent = active ? "#8B5CF6" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Clipboard board */}
-                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
+                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFFFF" stroke={revColor} strokeWidth="2" />
                             {/* Top Clip */}
-                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill="#E8996C" />
-                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill="#D47B4B" />
+                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill={revColor} />
+                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill={revAccent} />
                             {/* Checkmarks & lines */}
-                            <path d="M10.5 11L12 12.5L15 9.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="11" x2="23" y2="11" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 16L12 17.5L15 14.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="16" x2="23" y2="16" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 21L12 22.5L15 19.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="21" x2="20" y2="21" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 11L12 12.5L15 9.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="11" x2="23" y2="11" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 16L12 17.5L15 14.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="16" x2="23" y2="16" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 21L12 22.5L15 19.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="21" x2="20" y2="21" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="26" cy="24" r="5.5" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
-                            <polyline points="26,21.5 26,24 28,24" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="26" cy="24" r="5.5" fill="#FFFFFF" stroke={revColor} strokeWidth="2" />
+                            <polyline points="26,21.5 26,24 28,24" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
-                      case "assessment":
+                      }
+                      case "assessment": {
+                        const assColor = active ? "#7C3AED" : blackColor;
+                        const assRing = active ? "#8B5CF6" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Notepad body */}
-                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFDF8" stroke="#E8996C" strokeWidth="2" />
+                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFFFF" stroke={assColor} strokeWidth="2" />
                             {/* Spiral wire rings */}
-                            <rect x="8" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="13" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="18" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
-                            <rect x="23" y="4" width="2" height="5" rx="1" fill="#C49B4B" />
+                            <rect x="8" y="4" width="2" height="5" rx="1" fill={assRing} />
+                            <rect x="13" y="4" width="2" height="5" rx="1" fill={assRing} />
+                            <rect x="18" y="4" width="2" height="5" rx="1" fill={assRing} />
+                            <rect x="23" y="4" width="2" height="5" rx="1" fill={assRing} />
                             {/* Lines & checks on pad */}
-                            <path d="M9.5 13L11 14.5L14 11.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="13" x2="22" y2="13" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 18L11 19.5L14 16.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="18" x2="20" y2="18" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 23L11 24.5L14 21.5" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="23" x2="19" y2="23" stroke="#E8996C" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 13L11 14.5L14 11.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="13" x2="22" y2="13" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 18L11 19.5L14 16.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="18" x2="20" y2="18" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 23L11 24.5L14 21.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="23" x2="19" y2="23" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
                             {/* Angled pencil writing on pad */}
                             <g transform="translate(19, 13) rotate(35)">
-                              <rect x="0" y="0" width="5" height="13" rx="1" fill="#E8996C" />
-                              <polygon points="0,13 5,13 2.5,18" fill="#FDDBCB" />
-                              <polygon points="1.5,16 3.5,16 2.5,18" fill="#4F7B64" />
-                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill="#E8996C" />
+                              <rect x="0" y="0" width="5" height="13" rx="1" fill={assColor} />
+                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#EDE9FE" : "#E2E8F0"} />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#7C3AED" : blackColor} />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#A78BFA" : blackMuted} />
                             </g>
                           </svg>
                         );
-                      case "qbank":
+                      }
+                      case "qbank": {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            <defs>
+                              <linearGradient id="qbankGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#8B5CF6" />
+                                <stop offset="100%" stopColor="#6D28D9" />
+                              </linearGradient>
+                            </defs>
                             {/* 3D Glossy Speech bubble */}
-                            <path d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z" fill="#E8996C" />
+                            <path
+                              d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z"
+                              fill={active ? "url(#qbankGradActive)" : blackColor}
+                            />
                             {/* Subtle highlight arc */}
-                            <path d="M9 11C11 8 14.5 7 18 7" stroke="#FFF0E6" strokeWidth="1.8" strokeLinecap="round" opacity="0.7" />
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#DDD6FE" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
                             {/* White Question mark */}
                             <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                             <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
                           </svg>
                         );
-                      case "pyq":
+                      }
+                      case "pyq": {
+                        const pyqColor = active ? "#DB2777" : blackColor;
+                        const pyqFold = active ? "#FCE7F3" : "#E2E8F0";
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Document outline */}
-                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#FFFFFF" stroke={pyqColor} strokeWidth="2" strokeLinejoin="round" />
                             {/* Dog-ear fold */}
-                            <path d="M20 3V10H27" fill="#D4E5DC" stroke="#6F9A7F" strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M20 3V10H27" fill={pyqFold} stroke={pyqColor} strokeWidth="2" strokeLinejoin="round" />
                             {/* Document text lines */}
-                            <line x1="12" y1="9" x2="16" y2="9" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="13" x2="22" y2="13" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="17" x2="20" y2="17" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="21" x2="16" y2="21" stroke="#6F9A7F" strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="9" x2="16" y2="9" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="13" x2="22" y2="13" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="17" x2="20" y2="17" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="21" x2="16" y2="21" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
                             {/* PYQ Badge */}
-                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill="#6F9A7F" />
+                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill={pyqColor} />
                             <text x="23.5" y="27.8" fill="#FFFFFF" fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">PYQ</text>
                           </svg>
                         );
+                      }
                       case "prep_exam":
                       case "prep_test":
                       case "mocktest":
                       case "pre_final_test":
-                      case "certification_exam":
+                      case "certification_exam": {
+                        const examColor = active ? "#DB2777" : blackColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Calendar body */}
-                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" />
+                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#FFFFFF" stroke={examColor} strokeWidth="2" />
                             {/* Calendar header bar */}
-                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill="#6F9A7F" />
+                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill={examColor} />
                             {/* Spiral binder rings */}
-                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
-                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
-                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke="#6F9A7F" strokeWidth="1" />
+                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
+                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
+                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
                             {/* Grid of date checkmarks */}
-                            <path d="M9.5 15L10.5 16L12.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 15L16.5 16L18.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M21.5 15L22.5 16L24.5 14" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M9.5 20L10.5 21L12.5 19" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 20L16.5 21L18.5 19" stroke="#6F9A7F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 15L10.5 16L12.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 15L16.5 16L18.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M21.5 15L22.5 16L24.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 20L10.5 21L12.5 19" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 20L16.5 21L18.5 19" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="27" cy="24" r="5.5" fill="#F4F8F6" stroke="#6F9A7F" strokeWidth="2" />
-                            <polyline points="27,21.5 27,24 29,24" stroke="#6F9A7F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="27" cy="24" r="5.5" fill="#FFFFFF" stroke={examColor} strokeWidth="2" />
+                            <polyline points="27,21.5 27,24 29,24" stroke={examColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
-                      case "ask":
+                      }
+                      case "ask": {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             <defs>
-                              <radialGradient id="saralAiGrad" cx="35%" cy="35%" r="70%">
-                                <stop offset="0%" stopColor="#9BB5A7" />
-                                <stop offset="55%" stopColor="#789A89" />
-                                <stop offset="100%" stopColor="#547163" />
+                              <radialGradient id="saralCircleGradActive" cx="35%" cy="35%" r="70%">
+                                <stop offset="0%" stopColor="#4F7B64" />
+                                <stop offset="55%" stopColor="#355846" />
+                                <stop offset="100%" stopColor="#243D30" />
                               </radialGradient>
                             </defs>
-                            {/* Sage circular background matching screenshot 1 */}
-                            <circle cx="18" cy="17" r="13" fill="url(#saralAiGrad)" />
-                            {/* Big 4-point sparkle star in center (pure white) */}
-                            <path d="M17 9C17 12.8 13.5 15 9.5 15C13.5 15 17 17.2 17 21C17 17.2 20.5 15 24.5 15C20.5 15 17 12.8 17 9Z" fill="#FFFFFF" />
-                            {/* Small 4-point sparkle star on top right (pure white) */}
-                            <path d="M24.5 8C24.5 9.8 22.8 11 21 11C22.8 11 24.5 12.2 24.5 14C24.5 12.2 26.2 11 28 11C26.2 11 24.5 9.8 24.5 8Z" fill="#FFFFFF" />
+                            {/* Circle badge */}
+                            <circle cx="18" cy="17" r="13" fill={active ? "url(#saralCircleGradActive)" : blackColor} />
+                            {/* Big 4-point sparkle star in center */}
+                            <path d="M18 9C18 12.8 14.5 15 10.5 15C14.5 15 18 17.2 18 21C18 17.2 21.5 15 25.5 15C21.5 15 18 12.8 18 9Z" fill="#FFFFFF" />
+                            {/* Small 4-point sparkle star on top right */}
+                            <path d="M25 8C25 9.8 23.3 11 21.5 11C23.3 11 25 12.2 25 14C25 12.2 26.7 11 28.5 11C26.7 11 25 9.8 25 8Z" fill="#FFFFFF" />
                           </svg>
                         );
+                      }
                       default:
                         return (
-                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.75">
+                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={active ? color : blackColor} strokeWidth="1.75">
                             <circle cx="12" cy="12" r="8" />
                           </svg>
                         );
@@ -2655,11 +2664,9 @@ export default function StudyTable() {
                   };
 
                   const renderNode = (toolId: ToolId, labelOverride?: string, colorOverride?: string) => {
-                    const isCompleted = unitCompleted.includes(toolId);
                     const locked = false;
-
                     const active = activeTool === toolId;
-                    const theme = TOOL_THEMES[toolId] || { main: "#2D3E36", badge: "#2D3E36", text: "#2D3E36", bg: "#f0f7f4" };
+                    const theme = TOOL_THEMES[toolId] || { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" };
                     const themeColor = colorOverride || theme.main;
 
                     return (
@@ -2668,7 +2675,7 @@ export default function StudyTable() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!locked) {
-                            if (toolId === "mocktest") {
+                            if (toolId === "mocktest" || toolId === "prep_exam") {
                               setMockTestVariant(labelOverride === "Preparation Exam" ? "prep" : "mock");
                             }
                             setActiveTool(toolId);
@@ -2679,82 +2686,114 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '6px 12px',
+                          padding: '6px 10px',
                           borderRadius: '10px',
                           background: active ? '#ffffff' : 'transparent',
-                          border: active ? `1.5px solid ${themeColor}` : '1.5px solid transparent',
-                          boxShadow: active ? `0 2px 8px ${themeColor}25` : 'none',
+                          border: active ? `1.8px solid ${themeColor}` : '1.8px solid transparent',
+                          boxShadow: active ? `0 3px 12px ${themeColor}2e, 0 1px 3px rgba(0,0,0,0.06)` : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
-                          opacity: active ? 1 : locked ? 0.25 : 0.45,
-                          filter: active ? 'none' : 'grayscale(1)',
-                          transition: 'all 0.2s ease',
+                          opacity: 1, // All options look fully open and accessible!
+                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           position: 'relative',
-                          gap: '4px'
+                          gap: '4px',
+                          minWidth: '56px',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.opacity = '0.85';
-                          (e.currentTarget as HTMLDivElement).style.filter = 'grayscale(0)';
+                          (e.currentTarget as HTMLDivElement).style.background = 'rgba(15, 23, 42, 0.04)';
                           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.opacity = '0.45';
-                          (e.currentTarget as HTMLDivElement).style.filter = 'grayscale(1)';
+                          (e.currentTarget as HTMLDivElement).style.background = 'transparent';
                           (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '38px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '38px', transition: 'transform 0.18s ease', transform: active ? 'scale(1.05)' : 'scale(1)' }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
                           fontSize: '11px',
-                          fontWeight: active ? 700 : 500,
-                          color: active ? themeColor : '#94a3b8',
+                          fontWeight: active ? 700 : 600,
+                          color: active ? themeColor : '#1E293B',
                           textAlign: 'center',
                           lineHeight: '1.2',
-                          whiteSpace: 'nowrap'
+                          whiteSpace: 'nowrap',
+                          letterSpacing: '-0.1px',
+                          transition: 'color 0.18s ease',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
                         </span>
+                        {/* Active underline indicator */}
+                        {active && (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '-2px',
+                              width: '22px',
+                              height: '2.5px',
+                              borderRadius: '2px',
+                              background: themeColor,
+                            }}
+                          />
+                        )}
                       </div>
                     );
                   };
 
                   return (
                     <div
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', overflowX: 'auto', padding: '6px 16px', gap: '16px' }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        overflowX: 'auto',
+                        padding: '6px 20px',
+                        gap: '20px',
+                      }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {/* LEFT SIDE: LOGO */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                      {/* LEFT SIDE: BRAND TREE LOGO */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0, paddingLeft: '4px' }}>
                         <div
                           className="sv-rail-brand"
                           onClick={() => navigate("/")}
                           style={{ cursor: "pointer", display: "flex", alignItems: "center" }}
+                          title="Home"
                         >
-                          <img className="sv-brand-logo-img sv-study-rail-tree-logo" src={treeLogoSrc} alt="Saral Vidhya" />
+                          <img
+                            src={treeLogoSrc}
+                            alt="Saral Vidhya"
+                            style={{
+                              height: '76px',
+                              width: 'auto',
+                              minWidth: '72px',
+                              objectFit: 'contain',
+                              display: 'block',
+                              transition: 'transform 0.2s ease',
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'scale(1.05)'; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLImageElement).style.transform = 'none'; }}
+                          />
                         </div>
                       </div>
 
-                      {/* CENTER TOOL NODES (Figma Toolbar Box) */}
+                      {/* CENTER TOOL NODES (Figma Toolbar Layout) */}
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'flex-start',
                           justifyContent: 'center',
-                          gap: '28px',
-                          padding: '10px 24px',
-                          border: 'none',
-                          borderRadius: '12px',
+                          gap: '32px',
+                          padding: '4px 16px',
                           background: '#FFFFFF',
-                          boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
                           margin: '0 auto',
                           flexShrink: 0,
                         }}
                       >
-                        {/* 1. LEARN SECTION */}
+                        {/* 1. LEARN SECTION (Green #4F7B64) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ color: '#4F7B64', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
                             {isSegmented && (
                               <span
@@ -2767,79 +2806,132 @@ export default function StudyTable() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {renderNode("summary", "Read", "#4F7B64")}
-                            {renderNode("key_takeaways", "Takeaways", "#4F7B64")}
                             {renderNode("podcasts", "Listen", "#4F7B64")}
                             {renderNode("videos", "Watch", "#4F7B64")}
-                            {renderNode("mindmap", "Mindmap", "#4F7B64")}
+                            {renderNode("mindmap", "Mindmaps", "#4F7B64")}
+                            {renderNode("key_takeaways", "Key Takeaways", "#4F7B64")}
                           </div>
                         </div>
 
-                        {/* 2. PRACTICE SECTION */}
+                        {/* 2. PRACTICE SECTION (Purple #7C3AED) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#E8996C', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#7C3AED', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Practice
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#E8996C")}
-                            {renderNode("assessment", "Assessment", "#E8996C")}
-                            {renderNode("qbank", "Question Bank", "#4F7B64")}
+                            {renderNode("revision_flashcards", "Revise", "#7C3AED")}
+                            {renderNode("assessment", "Assessment", "#7C3AED")}
+                            {renderNode("qbank", "Question Bank", "#7C3AED")}
                           </div>
                         </div>
 
-                        {/* 3. PREPARE SECTION */}
+                        {/* 3. PREPARE SECTION (Pink #DB2777) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#6F9A7F', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#DB2777', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Prepare
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("pyq", "PYQ", "#6F9A7F")}
-                            {renderNode("prep_exam", "Preparation Exam", "#6F9A7F")}
+                            {renderNode("pyq", "PYQ", "#DB2777")}
+                            {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
                           </div>
                         </div>
 
-                        {/* 4. AI & PIN SECTION */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '22px' }}>
-                          {renderNode("ask", "Saral", "#547163")}
-
-                          {/* Pin Button (Tilted Pushpin from Figma) */}
-                          <button
-                            type="button"
-                            onClick={toggleToolbarPin}
-                            title={isToolbarPinned ? "Unpin toolbar (auto-hide on mouse leave)" : "Pin toolbar (keep open)"}
-                            aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
-                            style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "50%",
-                              border: "1.8px solid #1E293B",
-                              background: isToolbarPinned ? "#1E293B" : "#FFFFFF",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              cursor: "pointer",
-                              color: isToolbarPinned ? "#FFFFFF" : "#1E293B",
-                              marginBottom: "18px",
-                              marginLeft: "4px",
-                              boxShadow: isToolbarPinned ? "0 2px 8px rgba(30, 41, 59, 0.25)" : "0 1px 3px rgba(0,0,0,0.06)",
-                              transition: "all 0.2s ease",
-                            }}
-                          >
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 24 24"
-                              fill={isToolbarPinned ? "currentColor" : "none"}
-                              stroke="currentColor"
-                              strokeWidth="1.8"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              style={{ transform: "rotate(-45deg)" }}
-                            >
-                              <line x1="12" y1="17" x2="12" y2="22" />
-                              <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
-                            </svg>
-                          </button>
+                        {/* 4. ASK ME / SARAL AI COMPANION */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                          <div style={{ height: '21px', marginBottom: '6px' }} />
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {renderNode("ask", "Ask me", "#2D473B")}
+                          </div>
                         </div>
+                      </div>
+
+                      {/* RIGHT SIDE / END OF PAGE: LOGOUT & PIN ACTIONS */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '14px',
+                          flexShrink: 0,
+                          paddingRight: '6px',
+                        }}
+                      >
+                        {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
+                        <button
+                          type="button"
+                          onClick={() => navigate("/")}
+                          title="Quit to Landing Page"
+                          aria-label="Quit to Landing Page"
+                          style={{
+                            width: "38px",
+                            height: "38px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1.5px solid #EF4444",
+                            background: "#FEF2F2",
+                            color: "#EF4444",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                            boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                            <polyline points="15 8 19 12 15 16" />
+                            <line x1="9" y1="12" x2="19" y2="12" />
+                          </svg>
+                        </button>
+
+                        {/* Pin Button (Clean tilted pushpin without circle matching reference) */}
+                        <button
+                          type="button"
+                          onClick={toggleToolbarPin}
+                          title={isToolbarPinned ? "Unpin toolbar (auto-hide on mouse leave)" : "Pin toolbar (keep open)"}
+                          aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            color: "#315443",
+                            flexShrink: 0,
+                            transition: "transform 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                          }}
+                        >
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill={isToolbarPinned ? "#315443" : "none"}
+                            stroke="#315443"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ transform: "rotate(-45deg)" }}
+                          >
+                            <line x1="12" y1="17" x2="12" y2="22" />
+                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                          </svg>
+                        </button>
                       </div>
 
                       {/* Dropdown Ask AI Chatbot Popover (Fixed position) */}
@@ -2976,38 +3068,6 @@ export default function StudyTable() {
                           </div>
                         </div>
                       )}
-
-                      {/* RIGHT SIDE CONTROLS */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0, paddingLeft: '8px' }}>
-                        {/* Quit / Log Out Button */}
-                        <button
-                          type="button"
-                          onClick={() => navigate("/")}
-                          title="Quit to Landing Page"
-                          aria-label="Quit to Landing Page"
-                          style={{
-                            width: "34px",
-                            height: "34px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #ef4444",
-                            background: "#fef2f2",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            flexShrink: 0,
-                            boxShadow: "0 1px 3px rgba(239, 68, 68, 0.12)",
-                            transition: "all 0.2s ease",
-                          }}
-                        >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <polyline points="16 17 21 12 16 7" />
-                            <line x1="21" y1="12" x2="9" y2="12" />
-                          </svg>
-                        </button>
-                      </div>
                     </div>
                   );
                 })()}
@@ -3138,35 +3198,58 @@ export default function StudyTable() {
                       .sv-hdr-levels {
                         position: absolute;
                         left: 50%; transform: translateX(-50%);
-                        display: flex; gap: 8px; align-items: center; justify-content: center;
-                        z-index: 0;
+                        display: flex; gap: 12px; align-items: center; justify-content: center;
+                        z-index: 1;
                       }
                       .sv-hdr-level-btn {
-                        width: 44px; height: 44px; border-radius: 10px;
+                        width: 58px; height: 58px; border-radius: 14px;
                         padding: 0; border: 2.5px solid transparent;
                         cursor: pointer; background: transparent;
-                        transition: all 0.2s ease;
+                        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         overflow: hidden; flex-shrink: 0;
                         display: flex; align-items: center; justify-content: center;
+                        box-sizing: border-box;
                       }
                       .sv-hdr-level-btn img {
                         width: 100%; height: 100%; object-fit: contain;
-                        border-radius: 8px;
-                        padding: 2px;
+                        border-radius: 10px;
+                        padding: 3px;
                         box-sizing: border-box;
-                        filter: grayscale(0.5) opacity(0.65);
+                        filter: grayscale(0.2) opacity(0.75);
                         transition: filter 0.2s ease, transform 0.2s ease;
                       }
-                      .sv-hdr-level-btn:hover img { filter: grayscale(0) opacity(1); transform: scale(1.08); }
-                      /* Inactive — colored ring per level */
-                      .sv-hdr-level-btn.lvl-beginner     { border-color: rgba(123, 168, 139, 0.5); background: #ffffff; }
-                      .sv-hdr-level-btn.lvl-intermediate  { border-color: rgba(79, 123, 100, 0.5); background: #ffffff; }
-                      .sv-hdr-level-btn.lvl-advanced      { border-color: rgba(45, 62, 54, 0.5); background: #ffffff; }
-                      /* Active — vivid ring + full color image + lift */
-                      .sv-hdr-level-btn.lvl-beginner.active-lvl     { border-color: #7BA88B; box-shadow: 0 0 0 3px rgba(123, 168, 139, 0.25); background: #f2f7f4; }
-                      .sv-hdr-level-btn.lvl-intermediate.active-lvl  { border-color: #4F7B64; box-shadow: 0 0 0 3px rgba(79, 123, 100, 0.25); background: #eef5f1; }
-                      .sv-hdr-level-btn.lvl-advanced.active-lvl      { border-color: #2D3E36; box-shadow: 0 0 0 3px rgba(45, 62, 54, 0.25); background: #e9f0ec; }
-                      .sv-hdr-level-btn.active-lvl img { filter: grayscale(0) opacity(1); transform: scale(1.06); }
+                      .sv-hdr-level-btn:hover img {
+                        filter: grayscale(0) opacity(1);
+                        transform: scale(1.08);
+                      }
+                      /* Inactive — NO box for unselected ones */
+                      .sv-hdr-level-btn.lvl-beginner,
+                      .sv-hdr-level-btn.lvl-intermediate,
+                      .sv-hdr-level-btn.lvl-advanced {
+                        border-color: transparent !important;
+                        background: transparent !important;
+                        box-shadow: none !important;
+                      }
+                      /* Active — box shown ONLY for the selected one */
+                      .sv-hdr-level-btn.active-lvl {
+                        border: 2.5px solid #2D473B !important;
+                        background: #FFFFFF !important;
+                        box-shadow: 0 3px 12px rgba(45, 71, 59, 0.2) !important;
+                        border-radius: 14px !important;
+                      }
+                      .sv-hdr-level-btn.lvl-beginner.active-lvl {
+                        border-color: #4F7B64 !important;
+                      }
+                      .sv-hdr-level-btn.lvl-intermediate.active-lvl {
+                        border-color: #2D473B !important;
+                      }
+                      .sv-hdr-level-btn.lvl-advanced.active-lvl {
+                        border-color: #1E293B !important;
+                      }
+                      .sv-hdr-level-btn.active-lvl img {
+                        filter: grayscale(0) opacity(1) !important;
+                        transform: scale(1.04);
+                      }
                       /* RIGHT controls */
                       .sv-hdr-controls {
                         display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0;

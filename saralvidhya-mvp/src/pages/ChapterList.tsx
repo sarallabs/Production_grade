@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { getManifest, getChapters, getSubject, type Chapter } from '@/data/contentRepository';
-import { getChapterToolCoveragePercent } from '@/utils/analytics';
+import { getChapterToolCoveragePercent, getAnalytics } from '@/utils/analytics';
+import { getCompletedTools, isChapterComplete } from '@/utils/guidedFlow';
 import { getTopicsForChapter } from '@/data/chapterTopics';
 import './ChapterCard.css';
 
@@ -238,26 +239,35 @@ export default function ChapterList() {
 
                 const topicList = getTopicsForChapter(sId, flipCh.number);
                 const topicsCount = topicList.length > 0 ? topicList.length : (flipCh ? (flipCh.number * 2 + 6) : 12);
-                const sectionsCount = flipCh.completed?.length ? Math.min(Math.max(flipCh.completed.length, 4), 6) : 4;
                 
-                // Dynamic estimated time (e.g. 2h 30min for 12 topics)
-                const estMins = Math.round(topicsCount * 11.5 + sectionsCount * 3);
+                // Dynamic estimated time based on actual topic count (approx 12-14 mins per topic)
+                const estMins = Math.round(topicsCount * 13);
                 const estHours = Math.floor(estMins / 60);
                 const estRemainingMins = estMins % 60;
                 const estimatedTimeStr = estHours > 0 
                   ? `${estHours}h ${estRemainingMins > 0 ? `${estRemainingMins}min` : ''}`.trim()
                   : `${estMins}min`;
 
-                // Dynamic difficulty level based on persona / user progress
-                const userPersona = (localStorage.getItem('user_persona') || 'beginner').toLowerCase();
-                const difficultyLevel = userPersona.charAt(0).toUpperCase() + userPersona.slice(1);
+                // DB-driven real user progress in this chapter
+                const cleanId = (id?: string) => (id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+                const targetSub = cleanId(sId);
 
-                // Dynamic progress
-                const denom = Math.max(topicsCount, 6);
-                const rawPct = getChapterToolCoveragePercent(sId, flipCh.number, denom);
-                const chapterPct = rawPct > 0 ? rawPct : (flipCh.number === 1 ? 75 : (flipCh.number === 2 ? 40 : 0));
-                const totalSessions = sectionsCount;
-                const completedSessions = Math.max(0, Math.min(totalSessions, Math.round((chapterPct / 100) * totalSessions)));
+                const completedFromGuided = getCompletedTools(sId, flipCh.number);
+                const analyticsData = getAnalytics();
+                const toolsFromEvents = analyticsData.toolEvents
+                  .filter((e) => {
+                    const sub = cleanId(e.subjectId);
+                    return (sub === targetSub || (targetSub.includes('ento') && sub.includes('ento'))) && e.chapterNumber === flipCh.number;
+                  })
+                  .map((e) => e.tool);
+
+                const uniqueToolsDone = new Set([...completedFromGuided, ...toolsFromEvents]);
+
+                // Total standard learning sessions/tools per chapter in StudyTable
+                const totalSessions = 6;
+                const isFullyDone = isChapterComplete(sId, flipCh.number);
+                const completedSessions = isFullyDone ? totalSessions : Math.min(uniqueToolsDone.size, totalSessions);
+                const chapterPct = Math.round((completedSessions / totalSessions) * 100);
 
                 // Clean real chapter name without duplicate "Chapter X" prefix
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
@@ -330,21 +340,9 @@ export default function ChapterList() {
                           {toTitleCase(cleanChapterName)}
                         </h2>
 
-                        {/* 4 Dynamic Metric Cards */}
+                        {/* 2 Dynamic Metric Cards (Topics & Estimated Time) */}
                         <div className="chapter-stats-grid">
-                          {/* Card 1: Sections */}
-                          <div className="chapter-stat-item chapter-stat-item--sections">
-                            <div className="chapter-stat-icon-circle">
-                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                              </svg>
-                            </div>
-                            <div className="chapter-stat-val">{sectionsCount}</div>
-                            <div className="chapter-stat-label">Sections</div>
-                          </div>
-
-                          {/* Card 2: Topics */}
+                          {/* Card 1: Topics */}
                           <div className="chapter-stat-item chapter-stat-item--topics">
                             <div className="chapter-stat-icon-circle">
                               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -359,7 +357,7 @@ export default function ChapterList() {
                             <div className="chapter-stat-label">Topics</div>
                           </div>
 
-                          {/* Card 3: Estimated Time */}
+                          {/* Card 2: Estimated Time */}
                           <div className="chapter-stat-item chapter-stat-item--time">
                             <div className="chapter-stat-icon-circle">
                               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -369,19 +367,6 @@ export default function ChapterList() {
                             </div>
                             <div className="chapter-stat-val">{estimatedTimeStr}</div>
                             <div className="chapter-stat-label">Estimated time</div>
-                          </div>
-
-                          {/* Card 4: Difficulty Level */}
-                          <div className="chapter-stat-item chapter-stat-item--difficulty">
-                            <div className="chapter-stat-icon-circle" style={{ background: '#F0F7F4' }}>
-                              <img
-                                src={`${import.meta.env.BASE_URL}personas/${difficultyLevel.toLowerCase()}.png`}
-                                alt={difficultyLevel}
-                                style={{ width: 30, height: 30, objectFit: 'contain' }}
-                              />
-                            </div>
-                            <div className="chapter-stat-val">{difficultyLevel}</div>
-                            <div className="chapter-stat-label">Difficulty</div>
                           </div>
                         </div>
 
@@ -405,7 +390,7 @@ export default function ChapterList() {
                               className="chapter-continue-btn"
                               onClick={() => handleChapterClick(flipCh)}
                             >
-                              Continue learning →
+                              {chapterPct === 100 ? "Review chapter →" : chapterPct > 0 ? "Continue learning →" : "Start learning →"}
                             </button>
                           </div>
                         </div>

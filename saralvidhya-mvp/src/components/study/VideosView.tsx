@@ -200,9 +200,11 @@ export default function VideosView({
   const [isCcEnabled, setIsCcEnabled] = useState(false);
   const [showSpeedSelector, setShowSpeedSelector] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
 
@@ -638,6 +640,60 @@ export default function VideosView({
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Controls Auto-Hide Logic:
+  // When video is playing, controls hide after 2.8s of no mouse movement.
+  // When cursor moves, controls immediately appear and timer resets.
+  // When paused, controls remain visible.
+  const resetControlsTimer = useCallback(() => {
+    setShowControls(true);
+    if (hideControlsTimerRef.current) {
+      clearTimeout(hideControlsTimerRef.current);
+      hideControlsTimerRef.current = null;
+    }
+    if (isPlaying) {
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 2800);
+    }
+  }, [isPlaying]);
+
+  const handlePlayerMouseMove = useCallback(() => {
+    resetControlsTimer();
+  }, [resetControlsTimer]);
+
+  const handlePlayerMouseLeave = useCallback(() => {
+    if (isPlaying) {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 600);
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    if (!isPlaying) {
+      setShowControls(true);
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+        hideControlsTimerRef.current = null;
+      }
+    } else {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 2800);
+    }
+    return () => {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+    };
+  }, [isPlaying]);
+
   // Title and topics
   const displayTitle = currentVideo.title || chapterName || "Insects Digestive System";
   const displayDuration = useMemo(() => {
@@ -683,6 +739,8 @@ export default function VideosView({
   const renderVideoPlayer = (isFullWidth = false) => (
     <div
       ref={playerContainerRef}
+      onMouseMove={handlePlayerMouseMove}
+      onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
         width: "100%",
@@ -695,6 +753,7 @@ export default function VideosView({
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
+        cursor: isPlaying && !showControls ? "none" : "default",
       }}
     >
       {/* YouTube Iframe */}
@@ -706,25 +765,41 @@ export default function VideosView({
           width: "100%",
           height: "100%",
           border: 0,
+          pointerEvents: "none",
+        }}
+      />
+
+      {/* Transparent Click-to-Play/Pause overlay covering video */}
+      <div
+        onClick={handlePlayPause}
+        onDoubleClick={toggleFullscreen}
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 2,
+          cursor: isPlaying && !showControls ? "none" : "pointer",
         }}
       />
 
       {/* Center Play Overlay when Paused */}
       {!isPlaying && (
         <button
-          onClick={handlePlayPause}
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlayPause();
+          }}
           aria-label="Play Video"
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "74px",
-            height: "74px",
+            width: "80px",
+            height: "80px",
             borderRadius: "50%",
             border: "none",
-            background: "rgba(255, 255, 255, 0.92)",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.35)",
+            background: "rgba(255, 255, 255, 0.95)",
+            boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -733,7 +808,7 @@ export default function VideosView({
             transition: "transform 0.2s ease, background 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
+            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.1)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
@@ -743,67 +818,120 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: "14px solid transparent",
-              borderBottom: "14px solid transparent",
-              borderLeft: "24px solid #1E293B",
+              borderTop: "15px solid transparent",
+              borderBottom: "15px solid transparent",
+              borderLeft: "26px solid #1E293B",
               marginLeft: "6px",
             }}
           />
         </button>
       )}
 
-      {/* Control Bar */}
+      {/* Control Bar - Auto-hides when video is playing unless cursor moves */}
       <div
+        onMouseEnter={() => {
+          if (hideControlsTimerRef.current) {
+            clearTimeout(hideControlsTimerRef.current);
+          }
+          setShowControls(true);
+        }}
+        onMouseLeave={() => {
+          if (isPlaying) {
+            if (hideControlsTimerRef.current) {
+              clearTimeout(hideControlsTimerRef.current);
+            }
+            hideControlsTimerRef.current = setTimeout(() => {
+              setShowControls(false);
+            }, 2500);
+          }
+        }}
         style={{
-          position: "relative",
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 10,
-          background: "linear-gradient(to top, rgba(14, 19, 17, 0.95) 0%, rgba(14, 19, 17, 0.82) 75%, transparent 100%)",
-          paddingTop: "24px",
+          background: "linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.72) 65%, transparent 100%)",
+          padding: "24px 20px 14px 20px",
           display: "flex",
           flexDirection: "column",
           width: "100%",
+          boxSizing: "border-box",
+          opacity: showControls || !isPlaying ? 1 : 0,
+          transform: showControls || !isPlaying ? "translateY(0)" : "translateY(10px)",
+          pointerEvents: showControls || !isPlaying ? "auto" : "none",
+          transition: "opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          userSelect: "none",
         }}
       >
-        {/* Full-width Seek Bar */}
+        {/* Full-width Seek Bar with comfortable hit area */}
         <div
-          onClick={handleSeekClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSeekClick(e);
+          }}
           title="Seek"
           style={{
             position: "relative",
             width: "100%",
-            height: "4px",
-            background: "rgba(255, 255, 255, 0.32)",
+            height: "18px",
+            display: "flex",
+            alignItems: "center",
             cursor: "pointer",
-            transition: "height 0.15s ease",
+            marginBottom: "6px",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLDivElement).style.height = "6px";
+            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
+            if (track) track.style.height = "8px";
+            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
+            if (thumb) thumb.style.transform = "translateY(-50%) scale(1.25)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLDivElement).style.height = "4px";
+            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
+            if (track) track.style.height = "6px";
+            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
+            if (thumb) thumb.style.transform = "translateY(-50%) scale(1)";
           }}
         >
+          {/* Seek Track */}
           <div
+            className="seek-track"
             style={{
-              height: "100%",
-              width: `${Math.min(100, Math.max(0, progress))}%`,
-              background: "#FFFFFF",
               position: "relative",
+              width: "100%",
+              height: "6px",
+              background: "rgba(255, 255, 255, 0.32)",
+              borderRadius: "4px",
+              transition: "height 0.15s ease",
             }}
           >
+            {/* Progress Fill */}
             <div
               style={{
-                position: "absolute",
-                right: "-4px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: "9px",
-                height: "9px",
-                borderRadius: "50%",
+                height: "100%",
+                width: `${Math.min(100, Math.max(0, progress))}%`,
                 background: "#FFFFFF",
-                boxShadow: "0 0 6px rgba(0,0,0,0.6)",
+                borderRadius: "4px",
+                position: "relative",
               }}
-            />
+            >
+              {/* Scrubber Thumb */}
+              <div
+                className="seek-thumb"
+                style={{
+                  position: "absolute",
+                  right: "-7px",
+                  top: "50%",
+                  transform: "translateY(-50%) scale(1)",
+                  width: "15px",
+                  height: "15px",
+                  borderRadius: "50%",
+                  background: "#FFFFFF",
+                  boxShadow: "0 0 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5)",
+                  transition: "transform 0.15s ease",
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -813,34 +941,50 @@ export default function VideosView({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            padding: "8px 16px 10px 16px",
-            gap: "12px",
+            padding: "4px 6px 4px 6px",
+            gap: "16px",
           }}
         >
           {/* Left Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             {/* Play/Pause */}
             <button
-              onClick={handlePlayPause}
-              title={isPlaying ? "Pause" : "Play"}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePlayPause();
+              }}
+              title={isPlaying ? "Pause (Space/k)" : "Play (Space/k)"}
+              aria-label={isPlaying ? "Pause" : "Play"}
               style={{
-                background: "none",
+                background: "rgba(255, 255, 255, 0.12)",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
                 padding: 0,
+                width: "38px",
+                height: "38px",
+                borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
-                lineHeight: 1,
+                justifyContent: "center",
+                transition: "background 0.15s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
               {isPlaying ? (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
-                  <rect x="5" y="4" width="4" height="16" rx="1" />
-                  <rect x="15" y="4" width="4" height="16" rx="1" />
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
+                  <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
+                  <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
                 </svg>
               ) : (
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" style={{ marginLeft: "2px" }}>
                   <polygon points="6,4 20,12 6,20" />
                 </svg>
               )}
@@ -848,20 +992,36 @@ export default function VideosView({
 
             {/* Rewind 10s («) */}
             <button
-              onClick={handleRewind10}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRewind10();
+              }}
               title="Rewind 10s"
+              aria-label="Rewind 10s"
               style={{
-                background: "none",
+                background: "transparent",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
                 padding: 0,
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
-                lineHeight: 1,
+                justifyContent: "center",
+                transition: "background 0.15s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="11 17 6 12 11 7" />
                 <polyline points="18 17 13 12 18 7" />
               </svg>
@@ -869,20 +1029,36 @@ export default function VideosView({
 
             {/* Forward 10s (») */}
             <button
-              onClick={handleForward10}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleForward10();
+              }}
               title="Forward 10s"
+              aria-label="Forward 10s"
               style={{
-                background: "none",
+                background: "transparent",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
                 padding: 0,
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
-                lineHeight: 1,
+                justifyContent: "center",
+                transition: "background 0.15s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="13 17 18 12 13 7" />
                 <polyline points="6 17 11 12 6 7" />
               </svg>
@@ -892,40 +1068,61 @@ export default function VideosView({
             <div
               style={{
                 color: "#FFFFFF",
-                fontSize: "12px",
+                fontSize: "14px",
                 fontWeight: 600,
                 whiteSpace: "nowrap",
-                letterSpacing: "0.2px",
+                letterSpacing: "0.3px",
+                fontVariantNumeric: "tabular-nums",
+                userSelect: "none",
+                marginLeft: "4px",
               }}
             >
-              {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : "12:06 / 15:00"}
+              {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : "00:00 / 00:00"}
             </div>
 
             {/* Volume Icon + Slider */}
-            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "6px" }}>
               <button
-                onClick={toggleMute}
-                title={isMuted ? "Unmute" : "Mute"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleMute();
+                }}
+                title={isMuted ? "Unmute (m)" : "Mute (m)"}
+                aria-label={isMuted ? "Unmute" : "Mute"}
                 style={{
-                  background: "none",
+                  background: "transparent",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: "pointer",
                   padding: 0,
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
+                  justifyContent: "center",
+                  transition: "background 0.15s ease, transform 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.transform = "scale(1.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.transform = "scale(1)";
                 }}
               >
                 {isMuted || volume === 0 ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
                     <line x1="23" y1="9" x2="17" y2="15" />
                     <line x1="17" y1="9" x2="23" y2="15" />
                   </svg>
                 ) : (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeWidth="2.2" />
+                    <path d="M18.8 5.2a9 9 0 0 1 0 13.6" strokeWidth="2.2" />
                   </svg>
                 )}
               </button>
@@ -935,9 +1132,10 @@ export default function VideosView({
                 max="100"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
+                onClick={(e) => e.stopPropagation()}
                 style={{
-                  width: "50px",
-                  height: "3px",
+                  width: "75px",
+                  height: "5px",
                   accentColor: "#FFFFFF",
                   cursor: "pointer",
                 }}
@@ -946,33 +1144,41 @@ export default function VideosView({
           </div>
 
           {/* Right Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             {/* Speed Selector Toggle / Inline Pills */}
             {!showSpeedSelector ? (
               <button
-                onClick={() => setShowSpeedSelector(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowSpeedSelector(true);
+                }}
                 title="Playback Speed"
                 aria-label="Playback Speed"
                 style={{
-                  background: "none",
+                  background: "transparent",
                   border: "none",
                   color: "#FFFFFF",
                   cursor: "pointer",
                   padding: 0,
+                  width: "36px",
+                  height: "36px",
+                  borderRadius: "50%",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  transition: "transform 0.15s ease",
+                  transition: "background 0.15s ease, transform 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.1)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                  e.currentTarget.style.transform = "scale(1.08)";
                 }}
                 onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.transform = "scale(1)";
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.transform = "scale(1)";
                 }}
               >
                 {/* Speedometer Gauge Icon */}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="9" />
                   <line x1="12" y1="12" x2="16" y2="8" strokeWidth="2.2" />
                   <circle cx="12" cy="12" r="1.5" fill="#FFFFFF" />
@@ -981,21 +1187,22 @@ export default function VideosView({
               </button>
             ) : (
               <div
+                onClick={(e) => e.stopPropagation()}
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: "4px",
-                  background: "rgba(0, 0, 0, 0.4)",
-                  padding: "2px 5px",
-                  borderRadius: "14px",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  gap: "5px",
+                  background: "rgba(0, 0, 0, 0.6)",
+                  padding: "3px 6px",
+                  borderRadius: "16px",
+                  border: "1px solid rgba(255, 255, 255, 0.25)",
                 }}
               >
                 {[
                   { label: "Normal", rate: 1 },
-                  { label: "x1.25", rate: 1.25 },
-                  { label: "x1.5", rate: 1.5 },
-                  { label: "x2", rate: 2 },
+                  { label: "1.25x", rate: 1.25 },
+                  { label: "1.5x", rate: 1.5 },
+                  { label: "2x", rate: 2 },
                 ].map((s) => {
                   const isActive = playbackRate === s.rate;
                   return (
@@ -1009,15 +1216,15 @@ export default function VideosView({
                         }
                       }}
                       style={{
-                        background: isActive ? "rgba(255, 255, 255, 0.22)" : "transparent",
-                        border: isActive ? "1px solid rgba(255, 255, 255, 0.7)" : "1px solid transparent",
+                        background: isActive ? "rgba(255, 255, 255, 0.28)" : "transparent",
+                        border: isActive ? "1px solid rgba(255, 255, 255, 0.8)" : "1px solid transparent",
                         color: "#FFFFFF",
-                        fontSize: "11px",
+                        fontSize: "12px",
                         fontWeight: isActive ? 700 : 500,
                         borderRadius: "12px",
-                        padding: "1px 6px",
+                        padding: "3px 8px",
                         cursor: "pointer",
-                        lineHeight: 1.35,
+                        lineHeight: 1.3,
                         transition: "all 0.15s ease",
                       }}
                     >
@@ -1032,10 +1239,10 @@ export default function VideosView({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "rgba(255, 255, 255, 0.7)",
+                    color: "rgba(255, 255, 255, 0.75)",
                     cursor: "pointer",
-                    padding: "0 2px",
-                    fontSize: "11px",
+                    padding: "0 4px",
+                    fontSize: "13px",
                     lineHeight: 1,
                   }}
                 >
@@ -1046,19 +1253,36 @@ export default function VideosView({
 
             {/* CC Subtitles Button */}
             <button
-              onClick={toggleCc}
-              title={isCcEnabled ? "Turn Captions Off" : "Turn Captions On"}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleCc();
+              }}
+              title={isCcEnabled ? "Turn Captions Off (c)" : "Turn Captions On (c)"}
+              aria-label={isCcEnabled ? "Turn Captions Off" : "Turn Captions On"}
               style={{
-                background: "none",
+                background: "transparent",
                 border: "none",
                 color: isCcEnabled ? "#60A5FA" : "#FFFFFF",
                 cursor: "pointer",
                 padding: 0,
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.15s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="5" width="18" height="14" rx="3" />
                 <line x1="7" y1="12" x2="11" y2="12" strokeWidth="2" />
                 <line x1="13" y1="12" x2="17" y2="12" strokeWidth="2" />
@@ -1067,23 +1291,51 @@ export default function VideosView({
 
             {/* Fullscreen Button */}
             <button
-              onClick={toggleFullscreen}
-              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleFullscreen();
+              }}
+              title={isFullscreen ? "Exit Fullscreen (f)" : "Fullscreen (f)"}
+              aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               style={{
-                background: "none",
+                background: "transparent",
                 border: "none",
                 color: "#FFFFFF",
                 cursor: "pointer",
                 padding: 0,
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
                 display: "flex",
                 alignItems: "center",
+                justifyContent: "center",
+                transition: "background 0.15s ease, transform 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+                e.currentTarget.style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "transparent";
+                e.currentTarget.style.transform = "scale(1)";
               }}
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 3 21 3 21 9" />
-                <polyline points="9 21 3 21 3 15" />
-                <line x1="21" y1="3" x2="14" y2="10" />
-                <line x1="3" y1="21" x2="10" y2="14" />
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                {isFullscreen ? (
+                  <>
+                    <polyline points="4 14 10 14 10 20" />
+                    <polyline points="20 10 14 10 14 4" />
+                    <line x1="14" y1="10" x2="21" y2="3" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </>
+                ) : (
+                  <>
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </>
+                )}
               </svg>
             </button>
           </div>
