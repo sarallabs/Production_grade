@@ -2997,7 +2997,7 @@ export default function MockTestView({
                       return (
                         <div
                           key={optIdx}
-                          onClick={() => handleOptionClick(q.id, optIdx, q.type || "mcq")}
+                          onClick={() => handleOptionClick(q.id, optIdx, (q.type as any) || "mcq")}
                           style={{
                             display: "flex",
                             alignItems: "center",

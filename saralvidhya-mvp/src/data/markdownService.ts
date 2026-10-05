@@ -322,7 +322,7 @@ export async function getResourceContent(
       } catch (e) {
         console.warn('[GCS] Failed to fetch', apiUrl, e);
       }
-      return 'Content not available.';
+      // Fall through to local static files if GCS fetch was unsuccessful
     }
     // For unmapped resources (e.g. podcast transcripts) fall through to path-based fetch below.
   }
