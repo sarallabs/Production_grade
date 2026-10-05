@@ -242,6 +242,7 @@ let fallbackProgressTimer: number | null = null;
 let runId = 0;
 let chunkProgressTimers = new Set<number>();
 let isPaused = false;
+let liveUtterance: SpeechSynthesisUtterance | null = null;
 
 function cleanup() {
   pendingBlobUrls.forEach(u => URL.revokeObjectURL(u));
@@ -284,15 +285,40 @@ const VOICE_NAME_PATTERNS = {
   female: /female|woman|girl|zira|aria|hazel|samantha|victoria|alloy|maya|rita|neela|anya/i,
 };
 
+// Neural / cloud-backed browser voices sound far more human than the legacy OS
+// voices (e.g. "Microsoft Zira Desktop"). Edge exposes "... Online (Natural)",
+// Chrome exposes "Google ..." voices, Safari has "Premium"/"Enhanced" ones.
+function naturalnessScore(v: SpeechSynthesisVoice): number {
+  const n = `${v.name} ${v.voiceURI}`;
+  let s = 0;
+  if (/natural|neural/i.test(n)) s += 100;
+  if (/online/i.test(n)) s += 40;
+  if (/premium|enhanced/i.test(n)) s += 60;
+  if (/^google\b/i.test(v.name)) s += 50;
+  if (!v.localService) s += 20;
+  if (/desktop|espeak|compact/i.test(n)) s -= 50;
+  return s;
+}
+
 function findSpeechSynthesisVoice(voices: SpeechSynthesisVoice[], preferredGender: 'male' | 'female', desiredLang: string): SpeechSynthesisVoice | null {
-  const languageMatches = voices.filter((v) => v.lang.toLowerCase().startsWith(desiredLang));
   const genderPattern = VOICE_NAME_PATTERNS[preferredGender];
+  const rank = (list: SpeechSynthesisVoice[]) =>
+    [...list].sort((a, b) => {
+      const g = (v: SpeechSynthesisVoice) => (genderPattern.test(v.name) || genderPattern.test(v.voiceURI) ? 10 : 0);
+      // Accent outranks naturalness: Indian > US > others; avoid British/Australian
+      const accent = (v: SpeechSynthesisVoice) => {
+        const l = v.lang.toLowerCase().replace('_', '-');
+        if (l.endsWith('-in')) return 200;
+        if (l === 'en-us') return 120;
+        if (/-(gb|au|ie|nz|za)$/.test(l) || /\buk\b|british/i.test(v.name)) return -200;
+        return 0;
+      };
+      return (naturalnessScore(b) + g(b) + accent(b)) - (naturalnessScore(a) + g(a) + accent(a));
+    });
 
-  const matchingVoice = languageMatches.find((v) => genderPattern.test(v.name) || genderPattern.test(v.voiceURI));
-  if (matchingVoice) return matchingVoice;
-
-  if (languageMatches.length) return languageMatches[0];
-  if (voices.length) return voices[0];
+  const languageMatches = voices.filter((v) => v.lang.toLowerCase().startsWith(desiredLang));
+  if (languageMatches.length) return rank(languageMatches)[0];
+  if (voices.length) return rank(voices)[0];
   return null;
 }
 
@@ -305,8 +331,6 @@ async function fallbackSpeak(
 ) {
   if (!window.speechSynthesis) { onDone?.(); return; }
   window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = bcp47;
   const preferredGender = localStorage.getItem('user_voice') === 'male' ? 'male' : 'female';
   const desiredLang = bcp47.toLowerCase().split('-')[0];
   let availableVoices = await waitForSpeechSynthesisVoices(800);
@@ -341,18 +365,139 @@ async function fallbackSpeak(
   };
 
   const matchingVoice = findSpeechSynthesisVoice(availableVoices, preferredGender, desiredLang);
-  if (matchingVoice) utter.voice = matchingVoice;
+
+  // Online/neural browser voices stall on long utterances (Chrome stops after
+  // ~15s without firing onend, Edge "Natural" voices hang). Speak short
+  // sentence-sized pieces back to back, tracking each piece's exact offset.
+  const pieces: { text: string; start: number }[] = [];
+  {
+    const re = /[^\n]+/g; // one line at a time (headings/bullets get a natural pause)
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(text)) !== null) {
+      const lineStart = m.index;
+      const line = m[0];
+      const sentRe = /[^.!?।؟]+[.!?।؟]*\s*/g;
+      let s: RegExpExecArray | null;
+      let cur = '', curStart = lineStart;
+      while ((s = sentRe.exec(line)) !== null) {
+        if (!s[0]) { sentRe.lastIndex++; continue; }
+        if (cur && (cur + s[0]).length > 220) {
+          if (cur.trim()) pieces.push({ text: cur, start: curStart });
+          cur = ''; curStart = lineStart + s.index;
+        }
+        if (!cur) curStart = lineStart + s.index;
+        cur += s[0];
+      }
+      if (cur.trim()) pieces.push({ text: cur, start: curStart });
+    }
+  }
+  const myRun = runId;
+  let idx = 0;
+  // ms per character, refined after every piece from real timings
+  let msPerChar = 68;
 
   if (!didFireStart) { onStartCallback?.(); didFireStart = true; }
-  utter.rate = 0.95;
-  utter.onboundary = (e: SpeechSynthesisEvent) => {
-    if (e.name === 'word' && onProgress) {
-      onProgress(e.charIndex);
+
+  const speakNext = () => {
+    if (myRun !== runId || isStopped) return;
+    if (idx >= pieces.length) {
+      clearFallbackProgress();
+      onProgress?.(text.length);
+      isPlaying = false;
+      onDone?.();
+      return;
     }
+    const { text: piece, start: base } = pieces[idx];
+    const u = new SpeechSynthesisUtterance(piece);
+    // Chrome garbage-collects utterances that aren't referenced, and then
+    // onend never fires — keep a live reference until it finishes.
+    liveUtterance = u;
+    u.lang = bcp47;
+    if (matchingVoice) u.voice = matchingVoice;
+    u.rate = 0.95;
+    let done = false;
+    let watchdog: number | null = null;
+    let extensions = 0;
+    let gotBoundary = false;
+    let spokenMs = 0;
+    let lastTick = 0;
+    let startedAt = 0;
+    let pausedMs = 0;
+
+    // Word starts inside this piece, used by the time estimator
+    const wordStarts: number[] = [];
+    { const wr = /\S+/g; let w: RegExpExecArray | null; while ((w = wr.exec(piece)) !== null) wordStarts.push(w.index); }
+
+    const stopEstimator = () => {
+      if (fallbackProgressTimer != null) { window.clearInterval(fallbackProgressTimer); fallbackProgressTimer = null; }
+    };
+    const startEstimator = () => {
+      stopEstimator();
+      lastTick = Date.now();
+      fallbackProgressTimer = window.setInterval(() => {
+        const now = Date.now();
+        const d = now - lastTick; lastTick = now;
+        if (isPaused) { pausedMs += d; return; }
+        if (gotBoundary || !onProgress) return;
+        spokenMs += d;
+        const ch = Math.min(piece.length - 1, Math.floor(spokenMs / msPerChar));
+        // snap to the start of the word containing ch
+        let wi = 0;
+        while (wi + 1 < wordStarts.length && wordStarts[wi + 1] <= ch) wi++;
+        onProgress(base + (wordStarts[wi] ?? 0));
+      }, 90);
+    };
+
+    const finish = () => {
+      if (done) return;
+      done = true;
+      stopEstimator();
+      if (watchdog != null) { window.clearTimeout(watchdog); watchdog = null; }
+      if (myRun !== runId || isStopped) return;
+      // Calibrate speaking speed from this piece (ignore tiny/odd pieces)
+      if (startedAt && piece.length > 25) {
+        const actual = (Date.now() - startedAt - pausedMs) / piece.length;
+        if (actual > 30 && actual < 200) msPerChar = msPerChar * 0.5 + actual * 0.5;
+      }
+      onProgress?.(base + piece.length);
+      idx += 1;
+      // Let the engine settle before queuing the next utterance
+      window.setTimeout(speakNext, 0);
+    };
+    // Watchdog: if a piece never ends (voice stalled), skip ahead ourselves
+    const armWatchdog = () => {
+      if (watchdog != null) window.clearTimeout(watchdog);
+      watchdog = window.setTimeout(() => {
+        watchdog = null;
+        if (done || myRun !== runId) return;
+        if (isPaused) { armWatchdog(); return; }
+        if (window.speechSynthesis.speaking && extensions < 2) {
+          // Still audibly speaking — give it a bit more time
+          extensions += 1;
+          armWatchdog();
+          return;
+        }
+        window.speechSynthesis.cancel();
+        finish();
+      }, Math.max(4000, piece.length * 90));
+    };
+    u.onstart = () => {
+      startedAt = Date.now();
+      onProgress?.(base);
+      startEstimator();
+    };
+    u.onboundary = (e: SpeechSynthesisEvent) => {
+      if (e.name === 'word' && onProgress) {
+        gotBoundary = true; // real word events available — trust them
+        onProgress(base + e.charIndex);
+      }
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    armWatchdog();
+    window.speechSynthesis.speak(u);
   };
-  utter.onend = () => { clearFallbackProgress(); onProgress?.(text.length); isPlaying = false; onDone?.(); };
-  utter.onerror = () => { clearFallbackProgress(); isPlaying = false; onDone?.(); };
-  window.speechSynthesis.speak(utter);
+  speakNext();
 }
 
 // ── Sequential chunk player ────────────────────────────────────────────────────
@@ -494,12 +639,15 @@ export function googleTtsSpeak(
   onStart?: () => void,
   onEnd?: () => void,
   onProgress?: (globalCharIndex: number) => void,
+  opts?: { raw?: boolean },
 ) {
   googleTtsStop();
   runId += 1;
   isPaused = false;
 
-  const clean = sanitizeForTts(text);
+  // raw: caller already produced speakable text and needs progress indices
+  // that map 1:1 onto it (read-aloud highlighting).
+  const clean = opts?.raw ? text.trim() ? text : '' : sanitizeForTts(text);
   if (!clean) { onEnd?.(); return; }
 
   // Auto-detect language from script if content gives a clearer signal
@@ -513,7 +661,9 @@ export function googleTtsSpeak(
   };
 
   const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy');
-  if (!isGcpKey) {
+  // Raw mode needs exact char offsets; the Cloud path re-chunks/trims text
+  // (and currently 401s with this API key), so use the browser engine.
+  if (!isGcpKey || opts?.raw) {
     isStopped = false;
     isPlaying = true;
     onDoneCallback = null;
@@ -577,4 +727,14 @@ export function googleTtsResume() {
 
 export function googleTtsIsPlaying(): boolean {
   return isPlaying;
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && isPlaying && !isPaused) {
+      if (typeof window !== "undefined" && window.speechSynthesis && window.speechSynthesis.paused) {
+        window.speechSynthesis.resume();
+      }
+    }
+  });
 }

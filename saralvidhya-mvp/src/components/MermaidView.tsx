@@ -59,9 +59,9 @@ function cleanLabel(s: string) {
 }
 
 // ─── Tree ─────────────────────────────────────────────────────────────────────
-interface TNode { id: string; label: string; children: TNode[] }
+export interface TNode { id: string; label: string; children: TNode[] }
 
-function buildTree(raw: string): TNode | null {
+export function buildTree(raw: string): TNode | null {
   const lines = stripFences(raw).split('\n');
   const flat: { depth: number; label: string }[] = [];
   for (const line of lines) {

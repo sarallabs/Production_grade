@@ -59,6 +59,21 @@ export default function FlashcardsView({
   const [animationDirection, setAnimationDirection] = useState<'next' | 'prev' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  // 'out' = card turning edge-on, 'in' = turning back to face the user
+  const [flipPhase, setFlipPhase] = useState<'out' | 'in' | null>(null);
+  const flipTimers = useRef<number[]>([]);
+  const flipCard = (target?: boolean) => {
+    if (flipPhase) return;
+    flipTimers.current.forEach((t) => window.clearTimeout(t));
+    setFlipPhase('out');
+    flipTimers.current = [
+      window.setTimeout(() => {
+        setIsFlipped((prev) => (typeof target === 'boolean' ? target : !prev));
+        setFlipPhase('in');
+      }, 170),
+      window.setTimeout(() => setFlipPhase(null), 360),
+    ];
+  };
   const [imgFailed, setImgFailed] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const lang = SUBJECT_LANG[subjectId] ?? 'en-IN';
@@ -355,6 +370,23 @@ export default function FlashcardsView({
 
           {/* Progress badge */}
 
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+              transformOrigin: 'center center',
+              transform: flipPhase === 'out' ? 'perspective(1400px) rotateY(90deg)' : 'perspective(1400px) rotateY(0deg)',
+              transition: flipPhase === 'out'
+                ? 'transform 0.17s cubic-bezier(0.55, 0, 0.9, 0.5)'
+                : flipPhase === 'in'
+                  ? 'transform 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)'
+                  : 'none',
+              ...(flipPhase === 'in' ? { animation: 'sv-fc-flip-in 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)' } : {}),
+            }}
+          >
+          <style>{`@keyframes sv-fc-flip-in { from { transform: perspective(1400px) rotateY(-90deg); } to { transform: perspective(1400px) rotateY(0deg); } }`}</style>
           {(() => {
             const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
             const PHYSICS_REAL_INFOGRAPHICS = [
@@ -388,7 +420,7 @@ export default function FlashcardsView({
               return (
                 <div
                   style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '32px', cursor: 'pointer' }}
-                  onClick={() => setIsFlipped(true)}
+                  onClick={() => flipCard(true)}
                 >
                   <div style={{
                     fontSize: '26px',
@@ -403,7 +435,7 @@ export default function FlashcardsView({
 
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setIsFlipped(true); }}
+                    onClick={(e) => { e.stopPropagation(); flipCard(true); }}
                     style={{
                       background: 'rgba(255,255,255,0.18)',
                       border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(0,136,255,0.4)'}`,
@@ -431,7 +463,11 @@ export default function FlashcardsView({
 
             // ── BACK FACE: Answer + Infographic ──────────────────────────────
             return (
-              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
+              <div
+                title="Click to flip back to the question"
+                onClick={() => flipCard(false)}
+                style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden', cursor: 'pointer', paddingTop: '36px', boxSizing: 'border-box' }}
+              >
                 {/* Answer text */}
                 <div
                   style={{
@@ -467,7 +503,7 @@ export default function FlashcardsView({
                     <img
                       src={finalUrl}
                       alt="Infographic"
-                      onClick={() => setIsZoomed(true)}
+                      onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
                       onError={() => setImgFailed(true)}
                       title="Click to expand full screen"
                       style={{
@@ -490,6 +526,7 @@ export default function FlashcardsView({
               </div>
             );
           })()}
+          </div>
         </div>
 
         {/* Right Navigation Button OR Action Icons on Last Card */}

@@ -453,152 +453,70 @@ function DescriptiveQuestionCard({
             <span>★</span> {question.marks} {question.marks === 1 ? "Mark" : "Marks"}
           </span>
 
-          {/* Bloom Level Pill */}
-          {question.bloomLevel && (
-            <span
-              style={{
-                fontSize: "0.78rem",
-                fontWeight: 600,
-                padding: "4px 10px",
-                borderRadius: "6px",
-                background: "#F1F5F9",
-                color: "#475569",
-                border: "1px solid #E2E8F0",
-              }}
-            >
-              🧠 {question.bloomLevel}
-            </span>
-          )}
         </div>
-
-        {/* Mindmap Breadcrumb */}
-        {question.mindmapPath && (
-          <div
-            style={{
-              fontSize: "0.76rem",
-              color: "#64748B",
-              fontWeight: 500,
-              background: "#F8FAF9",
-              padding: "3px 10px",
-              borderRadius: "6px",
-              border: "1px solid #E2ECE6",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              maxWidth: "100%",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span style={{ color: "#467360" }}>🗺️</span>
-            <span>{question.mindmapPath}</span>
-          </div>
-        )}
       </div>
 
       {/* Question Text */}
-      <div
-        style={{
-          fontSize: "1.08rem",
-          fontWeight: 600,
-          color: "#1E2923",
-          lineHeight: "1.65",
-          background: "#FAFDFB",
-          padding: "16px 20px",
-          borderRadius: "12px",
-          border: "1px solid #E0EDE5",
-        }}
-      >
-        <MarkdownView content={question.text} />
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <span
+          aria-label="Question"
+          style={{
+            flexShrink: 0,
+            width: "30px",
+            height: "30px",
+            borderRadius: "8px",
+            background: "#2D3E36",
+            color: "#FFFFFF",
+            fontWeight: 800,
+            fontSize: "0.95rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "12px",
+          }}
+        >
+          Q
+        </span>
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: "1.08rem",
+            fontWeight: 600,
+            color: "#1E2923",
+            lineHeight: "1.65",
+            background: "#FAFDFB",
+            padding: "16px 20px",
+            borderRadius: "12px",
+            border: "1px solid #E0EDE5",
+          }}
+        >
+          <MarkdownView content={question.text} />
+        </div>
       </div>
 
       {/* Student Answer Box */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-          <label
-            style={{
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              color: "#2D3E36",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#467360" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg>
-            Student Response / Written Answer
-          </label>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            {/* Demo Badge */}
-            <span
-              style={{
-                fontSize: "0.72rem",
-                fontWeight: 600,
-                background: "#F0FDF4",
-                color: "#166534",
-                padding: "2px 8px",
-                borderRadius: "4px",
-                border: "1px solid #BBF7D0",
-              }}
-            >
-              ✓ Model answer pre-filled for demo
-            </span>
-
-            {/* Live Counter */}
-            <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
-              {wordCount} words • {charCount} chars
-            </span>
-
-            {/* Quick Actions */}
-            {question.modelAnswer && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onAnswerChange(question.modelAnswer || "");
-                }}
-                title="Reset to official model answer"
-                style={{
-                  background: "transparent",
-                  border: "1px solid #CBD5E1",
-                  borderRadius: "5px",
-                  padding: "2px 8px",
-                  fontSize: "0.72rem",
-                  color: "#475569",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                Reset
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onAnswerChange("");
-              }}
-              title="Clear answer field to test writing from scratch"
-              style={{
-                background: "transparent",
-                border: "1px solid #CBD5E1",
-                borderRadius: "5px",
-                padding: "2px 8px",
-                fontSize: "0.72rem",
-                color: "#94A3B8",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Clear
-            </button>
-          </div>
-        </div>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+        <span
+          aria-label="Answer"
+          style={{
+            flexShrink: 0,
+            width: "30px",
+            height: "30px",
+            borderRadius: "8px",
+            background: "#467360",
+            color: "#FFFFFF",
+            fontWeight: 800,
+            fontSize: "0.95rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginTop: "12px",
+          }}
+        >
+          A
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
 
         {/* Textarea */}
         <textarea
@@ -631,49 +549,8 @@ function DescriptiveQuestionCard({
             e.currentTarget.style.boxShadow = "inset 0 1px 3px rgba(0, 0, 0, 0.02)";
           }}
         />
-      </div>
-
-      {/* Keywords Checklist */}
-      {matchedKeywords.length > 0 && (
-        <div
-          style={{
-            background: "#F8FAF9",
-            border: "1px solid #E2ECE6",
-            borderRadius: "10px",
-            padding: "10px 14px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "6px",
-          }}
-        >
-          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#4A5D52", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-            🔑 Key Evaluation Concepts & Technical Vocabulary:
-          </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-            {matchedKeywords.map(({ keyword, matched }, kidx) => (
-              <span
-                key={kidx}
-                style={{
-                  fontSize: "0.75rem",
-                  fontWeight: 600,
-                  padding: "3px 9px",
-                  borderRadius: "6px",
-                  background: matched ? "#E8F5E9" : "#FFFFFF",
-                  color: matched ? "#166534" : "#64748B",
-                  border: matched ? "1px solid #86EFAC" : "1px solid #E2E8F0",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                <span>{matched ? "✓" : "○"}</span>
-                <span>{keyword}</span>
-              </span>
-            ))}
-          </div>
         </div>
-      )}
+      </div>
 
       {/* Rubric & Model Answer Toggle */}
       {(question.rubric || question.modelAnswer) && (
@@ -1167,14 +1044,9 @@ export default function MockTestView({
 
       setQuestions(finalQuestions);
 
-      // Pre-fill student text answers with model answers for internal demo:
-      const initialTextAnswers: Record<string, string> = {};
-      finalQuestions.forEach((q) => {
-        if (q.modelAnswer) {
-          initialTextAnswers[q.id] = q.modelAnswer;
-        }
-      });
-      setTextAnswers(initialTextAnswers);
+      // Student answer boxes start empty; the official model answer is shown
+      // separately in the rubric / model-answer section.
+      setTextAnswers({});
 
       const hasDescriptive = finalQuestions.some(
         (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
@@ -2507,25 +2379,6 @@ export default function MockTestView({
                         <svg width="18" height="18" viewBox="0 0 24 24" fill={markedQuestions[q.id] ? "#f97316" : "none"} stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                           <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" />
                         </svg>
-                      </button>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          scrollToQuestion(Math.min(questions.length - 1, qIdx + 1));
-                        }}
-                        style={{
-                          padding: "8px 20px",
-                          borderRadius: "10px",
-                          border: "1.5px solid #c6dfd4",
-                          background: "#edf5f1",
-                          color: "#2D3E36",
-                          fontSize: "0.9rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Skip →
                       </button>
 
                       <button
