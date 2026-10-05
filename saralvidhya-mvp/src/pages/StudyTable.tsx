@@ -2767,10 +2767,10 @@ export default function StudyTable() {
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {renderNode("summary", "Read", "#4F7B64")}
-                            {renderNode("key_takeaways", "Takeaways", "#4F7B64")}
                             {renderNode("podcasts", "Listen", "#4F7B64")}
                             {renderNode("videos", "Watch", "#4F7B64")}
                             {renderNode("mindmap", "Mindmap", "#4F7B64")}
+                            {renderNode("key_takeaways", "Takeaways", "#4F7B64")}
                           </div>
                         </div>
 
@@ -3104,7 +3104,7 @@ export default function StudyTable() {
                 }}
               >
                 {/* ── MVP STUDY HEADER: pixel-perfect reference match ── */}
-                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? (
+                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan") ? (
                   <>
                     <style>{`
                       @keyframes sv-hdr-in {
@@ -3171,7 +3171,7 @@ export default function StudyTable() {
                       .sv-hdr-controls {
                         display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0;
                       }
-                      /* Mode row: Quick | Detailed | Key Takeaways */
+                      /* Mode row: Quick | Detailed */
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
@@ -3185,7 +3185,6 @@ export default function StudyTable() {
                       .sv-hdr-mode-btn:hover { border-color: #94a3b8; color: #0f172a; background: #f8fafc; }
                       .sv-hdr-mode-btn.active-quick    { background: #3b82f6; border-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
                       .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
-                      .sv-hdr-mode-btn.active-key      { background: #d97706; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 8px rgba(217,119,6,0.4); }
                       .sv-hdr-mode-btn.active-plan     { background: #4f46e5; border-color: #4f46e5; color: #ffffff; box-shadow: 0 2px 8px rgba(79,70,229,0.4); }
                     `}</style>
 
@@ -3200,7 +3199,7 @@ export default function StudyTable() {
                       </div>
 
                       {/* MIDDLE: persona levels */}
-                      {activeTool !== "key_takeaways" && activeTool !== "study_plan" ? (
+                      {activeTool !== "study_plan" ? (
                         <div className="sv-hdr-levels">
                           <button id="studybar-level-beginner" type="button"
                             className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
@@ -3240,16 +3239,6 @@ export default function StudyTable() {
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
                             In-depth
                           </button>
-                          <button id="studybar-mode-key-takeaways" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "key_takeaways" ? " active-key" : ""}`}
-                            onClick={() => setActiveTool("key_takeaways")} title="Key Takeaways"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="7.5" cy="15.5" r="4.5"/>
-                              <path d="M10.5 12.5L20 3m0 0l-3 3m3-3v3m-3 0h3"/>
-                            </svg>
-                            Key Takeaways
-                          </button>
                           <button id="studybar-mode-study-plan" type="button"
                             className={`sv-hdr-mode-btn${activeTool === "study_plan" ? " active-plan" : ""}`}
                             onClick={() => setActiveTool("study_plan")} title="Study Plan"
@@ -3273,6 +3262,29 @@ export default function StudyTable() {
                       </div>
                     </div>
                   </>
+                ) : activeTool === "key_takeaways" ? (
+                  <div className="sv-hdr" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 6px 0' }}>
+                    <div className="sv-hdr-card">
+                      <span className="sv-hdr-crumb">
+                        <span className="crumb-subject" style={{ color: '#2563eb', fontWeight: 700 }}>{subjectName}</span>
+                        <span className="crumb-sep" style={{ color: '#94a3b8', margin: '0 5px' }}>·</span>
+                        <span className="crumb-chapter" style={{ color: '#4f46e5', fontWeight: 700 }}>{getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}</span>
+                      </span>
+                    </div>
+                    <div style={{ flex: 1 }} />
+                    <div className="sv-hdr-controls">
+                      <ReadAloudBar
+                        key={`${persona}-key_takeaways`}
+                        text={preprocessSummaryText(typeof content === "string" ? content : "")}
+                        subjectId={subjectId}
+                        persona={persona}
+                        onPlay={() => { setIsSidebarOpen(false); }}
+                        onHighlightChange={(payload) => setReadingHighlight(payload)}
+                        activeTool="key_takeaways"
+                        onSwitchTool={setActiveTool}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
