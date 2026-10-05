@@ -18,7 +18,7 @@ function SubjectIcon({ subjectId }: { subjectId: string }) {
   if (subjectId.includes('ento') || subjectId === 'ento_131') {
     return (
       <img
-        src="/subject-book-icon.png"
+        src={`${import.meta.env.BASE_URL}subject-entomology-icon.png`}
         alt="Entomology"
         className="sv-card-book-img"
       />
@@ -259,8 +259,8 @@ export default function ClassSubjectSelection() {
                     ? (chapterCounts[subject.id] ? Math.max(chapterCounts[subject.id], 4) : 4)
                     : (chapterCounts[subject.id] ?? 0);
                   const visited = getUniqueVisitedChaptersForSubject(subject.id);
-                  const displayVisited = isEntomology && visited === 0 ? 2 : visited;
                   const displayTotal = totalChapters > 0 ? totalChapters : (isEntomology ? 4 : 0);
+                  const displayVisited = Math.min(visited, displayTotal > 0 ? displayTotal : visited);
                   const coverage = displayTotal > 0 ? Math.round((displayVisited / displayTotal) * 100) : 0;
 
                   return (
@@ -294,24 +294,17 @@ export default function ClassSubjectSelection() {
                                 ))}
                               </div>
                               <div className="sv-progress-meta">
-                                {isEntomology ? (
-                                  <>
-                                    <span className="sv-badge sv-badge-percent">
-                                      <span className="sv-check-circle">
-                                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                          <polyline points="20 6 9 17 4 12" />
-                                        </svg>
-                                      </span>
-                                      <span>100%</span>
+                                <span className="sv-badge sv-badge-percent">
+                                  {coverage > 0 && (
+                                    <span className="sv-check-circle">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
                                     </span>
-                                    <span className="sv-badge sv-badge-count">{displayVisited}/{displayTotal}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className="sv-progress-percent">{coverage}%</span>
-                                    <span className="sv-progress-count">{visited}/{totalChapters}</span>
-                                  </>
-                                )}
+                                  )}
+                                  <span>{coverage}%</span>
+                                </span>
+                                <span className="sv-badge sv-badge-count">{displayVisited}/{displayTotal}</span>
                               </div>
                             </>
                           ) : (

@@ -369,75 +369,19 @@ export default function PodcastsView({
     return { totalWeight, wordWeights: shiftedWeights, wordIndexes };
   }, [transcriptTokens]);
 
-  const { activeWordIdx, activeTokenIdx } = useMemo(() => {
-    if (
-      !transcript ||
-      !displayDuration ||
-      wordTimings.wordIndexes.length === 0 ||
-      displayCurrent < 0
-    ) {
-      return {
-        activeWordIdx: -1,
-        activeTokenIdx: -1,
-      };
-    }
-
-    const clampedTime = Math.min(displayCurrent, displayDuration);
-    const progress = clampedTime / displayDuration;
-
-    const targetWeight = progress * wordTimings.totalWeight;
-
-    let wordIdx = 0;
-    for (let i = 0; i < wordTimings.wordWeights.length; i++) {
-      if (wordTimings.wordWeights[i] >= targetWeight) {
-        wordIdx = i;
-        break;
-      }
-    }
-
-    const tokenIdx = wordTimings.wordIndexes[wordIdx] ?? -1;
-
-    return {
-      activeWordIdx: wordIdx,
-      activeTokenIdx: tokenIdx,
-    };
-  }, [transcript, displayDuration, displayCurrent, wordTimings]);
-
-  // Auto-scroll transcript when active word changes
-  // Throttled: only scroll when word changes meaningfully (every ~3 words)
-  const lastScrolledWordRef = useRef(-1);
+  const wordTimingsRef = useRef(wordTimings);
   useEffect(() => {
-    // Skip scroll if word changed by less than 3 positions to reduce layout thrashing
-    if (Math.abs(activeWordIdx - lastScrolledWordRef.current) < 3) return;
-    lastScrolledWordRef.current = activeWordIdx;
-
-    if (!transcriptBoxRef.current || !transcriptRef.current) return;
-
-    const activeElement = transcriptBoxRef.current.querySelector(
-      ".transcript-word.active",
-    ) as HTMLElement | null;
-
-    if (activeElement) {
-      const container = transcriptRef.current;
-      const containerTop = container.getBoundingClientRect().top;
-      const targetTop = activeElement.getBoundingClientRect().top;
-      const relativeTop = targetTop - containerTop;
-      const targetHeight = activeElement.offsetHeight;
-      const containerHeight = container.offsetHeight;
-
-      // Center the active element in the container
-      const newScrollTop =
-        container.scrollTop +
-        relativeTop -
-        containerHeight / 2 +
-        targetHeight / 2;
-
-      container.scrollTo({
-        top: newScrollTop,
-        behavior: "smooth",
-      });
+    wordTimingsRef.current = wordTimings;
+    activeTokenIdxRef.current = -1;
+    if (activeWordElRef.current) {
+      activeWordElRef.current.classList.remove("active");
+      activeWordElRef.current = null;
     }
-  }, [activeTokenIdx, activeWordIdx]);
+  }, [wordTimings]);
+
+  const activeTokenIdxRef = useRef<number>(-1);
+  const activeWordElRef = useRef<HTMLElement | null>(null);
+  const lastScrollTimeRef = useRef<number>(0);
 
 
 
@@ -705,9 +649,8 @@ export default function PodcastsView({
   const playheadRef = useRef<HTMLDivElement>(null);
   const currentTimeDisplayRef = useRef<HTMLSpanElement>(null);
   const waveformColorRef = useRef<string>("#3b82f6");
-
-  // Throttle React state update to ~5fps for transcript sync
-  const lastReactUpdateRef = useRef(0);
+  const progressFillRef = useRef<HTMLDivElement>(null);
+  const [isMutedUi, setIsMutedUi] = useState(false);
 
   const updateProgress = useCallback((time: number, duration: number) => {
     currentTimeRef.current = time;
@@ -716,6 +659,9 @@ export default function PodcastsView({
     // Update playhead position directly in DOM (zero React overhead)
     if (playheadRef.current) {
       playheadRef.current.style.left = `calc(${pct}% - 7px)`;
+    }
+    if (progressFillRef.current) {
+      progressFillRef.current.style.width = `${pct}%`;
     }
 
     // Update bar colors directly in DOM
@@ -735,18 +681,59 @@ export default function PodcastsView({
       }
     }
 
-    // Update time display
+    // Update time display directly
     if (currentTimeDisplayRef.current) {
       const m = Math.floor(time / 60);
       const sec = String(Math.floor(time % 60)).padStart(2, "0");
       currentTimeDisplayRef.current.textContent = `${m}:${sec}`;
     }
 
-    // Only trigger React re-render ~5fps for transcript word highlighting
-    const now = performance.now();
-    if (now - lastReactUpdateRef.current > 200) {
-      lastReactUpdateRef.current = now;
-      setCurrentTime(time);
+    // Direct DOM transcript word highlighting (zero React virtual-DOM diffing)
+    const wt = wordTimingsRef.current;
+    if (wt && wt.totalWeight > 0 && duration > 0) {
+      const clamped = Math.min(time, duration);
+      const targetWeight = (clamped / duration) * wt.totalWeight;
+      const weights = wt.wordWeights;
+      let lo = 0, hi = weights.length - 1, wordIdx = 0;
+      while (lo <= hi) {
+        const mid = (lo + hi) >> 1;
+        if (weights[mid] >= targetWeight) {
+          wordIdx = mid;
+          hi = mid - 1;
+        } else {
+          lo = mid + 1;
+        }
+      }
+      const tokenIdx = wt.wordIndexes[wordIdx] ?? -1;
+      if (tokenIdx !== activeTokenIdxRef.current) {
+        activeTokenIdxRef.current = tokenIdx;
+        if (activeWordElRef.current) {
+          activeWordElRef.current.classList.remove("active");
+          activeWordElRef.current = null;
+        }
+        const box = transcriptBoxRef.current;
+        if (box && tokenIdx >= 0) {
+          const el = box.children[tokenIdx] as HTMLElement | undefined;
+          if (el) {
+            el.classList.add("active");
+            activeWordElRef.current = el;
+
+            // Smooth scroll throttled to prevent layout thrashing
+            const now = performance.now();
+            if (now - lastScrollTimeRef.current > 350 && transcriptRef.current) {
+              lastScrollTimeRef.current = now;
+              const container = transcriptRef.current;
+              const containerRect = container.getBoundingClientRect();
+              const elRect = el.getBoundingClientRect();
+              const relY = elRect.top - containerRect.top;
+              if (relY < containerRect.height * 0.25 || relY > containerRect.height * 0.70) {
+                const targetScroll = container.scrollTop + relY - containerRect.height / 2 + elRect.height / 2;
+                container.scrollTo({ top: targetScroll, behavior: "smooth" });
+              }
+            }
+          }
+        }
+      }
     }
   }, []);
 
@@ -786,6 +773,20 @@ export default function PodcastsView({
       }
     };
   }, [selectedTrack, autoPlay, available, updateProgress]);
+
+  // Synchronize playhead, waveform, and active word when user returns to tab after leaving
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const audio = audioRef.current;
+        if (audio && !audio.paused) {
+          updateProgress(audio.currentTime, audioDurationRef.current || audio.duration || 0);
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, [updateProgress]);
 
   // ── Load transcript when track, subject, chapter, or level changes ──
   useEffect(() => {
@@ -1246,11 +1247,12 @@ export default function PodcastsView({
                     <div style={{
                       display: "inline-flex", alignItems: "center", gap: "6px",
                       marginTop: "8px", padding: "4px 12px", borderRadius: "20px",
-                      fontSize: "11px", fontWeight: 600, width: "fit-content",
-                      background: c.pillBg, color: c.pillText, border: `1px solid ${c.pillBorder}`,
+                      background: c.pillBg, color: c.pillText,
+                      border: `1px solid ${c.pillBorder}`,
+                      fontSize: "11px", fontWeight: 600, width: "fit-content"
                     }}>
                       <span>{c.pill}</span>
-                      <span style={{ fontSize: "14px", fontWeight: 700 }}>›</span>
+                      <span style={{ fontSize: "12px", opacity: 0.7 }}>›</span>
                     </div>
                   </div>
                 </div>
@@ -1452,7 +1454,10 @@ export default function PodcastsView({
           );
         })()}
 
-        {/* Audio Player */}
+      </div>
+
+      {/* ── Player + transcript share one bordered shell (design) ── */}
+      <div className="pod-shell">
         <div className="podcast-player-real">
           {available && (
             <audio
@@ -1471,210 +1476,137 @@ export default function PodcastsView({
             />
           )}
 
-          {/* ── Redesigned Audio Player ── */}
           {(() => {
-            const trackTheme: any = {
-              long: {
-                color: "#3b82f6", light: "#eff6ff", gradient: "linear-gradient(90deg, #93c5fd, #3b82f6)", label: "Long Podcast", shadow: "rgba(59,130,246,0.35)",
-                icon: (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>)
-              },
-              short: {
-                color: "#10b981", light: "#ecfdf5", gradient: "linear-gradient(90deg, #6ee7b7, #10b981)", label: "Short Podcast", shadow: "rgba(16,185,129,0.35)",
-                icon: (<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>)
-              },
-              dl: {
-                color: "#8b5cf6", light: "#f5f3ff", gradient: "linear-gradient(90deg, #c4b5fd, #8b5cf6)", label: "Detailed Listen", shadow: "rgba(139,92,246,0.35)",
-                icon: (<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><path d="M6 12C6 10.8954 6.89543 10 8 10H20C22.2091 10 24 11.7909 24 14V38C24 36.3431 22.6569 35 21 35H8C6.89543 35 6 34.1046 6 33V12Z" fill="#c4b5fd" stroke="#7c3aed" strokeWidth="1.5" /><path d="M42 12C42 10.8954 41.1046 10 40 10H28C25.7909 10 24 11.7909 24 14V38C24 36.3431 25.3431 35 27 35H40C41.1046 35 42 34.1046 42 33V12Z" fill="#ddd6fe" stroke="#7c3aed" strokeWidth="1.5" /></svg>)
-              },
-              mc: {
-                color: "#22c55e", light: "#ecfdf5", gradient: "linear-gradient(90deg, #86efac, #22c55e)", label: "Microcast", shadow: "rgba(34,197,94,0.35)",
-                icon: (<svg width="28" height="28" viewBox="0 0 48 48" fill="none"><path d="M10 28V24C10 16.268 16.268 10 24 10C31.732 10 38 16.268 38 24V28" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" /><rect x="6" y="26" width="8" height="12" rx="4" fill="#22c55e" /><rect x="34" y="26" width="8" height="12" rx="4" fill="#22c55e" /></svg>)
-              },
-              ql: {
-                color: "#f97316", light: "#fff7ed", gradient: "linear-gradient(90deg, #fdba74, #f97316)", label: "Quick Listen", shadow: "rgba(249,115,22,0.35)",
-                icon: (<svg width="26" height="26" viewBox="0 0 40 40" fill="none"><path d="M22 3L8 22H18L16 37L32 18H22L22 3Z" fill="url(#qlGradPlayer)" stroke="#ea580c" strokeWidth="1.5" strokeLinejoin="round" /><defs><linearGradient id="qlGradPlayer" x1="16" y1="3" x2="24" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#fbbf24" /><stop offset="1" stopColor="#f97316" /></linearGradient></defs></svg>)
-              },
+            const playing = available ? isPlaying : ttsPlaybackState === "playing";
+            const seekTo = (pct: number) => {
+              if (audioRef.current && displayDuration) {
+                const targetTime = Math.max(0, Math.min(1, pct)) * displayDuration;
+                audioRef.current.currentTime = targetTime;
+                updateProgress(targetTime, displayDuration);
+              }
             };
-            const th = trackTheme[selectedTrack] || trackTheme.long;
-            
-            let currentTrackTitle = "Chapter Podcast";
-            if (selectedTrack === "mc") currentTrackTitle = MICROCASTS[selectedMc]?.title || currentTrackTitle;
-            else if (selectedTrack === "dl") currentTrackTitle = DETAILED_LISTENS[selectedDl]?.title || currentTrackTitle;
-            else if (selectedTrack === "ql") currentTrackTitle = QUICK_LISTENS[selectedQl]?.title || currentTrackTitle;
-            else if (selectedTrack === "long") currentTrackTitle = "In-depth Chapter Coverage";
-            else if (selectedTrack === "short") currentTrackTitle = "Brief Recap of Key Points";
-
-            // Update waveform color ref so direct DOM updates use correct color
-            waveformColorRef.current = selectedTrack === 'dl' ? '#CB30E0' : th.color;
-
             return (
-              <div style={{
-                display: "flex", alignItems: "center", gap: "20px", width: "100%",
-                background: "#ffffff", padding: "12px 20px", borderRadius: "20px",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.06)", border: `1.5px solid ${th.color}30`,
-                marginBottom: "0px"
-              }}>
-                {/* Track info */}
-                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0, minWidth: "200px" }}>
-                  <div style={{
-                    width: "48px", height: "48px", borderRadius: "50%",
-                    background: th.light, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    border: `1.5px solid ${th.color}40`
-                  }}>
-                    {th.icon}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column" }}>
-                    <span style={{ fontSize: "13px", fontWeight: 600, color: "#1e293b", lineHeight: "1.3", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {currentTrackTitle || "Select a track"}
-                    </span>
-                    <span style={{ fontSize: "11.5px", fontWeight: 600, color: th.color }}>
-                      {th.label}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Controls */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+              <div className="pod-bar">
+                <div className="pod-bar-ctrls">
                   <button
-                    onClick={() => { if (audioRef.current) { audioRef.current.currentTime = Math.max(audioRef.current.currentTime - 10, 0); setCurrentTime(audioRef.current.currentTime); } }}
-                    style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", transition: "all 0.2s", padding: 0 }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = th.color; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
+                    type="button"
+                    className="pod-bar-btn"
                     title="Rewind 10s"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="11 19 2 12 11 5 11 19" /><polygon points="22 19 13 12 22 5 22 19" /></svg>
-                  </button>
-
-                  <button
-                    onClick={() => { if (available) { isPlaying ? handlePause() : handlePlay(); } else { ttsPlaybackState === "playing" ? handleTtsPause() : handleTtsPlay(); } }}
-                    style={{ width: "50px", height: "50px", borderRadius: "50%", background: selectedTrack === 'dl' ? '#CB30E0' : th.color, color: "#fff", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0, boxShadow: `0 4px 15px ${selectedTrack === 'dl' ? 'rgba(203, 48, 224, 0.35)' : th.shadow}`, transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)" }}
-                    onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = `0 6px 20px ${selectedTrack === 'dl' ? 'rgba(203, 48, 224, 0.5)' : th.shadow.replace('0.35)', '0.5)')}`; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = `0 4px 15px ${selectedTrack === 'dl' ? 'rgba(203, 48, 224, 0.35)' : th.shadow}`; }}
-                    title={(available ? isPlaying : ttsPlaybackState === "playing") ? "Pause" : "Play"}
-                  >
-                    {(available ? isPlaying : ttsPlaybackState === "playing") ? (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                    ) : (
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "3px" }}><path d="M8 5v14l11-7z" /></svg>
-                    )}
-                  </button>
-
-                  <button
-                    onClick={() => { if (audioRef.current) { audioRef.current.currentTime = Math.min(audioRef.current.currentTime + 10, audioRef.current.duration || 9999); setCurrentTime(audioRef.current.currentTime); } }}
-                    style={{ background: "transparent", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", width: "36px", height: "36px", borderRadius: "50%", transition: "all 0.2s", padding: 0 }}
-                    onMouseEnter={(e) => { e.currentTarget.style.color = th.color; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.color = "#94a3b8"; }}
-                    title="Fast Forward 10s"
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="13 19 22 12 13 5 13 19" /><polygon points="2 19 11 12 2 5 2 19" /></svg>
-                  </button>
-                </div>
-
-                {/* Vertical Bar Waveform Progress — bars rendered once, updated via direct DOM refs */}
-                <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "6px", position: "relative" }}>
-                  <div
-                    style={{
-                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                      height: "36px", cursor: "pointer", position: "relative", width: "100%"
-                    }}
-                    onClick={(e) => {
+                    aria-label="Rewind 10 seconds"
+                    onClick={() => {
                       if (audioRef.current && displayDuration) {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        const pct = (e.clientX - rect.left) / rect.width;
-                        audioRef.current.currentTime = pct * displayDuration;
-                        setCurrentTime(audioRef.current.currentTime);
+                        const targetTime = Math.max(audioRef.current.currentTime - 10, 0);
+                        audioRef.current.currentTime = targetTime;
+                        updateProgress(targetTime, displayDuration);
                       }
                     }}
                   >
-                    {/* Static waveform bars — DOM-updated, never re-rendered by React */}
-                    <StaticWaveformBars waveformRef={waveformRef} />
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="pod-bar-btn pod-bar-play"
+                    title={playing ? "Pause" : "Play"}
+                    aria-label={playing ? "Pause" : "Play"}
+                    onClick={() => { if (available) { isPlaying ? handlePause() : handlePlay(); } else { ttsPlaybackState === "playing" ? handleTtsPause() : handleTtsPlay(); } }}
+                  >
+                    {playing ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="9.5" /><line x1="10" y1="8.5" x2="10" y2="15.5" strokeLinecap="round" /><line x1="14" y1="8.5" x2="14" y2="15.5" strokeLinecap="round" /></svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><circle cx="12" cy="12" r="9.5" /><path d="M10 8.5v7l5.5-3.5z" fill="currentColor" /></svg>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="pod-bar-btn"
+                    title="Forward 10s"
+                    aria-label="Forward 10 seconds"
+                    onClick={() => {
+                      if (audioRef.current && displayDuration) {
+                        const targetTime = Math.min(audioRef.current.currentTime + 10, displayDuration);
+                        audioRef.current.currentTime = targetTime;
+                        updateProgress(targetTime, displayDuration);
+                      }
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+                  </button>
+                </div>
 
-                    {/* Playhead Circle — position updated directly via ref */}
-                    <div ref={playheadRef} style={{
-                      position: "absolute",
-                      left: `calc(${progressPct}% - 7px)`,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "50%",
-                      background: "#ffffff",
-                      border: `4px solid ${th.color}`,
-                      pointerEvents: "none",
-                      boxShadow: "0 1px 3px rgba(0,0,0,0.15)"
-                    }} />
+                <button
+                  type="button"
+                  className="pod-bar-btn pod-bar-vol"
+                  title={isMutedUi ? "Unmute" : "Mute"}
+                  aria-label={isMutedUi ? "Unmute" : "Mute"}
+                  onClick={() => {
+                    const next = !isMutedUi;
+                    setIsMutedUi(next);
+                    if (audioRef.current) audioRef.current.muted = next;
+                  }}
+                >
+                  {isMutedUi ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><line x1="22" y1="9" x2="16" y2="15" /><line x1="16" y1="9" x2="22" y2="15" /></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" /><path d="M15.54 8.46a5 5 0 0 1 0 7.07" /><path d="M19.07 4.93a10 10 0 0 1 0 14.14" /></svg>
+                  )}
+                </button>
+
+                <div
+                  className="pod-seek"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    seekTo((e.clientX - rect.left) / rect.width);
+                  }}
+                >
+                  <div className="pod-seek-track">
+                    <div ref={progressFillRef} className="pod-seek-fill" style={{ width: `${progressPct}%` }} />
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <span ref={currentTimeDisplayRef} style={{ fontSize: "11px", fontWeight: 600, fontFamily: "ui-monospace, monospace", color: th.color }}>
-                      {fmtTime(displayCurrent)}
-                    </span>
-                    <span style={{ fontSize: "11px", fontWeight: 600, fontFamily: "ui-monospace, monospace", color: "#94a3b8" }}>
-                      {displayDuration ? fmtTime(displayDuration) : "--:--"}
-                    </span>
-                  </div>
-                  {/* Hidden range input for accessibility/seeking */}
+                  <div ref={playheadRef} className="pod-seek-handle" style={{ left: `calc(${progressPct}% - 7px)` }} />
+                  {/* Hidden range input for accessibility/keyboard seeking */}
                   <input
                     type="range" min={0} max={displayDuration || 0} step={0.5} value={displayCurrent}
-                    onChange={handleSeek} className="seek-slider" aria-label="Seek"
-                    style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "32px", opacity: 0, cursor: "pointer" }}
+                    onChange={handleSeek} className="pod-seek-input" aria-label="Seek"
                   />
                 </div>
 
-                {/* Volume */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                  </svg>
-                  <input
-                    type="range" min={0} max={1} step={0.05}
-                    defaultValue={1}
-                    onChange={(e) => { if (audioRef.current) audioRef.current.volume = parseFloat(e.target.value); }}
-                    style={{ width: "70px", accentColor: th.color, cursor: "pointer" }}
-                    aria-label="Volume"
-                  />
-                </div>
+                <span className="pod-time">
+                  <span ref={currentTimeDisplayRef}>{fmtTime(displayCurrent)}</span>
+                  {" / "}
+                  {displayDuration ? fmtTime(displayDuration) : "--:--"}
+                </span>
               </div>
             );
           })()}
         </div>
-      </div>
 
-      {/* ── Scrollable transcript ── */}
-      <div className="podcast-transcript-scroll" ref={transcriptRef}>
-        <div className="transcript-toggle">
-          <h4>Transcript</h4>
-        </div>
-        {transcript ? (
-          <div
-            className="transcript-box transcript-body"
-            ref={transcriptBoxRef}
-          >
-            {transcriptTokens.map((token, idx) => {
-              const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
-              const isCurrentActive = isWord && idx === activeTokenIdx;
-              return (
-                <span
-                  key={idx}
-                  className={
-                    isCurrentActive
-                      ? "transcript-word active"
-                      : isWord
-                        ? "transcript-word"
-                        : undefined
-                  }
-                >
-                  {token}
-                </span>
-              );
-            })}
+        {/* ── Scrollable transcript ── */}
+        <div className="podcast-transcript-scroll" ref={transcriptRef}>
+          <div className="transcript-toggle">
+            <h4>Transcript</h4>
           </div>
-        ) : (
-          <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-            Loading transcript…
-          </p>
-        )}
+          {transcript ? (
+            <div
+              className="transcript-box transcript-body"
+              ref={transcriptBoxRef}
+            >
+              {transcriptTokens.map((token, idx) => {
+                const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
+                return (
+                  <span
+                    key={idx}
+                    className={isWord ? "transcript-word" : undefined}
+                  >
+                    {token}
+                  </span>
+                );
+              })}
+            </div>
+          ) : (
+            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
+              Loading transcript…
+            </p>
+          )}
+        </div>
       </div>
     </div>
   );

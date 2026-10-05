@@ -2327,12 +2327,17 @@
 .transcript-box {
   min-height: 40px;
   margin-top: 4px;
-  line-height: 1.9;
-  font-size: var(--fs-base);
-  color: var(--text-primary);
+  line-height: 1.85;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #0f172a;
   white-space: pre-wrap;
   word-break: break-word;
   position: relative;
+}
+
+[data-theme*="dark"] .transcript-box {
+  color: #f8fafc;
 }
 
 .transcript-body {
@@ -2343,26 +2348,28 @@
   display: inline;
   padding: 1px 2px;
   border-radius: 4px;
-  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, text-shadow 0.15s ease;
+  color: inherit;
+  transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
 }
 
 .transcript-word.active {
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
+  background: #fde047;
+  color: #0f172a;
   font-weight: 700;
-  border-radius: 4px;
-  padding: 1px 4px;
-  box-shadow: 0 0 10px rgba(59, 130, 246, 0.32);
-  text-shadow: 0 0 8px rgba(59, 130, 246, 0.4);
-  border: 1px solid rgba(59, 130, 246, 0.28);
+  border-radius: 6px;
+  padding: 2px 6px;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.4);
+  border: 1px solid rgba(202, 138, 4, 0.4);
 }
 
 [data-theme*="dark"] .transcript-word.active {
-  background: rgba(59, 130, 246, 0.22);
-  color: #93c5fd;
-  box-shadow: 0 0 12px rgba(96, 165, 250, 0.45);
-  text-shadow: 0 0 8px rgba(147, 197, 253, 0.6);
-  border: 1px solid rgba(96, 165, 250, 0.4);
+  background: #eab308;
+  color: #09090b;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 2px 6px;
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.6);
+  border: 1px solid #facc15;
 }
 
 .transcript-phrase-active {
@@ -2475,14 +2482,53 @@
   box-shadow: 0 3px 10px rgba(124, 58, 237, 0.28);
 }
 
-mark.reading-mark {
-  background: #7c3aed;
-  color: #fff;
+::highlight(reading-active-word) {
+  background-color: #fde047;
+  color: #0f172a;
+}
+[data-theme*="dark"] ::highlight(reading-active-word) {
+  background-color: #eab308;
+  color: #09090b;
+}
+
+.reading-highlight-overlay {
+  position: absolute;
+  pointer-events: none;
+  background: rgba(253, 224, 71, 0.40);
+  border-radius: 5px;
+  border: 2px solid #eab308;
+  box-shadow: 0 2px 10px rgba(234, 179, 8, 0.35);
+  box-sizing: border-box;
+  z-index: 2;
+  transition: top 0.08s ease-out, left 0.08s ease-out, width 0.08s ease-out, height 0.08s ease-out;
+}
+
+[data-theme*="dark"] .reading-highlight-overlay {
+  background: rgba(234, 179, 8, 0.45);
+  border: 2px solid #facc15;
+  box-shadow: 0 0 14px rgba(234, 179, 8, 0.55);
+}
+
+/* Read-aloud active word — matches .transcript-word.active (podcasts) */
+mark.reading-mark,
+mark.reading-mark.reading-phrase-active {
+  background: rgba(79, 123, 100, 0.07);
+  color: inherit;
   border-radius: 6px;
-  padding: 0.1rem 0.25rem;
-  box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
+  padding: 0 3px;
+  border: 1px solid rgba(79, 123, 100, 0.35);
+  box-shadow: none;
+  text-shadow: none;
   font-style: inherit;
   font-weight: inherit;
+}
+
+[data-theme*="dark"] mark.reading-mark {
+  background: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.45);
+  text-shadow: 0 0 8px rgba(147, 197, 253, 0.6);
+  border: 1px solid rgba(96, 165, 250, 0.4);
 }
 
 .qbank-card--highlighted {
@@ -3224,7 +3270,7 @@ mark.reading-mark {
   flex-direction: column;
   gap: 16px;
   width: 100%;
-  max-width: 980px;
+  max-width: 1200px;
   margin: 0 auto;
   flex: 1;
   min-height: 0;
@@ -4650,4 +4696,114 @@ mark.reading-mark {
 .fm-active-content .quiz-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+/* ════════════════════════════════════════════════════════════════
+   Podcast player — design spec (track cards, shell, bar, transcript)
+/* One bordered shell holding the player bar + transcript */
+.podcast-sticky-top { border-bottom: none; }
+.pod-shell {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #a9c4b2;
+  border-radius: 12px;
+  background: #f7faf8;
+  padding: 10px 10px 0;
+}
+.pod-shell .podcast-player-real { padding: 0; flex-shrink: 0; }
+.pod-shell .podcast-transcript-scroll {
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 14px 6px 16px;
+}
+
+/* Player bar */
+.pod-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 7px 16px 7px 22px;
+  background: #eef2ef;
+  border-radius: 8px;
+}
+.pod-bar-ctrls { display: flex; align-items: center; gap: 6px; }
+.pod-bar-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; padding: 0;
+  border: none; background: transparent; border-radius: 50%;
+  color: #4b5563; cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.pod-bar-btn:hover { color: #4F7B64; background: rgba(79, 123, 100, 0.1); }
+.pod-bar-play { width: 30px; height: 30px; }
+.pod-bar-vol { margin-left: 18px; }
+.pod-seek {
+  position: relative;
+  flex: 1;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.pod-seek-track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: #cfd8d2;
+  overflow: hidden;
+}
+.pod-seek-fill {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: #5b7d68;
+  border-radius: 2px;
+}
+.pod-seek-handle {
+  position: absolute;
+  top: 50%;
+  width: 14px; height: 14px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  /* two slim vertical bars ▮▮ */
+  background:
+    linear-gradient(#5b7d68, #5b7d68) 3px 1px / 3.5px 12px no-repeat,
+    linear-gradient(#5b7d68, #5b7d68) 7.5px 1px / 3.5px 12px no-repeat;
+}
+.pod-seek-input {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; margin: 0;
+}
+.pod-time {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4F7B64;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Transcript */
+.pod-shell .transcript-toggle { margin-bottom: 10px; }
+.pod-shell .transcript-toggle h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e3a2b;
+  letter-spacing: -0.01em;
+}
+.pod-shell .transcript-box {
+  font-size: 14.5px;
+  font-weight: 500;
+  line-height: 1.85;
+  color: #0f172a;
+}
+[data-theme*="dark"] .pod-shell .transcript-box {
+  color: #f8fafc;
+}
+
+@media (max-width: 760px) {
+  .pod-bar-vol { margin-left: 4px; }
 }

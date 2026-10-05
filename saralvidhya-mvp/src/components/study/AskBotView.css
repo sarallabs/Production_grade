@@ -121,6 +121,8 @@
   text-align: left;
   width: 100%;
   box-sizing: border-box;
+  flex-shrink: 0;
+  line-height: 1.5;
 }
 
 .saral-history-item:hover {

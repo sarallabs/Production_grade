@@ -93,32 +93,44 @@
   width: 100% !important;
 }
 
-.sv-subject-card--entomology .sv-progress-segment {
+.sv-subject-card--entomology .sv-progress-segment,
+.sv-progress-segment {
   flex: 1 !important;
   height: 7px !important;
   border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.22) !important;
   transition: background 0.3s ease !important;
 }
 
-/* Segment colors precisely extracted from reference screenshot */
-.sv-subject-card--entomology .sv-progress-segment:nth-child(1) {
+/* Dynamic filled segment colors matching the warm design palette */
+.sv-subject-card--entomology .sv-progress-segment.filled,
+.sv-progress-segment.filled {
   background: #C69E86 !important;
 }
 
-.sv-subject-card--entomology .sv-progress-segment:nth-child(2) {
-  background: #E5C3B0 !important;
+.sv-subject-card--entomology .sv-progress-segment.filled:nth-child(1),
+.sv-progress-segment.filled:nth-child(1) {
+  background: #C69E86 !important;
 }
 
-.sv-subject-card--entomology .sv-progress-segment:nth-child(3) {
-  background: #F7E5D9 !important;
+.sv-subject-card--entomology .sv-progress-segment.filled:nth-child(2),
+.sv-progress-segment.filled:nth-child(2) {
+  background: #D9B39B !important;
 }
 
-.sv-subject-card--entomology .sv-progress-segment:nth-child(4) {
-  background: #FFFFFF !important;
+.sv-subject-card--entomology .sv-progress-segment.filled:nth-child(3),
+.sv-progress-segment.filled:nth-child(3) {
+  background: #E8C8B5 !important;
 }
 
-.sv-subject-card--entomology .sv-progress-segment:nth-child(n+5) {
-  background: #FFFFFF !important;
+.sv-subject-card--entomology .sv-progress-segment.filled:nth-child(4),
+.sv-progress-segment.filled:nth-child(4) {
+  background: #F4DDCF !important;
+}
+
+.sv-subject-card--entomology .sv-progress-segment.filled:nth-child(n+5),
+.sv-progress-segment.filled:nth-child(n+5) {
+  background: #F4DDCF !important;
 }
 
 /* Meta / Badges */

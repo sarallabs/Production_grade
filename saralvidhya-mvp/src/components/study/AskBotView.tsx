@@ -103,6 +103,7 @@ export default function AskBotView({
   const [micError, setMicError] = useState<string | null>(null);
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const lastBotMsgRef = useRef<HTMLDivElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
   const sessionStartingPromiseRef = useRef<Promise<SpeechSession> | null>(null);
   const isListeningRef = useRef(false);
@@ -134,9 +135,15 @@ export default function AskBotView({
     localStorage.setItem(historyStorageKey, JSON.stringify(historyItems));
   }, [historyItems, historyStorageKey]);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll: show the loading dots / user question at the bottom, but once a
+  // bot answer has arrived, keep the view at the TOP of that answer so long
+  // answers can be read from the start.
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (last.role === "bot" && !last.loading && lastBotMsgRef.current) {
+      lastBotMsgRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
       chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
@@ -628,6 +635,7 @@ export default function AskBotView({
                   </div>
                 ) : (
                   <div
+                    ref={i === messages.length - 1 ? lastBotMsgRef : undefined}
                     className="saral-msg-bot"
                     role="article"
                     aria-label="Saral response"

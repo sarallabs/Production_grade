@@ -12,6 +12,41 @@ export interface QuestionBankEntry {
   question: string;
   shortAnswer: string;
   longAnswer: string;
+  tenMarkAnswer?: string;
+}
+
+const PILLAR_TITLES: Record<string, string> = {
+  pillar_1_nomenclature: 'Introduction & Nomenclature',
+  pillar_2_mechanisms_and_kinetics: 'Mechanisms & Kinetics',
+  pillar_3_comparative_matrix: 'Comparative Matrix',
+  pillar_4_agronomic_applications: 'Agronomic Applications',
+  pillar_5_diagnostic_synthesis: 'Diagnostic Synthesis',
+};
+
+/** Converts the nested `essay_answer_10mark` JSON object (or plain string/array) into markdown. */
+function formatTenMarkAnswer(raw: any): string {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) return raw.join('\n\n');
+  if (typeof raw !== 'object') return String(raw);
+
+  const parts: string[] = [];
+  const rubric = raw.marking_rubric;
+  if (rubric && typeof rubric === 'object') {
+    const rows = Object.entries(rubric)
+      .filter(([k]) => k !== 'total_marks')
+      .map(([k, v]) => `| ${PILLAR_TITLES[k] || k.replace(/_/g, ' ')} | ${v} |`);
+    const total = rubric.total_marks ? `| **Total** | **${rubric.total_marks}** |` : '';
+    parts.push(['**Marking Scheme**', '', '| Section | Marks |', '| :--- | :--- |', ...rows, total].filter((l) => l !== undefined).join('\n'));
+  }
+  for (const [key, value] of Object.entries(raw)) {
+    if (key === 'marking_rubric' || typeof value !== 'string' || !value.trim()) continue;
+    const title = PILLAR_TITLES[key] || key.replace(/_/g, ' ');
+    // ASCII flow diagrams need a code fence to keep their alignment
+    const body = /^\s+\|\s*$/m.test(value) ? '```\n' + value + '\n```' : value;
+    parts.push(`### ${title}\n\n${body}`);
+  }
+  return parts.join('\n\n');
 }
 
 function normalizeText(text: string): string {
@@ -161,6 +196,7 @@ export function parseQuestionBankMarkdown(
             question: qText,
             shortAnswer: shortAns,
             longAnswer: longAns || shortAns,
+            tenMarkAnswer: formatTenMarkAnswer(q.essay_answer_10mark || q.long_answer_10mark || q.ten_mark_answer || q.answer_10mark) || undefined,
           };
         });
       }

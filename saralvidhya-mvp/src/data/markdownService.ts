@@ -33,7 +33,6 @@ function getGcsApiUrl(
     'glossary.md':      `${base}/read/glossary`,
     'mindmap.md':       `${base}/learn/mindmap`,
     'mindmap.json':     `${base}/learn/mindmap`,
-    'study_plan.md':    `${base}/learn/study_plan`,
     'question_bank.md':   `${base}/practice/question_bank`,
     'question_bank.json': `${base}/practice/question_bank`,
     'mock_test.md':       `${base}/practice/mock_test`,
@@ -117,6 +116,8 @@ export function getResourceFileCandidates(
       'detailed_view.md', 'Detailed Notes'
     ],
     'question_bank.md': [
+      'question_bank.json',
+      'Practice/Question Bank/question_bank.json',
       'question_bank.md',
       'Practice/Question Bank/question_bank.md',
       'Practice/Question Bank/questions.md',
@@ -297,7 +298,7 @@ export async function getResourceContent(
     const apiUrl = getGcsApiUrl(subject, chDir, resourceName, level);
     if (apiUrl) {
       try {
-        const res = await fetch(apiUrl);
+        const res = await fetch(apiUrl, { cache: 'no-cache' });
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {

@@ -296,8 +296,10 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '16px', flexShrink: 0 }}>
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#e0e7ff', color: '#4f46e5', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.section}</span>
               <span style={{ background: '#d1fae5', color: '#059669', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.chapter}</span>
+              {question.year && (
+                <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>📅 {question.year}</span>
+              )}
             </div>
             <span style={{ background: '#e2e8f0', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>
               {question.marks}M
