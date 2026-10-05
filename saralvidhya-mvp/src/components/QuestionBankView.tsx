@@ -115,8 +115,8 @@ export default function QuestionBankView({
                 chapterNumber,
                 chapterName: chapterLabel,
                 question: q.q,
-                shortAnswer: (Array.isArray(q.answer) ? q.answer : [q.answer])
-                  .map((i) => q.options[i as number])
+                shortAnswer: (Array.isArray((q as any).answer) ? (q as any).answer : [(q as any).answer])
+                  .map((i: any) => (q as any).options ? (q as any).options[i as number] : String(i ?? ''))
                   .filter(Boolean)
                   .join('; '),
                 longAnswer: q.explanation || '',
