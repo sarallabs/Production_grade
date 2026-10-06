@@ -24,6 +24,7 @@ saralvidhya-medha/firebase-service-account.json
 **/service-account*.json
 CREDENTIALS_PRIVATE/
 CREDENTIALS_PRIVATE.zip
+backend_db_envs.zip
 *.zip
 
 # Built/compiled bundles (contain embedded API keys)
