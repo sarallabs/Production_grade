@@ -300,9 +300,9 @@ export default function FlashcardsView({
             width: "100%",
             maxWidth: "min(96%, 1240px)",
             flex: 1,
-            height: "calc(100vh - 120px)",
-            maxHeight: "820px",
-            minHeight: "440px",
+            height: "calc((100vh - 120px) * 0.9)",
+            maxHeight: "738px",
+            minHeight: "396px",
             borderRadius: "24px",
             border: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
