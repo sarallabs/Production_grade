@@ -2857,7 +2857,7 @@ export default function StudyTable() {
                         </div>
                       </div>
 
-                      {/* RIGHT SIDE / END OF PAGE: LOGOUT & PIN ACTIONS */}
+                      {/* RIGHT SIDE / END OF PAGE: PIN & LOGOUT ACTIONS */}
                       <div
                         style={{
                           display: 'flex',
@@ -2867,43 +2867,6 @@ export default function StudyTable() {
                           paddingRight: '6px',
                         }}
                       >
-                        {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
-                        <button
-                          type="button"
-                          onClick={() => navigate("/")}
-                          title="Quit to Landing Page"
-                          aria-label="Quit to Landing Page"
-                          style={{
-                            width: "38px",
-                            height: "38px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #EF4444",
-                            background: "#FEF2F2",
-                            color: "#EF4444",
-                            cursor: "pointer",
-                            flexShrink: 0,
-                            boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
-                            transition: "all 0.2s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
-                          }}
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
-                            <polyline points="15 8 19 12 15 16" />
-                            <line x1="9" y1="12" x2="19" y2="12" />
-                          </svg>
-                        </button>
-
                         {/* Pin Button (Clean tilted pushpin without circle matching reference) */}
                         <button
                           type="button"
@@ -2942,6 +2905,43 @@ export default function StudyTable() {
                           >
                             <line x1="12" y1="17" x2="12" y2="22" />
                             <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                          </svg>
+                        </button>
+
+                        {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
+                        <button
+                          type="button"
+                          onClick={() => navigate("/")}
+                          title="Quit to Landing Page"
+                          aria-label="Quit to Landing Page"
+                          style={{
+                            width: "38px",
+                            height: "38px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            border: "1.5px solid #EF4444",
+                            background: "#FEF2F2",
+                            color: "#EF4444",
+                            cursor: "pointer",
+                            flexShrink: 0,
+                            boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
+                            transition: "all 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                          }}
+                        >
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                            <polyline points="15 8 19 12 15 16" />
+                            <line x1="9" y1="12" x2="19" y2="12" />
                           </svg>
                         </button>
                       </div>
