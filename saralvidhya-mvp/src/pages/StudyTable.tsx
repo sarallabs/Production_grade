@@ -781,9 +781,10 @@ export default function StudyTable() {
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
   const [isToolbarPinned, setIsToolbarPinned] = useState<boolean>(() => {
     try {
-      return localStorage.getItem("sv_study_toolbar_pinned") === "true";
+      const stored = localStorage.getItem("sv_study_toolbar_pinned");
+      return stored !== null ? stored === "true" : true;
     } catch {
-      return false;
+      return true;
     }
   });
   const [isToolbarOpen, setIsToolbarOpen] = useState<boolean>(() => {
@@ -2855,6 +2856,47 @@ export default function StudyTable() {
                           paddingRight: '6px',
                         }}
                       >
+                        {/* Pin Button (Clean tilted pushpin without circle matching reference) */}
+                        <button
+                          type="button"
+                          onClick={toggleToolbarPin}
+                          title={isToolbarPinned ? "Unpin toolbar (auto-collapse on mouse leave)" : "Pin toolbar (keep open)"}
+                          aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            padding: "6px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            color: "#315443",
+                            flexShrink: 0,
+                            transition: "transform 0.2s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                          }}
+                        >
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill={isToolbarPinned ? "#315443" : "none"}
+                            stroke="#315443"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ transform: "rotate(-45deg)" }}
+                          >
+                            <line x1="12" y1="17" x2="12" y2="22" />
+                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                          </svg>
+                        </button>
+
                         {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
                         <button
                           type="button"
@@ -2889,47 +2931,6 @@ export default function StudyTable() {
                             <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
                             <polyline points="15 8 19 12 15 16" />
                             <line x1="9" y1="12" x2="19" y2="12" />
-                          </svg>
-                        </button>
-
-                        {/* Pin Button (Clean tilted pushpin without circle matching reference) */}
-                        <button
-                          type="button"
-                          onClick={toggleToolbarPin}
-                          title={isToolbarPinned ? "Unpin toolbar (auto-hide on mouse leave)" : "Pin toolbar (keep open)"}
-                          aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
-                          style={{
-                            background: "transparent",
-                            border: "none",
-                            padding: "6px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                            color: "#315443",
-                            flexShrink: 0,
-                            transition: "transform 0.2s ease",
-                          }}
-                          onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
-                          }}
-                        >
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill={isToolbarPinned ? "#315443" : "none"}
-                            stroke="#315443"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{ transform: "rotate(-45deg)" }}
-                          >
-                            <line x1="12" y1="17" x2="12" y2="22" />
-                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
                           </svg>
                         </button>
                       </div>
@@ -3265,8 +3266,7 @@ export default function StudyTable() {
                         transition: all 0.18s ease; white-space: nowrap;
                         line-height: 1;
                       }
-                      .sv-hdr-mode-btn:hover { border-color: #94a3b8; color: #0f172a; background: #f8fafc; }
-                      .sv-hdr-mode-btn.active-quick    { background: #3b82f6; border-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
+                      .sv-hdr-mode-btn.active-quick,
                       .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
                       .sv-hdr-mode-btn.active-plan     { background: #4f46e5; border-color: #4f46e5; color: #ffffff; box-shadow: 0 2px 8px rgba(79,70,229,0.4); }
                     `}</style>
