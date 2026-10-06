@@ -4712,13 +4712,294 @@ mark.reading-mark.reading-phrase-active {
   background: #f7faf8;
   padding: 10px 10px 0;
 }
-.pod-shell .podcast-player-real { padding: 0; flex-shrink: 0; }
+.pod-shell .podcast-player-real { padding: 0; flex-shrink: 0; display: flex; justify-content: center; width: 100%; }
 .pod-shell .podcast-transcript-scroll {
   margin-top: 0;
   border: none;
   border-radius: 0;
   background: transparent;
   padding: 14px 6px 16px;
+}
+
+/* Custom Audio Player - Sage Minimalist Design from Screenshot */
+.pod-custom-player {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 25%;
+  min-width: 285px;
+  max-width: 100%;
+  padding: 8px 12px 9px 12px;
+  background: #e3e8e5;
+  border-radius: 8px;
+  box-sizing: border-box;
+  margin: 0 auto 8px auto;
+}
+
+[data-theme*="dark"] .pod-custom-player {
+  background: #1e2621;
+}
+
+/* Row 1: Timeline Wrap (Scrubber) */
+.pod-custom-timeline-wrap {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.pod-custom-timeline-track {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  background: #c9d5ce;
+  border-radius: 999px;
+  overflow: visible;
+}
+
+[data-theme*="dark"] .pod-custom-timeline-track {
+  background: #334239;
+}
+
+.pod-custom-timeline-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #467360;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+[data-theme*="dark"] .pod-custom-timeline-fill {
+  background: #528972;
+}
+
+/* Distinctive Double Vertical Bar Thumb (||) */
+.pod-custom-timeline-thumb {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  z-index: 2;
+  transition: transform 0.08s ease;
+}
+
+.pod-custom-thumb-bar {
+  display: block;
+  width: 2.8px;
+  height: 13px;
+  background: #467360;
+  border-radius: 0.5px;
+}
+
+[data-theme*="dark"] .pod-custom-thumb-bar {
+  background: #528972;
+}
+
+.pod-custom-timeline-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* Row 2: Controls row */
+.pod-custom-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.pod-custom-left-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pod-custom-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 2px;
+  color: #467360;
+  cursor: pointer;
+  border-radius: 4px;
+  line-height: 1;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.pod-custom-icon-btn:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+}
+
+.pod-custom-icon-btn:active {
+  transform: scale(0.95);
+}
+
+[data-theme*="dark"] .pod-custom-icon-btn {
+  color: #6da78e;
+}
+
+/* Circular Outlined Play/Pause Button */
+.pod-custom-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 1.6px solid #467360;
+  background: transparent;
+  color: #467360;
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.pod-custom-play-btn:hover {
+  background: rgba(70, 115, 96, 0.08);
+  transform: scale(1.06);
+}
+
+.pod-custom-play-btn:active {
+  transform: scale(0.94);
+}
+
+[data-theme*="dark"] .pod-custom-play-btn {
+  border-color: #6da78e;
+  color: #6da78e;
+}
+
+[data-theme*="dark"] .pod-custom-play-btn:hover {
+  background: rgba(109, 167, 142, 0.15);
+}
+
+/* Custom Volume Slider */
+.pod-custom-vol-slider-wrap {
+  position: relative;
+  width: 44px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  margin-left: 1px;
+}
+
+.pod-custom-vol-track {
+  position: relative;
+  width: 100%;
+  height: 1.5px;
+  background: #a3b8ad;
+}
+
+[data-theme*="dark"] .pod-custom-vol-track {
+  background: #527163;
+}
+
+.pod-custom-vol-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #467360;
+}
+
+[data-theme*="dark"] .pod-custom-vol-fill {
+  background: #6da78e;
+}
+
+.pod-custom-vol-dot {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 4.8px;
+  height: 4.8px;
+  border-radius: 50%;
+  background: #467360;
+  pointer-events: none;
+}
+
+[data-theme*="dark"] .pod-custom-vol-dot {
+  background: #6da78e;
+}
+
+.pod-custom-vol-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0 !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+  margin: 0;
+  cursor: pointer;
+  z-index: 3;
+}
+
+/* Right Controls: Speed Pill & Time */
+.pod-custom-right-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pod-custom-speed-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #d4ded7;
+  color: #384f43;
+  font-size: 10.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease;
+}
+
+.pod-custom-speed-pill:hover {
+  background: #c6d3cb;
+}
+
+[data-theme*="dark"] .pod-custom-speed-pill {
+  background: #2a3830;
+  color: #a3c2b2;
+}
+
+.pod-custom-time {
+  font-size: 11px;
+  font-weight: 500;
+  color: #467360;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+[data-theme*="dark"] .pod-custom-time {
+  color: #6da78e;
 }
 
 /* Spotify-Inspired Modern Podcast Player */
