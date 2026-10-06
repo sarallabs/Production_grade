@@ -719,7 +719,7 @@ export default function PodcastsView({
 
     // Update time display directly
     if (currentTimeDisplayRef.current) {
-      const m = Math.floor(time / 60);
+      const m = String(Math.floor(time / 60)).padStart(2, "0");
       const sec = String(Math.floor(time % 60)).padStart(2, "0");
       currentTimeDisplayRef.current.textContent = `${m}:${sec}`;
     }
@@ -1148,10 +1148,10 @@ export default function PodcastsView({
     }
   };
 
-  const fmtTime = (s: number, fallback = "0:00") => {
+  const fmtTime = (s: number, fallback = "00:00") => {
     if (s === undefined || s === null || isNaN(s) || !isFinite(s))
       return fallback;
-    const m = Math.floor(s / 60);
+    const m = String(Math.floor(s / 60)).padStart(2, "0");
     const sec = String(Math.floor(s % 60)).padStart(2, "0");
     return `${m}:${sec}`;
   };
@@ -1665,69 +1665,50 @@ export default function PodcastsView({
               }
             };
             return (
-              <div className="pod-spotify-player">
-                {/* 1. Track Info (Left) */}
-                <div className="pod-spotify-info">
-                  <div className="pod-spotify-artwork">
-                    {playing ? (
-                      <div className="pod-equalizer-bars">
-                        <span className="eq-bar eq-1" />
-                        <span className="eq-bar eq-2" />
-                        <span className="eq-bar eq-3" />
-                        <span className="eq-bar eq-4" />
-                      </div>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                        <line x1="12" y1="19" x2="12" y2="22" />
-                      </svg>
-                    )}
+              <div className="pod-custom-player">
+                {/* Row 1: Full-width Scrubber Timeline with Double Bar Handle */}
+                <div
+                  className="pod-custom-timeline-wrap"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    seekTo((e.clientX - rect.left) / rect.width);
+                  }}
+                >
+                  <div className="pod-custom-timeline-track">
+                    <div
+                      ref={progressFillRef}
+                      className="pod-custom-timeline-fill"
+                      style={{ width: `${progressPct}%` }}
+                    />
                   </div>
-                  <div className="pod-spotify-meta">
-                    <span className="pod-spotify-title" title={currentTrackTitle}>
-                      {currentTrackTitle}
-                    </span>
-                    <span className="pod-spotify-sub">
-                      {chapterName} · {selectedTrack === "ql" ? "Quick Listen" : selectedTrack === "dl" ? "Detailed Listen" : "Microcasts"}
-                    </span>
+                  <div
+                    ref={playheadRef}
+                    className="pod-custom-timeline-thumb"
+                    style={{ left: `${progressPct}%` }}
+                  >
+                    <span className="pod-custom-thumb-bar" />
+                    <span className="pod-custom-thumb-bar" />
                   </div>
+                  <input
+                    type="range"
+                    min={0}
+                    max={displayDuration || 0}
+                    step={0.5}
+                    value={displayCurrent}
+                    onChange={handleSeek}
+                    className="pod-custom-timeline-input"
+                    aria-label="Seek"
+                  />
                 </div>
 
-                {/* 2. Main Center Controls (Scrubber Bar Upside, Controls Downside) */}
-                <div className="pod-spotify-center">
-                  {/* Scrubber Progress Bar - Upside */}
-                  <div className="pod-spotify-scrubber-row">
-                    <span className="pod-time-current" ref={currentTimeDisplayRef}>
-                      {fmtTime(displayCurrent)}
-                    </span>
-                    <div
-                      className="pod-spotify-scrubber"
-                      onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        seekTo((e.clientX - rect.left) / rect.width);
-                      }}
-                    >
-                      <div className="pod-scrubber-track">
-                        <div ref={progressFillRef} className="pod-scrubber-fill" style={{ width: `${progressPct}%` }} />
-                      </div>
-                      <div ref={playheadRef} className="pod-scrubber-thumb" style={{ left: `${progressPct}%` }} />
-                      <input
-                        type="range" min={0} max={displayDuration || 0} step={0.5} value={displayCurrent}
-                        onChange={handleSeek} className="pod-scrubber-input" aria-label="Seek"
-                      />
-                    </div>
-                    <span className="pod-time-total">
-                      {displayDuration ? fmtTime(displayDuration) : "--:--"}
-                    </span>
-                  </div>
-
-                  {/* Playback Controls - Downside: Purely Symmetrical Trio */}
-                  <div className="pod-spotify-controls">
-                    {/* Rewind 10s Button - Actual authentic podcast rewind icon */}
+                {/* Row 2: Controls row */}
+                <div className="pod-custom-controls-row">
+                  {/* Left Controls: Rewind, Play/Pause, Forward, Volume */}
+                  <div className="pod-custom-left-group">
+                    {/* Rewind Button << */}
                     <button
                       type="button"
-                      className="pod-ctrl-btn pod-rewind-btn"
+                      className="pod-custom-icon-btn"
                       title="Rewind 10 seconds"
                       aria-label="Rewind 10 seconds"
                       onClick={() => {
@@ -1738,17 +1719,16 @@ export default function PodcastsView({
                         }
                       }}
                     >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                        <path d="M3 3v5h5" />
-                        <text x="12" y="15.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" stroke="none" fill="currentColor" fontFamily="system-ui, -apple-system, sans-serif">10</text>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="11 19 4 12 11 5" />
+                        <polyline points="19 19 12 12 19 5" />
                       </svg>
                     </button>
 
-                    {/* Play / Pause - Large Spotify-style circular filled button in exact center */}
+                    {/* Play/Pause Button (||) */}
                     <button
                       type="button"
-                      className="pod-play-btn"
+                      className="pod-custom-play-btn"
                       title={playing ? "Pause" : "Play"}
                       aria-label={playing ? "Pause" : "Play"}
                       onClick={() => {
@@ -1769,21 +1749,21 @@ export default function PodcastsView({
                       }}
                     >
                       {playing ? (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                          <rect x="6" y="4" width="4" height="16" rx="1.5" />
-                          <rect x="14" y="4" width="4" height="16" rx="1.5" />
+                        <svg width="10" height="11" viewBox="0 0 10 11" fill="currentColor">
+                          <rect x="1" y="0.5" width="2.4" height="10" rx="0.6" />
+                          <rect x="6.6" y="0.5" width="2.4" height="10" rx="0.6" />
                         </svg>
                       ) : (
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "2px" }}>
-                          <path d="M7 4.5v15l13-7.5z" />
+                        <svg width="10" height="11" viewBox="0 0 10 11" fill="currentColor" style={{ marginLeft: "1.5px" }}>
+                          <polygon points="2 1, 9 5.5, 2 10" />
                         </svg>
                       )}
                     </button>
 
-                    {/* Forward 10s Button - Actual authentic podcast forward icon */}
+                    {/* Forward Button >> */}
                     <button
                       type="button"
-                      className="pod-ctrl-btn pod-forward-btn"
+                      className="pod-custom-icon-btn"
                       title="Forward 10 seconds"
                       aria-label="Forward 10 seconds"
                       onClick={() => {
@@ -1794,64 +1774,74 @@ export default function PodcastsView({
                         }
                       }}
                     >
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 12a9 9 0 1 1-9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                        <path d="M21 3v5h-5" />
-                        <text x="12" y="15.5" textAnchor="middle" fontSize="6.5" fontWeight="bold" stroke="none" fill="currentColor" fontFamily="system-ui, -apple-system, sans-serif">10</text>
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="13 19 20 12 13 5" />
+                        <polyline points="5 19 12 12 5 5" />
                       </svg>
                     </button>
+
+                    {/* Speaker Icon */}
+                    <button
+                      type="button"
+                      className="pod-custom-icon-btn"
+                      title={isMutedUi ? "Unmute" : "Mute"}
+                      aria-label={isMutedUi ? "Unmute" : "Mute"}
+                      onClick={() => {
+                        const next = !isMutedUi;
+                        setIsMutedUi(next);
+                        if (audioRef.current) audioRef.current.muted = next;
+                      }}
+                      style={{ marginLeft: "2px" }}
+                    >
+                      {isMutedUi ? (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <line x1="23" y1="9" x2="17" y2="15" />
+                          <line x1="17" y1="9" x2="23" y2="15" />
+                        </svg>
+                      ) : (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        </svg>
+                      )}
+                    </button>
+
+                    {/* Volume Slider with Dot Handle */}
+                    <div className="pod-custom-vol-slider-wrap">
+                      <div className="pod-custom-vol-track">
+                        <div className="pod-custom-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                        <div className="pod-custom-vol-dot" style={{ left: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={isMutedUi ? 0 : volume}
+                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                        className="pod-custom-vol-input"
+                        aria-label="Volume"
+                      />
+                    </div>
                   </div>
-                </div>
 
-                {/* 3. Speed & Volume & Tools (Sideways Right) */}
-                <div className="pod-spotify-right">
-                  {/* Speed Pill (1x, 1.25x, 1.5x, 2x) placed on sideways right */}
-                  <button
-                    type="button"
-                    className="pod-speed-btn"
-                    title="Playback speed"
-                    aria-label="Change playback speed"
-                    onClick={handleToggleSpeed}
-                  >
-                    {playbackRate}x
-                  </button>
+                  {/* Right Controls: Speed Pill + Time Display */}
+                  <div className="pod-custom-right-group">
+                    <button
+                      type="button"
+                      className="pod-custom-speed-pill"
+                      title="Playback speed"
+                      aria-label="Change playback speed"
+                      onClick={handleToggleSpeed}
+                    >
+                      {playbackRate}x
+                    </button>
 
-                  <button
-                    type="button"
-                    className="pod-ctrl-btn pod-vol-btn"
-                    title={isMutedUi ? "Unmute" : "Mute"}
-                    aria-label={isMutedUi ? "Unmute" : "Mute"}
-                    onClick={() => {
-                      const next = !isMutedUi;
-                      setIsMutedUi(next);
-                      if (audioRef.current) audioRef.current.muted = next;
-                    }}
-                  >
-                    {isMutedUi ? (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                        <line x1="23" y1="9" x2="17" y2="15" />
-                        <line x1="16" y1="9" x2="22" y2="15" />
-                      </svg>
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                      </svg>
-                    )}
-                  </button>
-                  <div className="pod-vol-slider-wrap">
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={isMutedUi ? 0 : volume}
-                      onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                      className="pod-vol-slider"
-                      aria-label="Volume"
-                    />
+                    <span className="pod-custom-time">
+                      <span ref={currentTimeDisplayRef}>{fmtTime(displayCurrent)}</span> / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+                    </span>
                   </div>
                 </div>
               </div>
