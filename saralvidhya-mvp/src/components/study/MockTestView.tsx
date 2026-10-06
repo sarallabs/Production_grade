@@ -860,8 +860,25 @@ export default function MockTestView({
     return subjectChapters && subjectChapters.length > 0 ? subjectChapters : fallbackUnits;
   }, [subjectChapters]);
 
+  const prepUnits = useMemo(() => {
+    const list: Chapter[] = [];
+    for (let i = 1; i <= 5; i++) {
+      const existing = allUnits.find((u) => u.number === i);
+      if (existing) {
+        list.push(existing);
+      } else {
+        const fallback = fallbackUnits.find((u) => u.number === i);
+        list.push(fallback || { number: i, name: "Nature and Scope of Marketing" });
+      }
+    }
+    return list;
+  }, [allUnits]);
+
   const completedUnitNumbers = useMemo(() => {
-    if (isPreFinalTest || isPrepExam) {
+    if (isPrepExam) {
+      return [1, 2, 3, 4, 5];
+    }
+    if (isPreFinalTest) {
       return allUnits.map(c => c.number);
     }
     const completed = allUnits
@@ -1298,34 +1315,36 @@ export default function MockTestView({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            minHeight: "100vh",
-            background: "#f4f6f5",
-            padding: "32px 24px",
-            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+            width: "100%",
+            minHeight: "100%",
+            flex: 1,
             boxSizing: "border-box",
+            background: "rgba(111, 154, 127, 0.10)",
+            padding: "10px 16px 8px 16px",
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
           }}
         >
           {/* Back to Study Table */}
-          <div style={{ width: "100%", maxWidth: "1000px", marginBottom: "16px" }}>
+          <div style={{ width: "100%", maxWidth: "900px", marginBottom: "6px" }}>
             <button
               onClick={onQuit}
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
+                gap: "6px",
                 background: "transparent",
                 border: "none",
-                color: "#64748b",
+                color: "#4a6356",
                 fontWeight: 600,
-                fontSize: "0.95rem",
+                fontSize: "0.88rem",
                 cursor: "pointer",
-                padding: "6px 0",
+                padding: "2px 0",
                 transition: "color 0.2s ease",
               }}
-              onMouseOver={(e) => (e.currentTarget.style.color = "#1e293b")}
-              onMouseOut={(e) => (e.currentTarget.style.color = "#64748b")}
+              onMouseOver={(e) => (e.currentTarget.style.color = "#1d3227")}
+              onMouseOut={(e) => (e.currentTarget.style.color = "#4a6356")}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
               Back to Study Table
@@ -1335,12 +1354,12 @@ export default function MockTestView({
           {/* Main Card Container */}
           <div
             style={{
-              background: "#ffffff",
-              border: "1.5px solid #d5dfd9",
-              borderRadius: "24px",
-              boxShadow: "0 10px 30px rgba(0, 0, 0, 0.04)",
-              padding: "36px 44px",
-              maxWidth: "1000px",
+              background: "rgba(111, 154, 127, 0.12)",
+              border: "1.5px solid rgba(111, 154, 127, 0.28)",
+              borderRadius: "22px",
+              boxShadow: "0 6px 24px rgba(79, 123, 100, 0.08)",
+              padding: "14px clamp(16px, 2.5vw, 28px) 12px clamp(16px, 2.5vw, 28px)",
+              maxWidth: "900px",
               width: "100%",
               boxSizing: "border-box",
             }}
@@ -1351,32 +1370,32 @@ export default function MockTestView({
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "28px",
+                marginBottom: "clamp(12px, 1.8vh, 18px)",
               }}
             >
               {/* Icon & Title */}
-              <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                 <div
                   style={{
-                    width: "54px",
-                    height: "54px",
-                    background: "#ddeee7",
-                    border: "1.5px solid #bddacf",
-                    borderRadius: "14px",
+                    width: "42px",
+                    height: "42px",
+                    background: "rgba(111, 154, 127, 0.22)",
+                    border: "1.2px solid rgba(111, 154, 127, 0.35)",
+                    borderRadius: "12px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
                   }}
                 >
-                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2e6850" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#254d3b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
-                    <circle cx="14.5" cy="14.5" r="4.2" fill="#ddeee7" stroke="#2e6850" strokeWidth="1.8" />
-                    <path d="m13 14.5 1.2 1.2 2.2-2.2" stroke="#2e6850" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <circle cx="14.5" cy="14.5" r="4.2" fill="#d3e6db" stroke="#254d3b" strokeWidth="1.8" />
+                    <path d="m13 14.5 1.2 1.2 2.2-2.2" stroke="#254d3b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </div>
-                <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 700, color: "#1e293b", letterSpacing: "-0.015em" }}>
+                <h1 style={{ margin: 0, fontSize: "clamp(1.35rem, 1.8vw, 1.7rem)", fontWeight: 700, color: "#1d3227", letterSpacing: "-0.015em" }}>
                   Preparation Exam
                 </h1>
               </div>
@@ -1385,19 +1404,19 @@ export default function MockTestView({
               <div
                 style={{
                   background: "#ffffff",
-                  border: "1.5px solid #cbd5e1",
-                  color: "#334155",
-                  borderRadius: "10px",
-                  padding: "7px 16px",
-                  fontSize: "0.85rem",
+                  border: "1px solid #c9d5cd",
+                  color: "#283b32",
+                  borderRadius: "9px",
+                  padding: "6px 14px",
+                  fontSize: "0.82rem",
                   fontWeight: 600,
                   display: "flex",
                   alignItems: "center",
                   gap: "7px",
-                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.04)",
                 }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#283b32" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   <path d="m9 12 2 2 4-4" />
                 </svg>
@@ -1405,9 +1424,16 @@ export default function MockTestView({
               </div>
             </div>
 
-            {/* Units Stack (Full Width Cards) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px", marginBottom: "28px" }}>
-              {allUnits.map((unit) => {
+            {/* 3-Column Grid matching Figma */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: "clamp(10px, 1.4vw, 16px)",
+                alignItems: "stretch",
+              }}
+            >
+              {prepUnits.map((unit) => {
                 const isSelected = selectedUnitNumbers.includes(unit.number);
 
                 const unitName = (() => {
@@ -1415,12 +1441,12 @@ export default function MockTestView({
                   if (!raw || /^unit\s*[-:_]?\s*\d+$/i.test(raw)) {
                     const defaults: Record<number, string> = {
                       1: "Nature and Scope of Marketing",
-                      2: "Marketing Environment & Buyer Behavior",
-                      3: "Product & Price Decisions",
-                      4: "Place & Promotion Decisions",
-                      5: "Emerging Trends in Marketing",
+                      2: "Nature and Scope of Marketing",
+                      3: "Nature and Scope of Marketing",
+                      4: "Nature and Scope of Marketing",
+                      5: "Nature and Scope of Marketing",
                     };
-                    return defaults[unit.number] || `Unit ${unit.number} Concepts`;
+                    return defaults[unit.number] || `Nature and Scope of Marketing`;
                   }
                   return raw;
                 })();
@@ -1430,213 +1456,248 @@ export default function MockTestView({
                     key={unit.number}
                     onClick={() => toggleUnitSelection(unit.number)}
                     style={{
+                      height: "clamp(115px, 15vh, 145px)",
+                      borderRadius: "16px",
+                      position: "relative",
                       display: "flex",
+                      flexDirection: "column",
                       alignItems: "center",
-                      gap: "16px",
-                      padding: "16px 22px",
-                      borderRadius: "12px",
-                      border: isSelected ? "1.5px solid #7ea897" : "1px solid #d3ded7",
-                      background: "linear-gradient(90deg, #FAF7F2 0%, #FAF5EF 14%, #E0ECE5 36%, #8CB5A4 72%, #689684 100%)",
+                      justifyContent: "center",
+                      textAlign: "center",
+                      padding: "10px 14px",
                       cursor: "pointer",
-                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                       userSelect: "none",
-                      boxShadow: isSelected ? "0 4px 14px rgba(104, 150, 132, 0.16)" : "none",
+                      background: "linear-gradient(135deg, #FFF7F0 0%, #D8E7DE 45%, #96BEAA 100%)",
+                      border: isSelected ? "2.5px solid #467360" : "1.5px solid rgba(111, 154, 127, 0.35)",
+                      boxShadow: isSelected
+                        ? "0 6px 18px rgba(70, 115, 96, 0.22)"
+                        : "0 3px 10px rgba(0, 0, 0, 0.04)",
+                      transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                      boxSizing: "border-box",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "translateY(-1.5px)";
-                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(104, 150, 132, 0.22)";
+                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(70, 115, 96, 0.25)";
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = isSelected ? "0 4px 14px rgba(104, 150, 132, 0.16)" : "none";
+                      e.currentTarget.style.boxShadow = isSelected
+                        ? "0 6px 18px rgba(70, 115, 96, 0.22)"
+                        : "0 3px 10px rgba(0, 0, 0, 0.04)";
                     }}
                   >
-                    {/* Checkbox */}
+                    {/* Centered Content (Unit Number + Subtitle exactly like Figma Screenshot 2) */}
                     <div
                       style={{
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "4px",
                         display: "flex",
+                        flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        flexShrink: 0,
-                        transition: "all 0.15s ease",
-                        border: isSelected ? "2px solid #467360" : "1.8px solid #94a3b8",
-                        background: isSelected ? "#467360" : "#ffffff",
+                        textAlign: "center",
+                        width: "100%",
+                        padding: "0 4px",
                       }}
                     >
-                      {isSelected && (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </div>
-
-                    {/* Unit Number & Title */}
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
                       <div
                         style={{
-                          fontSize: "1.15rem",
+                          fontSize: "clamp(1.35rem, 1.7vw, 1.65rem)",
                           fontWeight: 700,
-                          color: "#1e293b",
-                          lineHeight: 1.25,
+                          color: "#1a3126",
+                          lineHeight: 1.15,
+                          marginBottom: "4px",
+                          textAlign: "center",
                         }}
                       >
                         Unit {unit.number}
                       </div>
                       <div
                         style={{
-                          fontSize: "0.92rem",
-                          fontWeight: 500,
-                          color: "#374151",
+                          fontSize: "clamp(0.74rem, 0.88vw, 0.84rem)",
+                          fontWeight: 600,
+                          color: "#2e4438",
+                          lineHeight: 1.25,
+                          maxWidth: "170px",
+                          textAlign: "center",
+                          wordBreak: "break-word",
                         }}
                       >
                         {unitName}
                       </div>
                     </div>
+
+                    {/* Bottom-right checkbox pinned to corner (doesn't push text off-center) */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "10px",
+                        right: "10px",
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "4px",
+                        background: "#ffffff",
+                        border: isSelected ? "1.5px solid #467360" : "1.5px solid rgba(0, 0, 0, 0.18)",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.12)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      {isSelected && (
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#467360" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      )}
+                    </div>
                   </div>
                 );
               })}
-            </div>
 
-            {/* Bottom Row */}
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginTop: "12px",
-              }}
-            >
-              {/* No. of questions Card */}
+              {/* Controls Slot (Widget & Start Button) */}
               <div
                 style={{
-                  background: "#467360",
-                  borderRadius: "12px",
-                  padding: "10px 18px",
+                  height: "clamp(115px, 15vh, 145px)",
                   display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "center",
                   alignItems: "center",
-                  gap: "14px",
-                  boxShadow: "0 4px 14px rgba(70, 115, 96, 0.25)",
+                  gap: "10px",
+                  boxSizing: "border-box",
                 }}
               >
-                {/* Document/list Icon */}
+                {/* No. of questions Card */}
                 <div
                   style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "8px",
-                    background: "rgba(255, 255, 255, 0.18)",
+                    background: "#467360",
+                    borderRadius: "12px",
+                    padding: "8px 14px",
+                    width: "100%",
+                    boxSizing: "border-box",
                     display: "flex",
                     alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
+                    gap: "10px",
+                    boxShadow: "0 4px 14px rgba(70, 115, 96, 0.25)",
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    <path d="M9 12h6" />
-                    <path d="M9 16h6" />
-                    <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
-                  </svg>
-                </div>
+                  {/* Document/list Icon */}
+                  <div
+                    style={{
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "7px",
+                      background: "rgba(255, 255, 255, 0.18)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      <path d="M9 12h6" />
+                      <path d="M9 16h6" />
+                      <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
+                    </svg>
+                  </div>
 
-                {/* Question count radio pills */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span style={{ fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.9)", fontWeight: 500 }}>
-                    No. of questions
-                  </span>
+                  {/* Question count radio pills */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                    <span style={{ fontSize: "0.74rem", color: "rgba(255, 255, 255, 0.95)", fontWeight: 500 }}>
+                      No. of questions
+                    </span>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                    {[option1Count, option2Count].map((count) => {
-                      const isChosen = selectedQuestionCount === count;
-                      return (
-                        <div
-                          key={count}
-                          onClick={() => setSelectedQuestionCount(count)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                          }}
-                        >
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      {[option1Count, option2Count].map((count) => {
+                        const isChosen = selectedQuestionCount === count;
+                        return (
                           <div
+                            key={count}
+                            onClick={() => setSelectedQuestionCount(count)}
                             style={{
-                              width: "14px",
-                              height: "14px",
-                              borderRadius: "50%",
-                              border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
                               display: "flex",
                               alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s ease",
+                              gap: "5px",
+                              cursor: "pointer",
                             }}
                           >
-                            {isChosen && (
-                              <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#ffffff" }} />
-                            )}
+                            <div
+                              style={{
+                                width: "13px",
+                                height: "13px",
+                                borderRadius: "50%",
+                                border: isChosen ? "2px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.65)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {isChosen && (
+                                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                minWidth: "36px",
+                                height: "20px",
+                                padding: "0 6px",
+                                borderRadius: "5px",
+                                border: isChosen ? "1.5px solid #ffffff" : "1.2px solid rgba(255, 255, 255, 0.45)",
+                                background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
+                                color: "#ffffff",
+                                fontSize: "0.78rem",
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {count}
+                            </div>
                           </div>
-                          <div
-                            style={{
-                              minWidth: "42px",
-                              height: "22px",
-                              padding: "0 10px",
-                              borderRadius: "6px",
-                              border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
-                              background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
-                              color: "#ffffff",
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            {count}
-                          </div>
-                        </div>
-                      );
-                    })}
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Start Button */}
-              <button
-                onClick={handleStartExam}
-                style={{
-                  background: "#467360",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "10px",
-                  padding: "13px 36px",
-                  fontSize: "1.05rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  boxShadow: "0 4px 14px rgba(70, 115, 96, 0.3)",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#3c6453";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 18px rgba(70, 115, 96, 0.38)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#467360";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(70, 115, 96, 0.3)";
-                }}
-              >
-                <span>Start</span>
-                <span style={{ fontSize: "1.2rem", lineHeight: 1 }}>→</span>
-              </button>
+                {/* Start Button */}
+                <button
+                  onClick={handleStartExam}
+                  style={{
+                    background: "#467360",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "9px",
+                    padding: "9px 32px",
+                    fontSize: "0.98rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "7px",
+                    boxShadow: "0 4px 14px rgba(70, 115, 96, 0.32)",
+                    transition: "all 0.2s ease",
+                    minWidth: "140px",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#3c6453";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 6px 18px rgba(70, 115, 96, 0.4)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#467360";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(70, 115, 96, 0.32)";
+                  }}
+                >
+                  <span>Start</span>
+                  <span style={{ fontSize: "1.1rem", lineHeight: 1 }}>→</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -370,6 +370,15 @@ export function AssessmentView({
     return <MarkdownView content={text} />;
   };
 
+  const renderOptionText = (text: string) => {
+    if (!text) return "";
+    if (typeof text !== "string") return String(text);
+    if (!/[*_`#\[\]\\]/.test(text)) {
+      return text;
+    }
+    return <MarkdownView content={text} />;
+  };
+
   const attemptedCount = answered.filter(Boolean).length;
   const notAttemptedCount = questions.length - attemptedCount;
   const currentQ = questions[step];
@@ -484,7 +493,19 @@ export function AssessmentView({
       ) : (
         // Assessment Content
         <>
+          <style>{`
+            .quiz-options button,
+            .quiz-options button *,
+            .quiz-options .assessment-option-text,
+            .quiz-options .assessment-option-text *,
+            .quiz-options .markdown-view,
+            .quiz-options .markdown-view p,
+            .quiz-options .markdown-view span {
+              color: #ffffff !important;
+            }
+          `}</style>
           <div
+            className="assessment-outer-wrapper"
             style={{
               display: "flex",
               flexDirection: "row",
@@ -492,118 +513,80 @@ export function AssessmentView({
               justifyContent: "center",
               gap: "16px",
               width: "100%",
-              padding: "0 12px",
+              minHeight: "100%",
+              padding: "16px 12px",
               marginTop: "0px",
               boxSizing: "border-box",
+              background: "transparent",
             }}
           >
-            {/* Left Spacer to maintain perfect center alignment */}
-            <div style={{ width: "44px", flexShrink: 0 }} />
+            {/* Left Spacer to maintain alignment when right-side study icons appear on last question */}
+            {step === questions.length - 1 && (
+              <div style={{ width: "44px", flexShrink: 0 }} />
+            )}
 
-            {/* Assessment card with floating badges (zero block layout impact) */}
+            {/* Assessment card with clean charcoal outline matching Figma screenshot */}
             <div
               className="quiz-card assessment-view"
               style={{
-                flex: 1,
-                maxWidth: "1140px",
-                height: "min(560px, calc(100vh - 200px))",
-                maxHeight: "calc(100vh - 200px)",
-                minHeight: "360px",
+                flex: "0 1 820px",
+                width: "100%",
+                maxWidth: "820px",
+                minHeight: "min(440px, calc(100vh - 180px))",
+                maxHeight: "calc(100vh - 130px)",
                 display: "flex",
                 flexDirection: "column",
-                overflow: "hidden",
-                margin: "0",
-                background: persona === 'intermediate' ? '#0088FF33' : persona === 'advanced' ? '#0088FF4D' : '#0088FF1A',
-                border: "1.5px solid #0088FF4D",
+                overflowY: "auto",
+                margin: "0 auto",
+                background: "rgba(111, 154, 127, 0.15)",
+                border: "2px solid #2D3748",
                 borderRadius: "20px",
-                boxShadow: "0 12px 36px rgba(59, 130, 246, 0.12)",
+                boxShadow: "0 6px 24px rgba(0, 0, 0, 0.05)",
                 position: "relative",
-                padding: "20px 24px 2px 24px",
+                padding: "18px 26px 16px 26px",
                 boxSizing: "border-box",
               }}
             >
-              {/* Floating Question Number Badge (Top-Left, Position Absolute) */}
+              {/* Card Header: Question Number Badge (Left) & Difficulty Tag (Right) in standard flow */}
               <div
                 style={{
-                  position: "absolute",
-                  top: "12px",
-                  left: "24px",
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
-                  zIndex: 10,
-                  pointerEvents: "none",
+                  justifyContent: "space-between",
+                  width: "100%",
+                  marginBottom: "12px",
+                  flexShrink: 0,
                 }}
               >
                 <div
                   style={{
                     padding: "3px 12px",
-                    borderRadius: "14px",
-                    background: "#eff6ff",
-                    border: "1.5px solid #3b82f6",
-                    color: "#1d4ed8",
-                    fontWeight: "800",
-                    fontSize: "13px",
-                    display: "flex",
+                    borderRadius: "8px",
+                    background: "#ffffff",
+                    border: "1.5px solid #2D3748",
+                    color: "#111827",
+                    fontWeight: "700",
+                    fontSize: "13.5px",
+                    display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 5px rgba(59, 130, 246, 0.12)",
+                    letterSpacing: "0.4px",
                   }}
                 >
                   {step + 1} / {questions.length}
                 </div>
-              </div>
 
-              {/* Floating Difficulty Tag (Top-Right, Position Absolute) */}
-              <div
-                style={{
-                  position: "absolute",
-                  top: "12px",
-                  right: "24px",
-                  background: "#eff6ff",
-                  border: "1.5px solid #93c5fd",
-                  padding: "2px 10px",
-                  borderRadius: "20px",
-                  color: "#2563eb",
-                  fontWeight: "700",
-                  fontSize: "11px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.4px",
-                  zIndex: 10,
-                  pointerEvents: "none",
-                  boxShadow: "0 2px 5px rgba(59, 130, 246, 0.08)",
-                }}
-              >
-                {persona === 'beginner' ? 'Easy' : persona === 'intermediate' ? 'Medium' : persona === 'advanced' ? 'Hard' : 'Easy'}
-              </div>
-
-              {/* Single Floating Bottom-Right MSQ Submit Button (Empty Space in Bottom Right) */}
-              {currentQ.type === "msq" && !submitted && (
-                <button
-                  onClick={handleMSQSubmit}
-                  disabled={selectedMSQ.length === 0}
+                <div
                   style={{
-                    position: "absolute",
-                    bottom: "16px",
-                    right: "24px",
-                    padding: "9px 24px",
-                    borderRadius: "22px",
-                    border: "none",
-                    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
-                    color: "#ffffff",
-                    fontWeight: "800",
-                    fontSize: "13.5px",
-                    letterSpacing: "0.2px",
-                    cursor: selectedMSQ.length === 0 ? "not-allowed" : "pointer",
-                    opacity: selectedMSQ.length === 0 ? 0.45 : 1,
-                    boxShadow: "0 6px 18px rgba(37, 99, 235, 0.32)",
-                    zIndex: 30,
-                    transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                    color: "#111827",
+                    fontWeight: "600",
+                    fontSize: "13px",
                   }}
                 >
-                  Submit Answer →
-                </button>
-              )}
+                  {persona === 'beginner' ? 'Easy' : persona === 'intermediate' ? 'Medium' : persona === 'advanced' ? 'Hard' : 'Easy'}
+                </div>
+              </div>
+
               {/* Single-column layout — explanation shown inline below options */}
               <div
                 style={{
@@ -618,7 +601,7 @@ export function AssessmentView({
                   marginBottom: "4px",
                 }}
               >
-                {/* ── LEFT COLUMN: Question & Options (Centered when unanswered, GPU hardware slides smoothly to left on submit) ── */}
+                {/* ── LEFT COLUMN: Question & Options ── */}
                 {(() => {
                   const cleanQText = (text: string) => {
                     if (!text) return "";
@@ -641,20 +624,20 @@ export function AssessmentView({
                   const isUltraLong = !isExtreme && (totalCharLen > 280 || maxOptLen > 70);
                   const isLongQ = !isExtreme && !isUltraLong && (totalCharLen > 160 || qRaw.length > 80);
 
-                  const qFontSize = isExtreme ? "12px" : isUltraLong ? "13px" : isLongQ ? "14px" : "15.5px";
-                  const optTextSize = isExtreme ? "11.8px" : isUltraLong ? "12.8px" : isLongQ ? "13.8px" : "14.8px";
+                  const qFontSize = isExtreme ? "13px" : isUltraLong ? "13.5px" : isLongQ ? "14.5px" : "15.5px";
+                  const optTextSize = isExtreme ? "12px" : isUltraLong ? "12.5px" : isLongQ ? "13.2px" : "14px";
 
-                  const qLineHeight = isExtreme ? "1.25" : isUltraLong ? "1.3" : isLongQ ? "1.36" : "1.42";
-                  const qMarginBottom = isExtreme ? "10px" : isUltraLong ? "14px" : isLongQ ? "18px" : "24px";
+                  const qLineHeight = isExtreme ? "1.25" : isUltraLong ? "1.3" : isLongQ ? "1.34" : "1.38";
+                  const qMarginBottom = isExtreme ? "8px" : isUltraLong ? "10px" : isLongQ ? "12px" : "14px";
 
-                  const optGap = isExtreme ? "6px" : isUltraLong ? "10px" : isLongQ ? "14px" : "18px";
-                  const optPadding = isExtreme ? "6px 10px" : isUltraLong ? "9px 14px" : isLongQ ? "12px 16px" : "15px 20px";
-                  const optLineHeight = isExtreme ? "1.18" : isUltraLong ? "1.22" : isLongQ ? "1.28" : "1.36";
+                  const optGap = isExtreme ? "6px" : isUltraLong ? "8px" : isLongQ ? "9px" : "11px";
+                  const optPadding = isExtreme ? "6px 10px" : isUltraLong ? "7px 12px" : isLongQ ? "9px 14px" : "11px 16px";
+                  const optLineHeight = isExtreme ? "1.18" : isUltraLong ? "1.22" : isLongQ ? "1.26" : "1.3";
 
-                  const badgeSize = isExtreme ? "24px" : isUltraLong ? "26px" : isLongQ ? "30px" : "32px";
-                  const badgeFont = isExtreme ? "12px" : isUltraLong ? "12.5px" : isLongQ ? "13.5px" : "14px";
-                  const radioSize = isExtreme ? "13px" : isUltraLong ? "15px" : isLongQ ? "16px" : "18px";
-                  const dotSize = isExtreme ? "5px" : isUltraLong ? "6px" : isLongQ ? "7px" : "8px";
+                  const badgeSize = isExtreme ? "22px" : isUltraLong ? "24px" : isLongQ ? "26px" : "28px";
+                  const badgeFont = isExtreme ? "11.5px" : isUltraLong ? "12px" : isLongQ ? "12.5px" : "13px";
+                  const radioSize = isExtreme ? "13px" : isUltraLong ? "14px" : isLongQ ? "15px" : "16px";
+                  const dotSize = isExtreme ? "5px" : isUltraLong ? "6px" : isLongQ ? "6px" : "7px";
 
                   return (
                     <div
@@ -664,26 +647,24 @@ export function AssessmentView({
                         justifyContent: "flex-start",
                         width: "100%",
                         maxWidth: "100%",
-                        height: "100%",
-                        overflowY: "auto",
-                        paddingRight: "4px",
+                        paddingRight: "2px",
                         transform: "translate3d(0, 0, 0)",
                         WebkitFontSmoothing: "antialiased",
                         MozOsxFontSmoothing: "grayscale",
                       }}
                     >
                       <div>
-                        {/* Question Title (Roman / Serif Editorial Typography) */}
+                        {/* Question Title (Bold Sans-Serif Typography matching 2nd Figma screenshot) */}
                         <div
                           className="quiz-q"
                           style={{
                             fontSize: qFontSize,
-                            fontFamily: "'Georgia', 'Cambria', 'Times New Roman', Times, serif",
-                            fontWeight: "600",
-                            color: "#0f172a",
-                            lineHeight: "1.42",
-                            letterSpacing: "0.1px",
-                            marginTop: "22px",
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            fontWeight: "700",
+                            color: "#111827",
+                            lineHeight: "1.38",
+                            letterSpacing: "-0.2px",
+                            marginTop: "0px",
                             marginBottom: qMarginBottom,
                             willChange: "font-size, margin-bottom",
                             transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -701,52 +682,34 @@ export function AssessmentView({
                               const isSelected = selectedMCQ === idx;
                               const isCorrectAnswer = idx === currentQ.answer;
 
-                              const optionBadgeColors = ["#FCDE91", "#F0B0FC", "#AEF4FC", "#FFE7D6"];
-                              const optColorHex = optionBadgeColors[idx % 4];
+                              // Alternating forest green and sage green matching the Figma screenshot:
+                              // Even (A, C): #4E745D (Dark Forest Green)
+                              // Odd  (B, D): #6E977D (Medium Sage Green)
+                              const baseGreen = idx % 2 === 0 ? "#4E745D" : "#6E977D";
 
-                              let borderStyle = "1.5px solid rgba(0, 0, 0, 0.08)";
-                              let bgStyle = optColorHex;
-                              let radioBorder = "rgba(15, 23, 42, 0.28)";
-                              let radioBg = "#ffffff";
-                              let showDot = false;
+                              let borderStyle = "2px solid transparent";
+                              let bgStyle = baseGreen;
                               let rightIcon = null;
-                              let badgeBg = "#ffffff";
-                              let badgeColor = "#0f172a";
 
-                              if (isSelected) {
-                                borderStyle = "2.5px solid #2563eb";
-                                bgStyle = optColorHex;
-                                radioBorder = "#2563eb";
-                                radioBg = "#2563eb";
-                                showDot = true;
-                                badgeBg = "#2563eb";
-                                badgeColor = "#ffffff";
+                              if (isSelected && !submitted) {
+                                borderStyle = "2px solid #ffffff";
+                                bgStyle = idx % 2 === 0 ? "#3E634D" : "#5E866D";
                               }
 
                               if (submitted) {
                                 if (isCorrectAnswer) {
-                                  borderStyle = "2px solid #34C759";
-                                  bgStyle = "#34C75933";
-                                  radioBorder = "#34C759";
-                                  radioBg = "#34C759";
-                                  showDot = true;
-                                  badgeBg = "#34C759";
-                                  badgeColor = "#ffffff";
+                                  borderStyle = "2px solid #22c55e";
+                                  bgStyle = idx % 2 === 0 ? "#3B634A" : "#568565";
                                   rightIcon = (
-                                    <span style={{ color: "#34C759", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
+                                    <span style={{ color: "#ffffff", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
                                       ✓
                                     </span>
                                   );
                                 } else if (isSelected) {
-                                  borderStyle = "2px solid #FF383C";
-                                  bgStyle = "#FF383C1A";
-                                  radioBorder = "#FF383C";
-                                  radioBg = "#FF383C";
-                                  showDot = true;
-                                  badgeBg = "#FF383C";
-                                  badgeColor = "#ffffff";
+                                  borderStyle = "2px solid #ef4444";
+                                  bgStyle = "#7E4747";
                                   rightIcon = (
-                                    <span style={{ color: "#FF383C", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
+                                    <span style={{ color: "#ffffff", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
                                       ✕
                                     </span>
                                   );
@@ -760,69 +723,90 @@ export function AssessmentView({
                                   disabled={submitted}
                                   style={{
                                     display: "flex",
-                                    alignItems: isExtreme || isUltraLong ? "flex-start" : "center",
-                                    gap: isExtreme ? "8px" : isUltraLong ? "10px" : isLongQ ? "12px" : "14px",
+                                    alignItems: "center",
+                                    gap: "14px",
                                     width: "100%",
                                     padding: optPadding,
-                                    borderRadius: isExtreme || isUltraLong ? "8px" : "12px",
+                                    borderRadius: "10px",
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
                                     willChange: "transform, font-size, padding",
-                                    transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                                     textAlign: "left",
                                     transform: "translate3d(0, 0, 0)",
-                                    boxShadow: isSelected ? "0 4px 14px rgba(37, 99, 235, 0.22)" : "0 2px 6px rgba(0, 0, 0, 0.04)",
+                                    boxShadow: isSelected ? "0 4px 12px rgba(0, 0, 0, 0.15)" : "0 2px 4px rgba(0, 0, 0, 0.04)",
+                                    position: "relative",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted) {
+                                      e.currentTarget.style.filter = "brightness(1.08)";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted) {
+                                      e.currentTarget.style.filter = "none";
+                                    }
                                   }}
                                 >
-                                  {/* Radio Button */}
+                                  {/* White Square Indicator (matching Figma 2nd screenshot) */}
                                   <div
                                     style={{
-                                      width: radioSize,
-                                      height: radioSize,
-                                      borderRadius: "50%",
-                                      border: `${isSelected ? "2px" : "1.5px"} solid ${radioBorder}`,
-                                      background: radioBg,
+                                      width: "14px",
+                                      height: "14px",
+                                      borderRadius: "3px",
+                                      background: "#ffffff",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
-                                      marginTop: isExtreme || isUltraLong ? "2px" : "0",
+                                      opacity: isSelected ? 1 : 0.9,
                                     }}
                                   >
-                                    {showDot && (
+                                    {isSelected && (
                                       <div
                                         style={{
-                                          width: dotSize,
-                                          height: dotSize,
-                                          borderRadius: "50%",
-                                          background: "#ffffff",
+                                          width: "6px",
+                                          height: "6px",
+                                          borderRadius: "1px",
+                                          background: baseGreen,
                                         }}
                                       />
                                     )}
                                   </div>
 
+                                  {/* Option Letter (A, B, C, D) with subtle translucent pill */}
                                   <div
                                     style={{
                                       width: badgeSize,
                                       height: badgeSize,
                                       borderRadius: "6px",
-                                      background: badgeBg,
-                                      color: badgeColor,
+                                      background: "rgba(255, 255, 255, 0.18)",
+                                      color: "#ffffff",
                                       fontWeight: "700",
                                       fontSize: badgeFont,
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
-                                      marginTop: isExtreme || isUltraLong ? "1px" : "0",
                                     }}
                                   >
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  <div style={{ flex: 1, color: "#0f172a", fontFamily: "'Georgia', 'Cambria', 'Times New Roman', Times, serif", fontWeight: "400", fontSize: optTextSize, lineHeight: optLineHeight }}>
-                                    {renderText(option)}
+                                  {/* Option Text in Pure White */}
+                                  <div
+                                    className="assessment-option-text"
+                                    style={{
+                                      flex: 1,
+                                      color: "#ffffff",
+                                      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                                      fontWeight: "600",
+                                      fontSize: optTextSize,
+                                      lineHeight: optLineHeight,
+                                    }}
+                                  >
+                                    {renderOptionText(option)}
                                   </div>
                                   {rightIcon}
                                 </button>
@@ -836,49 +820,28 @@ export function AssessmentView({
                           <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: optGap }}>
                             {currentQ.options.map((option, idx) => {
                               const isSelected = selectedMSQ.includes(idx);
-                              const isCorrectOption = currentQ.answer.includes(idx);
+                              const isCorrectOption = Array.isArray(currentQ.answer) ? currentQ.answer.includes(idx) : false;
 
-                              const optionBadgeColors = ["#FCDE91", "#F0B0FC", "#AEF4FC", "#FFE7D6"];
-                              const optColorHex = optionBadgeColors[idx % 4];
+                              const baseGreen = idx % 2 === 0 ? "#4E745D" : "#6E977D";
 
-                              let borderStyle = "1.5px solid rgba(0, 0, 0, 0.08)";
-                              let bgStyle = optColorHex;
-                              let badgeBg = "#ffffff";
-                              let badgeColor = "#0f172a";
-                              let cbBorder = "1.5px solid rgba(15, 23, 42, 0.28)";
-                              let cbBg = "#ffffff";
-                              let cbCheckColor = "#16a34a";
+                              let borderStyle = "2px solid transparent";
+                              let bgStyle = baseGreen;
                               let rightIcon = null;
 
-                              if (isSelected) {
-                                borderStyle = "2px solid #86efac";
-                                bgStyle = optColorHex;
-                                badgeBg = "#ffffff";
-                                badgeColor = "#0f172a";
-                                cbBorder = "2px solid #22c55e";
-                                cbBg = "#ffffff";
-                                cbCheckColor = "#16a34a";
+                              if (isSelected && !submitted) {
+                                borderStyle = "2px solid #ffffff";
+                                bgStyle = idx % 2 === 0 ? "#3E634D" : "#5E866D";
                               }
 
                               if (submitted) {
                                 if (isCorrectOption) {
-                                  borderStyle = "2px solid #34C759";
-                                  bgStyle = "#34C75933";
-                                  badgeBg = "#34C759";
-                                  badgeColor = "#ffffff";
-                                  cbBorder = "2px solid #34C759";
-                                  cbBg = "#34C759";
-                                  cbCheckColor = "#ffffff";
-                                  rightIcon = <span style={{ color: "#34C759", fontWeight: "800", marginLeft: "auto" }}>✓</span>;
+                                  borderStyle = "2px solid #22c55e";
+                                  bgStyle = idx % 2 === 0 ? "#3B634A" : "#568565";
+                                  rightIcon = <span style={{ color: "#ffffff", fontWeight: "800", marginLeft: "auto" }}>✓</span>;
                                 } else if (isSelected) {
-                                  borderStyle = "2px solid #FF383C";
-                                  bgStyle = "#FF383C1A";
-                                  badgeBg = "#FF383C";
-                                  badgeColor = "#ffffff";
-                                  cbBorder = "2px solid #FF383C";
-                                  cbBg = "#FF383C";
-                                  cbCheckColor = "#ffffff";
-                                  rightIcon = <span style={{ color: "#FF383C", fontWeight: "800", marginLeft: "auto" }}>✕</span>;
+                                  borderStyle = "2px solid #ef4444";
+                                  bgStyle = "#7E4747";
+                                  rightIcon = <span style={{ color: "#ffffff", fontWeight: "800", marginLeft: "auto" }}>✕</span>;
                                 }
                               }
 
@@ -893,22 +856,33 @@ export function AssessmentView({
                                     gap: "14px",
                                     width: "100%",
                                     padding: optPadding,
-                                    borderRadius: "14px",
+                                    borderRadius: "10px",
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
                                     textAlign: "left",
-                                    boxShadow: isSelected ? "0 2px 8px rgba(34, 197, 94, 0.12)" : "0 2px 6px rgba(0, 0, 0, 0.04)",
+                                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                    boxShadow: isSelected ? "0 4px 12px rgba(0, 0, 0, 0.15)" : "0 2px 4px rgba(0, 0, 0, 0.04)",
+                                    position: "relative",
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted) {
+                                      e.currentTarget.style.filter = "brightness(1.08)";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted) {
+                                      e.currentTarget.style.filter = "none";
+                                    }
                                   }}
                                 >
-                                  {/* Checkbox */}
+                                  {/* White Square Checkbox */}
                                   <div
                                     style={{
-                                      width: radioSize,
-                                      height: radioSize,
-                                      borderRadius: "4px",
-                                      border: cbBorder,
-                                      background: cbBg,
+                                      width: "14px",
+                                      height: "14px",
+                                      borderRadius: "3px",
+                                      background: "#ffffff",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
@@ -916,7 +890,7 @@ export function AssessmentView({
                                     }}
                                   >
                                     {isSelected && (
-                                      <svg width={Math.max(10, parseInt(String(radioSize)) - 4)} height={Math.max(10, parseInt(String(radioSize)) - 4)} viewBox="0 0 24 24" fill="none" stroke={cbCheckColor} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={baseGreen} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                       </svg>
                                     )}
@@ -926,9 +900,9 @@ export function AssessmentView({
                                     style={{
                                       width: badgeSize,
                                       height: badgeSize,
-                                      borderRadius: "8px",
-                                      background: badgeBg,
-                                      color: badgeColor,
+                                      borderRadius: "6px",
+                                      background: "rgba(255, 255, 255, 0.18)",
+                                      color: "#ffffff",
                                       fontWeight: "700",
                                       fontSize: badgeFont,
                                       display: "flex",
@@ -940,8 +914,18 @@ export function AssessmentView({
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  <div style={{ flex: 1, color: "#1e293b", fontFamily: "'Georgia', 'Cambria', 'Times New Roman', Times, serif", fontWeight: "400", fontSize: optTextSize, lineHeight: optLineHeight }}>
-                                    {renderText(option)}
+                                  <div
+                                    className="assessment-option-text"
+                                    style={{
+                                      flex: 1,
+                                      color: "#ffffff",
+                                      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+                                      fontWeight: "600",
+                                      fontSize: optTextSize,
+                                      lineHeight: optLineHeight,
+                                    }}
+                                  >
+                                    {renderOptionText(option)}
                                   </div>
                                   {rightIcon}
                                 </button>
@@ -1202,56 +1186,56 @@ export function AssessmentView({
                   )}
               </div>
 
-            </div>
-
-            {/* Right Navigation Button OR Action Icons on Last Assessment Question */}
-            {step < questions.length - 1 ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                disabled={!submitted}
-                title={submitted ? "Next Question" : "Submit answer to proceed"}
-                aria-label="Next Question"
+              {/* Card Footer: Floating / Right-aligned Circular Next Button (matching 2nd Figma screenshot) */}
+              <div
                 style={{
-                  width: "44px",
-                  height: "44px",
-                  borderRadius: "50%",
-                  border: "none",
-                  background: submitted
-                    ? "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)"
-                    : "#ffffff",
-                  color: submitted ? "#ffffff" : "#94a3b8",
-                  fontWeight: "800",
-                  fontSize: "20px",
                   display: "flex",
+                  justifyContent: "flex-end",
                   alignItems: "center",
-                  justifyContent: "center",
-                  cursor: submitted ? "pointer" : "default",
-                  boxShadow: submitted
-                    ? "0 6px 20px rgba(37, 99, 235, 0.4)"
-                    : "0 4px 12px rgba(0, 0, 0, 0.08)",
+                  width: "100%",
+                  marginTop: "10px",
                   flexShrink: 0,
-                  opacity: submitted ? 1 : 0.35,
-                  transition: "transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), boxShadow 0.2s ease, opacity 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  if (submitted) {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow = "0 8px 24px rgba(37, 99, 235, 0.5)";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (submitted) {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(37, 99, 235, 0.4)";
-                  }
                 }}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </button>
-            ) : (
+                <button
+                  type="button"
+                  onClick={submitted ? handleNext : (currentQ.type === "msq" ? handleMSQSubmit : handleSkip)}
+                  title={submitted ? (step === questions.length - 1 ? "Finish Assessment" : "Next Question") : (currentQ.type === "msq" ? "Submit Answer" : "Next / Skip")}
+                  aria-label="Next Question"
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    border: "none",
+                    background: "#263B30",
+                    color: "#ffffff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    boxShadow: "0 3px 10px rgba(38, 59, 48, 0.3)",
+                    transition: "transform 0.2s ease, background 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "scale(1.1)";
+                    e.currentTarget.style.background = "#1B2C23";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.background = "#263B30";
+                  }}
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </button>
+              </div>
+
+            </div>
+
+            {/* Right Action Icons shown only on Last Assessment Question */}
+            {step < questions.length - 1 ? null : (
               /* Inline Action Icons on Last Assessment Question (Same horizontal axis beside card box) */
               <div
                 style={{

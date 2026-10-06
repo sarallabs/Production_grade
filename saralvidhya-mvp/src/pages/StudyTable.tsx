@@ -2281,17 +2281,22 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
+      case "assessment":
+      case "prep_exam":
+        return { bg: "rgba(111, 154, 127, 0.10)", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "detailed":
       case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
-      case "revision_flashcards": case "assessment": case "qbank": case "flashcards":
+      case "revision_flashcards": case "qbank": case "flashcards":
         return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
-      case "pyq": case "prep_exam": case "mocktest":
+      case "pyq": case "mocktest":
         return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #DB2777 0%, #BE185D 100%)", shadow: "0 4px 12px rgba(219, 39, 119, 0.35)" };
       case "swot":
         return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
       case "deep_dive": case "ask":
         return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
+      case "prep_exam":
+        return { bg: "rgba(111, 154, 127, 0.10)", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       default:
         return { bg: "#ffffff", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
     }
@@ -2386,12 +2391,12 @@ export default function StudyTable() {
                     master_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
                     revision_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
                     revise: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    assessment: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    assessment: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "rgba(111, 154, 127, 0.10)" },
                     qbank: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
 
                     // Prepare (Pink)
                     pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    prep_exam: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "rgba(111, 154, 127, 0.10)" },
                     prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     mocktest: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     pre_final_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
@@ -3135,7 +3140,7 @@ export default function StudyTable() {
                     ? "4px 12px 0 12px"
                     : activeTool === "assessment"
                       ? "12px 12px 0 12px"
-                      : (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask")
+                      : (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "prep_exam")
                         ? "0px"
                         : "16px 12px",
               display: "flex",
@@ -3147,7 +3152,7 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "prep_exam" && activeTool !== "ask" && (
               <div
                 style={{
                   display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
@@ -3423,14 +3428,15 @@ export default function StudyTable() {
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
                     activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
-                    activeTool === "videos" || activeTool === "ask"
+                    activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "videos" || activeTool === "ask") ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
                     activeTool === "pre_final_test" ||
+                    activeTool === "prep_exam" ||
                     activeTool === "flashcards" ||
                     activeTool === "revision_flashcards" ||
                     activeTool === "assessment" ||
@@ -3449,7 +3455,7 @@ export default function StudyTable() {
                     ? "hidden"
                     : "auto",
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask")
+                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "videos" || activeTool === "ask")
                     ? "0px"
                     : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                       ? "0px"
@@ -3462,9 +3468,9 @@ export default function StudyTable() {
                             : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
                               ? "0px"
                               : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
