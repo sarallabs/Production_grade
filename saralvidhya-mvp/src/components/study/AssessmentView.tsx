@@ -508,10 +508,10 @@ export function AssessmentView({
                 flexDirection: "column",
                 overflowY: "auto",
                 margin: "0 auto",
-                background: "#F4F6F4",
+                background: "#FAFBF9",
                 border: "1.5px solid #2D3E36",
                 borderRadius: "22px",
-                boxShadow: "0 8px 30px rgba(45, 62, 54, 0.08)",
+                boxShadow: "0 8px 30px rgba(45, 62, 54, 0.06)",
                 position: "relative",
                 padding: "22px 28px 20px 28px",
                 boxSizing: "border-box",
@@ -656,14 +656,15 @@ export function AssessmentView({
                               const isSelected = selectedMCQ === idx;
                               const isCorrectAnswer = idx === currentQ.answer;
 
-                              const optionSageColors = ["#9EB3A8", "#B0C4B9", "#9EB3A8", "#B0C4B9"];
-                              let bgStyle = optionSageColors[idx % optionSageColors.length];
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid transparent";
+                              // Very light, subtle sage tints for maximum readability:
+                              const optionLightTints = ["#F5F8F6", "#ECF2EE", "#F5F8F6", "#ECF2EE"];
+                              let bgStyle = isSelected ? "#DCEBE0" : optionLightTints[idx % optionLightTints.length];
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
                               let rightIcon = null;
 
                               if (submitted) {
                                 if (isCorrectAnswer) {
-                                  bgStyle = "#76A08A";
+                                  bgStyle = "#E2F4E9";
                                   borderStyle = "2px solid #2D3E36";
                                   rightIcon = (
                                     <span style={{ color: "#2D3E36", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
@@ -671,10 +672,10 @@ export function AssessmentView({
                                     </span>
                                   );
                                 } else if (isSelected) {
-                                  bgStyle = "#C98E87";
-                                  borderStyle = "2px solid #9E3E34";
+                                  bgStyle = "#FDF0ED";
+                                  borderStyle = "2px solid #D9534F";
                                   rightIcon = (
-                                    <span style={{ color: "#9E3E34", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
+                                    <span style={{ color: "#D9534F", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
                                       ✕
                                     </span>
                                   );
@@ -686,6 +687,18 @@ export function AssessmentView({
                                   key={idx}
                                   onClick={() => handleMCQSelect(idx)}
                                   disabled={submitted}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = "#E2EDE6";
+                                      e.currentTarget.style.borderColor = "#BACBC1";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = bgStyle;
+                                      e.currentTarget.style.borderColor = "#D5E2D9";
+                                    }
+                                  }}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -696,24 +709,25 @@ export function AssessmentView({
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
-                                    transition: "all 0.2s ease",
+                                    transition: "all 0.18s ease",
                                     textAlign: "left",
-                                    boxShadow: isSelected ? "0 4px 12px rgba(45, 62, 54, 0.18)" : "none",
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
                                     boxSizing: "border-box",
                                   }}
                                 >
                                   {/* Square Checkbox Indicator */}
                                   <div
                                     style={{
-                                      width: "17px",
-                                      height: "17px",
-                                      borderRadius: "3.5px",
-                                      border: "1.5px solid rgba(255, 255, 255, 0.85)",
-                                      background: isSelected ? "#2D3E36" : "rgba(255, 255, 255, 0.22)",
+                                      width: "18px",
+                                      height: "18px",
+                                      borderRadius: "4px",
+                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #8FA396",
+                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "all 0.15s ease",
                                     }}
                                   >
                                     {isSelected && (
@@ -729,7 +743,8 @@ export function AssessmentView({
                                       width: "24px",
                                       height: "24px",
                                       borderRadius: "6px",
-                                      background: "rgba(0, 0, 0, 0.08)",
+                                      background: isSelected ? "#C8DFD2" : "#E2EDE6",
+                                      border: "1px solid rgba(45, 62, 54, 0.12)",
                                       color: "#2D3E36",
                                       fontWeight: "700",
                                       fontSize: "13px",
@@ -737,12 +752,13 @@ export function AssessmentView({
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "background 0.15s ease",
                                     }}
                                   >
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  <div style={{ flex: 1, color: "#1E293B", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
+                                  <div style={{ flex: 1, color: "#18221D", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
                                     {renderText(option)}
                                   </div>
                                   {rightIcon}
@@ -759,20 +775,21 @@ export function AssessmentView({
                               const isSelected = selectedMSQ.includes(idx);
                               const isCorrectOption = currentQ.answer.includes(idx);
 
-                              const optionSageColors = ["#9EB3A8", "#B0C4B9", "#9EB3A8", "#B0C4B9"];
-                              let bgStyle = optionSageColors[idx % optionSageColors.length];
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid transparent";
+                              // Very light, subtle sage tints for maximum readability:
+                              const optionLightTints = ["#F5F8F6", "#ECF2EE", "#F5F8F6", "#ECF2EE"];
+                              let bgStyle = isSelected ? "#DCEBE0" : optionLightTints[idx % optionLightTints.length];
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
                               let rightIcon = null;
 
                               if (submitted) {
                                 if (isCorrectOption) {
-                                  bgStyle = "#76A08A";
+                                  bgStyle = "#E2F4E9";
                                   borderStyle = "2px solid #2D3E36";
                                   rightIcon = <span style={{ color: "#2D3E36", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✓</span>;
                                 } else if (isSelected) {
-                                  bgStyle = "#C98E87";
-                                  borderStyle = "2px solid #9E3E34";
-                                  rightIcon = <span style={{ color: "#9E3E34", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✕</span>;
+                                  bgStyle = "#FDF0ED";
+                                  borderStyle = "2px solid #D9534F";
+                                  rightIcon = <span style={{ color: "#D9534F", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✕</span>;
                                 }
                               }
 
@@ -781,6 +798,18 @@ export function AssessmentView({
                                   key={idx}
                                   onClick={() => handleMSQToggle(idx)}
                                   disabled={submitted}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = "#E2EDE6";
+                                      e.currentTarget.style.borderColor = "#BACBC1";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = bgStyle;
+                                      e.currentTarget.style.borderColor = "#D5E2D9";
+                                    }
+                                  }}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
@@ -791,24 +820,25 @@ export function AssessmentView({
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
-                                    transition: "all 0.2s ease",
+                                    transition: "all 0.18s ease",
                                     textAlign: "left",
-                                    boxShadow: isSelected ? "0 4px 12px rgba(45, 62, 54, 0.18)" : "none",
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
                                     boxSizing: "border-box",
                                   }}
                                 >
                                   {/* Checkbox */}
                                   <div
                                     style={{
-                                      width: "17px",
-                                      height: "17px",
-                                      borderRadius: "3.5px",
-                                      border: "1.5px solid rgba(255, 255, 255, 0.85)",
-                                      background: isSelected ? "#2D3E36" : "rgba(255, 255, 255, 0.22)",
+                                      width: "18px",
+                                      height: "18px",
+                                      borderRadius: "4px",
+                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #8FA396",
+                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "all 0.15s ease",
                                     }}
                                   >
                                     {isSelected && (
@@ -823,7 +853,8 @@ export function AssessmentView({
                                       width: "24px",
                                       height: "24px",
                                       borderRadius: "6px",
-                                      background: "rgba(0, 0, 0, 0.08)",
+                                      background: isSelected ? "#C8DFD2" : "#E2EDE6",
+                                      border: "1px solid rgba(45, 62, 54, 0.12)",
                                       color: "#2D3E36",
                                       fontWeight: "700",
                                       fontSize: "13px",
@@ -831,12 +862,13 @@ export function AssessmentView({
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "background 0.15s ease",
                                     }}
                                   >
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  <div style={{ flex: 1, color: "#1E293B", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
+                                  <div style={{ flex: 1, color: "#18221D", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
                                     {renderText(option)}
                                   </div>
                                   {rightIcon}
@@ -853,17 +885,17 @@ export function AssessmentView({
                               const isSelected = selectedTF === val;
                               const isCorrectAnswer = val === currentQ.answer;
 
-                              let btnBg = val ? "#9EB3A8" : "#B0C4B9";
-                              let btnBorder = isSelected ? "2px solid #2D3E36" : "1.5px solid transparent";
-                              let btnTextColor = "#1E293B";
+                              let btnBg = isSelected ? "#DCEBE0" : val ? "#F5F8F6" : "#ECF2EE";
+                              let btnBorder = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
+                              let btnTextColor = "#18221D";
 
                               if (submitted) {
                                 if (isCorrectAnswer) {
                                   btnBorder = "2px solid #2D3E36";
-                                  btnBg = "#76A08A";
+                                  btnBg = "#E2F4E9";
                                 } else if (isSelected) {
-                                  btnBorder = "2px solid #9E3E34";
-                                  btnBg = "#C98E87";
+                                  btnBorder = "2px solid #D9534F";
+                                  btnBg = "#FDF0ED";
                                 }
                               }
 
@@ -886,7 +918,7 @@ export function AssessmentView({
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    boxShadow: isSelected ? "0 4px 12px rgba(45, 62, 54, 0.18)" : "none",
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
                                   }}
                                 >
                                   {val ? "True" : "False"}
@@ -898,11 +930,11 @@ export function AssessmentView({
 
                         {/* Type 3: Fill in the Blanks */}
                         {currentQ.type === "fill_blanks" && (
-                          <div style={{ padding: "16px", background: "#FFFFFF", borderRadius: "12px", border: "1.5px solid #2D3E36" }}>
+                          <div style={{ padding: "16px", background: "#FFFFFF", borderRadius: "12px", border: "1.5px solid #D5E2D9" }}>
                             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", lineHeight: "2.2", fontSize: "1rem" }}>
                               {currentQ.q.split("[blank]").map((segment, idx, arr) => (
                                 <React.Fragment key={idx}>
-                                  <span style={{ color: "#1E293B", fontWeight: "500" }}>{segment}</span>
+                                  <span style={{ color: "#18221D", fontWeight: "500" }}>{segment}</span>
                                   {idx < arr.length - 1 && (
                                     <button
                                       type="button"
@@ -911,8 +943,8 @@ export function AssessmentView({
                                         minWidth: "70px",
                                         padding: "2px 10px",
                                         borderRadius: "6px",
-                                        border: activeBlankIndex === idx ? "2px solid #2D3E36" : "1.5px solid #9EB3A8",
-                                        background: fillInputs[idx] ? "#E8F0EB" : "#F4F6F4",
+                                        border: activeBlankIndex === idx ? "2px solid #2D3E36" : "1.5px solid #D5E2D9",
+                                        background: fillInputs[idx] ? "#E8F3ED" : "#F5F8F6",
                                         color: fillInputs[idx] ? "#2D3E36" : "#64748b",
                                         fontWeight: "600",
                                         fontSize: "0.95rem",
@@ -940,8 +972,8 @@ export function AssessmentView({
                                       style={{
                                         padding: "6px 14px",
                                         borderRadius: "8px",
-                                        border: "1px solid #9EB3A8",
-                                        background: "#B0C4B9",
+                                        border: "1px solid #D5E2D9",
+                                        background: "#F5F8F6",
                                         color: "#2D3E36",
                                         fontWeight: "600",
                                         fontSize: "0.9rem",
@@ -984,10 +1016,10 @@ export function AssessmentView({
                                 const matchedRhs = matchSelections[lhs];
                                 const isCorrectMatch = matchedRhs === currentQ.correctPairs[lhs];
                                 return (
-                                  <div key={lhs} style={{ padding: "10px 14px", border: "1.5px solid #2D3E36", borderRadius: "8px", background: "#FFFFFF" }}>
-                                    <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "14px" }}>{lhs}</div>
+                                  <div key={lhs} style={{ padding: "10px 14px", border: "1.5px solid #D5E2D9", borderRadius: "8px", background: "#F5F8F6" }}>
+                                    <div style={{ fontWeight: "700", color: "#18221D", fontSize: "14px" }}>{lhs}</div>
                                     {matchedRhs && (
-                                      <div style={{ marginTop: "4px", fontSize: "13px", color: submitted ? (isCorrectMatch ? "#2D3E36" : "#9E3E34") : "#2D3E36", fontWeight: "600" }}>
+                                      <div style={{ marginTop: "4px", fontSize: "13px", color: submitted ? (isCorrectMatch ? "#2D3E36" : "#D9534F") : "#2D3E36", fontWeight: "600" }}>
                                         → {matchedRhs}
                                       </div>
                                     )}
@@ -1033,8 +1065,8 @@ export function AssessmentView({
                     style={{
                       marginTop: "14px",
                       borderRadius: "12px",
-                      border: `1.5px solid ${currentIsCorrect ? "#2D3E36" : "#9E3E34"}`,
-                      background: currentIsCorrect ? "#E8F0EB" : "#F9ECEB",
+                      border: `1.5px solid ${currentIsCorrect ? "#2D3E36" : "#D9534F"}`,
+                      background: currentIsCorrect ? "#F2F8F4" : "#FDF4F3",
                       padding: "12px 16px",
                       display: "flex",
                       flexDirection: "column",
@@ -1046,7 +1078,7 @@ export function AssessmentView({
                       <span style={{
                         fontWeight: "800",
                         fontSize: "13px",
-                        color: currentIsCorrect ? "#2D3E36" : "#9E3E34",
+                        color: currentIsCorrect ? "#2D3E36" : "#D9534F",
                         display: "flex", alignItems: "center", gap: "4px",
                       }}>
                         {currentIsCorrect ? "✓ Correct!" : "✕ Incorrect"}
