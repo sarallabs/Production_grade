@@ -1250,65 +1250,96 @@ export default function PodcastsView({
     <div className="podcasts-view">
       {/* ── Fixed top section: track selector + player ── */}
       <div className="podcast-sticky-top">
-        {/* Track selector */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "14px", width: "100%" }}>
+        <h2 style={{
+          fontSize: "18px",
+          fontWeight: 700,
+          color: "var(--text, #111827)",
+          margin: "0 0 14px 0",
+          letterSpacing: "-0.01em"
+        }}>
+          Choose how you want to listen
+        </h2>
+
+        {/* Track selector cards */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isNebOrMgmt ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
+          gap: "14px",
+          marginBottom: "14px",
+          width: "100%"
+        }}>
           {isNebOrMgmt ? (
-            (["ql", "dl", "mc"] as const).map((t) => {
+            (["dl", "mc", "ql"] as const).map((t) => {
               const isActive = selectedTrack === t;
               const config: any = {
-                ql: {
-                  label: "Quick Listen",
-                  borderColor: "#f97316",
-                  activeBg: "linear-gradient(135deg, #fffbeb, #fff7ed)",
-                  activeText: "#ea580c",
-                  shadowColor: "rgba(249, 115, 22, 0.2)",
-                  circleBg: "#fef3c7",
-                  icon: (
-                    <svg width="24" height="24" viewBox="0 0 40 40" fill="none">
-                      <path d="M22 3L8 22H18L16 37L32 18H22L22 3Z" fill="url(#qlGradDistinct)" stroke="#ea580c" strokeWidth="1.5" strokeLinejoin="round" />
-                      <defs>
-                        <linearGradient id="qlGradDistinct" x1="16" y1="3" x2="24" y2="37" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#fbbf24" />
-                          <stop offset="1" stopColor="#f97316" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  ),
-                },
                 dl: {
-                  label: "Detailed Listen",
+                  title: "Detailed Listen",
+                  subtitle: "In-depth Chapter Coverage",
+                  pill: "Deep dive into every concept",
                   borderColor: "#8b5cf6",
-                  activeBg: "linear-gradient(135deg, #faf5ff, #f3e8ff)",
-                  activeText: "#7c3aed",
-                  shadowColor: "rgba(139, 92, 246, 0.2)",
-                  circleBg: "#f1f0f9",
+                  activeShadow: "0 4px 16px rgba(139, 92, 246, 0.18)",
+                  circleBg: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+                  pillBg: "#faf5ff",
+                  pillBorder: "#c4b5fd",
+                  pillColor: "#7c3aed",
+                  dotsColor: "#ddd6fe",
+                  hasDots: true,
                   icon: (
-                    <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
-                      <path d="M6 12C6 10.8954 6.89543 10 8 10H20C22.2091 10 24 11.7909 24 14V38C24 36.3431 22.6569 35 21 35H8C6.89543 35 6 34.1046 6 33V12Z" fill="#c4b5fd" stroke="#7c3aed" strokeWidth="1.5" />
-                      <path d="M42 12C42 10.8954 41.1046 10 40 10H28C25.7909 10 24 11.7909 24 14V38C24 36.3431 25.3431 35 27 35H40C41.1046 35 42 34.1046 42 33V12Z" fill="#ddd6fe" stroke="#7c3aed" strokeWidth="1.5" />
-                      <path d="M16 10V20L19 17.5L22 20V10" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.2" strokeLinejoin="round" />
-                      <line x1="28" y1="16" x2="38" y2="16" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" />
-                      <line x1="28" y1="20" x2="36" y2="20" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" />
-                      <line x1="28" y1="24" x2="37" y2="24" stroke="#a78bfa" strokeWidth="1.2" strokeLinecap="round" />
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                      <path d="M7 13C7 11.8954 7.89543 11 9 11H21C23.2091 11 25 12.7909 25 15V39C25 37.3431 23.6569 36 22 36H9C7.89543 36 7 35.1046 7 34V13Z" fill="#a78bfa" />
+                      <path d="M41 13C41 11.8954 40.1046 11 39 11H27C24.7909 11 23 12.7909 23 15V39C23 37.3431 24.3431 36 26 36H39C40.1046 36 41 35.1046 41 34V13Z" fill="#c4b5fd" />
+                      <path d="M23 15.5C23 14 24.5 13 26 13H38C39.1 13 40 13.9 40 15V34C40 35.1 39.1 36 38 36H26C24.5 36 23 37 23 38.5V15.5Z" fill="#818cf8" opacity="0.9" />
+                      <path d="M25 15.5C25 14 23.5 13 22 13H10C8.9 13 8 13.9 8 15V34C8 35.1 8.9 36 10 36H22C23.5 36 25 37 25 38.5V15.5Z" fill="#6366f1" opacity="0.95" />
+                      <line x1="28" y1="18" x2="36" y2="18" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                      <line x1="28" y1="22" x2="35" y2="22" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
+                      <line x1="28" y1="26" x2="33" y2="26" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
                     </svg>
                   ),
                 },
                 mc: {
-                  label: "Microcasts",
+                  title: "Microcast",
+                  subtitle: "Bite-sized topic podcasts",
+                  pill: "Short · Focused · Crisp",
                   borderColor: "#22c55e",
-                  activeBg: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-                  activeText: "#16a34a",
-                  shadowColor: "rgba(34, 197, 94, 0.2)",
-                  circleBg: "#ecfdf5",
+                  activeShadow: "0 4px 16px rgba(34, 197, 94, 0.18)",
+                  circleBg: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
+                  pillBg: "#ecfdf5",
+                  pillBorder: "#86efac",
+                  pillColor: "#16a34a",
                   icon: (
-                    <svg width="26" height="26" viewBox="0 0 48 48" fill="none">
-                      <path d="M10 28V24C10 16.268 16.268 10 24 10C31.732 10 38 16.268 38 24V28" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" />
-                      <rect x="6" y="26" width="8" height="12" rx="4" fill="#22c55e" />
-                      <rect x="34" y="26" width="8" height="12" rx="4" fill="#22c55e" />
-                      <rect x="21" y="32" width="6" height="10" rx="3" fill="#16a34a" stroke="#15803d" strokeWidth="1" />
-                      <path d="M18 38C18 38 18 42 24 42C30 42 30 38 30 38" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M42 22C43.5 24 43.5 28 42 30" stroke="#4ade80" strokeWidth="1.5" strokeLinecap="round" />
-                      <path d="M45 20C47 23 47 29 45 32" stroke="#86efac" strokeWidth="1.5" strokeLinecap="round" />
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                      <path d="M11 26V23C11 15.82 16.82 10 24 10C31.18 10 37 15.82 37 23V26" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" />
+                      <rect x="7" y="24" width="8" height="13" rx="4" fill="#22c55e" />
+                      <rect x="33" y="24" width="8" height="13" rx="4" fill="#22c55e" />
+                      <circle cx="24" cy="30" r="5.5" fill="#15803d" />
+                      <rect x="22.5" y="30" width="3" height="8" rx="1.5" fill="#16a34a" />
+                      <path d="M19 32C19 35 21 38 24 38C27 38 29 35 29 32" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M38 18C41 20 42 24 40 27" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" />
+                      <path d="M42 16C45 19 46 25 43 29" stroke="#86efac" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                  ),
+                },
+                ql: {
+                  title: "Quick Listen",
+                  subtitle: "Brief Recap of Key Points",
+                  pill: "Quick · Smart · Effective",
+                  borderColor: "#f97316",
+                  activeShadow: "0 4px 16px rgba(249, 115, 22, 0.18)",
+                  circleBg: "linear-gradient(135deg, #fff7ed, #ffedd5)",
+                  pillBg: "#fff7ed",
+                  pillBorder: "#fdba74",
+                  pillColor: "#ea580c",
+                  icon: (
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                      <path d="M26 4L10 26H23L19 44L37 21H24L26 4Z" fill="url(#ql3dGradDistinct)" stroke="#f97316" strokeWidth="1.5" strokeLinejoin="round" />
+                      <path d="M26 4L17 26H23L19 44L22 26H13L26 4Z" fill="#ffedd5" opacity="0.35" />
+                      <defs>
+                        <linearGradient id="ql3dGradDistinct" x1="18" y1="4" x2="28" y2="44" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#fde047" />
+                          <stop offset="0.45" stopColor="#fb923c" />
+                          <stop offset="1" stopColor="#ea580c" />
+                        </linearGradient>
+                      </defs>
                     </svg>
                   ),
                 },
@@ -1323,17 +1354,18 @@ export default function PodcastsView({
                   onClick={() => !isDisabled && setSelectedTrack(t)}
                   title={isDisabled ? 'Not available in topic view — go to Podcasts tab for full access' : undefined}
                   style={{
-                    flex: 1,
+                    position: "relative",
+                    overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
-                    padding: "8px 16px",
-                    height: "56px",
+                    gap: "14px",
+                    padding: "14px 16px",
+                    minHeight: "90px",
                     cursor: isDisabled ? "not-allowed" : "pointer",
-                    border: `2px solid ${isActive ? c.borderColor : "#e2e8f0"}`,
-                    borderRadius: "14px",
-                    background: isActive ? c.activeBg : "#ffffff",
-                    boxShadow: isActive ? `0 4px 14px ${c.shadowColor}` : "0 1px 4px rgba(0,0,0,0.03)",
+                    border: isActive ? `2px solid ${c.borderColor}` : "1.5px solid #e5e7eb",
+                    borderRadius: "16px",
+                    background: "#ffffff",
+                    boxShadow: isActive ? c.activeShadow : "0 1px 3px rgba(0,0,0,0.02)",
                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                     opacity: isDisabled ? 0.35 : 1,
                     filter: isDisabled ? "grayscale(1)" : "none",
@@ -1344,75 +1376,121 @@ export default function PodcastsView({
                   onMouseEnter={(e) => {
                     if (!isActive && !isDisabled) {
                       e.currentTarget.style.borderColor = c.borderColor;
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.shadowColor}`;
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.borderColor}20`;
                       e.currentTarget.style.transform = "translateY(-1.5px)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive && !isDisabled) {
-                      e.currentTarget.style.borderColor = "#e2e8f0";
-                      e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.03)";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                      e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.02)";
                       e.currentTarget.style.transform = "translateY(0)";
                     }
                   }}
                 >
-                  {/* Distinct logo circle */}
+                  {/* Corner decorative dots */}
+                  {c.hasDots && (
+                    <div style={{ position: "absolute", bottom: "6px", left: "6px", pointerEvents: "none", opacity: 0.65 }}>
+                      <svg width="22" height="22" viewBox="0 0 22 22" fill={c.dotsColor}>
+                        <circle cx="4" cy="18" r="1.5" />
+                        <circle cx="10" cy="18" r="1.5" />
+                        <circle cx="4" cy="12" r="1.5" />
+                        <circle cx="10" cy="12" r="1.5" />
+                        <circle cx="16" cy="18" r="1.5" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* Left Avatar Circle */}
                   <div style={{
-                    width: "40px",
-                    height: "40px",
+                    width: "50px",
+                    height: "50px",
                     borderRadius: "50%",
                     background: c.circleBg,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
-                    boxShadow: isActive ? `0 2px 6px ${c.borderColor}25` : "none",
-                    transition: "all 0.2s ease",
+                    boxShadow: isActive ? `0 2px 8px ${c.borderColor}25` : "none",
                   }}>
                     {c.icon}
                   </div>
-                  {/* Title only */}
-                  <span style={{
-                    fontSize: "14.5px",
-                    fontWeight: 700,
-                    color: isActive ? c.activeText : "#1e293b",
-                    letterSpacing: "-0.01em",
-                    whiteSpace: "nowrap",
-                  }}>
-                    {c.label}
-                  </span>
+
+                  {/* Right Content */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
+                    <span style={{
+                      fontSize: "15px",
+                      fontWeight: 700,
+                      color: "#111827",
+                      letterSpacing: "-0.01em",
+                      lineHeight: "1.2",
+                    }}>
+                      {c.title}
+                    </span>
+                    <span style={{
+                      fontSize: "12px",
+                      color: "#4b5563",
+                      fontWeight: 450,
+                      marginBottom: "4px",
+                      lineHeight: "1.3",
+                    }}>
+                      {c.subtitle}
+                    </span>
+                    <span style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      border: `1px solid ${c.pillBorder}`,
+                      background: c.pillBg,
+                      color: c.pillColor,
+                      borderRadius: "9999px",
+                      padding: "2.5px 10px",
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      width: "fit-content",
+                      maxWidth: "100%",
+                    }}>
+                      <span>{c.pill}</span>
+                      <span style={{ fontSize: "11px", opacity: 0.8 }}>›</span>
+                    </span>
+                  </div>
                 </button>
               );
             })
           ) : (
-            (["short", "long"] as const).map((t) => {
+            (["long", "short"] as const).map((t) => {
               const isActive = selectedTrack === t;
               const config: any = {
                 long: {
-                  label: "Long Podcast",
-                  borderColor: "#3b82f6",
-                  activeBg: "linear-gradient(135deg, #eff6ff, #dbeafe)",
-                  activeText: "#2563eb",
-                  shadowColor: "rgba(59, 130, 246, 0.2)",
-                  circleBg: "#dbeafe",
+                  title: "Detailed Listen",
+                  subtitle: "In-depth Chapter Coverage",
+                  pill: "Deep dive into every concept",
+                  borderColor: "#8b5cf6",
+                  activeShadow: "0 4px 16px rgba(139, 92, 246, 0.18)",
+                  circleBg: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+                  pillBg: "#faf5ff",
+                  pillBorder: "#c4b5fd",
+                  pillColor: "#7c3aed",
                   icon: (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                      <path d="M7 13C7 11.8954 7.89543 11 9 11H21C23.2091 11 25 12.7909 25 15V39C25 37.3431 23.6569 36 22 36H9C7.89543 36 7 35.1046 7 34V13Z" fill="#a78bfa" />
+                      <path d="M41 13C41 11.8954 40.1046 11 39 11H27C24.7909 11 23 12.7909 23 15V39C23 37.3431 24.3431 36 26 36H39C40.1046 36 41 35.1046 41 34V13Z" fill="#c4b5fd" />
                     </svg>
                   ),
                 },
                 short: {
-                  label: "Short Podcast",
-                  borderColor: "#10b981",
-                  activeBg: "linear-gradient(135deg, #ecfdf5, #d1fae5)",
-                  activeText: "#059669",
-                  shadowColor: "rgba(16, 185, 129, 0.2)",
-                  circleBg: "#d1fae5",
+                  title: "Quick Listen",
+                  subtitle: "Brief Recap of Key Points",
+                  pill: "Quick · Smart · Effective",
+                  borderColor: "#f97316",
+                  activeShadow: "0 4px 16px rgba(249, 115, 22, 0.18)",
+                  circleBg: "linear-gradient(135deg, #fff7ed, #ffedd5)",
+                  pillBg: "#fff7ed",
+                  pillBorder: "#fdba74",
+                  pillColor: "#ea580c",
                   icon: (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#059669" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                      <path d="M26 4L10 26H23L19 44L37 21H24L26 4Z" fill="#fb923c" stroke="#f97316" strokeWidth="1.5" strokeLinejoin="round" />
                     </svg>
                   ),
                 }
@@ -1425,17 +1503,18 @@ export default function PodcastsView({
                   type="button"
                   onClick={() => setSelectedTrack(t)}
                   style={{
-                    flex: 1,
+                    position: "relative",
+                    overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
-                    gap: "12px",
-                    padding: "8px 16px",
-                    height: "56px",
+                    gap: "14px",
+                    padding: "14px 16px",
+                    minHeight: "90px",
                     cursor: "pointer",
-                    border: `2px solid ${isActive ? c.borderColor : "#e2e8f0"}`,
-                    borderRadius: "14px",
-                    background: isActive ? c.activeBg : "#ffffff",
-                    boxShadow: isActive ? `0 4px 14px ${c.shadowColor}` : "0 1px 4px rgba(0,0,0,0.03)",
+                    border: isActive ? `2px solid ${c.borderColor}` : "1.5px solid #e5e7eb",
+                    borderRadius: "16px",
+                    background: "#ffffff",
+                    boxShadow: isActive ? c.activeShadow : "0 1px 3px rgba(0,0,0,0.02)",
                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                     outline: "none",
                     textAlign: "left",
@@ -1443,43 +1522,55 @@ export default function PodcastsView({
                   onMouseEnter={(e) => {
                     if (!isActive) {
                       e.currentTarget.style.borderColor = c.borderColor;
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.shadowColor}`;
+                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.borderColor}20`;
                       e.currentTarget.style.transform = "translateY(-1.5px)";
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
-                      e.currentTarget.style.borderColor = "#e2e8f0";
-                      e.currentTarget.style.boxShadow = "0 1px 4px rgba(0,0,0,0.03)";
+                      e.currentTarget.style.borderColor = "#e5e7eb";
+                      e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.02)";
                       e.currentTarget.style.transform = "translateY(0)";
                     }
                   }}
                 >
-                  {/* Distinct logo circle */}
                   <div style={{
-                    width: "40px",
-                    height: "40px",
+                    width: "50px",
+                    height: "50px",
                     borderRadius: "50%",
                     background: c.circleBg,
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     flexShrink: 0,
-                    boxShadow: isActive ? `0 2px 6px ${c.borderColor}25` : "none",
-                    transition: "all 0.2s ease",
+                    boxShadow: isActive ? `0 2px 8px ${c.borderColor}25` : "none",
                   }}>
                     {c.icon}
                   </div>
-                  {/* Title only */}
-                  <span style={{
-                    fontSize: "14.5px",
-                    fontWeight: 700,
-                    color: isActive ? c.activeText : "#1e293b",
-                    letterSpacing: "-0.01em",
-                    whiteSpace: "nowrap",
-                  }}>
-                    {c.label}
-                  </span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#111827", letterSpacing: "-0.01em" }}>
+                      {c.title}
+                    </span>
+                    <span style={{ fontSize: "12px", color: "#4b5563", fontWeight: 450, marginBottom: "4px" }}>
+                      {c.subtitle}
+                    </span>
+                    <span style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      border: `1px solid ${c.pillBorder}`,
+                      background: c.pillBg,
+                      color: c.pillColor,
+                      borderRadius: "9999px",
+                      padding: "2.5px 10px",
+                      fontSize: "11px",
+                      fontWeight: 500,
+                      width: "fit-content",
+                    }}>
+                      <span>{c.pill}</span>
+                      <span style={{ fontSize: "11px", opacity: 0.8 }}>›</span>
+                    </span>
+                  </div>
                 </button>
               );
             })
@@ -1600,112 +1691,206 @@ export default function PodcastsView({
 
       {/* ── Player + transcript share one bordered shell (design) ── */}
       <div className="pod-shell">
-        <div className="podcast-player-real">
-          {available && (
-            <audio
-              ref={audioRef}
-              src={currentFiles.audio}
-              crossOrigin="anonymous"
-              preload="auto"
-              onPlay={() => {
-                setIsPlaying(true);
-                onPlayingChange?.(true);
-              }}
-              onPlaying={() => {
-                setIsPlaying(true);
-                onPlayingChange?.(true);
-              }}
-              onPause={() => {
-                setIsPlaying(false);
-                onPlayingChange?.(false);
-              }}
-              onEnded={() => {
-                setIsPlaying(false);
-                setCurrentTime(0);
-                onPlayingChange?.(false);
-              }}
-              onLoadedMetadata={(e) => {
-                const a = e.target as HTMLAudioElement;
-                const d = a.duration;
-                if (d && isFinite(d) && d > 0) {
-                  audioDurationRef.current = d;
-                  setAudioDuration(d);
-                  updateProgress(a.currentTime, d);
-                }
-              }}
-              onDurationChange={(e) => {
-                const a = e.target as HTMLAudioElement;
-                const d = a.duration;
-                if (d && isFinite(d) && d > 0) {
-                  audioDurationRef.current = d;
-                  setAudioDuration(d);
-                  updateProgress(a.currentTime, d);
-                }
-              }}
-              onCanPlay={(e) => {
-                const a = e.target as HTMLAudioElement;
-                const d = a.duration;
-                if (d && isFinite(d) && d > 0) {
-                  audioDurationRef.current = d;
-                  setAudioDuration(d);
-                  updateProgress(a.currentTime, d);
-                }
-              }}
-            />
-          )}
-
-          {(() => {
-            const isAudioActive = audioRef.current ? !audioRef.current.paused : false;
-            const playing = available ? (isAudioActive || isPlaying) : ttsPlaybackState === "playing";
-            const seekTo = (pct: number) => {
-              if (audioRef.current && displayDuration) {
-                const targetTime = Math.max(0, Math.min(1, pct)) * displayDuration;
-                audioRef.current.currentTime = targetTime;
-                updateProgress(targetTime, displayDuration);
+        {available && (
+          <audio
+            ref={audioRef}
+            src={currentFiles.audio}
+            crossOrigin="anonymous"
+            preload="auto"
+            onPlay={() => {
+              setIsPlaying(true);
+              onPlayingChange?.(true);
+            }}
+            onPlaying={() => {
+              setIsPlaying(true);
+              onPlayingChange?.(true);
+            }}
+            onPause={() => {
+              setIsPlaying(false);
+              onPlayingChange?.(false);
+            }}
+            onEnded={() => {
+              setIsPlaying(false);
+              setCurrentTime(0);
+              onPlayingChange?.(false);
+            }}
+            onLoadedMetadata={(e) => {
+              const a = e.target as HTMLAudioElement;
+              const d = a.duration;
+              if (d && isFinite(d) && d > 0) {
+                audioDurationRef.current = d;
+                setAudioDuration(d);
+                updateProgress(a.currentTime, d);
               }
-            };
-            return (
-              <div className="pod-custom-player">
-                {/* Row 1: Full-width Scrubber Timeline with Double Bar Handle */}
-                <div
-                  className="pod-custom-timeline-wrap"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    seekTo((e.clientX - rect.left) / rect.width);
-                  }}
-                >
-                  <div className="pod-custom-timeline-track">
+            }}
+            onDurationChange={(e) => {
+              const a = e.target as HTMLAudioElement;
+              const d = a.duration;
+              if (d && isFinite(d) && d > 0) {
+                audioDurationRef.current = d;
+                setAudioDuration(d);
+                updateProgress(a.currentTime, d);
+              }
+            }}
+            onCanPlay={(e) => {
+              const a = e.target as HTMLAudioElement;
+              const d = a.duration;
+              if (d && isFinite(d) && d > 0) {
+                audioDurationRef.current = d;
+                setAudioDuration(d);
+                updateProgress(a.currentTime, d);
+              }
+            }}
+          />
+        )}
+
+        {(() => {
+          const isAudioActive = audioRef.current ? !audioRef.current.paused : false;
+          const playing = available ? (isAudioActive || isPlaying) : ttsPlaybackState === "playing";
+          const seekTo = (pct: number) => {
+            if (audioRef.current && displayDuration) {
+              const targetTime = Math.max(0, Math.min(1, pct)) * displayDuration;
+              audioRef.current.currentTime = targetTime;
+              updateProgress(targetTime, displayDuration);
+            }
+          };
+
+          const trackTypeLabel = (() => {
+            if (selectedTrack === "ql" || selectedTrack === "short") return "Quick Listen";
+            if (selectedTrack === "dl" || selectedTrack === "long") return "Detailed Listen";
+            if (selectedTrack === "mc") return "Microcast";
+            return "Podcast";
+          })();
+
+          const displayTitle = (() => {
+            if (selectedTrack === "ql" || selectedTrack === "short") return "1. Chapter Quick Recap";
+            if (selectedTrack === "dl" || selectedTrack === "long") return "1. Chapter Detailed Listen";
+            if (selectedTrack === "mc") {
+              const item = MICROCASTS[selectedMc];
+              return `${selectedMc + 1}. ${item?.title || "Topic Microcast"}`;
+            }
+            return "1. Chapter Audio";
+          })();
+
+          return (
+            <div className="pod-unified-header">
+              {/* Left: Track Avatar + Info */}
+              <div className="pod-unified-track-info">
+                <div className="pod-unified-mic-circle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" y1="19" x2="12" y2="22" />
+                  </svg>
+                </div>
+                <div className="pod-unified-titles">
+                  <span className="pod-unified-title">{displayTitle}</span>
+                  <span className="pod-unified-subtitle">{chapterName} . {trackTypeLabel}</span>
+                </div>
+              </div>
+
+              {/* Right: Audio Player Controls Console */}
+              <div className="pod-unified-controls">
+                {/* Top Sub-row: Scrubber + Speed Pill + Timestamp */}
+                <div className="pod-unified-scrubber-row">
+                  <div
+                    className="pod-custom-timeline-wrap"
+                    onClick={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      seekTo((e.clientX - rect.left) / rect.width);
+                    }}
+                  >
+                    <div className="pod-custom-timeline-track">
+                      <div
+                        ref={progressFillRef}
+                        className="pod-custom-timeline-fill"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
                     <div
-                      ref={progressFillRef}
-                      className="pod-custom-timeline-fill"
-                      style={{ width: `${progressPct}%` }}
+                      ref={playheadRef}
+                      className="pod-custom-timeline-thumb"
+                      style={{ left: `${progressPct}%` }}
+                    >
+                      <span className="pod-custom-thumb-bar" />
+                      <span className="pod-custom-thumb-bar" />
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={displayDuration || 0}
+                      step={0.5}
+                      value={displayCurrent}
+                      onChange={handleSeek}
+                      className="pod-custom-timeline-input"
+                      aria-label="Seek"
                     />
                   </div>
-                  <div
-                    ref={playheadRef}
-                    className="pod-custom-timeline-thumb"
-                    style={{ left: `${progressPct}%` }}
+
+                  <button
+                    type="button"
+                    className="pod-custom-speed-pill"
+                    title="Playback speed"
+                    aria-label="Change playback speed"
+                    onClick={handleToggleSpeed}
                   >
-                    <span className="pod-custom-thumb-bar" />
-                    <span className="pod-custom-thumb-bar" />
-                  </div>
-                  <input
-                    type="range"
-                    min={0}
-                    max={displayDuration || 0}
-                    step={0.5}
-                    value={displayCurrent}
-                    onChange={handleSeek}
-                    className="pod-custom-timeline-input"
-                    aria-label="Seek"
-                  />
+                    {playbackRate}x
+                  </button>
+
+                  <span className="pod-custom-time">
+                    <span ref={currentTimeDisplayRef}>{fmtTime(displayCurrent)}</span> / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+                  </span>
                 </div>
 
-                {/* Row 2: Controls row */}
-                <div className="pod-custom-controls-row">
-                  {/* Left Controls: Rewind, Play/Pause, Forward, Volume */}
-                  <div className="pod-custom-left-group">
-                    {/* Rewind Button << */}
+                {/* Bottom Sub-row: Volume (Left) + Transport Controls (Centered/Right) */}
+                <div className="pod-unified-transport-row">
+                  {/* Volume */}
+                  <div className="pod-unified-vol-wrap">
+                    <button
+                      type="button"
+                      className="pod-custom-icon-btn"
+                      title={isMutedUi ? "Unmute" : "Mute"}
+                      aria-label={isMutedUi ? "Unmute" : "Mute"}
+                      onClick={() => {
+                        const next = !isMutedUi;
+                        setIsMutedUi(next);
+                        if (audioRef.current) audioRef.current.muted = next;
+                      }}
+                    >
+                      {isMutedUi ? (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <line x1="23" y1="9" x2="17" y2="15" />
+                          <line x1="17" y1="9" x2="23" y2="15" />
+                        </svg>
+                      ) : (
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                        </svg>
+                      )}
+                    </button>
+                    <div className="pod-custom-vol-slider-wrap">
+                      <div className="pod-custom-vol-track">
+                        <div className="pod-custom-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                        <div className="pod-custom-vol-dot" style={{ left: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={isMutedUi ? 0 : volume}
+                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                        className="pod-custom-vol-input"
+                        aria-label="Volume"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Transport: Rewind, Play/Pause, Forward */}
+                  <div className="pod-unified-transport-buttons">
                     <button
                       type="button"
                       className="pod-custom-icon-btn"
@@ -1725,7 +1910,6 @@ export default function PodcastsView({
                       </svg>
                     </button>
 
-                    {/* Play/Pause Button (||) */}
                     <button
                       type="button"
                       className="pod-custom-play-btn"
@@ -1760,7 +1944,6 @@ export default function PodcastsView({
                       )}
                     </button>
 
-                    {/* Forward Button >> */}
                     <button
                       type="button"
                       className="pod-custom-icon-btn"
@@ -1779,81 +1962,16 @@ export default function PodcastsView({
                         <polyline points="5 19 12 12 5 5" />
                       </svg>
                     </button>
-
-                    {/* Speaker Icon */}
-                    <button
-                      type="button"
-                      className="pod-custom-icon-btn"
-                      title={isMutedUi ? "Unmute" : "Mute"}
-                      aria-label={isMutedUi ? "Unmute" : "Mute"}
-                      onClick={() => {
-                        const next = !isMutedUi;
-                        setIsMutedUi(next);
-                        if (audioRef.current) audioRef.current.muted = next;
-                      }}
-                      style={{ marginLeft: "2px" }}
-                    >
-                      {isMutedUi ? (
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                          <line x1="23" y1="9" x2="17" y2="15" />
-                          <line x1="17" y1="9" x2="23" y2="15" />
-                        </svg>
-                      ) : (
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                        </svg>
-                      )}
-                    </button>
-
-                    {/* Volume Slider with Dot Handle */}
-                    <div className="pod-custom-vol-slider-wrap">
-                      <div className="pod-custom-vol-track">
-                        <div className="pod-custom-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
-                        <div className="pod-custom-vol-dot" style={{ left: `${(isMutedUi ? 0 : volume) * 100}%` }} />
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={isMutedUi ? 0 : volume}
-                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                        className="pod-custom-vol-input"
-                        aria-label="Volume"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Right Controls: Speed Pill + Time Display */}
-                  <div className="pod-custom-right-group">
-                    <button
-                      type="button"
-                      className="pod-custom-speed-pill"
-                      title="Playback speed"
-                      aria-label="Change playback speed"
-                      onClick={handleToggleSpeed}
-                    >
-                      {playbackRate}x
-                    </button>
-
-                    <span className="pod-custom-time">
-                      <span ref={currentTimeDisplayRef}>{fmtTime(displayCurrent)}</span> / {displayDuration ? fmtTime(displayDuration) : "--:--"}
-                    </span>
                   </div>
                 </div>
               </div>
-            );
-          })()}
-        </div>
+            </div>
+          );
+        })()}
 
-        {/* ── Scrollable transcript ── */}
-        <div className="podcast-transcript-scroll" ref={transcriptRef}>
-          <div className="transcript-toggle">
-            <h4>Transcript</h4>
-          </div>
+        {/* ── Scrollable transcript directly below inside same card ── */}
+        <div className="pod-unified-transcript-wrap" ref={transcriptRef}>
+          <h4 className="pod-unified-transcript-title">Transcript</h4>
           {transcript ? (
             <div
               className="transcript-box transcript-body"

@@ -4150,8 +4150,6 @@ h3 {
 /* 2. foreignObject: height:auto + overflow visible — main culprit for cut-off text */
 .mermaid-clean-render svg foreignObject {
   overflow: visible !important;
-  height: auto !important;
-  min-height: 1px;
 }
 
 /* 3. All text/label elements inside foreignObject or SVG nodes */

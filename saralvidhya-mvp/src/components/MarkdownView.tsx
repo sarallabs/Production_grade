@@ -105,7 +105,19 @@ export default function MarkdownView({ content }: Props) {
           code({ className, children, ...props }) {
             const match = /language-(\w+)/.exec(className || '');
             if (match && match[1] === 'mermaid') {
-              return <MermaidView content={String(children).replace(/\n$/, '')} />;
+              const extractText = (node: any): string => {
+                if (typeof node === 'string') return node;
+                if (typeof node === 'number') return String(node);
+                if (!node) return '';
+                if (Array.isArray(node)) return node.map(extractText).join('');
+                if (node.props) {
+                  if (node.type === 'br') return '<br/>';
+                  return extractText(node.props.children);
+                }
+                return '';
+              };
+              const mermaidContent = extractText(children).replace(/\n$/, '');
+              return <MermaidView content={mermaidContent} />;
             }
             return (
               <code className={className} {...props}>
