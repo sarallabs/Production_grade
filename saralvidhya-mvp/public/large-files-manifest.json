@@ -1,10 +1,23 @@
 {
   "version": "1.0",
   "threshold": "24MB",
-  "totalFiles": 0,
-  "generatedAt": "2026-10-05T07:17:35.436Z",
+  "totalFiles": 2,
+  "generatedAt": "2026-10-06T11:07:14.635Z",
   "note": "These files are stored in Google Drive and fetched on-demand",
-  "files": [],
+  "files": [
+    {
+      "path": "angrau/chapter_03/flashcards.md",
+      "size": 29.11,
+      "extension": ".md",
+      "createdAt": "2026-10-06T11:07:14.516Z"
+    },
+    {
+      "path": "angrau/chapter_03/prep_flashcards.md",
+      "size": 29.11,
+      "extension": ".md",
+      "createdAt": "2026-10-06T11:07:14.520Z"
+    }
+  ],
   "instructions": {
     "description": "Files larger than 24MB are stored in Google Drive",
     "action": "Use GoogleDriveService to fetch these files",

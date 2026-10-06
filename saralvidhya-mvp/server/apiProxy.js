@@ -36,7 +36,7 @@ router.post('/tts/synthesize', async (req, res) => {
     const key = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!key) throw new Error('GOOGLE_API_KEY is not set on the server.');
 
-    const response = await fetch(https://texttospeech.googleapis.com/v1/text:synthesize?key=, {
+    const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body)
@@ -44,7 +44,7 @@ router.post('/tts/synthesize', async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(TTS API Error:  );
+      throw new Error(`TTS API Error: ${errorText}`);
     }
 
     const data = await response.json();
@@ -60,7 +60,7 @@ router.post('/stt/recognize', async (req, res) => {
     const key = process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || process.env.VITE_GOOGLE_API_KEY || process.env.VITE_GEMINI_API_KEY;
     if (!key) throw new Error('GOOGLE_API_KEY is not set on the server.');
 
-    const response = await fetch(https://speech.googleapis.com/v1/speech:recognize?key=, {
+    const response = await fetch(`https://speech.googleapis.com/v1/speech:recognize?key=${key}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req.body)
@@ -68,7 +68,7 @@ router.post('/stt/recognize', async (req, res) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(STT API Error:  );
+      throw new Error(`STT API Error: ${errorText}`);
     }
 
     const data = await response.json();

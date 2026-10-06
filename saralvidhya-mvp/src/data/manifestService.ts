@@ -63,6 +63,8 @@ export function getVisibleBoardIds(): string[] {
 
 const DEFAULT_SUBJECT_PATHS: Record<string, string> = {
   neb_xii_biology: 'neb_nepal/class_12/biology',
+  ento_131: 'angrau',
+  entomology: 'angrau',
 };
 
 /** Files that are NOT level-specific — same content for all difficulty levels. */
@@ -206,28 +208,28 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
       {
         number: 1,
         name: 'Insect Digestive System & Anatomy',
-        dir: 'chapter_1',
+        dir: 'chapter_01',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
       },
       {
         number: 2,
         name: 'Insect Morphology & Structural Taxonomy',
-        dir: 'chapter_2',
+        dir: 'chapter_02',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'mindmap'],
         resourceCount: 6,
       },
       {
         number: 3,
-        name: 'Floral Biology & Pollination Mechanisms',
-        dir: 'chapter_4',
+        name: 'Soil Ecology & Environmental Weathering',
+        dir: 'chapter_03',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
       },
       {
         number: 4,
-        name: 'Soil Ecology & Environmental Weathering',
-        dir: 'chapter_3',
+        name: 'Floral Biology & Pollination Mechanisms',
+        dir: 'chapter_04',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
       },
@@ -275,6 +277,9 @@ export function getSubject(manifest: Manifest, subjectId: string): Subject | und
 
 export function getSubjectResourcePath(subjectId: string): string {
   const targetId = resolveSubjectId(subjectId);
+  if (targetId === 'ento_131' || targetId.includes('ento')) {
+    return 'angrau';
+  }
   const manifestPath = cachedManifest?.subjects.find((s) => s.id === targetId || s.id === subjectId)?.path;
   if (manifestPath) return manifestPath;
 
@@ -286,6 +291,10 @@ export function getSubjectResourcePath(subjectId: string): string {
   }
 
   return DEFAULT_SUBJECT_PATHS[targetId] ?? DEFAULT_SUBJECT_PATHS[subjectId] ?? targetId;
+}
+
+export function getLocalSubjectBaseUrl(subjectId: string): string {
+  return `${BASE}/${getSubjectResourcePath(subjectId)}`;
 }
 
 export function getSubjectBaseUrl(subjectId: string): string {
