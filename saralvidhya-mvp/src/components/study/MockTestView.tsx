@@ -1216,12 +1216,12 @@ export default function MockTestView({
               </div>
             </div>
 
-            {/* 3-Column Grid: Units + Action Controls */}
+            {/* 2x2 Grid: Units */}
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: "22px",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "20px",
               }}
             >
               {allUnits.map((unit) => {
@@ -1251,8 +1251,8 @@ export default function MockTestView({
                       flexDirection: "column",
                       alignItems: "center",
                       justifyContent: "center",
-                      padding: "24px 18px 30px 18px",
-                      minHeight: "185px",
+                      padding: "26px 20px 32px 20px",
+                      minHeight: "160px",
                       borderRadius: "18px",
                       position: "relative",
                       cursor: "pointer",
@@ -1304,7 +1304,7 @@ export default function MockTestView({
                     {/* Unit Subtitle */}
                     <div
                       style={{
-                        fontSize: "0.85rem",
+                        fontSize: "0.92rem",
                         fontWeight: 500,
                         color: "#475569",
                         textAlign: "center",
@@ -1319,10 +1319,10 @@ export default function MockTestView({
                     <div
                       style={{
                         position: "absolute",
-                        bottom: "12px",
-                        right: "12px",
-                        width: "20px",
-                        height: "20px",
+                        bottom: "14px",
+                        right: "14px",
+                        width: "22px",
+                        height: "22px",
                         borderRadius: "5px",
                         display: "flex",
                         alignItems: "center",
@@ -1341,152 +1341,148 @@ export default function MockTestView({
                   </div>
                 );
               })}
+            </div>
 
-              {/* 6th Slot: Config Card + Start Exam Button */}
+            {/* Bottom Actions Row: Center-Right Aligned */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "flex-end",
+                gap: "20px",
+                marginTop: "24px",
+              }}
+            >
+              {/* Green Config Box */}
               <div
                 style={{
+                  background: "#467360",
+                  borderRadius: "14px",
+                  padding: "12px 20px",
                   display: "flex",
-                  flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: "18px",
-                  minHeight: "185px",
-                  padding: "4px",
+                  gap: "16px",
+                  boxShadow: "0 6px 18px rgba(70, 115, 96, 0.22)",
                   boxSizing: "border-box",
                 }}
               >
-                {/* Green Config Box */}
+                {/* Clipboard Icon */}
                 <div
                   style={{
-                    width: "100%",
-                    background: "#467360",
-                    borderRadius: "14px",
-                    padding: "12px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                    boxShadow: "0 6px 18px rgba(70, 115, 96, 0.22)",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  {/* Clipboard Icon */}
-                  <div
-                    style={{
-                      width: "38px",
-                      height: "38px",
-                      borderRadius: "10px",
-                      background: "rgba(255, 255, 255, 0.16)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                      <path d="M9 12h6" />
-                      <path d="M9 16h6" />
-                      <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
-                    </svg>
-                  </div>
-
-                  {/* Question count radio options */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
-                    <span style={{ fontSize: "0.8rem", color: "rgba(255, 255, 255, 0.92)", fontWeight: 600 }}>
-                      No. of questions
-                    </span>
-
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      {[option1Count, option2Count].map((count) => {
-                        const isChosen = selectedQuestionCount === count;
-                        return (
-                          <div
-                            key={count}
-                            onClick={() => setSelectedQuestionCount(count)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <div
-                              style={{
-                                width: "14px",
-                                height: "14px",
-                                borderRadius: "50%",
-                                border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
-                              }}
-                            >
-                              {isChosen && (
-                                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
-                              )}
-                            </div>
-                            <div
-                              style={{
-                                minWidth: "42px",
-                                height: "23px",
-                                padding: "0 8px",
-                                borderRadius: "6px",
-                                border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
-                                background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
-                                color: "#ffffff",
-                                fontSize: "0.82rem",
-                                fontWeight: 700,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
-                              }}
-                            >
-                              {count}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Start Button */}
-                <button
-                  onClick={handleStartExam}
-                  style={{
-                    background: "#467360",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "12px",
-                    padding: "12px 48px",
-                    fontSize: "1.05rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
+                    width: "38px",
+                    height: "38px",
+                    borderRadius: "10px",
+                    background: "rgba(255, 255, 255, 0.16)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: "8px",
-                    boxShadow: "0 4px 16px rgba(70, 115, 96, 0.3)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#3c6453";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(70, 115, 96, 0.38)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#467360";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(70, 115, 96, 0.3)";
+                    flexShrink: 0,
                   }}
                 >
-                  <span>Start</span>
-                  <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>→</span>
-                </button>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    <path d="M9 12h6" />
+                    <path d="M9 16h6" />
+                    <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
+                  </svg>
+                </div>
+
+                {/* Question count radio options */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                  <span style={{ fontSize: "0.8rem", color: "rgba(255, 255, 255, 0.92)", fontWeight: 600 }}>
+                    No. of questions
+                  </span>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    {[option1Count, option2Count].map((count) => {
+                      const isChosen = selectedQuestionCount === count;
+                      return (
+                        <div
+                          key={count}
+                          onClick={() => setSelectedQuestionCount(count)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "14px",
+                              height: "14px",
+                              borderRadius: "50%",
+                              border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {isChosen && (
+                              <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                            )}
+                          </div>
+                          <div
+                            style={{
+                              minWidth: "42px",
+                              height: "23px",
+                              padding: "0 8px",
+                              borderRadius: "6px",
+                              border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
+                              background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
+                              color: "#ffffff",
+                              fontSize: "0.82rem",
+                              fontWeight: 700,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {count}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
+
+              {/* Start Button */}
+              <button
+                onClick={handleStartExam}
+                style={{
+                  background: "#467360",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: "12px",
+                  padding: "13px 44px",
+                  fontSize: "1.05rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 16px rgba(70, 115, 96, 0.3)",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#3c6453";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(70, 115, 96, 0.38)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#467360";
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(70, 115, 96, 0.3)";
+                }}
+              >
+                <span>Start</span>
+                <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>→</span>
+              </button>
             </div>
           </div>
         </div>
