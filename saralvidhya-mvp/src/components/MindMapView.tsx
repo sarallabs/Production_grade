@@ -13,12 +13,17 @@ interface Props {
   nodeIcons?: NodeIcons;
 }
 
-// Green theme — one tint per first-level branch
-const BRANCH_COLORS = ['#4F7B64', '#3F8F7A', '#6B9A5F', '#2F7A6B', '#7A9E6B', '#4A7A8A', '#5E8F78', '#8AA46B'];
-const ROOT_BG = '#2D3E36';
-const H_GAP = 56;
-const V_GAP = 12;
-const MAX_LABEL_W = 240;
+// Brand node levels palette
+const LEVEL_0_BG = '#2D3E36';
+const LEVEL_1_BG = '#4F7B64';
+const LEVEL_2_BG = '#7BA88B';
+
+const ROOT_BG = LEVEL_0_BG;
+const H_GAP = 96;
+const V_GAP = 36;
+const UNIFORM_NODE_W = 236;
+const UNIFORM_NODE_H = 56;
+const MAX_LABEL_W = 204;
 const MIN_Z = 0.2, MAX_Z = 3;
 const FONT = "'Inter','SF Pro Display',system-ui,sans-serif";
 const ICON_W = 22;
@@ -40,9 +45,9 @@ function measure(text: string, font: string): number {
 }
 
 function styleFor(depth: number) {
-  if (depth === 0) return { font: `700 16px ${FONT}`, px: 22, py: 12, extra: 0 };
-  if (depth === 1) return { font: `600 14px ${FONT}`, px: 16, py: 8, extra: 0 };
-  return { font: `500 13px ${FONT}`, px: 6, py: 4, extra: 3 };
+  if (depth === 0) return { font: `700 16px ${FONT}`, px: 24, py: 12, extra: 0 };
+  if (depth === 1) return { font: `600 13.5px ${FONT}`, px: 16, py: 8, extra: 0 };
+  return { font: `500 13px ${FONT}`, px: 14, py: 8, extra: 2 };
 }
 
 function wrap(label: string, font: string, maxW: number): string[] {
@@ -75,15 +80,21 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
   });
 
   const walk = (n: TNode, parentId: string | null, depth: number, side: 'l' | 'r', color: string, idx: number) => {
-    if (depth === 1) { side = sideOf.get(n.id) || 'r'; color = BRANCH_COLORS[idx % BRANCH_COLORS.length]; }
+    if (depth === 1) {
+      side = sideOf.get(n.id) || 'r';
+      color = LEVEL_1_BG;
+    } else if (depth >= 2) {
+      color = LEVEL_2_BG;
+    }
     const st = styleFor(depth);
-    const lines = wrap(n.label, st.font, MAX_LABEL_W);
+    const maxW = depth === 1 ? UNIFORM_NODE_W - st.px * 2 : MAX_LABEL_W;
+    const lines = wrap(n.label, st.font, maxW);
     const textW = Math.max(...lines.map(s => measure(s, st.font)));
     const ic = icons[n.label] || icons[n.label.toLowerCase()] || {};
     const hasVideo = depth > 0 && !!ic.hasVideo, hasPodcast = depth > 0 && !!ic.hasPodcast;
-    const iconCount = (hasVideo ? 1 : 0) + (hasPodcast ? 1 : 0);
-    const w = Math.ceil(textW) + st.px * 2 + (iconCount ? iconCount * ICON_W + 6 : 0);
-    const h = Math.ceil(lines.length * (st.font.includes('16px') ? 21 : 18)) + st.py * 2 + st.extra;
+    // For depth 1: uniform size! Icons sit outside the box so they do not add to w.
+    const w = depth === 1 ? UNIFORM_NODE_W : depth === 0 ? Math.max(190, Math.ceil(textW) + st.px * 2) : Math.ceil(textW) + st.px * 2;
+    const h = depth === 1 ? UNIFORM_NODE_H : Math.ceil(lines.length * (st.font.includes('16px') ? 22 : 18)) + st.py * 2 + st.extra;
     const isCol = collapsed.has(n.id);
     map.set(n.id, {
       id: n.id, label: n.label, lines, depth, side, color, w, h, x: 0, y: 0, sub: 0, parentId,
@@ -129,12 +140,12 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
     const p = map.get(m.parentId!)!;
     const rt = m.side === 'r';
     const x1 = rt ? p.x + p.w : p.x;
-    const y1 = p.depth >= 2 ? p.y + p.h : p.y + p.h / 2;
+    const y1 = p.y + p.h / 2;
     const x2 = rt ? m.x : m.x + m.w;
-    const y2 = m.depth >= 2 ? m.y + m.h : m.y + m.h / 2;
+    const y2 = m.y + m.h / 2;
     const mx = (x1 + x2) / 2;
     return {
-      id: m.id, color: m.color, sw: m.depth === 1 ? 4 : m.depth === 2 ? 3 : 2,
+      id: m.id, color: m.color, sw: m.depth === 1 ? 4 : 2.5,
       d: `M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`,
     };
   });
@@ -142,12 +153,12 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
 }
 
 const EyeSvg = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F7B64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" />
   </svg>
 );
 const EarSvg = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4F7B64" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" />
   </svg>
 );
@@ -172,11 +183,13 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
     if (!el || !layout) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     layout.nodes.forEach(m => {
-      x0 = Math.min(x0, m.x); y0 = Math.min(y0, m.y);
-      x1 = Math.max(x1, m.x + m.w); y1 = Math.max(y1, m.y + m.h);
+      const extraLeft = (!m.depth ? 0 : (m.side === 'l' && (m.hasVideo || m.hasPodcast) ? 44 : 0));
+      const extraRight = (!m.depth ? 0 : (m.side === 'r' && (m.hasVideo || m.hasPodcast) ? 44 : 0));
+      x0 = Math.min(x0, m.x - extraLeft); y0 = Math.min(y0, m.y);
+      x1 = Math.max(x1, m.x + m.w + extraRight); y1 = Math.max(y1, m.y + m.h);
     });
     const r = el.getBoundingClientRect();
-    const pad = 40;
+    const pad = 48;
     const k = Math.max(MIN_Z, Math.min(1, (r.width - pad * 2) / (x1 - x0), (r.height - pad * 2) / (y1 - y0)));
     setView({ k, x: r.width / 2 - ((x0 + x1) / 2) * k, y: r.height / 2 - ((y0 + y1) / 2) * k });
   }, [layout]);
@@ -286,21 +299,29 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
             const hov = hover === m.id && clickable;
             const base: React.CSSProperties = {
               position: 'absolute', left: m.x, top: m.y, width: m.w, height: m.h, boxSizing: 'border-box',
-              display: 'flex', alignItems: 'center', justifyContent: isRoot ? 'center' : 'flex-start', gap: 6,
-              font: st.font, lineHeight: m.depth === 0 ? '21px' : '18px',
-              cursor: clickable ? 'pointer' : 'default', transition: 'box-shadow .15s, filter .15s',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              font: st.font, lineHeight: '18px',
+              cursor: clickable ? 'pointer' : 'default', transition: 'box-shadow .2s ease, filter .2s ease, transform .2s ease',
             };
-            if (isRoot) Object.assign(base, { background: ROOT_BG, color: '#fff', borderRadius: 16, padding: `0 ${st.px}px`, boxShadow: '0 6px 16px rgba(45,62,54,.28)' });
+            if (isRoot) Object.assign(base, {
+              background: LEVEL_0_BG, color: '#fff', borderRadius: 16, padding: `0 ${st.px}px`,
+              boxShadow: '0 6px 16px rgba(45,62,54,.28)',
+            });
             else if (m.depth === 1) Object.assign(base, {
-              background: m.color, color: '#fff', borderRadius: 12, padding: `0 ${st.px}px`,
-              boxShadow: hov ? '0 8px 18px rgba(45,62,54,.3)' : '0 3px 8px rgba(45,62,54,.18)', filter: hov ? 'brightness(.92)' : 'none',
+              background: LEVEL_1_BG, color: '#fff', borderRadius: 14, padding: `0 ${st.px}px`,
+              boxShadow: hov ? '0 8px 20px rgba(45,62,54,.32)' : '0 3px 10px rgba(45,62,54,.18)',
+              filter: hov ? 'brightness(.93)' : 'none',
+              transform: hov ? 'scale(1.02)' : 'none',
             });
             else Object.assign(base, {
-              color: '#23322B', padding: `0 ${st.px}px`, borderBottom: `3px solid ${m.color}`,
-              background: hov ? 'rgba(79,123,100,.08)' : 'transparent', borderRadius: 4,
+              background: LEVEL_2_BG, color: '#fff', borderRadius: 10, padding: `0 ${st.px}px`,
+              boxShadow: hov ? '0 6px 16px rgba(45,62,54,.25)' : '0 2px 8px rgba(45,62,54,.14)',
+              filter: hov ? 'brightness(.95)' : 'none',
+              transform: hov ? 'scale(1.02)' : 'none',
             });
 
-            const toggleOnRight = m.side === 'r';
+            const isRightSide = m.side === 'r';
+            const toggleOnRight = isRightSide;
             return (
               <div
                 key={m.id}
@@ -310,36 +331,129 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
                 onMouseLeave={() => setHover(null)}
                 onClick={() => { if (clickable && !pan.current?.moved) onTopicClick?.(m.label, 'read'); }}
               >
-                <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word', textAlign: isRoot ? 'center' : 'left' }}>{m.lines.join('\n')}</span>
+                <span
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                    wordBreak: 'break-word',
+                    textAlign: 'center',
+                    width: '100%',
+                    lineHeight: '18px',
+                    userSelect: 'none',
+                  }}
+                >
+                  {m.lines.join('\n')}
+                </span>
+
+                {/* Outside action icons (listen / podcast button placed OUTSIDE the box) */}
                 {(m.hasVideo || m.hasPodcast) && (
-                  <span style={{ display: 'inline-flex', gap: 4, marginLeft: 'auto', flexShrink: 0 }}>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      [isRightSide ? 'right' : 'left']: -36,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      zIndex: 10,
+                    }}
+                  >
                     {m.hasVideo && (
-                      <button type="button" title="Watch video" aria-label="Watch video"
+                      <button
+                        type="button"
+                        title="Watch video"
+                        aria-label="Watch video"
                         onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'video'); }}
-                        style={{ width: 18, height: 18, borderRadius: '50%', border: 'none', background: '#F3F8F5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: '50%',
+                          border: `1.5px solid ${m.color}`,
+                          background: '#FFFFFF',
+                          color: m.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          boxShadow: '0 2px 8px rgba(45,62,54,.18)',
+                          transition: 'all .2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.15)';
+                          e.currentTarget.style.background = m.color;
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.color = m.color;
+                        }}
+                      >
                         <EyeSvg />
                       </button>
                     )}
                     {m.hasPodcast && (
-                      <button type="button" title="Listen to podcast" aria-label="Listen to podcast"
+                      <button
+                        type="button"
+                        title="Listen to podcast"
+                        aria-label="Listen to podcast"
                         onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'podcast'); }}
-                        style={{ width: 18, height: 18, borderRadius: '50%', border: 'none', background: '#F3F8F5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', padding: 0 }}>
+                        style={{
+                          width: 26,
+                          height: 26,
+                          borderRadius: '50%',
+                          border: `1.5px solid ${m.color}`,
+                          background: '#FFFFFF',
+                          color: m.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          boxShadow: '0 2px 8px rgba(45,62,54,.18)',
+                          transition: 'all .2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.15)';
+                          e.currentTarget.style.background = m.color;
+                          e.currentTarget.style.color = '#FFFFFF';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.color = m.color;
+                        }}
+                      >
                         <EarSvg />
                       </button>
                     )}
                   </span>
                 )}
+
                 {!isRoot && m.hasKids && (
                   <button
                     type="button"
                     aria-label={m.collapsed ? 'Expand' : 'Collapse'}
                     onClick={(e) => { e.stopPropagation(); toggle(m.id); }}
                     style={{
-                      position: 'absolute', top: '50%', transform: 'translateY(-50%)',
-                      [toggleOnRight ? 'right' : 'left']: -22,
-                      width: 18, height: 18, borderRadius: '50%', border: '1px solid #CFC3BA', background: '#fff',
-                      fontSize: 10, fontWeight: 700, lineHeight: 1, color: '#45584E', cursor: 'pointer', padding: 0,
-                      boxShadow: '0 1px 2px rgba(0,0,0,.12)', opacity: m.collapsed || hov ? 1 : 0.55,
+                      position: 'absolute',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      [toggleOnRight ? 'right' : 'left']: (m.hasVideo || m.hasPodcast) ? -68 : -22,
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      border: '1px solid #CFC3BA',
+                      background: '#fff',
+                      fontSize: 10,
+                      fontWeight: 700,
+                      lineHeight: 1,
+                      color: '#45584E',
+                      cursor: 'pointer',
+                      padding: 0,
+                      boxShadow: '0 1px 2px rgba(0,0,0,.12)',
+                      opacity: m.collapsed || hov ? 1 : 0.55,
                     } as React.CSSProperties}
                   >
                     {m.collapsed ? m.kidCount : '−'}

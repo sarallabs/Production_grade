@@ -663,6 +663,7 @@
   display: flex;
   gap: 24px;
   transition: box-shadow 0.2s ease, transform 0.2s ease;
+  cursor: pointer;
 }
 
 .qbank-simple-question-card:hover {
@@ -4720,70 +4721,324 @@ mark.reading-mark.reading-phrase-active {
   padding: 14px 6px 16px;
 }
 
-/* Player bar */
-.pod-bar {
+/* Spotify-Inspired Modern Podcast Player */
+.pod-spotify-player {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 7px 16px 7px 22px;
-  background: #eef2ef;
-  border-radius: 8px;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 20px;
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  margin-bottom: 6px;
+  box-sizing: border-box;
+  width: 100%;
 }
-.pod-bar-ctrls { display: flex; align-items: center; gap: 6px; }
-.pod-bar-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; padding: 0;
-  border: none; background: transparent; border-radius: 50%;
-  color: #4b5563; cursor: pointer;
-  transition: color 0.15s ease, background 0.15s ease;
+
+[data-theme*="dark"] .pod-spotify-player {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
 }
-.pod-bar-btn:hover { color: #4F7B64; background: rgba(79, 123, 100, 0.1); }
-.pod-bar-play { width: 30px; height: 30px; }
-.pod-bar-vol { margin-left: 18px; }
-.pod-seek {
+
+/* Left: Track Meta */
+.pod-spotify-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 0;
+  max-width: 260px;
+  min-width: 0;
+}
+
+.pod-spotify-artwork {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.15);
+}
+
+[data-theme*="dark"] .pod-spotify-artwork {
+  background: #064e3b;
+  color: #34d399;
+}
+
+/* Equalizer animated bars */
+.pod-equalizer-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+}
+.eq-bar {
+  width: 3px;
+  background: #16a34a;
+  border-radius: 2px;
+  animation: eqBounce 1s ease-in-out infinite alternate;
+}
+[data-theme*="dark"] .eq-bar { background: #34d399; }
+.eq-1 { height: 16px; animation-delay: 0.1s; }
+.eq-2 { height: 9px; animation-delay: 0.3s; }
+.eq-3 { height: 17px; animation-delay: 0.2s; }
+.eq-4 { height: 11px; animation-delay: 0.4s; }
+
+@keyframes eqBounce {
+  0% { height: 4px; }
+  100% { height: 18px; }
+}
+
+.pod-spotify-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pod-spotify-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
+}
+[data-theme*="dark"] .pod-spotify-title { color: #f8fafc; }
+.pod-spotify-sub {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme*="dark"] .pod-spotify-sub { color: #94a3b8; }
+
+/* Center: Controls + Scrubber */
+.pod-spotify-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  flex: 2 1 0;
+  max-width: 580px;
+  min-width: 0;
+}
+
+.pod-spotify-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.pod-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #475569;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.pod-ctrl-btn:hover {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+  transform: scale(1.08);
+}
+[data-theme*="dark"] .pod-ctrl-btn { color: #94a3b8; }
+[data-theme*="dark"] .pod-ctrl-btn:hover { color: #34d399; background: rgba(52, 211, 153, 0.12); }
+
+.pod-speed-btn {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.pod-speed-btn:hover {
+  border-color: #16a34a;
+  color: #16a34a;
+  background: #f0fdf4;
+}
+[data-theme*="dark"] .pod-speed-btn {
+  border-color: #475569;
+  background: #334155;
+  color: #cbd5e1;
+}
+
+/* Big Central Play Button */
+.pod-play-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: #16a34a;
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.38);
+  transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease, box-shadow 0.15s ease;
+}
+.pod-play-btn:hover {
+  transform: scale(1.06);
+  background: #15803d;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.48);
+}
+.pod-play-btn:active {
+  transform: scale(0.96);
+}
+
+/* Scrubber Row */
+.pod-spotify-scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pod-time-current,
+.pod-time-total {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  min-width: 40px;
+}
+.pod-time-current { text-align: right; }
+.pod-time-total { text-align: left; }
+[data-theme*="dark"] .pod-time-current,
+[data-theme*="dark"] .pod-time-total { color: #94a3b8; }
+
+.pod-spotify-scrubber {
   position: relative;
   flex: 1;
-  height: 22px;
+  height: 20px;
   display: flex;
   align-items: center;
   cursor: pointer;
-  margin-right: 10px;
 }
-.pod-seek-track {
+
+.pod-scrubber-track {
   position: relative;
   width: 100%;
-  height: 3px;
-  border-radius: 2px;
-  background: #cfd8d2;
+  height: 4px;
+  border-radius: 999px;
+  background: #e2e8f0;
+  transition: height 0.15s ease;
   overflow: hidden;
 }
-.pod-seek-fill {
-  position: absolute; left: 0; top: 0; bottom: 0;
-  background: #5b7d68;
-  border-radius: 2px;
+.pod-spotify-scrubber:hover .pod-scrubber-track {
+  height: 6px;
 }
-.pod-seek-handle {
+[data-theme*="dark"] .pod-scrubber-track { background: #334155; }
+
+.pod-scrubber-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: #16a34a;
+  border-radius: 999px;
+  transition: width 0.05s linear;
+}
+[data-theme*="dark"] .pod-scrubber-fill { background: #22c55e; }
+
+.pod-scrubber-thumb {
   position: absolute;
   top: 50%;
-  width: 14px; height: 14px;
-  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid #16a34a;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transform: translate(-50%, -50%) scale(0);
   pointer-events: none;
-  /* two slim vertical bars ▮▮ */
-  background:
-    linear-gradient(#5b7d68, #5b7d68) 3px 1px / 3.5px 12px no-repeat,
-    linear-gradient(#5b7d68, #5b7d68) 7.5px 1px / 3.5px 12px no-repeat;
+  transition: transform 0.15s ease;
 }
-.pod-seek-input {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  opacity: 0; cursor: pointer; margin: 0;
+.pod-spotify-scrubber:hover .pod-scrubber-thumb {
+  transform: translate(-50%, -50%) scale(1.1);
 }
-.pod-time {
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 500;
-  color: #4F7B64;
-  font-variant-numeric: tabular-nums;
+[data-theme*="dark"] .pod-scrubber-thumb {
+  background: #f8fafc;
+  border-color: #22c55e;
+}
+
+.pod-scrubber-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  margin: 0;
+}
+
+/* Right: Speed + Volume */
+.pod-spotify-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 0;
+  max-width: 260px;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.pod-vol-slider-wrap {
+  width: 72px;
+  display: flex;
+  align-items: center;
+}
+.pod-vol-slider {
+  width: 100%;
+  height: 4px;
+  border-radius: 999px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #e2e8f0;
+  outline: none;
+  cursor: pointer;
+}
+.pod-vol-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #16a34a;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+.pod-vol-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+}
+
+@media (max-width: 900px) {
+  .pod-spotify-player {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+  .pod-spotify-info { flex: 1 1 100%; }
+  .pod-spotify-center { flex: 1 1 100%; max-width: 100%; }
+  .pod-spotify-right { display: none; }
 }
 
 /* Transcript */

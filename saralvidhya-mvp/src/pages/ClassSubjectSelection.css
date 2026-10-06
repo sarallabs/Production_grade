@@ -136,7 +136,7 @@
 /* Meta / Badges */
 .sv-subject-card--entomology .sv-progress-meta {
   display: flex !important;
-  justify-content: space-between !important;
+  justify-content: flex-start !important;
   align-items: center !important;
   width: 100% !important;
 }
@@ -171,5 +171,41 @@
 .sv-badge-count {
   padding: 5px 14px !important;
   letter-spacing: 0.3px !important;
+  white-space: nowrap !important;
+}
+
+.sv-badge-progress {
+  padding: 5px 14px !important;
+  letter-spacing: 0.2px !important;
+  white-space: nowrap !important;
+}
+
+/* ── Single Subject Layout (Centered, No 2-Column Grid) ── */
+.sv-subjects--single {
+  max-width: 660px !important;
+  margin: 32px auto 0 auto !important;
+  width: 100% !important;
+  align-self: center !important;
+}
+
+.sv-subjects--single .sv-subjects-header {
+  margin-bottom: 20px !important;
+  width: 100% !important;
+}
+
+.sv-subjects-grid--single {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  grid-template-columns: none !important;
+  grid-template-rows: none !important;
+  gap: 0 !important;
+  width: 100% !important;
+  flex: none !important;
+}
+
+.sv-subjects-grid--single .sv-subject-card {
+  width: 100% !important;
+  max-width: 100% !important;
 }
 

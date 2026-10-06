@@ -167,6 +167,17 @@ export default function ReadAloudBar({
         return ranges.length - 1;
       };
       const startWordIdx = getWordIndexFromChar(startChar);
+      setPlayback("playing");
+      onPlay?.();
+      onHighlightChange?.({
+        active: true,
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      });
+      lastHighlightRef.current = {
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      };
       googleTtsSpeak(
         clean.slice(startChar),
         lang,

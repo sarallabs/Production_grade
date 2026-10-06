@@ -49,6 +49,27 @@ function formatTenMarkAnswer(raw: any): string {
   return parts.join('\n\n');
 }
 
+export function ensureQuestionMark(text: string): string {
+  if (!text) return '';
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+
+  // Check if wrapped with markdown bold/italic at the end
+  if (trimmed.endsWith('**')) {
+    const inner = trimmed.slice(0, -2).trim();
+    if (inner.endsWith('?')) return trimmed;
+    return inner.replace(/[:.;\s]+$/, '') + '?**';
+  }
+  if (trimmed.endsWith('*')) {
+    const inner = trimmed.slice(0, -1).trim();
+    if (inner.endsWith('?')) return trimmed;
+    return inner.replace(/[:.;\s]+$/, '') + '?*';
+  }
+
+  if (trimmed.endsWith('?')) return trimmed;
+  return trimmed.replace(/[:.;\s]+$/, '') + '?';
+}
+
 function normalizeText(text: string): string {
   if (!text) return '';
   return text
@@ -74,14 +95,14 @@ function parseUniversal(markdown: string): ParsedQa[] {
         qText = qText.replace(/^#{1,6}\s+Question\s+\d+[:\s-]*/i, '').trim();
         const aText = part.substring(solMatch.index).trim();
         result.push({
-          question: qText,
+          question: ensureQuestionMark(qText),
           answer: aText
         });
       } else {
         if (/^#{1,6}\s+Question/i.test(part)) {
           const qText = part.replace(/^#{1,6}\s+Question\s+\d+[:\s-]*/i, '').trim();
           result.push({
-            question: qText,
+            question: ensureQuestionMark(qText),
             answer: ''
           });
         }
@@ -193,7 +214,7 @@ export function parseQuestionBankMarkdown(
             subjectName,
             chapterNumber,
             chapterName,
-            question: qText,
+            question: ensureQuestionMark(qText),
             shortAnswer: shortAns,
             longAnswer: longAns || shortAns,
             tenMarkAnswer: formatTenMarkAnswer(q.essay_answer_10mark || q.long_answer_10mark || q.ten_mark_answer || q.answer_10mark) || undefined,
@@ -213,7 +234,7 @@ export function parseQuestionBankMarkdown(
     qBlocks.forEach((block, idx) => {
       const qMatch = block.match(/^##\s+Q\d+[\.:\s]+([^\n]+)/i);
       if (!qMatch) return;
-      const question = qMatch[1].trim();
+      const question = ensureQuestionMark(qMatch[1].trim());
 
       let shortAnswer = '';
       const shortMatch = block.match(/\*\*2-Mark Short Answer:\*\*([\s\S]*?)(?=\*\*5-Mark Comprehensive Long Answer:\*\*|---|##|$)/i);
@@ -284,7 +305,7 @@ export function parseQuestionBankMarkdown(
       subjectName,
       chapterNumber,
       chapterName,
-      question: p.question,
+      question: ensureQuestionMark(p.question),
       shortAnswer: short,
       longAnswer: long,
     };
