@@ -4783,7 +4783,7 @@ mark.reading-mark.reading-phrase-active {
 }
 
 .pod-unified-controls {
-  width: 340px;
+  width: 510px;
   max-width: 100%;
   display: flex;
   flex-direction: column;
@@ -4798,28 +4798,31 @@ mark.reading-mark.reading-phrase-active {
 .pod-unified-scrubber-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
 }
 
 .pod-unified-transport-row {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
-  min-height: 24px;
+  min-height: 26px;
 }
 
 .pod-unified-vol-wrap {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .pod-unified-transport-buttons {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .pod-unified-transcript-wrap {
@@ -5013,7 +5016,7 @@ mark.reading-mark.reading-phrase-active {
 /* Custom Volume Slider */
 .pod-custom-vol-slider-wrap {
   position: relative;
-  width: 55px;
+  width: 70px;
   height: 18px;
   display: flex;
   align-items: center;
