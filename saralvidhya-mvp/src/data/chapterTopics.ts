@@ -77,24 +77,6 @@ export const CHAPTER_TOPICS: ChapterTopics[] = [
       'Parthenocarpy & Fruit Set Physiology',
     ],
   },
-  {
-    subject: 'ento_131',
-    chapterNumber: 11,
-    topics: [
-      'Post-Embryonic Morphogenesis Phases',
-      'Ametabolous & Hemimetabolous Systems',
-      'Holometabolous Metamorphosis',
-      'Apolysis & Ecdysis Cycle',
-      'Histolysis & Histogenesis in Pupae',
-      'Imaginal Discs Morphogenesis',
-      'Prothoracicotropic Hormone (PTTH)',
-      'Ecdysone & Juvenile Hormone (JH)',
-      'Bursicon Cuticle Tanning Cascade',
-      'Photoperiodic Induction of Diapause',
-      'Supercooling & Cryoprotectants',
-      'Termination of Diapause Signaling',
-    ],
-  },
   // ── NEB Nepal - Class 12 Biology ──────────────────────
   {
     subject: 'neb_xii_biology',

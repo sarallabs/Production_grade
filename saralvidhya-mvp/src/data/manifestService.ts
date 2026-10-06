@@ -233,13 +233,6 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
       },
-      {
-        number: 11,
-        name: 'Metamorphosis & Diapause',
-        dir: 'chapter_11',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
-        resourceCount: 7,
-      },
     ];
 
     const map = new Map<number, Chapter>();
@@ -247,8 +240,8 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
       map.set(ch.number, ch);
     }
     for (const ch of subject?.chapters || []) {
-      const realName = ch.name === 'Chapter 11' ? 'Metamorphosis & Diapause' : ch.name;
-      map.set(ch.number, { ...ch, name: realName });
+      if (ch.number === 11) continue;
+      map.set(ch.number, ch);
     }
     return Array.from(map.values()).sort((a, b) => a.number - b.number);
   }
