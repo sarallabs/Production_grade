@@ -1965,6 +1965,9 @@ export default function PodcastsView({
                   </div>
                 </div>
               </div>
+
+              {/* Right: Balance spacer to center the controls */}
+              <div className="pod-unified-spacer" />
             </div>
           );
         })()}
