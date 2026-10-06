@@ -2354,23 +2354,23 @@
 }
 
 .transcript-word.active {
-  background: #fde047;
-  color: #0f172a;
-  font-weight: 700;
-  border-radius: 6px;
+  background: #DCEBE0;
+  color: #1E293B;
+  font-weight: 600;
+  border-radius: 4px;
   padding: 2px 6px;
-  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.4);
-  border: 1px solid rgba(202, 138, 4, 0.4);
+  box-shadow: none;
+  border: none;
 }
 
 [data-theme*="dark"] .transcript-word.active {
-  background: #eab308;
-  color: #09090b;
-  font-weight: 700;
-  border-radius: 6px;
+  background: #2D483A;
+  color: #E2E8F0;
+  font-weight: 600;
+  border-radius: 4px;
   padding: 2px 6px;
-  box-shadow: 0 0 14px rgba(234, 179, 8, 0.6);
-  border: 1px solid #facc15;
+  box-shadow: none;
+  border: none;
 }
 
 .transcript-phrase-active {
@@ -4707,37 +4707,150 @@ mark.reading-mark.reading-phrase-active {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid #a9c4b2;
-  border-radius: 12px;
-  background: #f7faf8;
-  padding: 10px 10px 0;
+  border: 1.5px solid #d5e2d9;
+  border-radius: 18px;
+  background: #f8faf8;
+  padding: 18px 22px 14px 22px;
+  box-sizing: border-box;
 }
+
+[data-theme*="dark"] .pod-shell {
+  border-color: #2b3d33;
+  background: #151d18;
+}
+
+.pod-unified-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2ece5;
+  width: 100%;
+}
+
+[data-theme*="dark"] .pod-unified-header {
+  border-bottom-color: #25332b;
+}
+
+.pod-unified-track-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.pod-unified-mic-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #365345;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(54, 83, 69, 0.2);
+}
+
+.pod-unified-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pod-unified-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+[data-theme*="dark"] .pod-unified-title {
+  color: #f1f5f9;
+}
+
+.pod-unified-subtitle {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+}
+
+[data-theme*="dark"] .pod-unified-subtitle {
+  color: #94a3b8;
+}
+
+.pod-unified-controls {
+  flex: 1;
+  max-width: 580px;
+  min-width: 290px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.pod-unified-scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.pod-unified-transport-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.pod-unified-vol-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pod-unified-transport-buttons {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-right: 12px;
+}
+
+.pod-unified-transcript-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin-top: 10px;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+.pod-unified-transcript-title {
+  margin: 4px 0 10px 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #4f7b64;
+  letter-spacing: -0.01em;
+}
+
+[data-theme*="dark"] .pod-unified-transcript-title {
+  color: #6da78e;
+}
+
 .pod-shell .podcast-player-real { padding: 0; flex-shrink: 0; display: flex; justify-content: center; width: 100%; }
 .pod-shell .podcast-transcript-scroll {
   margin-top: 0;
   border: none;
   border-radius: 0;
   background: transparent;
-  padding: 14px 6px 16px;
-}
-
-/* Custom Audio Player - Sage Minimalist Design from Screenshot */
-.pod-custom-player {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 25%;
-  min-width: 285px;
-  max-width: 100%;
-  padding: 8px 12px 9px 12px;
-  background: #e3e8e5;
-  border-radius: 8px;
-  box-sizing: border-box;
-  margin: 0 auto 8px auto;
-}
-
-[data-theme*="dark"] .pod-custom-player {
-  background: #1e2621;
+  padding: 10px 0;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 /* Row 1: Timeline Wrap (Scrubber) */
@@ -4897,7 +5010,7 @@ mark.reading-mark.reading-phrase-active {
 /* Custom Volume Slider */
 .pod-custom-vol-slider-wrap {
   position: relative;
-  width: 44px;
+  width: 64px;
   height: 18px;
   display: flex;
   align-items: center;
