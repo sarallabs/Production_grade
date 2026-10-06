@@ -66,12 +66,15 @@ export default function MarkdownView({ content }: Props) {
           img(props) {
             let cleanSrc = props.src ? props.src.replace(/base64,\s+/g, 'base64,') : props.src;
             if (cleanSrc && !cleanSrc.startsWith('http://') && !cleanSrc.startsWith('https://') && !cleanSrc.startsWith('data:')) {
+              const imgBase = import.meta.env.VITE_GCS_API_BASE
+                ? `${import.meta.env.VITE_GCS_API_BASE}/api/content/angrau/entomology`
+                : '/generated_resources/angrau';
               if (cleanSrc.startsWith('../Mindmaps/')) {
-                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/${cleanSrc.replace('../Mindmaps/', 'Mindmaps/')}`;
+                cleanSrc = `${imgBase}/chapter_01/${cleanSrc.replace('../Mindmaps/', 'Mindmaps/')}`;
               } else if (cleanSrc.startsWith('../../extracted_images/')) {
-                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_02/${cleanSrc.replace('../../', '')}`;
-              } else if (cleanSrc.startsWith('/api/')) {
-                cleanSrc = `https://saralvidhya-api-193782571555.asia-south1.run.app${cleanSrc}`;
+                cleanSrc = `${imgBase}/chapter_02/${cleanSrc.replace('../../', '')}`;
+              } else if (cleanSrc.startsWith('/api/') && import.meta.env.VITE_GCS_API_BASE) {
+                cleanSrc = `${import.meta.env.VITE_GCS_API_BASE}${cleanSrc}`;
               }
             }
             return (

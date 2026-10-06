@@ -6,6 +6,7 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
+  getLocalSubjectBaseUrl,
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
@@ -38,7 +39,10 @@ export async function getFlashcards(
     const chDir = getChapterDir(subject, chapterNumber);
     const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/practice/flashcards?persona=${level}`;
     try {
-      const res = await fetch(url, { cache: 'no-store' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         const cards = Array.isArray(data) ? data : (data.flashcards || data.cards || []);
@@ -86,9 +90,9 @@ export async function getFlashcards(
         }
       }
     } catch (e) {
-      console.warn('[GCS] Failed to fetch flashcards', url, e);
+      console.warn('[GCS] Failed or timed out fetching flashcards', url, e);
     }
-    return [{ front: 'No flashcards available yet.', back: 'Content coming soon.' }];
+    // Fall through to local static files
   }
 
   if (BACKEND_SUBJECTS.has(subject)) {
@@ -110,6 +114,7 @@ export async function getFlashcards(
   }
 
   const chDir = getChapterDir(subject, chapterNumber);
+  const localBase = getLocalSubjectBaseUrl(subject);
   const subjectBase = getSubjectBaseUrl(subject);
   const lvlStr = (level as string) || 'intermediate';
   const normLevel: DifficultyLevel =
@@ -119,28 +124,44 @@ export async function getFlashcards(
       ? 'advanced'
       : 'intermediate';
 
-  const paths = [
-    ...(videoDir
-      ? [
-          `${subjectBase}/${chDir}/${videoDir}/Learn/Flashcards/flashcards_${normLevel}.md`,
-          `${subjectBase}/${chDir}/${videoDir}/Prepare/Flashcards/prep_flashcards.md`,
-          `${subjectBase}/${chDir}/${videoDir}/Prepare/Flashcards/flashcards_prep_master.md`,
-        ]
-      : []),
-    `${subjectBase}/${chDir}/Learn/Flashcards/flashcards_${normLevel}.md`,
-    `${subjectBase}/${chDir}/unit_1/Learn/Flashcards/flashcards_${normLevel}.md`,
-    `${subjectBase}/${chDir}/Prepare/Flashcards/prep_flashcards.md`,
-    `${subjectBase}/${chDir}/Prepare/Flashcards/flashcards_prep_master.md`,
-    `${subjectBase}/${chDir}/unit_1/Prepare/Flashcards/prep_flashcards.md`,
-    `${subjectBase}/${chDir}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.json`,
-    `${subjectBase}/${chDir}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.md`,
-    `${subjectBase}/${chDir}/${normLevel}/flashcards_${normLevel}.md`,
-    `${subjectBase}/${chDir}/${normLevel}/flashcards.md`,
-    `${subjectBase}/${chDir}/${normLevel}/flashcards.json`,
-    `${subjectBase}/${chDir}/flashcards.md`,
-    `${subjectBase}/${chDir}/flashcards.json`,
-    `${subjectBase}/${chDir}/prep_flashcards.md`,
-  ];
+  const chDirsToTry = Array.from(new Set([
+    chDir,
+    `chapter_${String(chapterNumber).padStart(2, '0')}`,
+    `chapter_${chapterNumber}`,
+  ]));
+
+  const basesToTry = Array.from(new Set([
+    localBase,
+    subjectBase,
+  ]));
+
+  const paths: string[] = [];
+  for (const base of basesToTry) {
+    for (const ch of chDirsToTry) {
+      if (videoDir) {
+        paths.push(
+          `${base}/${ch}/${videoDir}/Learn/Flashcards/flashcards_${normLevel}.md`,
+          `${base}/${ch}/${videoDir}/Prepare/Flashcards/prep_flashcards.md`,
+          `${base}/${ch}/${videoDir}/Prepare/Flashcards/flashcards_prep_master.md`,
+        );
+      }
+      paths.push(
+        `${base}/${ch}/Learn/Flashcards/flashcards_${normLevel}.md`,
+        `${base}/${ch}/unit_1/Learn/Flashcards/flashcards_${normLevel}.md`,
+        `${base}/${ch}/Prepare/Flashcards/prep_flashcards.md`,
+        `${base}/${ch}/Prepare/Flashcards/flashcards_prep_master.md`,
+        `${base}/${ch}/unit_1/Prepare/Flashcards/prep_flashcards.md`,
+        `${base}/${ch}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.json`,
+        `${base}/${ch}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.md`,
+        `${base}/${ch}/${normLevel}/flashcards_${normLevel}.md`,
+        `${base}/${ch}/${normLevel}/flashcards.md`,
+        `${base}/${ch}/${normLevel}/flashcards.json`,
+        `${base}/${ch}/flashcards.md`,
+        `${base}/${ch}/flashcards.json`,
+        `${base}/${ch}/prep_flashcards.md`,
+      );
+    }
+  }
   for (const url of paths) {
     try {
       const res = await fetch(url, { cache: 'no-cache' });
