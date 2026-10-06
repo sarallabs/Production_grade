@@ -323,7 +323,20 @@ export default function ChapterList() {
                       </button>
 
                       {/* Main Dynamic Chapter Card */}
-                      <div className="chapter-hero-card" key={`ch-${flipCh.number}`}>
+                      <div
+                        className="chapter-hero-card"
+                        key={`ch-${flipCh.number}`}
+                        onClick={() => handleChapterClick(flipCh)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleChapterClick(flipCh);
+                          }
+                        }}
+                        title={`Open Chapter ${flipCh.number}: ${toTitleCase(cleanChapterName)}`}
+                      >
                         {/* Hero Illustration */}
                         <div className="chapter-hero-img-wrap">
                           <img
@@ -384,14 +397,6 @@ export default function ChapterList() {
                               className="chapter-progress-fill"
                               style={{ width: `${chapterPct}%` }}
                             />
-                          </div>
-                          <div className="chapter-progress-action-row" style={{ justifyContent: "flex-end" }}>
-                            <button
-                              className="chapter-continue-btn"
-                              onClick={() => handleChapterClick(flipCh)}
-                            >
-                              {chapterPct === 100 ? "Review chapter →" : chapterPct > 0 ? "Continue learning →" : "Start learning →"}
-                            </button>
                           </div>
                         </div>
                       </div>

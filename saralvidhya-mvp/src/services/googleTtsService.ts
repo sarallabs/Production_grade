@@ -256,7 +256,7 @@ function cleanup() {
   chunkProgressTimers.clear();
 }
 
-function waitForSpeechSynthesisVoices(timeoutMs = 500): Promise<SpeechSynthesisVoice[]> {
+function waitForSpeechSynthesisVoices(timeoutMs = 150): Promise<SpeechSynthesisVoice[]> {
   return new Promise((resolve) => {
     const voices = window.speechSynthesis.getVoices();
     if (voices.length) return resolve(voices);
@@ -333,7 +333,8 @@ async function fallbackSpeak(
   window.speechSynthesis.cancel();
   const preferredGender = localStorage.getItem('user_voice') === 'male' ? 'male' : 'female';
   const desiredLang = bcp47.toLowerCase().split('-')[0];
-  let availableVoices = await waitForSpeechSynthesisVoices(800);
+  const immediateVoices = window.speechSynthesis.getVoices();
+  let availableVoices = immediateVoices.length ? immediateVoices : await waitForSpeechSynthesisVoices(120);
 
   const startFallbackProgress = () => {
     if (!onProgress || !text) return;
@@ -355,7 +356,7 @@ async function fallbackSpeak(
         window.clearInterval(fallbackProgressTimer);
         fallbackProgressTimer = null;
       }
-    }, 180);
+    }, 50);
   };
   const clearFallbackProgress = () => {
     if (fallbackProgressTimer != null) {
@@ -418,7 +419,7 @@ async function fallbackSpeak(
     let done = false;
     let watchdog: number | null = null;
     let extensions = 0;
-    let gotBoundary = false;
+    let lastBoundaryTime = 0;
     let spokenMs = 0;
     let lastTick = 0;
     let startedAt = 0;
@@ -438,14 +439,16 @@ async function fallbackSpeak(
         const now = Date.now();
         const d = now - lastTick; lastTick = now;
         if (isPaused) { pausedMs += d; return; }
-        if (gotBoundary || !onProgress) return;
+        if (!onProgress) return;
+        // If real boundary events are actively firing (within 280ms), let them guide
+        if (lastBoundaryTime > 0 && now - lastBoundaryTime < 280) return;
         spokenMs += d;
         const ch = Math.min(piece.length - 1, Math.floor(spokenMs / msPerChar));
         // snap to the start of the word containing ch
         let wi = 0;
         while (wi + 1 < wordStarts.length && wordStarts[wi + 1] <= ch) wi++;
         onProgress(base + (wordStarts[wi] ?? 0));
-      }, 90);
+      }, 40);
     };
 
     const finish = () => {
@@ -488,13 +491,16 @@ async function fallbackSpeak(
     };
     u.onboundary = (e: SpeechSynthesisEvent) => {
       if (e.name === 'word' && onProgress) {
-        gotBoundary = true; // real word events available — trust them
+        lastBoundaryTime = Date.now();
         onProgress(base + e.charIndex);
       }
     };
     u.onend = finish;
     u.onerror = finish;
     armWatchdog();
+    if (window.speechSynthesis.paused) {
+      window.speechSynthesis.resume();
+    }
     window.speechSynthesis.speak(u);
   };
   speakNext();

@@ -9,8 +9,9 @@ import {
   type CatalogBoard,
   type CatalogClass,
   type CatalogSubject,
+  type Subject,
 } from '@/data/contentRepository';
-import { getUniqueVisitedChaptersForSubject } from '@/utils/analytics';
+import { getUniqueVisitedChaptersForSubject, getAnalytics } from '@/utils/analytics';
 import { getVisibleBoardIds } from '@/pages/ConfigPage';
 import './ClassSubjectSelection.css';
 
@@ -47,6 +48,14 @@ function SubjectIcon({ subjectId }: { subjectId: string }) {
   );
 }
 
+function toTitleCase(str: string): string {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
 export default function ClassSubjectSelection() {
   const navigate = useNavigate();
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
@@ -54,6 +63,7 @@ export default function ClassSubjectSelection() {
     ? `${import.meta.env.BASE_URL}neb-logo.png` 
     : `${import.meta.env.BASE_URL}brand-logo.png`;
   const [catalog, setCatalog] = useState<Catalog>({ version: 1, boards: [] });
+  const [manifestSubjects, setManifestSubjects] = useState<Subject[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
@@ -74,6 +84,7 @@ export default function ClassSubjectSelection() {
     });
 
     getManifest().then((manifest) => {
+      setManifestSubjects(manifest.subjects);
       setChapterCounts(
         Object.fromEntries(manifest.subjects.map((subject) => [subject.id, subject.chapters.length])),
       );
@@ -245,14 +256,14 @@ export default function ClassSubjectSelection() {
           )}
 
           {step === 2 && selectedClass && (
-            <div className="sv-subjects fade-in">
+            <div className={`sv-subjects ${selectedClass.subjects.length === 1 ? 'sv-subjects--single' : ''} fade-in`}>
               <div className="sv-subjects-header">
                 <div>
                   <h2 className="sv-subjects-title">My Subjects</h2>
                 </div>
               </div>
 
-              <div className="sv-subjects-grid">
+              <div className={`sv-subjects-grid ${selectedClass.subjects.length === 1 ? 'sv-subjects-grid--single' : ''}`}>
                 {selectedClass.subjects.map((subject, idx) => {
                   const isEntomology = subject.id === 'ento_131' || subject.name.toLowerCase().includes('entomology');
                   const totalChapters = isEntomology
@@ -261,7 +272,33 @@ export default function ClassSubjectSelection() {
                   const visited = getUniqueVisitedChaptersForSubject(subject.id);
                   const displayTotal = totalChapters > 0 ? totalChapters : (isEntomology ? 4 : 0);
                   const displayVisited = Math.min(visited, displayTotal > 0 ? displayTotal : visited);
-                  const coverage = displayTotal > 0 ? Math.round((displayVisited / displayTotal) * 100) : 0;
+
+                  const manifestSub = manifestSubjects.find(
+                    (s) => s.id === subject.id || (isEntomology && (s.id === 'ento_131' || s.id.toLowerCase().includes('ento')))
+                  );
+                  const chaptersList = manifestSub?.chapters || [];
+
+                  const analytics = getAnalytics();
+                  const subjectVisits = (analytics.chapterVisits || []).filter(
+                    (v) => v.subjectId === subject.id || (isEntomology && (v.subjectId || '').toLowerCase().includes('ento'))
+                  );
+                  const lastVisit = subjectVisits.length > 0 ? subjectVisits[subjectVisits.length - 1] : null;
+                  const currentChNum = lastVisit?.chapterNumber || 1;
+
+                  const currentChObj = chaptersList.find((c) => c.number === currentChNum) || chaptersList[currentChNum - 1] || chaptersList[0];
+                  let rawChName = currentChObj?.title || currentChObj?.name || lastVisit?.chapterName || '';
+                  if (!rawChName && isEntomology) {
+                    const fallbackNames: Record<number, string> = {
+                      1: 'Digestive System',
+                      2: 'Metamorphosis',
+                      3: 'Weathering',
+                      4: 'Pollination',
+                    };
+                    rawChName = fallbackNames[currentChNum] || 'Digestive System';
+                  } else if (!rawChName) {
+                    rawChName = `Chapter ${currentChNum}`;
+                  }
+                  const cleanChName = rawChName.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || rawChName;
 
                   return (
                     <div
@@ -294,17 +331,9 @@ export default function ClassSubjectSelection() {
                                 ))}
                               </div>
                               <div className="sv-progress-meta">
-                                <span className="sv-badge sv-badge-percent">
-                                  {coverage > 0 && (
-                                    <span className="sv-check-circle">
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12" />
-                                      </svg>
-                                    </span>
-                                  )}
-                                  <span>{coverage}%</span>
+                                <span className="sv-badge sv-badge-progress">
+                                  <span>{currentChNum} - {displayTotal} - {displayTotal === 1 ? 'Chapter' : 'Chapters'}</span>
                                 </span>
-                                <span className="sv-badge sv-badge-count">{displayVisited}/{displayTotal}</span>
                               </div>
                             </>
                           ) : (

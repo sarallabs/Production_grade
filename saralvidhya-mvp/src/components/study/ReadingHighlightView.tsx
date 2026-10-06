@@ -57,11 +57,9 @@ export default function ReadingHighlightView({
     mapBuiltRef.current = true;
   }, []);
 
-  // Build map when content changes
+  // Build map immediately when content changes
   useEffect(() => {
-    mapBuiltRef.current = false;
-    const timer = setTimeout(buildWordMap, 60);
-    return () => clearTimeout(timer);
+    buildWordMap();
   }, [content, buildWordMap]);
 
   // Update highlight position without DOM destruction
@@ -110,8 +108,8 @@ export default function ReadingHighlightView({
       const rect = range.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0 && overlay) {
         const containerRect = container.getBoundingClientRect();
-        const top = rect.top - containerRect.top + container.scrollTop;
-        const left = rect.left - containerRect.left + container.scrollLeft;
+        const top = rect.top - containerRect.top;
+        const left = rect.left - containerRect.left;
 
         overlay.style.display = "block";
         overlay.style.top = `${top - 1}px`;
@@ -119,13 +117,22 @@ export default function ReadingHighlightView({
         overlay.style.width = `${rect.width + 4}px`;
         overlay.style.height = `${rect.height + 2}px`;
 
-        // 3. Smooth scroll when word drifts outside comfortable middle view (throttled)
+        // 3. Smooth scroll within actual scroll parent when word drifts (throttled)
         if (Math.abs(startWord - lastScrolledWordRef.current) >= 2) {
-          const vh = window.innerHeight || 800;
-          if (rect.top < vh * 0.25 || rect.bottom > vh * 0.75) {
-            lastScrolledWordRef.current = startWord;
-            const scrollTarget = window.scrollY + rect.top - vh * 0.45;
-            window.scrollTo({ top: scrollTarget, behavior: "smooth" });
+          lastScrolledWordRef.current = startWord;
+          let scrollParent: HTMLElement | null = container.parentElement;
+          while (scrollParent && scrollParent !== document.body) {
+            const style = window.getComputedStyle(scrollParent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") break;
+            scrollParent = scrollParent.parentElement;
+          }
+          if (scrollParent) {
+            const sRect = scrollParent.getBoundingClientRect();
+            const relY = rect.top - sRect.top;
+            if (relY < sRect.height * 0.25 || relY > sRect.height * 0.70) {
+              const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.45;
+              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
+            }
           }
         }
       }

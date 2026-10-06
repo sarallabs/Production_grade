@@ -60,7 +60,7 @@
   background: #FFFFFF;
   border: 1.5px solid rgba(0, 0, 0, 0.07);
   border-radius: 30px;
-  padding: 24px 32px 20px 32px;
+  padding: 26px 32px 28px 32px;
   width: 100%;
   max-width: 660px;
   box-shadow: 0 12px 36px -6px rgba(0, 0, 0, 0.06);
@@ -70,6 +70,25 @@
   align-items: stretch;
   box-sizing: border-box;
   animation: chapterCardFadeIn 0.32s ease-out;
+  cursor: pointer;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.22s ease;
+  user-select: none;
+}
+
+.chapter-hero-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 44px -6px rgba(0, 0, 0, 0.12);
+  border-color: rgba(37, 58, 49, 0.24);
+}
+
+.chapter-hero-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, 0.08);
+}
+
+.chapter-hero-card:focus-visible {
+  outline: 3px solid #253A31;
+  outline-offset: 4px;
 }
 
 @keyframes chapterCardFadeIn {
@@ -253,7 +272,7 @@
   background: #E5E7EB;
   border-radius: 999px;
   overflow: hidden;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   position: relative;
 }
 

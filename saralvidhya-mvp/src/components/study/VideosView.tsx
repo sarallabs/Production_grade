@@ -763,12 +763,14 @@ export default function VideosView({
       style={{
         position: "relative",
         width: "100%",
+        maxWidth: "460px",
+        margin: "0 auto",
         aspectRatio: "16 / 9",
-        minHeight: isFullWidth ? "400px" : "320px",
+        minHeight: "unset",
         background: "#000000",
-        borderRadius: isFullWidth ? "16px" : "20px",
+        borderRadius: "16px",
         overflow: "hidden",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
@@ -835,12 +837,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "80px",
-            height: "80px",
+            width: "56px",
+            height: "56px",
             borderRadius: "50%",
             border: "none",
             background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -859,10 +861,10 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: "15px solid transparent",
-              borderBottom: "15px solid transparent",
-              borderLeft: "26px solid #1E293B",
-              marginLeft: "6px",
+              borderTop: "11px solid transparent",
+              borderBottom: "11px solid transparent",
+              borderLeft: "18px solid #1E293B",
+              marginLeft: "4px",
             }}
           />
         </button>
@@ -1543,33 +1545,36 @@ export default function VideosView({
         }
       `}</style>
 
-      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (70% Video Preview, 30% Details with Scroll) ── */}
+      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (Compact Centered Video Player + Details) ── */}
       {isSingleVideo ? (
         <div
           style={{
             width: "100%",
-            maxWidth: "960px",
+            maxWidth: "580px",
+            margin: "0 auto",
             background: "#FFFFFF",
             borderRadius: "24px",
-            padding: "22px 24px 24px 24px",
+            padding: "20px 22px",
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
             position: "relative",
             boxSizing: "border-box",
           }}
         >
-          {/* Top 70%: Video Player Preview */}
-          <div style={{ width: "100%", flexShrink: 0 }}>
+          {/* Centered Compact Video Player (quarter-size, centered) */}
+          <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
             {renderVideoPlayer(true)}
           </div>
 
-          {/* Bottom 30%: Details Preview with Scroll to See Full Details */}
+          {/* Details Preview below */}
           <div
             className="custom-details-scroll"
             style={{
+              width: "100%",
               marginTop: "16px",
-              maxHeight: "220px",
+              maxHeight: "260px",
               overflowY: "auto",
               paddingRight: "6px",
               position: "relative",
@@ -1579,13 +1584,14 @@ export default function VideosView({
           </div>
         </div>
       ) : (
-        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (70% Video Preview, 30% Details Side-by-Side) ── */
-        <div style={{ width: "100%", maxWidth: "1280px" }}>
+        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (Compact Centered Video + Details Side-by-Side) ── */
+        <div style={{ width: "100%", maxWidth: "940px", margin: "0 auto" }}>
           {/* Video Selector Tabs for Chapter Playlist */}
           {videos.length > 1 && (
             <div
               style={{
                 display: "flex",
+                justifyContent: "center",
                 alignItems: "center",
                 gap: "8px",
                 marginBottom: "14px",
@@ -1627,21 +1633,22 @@ export default function VideosView({
             </div>
           )}
 
-          {/* 70 - 30 Split Grid Layout */}
+          {/* Centered Grid Layout */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 70fr) minmax(0, 30fr)",
+              gridTemplateColumns: "minmax(0, 460px) minmax(0, 1fr)",
               gap: "20px",
-              alignItems: "stretch",
+              alignItems: "start",
+              justifyContent: "center",
             }}
           >
-            {/* Left 70%: Video Player Preview */}
-            <div style={{ width: "100%" }}>
+            {/* Left: Compact Centered Video Player */}
+            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
               {renderVideoPlayer(false)}
             </div>
 
-            {/* Right 30%: Details Card with Scroll to See Full Details */}
+            {/* Right: Details Card with Scroll */}
             <div
               className="custom-details-scroll"
               style={{
