@@ -473,7 +473,7 @@ export default function VideosView({
                 if (event.target && typeof event.target.unloadModule === "function") {
                   event.target.unloadModule("captions");
                 }
-              } catch (err) {}
+              } catch (err) { }
             },
             onStateChange: (event: any) => {
               if (event.data === (window as any).YT.PlayerState.PLAYING) {
@@ -538,7 +538,7 @@ export default function VideosView({
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
           playerRef.current.destroy();
-        } catch (e) {}
+        } catch (e) { }
         playerRef.current = null;
       }
     };
@@ -619,17 +619,17 @@ export default function VideosView({
         playerRef.current.unloadModule?.("captions");
         playerRef.current.setOption?.("captions", "track", {});
       }
-    } catch (err) {}
+    } catch (err) { }
   };
 
   const toggleFullscreen = () => {
     const container = playerContainerRef.current;
     if (!container) return;
     if (!document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => {});
+      container.requestFullscreen?.().catch(() => { });
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen?.().catch(() => {});
+      document.exitFullscreen?.().catch(() => { });
       setIsFullscreen(false);
     }
   };
@@ -639,7 +639,7 @@ export default function VideosView({
   const openFullscreenAndPlay = () => {
     const container = playerContainerRef.current;
     if (container && !document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => {});
+      container.requestFullscreen?.().catch(() => { });
       setIsFullscreen(true);
     }
     try { playerRef.current?.playVideo?.(); } catch { /* player not ready */ }
@@ -763,7 +763,8 @@ export default function VideosView({
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: "460px",
+        maxWidth: isFullWidth ? "min(680px, 100%)" : "520px",
+        maxHeight: isFullWidth ? "min(365px, 44vh)" : undefined,
         margin: "0 auto",
         aspectRatio: "16 / 9",
         minHeight: "unset",
@@ -1398,62 +1399,14 @@ export default function VideosView({
         zIndex: 1,
       }}
     >
-      {/* Top Badges Row */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "10px",
-        }}
-      >
-        {/* Left: Video Badge */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            background: "#E5E7EB",
-            color: "#374151",
-            padding: "4px 10px",
-            borderRadius: "6px",
-            fontSize: "12.5px",
-            fontWeight: 700,
-          }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-            <rect x="2" y="5" width="13" height="14" rx="2" />
-            <polygon points="15,9 21,5 21,19 15,15" />
-          </svg>
-          Video
-        </div>
-
-        {/* Right: Duration Badge */}
-        <div
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "5px",
-            color: "#374151",
-            fontSize: "12.5px",
-            fontWeight: 600,
-          }}
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <polyline points="12 7 12 12 15 14" />
-          </svg>
-          {displayDuration}
-        </div>
-      </div>
-
-      {/* Main Chapter / Video Title */}
+      {/* Main Chapter / Video Title (Centered and Enlarged) */}
       <h2
         style={{
-          fontSize: "22px",
+          fontSize: "25px",
           fontWeight: 800,
           color: "#111827",
-          margin: "4px 0 16px 0",
+          margin: "4px 0 14px 0",
+          textAlign: "center",
           letterSpacing: "-0.3px",
           lineHeight: 1.25,
         }}
@@ -1520,7 +1473,7 @@ export default function VideosView({
         width: "100%",
         minHeight: "100%",
         background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
-        padding: "20px 20px 36px 20px",
+        padding: "12px 16px 28px 16px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -1545,16 +1498,16 @@ export default function VideosView({
         }
       `}</style>
 
-      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (Compact Centered Video Player + Details) ── */}
+      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (Wider Horizontal Centered Card) ── */}
       {isSingleVideo ? (
         <div
           style={{
             width: "100%",
-            maxWidth: "580px",
+            maxWidth: "760px",
             margin: "0 auto",
             background: "#FFFFFF",
-            borderRadius: "24px",
-            padding: "20px 22px",
+            borderRadius: "22px",
+            padding: "16px 20px 24px 20px",
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
             display: "flex",
             flexDirection: "column",
@@ -1563,20 +1516,17 @@ export default function VideosView({
             boxSizing: "border-box",
           }}
         >
-          {/* Centered Compact Video Player (quarter-size, centered) */}
+          {/* Centered Video Player */}
           <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
             {renderVideoPlayer(true)}
           </div>
 
           {/* Details Preview below */}
           <div
-            className="custom-details-scroll"
             style={{
               width: "100%",
+              maxWidth: "680px",
               marginTop: "16px",
-              maxHeight: "260px",
-              overflowY: "auto",
-              paddingRight: "6px",
               position: "relative",
             }}
           >
@@ -1584,8 +1534,8 @@ export default function VideosView({
           </div>
         </div>
       ) : (
-        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (Compact Centered Video + Details Side-by-Side) ── */
-        <div style={{ width: "100%", maxWidth: "940px", margin: "0 auto" }}>
+        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (Wider Grid Layout) ── */
+        <div style={{ width: "100%", maxWidth: "1060px", margin: "0 auto" }}>
           {/* Video Selector Tabs for Chapter Playlist */}
           {videos.length > 1 && (
             <div
@@ -1637,8 +1587,8 @@ export default function VideosView({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 460px) minmax(0, 1fr)",
-              gap: "20px",
+              gridTemplateColumns: "minmax(0, 520px) minmax(0, 1fr)",
+              gap: "24px",
               alignItems: "start",
               justifyContent: "center",
             }}
