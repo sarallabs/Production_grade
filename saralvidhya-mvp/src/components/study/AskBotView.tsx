@@ -104,6 +104,7 @@ export default function AskBotView({
 
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastBotMsgRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
   const sessionStartingPromiseRef = useRef<Promise<SpeechSession> | null>(null);
   const isListeningRef = useRef(false);
@@ -608,8 +609,47 @@ export default function AskBotView({
               <div className="saral-welcome-text">
                 <h3 className="saral-welcome-title">Hi there! I'm Saral,</h3>
                 <p className="saral-welcome-subtitle">
-                  Let's have a conversation... on what??
+                  Let's explore...!
                 </p>
+                <div className="saral-welcome-actions">
+                  <button
+                    type="button"
+                    className="saral-welcome-action-btn"
+                    onClick={() => {
+                      inputRef.current?.focus();
+                    }}
+                    title="Ask Questions"
+                  >
+                    <div className="saral-welcome-action-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
+                        <path d="M9 18h6" />
+                        <path d="M10 21h4" />
+                        <path d="M19 3v3" />
+                        <path d="M20.5 4.5h-3" />
+                      </svg>
+                    </div>
+                    <span>Ask Questions</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="saral-welcome-action-btn"
+                    onClick={() => {
+                      handleSend(`Can you explain the key concepts of ${chapterName}?`);
+                    }}
+                    title="Get Explanations"
+                  >
+                    <div className="saral-welcome-action-icon">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M14 4a5 5 0 0 0-5 5v3a5 5 0 0 0 2 4v2a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a5 5 0 0 0 2-4V9a5 5 0 0 0-4-5z" />
+                        <path d="M20 4v3" />
+                        <path d="M21.5 5.5h-3" />
+                      </svg>
+                    </div>
+                    <span>Get Explanations</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -727,6 +767,7 @@ export default function AskBotView({
 
             {/* Input field */}
             <input
+              ref={inputRef}
               type="text"
               className="saral-text-input"
               placeholder={
