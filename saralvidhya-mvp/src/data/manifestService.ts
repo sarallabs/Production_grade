@@ -221,14 +221,14 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
       },
       {
         number: 3,
-        name: 'Soil Ecology & Environmental Weathering',
+        name: 'Weathering',
         dir: 'chapter_03',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
       },
       {
         number: 4,
-        name: 'Floral Biology & Pollination Mechanisms',
+        name: 'Pollination',
         dir: 'chapter_04',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
