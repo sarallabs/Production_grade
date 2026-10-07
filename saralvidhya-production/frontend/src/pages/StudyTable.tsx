@@ -2742,11 +2742,19 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 1. LEARN SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#dcfce7', color: '#16a34a', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #16a34a',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(22, 163, 74, 0.02)',
+                          }}
+                        >
+                          <div style={{ color: '#16a34a', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
-                            {/* Three parallel tool sets exist in a segmented
-                                chapter — say which video's is on screen. */}
                             {isSegmented && (
                               <span
                                 title={activeVideo?.title}
@@ -2760,8 +2768,6 @@ export default function StudyTable() {
                             {renderNode("summary", "Read", "#16a34a")}
                             {renderNode("podcasts", "Listen", "#16a34a")}
                             {renderNode("videos", "Watch", "#16a34a")}
-                            {renderNode("mindmap", "Mindmap", "#16a34a")}
-                            {renderNode("key_takeaways", "Key Takeaways", "#16a34a")}
                           </div>
                         </div>
 
@@ -2769,7 +2775,17 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 2. PRACTICE SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #9333ea',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(147, 51, 234, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#f3e8ff', color: '#9333ea', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Practice</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {renderNode("revision_flashcards", "Revise", "#9333ea")}
@@ -2782,7 +2798,17 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 3. PREPARE SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #ec4899',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(236, 72, 153, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#fce7f3', color: '#ec4899', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Prepare</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {renderNode("pyq", "PYQ", "#ec4899")}
@@ -2793,10 +2819,22 @@ export default function StudyTable() {
                         {/* Divider */}
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
-                        {/* 5. RESOURCES SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* 4. RESOURCES SECTION */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #92400e',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(146, 64, 14, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#fef3c7', color: '#92400e', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Resources</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {renderNode("mindmap", "Mindmap", "#92400e")}
+                            {renderNode("key_takeaways", "Key Takeaways", "#92400e")}
                             {renderNode("ask", "Ask me", "#92400e")}
                           </div>
                         </div>

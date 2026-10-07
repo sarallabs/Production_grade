@@ -3113,9 +3113,9 @@ export default function StudyTable() {
                       <div
                         style={{
                           display: 'flex',
-                          alignItems: 'flex-start',
+                          alignItems: 'center',
                           justifyContent: 'center',
-                          gap: '32px',
+                          gap: '16px',
                           padding: '4px 16px',
                           background: '#FFFFFF',
                           margin: '0 auto',
@@ -3123,8 +3123,19 @@ export default function StudyTable() {
                         }}
                       >
                         {/* 1. LEARN SECTION (Green #4F7B64) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#4F7B64', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #4F7B64',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(79, 123, 100, 0.02)',
+                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
+                          }}
+                        >
+                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
                             {isSegmented && (
                               <span
@@ -3143,8 +3154,19 @@ export default function StudyTable() {
                         </div>
 
                         {/* 2. PRACTICE SECTION (Forest Green #4F7B64) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#4F7B64', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #4F7B64',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(79, 123, 100, 0.02)',
+                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
+                          }}
+                        >
+                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Practice
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -3155,32 +3177,61 @@ export default function StudyTable() {
                         </div>
 
                         {/* 3. PREPARE SECTION (Pink #DB2777) */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#DB2777', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #DB2777',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(219, 39, 119, 0.02)',
+                            boxShadow: '0 2px 8px rgba(219, 39, 119, 0.06)',
+                          }}
+                        >
+                          <div style={{ color: '#DB2777', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Prepare
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("key_takeaways", "Key Takeaways", "#DB2777")}
                             {renderNode("pyq", "PYQ", "#DB2777")}
                             {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
                           </div>
                         </div>
 
-                        {/* 4. SEPARATE TOOLS: MINDMAPS & ASK ME */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          {/* Mindmaps aside beside Ask me */}
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ height: '21px', marginBottom: '6px' }} />
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              {renderNode("mindmap", "Mindmaps", "#4F7B64")}
-                            </div>
+                        {/* 4. RESOURCES SECTION (Green #4F7B64) */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #4F7B64',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(79, 123, 100, 0.02)',
+                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
+                          }}
+                        >
+                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                            Resources
                           </div>
-                          {/* Ask me */}
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                            <div style={{ height: '21px', marginBottom: '6px' }} />
-                            <div style={{ display: 'flex', alignItems: 'center' }}>
-                              {renderNode("ask", "Ask me", "#2D473B")}
-                            </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {renderNode("mindmap", "Mindmaps", "#4F7B64")}
+                            {renderNode("key_takeaways", "Key Takeaways", "#4F7B64")}
+                          </div>
+                        </div>
+
+                        {/* 5. SEPARATE TOOL: ASK ME */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            alignSelf: 'center',
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            {renderNode("ask", "Ask me", "#2D473B")}
                           </div>
                         </div>
                       </div>
