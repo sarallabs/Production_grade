@@ -406,10 +406,13 @@ export default function FlashcardsView({
 
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
             if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
+              const imgBase = import.meta.env.VITE_GCS_API_BASE
+                ? `${import.meta.env.VITE_GCS_API_BASE}/api/content/angrau/entomology`
+                : '/generated_resources/angrau';
               if (finalUrl.startsWith('../Mindmaps/')) {
-                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
-              } else if (finalUrl.startsWith('/api/')) {
-                finalUrl = `https://saralvidhya-api-193782571555.asia-south1.run.app${finalUrl}`;
+                finalUrl = `${imgBase}/chapter_01/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
+              } else if (finalUrl.startsWith('/api/') && import.meta.env.VITE_GCS_API_BASE) {
+                finalUrl = `${import.meta.env.VITE_GCS_API_BASE}${finalUrl}`;
               }
             }
             if (isPhysics) {

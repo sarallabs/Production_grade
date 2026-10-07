@@ -56,7 +56,10 @@ export async function fetchAndParseFirst(
 ): Promise<AssessmentQuestion[]> {
   for (const url of urls) {
     try {
-      const res = await fetch(url, { cache: 'no-cache' });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const res = await fetch(url, { cache: 'no-cache', signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) continue;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('text/html')) continue;
@@ -194,22 +197,29 @@ export async function getAssessments(
     const combined = [...mcqRes, ...msqRes];
     if (combined.length > 0) return combined;
 
-    // GCS had no questions — fall back to local generated_resources files
-    // NOTE: local path ≠ GCS API path (e.g. 'angrau' not 'angrau/entomology')
     const GCS_LOCAL_PATH: Record<string, string> = {
       'angrau/entomology': 'angrau',
     };
     const localSubjectPath = GCS_LOCAL_PATH[subjectPath] ?? subjectPath;
-    const localBase = `${BASE}/${localSubjectPath}/${chDir}`;
-    const localMcq = await fetchAndParseFirst([
-      `${localBase}/${level}/mcq.md`,
-      `${localBase}/${level}/assessment.md`,
-      `${localBase}/${level}/quiz.md`,
-      `${localBase}/assessment.md`,
-    ], 'mcq_');
-    const localMsq = await fetchAndParseFirst([
-      `${localBase}/${level}/msq.md`,
-    ], 'msq_');
+    const chDirs = Array.from(new Set([chDir, `chapter_${String(chapterNumber).padStart(2, '0')}`, `chapter_${chapterNumber}`]));
+    const mcqCandidates: string[] = [];
+    const msqCandidates: string[] = [];
+    for (const c of chDirs) {
+      const b = `${BASE}/${localSubjectPath}/${c}`;
+      mcqCandidates.push(
+        `${b}/${level}/mcq.md`,
+        `${b}/${level}/assessment.md`,
+        `${b}/${level}/quiz.md`,
+        `${b}/assessment.md`,
+        `${b}/quiz.md`,
+      );
+      msqCandidates.push(
+        `${b}/${level}/msq.md`,
+        `${b}/msq.md`,
+      );
+    }
+    const localMcq = await fetchAndParseFirst(mcqCandidates, 'mcq_');
+    const localMsq = await fetchAndParseFirst(msqCandidates, 'msq_');
     return [...localMcq, ...localMsq];
   }
 

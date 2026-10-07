@@ -158,7 +158,7 @@ export default function ChapterList() {
       params.set('chapterName', toTitleCase(ch.name));
       params.delete('tool');
       navigate(`/study-table?${params.toString()}`);
-    }, 800);
+    }, 200);
   };
 
   return (
@@ -322,20 +322,20 @@ export default function ChapterList() {
                         </svg>
                       </button>
 
-                      {/* Main Dynamic Chapter Card */}
+                      {/* Main Dynamic Chapter Card (Clickable) */}
                       <div
-                        className="chapter-hero-card"
+                        className={`chapter-hero-card ${clickedChapter === flipCh.number ? 'chapter-hero-card--opening' : ''} ${isDisabled(flipCh) ? 'chapter-hero-card--disabled' : ''}`}
                         key={`ch-${flipCh.number}`}
                         onClick={() => handleChapterClick(flipCh)}
                         role="button"
-                        tabIndex={0}
+                        tabIndex={isDisabled(flipCh) ? -1 : 0}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
                             handleChapterClick(flipCh);
                           }
                         }}
-                        title={`Open Chapter ${flipCh.number}: ${toTitleCase(cleanChapterName)}`}
+                        title={isDisabled(flipCh) ? `Chapter ${flipCh.number} is locked` : `Open Chapter ${flipCh.number}: ${toTitleCase(cleanChapterName)}`}
                       >
                         {/* Hero Illustration */}
                         <div className="chapter-hero-img-wrap">
@@ -356,12 +356,12 @@ export default function ChapterList() {
                           {toTitleCase(cleanChapterName)}
                         </h2>
 
-                        {/* 2 Dynamic Metric Cards (Topics & Estimated Time) */}
+                        {/* 2 Dynamic Metric Cards (Topics & Estimated Time - Compact Squares) */}
                         <div className="chapter-stats-grid">
                           {/* Card 1: Topics */}
                           <div className="chapter-stat-item chapter-stat-item--topics">
                             <div className="chapter-stat-icon-circle">
-                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                 <polyline points="14 2 14 8 20 8" />
                                 <line x1="16" y1="13" x2="8" y2="13" />
@@ -376,7 +376,7 @@ export default function ChapterList() {
                           {/* Card 2: Estimated Time */}
                           <div className="chapter-stat-item chapter-stat-item--time">
                             <div className="chapter-stat-icon-circle">
-                              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="10" />
                                 <polyline points="12 6 12 12 16 14" />
                               </svg>
@@ -397,6 +397,11 @@ export default function ChapterList() {
                               className="chapter-progress-fill"
                               style={{ width: `${chapterPct}%` }}
                             />
+                          </div>
+                          <div className="chapter-progress-action-row">
+                            <span className="chapter-sessions-subtext">
+                              {completedSessions} out of {totalSessions} sessions completed
+                            </span>
                           </div>
                         </div>
                       </div>

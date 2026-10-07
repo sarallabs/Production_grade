@@ -200,13 +200,24 @@ export default function VideosView({
   const [isCcEnabled, setIsCcEnabled] = useState(false);
   const [showSpeedSelector, setShowSpeedSelector] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showControls, setShowControls] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const [seekFeedback, setSeekFeedback] = useState<"-10s" | "+10s" | null>(null);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
+  const isSeekingRef = useRef<boolean>(false);
+  const seekFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showSeekBadge = (type: "-10s" | "+10s") => {
+    setSeekFeedback(type);
+    if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
+    seekFeedbackTimerRef.current = setTimeout(() => {
+      setSeekFeedback(null);
+    }, 650);
+  };
 
   // 1. Build video list
   const videos = useMemo(() => {
@@ -466,17 +477,32 @@ export default function VideosView({
             cc_load_policy: 0,
             cc_lang_pref: "none",
             playsinline: 1,
+            iv_load_policy: 3,
           },
           events: {
             onReady: (event: any) => {
               try {
-                if (event.target && typeof event.target.unloadModule === "function") {
-                  event.target.unloadModule("captions");
+                if (event.target) {
+                  if (typeof event.target.unloadModule === "function") {
+                    event.target.unloadModule("captions");
+                  }
+                  if (typeof event.target.setOption === "function") {
+                    event.target.setOption("captions", "track", {});
+                  }
                 }
-              } catch (err) { }
+              } catch (err) {}
             },
             onStateChange: (event: any) => {
-              if (event.data === (window as any).YT.PlayerState.PLAYING) {
+              const state = event.data;
+              const YT = (window as any).YT;
+              if (state === YT?.PlayerState?.PLAYING || state === 1) {
+                isSeekingRef.current = false;
+                if (!isCcEnabledRef.current && playerRef.current) {
+                  try {
+                    playerRef.current.unloadModule?.("captions");
+                    playerRef.current.setOption?.("captions", "track", {});
+                  } catch (e) {}
+                }
                 hasStartedPlayingRef.current = true;
                 setIsPlaying(true);
                 if (!progressIntervalRef.current) {
@@ -496,7 +522,15 @@ export default function VideosView({
                     }
                   }, 500);
                 }
-              } else if (event.data === (window as any).YT.PlayerState.ENDED) {
+              } else if (state === YT?.PlayerState?.BUFFERING || state === 3) {
+                // Buffering during seek or playback
+                if (isSeekingRef.current && playerRef.current) {
+                  try {
+                    playerRef.current.playVideo?.();
+                  } catch (e) {}
+                }
+              } else if (state === YT?.PlayerState?.ENDED || state === 0) {
+                isSeekingRef.current = false;
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -507,7 +541,14 @@ export default function VideosView({
                   markWatched(robustActive + 1, true);
                   if (onComplete) onComplete();
                 }
-              } else {
+              } else if (state === YT?.PlayerState?.PAUSED || state === 2) {
+                if (isSeekingRef.current) {
+                  // YouTube's internal seek pause event - force resume playback!
+                  try {
+                    playerRef.current?.playVideo?.();
+                  } catch (e) {}
+                  return;
+                }
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -538,7 +579,7 @@ export default function VideosView({
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
           playerRef.current.destroy();
-        } catch (e) { }
+        } catch (e) {}
         playerRef.current = null;
       }
     };
@@ -556,19 +597,44 @@ export default function VideosView({
 
   const handleRewind10 = () => {
     if (!playerRef.current) return;
-    const cur = playerRef.current.getCurrentTime?.() ?? currentTime;
+    isSeekingRef.current = true;
+    showSeekBadge("-10s");
+    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
     const target = Math.max(0, cur - 10);
     playerRef.current.seekTo?.(target, true);
     setCurrentTime(target);
+    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    if (dur > 0) setProgress((target / dur) * 100);
+    setIsPlaying(true);
+    try {
+      playerRef.current.playVideo?.();
+    } catch (e) {}
+    setTimeout(() => {
+      try {
+        playerRef.current?.playVideo?.();
+      } catch (e) {}
+    }, 60);
   };
 
   const handleForward10 = () => {
     if (!playerRef.current) return;
-    const cur = playerRef.current.getCurrentTime?.() ?? currentTime;
-    const dur = playerRef.current.getDuration?.() ?? duration;
+    isSeekingRef.current = true;
+    showSeekBadge("+10s");
+    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
+    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
     const target = Math.min(dur || 900, cur + 10);
     playerRef.current.seekTo?.(target, true);
     setCurrentTime(target);
+    if (dur > 0) setProgress((target / dur) * 100);
+    setIsPlaying(true);
+    try {
+      playerRef.current.playVideo?.();
+    } catch (e) {}
+    setTimeout(() => {
+      try {
+        playerRef.current?.playVideo?.();
+      } catch (e) {}
+    }, 60);
   };
 
   const handleSeekClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -581,6 +647,9 @@ export default function VideosView({
     playerRef.current.seekTo?.(newTime, true);
     setCurrentTime(newTime);
     setProgress(ratio * 100);
+    if (isPlayingRef.current) {
+      playerRef.current.playVideo?.();
+    }
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -607,9 +676,20 @@ export default function VideosView({
     }
   };
 
+  const isCcEnabledRef = useRef(isCcEnabled);
+  useEffect(() => {
+    isCcEnabledRef.current = isCcEnabled;
+  }, [isCcEnabled]);
+
+  const isFullscreenRef = useRef(isFullscreen);
+  useEffect(() => {
+    isFullscreenRef.current = isFullscreen;
+  }, [isFullscreen]);
+
   const toggleCc = () => {
     const nextState = !isCcEnabled;
     setIsCcEnabled(nextState);
+    isCcEnabledRef.current = nextState;
     if (!playerRef.current) return;
     try {
       if (nextState) {
@@ -619,44 +699,163 @@ export default function VideosView({
         playerRef.current.unloadModule?.("captions");
         playerRef.current.setOption?.("captions", "track", {});
       }
-    } catch (err) { }
+    } catch (err) {}
+  };
+
+  const enterFullscreen = () => {
+    const container = playerContainerRef.current;
+    if (!container) return;
+    try {
+      if (container.requestFullscreen) {
+        container.requestFullscreen().catch(() => {});
+      } else if ((container as any).webkitRequestFullscreen) {
+        (container as any).webkitRequestFullscreen();
+      } else if ((container as any).mozRequestFullScreen) {
+        (container as any).mozRequestFullScreen();
+      } else if ((container as any).msRequestFullscreen) {
+        (container as any).msRequestFullscreen();
+      }
+      setIsFullscreen(true);
+      isFullscreenRef.current = true;
+    } catch (e) {}
+  };
+
+  const exitFullscreen = () => {
+    try {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
+      } else if ((document as any).msExitFullscreen) {
+        (document as any).msExitFullscreen();
+      }
+      setIsFullscreen(false);
+      isFullscreenRef.current = false;
+    } catch (e) {}
+  };
+
+  const isCurrentlyFullscreen = () => {
+    return !!(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement ||
+      (document as any).msFullscreenElement ||
+      isFullscreenRef.current
+    );
   };
 
   const toggleFullscreen = () => {
-    const container = playerContainerRef.current;
-    if (!container) return;
-    if (!document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => { });
-      setIsFullscreen(true);
+    if (isCurrentlyFullscreen()) {
+      exitFullscreen();
     } else {
-      document.exitFullscreen?.().catch(() => { });
-      setIsFullscreen(false);
+      enterFullscreen();
     }
-  };
-
-  // Inline the player is just a thumbnail: clicking anywhere opens fullscreen
-  // and starts playback (both inside the same click gesture).
-  const openFullscreenAndPlay = () => {
-    const container = playerContainerRef.current;
-    if (container && !document.fullscreenElement) {
-      container.requestFullscreen?.().catch(() => { });
-      setIsFullscreen(true);
-    }
-    try { playerRef.current?.playVideo?.(); } catch { /* player not ready */ }
   };
 
   useEffect(() => {
     const handler = () => {
-      const fs = !!document.fullscreenElement;
+      const fs = !!(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement ||
+        (document as any).msFullscreenElement
+      );
       setIsFullscreen(fs);
-      // Leaving fullscreen returns to the thumbnail — pause playback
-      if (!fs) {
-        try { playerRef.current?.pauseVideo?.(); } catch { /* ignore */ }
-        setShowControls(false);
-      }
+      isFullscreenRef.current = fs;
     };
     document.addEventListener("fullscreenchange", handler);
-    return () => document.removeEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler);
+    document.addEventListener("mozfullscreenchange", handler);
+    document.addEventListener("MSFullscreenChange", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler);
+      document.removeEventListener("mozfullscreenchange", handler);
+      document.removeEventListener("MSFullscreenChange", handler);
+    };
+  }, []);
+
+  const isPlayingRef = useRef(isPlaying);
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  // Click on video opens fullscreen by default if small, and plays.
+  // In fullscreen:
+  // - Left 30% click: Rewind 10s («)
+  // - Right 30% click: Forward 10s (»)
+  // - Center click: Toggle Play / Pause
+  const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isCurrentlyFullscreen()) {
+      enterFullscreen();
+      if (!isPlayingRef.current && playerRef.current) {
+        playerRef.current.playVideo?.();
+      }
+      return;
+    }
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const ratio = clickX / rect.width;
+
+    if (ratio < 0.3) {
+      handleRewind10();
+    } else if (ratio > 0.7) {
+      handleForward10();
+    } else {
+      handlePlayPause();
+    }
+  };
+
+  // Keyboard shortcuts (YouTube style: Space = pause/play, Right = +10s, Left = -10s, F = fullscreen, C = captions, M = mute)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName;
+        if (
+          tagName === "INPUT" ||
+          tagName === "TEXTAREA" ||
+          target.isContentEditable ||
+          target.closest("input, textarea, [contenteditable='true']")
+        ) {
+          return;
+        }
+      }
+
+      if (e.code === "Space" || e.key === " " || e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        if (playerRef.current) {
+          if (isPlayingRef.current) {
+            playerRef.current.pauseVideo?.();
+          } else {
+            playerRef.current.playVideo?.();
+          }
+        }
+      } else if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        handleForward10();
+      } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        handleRewind10();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
+      } else if (e.key === "c" || e.key === "C") {
+        e.preventDefault();
+        toggleCc();
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleMute();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   // Controls Auto-Hide Logic:
@@ -681,21 +880,27 @@ export default function VideosView({
   }, [resetControlsTimer]);
 
   const handlePlayerMouseLeave = useCallback(() => {
-    // Controls are hover-only: hide shortly after the cursor leaves
-    if (hideControlsTimerRef.current) {
-      clearTimeout(hideControlsTimerRef.current);
+    if (isPlaying) {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+      hideControlsTimerRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 600);
     }
-    hideControlsTimerRef.current = setTimeout(() => {
-      setShowControls(false);
-    }, 400);
-  }, []);
+  }, [isPlaying]);
 
   useEffect(() => {
-    if (hideControlsTimerRef.current) {
-      clearTimeout(hideControlsTimerRef.current);
-      hideControlsTimerRef.current = null;
-    }
-    if (isPlaying) {
+    if (!isPlaying) {
+      setShowControls(true);
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+        hideControlsTimerRef.current = null;
+      }
+    } else {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
       hideControlsTimerRef.current = setTimeout(() => {
         setShowControls(false);
       }, 2800);
@@ -741,16 +946,10 @@ export default function VideosView({
       onSelectVideoIndex(index + 1);
     }
     if (playerRef.current?.loadVideoById && videos[index]) {
-      if (document.fullscreenElement) {
-        playerRef.current.loadVideoById(videos[index].ytId);
-        setIsPlaying(true);
-      } else {
-        // Inline is a thumbnail — cue only, don't play behind it
-        playerRef.current.cueVideoById?.(videos[index].ytId);
-        setIsPlaying(false);
-      }
+      playerRef.current.loadVideoById(videos[index].ytId);
       setCurrentTime(0);
       setProgress(0);
+      setIsPlaying(true);
     }
   };
 
@@ -763,15 +962,13 @@ export default function VideosView({
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: isFullWidth ? "min(680px, 100%)" : "520px",
-        maxHeight: isFullWidth ? "min(365px, 44vh)" : undefined,
-        margin: "0 auto",
+        maxWidth: "min(960px, calc(58vh * 16 / 9))",
         aspectRatio: "16 / 9",
-        minHeight: "unset",
+        maxHeight: "58vh",
         background: "#000000",
         borderRadius: "16px",
         overflow: "hidden",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
@@ -791,46 +988,69 @@ export default function VideosView({
         }}
       />
 
-      {/* Thumbnail cover — shown inline (not fullscreen) */}
-      {!isFullscreen && currentVideo?.ytId && (
-        <img
-          src={`https://i.ytimg.com/vi/${currentVideo.ytId}/maxresdefault.jpg`}
-          onError={(e) => {
-            const img = e.currentTarget;
-            if (!img.src.includes("hqdefault")) img.src = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
-          }}
-          alt={currentVideo.title || "Video thumbnail"}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex: 1,
-            pointerEvents: "none",
-          }}
-        />
-      )}
-
-      {/* Transparent click overlay: inline → open fullscreen; fullscreen → play/pause */}
+      {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
       <div
-        onClick={() => (isFullscreen ? handlePlayPause() : openFullscreenAndPlay())}
-        onDoubleClick={isFullscreen ? toggleFullscreen : undefined}
+        onClick={handleVideoClick}
         style={{
           position: "absolute",
           inset: 0,
           zIndex: 2,
-          cursor: isPlaying && !showControls ? "none" : "pointer",
+          cursor: isFullscreen && isPlaying && !showControls ? "none" : "pointer",
         }}
       />
 
+      {/* Sleek Seek Feedback Badge (-10s / +10s) */}
+      {seekFeedback && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: seekFeedback === "-10s" ? "18%" : "82%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0, 0, 0, 0.78)",
+            backdropFilter: "blur(10px)",
+            color: "#FFFFFF",
+            padding: "16px 24px",
+            borderRadius: "50px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            fontSize: "20px",
+            fontWeight: 800,
+            letterSpacing: "0.5px",
+            zIndex: 15,
+            pointerEvents: "none",
+            boxShadow: "0 10px 36px rgba(0, 0, 0, 0.6)",
+            border: "1.5px solid rgba(255, 255, 255, 0.3)",
+          }}
+        >
+          {seekFeedback === "-10s" ? (
+            <>
+              <span style={{ fontSize: "24px" }}>«</span>
+              <span>10s</span>
+            </>
+          ) : (
+            <>
+              <span>10s</span>
+              <span style={{ fontSize: "24px" }}>»</span>
+            </>
+          )}
+        </div>
+      )}
+
       {/* Center Play Overlay when Paused */}
-      {(!isPlaying || !isFullscreen) && (
+      {!isPlaying && (
         <button
           onClick={(e) => {
             e.stopPropagation();
-            if (isFullscreen) handlePlayPause();
-            else openFullscreenAndPlay();
+            if (!isCurrentlyFullscreen()) {
+              enterFullscreen();
+              if (playerRef.current) {
+                playerRef.current.playVideo?.();
+              }
+            } else {
+              handlePlayPause();
+            }
           }}
           aria-label="Play Video"
           style={{
@@ -838,12 +1058,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "56px",
-            height: "56px",
+            width: "80px",
+            height: "80px",
             borderRadius: "50%",
             border: "none",
             background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+            boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -862,17 +1082,18 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: "11px solid transparent",
-              borderBottom: "11px solid transparent",
-              borderLeft: "18px solid #1E293B",
-              marginLeft: "4px",
+              borderTop: "15px solid transparent",
+              borderBottom: "15px solid transparent",
+              borderLeft: "26px solid #1E293B",
+              marginLeft: "6px",
             }}
           />
         </button>
       )}
 
-      {/* Control Bar - Auto-hides when video is playing unless cursor moves */}
-      <div
+      {/* Control Bar - Only visible in Fullscreen mode, auto-hides when video is playing unless cursor moves */}
+      {isFullscreen && (
+        <div
         onMouseEnter={() => {
           if (hideControlsTimerRef.current) {
             clearTimeout(hideControlsTimerRef.current);
@@ -901,9 +1122,9 @@ export default function VideosView({
           flexDirection: "column",
           width: "100%",
           boxSizing: "border-box",
-          opacity: isFullscreen && showControls ? 1 : 0,
-          transform: isFullscreen && showControls ? "translateY(0)" : "translateY(10px)",
-          pointerEvents: isFullscreen && showControls ? "auto" : "none",
+          opacity: showControls || !isPlaying ? 1 : 0,
+          transform: showControls || !isPlaying ? "translateY(0)" : "translateY(10px)",
+          pointerEvents: showControls || !isPlaying ? "auto" : "none",
           transition: "opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           userSelect: "none",
         }}
@@ -1333,14 +1554,14 @@ export default function VideosView({
               </svg>
             </button>
 
-            {/* Fullscreen Button */}
+            {/* Fullscreen / Minimize Button */}
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 toggleFullscreen();
               }}
-              title={isFullscreen ? "Exit Fullscreen (f)" : "Fullscreen (f)"}
-              aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+              title={isFullscreen ? "Exit Fullscreen / Minimize (f)" : "Fullscreen (f)"}
+              aria-label={isFullscreen ? "Exit Fullscreen / Minimize" : "Fullscreen"}
               style={{
                 background: "transparent",
                 border: "none",
@@ -1385,6 +1606,7 @@ export default function VideosView({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 
@@ -1399,24 +1621,24 @@ export default function VideosView({
         zIndex: 1,
       }}
     >
-      {/* Main Chapter / Video Title (Centered and Enlarged) */}
+      {/* Main Chapter / Video Title (Center aligned) */}
       <h2
         style={{
-          fontSize: "25px",
+          fontSize: "22px",
           fontWeight: 800,
           color: "#111827",
-          margin: "4px 0 14px 0",
-          textAlign: "center",
+          margin: "4px 0 16px 0",
           letterSpacing: "-0.3px",
           lineHeight: 1.25,
+          textAlign: "center",
         }}
       >
         {displayTitle}
       </h2>
 
-      {/* 5 Topic Rows with Dedicated Icons */}
+      {/* Topic Rows with Dedicated Icons */}
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 1 }}>
-        {topicsList.slice(0, 5).map((topic, idx) => (
+        {topicsList.map((topic, idx) => (
           <div
             key={idx}
             style={{
@@ -1473,7 +1695,7 @@ export default function VideosView({
         width: "100%",
         minHeight: "100%",
         background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
-        padding: "12px 16px 28px 16px",
+        padding: "20px 20px 36px 20px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
@@ -1498,35 +1720,32 @@ export default function VideosView({
         }
       `}</style>
 
-      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (Wider Horizontal Centered Card) ── */}
+      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (70% Video, 30% Down Details with Unified Page Scroll) ── */}
       {isSingleVideo ? (
         <div
           style={{
             width: "100%",
-            maxWidth: "760px",
-            margin: "0 auto",
+            maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))",
             background: "#FFFFFF",
-            borderRadius: "22px",
-            padding: "16px 20px 24px 20px",
+            borderRadius: "24px",
+            padding: "20px 24px 28px 24px",
             boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
             position: "relative",
             boxSizing: "border-box",
           }}
         >
-          {/* Centered Video Player */}
+          {/* Top: Video Player Preview (70% screen ratio) */}
           <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
             {renderVideoPlayer(true)}
           </div>
 
-          {/* Details Preview below */}
+          {/* Bottom Down Details (No nested scroll; total page scrolls) */}
           <div
             style={{
+              marginTop: "20px",
               width: "100%",
-              maxWidth: "680px",
-              marginTop: "16px",
               position: "relative",
             }}
           >
@@ -1534,19 +1753,19 @@ export default function VideosView({
           </div>
         </div>
       ) : (
-        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (Wider Grid Layout) ── */
-        <div style={{ width: "100%", maxWidth: "1060px", margin: "0 auto" }}>
+        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (70% Video, 30% Down Details with Playlist Tabs) ── */
+        <div style={{ width: "100%", maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))", display: "flex", flexDirection: "column", alignItems: "center" }}>
           {/* Video Selector Tabs for Chapter Playlist */}
           {videos.length > 1 && (
             <div
               style={{
                 display: "flex",
-                justifyContent: "center",
                 alignItems: "center",
                 gap: "8px",
                 marginBottom: "14px",
                 overflowX: "auto",
                 paddingBottom: "4px",
+                width: "100%",
               }}
             >
               <span style={{ fontSize: "12px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
@@ -1583,35 +1802,31 @@ export default function VideosView({
             </div>
           )}
 
-          {/* Centered Grid Layout */}
+          {/* Unified Card for Video and Down Details */}
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0, 520px) minmax(0, 1fr)",
-              gap: "24px",
-              alignItems: "start",
-              justifyContent: "center",
+              width: "100%",
+              background: "#FFFFFF",
+              borderRadius: "24px",
+              padding: "20px 24px 28px 24px",
+              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
+              display: "flex",
+              flexDirection: "column",
+              position: "relative",
+              boxSizing: "border-box",
             }}
           >
-            {/* Left: Compact Centered Video Player */}
-            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-              {renderVideoPlayer(false)}
+            {/* Top: Video Player Preview (70% screen ratio) */}
+            <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
+              {renderVideoPlayer(true)}
             </div>
 
-            {/* Right: Details Card with Scroll */}
+            {/* Bottom Down Details (No nested scroll; total page scrolls) */}
             <div
-              className="custom-details-scroll"
               style={{
-                background: "#FFFFFF",
-                borderRadius: "24px",
-                padding: "20px 22px",
-                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
+                marginTop: "20px",
+                width: "100%",
                 position: "relative",
-                overflowY: "auto",
-                maxHeight: "440px",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
               }}
             >
               {renderTopicsSection()}

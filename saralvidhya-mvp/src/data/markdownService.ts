@@ -7,6 +7,7 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
+  getLocalSubjectBaseUrl,
   SHARED_RESOURCE_FILES,
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
@@ -98,6 +99,18 @@ export function getResourceFileCandidates(
       'Learn/Mindmaps/mindmap.json',
       'mindmap.md',
       'mindmap.json'
+    ],
+    'study_plan.md': [
+      'study_plan.md',
+      'Foundation/Study Plan/study_plan.md',
+      'Foundation/study_plan.md',
+      'study_plan.json',
+      'Foundation/Study Plan/study_plan.json',
+    ],
+    'mock_test.md': [
+      'mock_test.md',
+      'Prepare/Mock_Test/mock_test.md',
+      'mock_test.json',
     ],
     'podcast_script.md': ['podcast_script.md', 'long_podcast.md', 'short_podcast.md'],
     'youtube_links.md': ['youtube_links.md', 'video_script.md'],
@@ -291,14 +304,18 @@ export async function getResourceContent(
 ): Promise<string> {
   await getManifest();
   const chDir = getChapterDir(subject, chapterNumber);
+  const localBase = getLocalSubjectBaseUrl(subject);
   const subjectBase = getSubjectBaseUrl(subject);
 
-  // ── GCS Cloud Run subjects: use canonical API routes ──
+  // ── GCS Cloud Run subjects: use canonical API routes (with 2s timeout) ──
   if (GCS_BACKEND_SUBJECTS.has(subject)) {
     const apiUrl = getGcsApiUrl(subject, chDir, resourceName, level);
     if (apiUrl) {
       try {
-        const res = await fetch(apiUrl, { cache: 'no-cache' });
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(apiUrl, { signal: controller.signal, cache: 'no-cache' });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {
@@ -321,7 +338,7 @@ export async function getResourceContent(
           }
         }
       } catch (e) {
-        console.warn('[GCS] Failed to fetch', apiUrl, e);
+        console.warn('[GCS] Failed or timed out fetching', apiUrl, e);
       }
       // Fall through to local static files if GCS fetch was unsuccessful
     }
@@ -389,12 +406,27 @@ export async function getResourceContent(
     }
   };
 
-  for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
-    const leveledResult = await tryFetch(`${subjectBase}/${chDir}/${level}/${fileName}`, fileName);
-    if (leveledResult !== null) return leveledResult;
+  const chDirsToTry = Array.from(new Set([
+    chDir,
+    `chapter_${String(chapterNumber).padStart(2, '0')}`,
+    `chapter_${chapterNumber}`,
+  ]));
 
-    const rootResult = await tryFetch(`${subjectBase}/${chDir}/${fileName}`, fileName);
-    if (rootResult !== null) return rootResult;
+  const basesToTry = Array.from(new Set([
+    localBase,
+    subjectBase,
+  ]));
+
+  for (const base of basesToTry) {
+    for (const ch of chDirsToTry) {
+      for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
+        const leveledResult = await tryFetch(`${base}/${ch}/${level}/${fileName}`, fileName);
+        if (leveledResult !== null) return leveledResult;
+
+        const rootResult = await tryFetch(`${base}/${ch}/${fileName}`, fileName);
+        if (rootResult !== null) return rootResult;
+      }
+    }
   }
 
   return `Content not available.`;
