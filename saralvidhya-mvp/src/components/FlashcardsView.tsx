@@ -261,7 +261,7 @@ export default function FlashcardsView({
           {levelControls}
         </div>
       )}
-      <div className="flashcards-stage" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", width: "100%", maxWidth: "min(98%, 1320px)", margin: "0 auto", padding: "8px 12px", flex: 1, minHeight: 0 }}>
+      <div className="flashcards-stage" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", width: "100%", maxWidth: "min(98%, 1320px)", margin: "0 auto", padding: "4px 12px 14px", flex: 1, minHeight: 0 }}>
         {/* Left Navigation Button */}
         <button
           type="button"
@@ -300,9 +300,9 @@ export default function FlashcardsView({
             width: "100%",
             maxWidth: "min(96%, 1240px)",
             flex: 1,
-            height: "calc((100vh - 120px) * 0.9)",
-            maxHeight: "738px",
-            minHeight: "396px",
+            height: "calc((100vh - 220px) * 0.94)",
+            maxHeight: "calc(100vh - 220px)",
+            minHeight: "340px",
             borderRadius: "24px",
             border: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
@@ -333,7 +333,7 @@ export default function FlashcardsView({
                 : (cards[currentIndex]?.level || persona) === "advanced"
                   ? "0 16px 44px rgba(45, 62, 54, 0.28)"
                   : "0 16px 44px rgba(45, 62, 54, 0.14)",
-            padding: "18px 24px 14px",
+            padding: "16px 22px 12px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
@@ -597,152 +597,48 @@ export default function FlashcardsView({
             </svg>
           </button>
         ) : (
-          /* On the last flashcard, replace the greyed-out right arrow with the action icons on the same horizontal axis */
+          /* On the last flashcard, show the Up next: Assessment button */
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               flexShrink: 0,
             }}
           >
-            {/* 1a. Level Down Button */}
-            {onLevelDownPersona && persona !== 'beginner' && (
-              <button
-                type="button"
-                onClick={() => onLevelDownPersona?.()}
-                title={`Level Down to ${persona === 'intermediate' ? 'Beginner' : 'Intermediate'}`}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  background: "#ffffff",
-                  border: `1.5px solid ${isPurpleTheme ? "#9333ea" : "#6F9A7F"}`,
-                  boxShadow: isPurpleTheme
-                    ? "0 4px 12px rgba(147,51,234,0.15)"
-                    : "0 4px 12px rgba(45,62,54,0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isPurpleTheme ? "#9333ea" : "#4F7B64"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            )}
-
-            {/* 1b. Level Up Button */}
-            {onLevelUpPersona && (
-              <button
-                type="button"
-                onClick={() => onLevelUpPersona?.()}
-                title={`Level Up to ${persona === 'beginner' ? 'Intermediate' : persona === 'intermediate' ? 'Advanced' : 'Beginner'}`}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  background: isPurpleTheme
-                    ? "linear-gradient(135deg, #9333ea, #cb30e0)"
-                    : "linear-gradient(135deg, #4F7B64, #2D3E36)",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  boxShadow: isPurpleTheme
-                    ? "0 4px 14px rgba(147,51,234,0.4)"
-                    : "0 4px 14px rgba(45,62,54,0.35)",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-              </button>
-            )}
-
-
-            {/* 2. Quick Study Button */}
             <button
               type="button"
-              onClick={() => onSelectTool?.("summary")}
-              title="Quick Study"
+              onClick={() => onSelectTool ? onSelectTool("assessment") : onFlashcardsCompleted?.()}
               style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: "8px",
+                padding: "10px 18px",
+                borderRadius: "999px",
+                background: "#4F7B64",
+                color: "#FFFFFF",
+                fontWeight: 700,
+                fontSize: "13.5px",
+                border: "none",
                 cursor: "pointer",
-                padding: "4px",
-                boxSizing: "border-box",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+                boxShadow: "0 4px 14px rgba(79, 123, 100, 0.35)",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                whiteSpace: "nowrap",
               }}
-            >
-              {/* Lightning bolt = Quick Summary */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-            </button>
-
-            {/* 3. Detailed Study Button */}
-            <button
-              type="button"
-              onClick={() => onSelectTool?.("detailed")}
-              title="Detailed Study"
-              style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                padding: "4px",
-                boxSizing: "border-box",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(79, 123, 100, 0.45)";
               }}
-            >
-              {/* Open book = Detailed Study */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-              </svg>
-            </button>
-
-            {/* 4. Home / Video Player Button */}
-            <button
-              type="button"
-              onClick={() => onSelectTool?.("videos")}
-              title="Home (Videos)"
-              style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "2px solid #f97316",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.16)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(79, 123, 100, 0.35)";
               }}
+              title="Proceed to Assessment"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V10.5Z" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M9 21V14H15V21" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <span>Up next: Assessment</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>

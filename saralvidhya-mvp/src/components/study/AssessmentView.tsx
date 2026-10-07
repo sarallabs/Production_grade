@@ -460,9 +460,15 @@ export function AssessmentView({
                   You got {score} of {questions.length} correct
                 </div>
                 <button
-                  onClick={onQuit}
+                  onClick={() => {
+                    if (setActiveTool) {
+                      setActiveTool("qbank");
+                    } else {
+                      onQuit();
+                    }
+                  }}
                   style={{
-                    padding: "10px 36px",
+                    padding: "11px 32px",
                     borderRadius: "24px",
                     border: "none",
                     background: "#2D3E36",
@@ -473,9 +479,16 @@ export function AssessmentView({
                     marginTop: "8px",
                     boxShadow: "0 6px 18px rgba(45, 62, 54, 0.25)",
                     transition: "all 0.2s ease",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
+                  title="Proceed to Question Bank"
                 >
-                  Continue
+                  <span>Up next: Question Bank</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
             );
@@ -1214,78 +1227,7 @@ export function AssessmentView({
                   flexShrink: 0,
                 }}
               >
-                {/* 1a. Level Down Button */}
-                {persona !== "beginner" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (persona === "advanced") setPersona?.("intermediate");
-                      else if (persona === "intermediate") setPersona?.("beginner");
-                    }}
-                    title={`Level Down to ${persona === 'advanced' ? 'Intermediate' : 'Beginner'}`}
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "50%",
-                      background: "#ffffff",
-                      border: "2px solid #2563eb",
-                      boxShadow: "0 4px 12px rgba(37, 99, 235, 0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(37, 99, 235, 0.25)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.15)";
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                )}
 
-                {/* 1b. Level Up Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (persona === "beginner") setPersona?.("intermediate");
-                    else if (persona === "intermediate") setPersona?.("advanced");
-                    else setPersona?.("beginner");
-                  }}
-                  title={`Level Up to ${persona === 'beginner' ? 'Intermediate' : persona === 'intermediate' ? 'Advanced' : 'Beginner'}`}
-                  style={{
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #0088ff, #0066cc)",
-                    border: "none",
-                    boxShadow: "0 4px 14px rgba(0, 136, 255, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow = "0 6px 18px rgba(0, 136, 255, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(0, 136, 255, 0.4)";
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="18 15 12 9 6 15" />
-                  </svg>
-                </button>
 
                 {/* 2. Quick Study Button */}
                 <button

@@ -249,19 +249,14 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
         const totalTxtH = node.lines.length * LINE_H;
         const txtStartY = node.y - totalTxtH / 2 + LINE_H * 0.78;
 
-          const iconY = node.y;
+          const earY = node.y - node.h / 2 + 14;
           const rightEdge = node.x + node.w / 2;
-          let eyeX = rightEdge + 16;
-          let earX = rightEdge + 44; // 16 + 28px spacing
-
-          if (node.hasVideo && !node.hasPodcast) {
-             eyeX = rightEdge + 16;
-          } else if (!node.hasVideo && node.hasPodcast) {
-             earX = rightEdge + 16;
-          }
+          const earX = rightEdge;
+          const eyeX = rightEdge + 16;
+          const iconY = node.y;
 
         const iconFill = '#4F7B64';
-        const iconBg = '#F3F8F5';
+        const iconBg = '#FFFFFF';
 
         const hoverFill = isRoot ? '#23322B' : node.depth === 1 ? '#436A55' : '#6A967A';
         const hoverStroke = isRoot ? '#18241E' : node.depth === 1 ? '#365544' : '#578267';
@@ -317,8 +312,8 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
                 )}
                 {node.hasPodcast && (
                   <g onClick={(e) => { e.stopPropagation(); onTopicClick?.(node.label, 'podcast'); }} style={{ cursor: 'pointer' }}>
-                    <circle cx={earX} cy={iconY} r={10} fill={iconBg} />
-                    <EarIcon cx={earX} cy={iconY} c={iconFill} />
+                    <circle cx={earX} cy={earY} r={12} fill={iconBg} stroke={iconFill} strokeWidth={1.5} />
+                    <EarIcon cx={earX} cy={earY} c={iconFill} />
                   </g>
                 )}
               </g>

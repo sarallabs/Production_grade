@@ -344,90 +344,51 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
                   {m.lines.join('\n')}
                 </span>
 
-                {/* Outside action icons (listen / podcast button placed OUTSIDE the box) */}
-                {(m.hasVideo || m.hasPodcast) && (
+                {/* Action icon: earphone tab as seamless extension of the node */}
+                {m.hasPodcast && (
                   <span
                     style={{
                       position: 'absolute',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      [isRightSide ? 'right' : 'left']: -36,
+                      top: 4,
+                      [isRightSide ? 'right' : 'left']: -20,
                       display: 'inline-flex',
+                      flexDirection: 'column',
                       alignItems: 'center',
-                      gap: 6,
-                      zIndex: 10,
+                      gap: 4,
+                      zIndex: 5,
                     }}
                   >
-                    {m.hasVideo && (
-                      <button
-                        type="button"
-                        title="Watch video"
-                        aria-label="Watch video"
-                        onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'video'); }}
-                        style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: '50%',
-                          border: `1.5px solid ${m.color}`,
-                          background: '#FFFFFF',
-                          color: m.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          padding: 0,
-                          boxShadow: '0 2px 8px rgba(45,62,54,.18)',
-                          transition: 'all .2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.15)';
-                          e.currentTarget.style.background = m.color;
-                          e.currentTarget.style.color = '#FFFFFF';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.color = m.color;
-                        }}
-                      >
-                        <EyeSvg />
-                      </button>
-                    )}
-                    {m.hasPodcast && (
-                      <button
-                        type="button"
-                        title="Listen to podcast"
-                        aria-label="Listen to podcast"
-                        onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'podcast'); }}
-                        style={{
-                          width: 26,
-                          height: 26,
-                          borderRadius: '50%',
-                          border: `1.5px solid ${m.color}`,
-                          background: '#FFFFFF',
-                          color: m.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          cursor: 'pointer',
-                          padding: 0,
-                          boxShadow: '0 2px 8px rgba(45,62,54,.18)',
-                          transition: 'all .2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'scale(1.15)';
-                          e.currentTarget.style.background = m.color;
-                          e.currentTarget.style.color = '#FFFFFF';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'scale(1)';
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.color = m.color;
-                        }}
-                      >
-                        <EarSvg />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      title="Listen to podcast"
+                      aria-label="Listen to podcast"
+                      onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'podcast'); }}
+                      style={{
+                        width: 24,
+                        height: 24,
+                        borderRadius: isRightSide ? '0 12px 12px 0' : '12px 0 0 12px',
+                        border: 'none',
+                        background: m.color,
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        padding: 0,
+                        boxShadow: isRightSide ? '2px 2px 6px rgba(45,62,54,.25)' : '-2px 2px 6px rgba(45,62,54,.25)',
+                        transition: 'all .2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.filter = 'brightness(1.18)';
+                        e.currentTarget.style.transform = isRightSide ? 'translateX(2px)' : 'translateX(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.filter = 'none';
+                        e.currentTarget.style.transform = 'none';
+                      }}
+                    >
+                      <EarSvg />
+                    </button>
                   </span>
                 )}
 
@@ -440,7 +401,7 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
                       position: 'absolute',
                       top: '50%',
                       transform: 'translateY(-50%)',
-                      [toggleOnRight ? 'right' : 'left']: (m.hasVideo || m.hasPodcast) ? -68 : -22,
+                      [toggleOnRight ? 'right' : 'left']: -22,
                       width: 18,
                       height: 18,
                       borderRadius: '50%',
