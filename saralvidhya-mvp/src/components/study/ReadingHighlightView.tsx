@@ -2,7 +2,9 @@ import React, { useRef, useCallback, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
 
 /**
- * Component to highlight currently read words when using text-to-speech.
+ * High-performance component to highlight currently read words when using text-to-speech.
+ * Uses a non-destructive floating overlay and CSS Custom Highlight API.
+ * Never destroys text nodes or runs TreeWalker repeatedly, eliminating freezing and layout thrashing.
  */
 export default function ReadingHighlightView({
   content,
@@ -16,14 +18,16 @@ export default function ReadingHighlightView({
   endWord: number;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastMarkRef = useRef<HTMLElement | null>(null);
-  // Pre-built map: wordIndex → { node, nodeOffset, length }
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const lastScrolledWordRef = useRef<number>(-1);
+
+  // Pre-built map: wordIndex → { node, offset, length }
   const wordMapRef = useRef<
     Array<{ node: Text; offset: number; length: number }>
   >([]);
   const mapBuiltRef = useRef(false);
 
-  // Build the word map once after content renders
+  // Build the word map ONCE when content renders
   const buildWordMap = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -34,9 +38,13 @@ export default function ReadingHighlightView({
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     const textNodes: Text[] = [];
     let n: Text | null;
-    while ((n = walker.nextNode() as Text | null)) textNodes.push(n);
+    while ((n = walker.nextNode() as Text | null)) {
+      if (n.textContent && n.textContent.trim().length > 0) {
+        textNodes.push(n);
+      }
+    }
 
-    // Walk through text nodes and split into words, recording exact position
+    // Split each text node into words, recording exact character boundaries
     const wordRegex = /\S+/g;
     for (const node of textNodes) {
       const text = node.textContent || "";
@@ -49,98 +57,98 @@ export default function ReadingHighlightView({
     mapBuiltRef.current = true;
   }, []);
 
-  // Rebuild map when content changes (after MarkdownView re-renders)
+  // Build map immediately when content changes
   useEffect(() => {
-    // Small delay to let MarkdownView finish rendering
-    const timer = setTimeout(buildWordMap, 50);
-    return () => clearTimeout(timer);
+    buildWordMap();
   }, [content, buildWordMap]);
 
-  // Highlight the current word range
+  // Update highlight position without DOM destruction
   useEffect(() => {
-    if (!active) return;
+    const overlay = overlayRef.current;
+    const container = containerRef.current;
+
+    if (!active || startWord < 0) {
+      if (overlay) overlay.style.display = "none";
+      if (typeof Highlight !== "undefined" && CSS.highlights) {
+        CSS.highlights.delete("reading-active-word");
+      }
+      return;
+    }
+
     if (!mapBuiltRef.current) {
       buildWordMap();
     }
 
     const map = wordMapRef.current;
-    if (!map.length || startWord < 0) return;
+    if (!map.length || !container) return;
 
-    // Remove previous mark
-    if (lastMarkRef.current) {
-      const m = lastMarkRef.current;
-      const parent = m.parentNode;
-      if (parent) {
-        // Restore original text node
-        const textNode = document.createTextNode(m.textContent || "");
-        parent.replaceChild(textNode, m);
-        parent.normalize();
-        // After normalize, the map is stale — rebuild on next call
-        mapBuiltRef.current = false;
-      }
-      lastMarkRef.current = null;
-    }
+    const idx = Math.min(startWord, map.length - 1);
+    if (idx < 0 || idx >= map.length) return;
 
-    // Rebuild map if stale (after previous mark removal)
-    if (!mapBuiltRef.current) buildWordMap();
-
-    const freshMap = wordMapRef.current;
-    const idx = Math.min(startWord, freshMap.length - 1);
-    if (idx < 0 || idx >= freshMap.length) return;
-
-    const startEntry = freshMap[idx];
+    const startEntry = map[idx];
     if (!startEntry || !startEntry.node.parentNode) return;
 
-    // Span up to 3 words
-    const endIdx = Math.min(idx + 2, freshMap.length - 1);
-    const endEntry = freshMap[endIdx];
+    const endIdx = Math.max(idx, Math.min(endWord, map.length - 1));
+    const endEntry = endIdx === idx ? startEntry : map[endIdx];
 
     try {
-      // If all words are in the same text node, wrap them all in one mark
-      if (startEntry.node === endEntry.node) {
-        const range = document.createRange();
-        range.setStart(startEntry.node, startEntry.offset);
-        range.setEnd(endEntry.node, endEntry.offset + endEntry.length);
-        const mark = document.createElement("mark");
-        mark.className = "reading-mark reading-phrase-active";
-        range.surroundContents(mark);
-        lastMarkRef.current = mark;
-        mapBuiltRef.current = false;
-        mark.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      } else {
-        // Words span different nodes — wrap just the first word
-        const range = document.createRange();
-        range.setStart(startEntry.node, startEntry.offset);
-        range.setEnd(startEntry.node, startEntry.offset + startEntry.length);
-        const mark = document.createElement("mark");
-        mark.className = "reading-mark reading-phrase-active";
-        range.surroundContents(mark);
-        lastMarkRef.current = mark;
-        mapBuiltRef.current = false;
-        mark.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const range = document.createRange();
+      range.setStart(startEntry.node, Math.min(startEntry.offset, startEntry.node.length));
+      range.setEnd(
+        endEntry.node,
+        Math.min(endEntry.offset + endEntry.length, endEntry.node.length)
+      );
+
+      // 1. Native CSS Custom Highlight API (zero layout recalculation)
+      if (typeof Highlight !== "undefined" && CSS.highlights) {
+        CSS.highlights.set("reading-active-word", new Highlight(range));
+      }
+
+      // 2. High-performance non-destructive floating overlay box
+      const rect = range.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0 && overlay) {
+        const containerRect = container.getBoundingClientRect();
+        const top = rect.top - containerRect.top;
+        const left = rect.left - containerRect.left;
+
+        overlay.style.display = "block";
+        overlay.style.top = `${top - 1}px`;
+        overlay.style.left = `${left - 2}px`;
+        overlay.style.width = `${rect.width + 4}px`;
+        overlay.style.height = `${rect.height + 2}px`;
+
+        // 3. Smooth scroll within actual scroll parent when word drifts (throttled)
+        if (Math.abs(startWord - lastScrolledWordRef.current) >= 2) {
+          lastScrolledWordRef.current = startWord;
+          let scrollParent: HTMLElement | null = container.parentElement;
+          while (scrollParent && scrollParent !== document.body) {
+            const style = window.getComputedStyle(scrollParent);
+            if (style.overflowY === "auto" || style.overflowY === "scroll") break;
+            scrollParent = scrollParent.parentElement;
+          }
+          if (scrollParent) {
+            const sRect = scrollParent.getBoundingClientRect();
+            const relY = rect.top - sRect.top;
+            if (relY < sRect.height * 0.25 || relY > sRect.height * 0.70) {
+              const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.45;
+              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
+            }
+          }
+        }
       }
     } catch {
-      // surroundContents can fail if range crosses element boundaries — skip
+      // Range calculation fallback
     }
   }, [active, startWord, endWord, buildWordMap]);
 
-  // Cleanup when inactive
-  useEffect(() => {
-    if (active) return;
-    if (lastMarkRef.current) {
-      const m = lastMarkRef.current;
-      const parent = m.parentNode;
-      if (parent) {
-        parent.replaceChild(document.createTextNode(m.textContent || ""), m);
-        parent.normalize();
-      }
-      lastMarkRef.current = null;
-      mapBuiltRef.current = false;
-    }
-  }, [active]);
-
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <div
+        ref={overlayRef}
+        className="reading-highlight-overlay"
+        style={{ display: "none" }}
+        aria-hidden="true"
+      />
       <MarkdownView content={content} />
     </div>
   );

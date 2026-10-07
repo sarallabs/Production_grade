@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import MarkdownView from "@/components/MarkdownView";
 import JsMindView from "@/components/JsMindView";
-import MermaidView from "@/components/MermaidView";
+import MindMapView from "@/components/MindMapView";
 import FlashcardsView from "@/components/FlashcardsView";
 import QuestionBankView from "@/components/QuestionBankView";
 import type { ToolId } from "@/components/ToolsMenu";
@@ -298,6 +298,76 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
   },
 };
 
+// ── In-memory cache for Mindmap Topic Markdown content ───────────────────────
+const angrauTopicCache = new Map<string, { quick: string; detailed?: string }>();
+
+// ANGRAU Chapter Configuration for Mindmaps
+type AngrauTopic = { label: string; topicNum: number; podcastFile: string };
+const ANGRAU_CHAPTER_CONFIG: Record<number, {
+  chapterTitle: string;
+  quickFolder: string;
+  detailedFolder: string;
+  topics: AngrauTopic[];
+}> = {
+  1: {
+    chapterTitle: 'Insect Digestive System',
+    quickFolder: 'Digestive_system_quick_Topic_Level',
+    detailedFolder: 'Digestive_system_detailed_Topic_Level',
+    topics: [
+      { label: 'Three Primary Gut Regions',              topicNum: 1, podcastFile: '1. Anatomy of the three-part insect gut' },
+      { label: 'Salivary Glands & Specialised Secretions', topicNum: 2, podcastFile: '2. Inside the Insect Foregut and Gizzard' },
+      { label: 'Specialized Physiological Adaptations',  topicNum: 3, podcastFile: '3. How Insect Digestion Activates Bt Toxins' },
+      { label: 'Excretory Integration & Gut Renewal',    topicNum: 4, podcastFile: '4. How insects recycle water from waste' },
+    ],
+  },
+  2: {
+    chapterTitle: 'Metamorphosis & Diapause',
+    quickFolder: 'Metamorphosis_quick_Topic_Level',
+    detailedFolder: 'Metamorphosis_detailed_Topic_Level',
+    topics: [
+      { label: 'Morphogenesis Framework',         topicNum: 1, podcastFile: '1.Three Categories of Insect Metamorphosis' },
+      { label: 'Types of Metamorphosis',          topicNum: 2, podcastFile: '2.Identify Insect Larvae to Protect Crops' },
+      { label: 'Immature & Pupal Classifications',topicNum: 3, podcastFile: '3.Insect pupal structures and escape tactics' },
+      { label: 'Hypermetamorphosis',              topicNum: 4, podcastFile: '4.Blister beetles live multiple larval lives' },
+      { label: 'Endocrine Regulation',            topicNum: 5, podcastFile: '5.Controlling Pests with Hormones and Diapause' },
+      { label: 'Diapause & Dormancy',             topicNum: 6, podcastFile: '6.Predicting insect diapause for crop protection' },
+    ],
+  },
+  3: {
+    chapterTitle: 'Weathering of Rocks and Minerals',
+    quickFolder: 'Weathering_quick_Topic_Level',
+    detailedFolder: 'Weathering_Detailed_Topic_Level',
+    topics: [
+      { label: 'Fundamentals & Regolith Genesis',          topicNum: 1, podcastFile: '1. How weathering transforms bedrock into regolith' },
+      { label: 'Physical Weathering (Mechanical Agents)',   topicNum: 2, podcastFile: '2. Mechanical forces breaking down Indian landscapes' },
+      { label: 'Biological Weathering (Living Agents)',     topicNum: 3, podcastFile: '3. How life turns solid rock into soil' },
+      { label: 'Synthesis & Quantitative Summary',          topicNum: 4, podcastFile: '4. Mathematical Forces Turning Rock into Soil' },
+    ],
+  },
+  4: {
+    chapterTitle: 'Pollination, Pollinizers & Parthenocarpy',
+    quickFolder: 'Pollination_Quick_Topic_Level',
+    detailedFolder: 'Pollination_detailed_Topic_Level',
+    topics: [
+      { label: 'Fundamentals of Floral Biology & Pollination Anatomy',     topicNum: 1, podcastFile: '1. Floral architecture and double fertilization' },
+      { label: 'Self-Pollination (Autogamy) & Inbreeding Mechanisms',      topicNum: 2, podcastFile: '2. Self-Pollination Mechanisms in Indian Crops' },
+      { label: 'Cross-Pollination (Allogamy / Xenogamy) & Outcrossing',   topicNum: 3, podcastFile: '3.How Indian crops force cross pollination' },
+      { label: 'Pollinators & Pollination Vectors (Abiotic & Biotic)',     topicNum: 4, podcastFile: '4.How nature pollinates India_s crops' },
+      { label: 'Pollinizers & Orchard Layout Management',                  topicNum: 5, podcastFile: '5. Choosing and Arranging Orchard Pollinizers' },
+      { label: 'Parthenocarpy (Seedless Fruit Development)',               topicNum: 6, podcastFile: '6. How Parthenocarpy Creates Seedless Fruit' },
+    ],
+  },
+};
+
+function buildAngrauMermaid(cfg: (typeof ANGRAU_CHAPTER_CONFIG)[number] | null): string {
+  if (!cfg) return '';
+  const lines = ['mindmap', `  root(("${cfg.chapterTitle}"))`];
+  for (const t of cfg.topics) {
+    lines.push(`    "${t.label}"`);
+  }
+  return lines.join('\n');
+}
+
 export default function StudyTable() {
   // Mindmap inline topic view (no popup — content shown in-place below the map)
   const [mindmapTopicTitle, setMindmapTopicTitle] = useState<string | null>(null);
@@ -305,18 +375,36 @@ export default function StudyTable() {
   const [mindmapDetailedContent, setMindmapDetailedContent] = useState<string | null>(null);
   const [mindmapInlineTab, setMindmapInlineTab] = useState<'quick' | 'detailed'>('quick');
   const [mindmapTopicOpen, setMindmapTopicOpen] = useState(false);
+  const [mindmapTopicLoading, setMindmapTopicLoading] = useState(false);
   const [mindmapInlineType, setMindmapInlineType] = useState<'text' | 'video' | 'audio'>('text');
   const [mindmapMediaUrl, setMindmapMediaUrl] = useState<string>('');
   // For microcast inline: which ANGRAU microcast index maps to this topic
   const [mindmapMicrocastIdx, setMindmapMicrocastIdx] = useState<number>(0);
-  // Foundation tool: toggle between "mindmap" and "study_plan" sub-tabs
-  const [foundationTab, setFoundationTab] = useState<'mindmap' | 'study_plan'>('mindmap');
   const [foundationMindmapContent, setFoundationMindmapContent] = useState<string>('');
-  const [foundationStudyPlanContent, setFoundationStudyPlanContent] = useState<string>('');
   const [foundationLoading, setFoundationLoading] = useState(false);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const subjectId = searchParams.get("sId") || searchParams.get("subjectId") || "english";
+  // Remember the course params of the last valid URL so a link that lost its
+  // subject (back/forward, bookmark, stripped query) doesn't fall back to "english".
+  const COURSE_PARAM_KEYS = ["boardId", "boardName", "cId", "className", "sId", "subjectName", "semesterName"];
+  const savedCourseParams: Record<string, string> = (() => {
+    try { return JSON.parse(sessionStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
+  })();
+  const subjectId =
+    searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
+  useEffect(() => {
+    if (searchParams.get("sId")) {
+      const toSave: Record<string, string> = {};
+      COURSE_PARAM_KEYS.forEach((k) => { const v = searchParams.get(k); if (v) toSave[k] = v; });
+      sessionStorage.setItem("sv_last_course_params", JSON.stringify(toSave));
+    } else if (!searchParams.get("subjectId") && savedCourseParams.sId) {
+      setSearchParams((prev) => {
+        COURSE_PARAM_KEYS.forEach((k) => { if (!prev.get(k) && savedCourseParams[k]) prev.set(k, savedCourseParams[k]); });
+        return prev;
+      }, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
   const treeLogoSrc = subjectId?.startsWith('neb_')
     ? `${import.meta.env.BASE_URL}neb-logo.png`
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
@@ -388,6 +476,33 @@ export default function StudyTable() {
     return () => {
       cancelled = true;
     };
+  }, [subjectId, chapterNumber]);
+
+  // Prefetch ANGRAU mindmap topic notes in background so node clicks are instant (0ms)
+  useEffect(() => {
+    if (subjectId !== 'ento_131') return;
+    const cfg = ANGRAU_CHAPTER_CONFIG[chapterNumber];
+    if (!cfg) return;
+
+    const base = `${import.meta.env.BASE_URL}generated_resources/angrau/mindmaps topic level`;
+    cfg.topics.forEach((t) => {
+      const cacheKey = `angrau_${chapterNumber}_${t.topicNum}`;
+      if (angrauTopicCache.has(cacheKey)) return;
+
+      const quickPath = `${base}/${cfg.quickFolder}/quick_summary_topic${t.topicNum}.md`;
+      const detailedPath = `${base}/${cfg.detailedFolder}/detailed_summary_topic${t.topicNum}.md`;
+
+      Promise.all([
+        fetch(quickPath).then(r => (r.ok ? r.text() : '')),
+        fetch(detailedPath).then(r => (r.ok ? r.text() : '')),
+      ]).then(([quick, detailed]) => {
+        if (quick || detailed) {
+          angrauTopicCache.set(cacheKey, { quick, detailed });
+        }
+      }).catch(err => {
+        console.warn('Prefetch topic failed', t.topicNum, err);
+      });
+    });
   }, [subjectId, chapterNumber]);
 
   // 1-based index of the video being studied. Drives both which assets load and
@@ -703,7 +818,144 @@ export default function StudyTable() {
   // Guided chapter gating has been removed per user request so they can freely 
   // navigate between unit tabs in MOOC mode.
 
-
+  // ── UNIVERSAL STUDY TOOL UP-NEXT FLOW ENGINE ──
+  const getUpNext = (): {
+    tool?: ToolId;
+    label: string;
+    subLabel: string;
+    description: string;
+    color: string;
+    action: () => void;
+  } | null => {
+    switch (activeTool) {
+      case "summary":
+      case "detailed":
+        return {
+          tool: "podcasts",
+          label: "Listen",
+          subLabel: "Podcasts",
+          description: "Conversational audio discussions & topic microcasts",
+          color: "#4F7B64",
+          action: () => setActiveTool("podcasts"),
+        };
+      case "podcasts":
+        return {
+          tool: "videos",
+          label: "Watch",
+          subLabel: "Videos",
+          description: "Curated video demonstrations and lecture clips",
+          color: "#4F7B64",
+          action: () => setActiveTool("videos"),
+        };
+      case "videos":
+        return {
+          tool: "revision_flashcards",
+          label: "Revise",
+          subLabel: "Flashcards",
+          description: "Reinforce key concepts with interactive flashcards",
+          color: "#4F7B64",
+          action: () => setActiveTool("revision_flashcards"),
+        };
+      case "flashcards":
+      case "revision_flashcards":
+        return {
+          tool: "assessment",
+          label: "Assessment",
+          subLabel: "Practice Questions",
+          description: "Multi-format questions to test chapter understanding",
+          color: "#4F7B64",
+          action: () => setActiveTool("assessment"),
+        };
+      case "assessment":
+        return {
+          tool: "qbank",
+          label: "Question Bank",
+          subLabel: "Question Bank",
+          description: "Explore the comprehensive topic question bank",
+          color: "#4F7B64",
+          action: () => setActiveTool("qbank"),
+        };
+      case "qbank":
+        return {
+          tool: "key_takeaways",
+          label: "Key Takeaways",
+          subLabel: "Key Takeaways",
+          description: "High-yield summaries and essential bullet points",
+          color: "#DB2777",
+          action: () => setActiveTool("key_takeaways"),
+        };
+      case "key_takeaways":
+        return {
+          tool: "pyq",
+          label: "PYQ",
+          subLabel: "Previous Year Questions",
+          description: "Real past university examination questions",
+          color: "#DB2777",
+          action: () => setActiveTool("pyq"),
+        };
+      case "pyq":
+        return {
+          tool: "prep_exam",
+          label: "Preparation Exam",
+          subLabel: "Simulated Exam",
+          description: "Take a full simulated chapter test under exam conditions",
+          color: "#DB2777",
+          action: () => setActiveTool("prep_exam"),
+        };
+      case "prep_exam":
+      case "mocktest":
+      case "pre_final_test":
+        if (nextUnit) {
+          return {
+            label: `${getChapterPrefix(subjectId)} ${nextUnit.number}`,
+            subLabel: toTitleCase(nextUnit.name),
+            description: `Advance to next chapter: ${toTitleCase(nextUnit.name)}`,
+            color: "#2563EB",
+            action: () => {
+              handleChapterChange(nextUnit.number);
+              setActiveTool("summary");
+            },
+          };
+        }
+        return {
+          tool: "ask",
+          label: "Ask Me",
+          subLabel: "AI Subject Tutor",
+          description: "Clear your lingering doubts with the AI tutor",
+          color: "#4F7B64",
+          action: () => setIsAskOpen(true),
+        };
+      case "mindmap":
+      case "foundation":
+        return {
+          tool: "summary",
+          label: "Read",
+          subLabel: "Chapter Notes",
+          description: "Dive into complete chapter notes and study text",
+          color: "#4F7B64",
+          action: () => setActiveTool("summary"),
+        };
+      case "ask":
+        return {
+          tool: "summary",
+          label: "Read",
+          subLabel: "Chapter Notes",
+          description: "Return to chapter notes and continue learning",
+          color: "#4F7B64",
+          action: () => setActiveTool("summary"),
+        };
+      default:
+        return {
+          tool: "summary",
+          label: "Read",
+          subLabel: "Study Notes",
+          description: "Explore chapter reading materials",
+          color: "#4F7B64",
+          action: () => setActiveTool("summary"),
+        };
+    }
+  };
+  const upNext = getUpNext();
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -779,54 +1031,23 @@ export default function StudyTable() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
-  const [isToolbarPinned, setIsToolbarPinned] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("sv_study_toolbar_pinned");
-      return stored !== null ? stored === "true" : true;
-    } catch {
-      return true;
-    }
-  });
+  // Toolbar state: stays intact and open at all times unless user explicitly toggles it
   const [isToolbarOpen, setIsToolbarOpen] = useState<boolean>(() => {
     try {
-      const stored = localStorage.getItem("sv_study_toolbar_pinned");
+      const stored = localStorage.getItem("sv_study_toolbar_open");
       return stored !== null ? stored === "true" : true;
     } catch {
       return true;
     }
   });
-  const toolbarCollapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const clearToolbarCollapseTimer = useCallback(() => {
-    if (toolbarCollapseTimerRef.current != null) {
-      clearTimeout(toolbarCollapseTimerRef.current);
-      toolbarCollapseTimerRef.current = null;
-    }
-  }, []);
-
-  const handleToolbarMouseEnter = useCallback(() => {
-    clearToolbarCollapseTimer();
-    setIsToolbarOpen(true);
-  }, [clearToolbarCollapseTimer]);
-
-  const handleToolbarMouseLeave = useCallback(() => {
-    if (isToolbarPinned) return;
-    clearToolbarCollapseTimer();
-    toolbarCollapseTimerRef.current = setTimeout(() => {
-      setIsToolbarOpen(false);
-    }, 250);
-  }, [isToolbarPinned, clearToolbarCollapseTimer]);
-
-  const toggleToolbarPin = useCallback(() => {
-    setIsToolbarPinned((prev) => {
+  const toggleToolbarOpen = useCallback(() => {
+    setIsToolbarOpen((prev) => {
       const next = !prev;
       try {
-        localStorage.setItem("sv_study_toolbar_pinned", String(next));
+        localStorage.setItem("sv_study_toolbar_open", String(next));
       } catch {
         // ignore storage errors
-      }
-      if (next) {
-        setIsToolbarOpen(true);
       }
       return next;
     });
@@ -1112,10 +1333,6 @@ export default function StudyTable() {
       getResourceContent(internalSubId, chapterNumber, "mindmap.md", persona)
         .then(apply)
         .catch(() => apply(""));
-    } else if (activeTool === "study_plan") {
-      getResourceContent(internalSubId, chapterNumber, "study_plan.md", persona)
-        .then(apply)
-        .catch(() => apply("Study plan unavailable."));
     } else if (activeTool === "qbank" || activeTool === "assessment") {
       getResourceContent(
         internalSubId,
@@ -1283,6 +1500,83 @@ export default function StudyTable() {
               startWord={readingHighlight.startWord}
               endWord={readingHighlight.endWord}
             />
+
+            {/* Inline Up Next Card at bottom of reading notes */}
+            {upNext && (
+              <div
+                className="sv-up-next-banner"
+                style={{
+                  marginTop: "48px",
+                  marginBottom: "36px",
+                  padding: "22px 28px",
+                  background: upNext.color === "#DB2777" ? "linear-gradient(135deg, #FDF2F8 0%, #FFFFFF 100%)" : "linear-gradient(135deg, #F0F7F4 0%, #FFFFFF 100%)",
+                  border: `1.5px solid ${upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9"}`,
+                  borderRadius: "16px",
+                  boxShadow: "0 4px 20px rgba(15, 23, 42, 0.06)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "20px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "220px", flex: 1 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{
+                      fontSize: "11.5px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.6px",
+                      color: upNext.color,
+                      background: upNext.color === "#DB2777" ? "rgba(219, 39, 119, 0.12)" : "rgba(79, 123, 100, 0.12)",
+                      padding: "3px 9px",
+                      borderRadius: "6px"
+                    }}>
+                      Up Next
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#18221D", marginTop: "2px" }}>
+                    {upNext.subLabel ? `${upNext.label}: ${upNext.subLabel}` : upNext.label}
+                  </div>
+                  <div style={{ fontSize: "13.5px", color: "#64748B", lineHeight: 1.4 }}>
+                    {upNext.description}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={upNext.action}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "12px 26px",
+                    borderRadius: "30px",
+                    background: upNext.color,
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: "14.5px",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: `0 4px 14px ${upNext.color}55`,
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                    whiteSpace: "nowrap",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = `0 6px 20px ${upNext.color}77`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = `0 4px 14px ${upNext.color}55`;
+                  }}
+                >
+                  <span>Up next: {upNext.label}</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         );
       }
@@ -1600,65 +1894,6 @@ export default function StudyTable() {
 
         // ── ANGRAU mindmap config ────────────────────────────────────────────
         const isAngrau = subjectId === 'ento_131';
-
-        // Each topic: exact display label (= node text = lookup key), file number, podcast file
-        type AngrauTopic = { label: string; topicNum: number; podcastFile: string };
-        const ANGRAU_CHAPTER_CONFIG: Record<number, {
-          chapterTitle: string;
-          quickFolder: string;
-          detailedFolder: string;
-          topics: AngrauTopic[];
-        }> = {
-          1: {
-            chapterTitle: 'Insect Digestive System',
-            quickFolder: 'Digestive_system_quick_Topic_Level',
-            detailedFolder: 'Digestive_system_detailed_Topic_Level',
-            topics: [
-              { label: 'Three Primary Gut Regions',              topicNum: 1, podcastFile: '1. Anatomy of the three-part insect gut' },
-              { label: 'Salivary Glands & Specialised Secretions', topicNum: 2, podcastFile: '2. Inside the Insect Foregut and Gizzard' },
-              { label: 'Specialized Physiological Adaptations',  topicNum: 3, podcastFile: '3. How Insect Digestion Activates Bt Toxins' },
-              { label: 'Excretory Integration & Gut Renewal',    topicNum: 4, podcastFile: '4. How insects recycle water from waste' },
-            ],
-          },
-          2: {
-            chapterTitle: 'Metamorphosis & Diapause',
-            quickFolder: 'Metamorphosis_quick_Topic_Level',
-            detailedFolder: 'Metamorphosis_detailed_Topic_Level',
-            topics: [
-              { label: 'Morphogenesis Framework',         topicNum: 1, podcastFile: '1.Three Categories of Insect Metamorphosis' },
-              { label: 'Types of Metamorphosis',          topicNum: 2, podcastFile: '2.Identify Insect Larvae to Protect Crops' },
-              { label: 'Immature & Pupal Classifications',topicNum: 3, podcastFile: '3.Insect pupal structures and escape tactics' },
-              { label: 'Hypermetamorphosis',              topicNum: 4, podcastFile: '4.Blister beetles live multiple larval lives' },
-              { label: 'Endocrine Regulation',            topicNum: 5, podcastFile: '5.Controlling Pests with Hormones and Diapause' },
-              { label: 'Diapause & Dormancy',             topicNum: 6, podcastFile: '6.Predicting insect diapause for crop protection' },
-            ],
-          },
-          3: {
-            chapterTitle: 'Weathering of Rocks and Minerals',
-            quickFolder: 'Weathering_quick_Topic_Level',
-            detailedFolder: 'Weathering_Detailed_Topic_Level',
-            topics: [
-              { label: 'Fundamentals & Regolith Genesis',          topicNum: 1, podcastFile: '1. How weathering transforms bedrock into regolith' },
-              { label: 'Physical Weathering (Mechanical Agents)',   topicNum: 2, podcastFile: '2. Mechanical forces breaking down Indian landscapes' },
-              { label: 'Biological Weathering (Living Agents)',     topicNum: 3, podcastFile: '3. How life turns solid rock into soil' },
-              { label: 'Synthesis & Quantitative Summary',          topicNum: 4, podcastFile: '4. Mathematical Forces Turning Rock into Soil' },
-            ],
-          },
-          4: {
-            chapterTitle: 'Pollination, Pollinizers & Parthenocarpy',
-            quickFolder: 'Pollination_Quick_Topic_Level',
-            detailedFolder: 'Pollination_detailed_Topic_Level',
-            topics: [
-              { label: 'Fundamentals of Floral Biology & Pollination Anatomy',     topicNum: 1, podcastFile: '1. Floral architecture and double fertilization' },
-              { label: 'Self-Pollination (Autogamy) & Inbreeding Mechanisms',      topicNum: 2, podcastFile: '2. Self-Pollination Mechanisms in Indian Crops' },
-              { label: 'Cross-Pollination (Allogamy / Xenogamy) & Outcrossing',   topicNum: 3, podcastFile: '3.How Indian crops force cross pollination' },
-              { label: 'Pollinators & Pollination Vectors (Abiotic & Biotic)',     topicNum: 4, podcastFile: '4.How nature pollinates India_s crops' },
-              { label: 'Pollinizers & Orchard Layout Management',                  topicNum: 5, podcastFile: '5. Choosing and Arranging Orchard Pollinizers' },
-              { label: 'Parthenocarpy (Seedless Fruit Development)',               topicNum: 6, podcastFile: '6. How Parthenocarpy Creates Seedless Fruit' },
-            ],
-          },
-        };
-
         const angrauChapCfg = isAngrau ? ANGRAU_CHAPTER_CONFIG[chapterNumber] : null;
 
         // Build mmIcons for ANGRAU: every topic node gets hasRead + hasPodcast
@@ -1670,18 +1905,6 @@ export default function StudyTable() {
             angrauMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true };
           }
         }
-
-        // For ANGRAU: generate a clean mermaid directly from config instead of using the messy mindmap.md
-        // This guarantees node labels exactly match the topic files.
-        function buildAngrauMermaid(cfg: typeof angrauChapCfg): string {
-          if (!cfg) return '';
-          const lines = ['mindmap', `  root(("${cfg.chapterTitle}"))`];
-          for (const t of cfg.topics) {
-            lines.push(`    "${t.label}"`);
-          }
-          return lines.join('\n');
-        }
-
 
         const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isAngrau && angrauChapCfg
           ? angrauMmIcons
@@ -1769,22 +1992,55 @@ export default function StudyTable() {
 
             // Default: read (quick + detailed)
             setMindmapInlineType('text');
+            setMindmapInlineTab('quick');
+            setMindmapTopicOpen(true);
+
+            const cacheKey = `angrau_${chapterNumber}_${match.topicNum}`;
+            const cached = angrauTopicCache.get(cacheKey);
+
+            if (cached && cached.quick) {
+              setMindmapTopicContent(cached.quick);
+              setMindmapDetailedContent(cached.detailed || '');
+              setMindmapTopicLoading(false);
+              return;
+            }
+
+            setMindmapTopicLoading(true);
+            setMindmapTopicContent(null);
+            setMindmapDetailedContent(null);
+
             try {
               const quickPath = `${base}/${angrauChapCfg.quickFolder}/quick_summary_topic${match.topicNum}.md`;
               const detailedPath = `${base}/${angrauChapCfg.detailedFolder}/detailed_summary_topic${match.topicNum}.md`;
-              const [resQuick, resDetailed] = await Promise.all([
-                fetch(quickPath, { cache: 'no-cache' }),
-                fetch(detailedPath, { cache: 'no-cache' }),
-              ]);
-              const quickText = resQuick.ok ? await resQuick.text() : 'Quick content not found.';
-              const detailedText = resDetailed.ok ? await resDetailed.text() : 'Detailed content not found.';
-              setMindmapTopicContent(quickText);
-              setMindmapDetailedContent(detailedText);
-              setMindmapInlineTab('quick');
-              setMindmapInlineType('text');
-              setMindmapTopicOpen(true);
+
+              fetch(quickPath)
+                .then(r => (r.ok ? r.text() : 'Quick content not found.'))
+                .then(quickText => {
+                  setMindmapTopicContent(quickText);
+                  setMindmapTopicLoading(false);
+                  const entry = angrauTopicCache.get(cacheKey) || { quick: quickText };
+                  entry.quick = quickText;
+                  angrauTopicCache.set(cacheKey, entry);
+                })
+                .catch(e => {
+                  console.error('Quick fetch error', e);
+                  setMindmapTopicLoading(false);
+                });
+
+              fetch(detailedPath)
+                .then(r => (r.ok ? r.text() : 'Detailed content not found.'))
+                .then(detailedText => {
+                  setMindmapDetailedContent(detailedText);
+                  const entry = angrauTopicCache.get(cacheKey) || { quick: '' };
+                  entry.detailed = detailedText;
+                  angrauTopicCache.set(cacheKey, entry);
+                })
+                .catch(e => {
+                  console.error('Detailed fetch error', e);
+                });
             } catch (e) {
               console.error('ANGRAU mindmap fetch error', e);
+              setMindmapTopicLoading(false);
             }
             return;
           }
@@ -1826,8 +2082,24 @@ export default function StudyTable() {
           }
 
           setMindmapInlineType('text');
+          setMindmapInlineTab('quick');
+          setMindmapTopicOpen(true);
 
           if (mapped) {
+            const cacheKey = `neb_${mapped.type}_${mapped.id}`;
+            const cached = angrauTopicCache.get(cacheKey);
+
+            if (cached && cached.quick) {
+              setMindmapTopicContent(cached.quick);
+              setMindmapDetailedContent(cached.detailed || '');
+              setMindmapTopicLoading(false);
+              return;
+            }
+
+            setMindmapTopicLoading(true);
+            setMindmapTopicContent(null);
+            setMindmapDetailedContent(null);
+
             try {
               const basePathDetailed = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
               const basePathQuick = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
@@ -1835,25 +2107,36 @@ export default function StudyTable() {
               const detailedFilename = mapped.type === 'topic' ? `detailed_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
               const quickFilename = mapped.type === 'topic' ? `quick_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
 
-              const [resDetailed, resQuick] = await Promise.all([
-                fetch(basePathDetailed + detailedFilename, { cache: 'no-cache' }),
-                fetch(basePathQuick + quickFilename, { cache: 'no-cache' })
-              ]);
+              fetch(basePathQuick + quickFilename)
+                .then(r => (r.ok ? r.text() : "Quick content not found for this topic."))
+                .then(quickText => {
+                  quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
+                  quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
+                  setMindmapTopicContent(quickText);
+                  setMindmapTopicLoading(false);
+                  const entry = angrauTopicCache.get(cacheKey) || { quick: quickText };
+                  entry.quick = quickText;
+                  angrauTopicCache.set(cacheKey, entry);
+                })
+                .catch(e => {
+                  console.error(e);
+                  setMindmapTopicLoading(false);
+                });
 
-              let detailedText = resDetailed.ok ? await resDetailed.text() : "Detailed content not found for this topic.";
-              let quickText = resQuick.ok ? await resQuick.text() : "Quick content not found for this topic.";
-
-              detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
-              detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
-              quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
-              quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
-
-              setMindmapDetailedContent(detailedText);
-              setMindmapTopicContent(quickText);
-              setMindmapInlineTab('quick');
-              setMindmapTopicOpen(true);
+              fetch(basePathDetailed + detailedFilename)
+                .then(r => (r.ok ? r.text() : "Detailed content not found for this topic."))
+                .then(detailedText => {
+                  detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
+                  detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
+                  setMindmapDetailedContent(detailedText);
+                  const entry = angrauTopicCache.get(cacheKey) || { quick: '' };
+                  entry.detailed = detailedText;
+                  angrauTopicCache.set(cacheKey, entry);
+                })
+                .catch(console.error);
             } catch (e) {
               console.error(e);
+              setMindmapTopicLoading(false);
             }
           }
         };
@@ -1870,50 +2153,66 @@ export default function StudyTable() {
           : null;
 
         return (
-          <div className="mindmap-container" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="mindmap-container" style={{ display: 'flex', flexDirection: 'column', gap: mindmapTopicOpen ? '0px' : '16px', height: '100%' }}>
             {/* Map — hidden while a topic is open so only content fills the view */}
             {!mindmapTopicOpen && (
-              <MermaidView content={mermaidContent} onTopicClick={handleTopicClick} nodeIcons={mmIcons} />
+              <MindMapView content={mermaidContent} onTopicClick={handleTopicClick} nodeIcons={mmIcons} />
             )}
 
             {/* Inline topic panel — shown below the map, no popup */}
             {mindmapTopicOpen && (
               <div className="mm-concept-view" style={{ marginTop: 0 }}>
                 {/* Top bar */}
-                <div className="mm-concept-topbar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'nowrap' }}>
-                  {/* Left: back + prev */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    <button
-                      className="mm-back-btn"
-                      onClick={() => { setMindmapTopicOpen(false); setMindmapTopicTitle(null); setMindmapInlineType('text'); setMindmapMediaUrl(''); }}
-                    >
-                      ← Mindmap
-                    </button>
+                <div
+                  className="mm-concept-topbar"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '12px',
+                    flexWrap: 'nowrap',
+                    width: '100%',
+                  }}
+                >
+                  {/* Left: prev */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-start', minWidth: 0 }}>
                     {prevTopicLabel && (
                       <button
                         className="mm-next-topic-btn"
                         onClick={() => handleTopicClick(prevTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
                         title={prevTopicLabel}
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
                       >
-                        ← Prev: {prevTopicLabel.length > 18 ? `${prevTopicLabel.slice(0, 16)}…` : prevTopicLabel}
+                        ← Prev: {prevTopicLabel.length > 20 ? `${prevTopicLabel.slice(0, 18)}…` : prevTopicLabel}
                       </button>
                     )}
                   </div>
 
-                  {/* Center: topic title */}
-                  <span style={{ fontWeight: 700, fontSize: '15px', color: '#1e293b', textAlign: 'center', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {mindmapTopicTitle}
-                  </span>
+                  {/* Center: Mindmap button */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <button
+                      className="mm-back-btn"
+                      onClick={() => {
+                        setMindmapTopicOpen(false);
+                        setMindmapTopicTitle(null);
+                        setMindmapInlineType('text');
+                        setMindmapMediaUrl('');
+                      }}
+                    >
+                      ← Mindmap
+                    </button>
+                  </div>
 
                   {/* Right: next */}
-                  <div style={{ display: 'flex', justifyContent: 'flex-end', flexShrink: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
                     {nextTopicLabel && (
                       <button
                         className="mm-next-topic-btn"
                         onClick={() => handleTopicClick(nextTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
                         title={nextTopicLabel}
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
                       >
-                        Next: {nextTopicLabel.length > 18 ? `${nextTopicLabel.slice(0, 16)}…` : nextTopicLabel} →
+                        Next: {nextTopicLabel.length > 20 ? `${nextTopicLabel.slice(0, 18)}…` : nextTopicLabel} →
                       </button>
                     )}
                   </div>
@@ -1949,16 +2248,53 @@ export default function StudyTable() {
                 )}
 
                 {/* Content */}
-                <div className="mm-concept-content">
+                <div className="mm-concept-content" style={{ padding: 0 }}>
                   {mindmapInlineType === 'text' && (
-                    /* Reading gutter — centred column with generous side padding for comfortable line lengths */
-                    <div style={{
-                      maxWidth: '72ch',
-                      margin: '0 auto',
-                      padding: '32px 48px 48px',
-                    }}>
-                      <MarkdownView content={mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent} />
-                    </div>
+                    mindmapTopicLoading && !mindmapTopicContent ? (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '80px 20px',
+                          gap: '16px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            border: '3px solid #E2E8F0',
+                            borderTopColor: '#2563eb',
+                            animation: 'spinnerRing 0.8s linear infinite',
+                          }}
+                        />
+                        <span style={{ fontSize: '14px', color: '#64748B', fontWeight: 500 }}>
+                          Loading topic notes...
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className="markdown-container"
+                        style={{
+                          position: 'relative',
+                          maxWidth: '1040px',
+                          margin: '0 auto',
+                          width: '100%',
+                          padding: '24px 24px 48px',
+                          boxSizing: 'border-box',
+                        }}
+                      >
+                        <MarkdownView
+                          content={
+                            ((mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || '')
+                              .replace(/^#\s+[^\n]+(\r?\n)+/, '')
+                          }
+                        />
+                      </div>
+                    )
                   )}
                   {mindmapInlineType === 'video' && (
                     <div style={{ width: '100%', aspectRatio: '16/9', borderRadius: '12px', overflow: 'hidden' }}>
@@ -1986,14 +2322,6 @@ export default function StudyTable() {
                 </div>
               </div>
             )}
-          </div>
-        );
-      }
-      case "study_plan": {
-        const md = typeof content === "string" ? content : "Study plan not available.";
-        return (
-          <div className="markdown-container" style={{ position: 'relative', maxWidth: '1040px', margin: '0 auto', width: '100%', padding: '24px 32px', boxSizing: 'border-box' }}>
-            <MarkdownView content={md} />
           </div>
         );
       }
@@ -2031,7 +2359,7 @@ export default function StudyTable() {
             cards={content}
             subjectId={subjectId}
             persona={persona}
-            isPurpleTheme={true}
+            isPurpleTheme={false}
             speakTrigger={flashcardSpeakTrigger}
             stopTrigger={flashcardStopTrigger}
             onSpeakingChange={setFlashcardIsSpeaking}
@@ -2214,14 +2542,13 @@ export default function StudyTable() {
   const TOOL_LABELS: Record<string, string> = {
     summary: "Study Table",
     detailed: "Study Table",
-    study_plan: "Study Plan",
     key_takeaways: "Key Takeaways",
     mindmap: "Mindmap",
     foundation: "Mindmap",
     flashcards: "Flashcards",
     podcasts: "Podcasts",
     videos: "Videos",
-    ask: "Ask",
+    ask: "Ask Me",
     assessment: "Assessments",
     qbank: "Question Bank",
     swot: "SWOT Analysis",
@@ -2281,22 +2608,19 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
-      case "assessment":
-      case "prep_exam":
-        return { bg: "rgba(111, 154, 127, 0.10)", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "detailed":
-      case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "study_plan": case "foundation":
+      case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
-      case "revision_flashcards": case "qbank": case "flashcards":
-        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
-      case "pyq": case "mocktest":
+      case "flashcards": case "revision_flashcards":
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #6F9A7F 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
+      case "assessment": case "qbank":
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
+      case "pyq": case "prep_exam": case "mocktest":
         return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #DB2777 0%, #BE185D 100%)", shadow: "0 4px 12px rgba(219, 39, 119, 0.35)" };
       case "swot":
         return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
       case "deep_dive": case "ask":
         return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
-      case "prep_exam":
-        return { bg: "rgba(111, 154, 127, 0.10)", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       default:
         return { bg: "#ffffff", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
     }
@@ -2342,8 +2666,6 @@ export default function StudyTable() {
           {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
             <div
               className="study-toolbar-wrapper"
-              onMouseEnter={handleToolbarMouseEnter}
-              onMouseLeave={handleToolbarMouseLeave}
               style={{
                 position: "relative",
                 width: "100%",
@@ -2378,25 +2700,24 @@ export default function StudyTable() {
                     videos: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     summary: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     quick_study: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    key_takeaways: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     detailed: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     detailed_notes: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     mindmap: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
-                    // Practice (Purple)
-                    flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    master_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    revision_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    revise: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    assessment: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "rgba(111, 154, 127, 0.10)" },
-                    qbank: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    // Practice (Forest Green / SV Sage)
+                    flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    master_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    revision_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    revise: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    assessment: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    qbank: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
                     // Prepare (Pink)
+                    key_takeaways: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    prep_exam: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "rgba(111, 154, 127, 0.10)" },
+                    prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     mocktest: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     pre_final_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
@@ -2408,7 +2729,7 @@ export default function StudyTable() {
                   };
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
-                    const blackColor = "#1E293B";
+                    const blackColor = "#475569";
                     const blackMuted = "#475569";
                     const blackSubtle = "#334155";
 
@@ -2498,30 +2819,34 @@ export default function StudyTable() {
                               width: '34px',
                               height: '32px',
                               objectFit: 'contain',
+                              opacity: active ? 1 : 0.7,
                               transition: 'all 0.18s ease',
                             }}
                           />
                         );
                       }
                       case "key_takeaways": {
+                        const keyColor = active ? "#DB2777" : blackColor;
                         return (
-                          <img
-                            src={active ? `${import.meta.env.BASE_URL}key_takeaways_icon.png` : `${import.meta.env.BASE_URL}key_takeaways_icon_black.png`}
-                            alt="Key Takeaways"
-                            style={{
-                              width: '36px',
-                              height: '32px',
-                              objectFit: 'contain',
-                              transition: 'all 0.18s ease',
-                            }}
-                          />
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Key head */}
+                            <circle cx="14" cy="14" r="6.5" stroke={keyColor} strokeWidth="2.2" fill={active ? "#FCE7F3" : "#FFFFFF"} />
+                            <circle cx="14" cy="14" r="2.5" fill={keyColor} />
+                            {/* Key shaft */}
+                            <path d="M19.5 17.5L29 27" stroke={keyColor} strokeWidth="2.4" strokeLinecap="round" />
+                            {/* Key teeth */}
+                            <path d="M24 22L26.5 19.5" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
+                            <path d="M26.5 24.5L29 22" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
+                            {/* Sparkle badge */}
+                            <path d="M7 7C7 8.5 5.8 9.5 4.5 9.5C5.8 9.5 7 10.5 7 12C7 10.5 8.2 9.5 9.5 9.5C8.2 9.5 7 8.5 7 7Z" fill={active ? keyColor : "#94A3B8"} />
+                          </svg>
                         );
                       }
                       case "flashcards":
                       case "revision_flashcards":
                       case "revise": {
-                        const revColor = active ? "#7C3AED" : blackColor;
-                        const revAccent = active ? "#8B5CF6" : blackMuted;
+                        const revColor = active ? "#4F7B64" : blackColor;
+                        const revAccent = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Clipboard board */}
@@ -2543,8 +2868,8 @@ export default function StudyTable() {
                         );
                       }
                       case "assessment": {
-                        const assColor = active ? "#7C3AED" : blackColor;
-                        const assRing = active ? "#8B5CF6" : blackMuted;
+                        const assColor = active ? "#4F7B64" : blackColor;
+                        const assRing = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Notepad body */}
@@ -2564,9 +2889,9 @@ export default function StudyTable() {
                             {/* Angled pencil writing on pad */}
                             <g transform="translate(19, 13) rotate(35)">
                               <rect x="0" y="0" width="5" height="13" rx="1" fill={assColor} />
-                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#EDE9FE" : "#E2E8F0"} />
-                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#7C3AED" : blackColor} />
-                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#A78BFA" : blackMuted} />
+                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#E8F0EB" : "#E2E8F0"} />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#4F7B64" : blackColor} />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#6F9A7F" : blackMuted} />
                             </g>
                           </svg>
                         );
@@ -2576,8 +2901,8 @@ export default function StudyTable() {
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             <defs>
                               <linearGradient id="qbankGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#8B5CF6" />
-                                <stop offset="100%" stopColor="#6D28D9" />
+                                <stop offset="0%" stopColor="#6F9A7F" />
+                                <stop offset="100%" stopColor="#4F7B64" />
                               </linearGradient>
                             </defs>
                             {/* 3D Glossy Speech bubble */}
@@ -2586,7 +2911,7 @@ export default function StudyTable() {
                               fill={active ? "url(#qbankGradActive)" : blackColor}
                             />
                             {/* Subtle highlight arc */}
-                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#DDD6FE" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#E8F0EB" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
                             {/* White Question mark */}
                             <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                             <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
@@ -2720,7 +3045,7 @@ export default function StudyTable() {
                         <span style={{
                           fontSize: '11px',
                           fontWeight: active ? 700 : 600,
-                          color: active ? themeColor : '#1E293B',
+                          color: active ? themeColor : '#475569',
                           textAlign: 'center',
                           lineHeight: '1.2',
                           whiteSpace: 'nowrap',
@@ -2814,20 +3139,18 @@ export default function StudyTable() {
                             {renderNode("summary", "Read", "#4F7B64")}
                             {renderNode("podcasts", "Listen", "#4F7B64")}
                             {renderNode("videos", "Watch", "#4F7B64")}
-                            {renderNode("mindmap", "Mindmaps", "#4F7B64")}
-                            {renderNode("key_takeaways", "Key Takeaways", "#4F7B64")}
                           </div>
                         </div>
 
-                        {/* 2. PRACTICE SECTION (Purple #7C3AED) */}
+                        {/* 2. PRACTICE SECTION (Forest Green #4F7B64) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#7C3AED', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#4F7B64', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Practice
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#7C3AED")}
-                            {renderNode("assessment", "Assessment", "#7C3AED")}
-                            {renderNode("qbank", "Question Bank", "#7C3AED")}
+                            {renderNode("revision_flashcards", "Revise", "#4F7B64")}
+                            {renderNode("assessment", "Assessment", "#4F7B64")}
+                            {renderNode("qbank", "Question Bank", "#4F7B64")}
                           </div>
                         </div>
 
@@ -2837,68 +3160,74 @@ export default function StudyTable() {
                             Prepare
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {renderNode("key_takeaways", "Key Takeaways", "#DB2777")}
                             {renderNode("pyq", "PYQ", "#DB2777")}
                             {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
                           </div>
                         </div>
 
-                        {/* 4. ASK ME / SARAL AI COMPANION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ height: '21px', marginBottom: '6px' }} />
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            {renderNode("ask", "Ask me", "#2D473B")}
+                        {/* 4. SEPARATE TOOLS: MINDMAPS & ASK ME */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* Mindmaps aside beside Ask me */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ height: '21px', marginBottom: '6px' }} />
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              {renderNode("mindmap", "Mindmaps", "#4F7B64")}
+                            </div>
+                          </div>
+                          {/* Ask me */}
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                            <div style={{ height: '21px', marginBottom: '6px' }} />
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
+                              {renderNode("ask", "Ask me", "#2D473B")}
+                            </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* RIGHT SIDE / END OF PAGE: LOGOUT & PIN ACTIONS */}
+                      {/* RIGHT SIDE / END OF PAGE: ACTIONS */}
                       <div
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '14px',
+                          gap: '12px',
                           flexShrink: 0,
                           paddingRight: '6px',
                         }}
                       >
-                        {/* Pin Button (Clean tilted pushpin without circle matching reference) */}
+                        {/* Explicit Collapse Toolbar Button (Only collapses when user clicks it) */}
                         <button
                           type="button"
-                          onClick={toggleToolbarPin}
-                          title={isToolbarPinned ? "Unpin toolbar (auto-collapse on mouse leave)" : "Pin toolbar (keep open)"}
-                          aria-label={isToolbarPinned ? "Unpin toolbar" : "Pin toolbar"}
+                          onClick={() => toggleToolbarOpen()}
+                          title="Collapse toolbar"
+                          aria-label="Collapse toolbar"
                           style={{
-                            background: "transparent",
-                            border: "none",
-                            padding: "6px",
+                            width: "36px",
+                            height: "36px",
+                            borderRadius: "50%",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            border: "1.5px solid #E2E8F0",
+                            background: "#F8FAFC",
+                            color: "#64748B",
                             cursor: "pointer",
-                            color: "#315443",
                             flexShrink: 0,
-                            transition: "transform 0.2s ease",
+                            transition: "all 0.2s ease",
                           }}
                           onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.15)";
+                            (e.currentTarget as HTMLButtonElement).style.background = "#F1F5F9";
+                            (e.currentTarget as HTMLButtonElement).style.color = "#1E293B";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)";
                           }}
                           onMouseLeave={(e) => {
+                            (e.currentTarget as HTMLButtonElement).style.background = "#F8FAFC";
+                            (e.currentTarget as HTMLButtonElement).style.color = "#64748B";
                             (e.currentTarget as HTMLButtonElement).style.transform = "none";
                           }}
                         >
-                          <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill={isToolbarPinned ? "#315443" : "none"}
-                            stroke="#315443"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            style={{ transform: "rotate(-45deg)" }}
-                          >
-                            <line x1="12" y1="17" x2="12" y2="22" />
-                            <path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a1 1 0 0 0 1-1V3H7v2a1 1 0 0 0 1 1h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z" />
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="18 15 12 9 6 15" />
                           </svg>
                         </button>
 
@@ -3085,43 +3414,45 @@ export default function StudyTable() {
 
           {/* Top Hover Trigger Area & Centered Pull-Tab */}
           {!isToolbarOpen && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
-            <>
-              {/* Full-width top hover trigger strip */}
-              <div
-                onMouseEnter={handleToolbarMouseEnter}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: "20px",
-                  zIndex: 98,
-                  cursor: "pointer",
-                }}
-              />
-              {/* Elegant Centered Pull-Tab (Floating absolute, zero layout shift) */}
-              <div
-                onMouseEnter={handleToolbarMouseEnter}
-                onClick={handleToolbarMouseEnter}
-                title="Hover or click to open Study Tools"
-                style={{
-                  position: "absolute",
-                  top: "0",
-                  left: "50%",
-                  transform: "translateX(-50%) translate3d(0, 0, 0)",
-                  width: "120px",
-                  height: "10px",
-                  borderBottomLeftRadius: "12px",
-                  borderBottomRightRadius: "12px",
-                  background: activeToolTheme.gradient,
-                  boxShadow: activeToolTheme.shadow,
-                  cursor: "pointer",
-                  zIndex: 99,
-                  willChange: "transform, opacity",
-                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                }}
-              />
-            </>
+            <div
+              onClick={() => setIsToolbarOpen(true)}
+              title="Click to show Study Tools"
+              style={{
+                position: "absolute",
+                top: "0",
+                left: "50%",
+                transform: "translateX(-50%) translate3d(0, 0, 0)",
+                padding: "4px 18px 5px",
+                borderBottomLeftRadius: "12px",
+                borderBottomRightRadius: "12px",
+                background: "#ffffff",
+                border: "1px solid #E2E8F0",
+                borderTop: "none",
+                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                cursor: "pointer",
+                zIndex: 99,
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#475569",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLDivElement).style.background = "#F8FAFC";
+                (e.currentTarget as HTMLDivElement).style.color = "#1E293B";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLDivElement).style.background = "#ffffff";
+                (e.currentTarget as HTMLDivElement).style.color = "#475569";
+              }}
+            >
+              <span>Study Tools</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
           )}
 
           {/* ── BODY ── */}
@@ -3130,19 +3461,13 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts"
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam"
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "pyq" || activeTool === "mindmap" || activeTool === "foundation" || activeTool === "deep_dive" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "podcasts"
-                  ? "0px 12px 0 12px"
-                  : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                    ? "4px 12px 0 12px"
-                    : activeTool === "assessment"
-                      ? "12px 12px 0 12px"
-                      : (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "prep_exam")
-                        ? "0px"
-                        : "16px 12px",
+                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
+                  ? "0px"
+                  : "16px 16px 0 16px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
@@ -3152,7 +3477,7 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "prep_exam" && activeTool !== "ask" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && (
               <div
                 style={{
                   display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
@@ -3160,17 +3485,14 @@ export default function StudyTable() {
                   alignItems: "center",
                   position: "relative",
                   gap: "20px",
-                  marginTop: activeTool === "pyq" ? "-8px" : 0,
-                  paddingTop: activeTool === "mindmap" ? "2px" : 0,
-                  marginBottom:
-                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
-                      ? "2px"
-                      : "12px",
+                  marginTop: 0,
+                  paddingTop: 0,
+                  marginBottom: "12px",
                   flexShrink: 0,
                 }}
               >
                 {/* ── MVP STUDY HEADER: pixel-perfect reference match ── */}
-                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "study_plan") ? (
+                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment") ? (
                   <>
                     <style>{`
                       @keyframes sv-hdr-in {
@@ -3183,7 +3505,9 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
-                        padding: 2px 0 6px 0;
+                        min-height: 64px;
+                        padding: 4px 0 8px 0;
+                        overflow: visible;
                       }
                       /* LEFT breadcrumb — single line, no card box */
                       .sv-hdr-card {
@@ -3203,16 +3527,18 @@ export default function StudyTable() {
                       /* MIDDLE levels — absolutely centered to the full bar */
                       .sv-hdr-levels {
                         position: absolute;
-                        left: 50%; transform: translateX(-50%);
+                        left: 50%;
+                        top: 50%;
+                        transform: translate(-50%, -50%);
                         display: flex; gap: 12px; align-items: center; justify-content: center;
-                        z-index: 1;
+                        z-index: 10;
                       }
                       .sv-hdr-level-btn {
                         width: 58px; height: 58px; border-radius: 14px;
                         padding: 0; border: 2.5px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-                        overflow: hidden; flex-shrink: 0;
+                        overflow: visible; flex-shrink: 0;
                         display: flex; align-items: center; justify-content: center;
                         box-sizing: border-box;
                       }
@@ -3342,9 +3668,9 @@ export default function StudyTable() {
                         transition: all 0.18s ease; white-space: nowrap;
                         line-height: 1;
                       }
-                      .sv-hdr-mode-btn.active-quick,
+                      .sv-hdr-mode-btn:hover { border-color: #15803d; color: #15803d; background: rgba(21, 128, 61, 0.05); }
+                      .sv-hdr-mode-btn.active-quick    { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
                       .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
-                      .sv-hdr-mode-btn.active-plan     { background: #4f46e5; border-color: #4f46e5; color: #ffffff; box-shadow: 0 2px 8px rgba(79,70,229,0.4); }
                     `}</style>
 
                     <div className="sv-hdr">
@@ -3358,89 +3684,82 @@ export default function StudyTable() {
                       </div>
 
                       {/* MIDDLE: persona levels */}
-                      {activeTool !== "study_plan" ? (
-                        <div className="sv-hdr-levels">
-                          <button id="studybar-level-beginner" type="button"
-                            className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
-                            onClick={() => setPersona("beginner")}
-                          >
-                            <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
-                          </button>
-                          <button id="studybar-level-intermediate" type="button"
-                            className={`sv-hdr-level-btn lvl-intermediate${persona === "intermediate" ? " active-lvl" : ""}`}
-                            onClick={() => setPersona("intermediate")}
-                          >
-                            <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
-                          </button>
-                          <button id="studybar-level-advanced" type="button"
-                            className={`sv-hdr-level-btn lvl-advanced${persona === "advanced" ? " active-lvl" : ""}`}
-                            onClick={() => setPersona("advanced")}
-                          >
-                            <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
-                          </button>
-                        </div>
-                      ) : <div style={{ flex: 1 }} />}
+                      <div className="sv-hdr-levels">
+                        <button id="studybar-level-beginner" type="button"
+                          className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
+                          onClick={() => setPersona("beginner")}
+                        >
+                          <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
+                        </button>
+                        <button id="studybar-level-intermediate" type="button"
+                          className={`sv-hdr-level-btn lvl-intermediate${persona === "intermediate" ? " active-lvl" : ""}`}
+                          onClick={() => setPersona("intermediate")}
+                        >
+                          <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
+                        </button>
+                        <button id="studybar-level-advanced" type="button"
+                          className={`sv-hdr-level-btn lvl-advanced${persona === "advanced" ? " active-lvl" : ""}`}
+                          onClick={() => setPersona("advanced")}
+                        >
+                          <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
+                        </button>
+                      </div>
 
-                      {/* RIGHT: mode toggles — Essentials | In-depth | Study Plan */}
+                      {/* RIGHT: mode toggles — Essentials | In-depth */}
                       <div className="sv-hdr-controls">
-                        <div className="sv-hdr-modes">
-                          <div
-                            className="sv-hdr-segmented-toggle"
-                            data-active={activeTool === "summary" ? "summary" : activeTool === "detailed" ? "detailed" : "none"}
-                            role="radiogroup"
-                            aria-label="Reading depth toggle"
-                          >
-                            <div className="sv-hdr-toggle-pill-bg" />
-                            <button
-                              id="studybar-mode-quick"
-                              type="button"
-                              role="radio"
-                              aria-checked={activeTool === "summary"}
-                              className={`sv-hdr-toggle-btn${activeTool === "summary" ? " active" : ""}`}
-                              onClick={() => setActiveTool("summary")}
-                              title="Essentials"
+                        {(activeTool === "summary" || activeTool === "detailed") && (
+                          <div className="sv-hdr-modes">
+                            <div
+                              className="sv-hdr-segmented-toggle"
+                              data-active={activeTool === "summary" ? "summary" : "detailed"}
+                              role="radiogroup"
+                              aria-label="Reading depth toggle"
                             >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                              Essentials
-                            </button>
-                            <button
-                              id="studybar-mode-detailed"
-                              type="button"
-                              role="radio"
-                              aria-checked={activeTool === "detailed"}
-                              className={`sv-hdr-toggle-btn${activeTool === "detailed" ? " active" : ""}`}
-                              onClick={() => setActiveTool("detailed")}
-                              title="In-depth"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
-                              In-depth
-                            </button>
+                              <div className="sv-hdr-toggle-pill-bg" />
+                              <button
+                                id="studybar-mode-quick"
+                                type="button"
+                                role="radio"
+                                aria-checked={activeTool === "summary"}
+                                className={`sv-hdr-toggle-btn${activeTool === "summary" ? " active" : ""}`}
+                                onClick={() => setActiveTool("summary")}
+                                title="Essentials"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                Essentials
+                              </button>
+                              <button
+                                id="studybar-mode-detailed"
+                                type="button"
+                                role="radio"
+                                aria-checked={activeTool === "detailed"}
+                                className={`sv-hdr-toggle-btn${activeTool === "detailed" ? " active" : ""}`}
+                                onClick={() => setActiveTool("detailed")}
+                                title="In-depth"
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
+                                In-depth
+                              </button>
+                            </div>
+                            {/* Read Aloud — inline, right of mode buttons */}
+                            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
+                            <ReadAloudBar
+                              key={`${persona}-${activeTool}`}
+                              text={preprocessSummaryText(typeof content === "string" ? content : "")}
+                              subjectId={subjectId}
+                              persona={persona}
+                              onPlay={() => { setIsSidebarOpen(false); }}
+                              onHighlightChange={(payload) => setReadingHighlight(payload)}
+                              activeTool={activeTool}
+                              onSwitchTool={setActiveTool}
+                            />
                           </div>
-                          <button id="studybar-mode-study-plan" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "study_plan" ? " active-plan" : ""}`}
-                            onClick={() => setActiveTool("study_plan")} title="Study Plan"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                            Study Plan
-                          </button>
-                          {/* Read Aloud — inline, right of mode buttons */}
-                          <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
-                          <ReadAloudBar
-                            key={`${persona}-${activeTool}`}
-                            text={preprocessSummaryText(typeof content === "string" ? content : "")}
-                            subjectId={subjectId}
-                            persona={persona}
-                            onPlay={() => { setIsSidebarOpen(false); }}
-                            onHighlightChange={(payload) => setReadingHighlight(payload)}
-                            activeTool={activeTool}
-                            onSwitchTool={setActiveTool}
-                          />
-                        </div>
+                        )}
                       </div>
                     </div>
                   </>
                 ) : activeTool === "key_takeaways" ? (
-                  <div className="sv-hdr" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 0 6px 0' }}>
+                  <div className="sv-hdr" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '4px 0 8px 0' }}>
                     <div className="sv-hdr-card">
                       <span className="sv-hdr-crumb">
                         <span className="crumb-subject" style={{ color: '#2563eb', fontWeight: 700 }}>{subjectName}</span>
@@ -3466,12 +3785,12 @@ export default function StudyTable() {
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "study_plan", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
+                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
                           <h1 className="st-page-title" style={{ margin: 0, fontSize: "1.6rem" }}>
                             {TOOL_LABELS[activeTool]}
                           </h1>
                         )}
-                        {activeTool !== "podcasts" && activeTool !== "foundation" && (
+                        {activeTool !== "foundation" && (
                           activeTool === "mindmap" ? (
                             activeNodeTitle && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
@@ -3480,7 +3799,7 @@ export default function StudyTable() {
                                 </span>
                               </div>
                             )
-                          ) : activeTool === "videos" ? null : (
+                          ) : (activeTool === "videos" || activeTool === "pyq") ? null : (
                             !isMoocMode && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
                                 <span className="st-page-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', fontWeight: 500 }}>
@@ -3492,13 +3811,6 @@ export default function StudyTable() {
                         )}
                       </div>
                     </div>
-                    {activeTool === "podcasts" && !isMoocMode && (
-                      <div style={{ position: "absolute", left: "50%", transform: "translateX(-50%)", display: "flex", alignItems: "center", marginTop: "6px" }}>
-                        <span style={{ color: '#0f172a', fontSize: '1.05rem', fontWeight: 600 }}>
-                          {getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}
-                        </span>
-                      </div>
-                    )}
                     <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", minWidth: "200px" }} />
                   </>
                 )}
@@ -3516,11 +3828,11 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
-                    activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam"
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" ||
+                    activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "videos" || activeTool === "ask") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
@@ -3534,17 +3846,17 @@ export default function StudyTable() {
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
+                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || (activeTool === "mindmap" && mindmapTopicOpen)
                         ? "1px solid #22c55e4D"
                         : "1px solid #E2E8F0",
                 overflowX: "hidden",
                 overflowY:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask"
+                    activeTool === "ask" || activeTool === "prep_exam"
                     ? "hidden"
                     : "auto",
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "videos" || activeTool === "ask")
+                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam")
                     ? "0px"
                     : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                       ? "0px"
@@ -3554,12 +3866,12 @@ export default function StudyTable() {
                           ? "16px"
                           : activeTool === "deep_dive"
                             ? "8px"
-                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan"
+                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || (activeTool === "mindmap" && mindmapTopicOpen)
                               ? "0px"
                               : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways") ? "48px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
@@ -3568,120 +3880,74 @@ export default function StudyTable() {
 
 
 
-            {/* Floating guided flow navigation controls */}
-            {isMoocMode && guidedFlowIdx !== -1 && !isFocusModeActive && activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && (
-
+            {/* Universal Floating "Up next: {Study tool}" Button */}
+            {!isFocusModeActive && upNext && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
               <div
+                className="sv-floating-up-next"
                 style={{
                   position: "absolute",
-                  // The video player draws its own control bar across the bottom
-                  // of the stage; at 20px these arrows land underneath it and
-                  // read as missing. Clear the bar on the videos tool.
-                  bottom: activeTool === "videos" ? "84px" : "20px",
-                  right: "24px",
+                  bottom: activeTool === "videos" ? "88px" : activeTool === "podcasts" ? "84px" : "28px",
+                  right: "28px",
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
-                  zIndex: 60,
+                  gap: "10px",
+                  zIndex: 70,
                 }}
               >
-                {prevTool && (
-                  <button
-                    onClick={() => setActiveTool(prevTool)}
+                <button
+                  type="button"
+                  onClick={upNext.action}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    padding: "9px 18px 9px 20px",
+                    borderRadius: "999px",
+                    background: "rgba(255, 255, 255, 0.95)",
+                    backdropFilter: "blur(8px)",
+                    border: `1.5px solid ${upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9"}`,
+                    boxShadow: "0 6px 20px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.05)",
+                    cursor: "pointer",
+                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+                    e.currentTarget.style.boxShadow = "0 10px 28px rgba(15, 23, 42, 0.18)";
+                    e.currentTarget.style.borderColor = upNext.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.05)";
+                    e.currentTarget.style.borderColor = upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9";
+                  }}
+                  title={`Up next: ${upNext.label}`}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
+                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.1 }}>
+                      Up next
+                    </span>
+                    <span style={{ fontSize: "13.5px", fontWeight: 700, color: upNext.color, lineHeight: 1.3 }}>
+                      {upNext.label}
+                    </span>
+                  </div>
+                  <div
                     style={{
-                      width: "40px",
-                      height: "40px",
+                      width: "30px",
+                      height: "30px",
                       borderRadius: "50%",
-                      border: "1px solid #E2E8F0",
-                      background: "rgba(255, 255, 255, 0.9)",
-                      backdropFilter: "blur(4px)",
-                      color: "#475569",
+                      background: upNext.color,
+                      color: "#FFFFFF",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      cursor: "pointer",
-                      fontSize: "1.1rem",
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-                      transition: "all 0.2s",
-                      padding: 0,
+                      flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "#F1F5F9";
-                      e.currentTarget.style.borderColor = "#CBD5E1";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.9)";
-                      e.currentTarget.style.borderColor = "#E2E8F0";
-                    }}
-                    title={`Previous: ${GUIDED_LABELS[prevTool]}`}
                   >
-                    ←
-                  </button>
-                )}
-                {/* On unwatched video or last flashcard/assessment, hide greyed out right arrow */}
-                {!((activeTool === "flashcards" || activeTool === "assessment") && !canSkipForward) && (
-                  <button
-                    disabled={!canSkipForward}
-                    onClick={() => {
-                      if (!canSkipForward) return;
-                      const completed = markToolHere(activeTool);
-                      if (isEndOfVideoLoop) {
-                        // Done with this video's tools, whether worked through or
-                        // skipped — on to the next video.
-                        advancePastVideoLoop();
-                      } else if (nextTool) {
-                        setActiveTool(nextTool, completed);
-                      } else if (nextUnit) {
-                        openUnitTool(nextUnit, GUIDED_FLOW[0], completed);
-                      } else {
-                        handleBackToChapters();
-                      }
-                    }}
-                    style={{
-                      width: "40px",
-                      height: "40px",
-                      borderRadius: "50%",
-                      border: "1px solid #E2E8F0",
-                      background: "rgba(255, 255, 255, 0.9)",
-                      backdropFilter: "blur(4px)",
-                      color: canSkipForward ? "#7C3AED" : "#94A3B8",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: canSkipForward ? "pointer" : "not-allowed",
-                      opacity: canSkipForward ? 1 : 0.55,
-                      fontSize: "1.1rem",
-                      boxShadow: "0 2px 8px rgba(0, 0, 0, 0.06)",
-                      transition: "all 0.2s",
-                      padding: 0,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!canSkipForward) return;
-                      e.currentTarget.style.backgroundColor = "#F5F3FF";
-                      e.currentTarget.style.borderColor = "#7C3AED";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!canSkipForward) return;
-                      e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.9)";
-                      e.currentTarget.style.borderColor = "#E2E8F0";
-                    }}
-                    title={
-                      !canSkipForward
-                        ? "Watch this video to unlock its flashcards, assessment and notes"
-                        : isEndOfVideoLoop
-                          ? hasNextVideo
-                            ? `Next: Video ${videoIndex + 1}`
-                            : "Next: Mock Test"
-                          : nextTool
-                            ? `Next: ${GUIDED_LABELS[nextTool]}`
-                            : nextUnit
-                              ? `Finish & start Unit ${nextUnit.number}`
-                              : "Finish course"
-                    }
-                  >
-                    →
-                  </button>
-                )}
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                  </div>
+                </button>
               </div>
             )}
           </div>

@@ -89,20 +89,47 @@ export default function ChapterList() {
   const [bookOpen, setBookOpen] = useState(false);
   const [clickedChapter, setClickedChapter] = useState<number | null>(null);
   
-  const [flipIndex, setFlipIndex] = useState(0);
+  const initialChapterParam = searchParams.get('chapter');
+  const initialChapterNum = initialChapterParam ? parseInt(initialChapterParam, 10) : null;
+  const [flipIndex, setFlipIndex] = useState<number>(() => {
+    return initialChapterNum && initialChapterNum > 0 ? initialChapterNum - 1 : 0;
+  });
   const className   = searchParams.get('className')   || '';
   const sId         = subjectId || searchParams.get('sId')         || '';
   const [resolvedSubjectName, setResolvedSubjectName] = useState(searchParams.get('subjectName') || '');
+  const lastChapterParamRef = React.useRef<string | null>(initialChapterParam);
 
   useEffect(() => {
     if (!sId) return;
     getManifest().then((m) => {
       const subject = getSubject(m, sId);
-      setChapters(getChapters(m, sId));
+      const chList = getChapters(m, sId);
+      setChapters(chList);
       setResolvedSubjectName(searchParams.get('subjectName') || subject?.name || sId);
       setLoading(false);
+
+      const chParam = searchParams.get('chapter');
+      if (chParam) {
+        const chNum = parseInt(chParam, 10);
+        const idx = chList.findIndex((c) => c.number === chNum);
+        if (idx !== -1) {
+          setFlipIndex(idx);
+        }
+      }
     });
   }, [sId, searchParams]);
+
+  useEffect(() => {
+    const chParam = searchParams.get('chapter');
+    if (chParam && chParam !== lastChapterParamRef.current && chapters.length > 0) {
+      lastChapterParamRef.current = chParam;
+      const chNum = parseInt(chParam, 10);
+      const idx = chapters.findIndex((c) => c.number === chNum);
+      if (idx !== -1) {
+        setFlipIndex(idx);
+      }
+    }
+  }, [searchParams, chapters]);
 
   // Trigger the book-open animation shortly after data loads
   useEffect(() => {
@@ -151,6 +178,9 @@ export default function ChapterList() {
     setClickedChapter(ch.number);
     setTimeout(() => {
       const params = new URLSearchParams(searchParams);
+      // The subject lives in the route path (/subjects/:subjectId), not the query string
+      if (sId) params.set('sId', sId);
+      if (resolvedSubjectName && !params.get('subjectName')) params.set('subjectName', resolvedSubjectName);
       params.set('chapter', ch.number.toString());
       params.set('chapterName', toTitleCase(ch.name));
       params.delete('tool');
@@ -282,14 +312,14 @@ export default function ChapterList() {
                   flipCh.number === 2 ||
                   flipCh.number === 11 ||
                   flipIndex === 1;
-                const isPollination =
-                  lowerName.includes('pollination') ||
-                  lowerName.includes('floral') ||
-                  flipCh.number === 3 ||
-                  flipIndex === 2;
                 const isWeathering =
                   lowerName.includes('weathering') ||
                   lowerName.includes('soil') ||
+                  flipCh.number === 3 ||
+                  flipIndex === 2;
+                const isPollination =
+                  lowerName.includes('pollination') ||
+                  lowerName.includes('floral') ||
                   flipCh.number === 4 ||
                   flipIndex === 3;
 
@@ -297,10 +327,10 @@ export default function ChapterList() {
                   ? `${import.meta.env.BASE_URL}chapter-digestive-hero.png`
                   : isMetamorphosis
                   ? `${import.meta.env.BASE_URL}chapter-metamorphosis-hero.png`
-                  : isPollination
-                  ? `${import.meta.env.BASE_URL}chapter-pollination-hero.png`
                   : isWeathering
                   ? `${import.meta.env.BASE_URL}chapter-weathering-hero.png`
+                  : isPollination
+                  ? `${import.meta.env.BASE_URL}chapter-pollination-hero.png`
                   : `${import.meta.env.BASE_URL}chapter-entomology-hero.png`;
 
                 return (
@@ -394,11 +424,6 @@ export default function ChapterList() {
                               className="chapter-progress-fill"
                               style={{ width: `${chapterPct}%` }}
                             />
-                          </div>
-                          <div className="chapter-progress-action-row">
-                            <span className="chapter-sessions-subtext">
-                              {completedSessions} out of {totalSessions} sessions completed
-                            </span>
                           </div>
                         </div>
                       </div>

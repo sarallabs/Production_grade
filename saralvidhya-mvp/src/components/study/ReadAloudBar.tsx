@@ -43,7 +43,11 @@ export function stripMarkdown(md: string): string {
   // 3. Remove standalone base64 data URIs if any leaked
   t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
 
-  // 4. Standard markdown stripping
+  // 4. Drop list bullets / ordered-list numbers — the rendered page doesn't show
+  //    them as text, so keeping them would shift the word highlight.
+  t = t.replace(/^[ \t]*[-*+][ \t]+/gm, "").replace(/^[ \t]*\d+[.)][ \t]+/gm, "");
+
+  // 5. Standard markdown stripping
   return t
     .replace(/```[\s\S]*?```/g, "")
     .replace(/#{1,6}\s*/g, "")
@@ -96,6 +100,8 @@ export default function ReadAloudBar({
     endWord: 2,
   });
   const stoppedExternallyRef = useRef(false); // true = stopped by persona switch, not natural end
+  const lastSavedTsRef = useRef(0);
+  const latestGlobalCharRef = useRef(0);
   const progressStorageKey = useMemo(() => {
     if (!text)
       return `read_progress_${subjectId}_${persona ?? ""}_${activeTool ?? "summary"}_empty`;
@@ -130,7 +136,7 @@ export default function ReadAloudBar({
       onHighlightChange?.({
         active: true,
         startWord: Math.max(0, lastHighlightRef.current.startWord),
-        endWord: Math.max(0, lastHighlightRef.current.endWord),
+        endWord: Math.max(0, lastHighlightRef.current.startWord),
       });
     } else {
       const clean = stripMarkdown(text);
@@ -161,6 +167,17 @@ export default function ReadAloudBar({
         return ranges.length - 1;
       };
       const startWordIdx = getWordIndexFromChar(startChar);
+      setPlayback("playing");
+      onPlay?.();
+      onHighlightChange?.({
+        active: true,
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      });
+      lastHighlightRef.current = {
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      };
       googleTtsSpeak(
         clean.slice(startChar),
         lang,
@@ -170,11 +187,11 @@ export default function ReadAloudBar({
           onHighlightChange?.({
             active: true,
             startWord: Math.max(0, startWordIdx),
-            endWord: Math.min(ranges.length - 1, startWordIdx + 2),
+            endWord: Math.max(0, startWordIdx),
           });
           lastHighlightRef.current = {
             startWord: Math.max(0, startWordIdx),
-            endWord: Math.min(ranges.length - 1, startWordIdx + 2),
+            endWord: Math.max(0, startWordIdx),
           };
         },
         () => {
@@ -194,7 +211,16 @@ export default function ReadAloudBar({
             clean.length,
             resumeCharRef.current + Math.max(0, localCharIndex),
           );
-          localStorage.setItem(progressStorageKey, String(globalCharIndex));
+          latestGlobalCharRef.current = globalCharIndex;
+
+          // Throttle synchronous localStorage writes to avoid main-thread jank
+          const now = Date.now();
+          if (now - lastSavedTsRef.current > 1200) {
+            lastSavedTsRef.current = now;
+            try {
+              localStorage.setItem(progressStorageKey, String(globalCharIndex));
+            } catch {}
+          }
 
           // Find the word at this char position using binary search
           let lo = 0,
@@ -213,20 +239,21 @@ export default function ReadAloudBar({
             }
           }
 
-          // Highlight a window of 3 words centered on current position
+          // Single active word — only notify parent when the active word actually changes
           const windowStart = Math.max(0, idx);
-          const windowEnd = Math.min(rangesLocal.length - 1, idx + 2);
-
-          onHighlightChange?.({
-            active: true,
-            startWord: windowStart,
-            endWord: windowEnd,
-          });
-          lastHighlightRef.current = {
-            startWord: windowStart,
-            endWord: windowEnd,
-          };
+          if (lastHighlightRef.current.startWord !== windowStart) {
+            lastHighlightRef.current = {
+              startWord: windowStart,
+              endWord: windowStart,
+            };
+            onHighlightChange?.({
+              active: true,
+              startWord: windowStart,
+              endWord: windowStart,
+            });
+          }
         },
+        { raw: true },
       );
     }
   };
@@ -244,11 +271,17 @@ export default function ReadAloudBar({
 
   useEffect(() => {
     return () => {
+      // Flush any pending progress before unmount
+      if (latestGlobalCharRef.current > 0) {
+        try {
+          localStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
+        } catch {}
+      }
       // Mark as externally stopped so onEnd doesn't clear saved progress
       stoppedExternallyRef.current = true;
       googleTtsStop();
     };
-  }, []);
+  }, [progressStorageKey]);
 
   if (!text) return null;
 

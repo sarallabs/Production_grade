@@ -92,7 +92,7 @@ export function getAnalytics(): AnalyticsData {
   return load();
 }
 
-export function getUniqueVisitedChaptersForSubject(subjectId: string) {
+export function getVisitedChapterNumbersForSubject(subjectId: string): Set<number> {
   const data = load();
   const cleanId = (id?: string) => (id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const target = cleanId(subjectId);
@@ -128,7 +128,11 @@ export function getUniqueVisitedChaptersForSubject(subjectId: string) {
     }
   } catch { /* ignore */ }
 
-  return set.size;
+  return set;
+}
+
+export function getUniqueVisitedChaptersForSubject(subjectId: string): number {
+  return getVisitedChapterNumbersForSubject(subjectId).size;
 }
 
 export function getUniqueVisitedChaptersOverall() {

@@ -1,6 +1,6 @@
 /**
  * Topics to be covered for each chapter, extracted from mindmap top-level branches.
- * Used in the Study Plan / Study Table view.
+ * Used in the Study Table view.
  */
 
 export interface ChapterTopics {

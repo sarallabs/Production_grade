@@ -370,15 +370,6 @@ export function AssessmentView({
     return <MarkdownView content={text} />;
   };
 
-  const renderOptionText = (text: string) => {
-    if (!text) return "";
-    if (typeof text !== "string") return String(text);
-    if (!/[*_`#\[\]\\]/.test(text)) {
-      return text;
-    }
-    return <MarkdownView content={text} />;
-  };
-
   const attemptedCount = answered.filter(Boolean).length;
   const notAttemptedCount = questions.length - attemptedCount;
   const currentQ = questions[step];
@@ -458,7 +449,7 @@ export function AssessmentView({
                   style={{
                     fontSize: "44px",
                     fontWeight: "800",
-                    color: "#3b82f6",
+                    color: "#2D3E36",
                     letterSpacing: "-0.5px",
                     lineHeight: "1.1",
                   }}
@@ -469,22 +460,35 @@ export function AssessmentView({
                   You got {score} of {questions.length} correct
                 </div>
                 <button
-                  onClick={onQuit}
+                  onClick={() => {
+                    if (setActiveTool) {
+                      setActiveTool("qbank");
+                    } else {
+                      onQuit();
+                    }
+                  }}
                   style={{
-                    padding: "10px 36px",
+                    padding: "11px 32px",
                     borderRadius: "24px",
                     border: "none",
-                    background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                    background: "#2D3E36",
                     color: "#ffffff",
                     cursor: "pointer",
                     fontWeight: "700",
                     fontSize: "14.5px",
                     marginTop: "8px",
-                    boxShadow: "0 6px 18px rgba(37, 99, 235, 0.3)",
+                    boxShadow: "0 6px 18px rgba(45, 62, 54, 0.25)",
                     transition: "all 0.2s ease",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
+                  title="Proceed to Question Bank"
                 >
-                  Continue
+                  <span>Up next: Question Bank</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
+                  </svg>
                 </button>
               </div>
             );
@@ -493,100 +497,81 @@ export function AssessmentView({
       ) : (
         // Assessment Content
         <>
-          <style>{`
-            .quiz-options button,
-            .quiz-options button *,
-            .quiz-options .assessment-option-text,
-            .quiz-options .assessment-option-text *,
-            .quiz-options .markdown-view,
-            .quiz-options .markdown-view p,
-            .quiz-options .markdown-view span {
-              color: #ffffff !important;
-            }
-          `}</style>
           <div
-            className="assessment-outer-wrapper"
             style={{
               display: "flex",
               flexDirection: "row",
               alignItems: "center",
               justifyContent: "center",
-              gap: "16px",
               width: "100%",
-              minHeight: "100%",
-              padding: "16px 12px",
+              padding: "0 12px",
               marginTop: "0px",
               boxSizing: "border-box",
-              background: "transparent",
             }}
           >
-            {/* Left Spacer to maintain alignment when right-side study icons appear on last question */}
-            {step === questions.length - 1 && (
-              <div style={{ width: "44px", flexShrink: 0 }} />
-            )}
-
-            {/* Assessment card with clean charcoal outline matching Figma screenshot */}
+            {/* Assessment card styled to match reference theme */}
             <div
               className="quiz-card assessment-view"
               style={{
-                flex: "0 1 820px",
                 width: "100%",
-                maxWidth: "820px",
-                minHeight: "min(440px, calc(100vh - 180px))",
-                maxHeight: "calc(100vh - 130px)",
+                maxWidth: "860px",
+                minHeight: "360px",
+                maxHeight: "calc(100vh - 160px)",
                 display: "flex",
                 flexDirection: "column",
                 overflowY: "auto",
                 margin: "0 auto",
-                background: "rgba(111, 154, 127, 0.15)",
-                border: "2px solid #2D3748",
-                borderRadius: "20px",
-                boxShadow: "0 6px 24px rgba(0, 0, 0, 0.05)",
+                background: "#FAFBF9",
+                border: "1.5px solid #2D3E36",
+                borderRadius: "22px",
+                boxShadow: "0 8px 30px rgba(45, 62, 54, 0.06)",
                 position: "relative",
-                padding: "18px 26px 16px 26px",
+                padding: "22px 28px 20px 28px",
                 boxSizing: "border-box",
               }}
             >
-              {/* Card Header: Question Number Badge (Left) & Difficulty Tag (Right) in standard flow */}
+              {/* Header row: Question Number Badge (Left) & Difficulty Tag (Right) */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   width: "100%",
-                  marginBottom: "12px",
-                  flexShrink: 0,
+                  marginBottom: "4px",
                 }}
               >
+                {/* Top-Left Pill Badge: 2 / 10 */}
                 <div
                   style={{
-                    padding: "3px 12px",
+                    padding: "4px 12px",
                     borderRadius: "8px",
-                    background: "#ffffff",
-                    border: "1.5px solid #2D3748",
-                    color: "#111827",
+                    background: "#FFFFFF",
+                    border: "1.5px solid #2D3E36",
+                    color: "#2D3E36",
                     fontWeight: "700",
                     fontSize: "13.5px",
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    letterSpacing: "0.4px",
+                    boxShadow: "0 1px 3px rgba(45, 62, 54, 0.05)",
                   }}
                 >
                   {step + 1} / {questions.length}
                 </div>
 
+                {/* Top-Right Difficulty */}
                 <div
                   style={{
-                    color: "#111827",
+                    color: "#2D3E36",
                     fontWeight: "600",
-                    fontSize: "13px",
+                    fontSize: "13.5px",
+                    textTransform: "capitalize",
+                    letterSpacing: "0.2px",
                   }}
                 >
                   {persona === 'beginner' ? 'Easy' : persona === 'intermediate' ? 'Medium' : persona === 'advanced' ? 'Hard' : 'Easy'}
                 </div>
               </div>
-
               {/* Single-column layout — explanation shown inline below options */}
               <div
                 style={{
@@ -601,7 +586,7 @@ export function AssessmentView({
                   marginBottom: "4px",
                 }}
               >
-                {/* ── LEFT COLUMN: Question & Options ── */}
+                {/* ── LEFT COLUMN: Question & Options (Centered when unanswered, GPU hardware slides smoothly to left on submit) ── */}
                 {(() => {
                   const cleanQText = (text: string) => {
                     if (!text) return "";
@@ -624,20 +609,20 @@ export function AssessmentView({
                   const isUltraLong = !isExtreme && (totalCharLen > 280 || maxOptLen > 70);
                   const isLongQ = !isExtreme && !isUltraLong && (totalCharLen > 160 || qRaw.length > 80);
 
-                  const qFontSize = isExtreme ? "13px" : isUltraLong ? "13.5px" : isLongQ ? "14.5px" : "15.5px";
-                  const optTextSize = isExtreme ? "12px" : isUltraLong ? "12.5px" : isLongQ ? "13.2px" : "14px";
+                  const qFontSize = isExtreme ? "12px" : isUltraLong ? "13px" : isLongQ ? "14px" : "15.5px";
+                  const optTextSize = isExtreme ? "11.8px" : isUltraLong ? "12.8px" : isLongQ ? "13.8px" : "14.8px";
 
-                  const qLineHeight = isExtreme ? "1.25" : isUltraLong ? "1.3" : isLongQ ? "1.34" : "1.38";
-                  const qMarginBottom = isExtreme ? "8px" : isUltraLong ? "10px" : isLongQ ? "12px" : "14px";
+                  const qLineHeight = isExtreme ? "1.25" : isUltraLong ? "1.3" : isLongQ ? "1.36" : "1.42";
+                  const qMarginBottom = isExtreme ? "10px" : isUltraLong ? "14px" : isLongQ ? "18px" : "24px";
 
-                  const optGap = isExtreme ? "6px" : isUltraLong ? "8px" : isLongQ ? "9px" : "11px";
-                  const optPadding = isExtreme ? "6px 10px" : isUltraLong ? "7px 12px" : isLongQ ? "9px 14px" : "11px 16px";
-                  const optLineHeight = isExtreme ? "1.18" : isUltraLong ? "1.22" : isLongQ ? "1.26" : "1.3";
+                  const optGap = isExtreme ? "6px" : isUltraLong ? "10px" : isLongQ ? "14px" : "18px";
+                  const optPadding = isExtreme ? "6px 10px" : isUltraLong ? "9px 14px" : isLongQ ? "12px 16px" : "15px 20px";
+                  const optLineHeight = isExtreme ? "1.18" : isUltraLong ? "1.22" : isLongQ ? "1.28" : "1.36";
 
-                  const badgeSize = isExtreme ? "22px" : isUltraLong ? "24px" : isLongQ ? "26px" : "28px";
-                  const badgeFont = isExtreme ? "11.5px" : isUltraLong ? "12px" : isLongQ ? "12.5px" : "13px";
-                  const radioSize = isExtreme ? "13px" : isUltraLong ? "14px" : isLongQ ? "15px" : "16px";
-                  const dotSize = isExtreme ? "5px" : isUltraLong ? "6px" : isLongQ ? "6px" : "7px";
+                  const badgeSize = isExtreme ? "24px" : isUltraLong ? "26px" : isLongQ ? "30px" : "32px";
+                  const badgeFont = isExtreme ? "12px" : isUltraLong ? "12.5px" : isLongQ ? "13.5px" : "14px";
+                  const radioSize = isExtreme ? "13px" : isUltraLong ? "15px" : isLongQ ? "16px" : "18px";
+                  const dotSize = isExtreme ? "5px" : isUltraLong ? "6px" : isLongQ ? "7px" : "8px";
 
                   return (
                     <div
@@ -647,24 +632,26 @@ export function AssessmentView({
                         justifyContent: "flex-start",
                         width: "100%",
                         maxWidth: "100%",
-                        paddingRight: "2px",
+                        height: "100%",
+                        overflowY: "auto",
+                        paddingRight: "4px",
                         transform: "translate3d(0, 0, 0)",
                         WebkitFontSmoothing: "antialiased",
                         MozOsxFontSmoothing: "grayscale",
                       }}
                     >
                       <div>
-                        {/* Question Title (Bold Sans-Serif Typography matching 2nd Figma screenshot) */}
+                        {/* Question Title */}
                         <div
                           className="quiz-q"
                           style={{
                             fontSize: qFontSize,
-                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                             fontWeight: "700",
                             color: "#111827",
-                            lineHeight: "1.38",
-                            letterSpacing: "-0.2px",
-                            marginTop: "0px",
+                            lineHeight: "1.4",
+                            letterSpacing: "-0.1px",
+                            marginTop: "16px",
                             marginBottom: qMarginBottom,
                             willChange: "font-size, margin-bottom",
                             transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
@@ -682,34 +669,26 @@ export function AssessmentView({
                               const isSelected = selectedMCQ === idx;
                               const isCorrectAnswer = idx === currentQ.answer;
 
-                              // Alternating forest green and sage green matching the Figma screenshot:
-                              // Even (A, C): #4E745D (Dark Forest Green)
-                              // Odd  (B, D): #6E977D (Medium Sage Green)
-                              const baseGreen = idx % 2 === 0 ? "#4E745D" : "#6E977D";
-
-                              let borderStyle = "2px solid transparent";
-                              let bgStyle = baseGreen;
+                              // Very light, subtle sage tints for maximum readability:
+                              const optionLightTints = ["#F5F8F6", "#ECF2EE", "#F5F8F6", "#ECF2EE"];
+                              let bgStyle = isSelected ? "#DCEBE0" : optionLightTints[idx % optionLightTints.length];
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
                               let rightIcon = null;
-
-                              if (isSelected && !submitted) {
-                                borderStyle = "2px solid #ffffff";
-                                bgStyle = idx % 2 === 0 ? "#3E634D" : "#5E866D";
-                              }
 
                               if (submitted) {
                                 if (isCorrectAnswer) {
-                                  borderStyle = "2px solid #22c55e";
-                                  bgStyle = idx % 2 === 0 ? "#3B634A" : "#568565";
+                                  bgStyle = "#E2F4E9";
+                                  borderStyle = "2px solid #2D3E36";
                                   rightIcon = (
-                                    <span style={{ color: "#ffffff", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
+                                    <span style={{ color: "#2D3E36", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
                                       ✓
                                     </span>
                                   );
                                 } else if (isSelected) {
-                                  borderStyle = "2px solid #ef4444";
-                                  bgStyle = "#7E4747";
+                                  bgStyle = "#FDF0ED";
+                                  borderStyle = "2px solid #D9534F";
                                   rightIcon = (
-                                    <span style={{ color: "#ffffff", fontWeight: "800", fontSize: "18px", marginLeft: "auto", paddingRight: "4px" }}>
+                                    <span style={{ color: "#D9534F", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
                                       ✕
                                     </span>
                                   );
@@ -721,92 +700,79 @@ export function AssessmentView({
                                   key={idx}
                                   onClick={() => handleMCQSelect(idx)}
                                   disabled={submitted}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = "#E2EDE6";
+                                      e.currentTarget.style.borderColor = "#BACBC1";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = bgStyle;
+                                      e.currentTarget.style.borderColor = "#D5E2D9";
+                                    }
+                                  }}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: "14px",
+                                    gap: "12px",
                                     width: "100%",
                                     padding: optPadding,
                                     borderRadius: "10px",
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
-                                    willChange: "transform, font-size, padding",
-                                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                                    transition: "all 0.18s ease",
                                     textAlign: "left",
-                                    transform: "translate3d(0, 0, 0)",
-                                    boxShadow: isSelected ? "0 4px 12px rgba(0, 0, 0, 0.15)" : "0 2px 4px rgba(0, 0, 0, 0.04)",
-                                    position: "relative",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!submitted) {
-                                      e.currentTarget.style.filter = "brightness(1.08)";
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!submitted) {
-                                      e.currentTarget.style.filter = "none";
-                                    }
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
+                                    boxSizing: "border-box",
                                   }}
                                 >
-                                  {/* White Square Indicator (matching Figma 2nd screenshot) */}
+                                  {/* Square Checkbox Indicator */}
                                   <div
                                     style={{
-                                      width: "14px",
-                                      height: "14px",
-                                      borderRadius: "3px",
-                                      background: "#ffffff",
+                                      width: "18px",
+                                      height: "18px",
+                                      borderRadius: "4px",
+                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #8FA396",
+                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
-                                      opacity: isSelected ? 1 : 0.9,
+                                      transition: "all 0.15s ease",
                                     }}
                                   >
                                     {isSelected && (
-                                      <div
-                                        style={{
-                                          width: "6px",
-                                          height: "6px",
-                                          borderRadius: "1px",
-                                          background: baseGreen,
-                                        }}
-                                      />
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
                                     )}
                                   </div>
 
-                                  {/* Option Letter (A, B, C, D) with subtle translucent pill */}
+                                  {/* Letter Pill */}
                                   <div
                                     style={{
-                                      width: badgeSize,
-                                      height: badgeSize,
+                                      width: "24px",
+                                      height: "24px",
                                       borderRadius: "6px",
-                                      background: "rgba(255, 255, 255, 0.18)",
-                                      color: "#ffffff",
+                                      background: isSelected ? "#C8DFD2" : "#E2EDE6",
+                                      border: "1px solid rgba(45, 62, 54, 0.12)",
+                                      color: "#2D3E36",
                                       fontWeight: "700",
-                                      fontSize: badgeFont,
+                                      fontSize: "13px",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "background 0.15s ease",
                                     }}
                                   >
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  {/* Option Text in Pure White */}
-                                  <div
-                                    className="assessment-option-text"
-                                    style={{
-                                      flex: 1,
-                                      color: "#ffffff",
-                                      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                                      fontWeight: "600",
-                                      fontSize: optTextSize,
-                                      lineHeight: optLineHeight,
-                                    }}
-                                  >
-                                    {renderOptionText(option)}
+                                  <div style={{ flex: 1, color: "#18221D", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
+                                    {renderText(option)}
                                   </div>
                                   {rightIcon}
                                 </button>
@@ -820,28 +786,23 @@ export function AssessmentView({
                           <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: optGap }}>
                             {currentQ.options.map((option, idx) => {
                               const isSelected = selectedMSQ.includes(idx);
-                              const isCorrectOption = Array.isArray(currentQ.answer) ? currentQ.answer.includes(idx) : false;
+                              const isCorrectOption = currentQ.answer.includes(idx);
 
-                              const baseGreen = idx % 2 === 0 ? "#4E745D" : "#6E977D";
-
-                              let borderStyle = "2px solid transparent";
-                              let bgStyle = baseGreen;
+                              // Very light, subtle sage tints for maximum readability:
+                              const optionLightTints = ["#F5F8F6", "#ECF2EE", "#F5F8F6", "#ECF2EE"];
+                              let bgStyle = isSelected ? "#DCEBE0" : optionLightTints[idx % optionLightTints.length];
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
                               let rightIcon = null;
-
-                              if (isSelected && !submitted) {
-                                borderStyle = "2px solid #ffffff";
-                                bgStyle = idx % 2 === 0 ? "#3E634D" : "#5E866D";
-                              }
 
                               if (submitted) {
                                 if (isCorrectOption) {
-                                  borderStyle = "2px solid #22c55e";
-                                  bgStyle = idx % 2 === 0 ? "#3B634A" : "#568565";
-                                  rightIcon = <span style={{ color: "#ffffff", fontWeight: "800", marginLeft: "auto" }}>✓</span>;
+                                  bgStyle = "#E2F4E9";
+                                  borderStyle = "2px solid #2D3E36";
+                                  rightIcon = <span style={{ color: "#2D3E36", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✓</span>;
                                 } else if (isSelected) {
-                                  borderStyle = "2px solid #ef4444";
-                                  bgStyle = "#7E4747";
-                                  rightIcon = <span style={{ color: "#ffffff", fontWeight: "800", marginLeft: "auto" }}>✕</span>;
+                                  bgStyle = "#FDF0ED";
+                                  borderStyle = "2px solid #D9534F";
+                                  rightIcon = <span style={{ color: "#D9534F", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✕</span>;
                                 }
                               }
 
@@ -850,47 +811,51 @@ export function AssessmentView({
                                   key={idx}
                                   onClick={() => handleMSQToggle(idx)}
                                   disabled={submitted}
+                                  onMouseEnter={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = "#E2EDE6";
+                                      e.currentTarget.style.borderColor = "#BACBC1";
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (!submitted && !isSelected) {
+                                      e.currentTarget.style.background = bgStyle;
+                                      e.currentTarget.style.borderColor = "#D5E2D9";
+                                    }
+                                  }}
                                   style={{
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: "14px",
+                                    gap: "12px",
                                     width: "100%",
                                     padding: optPadding,
                                     borderRadius: "10px",
                                     border: borderStyle,
                                     background: bgStyle,
                                     cursor: submitted ? "default" : "pointer",
+                                    transition: "all 0.18s ease",
                                     textAlign: "left",
-                                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                                    boxShadow: isSelected ? "0 4px 12px rgba(0, 0, 0, 0.15)" : "0 2px 4px rgba(0, 0, 0, 0.04)",
-                                    position: "relative",
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    if (!submitted) {
-                                      e.currentTarget.style.filter = "brightness(1.08)";
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!submitted) {
-                                      e.currentTarget.style.filter = "none";
-                                    }
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
+                                    boxSizing: "border-box",
                                   }}
                                 >
-                                  {/* White Square Checkbox */}
+                                  {/* Checkbox */}
                                   <div
                                     style={{
-                                      width: "14px",
-                                      height: "14px",
-                                      borderRadius: "3px",
-                                      background: "#ffffff",
+                                      width: "18px",
+                                      height: "18px",
+                                      borderRadius: "4px",
+                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #8FA396",
+                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "all 0.15s ease",
                                     }}
                                   >
                                     {isSelected && (
-                                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={baseGreen} strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
                                         <polyline points="20 6 9 17 4 12" />
                                       </svg>
                                     )}
@@ -898,34 +863,26 @@ export function AssessmentView({
 
                                   <div
                                     style={{
-                                      width: badgeSize,
-                                      height: badgeSize,
+                                      width: "24px",
+                                      height: "24px",
                                       borderRadius: "6px",
-                                      background: "rgba(255, 255, 255, 0.18)",
-                                      color: "#ffffff",
+                                      background: isSelected ? "#C8DFD2" : "#E2EDE6",
+                                      border: "1px solid rgba(45, 62, 54, 0.12)",
+                                      color: "#2D3E36",
                                       fontWeight: "700",
-                                      fontSize: badgeFont,
+                                      fontSize: "13px",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
+                                      transition: "background 0.15s ease",
                                     }}
                                   >
                                     {String.fromCharCode(65 + idx)}
                                   </div>
 
-                                  <div
-                                    className="assessment-option-text"
-                                    style={{
-                                      flex: 1,
-                                      color: "#ffffff",
-                                      fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                                      fontWeight: "600",
-                                      fontSize: optTextSize,
-                                      lineHeight: optLineHeight,
-                                    }}
-                                  >
-                                    {renderOptionText(option)}
+                                  <div style={{ flex: 1, color: "#18221D", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
+                                    {renderText(option)}
                                   </div>
                                   {rightIcon}
                                 </button>
@@ -936,28 +893,22 @@ export function AssessmentView({
 
                         {/* Type 2: True / False */}
                         {currentQ.type === "true_false" && (
-                          <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "12px" }}>
+                          <div style={{ display: "flex", gap: "14px", justifyContent: "center", marginTop: "12px" }}>
                             {[true, false].map((val) => {
                               const isSelected = selectedTF === val;
                               const isCorrectAnswer = val === currentQ.answer;
 
-                              let btnBorder = "1.5px solid #e2e8f0";
-                              let btnBg = "#fff";
-                              let btnTextColor = "#1e293b";
+                              let btnBg = isSelected ? "#DCEBE0" : val ? "#F5F8F6" : "#ECF2EE";
+                              let btnBorder = isSelected ? "2px solid #2D3E36" : "1.5px solid #D5E2D9";
+                              let btnTextColor = "#18221D";
 
-                              if (isSelected) {
-                                btnBorder = "2px solid #3b82f6";
-                                btnBg = "#eff6ff";
-                              }
                               if (submitted) {
                                 if (isCorrectAnswer) {
-                                  btnBorder = "2px solid #34C759";
-                                  btnBg = "#34C75933";
-                                  btnTextColor = "#15803d";
+                                  btnBorder = "2px solid #2D3E36";
+                                  btnBg = "#E2F4E9";
                                 } else if (isSelected) {
-                                  btnBorder = "2px solid #FF383C";
-                                  btnBg = "#FF383C1A";
-                                  btnTextColor = "#b91c1c";
+                                  btnBorder = "2px solid #D9534F";
+                                  btnBg = "#FDF0ED";
                                 }
                               }
 
@@ -968,18 +919,19 @@ export function AssessmentView({
                                   disabled={submitted}
                                   style={{
                                     flex: 1,
-                                    height: "80px",
-                                    borderRadius: "14px",
+                                    height: "64px",
+                                    borderRadius: "10px",
                                     border: btnBorder,
                                     background: btnBg,
                                     color: btnTextColor,
-                                    fontSize: "1.1rem",
+                                    fontSize: "1.05rem",
                                     fontWeight: "700",
                                     cursor: submitted ? "default" : "pointer",
                                     transition: "all 0.2s ease",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
+                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
                                   }}
                                 >
                                   {val ? "True" : "False"}
@@ -991,11 +943,11 @@ export function AssessmentView({
 
                         {/* Type 3: Fill in the Blanks */}
                         {currentQ.type === "fill_blanks" && (
-                          <div style={{ padding: "16px", background: "#f8fafc", borderRadius: "14px", border: "1.5px dashed #cbd5e1" }}>
+                          <div style={{ padding: "16px", background: "#FFFFFF", borderRadius: "12px", border: "1.5px solid #D5E2D9" }}>
                             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", lineHeight: "2.2", fontSize: "1rem" }}>
                               {currentQ.q.split("[blank]").map((segment, idx, arr) => (
                                 <React.Fragment key={idx}>
-                                  <span>{segment}</span>
+                                  <span style={{ color: "#18221D", fontWeight: "500" }}>{segment}</span>
                                   {idx < arr.length - 1 && (
                                     <button
                                       type="button"
@@ -1003,10 +955,10 @@ export function AssessmentView({
                                       style={{
                                         minWidth: "70px",
                                         padding: "2px 10px",
-                                        borderRadius: "8px",
-                                        border: activeBlankIndex === idx ? "2px solid #3b82f6" : "1.5px solid #cbd5e1",
-                                        background: fillInputs[idx] ? "#eff6ff" : "#ffffff",
-                                        color: fillInputs[idx] ? "#1d4ed8" : "#94a3b8",
+                                        borderRadius: "6px",
+                                        border: activeBlankIndex === idx ? "2px solid #2D3E36" : "1.5px solid #D5E2D9",
+                                        background: fillInputs[idx] ? "#E8F3ED" : "#F5F8F6",
+                                        color: fillInputs[idx] ? "#2D3E36" : "#64748b",
                                         fontWeight: "600",
                                         fontSize: "0.95rem",
                                         cursor: submitted ? "default" : "pointer",
@@ -1021,7 +973,7 @@ export function AssessmentView({
 
                             {!submitted && (
                               <div style={{ marginTop: "16px" }}>
-                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#64748b", textTransform: "uppercase", marginBottom: "8px" }}>
+                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#2D3E36", textTransform: "uppercase", marginBottom: "8px" }}>
                                   Word Bank
                                 </div>
                                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
@@ -1033,9 +985,9 @@ export function AssessmentView({
                                       style={{
                                         padding: "6px 14px",
                                         borderRadius: "8px",
-                                        border: "1px solid #93c5fd",
-                                        background: "#eff6ff",
-                                        color: "#1d4ed8",
+                                        border: "1px solid #D5E2D9",
+                                        background: "#F5F8F6",
+                                        color: "#2D3E36",
                                         fontWeight: "600",
                                         fontSize: "0.9rem",
                                         cursor: "pointer",
@@ -1050,13 +1002,13 @@ export function AssessmentView({
                                   disabled={fillInputs.some((val) => !val.trim())}
                                   style={{
                                     marginTop: "16px",
-                                    padding: "10px 20px",
-                                    borderRadius: "10px",
+                                    padding: "8px 20px",
+                                    borderRadius: "18px",
                                     border: "none",
-                                    background: "#3b82f6",
+                                    background: "#2D3E36",
                                     color: "#ffffff",
                                     fontWeight: "700",
-                                    fontSize: "14px",
+                                    fontSize: "13.5px",
                                     cursor: fillInputs.some((val) => !val.trim()) ? "default" : "pointer",
                                     opacity: fillInputs.some((val) => !val.trim()) ? 0.5 : 1,
                                   }}
@@ -1071,16 +1023,16 @@ export function AssessmentView({
                         {/* Type 4: Match the Following */}
                         {currentQ.type === "match_following" && (
                           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                            <div style={{ fontSize: "13px", color: "#64748b" }}>Match items on left with right.</div>
+                            <div style={{ fontSize: "13px", color: "#2D3E36", fontWeight: "600" }}>Match items on left with right:</div>
                             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                               {currentQ.leftItems.map((lhs: string) => {
                                 const matchedRhs = matchSelections[lhs];
                                 const isCorrectMatch = matchedRhs === currentQ.correctPairs[lhs];
                                 return (
-                                  <div key={lhs} style={{ padding: "10px", border: "1.5px dashed #cbd5e1", borderRadius: "10px", background: "#f8fafc" }}>
-                                    <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "14px" }}>{lhs}</div>
+                                  <div key={lhs} style={{ padding: "10px 14px", border: "1.5px solid #D5E2D9", borderRadius: "8px", background: "#F5F8F6" }}>
+                                    <div style={{ fontWeight: "700", color: "#18221D", fontSize: "14px" }}>{lhs}</div>
                                     {matchedRhs && (
-                                      <div style={{ marginTop: "4px", fontSize: "13px", color: submitted ? (isCorrectMatch ? "#16a34a" : "#ef4444") : "#3b82f6", fontWeight: "600" }}>
+                                      <div style={{ marginTop: "4px", fontSize: "13px", color: submitted ? (isCorrectMatch ? "#2D3E36" : "#D9534F") : "#2D3E36", fontWeight: "600" }}>
                                         → {matchedRhs}
                                       </div>
                                     )}
@@ -1093,13 +1045,13 @@ export function AssessmentView({
                                 onClick={handleMatchSubmit}
                                 style={{
                                   marginTop: "12px",
-                                  padding: "10px 20px",
-                                  borderRadius: "10px",
+                                  padding: "8px 20px",
+                                  borderRadius: "18px",
                                   border: "none",
-                                  background: "#3b82f6",
+                                  background: "#2D3E36",
                                   color: "#ffffff",
                                   fontWeight: "700",
-                                  fontSize: "14px",
+                                  fontSize: "13.5px",
                                   cursor: "pointer",
                                 }}
                               >
@@ -1111,7 +1063,7 @@ export function AssessmentView({
 
                         {/* Type 5 & 6 Fallback */}
                         {(currentQ.type === "sequencing" || currentQ.type === "labelling") && (
-                          <div style={{ fontSize: "14px", color: "#64748b" }}>
+                          <div style={{ fontSize: "14px", color: "#2D3E36" }}>
                             Complete the question task to view answer status.
                           </div>
                         )}
@@ -1126,106 +1078,135 @@ export function AssessmentView({
                     style={{
                       marginTop: "14px",
                       borderRadius: "12px",
-                      border: `1.5px solid ${currentIsCorrect ? "#4ade80" : "#f87171"}`,
-                      background: currentIsCorrect ? "#f0fdf4" : "#fff5f5",
+                      border: `1.5px solid ${currentIsCorrect ? "#2D3E36" : "#D9534F"}`,
+                      background: currentIsCorrect ? "#F2F8F4" : "#FDF4F3",
                       padding: "12px 16px",
                       display: "flex",
                       flexDirection: "column",
                       gap: "6px",
                     }}
                   >
-                      {/* Status + correct option in one row */}
-                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                        <span style={{
-                          fontWeight: "800",
-                          fontSize: "13px",
-                          color: currentIsCorrect ? "#16a34a" : "#ef4444",
-                          display: "flex", alignItems: "center", gap: "4px",
-                        }}>
-                          {currentIsCorrect ? "✓ Correct!" : "✕ Incorrect"}
-                        </span>
-                        {!currentIsCorrect && (
-                          <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                            Correct option:
-                            <span style={{
-                              background: "#dcfce7", color: "#16a34a", fontWeight: "800",
-                              borderRadius: "5px", padding: "1px 7px", fontSize: "12px",
-                              border: "1px solid #4ade80",
-                            }}>
-                              {typeof (currentQ as any).answer === 'number'
-                                ? String.fromCharCode(65 + (currentQ as any).answer)
-                                : Array.isArray((currentQ as any).answer)
-                                  ? (currentQ as any).answer.map((a: number) => String.fromCharCode(65 + a)).join(', ')
-                                  : (currentQ as any).correctAnswers
-                                    ? (currentQ as any).correctAnswers.join(', ')
-                                    : String((currentQ as any).answer || '')}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                      {/* Explanation text */}
-                      <div style={{
+                    {/* Status + correct option in one row */}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                      <span style={{
+                        fontWeight: "800",
                         fontSize: "13px",
-                        color: "#334155",
-                        lineHeight: "1.5",
-                        fontWeight: "500",
-                        maxHeight: "120px",
-                        overflowY: "auto",
+                        color: currentIsCorrect ? "#2D3E36" : "#D9534F",
+                        display: "flex", alignItems: "center", gap: "4px",
                       }}>
-                        <MarkdownView
-                          content={
-                            (currentQ.explanation || "No explanation provided.")
-                              .replace(/^(?:\*\*)?(?:Explanation|Brief Explanation|Solution|Answer|Model Answer|Outline Answer|Rationale|وضاحت)(?:\*\*)?[:\s-]*\s*/gi, '')
-                              .replace(/Rationale:\*\*\s*(?:correct:)?/gi, '')
-                              .replace(/---\s*#/g, '')
-                              .trim() || "No explanation provided."
-                          }
-                        />
-                      </div>
+                        {currentIsCorrect ? "✓ Correct!" : "✕ Incorrect"}
+                      </span>
+                      {!currentIsCorrect && (
+                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                          Correct option:
+                          <span style={{
+                            background: "#E8F0EB", color: "#2D3E36", fontWeight: "800",
+                            borderRadius: "5px", padding: "1px 7px", fontSize: "12px",
+                            border: "1px solid #2D3E36",
+                          }}>
+                            {typeof (currentQ as any).answer === 'number'
+                              ? String.fromCharCode(65 + (currentQ as any).answer)
+                              : Array.isArray((currentQ as any).answer)
+                                ? (currentQ as any).answer.map((a: number) => String.fromCharCode(65 + a)).join(', ')
+                                : (currentQ as any).correctAnswers
+                                  ? (currentQ as any).correctAnswers.join(', ')
+                                  : String((currentQ as any).answer || '')}
+                          </span>
+                        </span>
+                      )}
                     </div>
-                  )}
+                    {/* Explanation text */}
+                    <div style={{
+                      fontSize: "13px",
+                      color: "#1E293B",
+                      lineHeight: "1.5",
+                      fontWeight: "500",
+                      maxHeight: "120px",
+                      overflowY: "auto",
+                    }}>
+                      <MarkdownView
+                        content={
+                          (currentQ.explanation || "No explanation provided.")
+                            .replace(/^(?:\*\*)?(?:Explanation|Brief Explanation|Solution|Answer|Model Answer|Outline Answer|Rationale|وضاحت)(?:\*\*)?[:\s-]*\s*/gi, '')
+                            .replace(/Rationale:\*\*\s*(?:correct:)?/gi, '')
+                            .replace(/---\s*#/g, '')
+                            .trim() || "No explanation provided."
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Card Footer: Floating / Right-aligned Circular Next Button (matching 2nd Figma screenshot) */}
+              {/* Bottom Card Footer: MSQ Submit (if applicable) & Next Button (Right) */}
               <div
                 style={{
                   display: "flex",
-                  justifyContent: "flex-end",
                   alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: "12px",
                   width: "100%",
-                  marginTop: "10px",
-                  flexShrink: 0,
                 }}
               >
+                <div>
+                  {currentQ.type === "msq" && !submitted && (
+                    <button
+                      onClick={handleMSQSubmit}
+                      disabled={selectedMSQ.length === 0}
+                      style={{
+                        padding: "7px 18px",
+                        borderRadius: "18px",
+                        border: "none",
+                        background: "#2D3E36",
+                        color: "#ffffff",
+                        fontWeight: "700",
+                        fontSize: "13px",
+                        cursor: selectedMSQ.length === 0 ? "not-allowed" : "pointer",
+                        opacity: selectedMSQ.length === 0 ? 0.45 : 1,
+                        boxShadow: "0 4px 10px rgba(45, 62, 54, 0.2)",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      Submit Answer →
+                    </button>
+                  )}
+                </div>
+
                 <button
                   type="button"
-                  onClick={submitted ? handleNext : (currentQ.type === "msq" ? handleMSQSubmit : handleSkip)}
-                  title={submitted ? (step === questions.length - 1 ? "Finish Assessment" : "Next Question") : (currentQ.type === "msq" ? "Submit Answer" : "Next / Skip")}
-                  aria-label="Next Question"
+                  onClick={handleNext}
+                  disabled={!submitted}
+                  title={
+                    submitted
+                      ? (step < questions.length - 1 ? "Next Question" : "Finish Assessment")
+                      : "Select an answer to proceed"
+                  }
+                  aria-label={step < questions.length - 1 ? "Next Question" : "Finish Assessment"}
                   style={{
-                    width: "36px",
-                    height: "36px",
+                    width: "34px",
+                    height: "34px",
                     borderRadius: "50%",
                     border: "none",
-                    background: "#263B30",
+                    background: "#2D3E36",
                     color: "#ffffff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    cursor: "pointer",
-                    boxShadow: "0 3px 10px rgba(38, 59, 48, 0.3)",
-                    transition: "transform 0.2s ease, background 0.2s ease",
+                    cursor: submitted ? "pointer" : "default",
+                    opacity: submitted ? 1 : 0.35,
+                    boxShadow: submitted ? "0 4px 10px rgba(45, 62, 54, 0.25)" : "none",
+                    transition: "transform 0.2s ease, opacity 0.2s ease",
+                    marginLeft: "auto",
+                    flexShrink: 0,
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.background = "#1B2C23";
+                    if (submitted) e.currentTarget.style.transform = "scale(1.08)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.background = "#263B30";
+                    if (submitted) e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="5" y1="12" x2="19" y2="12" />
                     <polyline points="12 5 19 12 12 19" />
                   </svg>
@@ -1235,125 +1216,18 @@ export function AssessmentView({
             </div>
 
             {/* Right Action Icons shown only on Last Assessment Question */}
-            {step < questions.length - 1 ? null : (
-              /* Inline Action Icons on Last Assessment Question (Same horizontal axis beside card box) */
+            {step === questions.length - 1 && (
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
                   gap: "10px",
+                  marginLeft: "12px",
                   flexShrink: 0,
                 }}
               >
-                {/* 0. Finish Assessment Checkmark Button (shown when submitted) */}
-                {submitted && (
-                  <button
-                    type="button"
-                    onClick={handleNext}
-                    title="Finish Assessment"
-                    aria-label="Finish Assessment"
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "50%",
-                      border: "none",
-                      background: "linear-gradient(135deg, #22c55e, #16a34a)",
-                      color: "#ffffff",
-                      boxShadow: "0 4px 14px rgba(34, 197, 94, 0.4)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.boxShadow = "0 6px 18px rgba(34, 197, 94, 0.5)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = "0 4px 14px rgba(34, 197, 94, 0.4)";
-                    }}
-                  >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </button>
-                )}
 
-                {/* 1a. Level Down Button */}
-                {persona !== 'beginner' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (persona === "advanced") setPersona?.("intermediate");
-                      else if (persona === "intermediate") setPersona?.("beginner");
-                    }}
-                    title={`Level Down to ${persona === 'advanced' ? 'Intermediate' : 'Beginner'}`}
-                    style={{
-                      width: "42px",
-                      height: "42px",
-                      borderRadius: "50%",
-                      background: "#ffffff",
-                      border: "1.5px solid #2563eb",
-                      boxShadow: "0 4px 12px rgba(37, 99, 235, 0.15)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.1)";
-                      e.currentTarget.style.boxShadow = "0 6px 16px rgba(37, 99, 235, 0.25)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = "0 4px 12px rgba(37, 99, 235, 0.15)";
-                    }}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
-                  </button>
-                )}
-
-                {/* 1b. Level Up Button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (persona === "beginner") setPersona?.("intermediate");
-                    else if (persona === "intermediate") setPersona?.("advanced");
-                    else setPersona?.("beginner");
-                  }}
-                  title={`Level Up to ${persona === 'beginner' ? 'Intermediate' : persona === 'intermediate' ? 'Advanced' : 'Beginner'}`}
-                  style={{
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #0088ff, #0066cc)",
-                    border: "none",
-                    boxShadow: "0 4px 14px rgba(0, 136, 255, 0.4)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    cursor: "pointer",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "scale(1.1)";
-                    e.currentTarget.style.boxShadow = "0 6px 18px rgba(0, 136, 255, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "scale(1)";
-                    e.currentTarget.style.boxShadow = "0 4px 14px rgba(0, 136, 255, 0.4)";
-                  }}
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="18 15 12 9 6 15" />
-                  </svg>
-                </button>
 
                 {/* 2. Quick Study Button */}
                 <button
@@ -1458,6 +1332,12 @@ export function AssessmentView({
                 </button>
               </div>
             )}
+
+
+
+
+
+
           </div>
         </>
       )}
