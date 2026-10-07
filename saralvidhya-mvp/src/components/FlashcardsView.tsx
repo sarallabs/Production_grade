@@ -59,6 +59,21 @@ export default function FlashcardsView({
   const [animationDirection, setAnimationDirection] = useState<'next' | 'prev' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
+  // 'out' = card turning edge-on, 'in' = turning back to face the user
+  const [flipPhase, setFlipPhase] = useState<'out' | 'in' | null>(null);
+  const flipTimers = useRef<number[]>([]);
+  const flipCard = (target?: boolean) => {
+    if (flipPhase) return;
+    flipTimers.current.forEach((t) => window.clearTimeout(t));
+    setFlipPhase('out');
+    flipTimers.current = [
+      window.setTimeout(() => {
+        setIsFlipped((prev) => (typeof target === 'boolean' ? target : !prev));
+        setFlipPhase('in');
+      }, 170),
+      window.setTimeout(() => setFlipPhase(null), 360),
+    ];
+  };
   const [imgFailed, setImgFailed] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
   const lang = SUBJECT_LANG[subjectId] ?? 'en-IN';
@@ -246,7 +261,7 @@ export default function FlashcardsView({
           {levelControls}
         </div>
       )}
-      <div className="flashcards-stage" style={{ display: "flex", alignItems: "center", paddingTop: "24px", justifyContent: "center", gap: "8px", width: "100%", padding: "24px 4px 0" }}>
+      <div className="flashcards-stage" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", width: "100%", maxWidth: "min(98%, 1320px)", margin: "0 auto", padding: "4px 12px 14px", flex: 1, minHeight: 0 }}>
         {/* Left Navigation Button */}
         <button
           type="button"
@@ -283,9 +298,11 @@ export default function FlashcardsView({
           key={currentIndex}
           style={{
             width: "100%",
+            maxWidth: "min(96%, 1240px)",
             flex: 1,
-            minHeight: "65vh",
-            maxHeight: "calc(100vh - 80px)",
+            height: "calc((100vh - 220px) * 0.94)",
+            maxHeight: "calc(100vh - 220px)",
+            minHeight: "340px",
             borderRadius: "24px",
             border: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
@@ -293,26 +310,30 @@ export default function FlashcardsView({
                 : (cards[currentIndex]?.level || persona) === "advanced"
                   ? "2px solid #CB30E0A0"
                   : "1.5px solid #CB30E04D"
-              : persona === "intermediate"
-                ? "2px solid #0088FF80"
-                : persona === "advanced"
-                  ? "2px solid #0088FFA0"
-                  : "1.5px solid #0088FF4D",
+              : (cards[currentIndex]?.level || persona) === "intermediate"
+                ? "2px solid rgba(111, 154, 127, 0.70)"
+                : (cards[currentIndex]?.level || persona) === "advanced"
+                  ? "2px solid rgba(111, 154, 127, 0.95)"
+                  : "1.5px solid rgba(111, 154, 127, 0.45)",
             background: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
                 ? "#CB30E033"
                 : (cards[currentIndex]?.level || persona) === "advanced"
                   ? "#CB30E04D"
                   : "#CB30E01A"
-              : persona === "intermediate"
-                ? "#0088FF33"
-                : persona === "advanced"
-                  ? "#0088FF4D"
-                  : "#0088FF1A",
+              : (cards[currentIndex]?.level || persona) === "intermediate"
+                ? "rgba(111, 154, 127, 0.36)"
+                : (cards[currentIndex]?.level || persona) === "advanced"
+                  ? "rgba(111, 154, 127, 0.55)"
+                  : "rgba(111, 154, 127, 0.18)",
             boxShadow: isPurpleTheme
               ? "0 16px 44px rgba(203, 48, 224, 0.20)"
-              : "0 16px 44px rgba(0, 136, 255, 0.20)",
-            padding: "24px",
+              : (cards[currentIndex]?.level || persona) === "intermediate"
+                ? "0 16px 44px rgba(45, 62, 54, 0.20)"
+                : (cards[currentIndex]?.level || persona) === "advanced"
+                  ? "0 16px 44px rgba(45, 62, 54, 0.28)"
+                  : "0 16px 44px rgba(45, 62, 54, 0.14)",
+            padding: "16px 22px 12px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
@@ -331,12 +352,12 @@ export default function FlashcardsView({
               left: 0,
               background: isPurpleTheme
                 ? "linear-gradient(135deg, #f5d0fe 0%, #e9d5ff 100%)"
-                : "linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)",
-              borderRight: isPurpleTheme ? "2px solid #c026d3" : "2px solid #3b82f6",
-              borderBottom: isPurpleTheme ? "2px solid #c026d3" : "2px solid #3b82f6",
+                : "linear-gradient(135deg, #dcf0e4 0%, #c1dfcd 100%)",
+              borderRight: isPurpleTheme ? "2px solid #c026d3" : "2px solid #6F9A7F",
+              borderBottom: isPurpleTheme ? "2px solid #c026d3" : "2px solid #6F9A7F",
               borderTopLeftRadius: "18px",
               borderBottomRightRadius: "12px",
-              color: "#0f172a",
+              color: isPurpleTheme ? "#0f172a" : "#2D3E36",
               fontWeight: "800",
               fontSize: "15px",
               padding: "6px 16px",
@@ -346,7 +367,7 @@ export default function FlashcardsView({
               justifyContent: "center",
               boxShadow: isPurpleTheme
                 ? "0 4px 12px rgba(192, 38, 211, 0.15)"
-                : "0 4px 12px rgba(59, 130, 246, 0.15)",
+                : "0 4px 12px rgba(45, 62, 54, 0.15)",
               pointerEvents: "none",
             }}
           >
@@ -355,6 +376,23 @@ export default function FlashcardsView({
 
           {/* Progress badge */}
 
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              minHeight: 0,
+              transformOrigin: 'center center',
+              transform: flipPhase === 'out' ? 'perspective(1400px) rotateY(90deg)' : 'perspective(1400px) rotateY(0deg)',
+              transition: flipPhase === 'out'
+                ? 'transform 0.17s cubic-bezier(0.55, 0, 0.9, 0.5)'
+                : flipPhase === 'in'
+                  ? 'transform 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)'
+                  : 'none',
+              ...(flipPhase === 'in' ? { animation: 'sv-fc-flip-in 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)' } : {}),
+            }}
+          >
+          <style>{`@keyframes sv-fc-flip-in { from { transform: perspective(1400px) rotateY(-90deg); } to { transform: perspective(1400px) rotateY(0deg); } }`}</style>
           {(() => {
             const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
             const PHYSICS_REAL_INFOGRAPHICS = [
@@ -391,7 +429,7 @@ export default function FlashcardsView({
               return (
                 <div
                   style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '32px', cursor: 'pointer' }}
-                  onClick={() => setIsFlipped(true)}
+                  onClick={() => flipCard(true)}
                 >
                   <div style={{
                     fontSize: '26px',
@@ -406,15 +444,15 @@ export default function FlashcardsView({
 
                   <button
                     type="button"
-                    onClick={(e) => { e.stopPropagation(); setIsFlipped(true); }}
+                    onClick={(e) => { e.stopPropagation(); flipCard(true); }}
                     style={{
-                      background: 'rgba(255,255,255,0.18)',
-                      border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(0,136,255,0.4)'}`,
+                      background: 'rgba(255,255,255,0.4)',
+                      border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(111,154,127,0.6)'}`,
                       borderRadius: '999px',
                       padding: '10px 28px',
                       fontSize: '15px',
                       fontWeight: 600,
-                      color: isPurpleTheme ? '#7e22ce' : '#1d4ed8',
+                      color: isPurpleTheme ? '#7e22ce' : '#2D3E36',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -432,60 +470,93 @@ export default function FlashcardsView({
               );
             }
 
-            // ── BACK FACE: Answer + Infographic ──────────────────────────────
+            // ── BACK FACE: Answer on Top (Centered) + Infographic Below (Centered) ──
             return (
-              <div style={{ display: 'flex', flexDirection: hasImage ? 'row' : 'column', gap: '24px', flex: 1, overflow: 'hidden' }}>
-                {/* Answer text */}
+              <div
+                title="Click to flip back to the question"
+                onClick={() => flipCard(false)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: hasImage ? 'flex-start' : 'center',
+                  gap: hasImage ? '8px' : '16px',
+                  flex: 1,
+                  height: '100%',
+                  minHeight: 0,
+                  overflowY: 'auto',
+                  overflowX: 'hidden',
+                  cursor: 'pointer',
+                  paddingTop: hasImage ? '4px' : '16px',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {/* Answer text: Top center div (no "Answer." heading) */}
                 <div
                   style={{
-                    fontSize: '19px',
-                    lineHeight: '1.65',
-                    color: '#334155',
-                    width: hasImage ? 'calc(42% - 12px)' : '100%',
-                    flexShrink: 0,
-                    marginBottom: '12px',
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    fontSize: hasImage ? '16px' : '22px',
+                    lineHeight: '1.45',
+                    color: '#1e293b',
+                    fontWeight: 500,
+                    padding: hasImage ? '0 16px 4px' : '20px 32px',
+                    boxSizing: 'border-box',
                     overflowY: 'auto',
-                    paddingRight: hasImage ? '16px' : '0',
+                    flexShrink: 0,
+                    maxHeight: hasImage ? '35%' : '100%',
                   }}
                 >
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: isPurpleTheme ? '#9333ea' : '#0088ff',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                    marginBottom: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                  }}>
-                    Answer.
+                  <style>{`
+                    .flashcard-answer-text p, .flashcard-answer-text div, .flashcard-answer-text span {
+                      text-align: center !important;
+                      margin: 0 !important;
+                    }
+                  `}</style>
+                  <div className="flashcard-answer-text" style={{ maxWidth: '1080px', width: '100%', textAlign: 'center' }}>
+                    <MarkdownView content={safeBack} />
                   </div>
-                  <MarkdownView content={safeBack} />
                 </div>
 
-                {/* Infographic */}
+                {/* Infographic: Bottom center div — clear, generously sized and NEVER cut off */}
                 {hasImage && (
-                  <div style={{ width: 'calc(58% - 12px)', flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', overflowY: 'auto' }}>
+                  <div
+                    style={{
+                      width: '100%',
+                      flex: 1,
+                      minHeight: 0,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      padding: '2px 8px 6px',
+                      boxSizing: 'border-box',
+                      position: 'relative',
+                    }}
+                  >
                     <img
                       src={finalUrl}
                       alt="Infographic"
-                      onClick={() => setIsZoomed(true)}
+                      onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
                       onError={() => setImgFailed(true)}
-                      title="Click to expand full screen"
+                      title="Click to view full screen"
                       style={{
-                        width: '100%',
-                        height: 'auto',
+                        maxWidth: '100%',
                         maxHeight: '100%',
+                        width: 'auto',
+                        height: 'auto',
                         objectFit: 'contain',
                         borderRadius: '12px',
                         backgroundColor: '#ffffff',
-                        padding: '12px',
-                        border: '1px solid #cbd5e1',
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                        padding: '6px',
+                        border: '1px solid rgba(111, 154, 127, 0.35)',
+                        boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
                         cursor: 'zoom-in',
-                        flexShrink: 0,
-                        transition: 'transform 0.2s ease',
+                        boxSizing: 'border-box',
+                        display: 'block',
                       }}
                     />
                   </div>
@@ -493,6 +564,7 @@ export default function FlashcardsView({
               </div>
             );
           })()}
+          </div>
         </div>
 
         {/* Right Navigation Button OR Action Icons on Last Card */}
@@ -525,152 +597,48 @@ export default function FlashcardsView({
             </svg>
           </button>
         ) : (
-          /* On the last flashcard, replace the greyed-out right arrow with the action icons on the same horizontal axis */
+          /* On the last flashcard, show the Up next: Assessment button */
           <div
             style={{
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "10px",
+              gap: "8px",
               flexShrink: 0,
             }}
           >
-            {/* 1a. Level Down Button */}
-            {onLevelDownPersona && persona !== 'beginner' && (
-              <button
-                type="button"
-                onClick={() => onLevelDownPersona?.()}
-                title={`Level Down to ${persona === 'intermediate' ? 'Beginner' : 'Intermediate'}`}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  background: "#ffffff",
-                  border: `1.5px solid ${isPurpleTheme ? "#9333ea" : "#0088ff"}`,
-                  boxShadow: isPurpleTheme
-                    ? "0 4px 12px rgba(147,51,234,0.15)"
-                    : "0 4px 12px rgba(0,136,255,0.15)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isPurpleTheme ? "#9333ea" : "#0088ff"} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            )}
-
-            {/* 1b. Level Up Button */}
-            {onLevelUpPersona && (
-              <button
-                type="button"
-                onClick={() => onLevelUpPersona?.()}
-                title={`Level Up to ${persona === 'beginner' ? 'Intermediate' : persona === 'intermediate' ? 'Advanced' : 'Beginner'}`}
-                style={{
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "50%",
-                  background: isPurpleTheme
-                    ? "linear-gradient(135deg, #9333ea, #cb30e0)"
-                    : "linear-gradient(135deg, #0088ff, #0066cc)",
-                  border: "none",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  boxShadow: isPurpleTheme
-                    ? "0 4px 14px rgba(147,51,234,0.4)"
-                    : "0 4px 14px rgba(0,136,255,0.4)",
-                  transition: "transform 0.2s ease, box-shadow 0.2s ease",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="18 15 12 9 6 15" />
-                </svg>
-              </button>
-            )}
-
-
-            {/* 2. Quick Study Button */}
             <button
               type="button"
-              onClick={() => onSelectTool?.("summary")}
-              title="Quick Study"
+              onClick={() => onSelectTool ? onSelectTool("assessment") : onFlashcardsCompleted?.()}
               style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                justifyContent: "center",
+                gap: "8px",
+                padding: "10px 18px",
+                borderRadius: "999px",
+                background: "#4F7B64",
+                color: "#FFFFFF",
+                fontWeight: 700,
+                fontSize: "13.5px",
+                border: "none",
                 cursor: "pointer",
-                padding: "4px",
-                boxSizing: "border-box",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+                boxShadow: "0 4px 14px rgba(79, 123, 100, 0.35)",
+                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                whiteSpace: "nowrap",
               }}
-            >
-              {/* Lightning bolt = Quick Summary */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-              </svg>
-            </button>
-
-            {/* 3. Detailed Study Button */}
-            <button
-              type="button"
-              onClick={() => onSelectTool?.("detailed")}
-              title="Detailed Study"
-              style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                padding: "4px",
-                boxSizing: "border-box",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow = "0 6px 20px rgba(79, 123, 100, 0.45)";
               }}
-            >
-              {/* Open book = Detailed Study */}
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-              </svg>
-            </button>
-
-            {/* 4. Home / Video Player Button */}
-            <button
-              type="button"
-              onClick={() => onSelectTool?.("videos")}
-              title="Home (Videos)"
-              style={{
-                width: "42px",
-                height: "42px",
-                borderRadius: "50%",
-                background: "#ffffff",
-                border: "2px solid #f97316",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.16)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                cursor: "pointer",
-                transition: "transform 0.2s ease, boxShadow 0.2s ease",
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 4px 14px rgba(79, 123, 100, 0.35)";
               }}
+              title="Proceed to Assessment"
             >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V10.5Z" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M9 21V14H15V21" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <span>Up next: Assessment</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </div>

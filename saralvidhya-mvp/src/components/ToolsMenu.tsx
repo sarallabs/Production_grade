@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 export type ToolId =
   | "summary"
   | "detailed"
-  | "study_plan"
   | "key_takeaways"
   | "flashcards"
   | "podcasts"
@@ -37,17 +36,17 @@ const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string; disabl
   { id: "podcasts", icon: "🎧", label: "Listen", desc: "Listen to audio" },
   { id: "videos", icon: "🎥", label: "Watch", desc: "Watch video lectures" },
   { id: "mindmap", icon: "🧠", label: "Mindmap", desc: "Visual mind map" },
-  { id: "key_takeaways", icon: "🔑", label: "Takeaways", desc: "Key Takeaways" },
-  // { id: "foundation", icon: "🏛️", label: "Foundation", desc: "Mind Maps & Study Plan" },
+  // { id: "foundation", icon: "🏛️", label: "Foundation", desc: "Mind Maps" },
   { id: "revision_flashcards", icon: "🗂️", label: "Revise", desc: "Quick revision" },
   { id: "assessment", icon: "🎯", label: "Assessments", desc: "Test knowledge" },
   { id: "qbank", icon: "🏦", label: "Question Bank", desc: "Practice more" },
+  { id: "key_takeaways", icon: "🔑", label: "Key Takeaways", desc: "Key Takeaways" },
   { id: "pyq", icon: "📄", label: "PYQ", desc: "Previous Year Questions" },
   { id: "prep_exam", icon: "📝", label: "Preparation Exam", desc: "Test your preparation" },
   { id: "swot", icon: "💡", label: "SWOT", desc: "SWOT Analysis", disabled: true },
   { id: "deep_dive", icon: "🔍", label: "Deep Dive", desc: "Detailed explanations" },
   { id: "pre_final_test", icon: "🎓", label: "Certification Exam", desc: "Certification Exam" },
-  { id: "ask", icon: "❓", label: "Ask AI", desc: "Ask me anything" },
+  { id: "ask", icon: "❓", label: "Ask Me", desc: "Ask me anything" },
 ];
 
 export default function ToolsMenu({

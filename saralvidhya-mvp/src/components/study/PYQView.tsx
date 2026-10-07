@@ -5,6 +5,7 @@ import {
   ANU_PHYSICS_MOCKED_QUESTIONS,
   ANU_CHARACTERIZATION_MOCKED_QUESTIONS,
 } from "@/pages/PreviousYearQuestions";
+import { ANGRAU_PLACEHOLDER_PYQS } from "@/data/angrauPlaceholderPyqs";
 
 /**
  * Displays Previous Year Questions for the selected subject and chapter.
@@ -32,7 +33,8 @@ export default function PYQView({
     "management",
     "anu_physics",
     "anu_characterization",
-    "neb_xii_biology"
+    "neb_xii_biology",
+    "ento_131"
   ];
   const isSupported = supportedSubjects.includes(subjectId);
 
@@ -66,6 +68,11 @@ export default function PYQView({
         } catch (e) {
           setBaseQuestions([]);
         }
+      } else if (subjectId === "ento_131") {
+        // Placeholder PYQs (5 per chapter) — replace with official set later.
+        setBaseQuestions(
+          ANGRAU_PLACEHOLDER_PYQS.filter((q) => q.chapterNumber === chapterNumber),
+        );
       } else {
         const questions =
           subjectId === "management"

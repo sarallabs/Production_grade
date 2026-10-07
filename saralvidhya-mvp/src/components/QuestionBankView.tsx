@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getManifest, getResourceContent, getChapterExamQuestions, type DifficultyLevel, type Manifest } from '@/data/contentRepository';
-import { parseQuestionBankMarkdown, type QuestionBankEntry } from '@/utils/questionBankParser';
+import { parseQuestionBankMarkdown, ensureQuestionMark, type QuestionBankEntry } from '@/utils/questionBankParser';
 import MarkdownView from './MarkdownView';
 
 // ── Forest Green palette ────────────────────────────────────────────────────
@@ -43,6 +43,8 @@ export default function QuestionBankView({
   const [questions, setQuestions] = useState<QuestionBankEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+  const [revealedCards, setRevealedCards] = useState<Record<string, boolean>>({});
+  const [answerModes, setAnswerModes] = useState<Record<string, 'short' | 'long' | 'ten'>>({});
 
   const visibleSubjects = useMemo(() => {
     if (!manifest) return [];
@@ -114,7 +116,7 @@ export default function QuestionBankView({
                 subjectName: subject.name,
                 chapterNumber,
                 chapterName: chapterLabel,
-                question: q.q,
+                question: ensureQuestionMark(q.q),
                 shortAnswer: (Array.isArray((q as any).answer) ? (q as any).answer : [(q as any).answer])
                   .map((i: any) => (q as any).options ? (q as any).options[i as number] : String(i ?? ''))
                   .filter(Boolean)
@@ -139,6 +141,23 @@ export default function QuestionBankView({
         ? current.filter((n) => n !== chapterNumber)
         : [...current, chapterNumber];
       return { ...prev, [subjectId]: nextList };
+    });
+  };
+
+  const toggleReveal = (id: string) => {
+    setRevealedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  // Pick Short / Long / 10M; choosing a version reveals the answer, or toggles if already active.
+  const setAnswerMode = (id: string, mode: 'short' | 'long' | 'ten') => {
+    setAnswerModes((prev) => ({ ...prev, [id]: mode }));
+    setRevealedCards((prev) => {
+      const currentMode = answerModes[id] ?? 'short';
+      const isCurrentlyRevealed = prev[id] ?? false;
+      if (currentMode === mode && isCurrentlyRevealed) {
+        return { ...prev, [id]: false };
+      }
+      return { ...prev, [id]: true };
     });
   };
 
@@ -331,10 +350,34 @@ export default function QuestionBankView({
       ) : (
         <div className="qbank-card-list">
           {questions.map((entry, index) => {
-            const flipped = expandedCards[entry.id] ?? false;
+            const modeOptions = [
+              entry.shortAnswer ? { key: 'short' as const, label: '2M' } : null,
+              entry.longAnswer ? { key: 'long' as const, label: '5M' } : null,
+              entry.tenMarkAnswer ? { key: 'ten' as const, label: '10M' } : null,
+            ].filter(Boolean) as { key: 'short' | 'long' | 'ten'; label: string }[];
+            const defaultMode = modeOptions[0]?.key ?? 'short';
+            const mode = answerModes[entry.id] ?? defaultMode;
+            const isRevealed = revealedCards[entry.id] ?? false;
+            const hasBoth = modeOptions.length > 1;
+            const shownAnswer =
+              (mode === 'ten' && entry.tenMarkAnswer) ||
+              (mode === 'long' && entry.longAnswer) ||
+              entry.shortAnswer || entry.longAnswer || entry.tenMarkAnswer || '';
             
             return (
-              <div key={entry.id} className="qbank-simple-question-card">
+              <div
+                key={entry.id}
+                className="qbank-simple-question-card"
+                onClick={() => toggleReveal(entry.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleReveal(entry.id);
+                  }
+                }}
+              >
                 {/* Left side: Number */}
                 <div style={{ flexShrink: 0, width: '48px', display: 'flex', justifyContent: 'center' }}>
                   <span style={{
@@ -348,17 +391,62 @@ export default function QuestionBankView({
                 </div>
 
                 {/* Right side: Content */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                  {/* Top: Question & Tags */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                    <div style={{ flex: 1, fontSize: '1.15rem', fontWeight: 500, color: '#111', lineHeight: 1.55 }}>
-                      <MarkdownView content={entry.question} />
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+                  {/* Top: Question, answer controls & tags — all on one axis */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
+                    <div style={{ flex: 1, minWidth: 0, fontSize: '1.15rem', fontWeight: 500, color: '#111', lineHeight: 1.55 }}>
+                      <MarkdownView content={ensureQuestionMark(entry.question)} />
                     </div>
-                    <div style={{ 
-                      display: 'flex', 
-                      flexDirection: 'column', 
+
+                    {/* Answer controls: Clicking marks (2M / 5M / 10M) reveals/toggles the answer */}
+                    <div
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {modeOptions.length > 0 && (
+                        <div style={{
+                          display: 'flex',
+                          background: G.pale,
+                          border: `1px solid ${G.paleBorder}`,
+                          borderRadius: '999px',
+                          padding: '2px',
+                        }}>
+                          {modeOptions.map((opt) => {
+                            const active = mode === opt.key && isRevealed;
+                            return (
+                              <button
+                                key={opt.key}
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setAnswerMode(entry.id, opt.key);
+                                }}
+                                title={active ? 'Click to hide answer' : `Click for ${opt.label} answer`}
+                                style={{
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  borderRadius: '999px',
+                                  padding: '3px 12px',
+                                  fontSize: '0.75rem',
+                                  fontWeight: active ? 700 : 600,
+                                  background: active ? 'white' : 'transparent',
+                                  color: active ? G.dark : G.mid,
+                                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                                  transition: 'all 0.18s ease',
+                                }}
+                              >
+                                {opt.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
                       alignItems: 'flex-end',
-                      marginLeft: '24px',
                       fontSize: '0.78rem',
                       color: G.mid,
                       fontWeight: 600,
@@ -389,47 +477,44 @@ export default function QuestionBankView({
                     </div>
                   </div>
 
-                  {/* Bottom: Answer & Eye Icon */}
-                  <div style={{ 
-                    paddingTop: '16px', 
-                    borderTop: `1px solid ${G.paleBorder}`, 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-end',
-                    position: 'relative'
-                  }}>
-                    <div style={{ flex: 1, fontSize: '1.05rem', color: '#1e293b', lineHeight: 1.6 }}>
-                      <MarkdownView 
-                        content={(flipped && entry.longAnswer) ? entry.longAnswer : (entry.shortAnswer || entry.longAnswer || '')} 
-                      />
-                    </div>
-                    {entry.shortAnswer && entry.longAnswer && (
-                      <button
-                        onClick={() => toggleCardFlip(entry.id)}
-                        title={flipped ? 'Show short answer' : 'Show detailed answer'}
+                  {/* Answer — revealed on card click or marks pill click */}
+                  {isRevealed && (
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        marginTop: '16px',
+                        paddingTop: '16px',
+                        borderTop: `1px solid ${G.paleBorder}`,
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '12px',
+                        cursor: 'default',
+                        animation: 'fadeIn 0.22s ease-out',
+                      }}
+                    >
+                      <span
+                        aria-label="Answer"
                         style={{
-                          background: flipped ? G.pale : 'white',
-                          border: `1px solid ${G.paleBorder}`,
+                          flexShrink: 0,
+                          width: '28px',
+                          height: '28px',
                           borderRadius: '8px',
-                          width: '32px',
-                          height: '32px',
+                          background: G.mid,
+                          color: 'white',
+                          fontWeight: 800,
+                          fontSize: '0.9rem',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          cursor: 'pointer',
-                          marginLeft: '16px',
-                          flexShrink: 0,
-                          alignSelf: 'center',
-                          transition: 'background 0.18s ease',
                         }}
                       >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={G.mid} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                          <circle cx="12" cy="12" r="3" />
-                        </svg>
-                      </button>
-                    )}
-                  </div>
+                        A
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0, fontSize: '1.05rem', color: '#1e293b', lineHeight: 1.6 }}>
+                        <MarkdownView content={shownAnswer} />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             );
