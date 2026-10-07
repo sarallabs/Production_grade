@@ -3262,9 +3262,80 @@ export default function StudyTable() {
                       }
                       /* Mode row: Quick | Detailed */
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
+                      /* Reading Depth Segmented Toggle */
+                      .sv-hdr-segmented-toggle {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        background: #f1f5f9;
+                        border: 1.5px solid #cbd5e1;
+                        border-radius: 9999px;
+                        padding: 3px;
+                        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+                        user-select: none;
+                        gap: 0;
+                        box-sizing: border-box;
+                      }
+                      .sv-hdr-toggle-pill-bg {
+                        position: absolute;
+                        top: 3px;
+                        bottom: 3px;
+                        left: 3px;
+                        width: calc(50% - 3px);
+                        background: #15803d;
+                        border-radius: 9999px;
+                        box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
+                        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+                        pointer-events: none;
+                        z-index: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="summary"] .sv-hdr-toggle-pill-bg {
+                        transform: translateX(0);
+                        opacity: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="detailed"] .sv-hdr-toggle-pill-bg {
+                        transform: translateX(100%);
+                        opacity: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="none"] .sv-hdr-toggle-pill-bg {
+                        opacity: 0;
+                      }
+                      .sv-hdr-toggle-btn {
+                        position: relative;
+                        z-index: 2;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        padding: 7px 22px;
+                        border-radius: 9999px;
+                        border: none;
+                        background: transparent;
+                        font-size: 0.84rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        white-space: nowrap;
+                        line-height: 1;
+                        color: #475569;
+                        transition: color 0.18s ease;
+                        flex: 1;
+                      }
+                      .sv-hdr-toggle-btn:hover {
+                        color: #0f172a;
+                      }
+                      .sv-hdr-toggle-btn.active {
+                        color: #ffffff;
+                        font-weight: 700;
+                      }
+                      .sv-hdr-toggle-btn svg {
+                        transition: transform 0.18s ease;
+                      }
+                      .sv-hdr-toggle-btn:hover svg {
+                        transform: scale(1.1);
+                      }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
-                        padding: 8px 26px; border-radius: 20px;
+                        padding: 8px 22px; border-radius: 20px;
                         font-size: 0.84rem; font-weight: 600; cursor: pointer;
                         border: 1.5px solid #cbd5e1;
                         background: #ffffff; color: #475569;
@@ -3313,20 +3384,38 @@ export default function StudyTable() {
                       {/* RIGHT: mode toggles — Essentials | In-depth | Study Plan */}
                       <div className="sv-hdr-controls">
                         <div className="sv-hdr-modes">
-                          <button id="studybar-mode-quick" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "summary" ? " active-quick" : ""}`}
-                            onClick={() => setActiveTool("summary")} title="Essentials"
+                          <div
+                            className="sv-hdr-segmented-toggle"
+                            data-active={activeTool === "summary" ? "summary" : activeTool === "detailed" ? "detailed" : "none"}
+                            role="radiogroup"
+                            aria-label="Reading depth toggle"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                            Essentials
-                          </button>
-                          <button id="studybar-mode-detailed" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "detailed" ? " active-detailed" : ""}`}
-                            onClick={() => setActiveTool("detailed")} title="In-depth"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
-                            In-depth
-                          </button>
+                            <div className="sv-hdr-toggle-pill-bg" />
+                            <button
+                              id="studybar-mode-quick"
+                              type="button"
+                              role="radio"
+                              aria-checked={activeTool === "summary"}
+                              className={`sv-hdr-toggle-btn${activeTool === "summary" ? " active" : ""}`}
+                              onClick={() => setActiveTool("summary")}
+                              title="Essentials"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                              Essentials
+                            </button>
+                            <button
+                              id="studybar-mode-detailed"
+                              type="button"
+                              role="radio"
+                              aria-checked={activeTool === "detailed"}
+                              className={`sv-hdr-toggle-btn${activeTool === "detailed" ? " active" : ""}`}
+                              onClick={() => setActiveTool("detailed")}
+                              title="In-depth"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
+                              In-depth
+                            </button>
+                          </div>
                           <button id="studybar-mode-study-plan" type="button"
                             className={`sv-hdr-mode-btn${activeTool === "study_plan" ? " active-plan" : ""}`}
                             onClick={() => setActiveTool("study_plan")} title="Study Plan"
