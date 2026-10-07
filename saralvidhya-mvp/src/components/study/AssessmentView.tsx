@@ -539,23 +539,63 @@ export function AssessmentView({
                   marginBottom: "4px",
                 }}
               >
-                {/* Top-Left Pill Badge: 2 / 10 */}
-                <div
-                  style={{
-                    padding: "3px 12px",
-                    borderRadius: "8px",
-                    background: "#FFFFFF",
-                    border: "1.5px solid #2D3E36",
-                    color: "#2D3E36",
-                    fontWeight: "700",
-                    fontSize: "13px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 1px 3px rgba(45, 62, 54, 0.05)",
-                  }}
-                >
-                  {step + 1} / {questions.length}
+                {/* Top-Left: Question Number Badge & Type Tag */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div
+                    style={{
+                      padding: "3px 12px",
+                      borderRadius: "8px",
+                      background: "#FFFFFF",
+                      border: "1.5px solid #2D3E36",
+                      color: "#2D3E36",
+                      fontWeight: "700",
+                      fontSize: "13px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 1px 3px rgba(45, 62, 54, 0.05)",
+                    }}
+                  >
+                    {step + 1} / {questions.length}
+                  </div>
+
+                  {currentQ?.type === "msq" ? (
+                    <div
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "8px",
+                        background: "rgba(147, 51, 234, 0.08)",
+                        border: "1.5px solid #9333ea",
+                        color: "#7e22ce",
+                        fontWeight: "700",
+                        fontSize: "12px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                      <span>Multiple Select (MSQ) — Select all that apply</span>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "8px",
+                        background: "rgba(45, 62, 54, 0.06)",
+                        border: "1px solid rgba(45, 62, 54, 0.15)",
+                        color: "#2D3E36",
+                        fontWeight: "600",
+                        fontSize: "12px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
+                      <span>Single Choice (MCQ)</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Top-Right Difficulty */}
@@ -720,25 +760,32 @@ export function AssessmentView({
                                     boxSizing: "border-box",
                                   }}
                                 >
-                                  {/* Square Checkbox Indicator */}
+                                  {/* Circular Radio Button Indicator */}
                                   <div
                                     style={{
                                       width: "18px",
                                       height: "18px",
-                                      borderRadius: "4px",
-                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #6E8576",
-                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
+                                      borderRadius: "50%",
+                                      border: isSelected ? "2px solid #2D3E36" : "1.5px solid #6E8576",
+                                      background: "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       justifyContent: "center",
                                       flexShrink: 0,
                                       transition: "all 0.15s ease",
+                                      boxSizing: "border-box",
                                     }}
                                   >
                                     {isSelected && (
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12" />
-                                      </svg>
+                                      <div
+                                        style={{
+                                          width: "8px",
+                                          height: "8px",
+                                          borderRadius: "50%",
+                                          background: "#2D3E36",
+                                          transition: "all 0.15s ease",
+                                        }}
+                                      />
                                     )}
                                   </div>
 
@@ -776,6 +823,10 @@ export function AssessmentView({
                         {/* Type: MSQ */}
                         {currentQ.type === "msq" && (
                           <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: optGap }}>
+                            <div style={{ fontSize: "12px", color: "#7e22ce", fontWeight: "600", marginBottom: "2px", display: "flex", alignItems: "center", gap: "5px" }}>
+                              <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#7e22ce" }} />
+                              <span>Select all correct options, then click <b>Submit Answer</b> below.</span>
+                            </div>
                             {currentQ.options.map((option, idx) => {
                               const isSelected = selectedMSQ.includes(idx);
                               const isCorrectOption = currentQ.answer.includes(idx);

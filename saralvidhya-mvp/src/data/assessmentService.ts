@@ -431,7 +431,7 @@ export async function getChapterExamQuestions(
   return seededShuffle(merged, `${subject}_${chapterNumber}_${kind}`);
 }
 
-const OPTION_LINE = /^[ \t]*[-*]?[ \t]*(?:\[[ xX]\][ \t]*)?(?:\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/gm;
+const OPTION_LINE = /^[ \t]*[-*]?[ \t]*(?:\[[ xX]\][ \t]*)?(?:\*\*\[[ \t]*|\[\*\*[ \t]*|\[[ \t]*|\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\][ \t]*\*\*|\*\*[ \t]*\]|\][ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/gm;
 
 function splitQuestionBlocks(md: string): string[] {
   const byHeading = md.split(/(?=^#{1,6}[ \t]+Question[ \t]+\d+)/gim).filter(b => b.trim());
@@ -484,20 +484,24 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
       }
     }
 
-    const correctMatch = block.match(/\*{0,2}Correct (?:Answers?|Options?):\*{0,2}\s*[\s\S]*?\b([A-G](?:,\s*[A-G])*)\b/i);
-    if (!correctMatch) continue;
-
-    const rationaleMatch = block.match(
-      /(?:\*{0,2}(?:Rationale|Explanation):\*{0,2}|(?:Rationale|Explanation):)\s*([\s\S]*?)(?=\*\*Source Reference:\*\*|<\/details>|\n---|\n#{1,6}[ \t]|$)/i,
-    );
-
     const options = opts.map((o) => o.text);
     const letterToIndex = new Map(opts.map((o, idx) => [o.letter, idx]));
-    const rawAnswers = correctMatch[1].replace(/[*()]/g, '');
-    const answers = rawAnswers
-      .split(',')
-      .map((a) => letterToIndex.get(a.trim().charAt(0)))
-      .filter((idx): idx is number => idx !== undefined);
+
+    const correctLineMatch = block.match(/\*{0,2}Correct (?:Answers?|Options?):\*{0,2}[ \t]*([^\n<]+)/i);
+    let answers: number[] = [];
+    if (correctLineMatch) {
+      const letters = [...correctLineMatch[1].matchAll(/\b([A-G])\b/gi)].map(m => m[1].toUpperCase());
+      answers = letters.map(l => letterToIndex.get(l)).filter((idx): idx is number => idx !== undefined);
+    } else {
+      const fallbackMatch = block.match(/\*{0,2}Correct (?:Answers?|Options?):\*{0,2}\s*[\s\S]*?\b([A-G](?:,\s*[A-G])*)\b/i);
+      if (fallbackMatch) {
+        const rawAnswers = fallbackMatch[1].replace(/[*()]/g, '');
+        answers = rawAnswers
+          .split(',')
+          .map((a) => letterToIndex.get(a.trim().charAt(0)))
+          .filter((idx): idx is number => idx !== undefined);
+      }
+    }
     if (answers.length === 0) continue;
 
     const isMSQ =
