@@ -2295,7 +2295,7 @@ export default function StudyTable() {
       case "flashcards": case "revision_flashcards":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #6F9A7F 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
       case "assessment": case "qbank":
-        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "pyq": case "prep_exam": case "mocktest":
         return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #DB2777 0%, #BE185D 100%)", shadow: "0 4px 12px rgba(219, 39, 119, 0.35)" };
       case "swot":
@@ -2390,13 +2390,13 @@ export default function StudyTable() {
                     foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
-                    // Practice (Purple)
-                    flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    master_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    revision_flashcards: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    revise: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    assessment: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    qbank: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
+                    // Practice (Forest Green / SV Sage)
+                    flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    master_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    revision_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    revise: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    assessment: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    qbank: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
                     // Prepare (Pink)
                     pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
@@ -2526,8 +2526,8 @@ export default function StudyTable() {
                       case "flashcards":
                       case "revision_flashcards":
                       case "revise": {
-                        const revColor = active ? "#7C3AED" : blackColor;
-                        const revAccent = active ? "#8B5CF6" : blackMuted;
+                        const revColor = active ? "#4F7B64" : blackColor;
+                        const revAccent = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Clipboard board */}
@@ -2549,8 +2549,8 @@ export default function StudyTable() {
                         );
                       }
                       case "assessment": {
-                        const assColor = active ? "#7C3AED" : blackColor;
-                        const assRing = active ? "#8B5CF6" : blackMuted;
+                        const assColor = active ? "#4F7B64" : blackColor;
+                        const assRing = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Notepad body */}
@@ -2570,9 +2570,9 @@ export default function StudyTable() {
                             {/* Angled pencil writing on pad */}
                             <g transform="translate(19, 13) rotate(35)">
                               <rect x="0" y="0" width="5" height="13" rx="1" fill={assColor} />
-                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#EDE9FE" : "#E2E8F0"} />
-                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#7C3AED" : blackColor} />
-                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#A78BFA" : blackMuted} />
+                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#E8F0EB" : "#E2E8F0"} />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#4F7B64" : blackColor} />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#6F9A7F" : blackMuted} />
                             </g>
                           </svg>
                         );
@@ -2582,8 +2582,8 @@ export default function StudyTable() {
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             <defs>
                               <linearGradient id="qbankGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#8B5CF6" />
-                                <stop offset="100%" stopColor="#6D28D9" />
+                                <stop offset="0%" stopColor="#6F9A7F" />
+                                <stop offset="100%" stopColor="#4F7B64" />
                               </linearGradient>
                             </defs>
                             {/* 3D Glossy Speech bubble */}
@@ -2592,7 +2592,7 @@ export default function StudyTable() {
                               fill={active ? "url(#qbankGradActive)" : blackColor}
                             />
                             {/* Subtle highlight arc */}
-                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#DDD6FE" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#E8F0EB" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
                             {/* White Question mark */}
                             <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
                             <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
@@ -2825,15 +2825,15 @@ export default function StudyTable() {
                           </div>
                         </div>
 
-                        {/* 2. PRACTICE SECTION (Purple #7C3AED) */}
+                        {/* 2. PRACTICE SECTION (Forest Green #4F7B64) */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ color: '#7C3AED', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
+                          <div style={{ color: '#4F7B64', fontSize: '14px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
                             Practice
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#7C3AED")}
-                            {renderNode("assessment", "Assessment", "#7C3AED")}
-                            {renderNode("qbank", "Question Bank", "#7C3AED")}
+                            {renderNode("revision_flashcards", "Revise", "#4F7B64")}
+                            {renderNode("assessment", "Assessment", "#4F7B64")}
+                            {renderNode("qbank", "Question Bank", "#4F7B64")}
                           </div>
                         </div>
 
