@@ -54,7 +54,7 @@ export function parseQuestionBank(markdownText: string): QuizQuestion[] {
     // Collect all lines before the first option or answer as the question text
     let qText = "";
     let optionsStartIndex = 1;
-    const optRegex = /^(?:[-*]?[ \t]*)?(?:\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/i;
+    const optRegex = /^(?:[-*]?[ \t]*)?(?:\*\*\[[ \t]*|\[\*\*[ \t]*|\[[ \t]*|\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\][ \t]*\*\*|\*\*[ \t]*\]|\][ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/i;
     
     // Match answer indicators only when they appear at the start of a line
     const ansStartRegex = /^\s*(?:\*\*|__)?(?:Correct|Answer|correct|answer|جواب|صحیح)\b/i;
