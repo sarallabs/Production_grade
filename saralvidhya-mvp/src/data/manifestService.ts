@@ -75,6 +75,8 @@ export const SHARED_RESOURCE_FILES = new Set([
   'course_offerings.md',
   'mindmap.md',       // lives at chapter root only
   'detailed_view.md', // lives at chapter root only
+  'study_plan.md',    // lives at chapter root or Foundation
+  'key_takeaways.md',
 ]);
 
 /** Files whose content differs per difficulty level. */
