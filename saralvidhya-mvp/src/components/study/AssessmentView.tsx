@@ -514,19 +514,18 @@ export function AssessmentView({
               className="quiz-card assessment-view"
               style={{
                 width: "100%",
-                maxWidth: "860px",
-                minHeight: "360px",
-                maxHeight: "calc(100vh - 160px)",
+                maxWidth: "min(96%, 1120px)",
+                maxHeight: "calc(100vh - 120px)",
                 display: "flex",
                 flexDirection: "column",
-                overflowY: "auto",
+                overflowY: "hidden",
                 margin: "0 auto",
                 background: "#FAFBF9",
                 border: "1.5px solid #2D3E36",
-                borderRadius: "22px",
-                boxShadow: "0 8px 30px rgba(45, 62, 54, 0.06)",
+                borderRadius: "20px",
+                boxShadow: "0 10px 32px rgba(45, 62, 54, 0.08)",
                 position: "relative",
-                padding: "22px 28px 20px 28px",
+                padding: "16px 28px 14px 28px",
                 boxSizing: "border-box",
               }}
             >
@@ -543,13 +542,13 @@ export function AssessmentView({
                 {/* Top-Left Pill Badge: 2 / 10 */}
                 <div
                   style={{
-                    padding: "4px 12px",
+                    padding: "3px 12px",
                     borderRadius: "8px",
                     background: "#FFFFFF",
                     border: "1.5px solid #2D3E36",
                     color: "#2D3E36",
                     fontWeight: "700",
-                    fontSize: "13.5px",
+                    fontSize: "13px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -564,7 +563,7 @@ export function AssessmentView({
                   style={{
                     color: "#2D3E36",
                     fontWeight: "600",
-                    fontSize: "13.5px",
+                    fontSize: "13px",
                     textTransform: "capitalize",
                     letterSpacing: "0.2px",
                   }}
@@ -583,10 +582,10 @@ export function AssessmentView({
                   minHeight: 0,
                   alignItems: "stretch",
                   marginTop: "0px",
-                  marginBottom: "4px",
+                  marginBottom: "2px",
                 }}
               >
-                {/* ── LEFT COLUMN: Question & Options (Centered when unanswered, GPU hardware slides smoothly to left on submit) ── */}
+                {/* ── LEFT COLUMN: Question & Options ── */}
                 {(() => {
                   const cleanQText = (text: string) => {
                     if (!text) return "";
@@ -604,25 +603,20 @@ export function AssessmentView({
                   const maxOptLen = opts.reduce((max: number, o: any) => Math.max(max, (typeof o === 'string' ? o : o.text || '').length), 0);
                   const totalCharLen = qRaw.length + opts.reduce((acc: number, o: any) => acc + (typeof o === 'string' ? o : o.text || '').length, 0);
 
-                  // 4-Tier Dynamic Sizing Engine for Advanced Personas & Long Questions:
-                  const isExtreme = totalCharLen > 460 || maxOptLen > 120;
-                  const isUltraLong = !isExtreme && (totalCharLen > 280 || maxOptLen > 70);
-                  const isLongQ = !isExtreme && !isUltraLong && (totalCharLen > 160 || qRaw.length > 80);
+                  // Responsive sizing tuned for single screen fit without being tiny:
+                  const isExtreme = totalCharLen > 480 || maxOptLen > 140;
+                  const isUltraLong = !isExtreme && (totalCharLen > 320 || maxOptLen > 90);
+                  const isLongQ = !isExtreme && !isUltraLong && (totalCharLen > 180 || qRaw.length > 100);
 
-                  const qFontSize = isExtreme ? "12px" : isUltraLong ? "13px" : isLongQ ? "14px" : "15.5px";
-                  const optTextSize = isExtreme ? "11.8px" : isUltraLong ? "12.8px" : isLongQ ? "13.8px" : "14.8px";
+                  const qFontSize = isExtreme ? "15.5px" : isUltraLong ? "16.5px" : isLongQ ? "17.5px" : "18.5px";
+                  const optTextSize = isExtreme ? "14px" : isUltraLong ? "14.5px" : isLongQ ? "15px" : "15.5px";
 
-                  const qLineHeight = isExtreme ? "1.25" : isUltraLong ? "1.3" : isLongQ ? "1.36" : "1.42";
-                  const qMarginBottom = isExtreme ? "10px" : isUltraLong ? "14px" : isLongQ ? "18px" : "24px";
+                  const qLineHeight = isExtreme ? "1.32" : isUltraLong ? "1.35" : isLongQ ? "1.38" : "1.42";
+                  const qMarginBottom = isExtreme ? "8px" : isUltraLong ? "10px" : isLongQ ? "12px" : "14px";
 
-                  const optGap = isExtreme ? "6px" : isUltraLong ? "10px" : isLongQ ? "14px" : "18px";
-                  const optPadding = isExtreme ? "6px 10px" : isUltraLong ? "9px 14px" : isLongQ ? "12px 16px" : "15px 20px";
-                  const optLineHeight = isExtreme ? "1.18" : isUltraLong ? "1.22" : isLongQ ? "1.28" : "1.36";
-
-                  const badgeSize = isExtreme ? "24px" : isUltraLong ? "26px" : isLongQ ? "30px" : "32px";
-                  const badgeFont = isExtreme ? "12px" : isUltraLong ? "12.5px" : isLongQ ? "13.5px" : "14px";
-                  const radioSize = isExtreme ? "13px" : isUltraLong ? "15px" : isLongQ ? "16px" : "18px";
-                  const dotSize = isExtreme ? "5px" : isUltraLong ? "6px" : isLongQ ? "7px" : "8px";
+                  const optGap = isExtreme ? "6px" : isUltraLong ? "8px" : isLongQ ? "9px" : "10px";
+                  const optPadding = isExtreme ? "8px 14px" : isUltraLong ? "9px 16px" : isLongQ ? "10px 18px" : "11px 20px";
+                  const optLineHeight = isExtreme ? "1.3" : isUltraLong ? "1.34" : isLongQ ? "1.38" : "1.4";
 
                   return (
                     <div
@@ -632,9 +626,7 @@ export function AssessmentView({
                         justifyContent: "flex-start",
                         width: "100%",
                         maxWidth: "100%",
-                        height: "100%",
-                        overflowY: "auto",
-                        paddingRight: "4px",
+                        paddingRight: "2px",
                         transform: "translate3d(0, 0, 0)",
                         WebkitFontSmoothing: "antialiased",
                         MozOsxFontSmoothing: "grayscale",
@@ -649,12 +641,12 @@ export function AssessmentView({
                             fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                             fontWeight: "700",
                             color: "#111827",
-                            lineHeight: "1.4",
+                            lineHeight: qLineHeight,
                             letterSpacing: "-0.1px",
-                            marginTop: "16px",
+                            marginTop: "4px",
                             marginBottom: qMarginBottom,
                             willChange: "font-size, margin-bottom",
-                            transition: "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                           }}
                         >
                           {renderText(cleanQText(currentQ.q))}
@@ -1076,32 +1068,32 @@ export function AssessmentView({
                 {submitted && (
                   <div
                     style={{
-                      marginTop: "14px",
-                      borderRadius: "12px",
+                      marginTop: "6px",
+                      borderRadius: "10px",
                       border: `1.5px solid ${currentIsCorrect ? "#2D3E36" : "#D9534F"}`,
                       background: currentIsCorrect ? "#F2F8F4" : "#FDF4F3",
-                      padding: "12px 16px",
+                      padding: "6px 12px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
+                      gap: "3px",
                     }}
                   >
                     {/* Status + correct option in one row */}
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                       <span style={{
                         fontWeight: "800",
-                        fontSize: "13px",
+                        fontSize: "12px",
                         color: currentIsCorrect ? "#2D3E36" : "#D9534F",
                         display: "flex", alignItems: "center", gap: "4px",
                       }}>
                         {currentIsCorrect ? "✓ Correct!" : "✕ Incorrect"}
                       </span>
                       {!currentIsCorrect && (
-                        <span style={{ fontSize: "12px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span style={{ fontSize: "11.5px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
                           Correct option:
                           <span style={{
                             background: "#E8F0EB", color: "#2D3E36", fontWeight: "800",
-                            borderRadius: "5px", padding: "1px 7px", fontSize: "12px",
+                            borderRadius: "4px", padding: "1px 6px", fontSize: "11px",
                             border: "1px solid #2D3E36",
                           }}>
                             {typeof (currentQ as any).answer === 'number'
@@ -1117,11 +1109,11 @@ export function AssessmentView({
                     </div>
                     {/* Explanation text */}
                     <div style={{
-                      fontSize: "13px",
+                      fontSize: "11.5px",
                       color: "#1E293B",
-                      lineHeight: "1.5",
+                      lineHeight: "1.36",
                       fontWeight: "500",
-                      maxHeight: "120px",
+                      maxHeight: "65px",
                       overflowY: "auto",
                     }}>
                       <MarkdownView
@@ -1144,7 +1136,7 @@ export function AssessmentView({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginTop: "12px",
+                  marginTop: "6px",
                   width: "100%",
                 }}
               >
@@ -1154,16 +1146,16 @@ export function AssessmentView({
                       onClick={handleMSQSubmit}
                       disabled={selectedMSQ.length === 0}
                       style={{
-                        padding: "7px 18px",
-                        borderRadius: "18px",
+                        padding: "5px 14px",
+                        borderRadius: "14px",
                         border: "none",
                         background: "#2D3E36",
                         color: "#ffffff",
                         fontWeight: "700",
-                        fontSize: "13px",
+                        fontSize: "12px",
                         cursor: selectedMSQ.length === 0 ? "not-allowed" : "pointer",
                         opacity: selectedMSQ.length === 0 ? 0.45 : 1,
-                        boxShadow: "0 4px 10px rgba(45, 62, 54, 0.2)",
+                        boxShadow: "0 3px 8px rgba(45, 62, 54, 0.2)",
                         transition: "all 0.2s ease",
                       }}
                     >
@@ -1183,32 +1175,35 @@ export function AssessmentView({
                   }
                   aria-label={step < questions.length - 1 ? "Next Question" : "Finish Assessment"}
                   style={{
-                    width: "34px",
-                    height: "34px",
-                    borderRadius: "50%",
+                    padding: submitted ? "5px 14px" : "5px 10px",
+                    height: "30px",
+                    borderRadius: "15px",
                     border: "none",
                     background: "#2D3E36",
                     color: "#ffffff",
                     display: "flex",
                     alignItems: "center",
+                    gap: "6px",
                     justifyContent: "center",
                     cursor: submitted ? "pointer" : "default",
                     opacity: submitted ? 1 : 0.35,
-                    boxShadow: submitted ? "0 4px 10px rgba(45, 62, 54, 0.25)" : "none",
+                    boxShadow: submitted ? "0 3px 8px rgba(45, 62, 54, 0.25)" : "none",
                     transition: "transform 0.2s ease, opacity 0.2s ease",
                     marginLeft: "auto",
                     flexShrink: 0,
+                    fontSize: "12px",
+                    fontWeight: "700",
                   }}
                   onMouseEnter={(e) => {
-                    if (submitted) e.currentTarget.style.transform = "scale(1.08)";
+                    if (submitted) e.currentTarget.style.transform = "scale(1.05)";
                   }}
                   onMouseLeave={(e) => {
                     if (submitted) e.currentTarget.style.transform = "scale(1)";
                   }}
                 >
-                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
+                  <span>{step < questions.length - 1 ? "Next Question" : "Finish"}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="9 18 15 12 9 6" />
                   </svg>
                 </button>
               </div>

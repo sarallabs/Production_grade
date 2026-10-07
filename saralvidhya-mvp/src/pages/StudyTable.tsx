@@ -2218,32 +2218,149 @@ export default function StudyTable() {
                   </div>
                 </div>
 
-                {/* Tab bar for text mode */}
+                {/* Header row: Persona levels centered + Essentials / In-depth toggle button on the right */}
                 {mindmapInlineType === 'text' && (
-                  <div className="mm-section-tabs">
-                    <button
-                      className={`mm-tab-btn${mindmapInlineTab === 'quick' ? ' active' : ''}`}
-                      onClick={() => setMindmapInlineTab('quick')}
+                  <div
+                    style={{
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                      minHeight: '48px',
+                      padding: '4px 12px 6px',
+                      boxSizing: 'border-box',
+                    }}
+                  >
+                    {/* Left spacer to keep center aligned */}
+                    <div style={{ flex: 1, minWidth: 0 }} />
+
+                    {/* Center: persona levels (exact match with assessment & flashcards) */}
+                    <div
+                      className="sv-hdr-levels"
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                      }}
                     >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M4 19.5C4 18.837 4.26339 18.2011 4.73223 17.7322C5.20107 17.2634 5.83696 17 6.5 17H20" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M6.5 2H20V22H6.5C5.83696 22 5.20107 21.7366 4.73223 21.2678C4.26339 20.7989 4 20.163 4 19.5V4.5C4 3.83696 4.26339 3.20107 4.73223 2.73223C5.20107 2.26339 5.83696 2 6.5 2V2Z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        Essentials
-                      </span>
-                    </button>
-                    <button
-                      className={`mm-tab-btn${mindmapInlineTab === 'detailed' ? ' active' : ''}`}
-                      onClick={() => setMindmapInlineTab('detailed')}
-                    >
-                      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                          <path d="M9 12h6M9 16h6M5 4h14a2 2 0 012 2v12a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        In-depth
-                      </span>
-                    </button>
+                      {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => {
+                        const isSelected = persona === lvl;
+                        return (
+                          <button
+                            key={lvl}
+                            id={`mm-studybar-level-${lvl}`}
+                            type="button"
+                            className={`sv-hdr-level-btn lvl-${lvl}${isSelected ? " active-lvl" : ""}`}
+                            onClick={() => setPersona(lvl)}
+                            title={lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                            style={{
+                              width: '54px',
+                              height: '54px',
+                              borderRadius: '12px',
+                              padding: 0,
+                              border: isSelected ? '2.5px solid #2D473B' : '2.5px solid transparent',
+                              background: isSelected ? '#FFFFFF' : 'transparent',
+                              boxShadow: isSelected ? '0 3px 12px rgba(45, 71, 59, 0.2)' : 'none',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              boxSizing: 'border-box',
+                              flexShrink: 0,
+                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                            }}
+                          >
+                            <img
+                              src={`${import.meta.env.BASE_URL}personas/${lvl}.png`}
+                              alt={lvl}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                padding: '3px',
+                                boxSizing: 'border-box',
+                                filter: isSelected ? 'grayscale(0) opacity(1)' : 'grayscale(0.2) opacity(0.75)',
+                                transform: isSelected ? 'scale(1.04)' : 'none',
+                                transition: 'filter 0.2s ease, transform 0.2s ease',
+                              }}
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right: toggle button for Essentials | In-depth */}
+                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', zIndex: 11 }}>
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          background: '#E2E8F0',
+                          padding: '3px',
+                          borderRadius: '999px',
+                          border: '1px solid #CBD5E1',
+                          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setMindmapInlineTab('quick')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 18px',
+                            borderRadius: '999px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: mindmapInlineTab === 'quick' ? '#15803d' : 'transparent',
+                            color: mindmapInlineTab === 'quick' ? '#ffffff' : '#64748b',
+                            boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                            transition: 'all 0.18s ease',
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                          </svg>
+                          Essentials
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setMindmapInlineTab('detailed')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 18px',
+                            borderRadius: '999px',
+                            fontSize: '13px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: mindmapInlineTab === 'detailed' ? '#15803d' : 'transparent',
+                            color: mindmapInlineTab === 'detailed' ? '#ffffff' : '#64748b',
+                            boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                            transition: 'all 0.18s ease',
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 8v4l2 2" />
+                          </svg>
+                          In-depth
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -3412,46 +3529,46 @@ export default function StudyTable() {
             </div>
           )}
 
-          {/* Top Hover Trigger Area & Centered Pull-Tab */}
+          {/* Top Hover Trigger Notch */}
           {!isToolbarOpen && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
             <div
               onClick={() => setIsToolbarOpen(true)}
-              title="Click to show Study Tools"
+              onMouseEnter={() => setIsToolbarOpen(true)}
+              title="Show Study Tools"
+              aria-label="Show Study Tools"
               style={{
                 position: "absolute",
-                top: "0",
+                top: 0,
                 left: "50%",
                 transform: "translateX(-50%) translate3d(0, 0, 0)",
-                padding: "4px 18px 5px",
-                borderBottomLeftRadius: "12px",
-                borderBottomRightRadius: "12px",
-                background: "#ffffff",
-                border: "1px solid #E2E8F0",
-                borderTop: "none",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                padding: "2px 24px 10px 24px",
                 cursor: "pointer",
                 zIndex: 99,
                 display: "flex",
                 alignItems: "center",
-                gap: "6px",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#475569",
-                transition: "all 0.2s ease",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLDivElement).style.background = "#F8FAFC";
-                (e.currentTarget as HTMLDivElement).style.color = "#1E293B";
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLDivElement).style.background = "#ffffff";
-                (e.currentTarget as HTMLDivElement).style.color = "#475569";
+                justifyContent: "center",
               }}
             >
-              <span>Study Tools</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <div
+                style={{
+                  width: "48px",
+                  height: "5px",
+                  borderRadius: "999px",
+                  backgroundColor: "#94A3B8",
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "#0F766E";
+                  (e.currentTarget as HTMLDivElement).style.width = "64px";
+                  (e.currentTarget as HTMLDivElement).style.height = "6px";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "#94A3B8";
+                  (e.currentTarget as HTMLDivElement).style.width = "48px";
+                  (e.currentTarget as HTMLDivElement).style.height = "5px";
+                }}
+              />
             </div>
           )}
 
@@ -3461,12 +3578,16 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam"
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam" || activeTool === "assessment"
                   ? "hidden"
                   : "auto",
               padding:
                 activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
                   ? "0px"
+                  : activeTool === "assessment"
+                  ? "4px 16px 0 16px"
+                  : (activeTool === "flashcards" || activeTool === "revision_flashcards")
+                  ? "2px 16px 8px 16px"
                   : "16px 16px 0 16px",
               display: "flex",
               flexDirection: "column",
@@ -3487,7 +3608,7 @@ export default function StudyTable() {
                   gap: "20px",
                   marginTop: 0,
                   paddingTop: 0,
-                  marginBottom: "12px",
+                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "4px" : "12px",
                   flexShrink: 0,
                 }}
               >
@@ -3505,8 +3626,8 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
-                        min-height: 64px;
-                        padding: 4px 0 8px 0;
+                        min-height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "64px"};
+                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0 0 2px 0" : "4px 0 8px 0"};
                         overflow: visible;
                       }
                       /* LEFT breadcrumb — single line, no card box */
@@ -3530,11 +3651,13 @@ export default function StudyTable() {
                         left: 50%;
                         top: 50%;
                         transform: translate(-50%, -50%);
-                        display: flex; gap: 12px; align-items: center; justify-content: center;
+                        display: flex; gap: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "10px" : "12px"}; align-items: center; justify-content: center;
                         z-index: 10;
                       }
                       .sv-hdr-level-btn {
-                        width: 58px; height: 58px; border-radius: 14px;
+                        width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
+                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
+                        border-radius: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "12px" : "14px"};
                         padding: 0; border: 2.5px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -3637,21 +3760,63 @@ export default function StudyTable() {
                       {/* RIGHT: mode toggles — Essentials | In-depth */}
                       <div className="sv-hdr-controls">
                         {(activeTool === "summary" || activeTool === "detailed") && (
-                          <div className="sv-hdr-modes">
-                            <button id="studybar-mode-quick" type="button"
-                              className={`sv-hdr-mode-btn${activeTool === "summary" ? " active-quick" : ""}`}
-                              onClick={() => setActiveTool("summary")} title="Essentials"
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                background: '#E2E8F0',
+                                padding: '3px',
+                                borderRadius: '999px',
+                                border: '1px solid #CBD5E1',
+                                boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
+                              }}
                             >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                              Essentials
-                            </button>
-                            <button id="studybar-mode-detailed" type="button"
-                              className={`sv-hdr-mode-btn${activeTool === "detailed" ? " active-detailed" : ""}`}
-                              onClick={() => setActiveTool("detailed")} title="In-depth"
-                            >
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
-                              In-depth
-                            </button>
+                              <button id="studybar-mode-quick" type="button"
+                                className={`sv-hdr-mode-btn${activeTool === "summary" ? " active-quick" : ""}`}
+                                onClick={() => setActiveTool("summary")} title="Essentials"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '6px 18px',
+                                  borderRadius: '999px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: 'none',
+                                  background: activeTool === "summary" ? '#15803d' : 'transparent',
+                                  color: activeTool === "summary" ? '#ffffff' : '#64748b',
+                                  boxShadow: activeTool === "summary" ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                                  transition: 'all 0.18s ease',
+                                }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                Essentials
+                              </button>
+                              <button id="studybar-mode-detailed" type="button"
+                                className={`sv-hdr-mode-btn${activeTool === "detailed" ? " active-detailed" : ""}`}
+                                onClick={() => setActiveTool("detailed")} title="In-depth"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  padding: '6px 18px',
+                                  borderRadius: '999px',
+                                  fontSize: '13px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  border: 'none',
+                                  background: activeTool === "detailed" ? '#15803d' : 'transparent',
+                                  color: activeTool === "detailed" ? '#ffffff' : '#64748b',
+                                  boxShadow: activeTool === "detailed" ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                                  transition: 'all 0.18s ease',
+                                }}
+                              >
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
+                                In-depth
+                              </button>
+                            </div>
                             {/* Read Aloud — inline, right of mode buttons */}
                             <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
                             <ReadAloudBar

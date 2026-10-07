@@ -152,8 +152,8 @@ firebase-service-account.json
 .venv-podcast/
 
 # ProjectBrain (local dev only)
-.projectbrain.json
-.projectbrain_graph.json
+.projectbrain*
+*.projectbrain*
 test_projectbrain.json
 project_brain.py
 .agents/

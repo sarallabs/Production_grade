@@ -243,9 +243,15 @@ export function parseQuestionBankMarkdown(
       }
 
       let longAnswer = '';
-      const longMatch = block.match(/\*\*5-Mark Comprehensive Long Answer:\*\*([\s\S]*?)(?=---|##|$)/i);
+      const longMatch = block.match(/\*\*5-Mark Comprehensive Long Answer:\*\*([\s\S]*?)(?=\*\*10-Mark|---|##|$)/i);
       if (longMatch) {
         longAnswer = longMatch[1].trim();
+      }
+
+      let tenMarkAnswer = '';
+      const tenMatch = block.match(/\*\*10-Mark(?:[\w\s]+)?:\*\*([\s\S]*?)(?=---|##|$)/i);
+      if (tenMatch) {
+        tenMarkAnswer = tenMatch[1].trim();
       }
 
       dualEntries.push({
@@ -257,6 +263,7 @@ export function parseQuestionBankMarkdown(
         question,
         shortAnswer,
         longAnswer: longAnswer || shortAnswer,
+        tenMarkAnswer: tenMarkAnswer || undefined,
       });
     });
 

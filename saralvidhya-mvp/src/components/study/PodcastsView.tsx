@@ -1206,9 +1206,9 @@ export default function PodcastsView({
               );
             })
           ) : (
-            (["long", "short"] as const).map((t) => {
-              const labelMap: any = { long: "Long Podcast", short: "Short Podcast" };
-              const descMap: any = { long: "In-depth Chapter Coverage", short: "Brief Recap of Key Points" };
+            (["short", "long"] as const).map((t) => {
+              const labelMap: any = { short: "Quick Podcast", long: "Detailed Podcast" };
+              const descMap: any = { short: "Brief Recap of Key Points", long: "In-depth Chapter Coverage" };
               return (
                 <div
                   key={t}
@@ -1269,7 +1269,7 @@ export default function PodcastsView({
           width: "100%"
         }}>
           {isNebOrMgmt ? (
-            (["dl", "mc", "ql"] as const).map((t) => {
+            (["ql", "dl", "mc"] as const).map((t) => {
               const isActive = selectedTrack === t;
               const config: any = {
                 dl: {
@@ -1458,7 +1458,7 @@ export default function PodcastsView({
               );
             })
           ) : (
-            (["long", "short"] as const).map((t) => {
+            (["short", "long"] as const).map((t) => {
               const isActive = selectedTrack === t;
               const config: any = {
                 long: {
