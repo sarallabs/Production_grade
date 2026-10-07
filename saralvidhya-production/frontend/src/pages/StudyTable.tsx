@@ -2742,11 +2742,19 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 1. LEARN SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <div style={{ background: '#dcfce7', color: '#16a34a', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #16a34a',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(22, 163, 74, 0.02)',
+                          }}
+                        >
+                          <div style={{ color: '#16a34a', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <span>Learn</span>
-                            {/* Three parallel tool sets exist in a segmented
-                                chapter — say which video's is on screen. */}
                             {isSegmented && (
                               <span
                                 title={activeVideo?.title}
@@ -2760,8 +2768,6 @@ export default function StudyTable() {
                             {renderNode("summary", "Read", "#16a34a")}
                             {renderNode("podcasts", "Listen", "#16a34a")}
                             {renderNode("videos", "Watch", "#16a34a")}
-                            {renderNode("mindmap", "Mindmap", "#16a34a")}
-                            {renderNode("key_takeaways", "Key Takeaways", "#16a34a")}
                           </div>
                         </div>
 
@@ -2769,7 +2775,17 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 2. PRACTICE SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #9333ea',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(147, 51, 234, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#f3e8ff', color: '#9333ea', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Practice</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {renderNode("revision_flashcards", "Revise", "#9333ea")}
@@ -2782,7 +2798,17 @@ export default function StudyTable() {
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
                         {/* 3. PREPARE SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #ec4899',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(236, 72, 153, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#fce7f3', color: '#ec4899', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Prepare</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             {renderNode("pyq", "PYQ", "#ec4899")}
@@ -2793,10 +2819,22 @@ export default function StudyTable() {
                         {/* Divider */}
                         <div style={{ width: '2.5px', height: '46px', background: 'rgba(148, 163, 184, 0.2)', alignSelf: 'flex-start', margin: '34px 16px 0 16px', flexShrink: 0, borderRadius: '2px' }} />
 
-                        {/* 5. RESOURCES SECTION */}
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        {/* 4. RESOURCES SECTION */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            border: '1.5px solid #92400e',
+                            borderRadius: '16px',
+                            padding: '6px 12px 8px',
+                            background: 'rgba(146, 64, 14, 0.02)',
+                          }}
+                        >
                           <div style={{ background: '#fef3c7', color: '#92400e', fontSize: '12px', fontWeight: 700, padding: '3px 20px', borderRadius: '12px', marginBottom: '8px', textAlign: 'center' }}>Resources</div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {renderNode("mindmap", "Mindmap", "#92400e")}
+                            {renderNode("key_takeaways", "Key Takeaways", "#92400e")}
                             {renderNode("ask", "Ask me", "#92400e")}
                           </div>
                         </div>
@@ -3138,8 +3176,79 @@ export default function StudyTable() {
                       .sv-hdr-controls {
                         display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-shrink: 0;
                       }
-                      /* Mode row: Quick | Detailed | Key Takeaways */
+                      /* Mode row: Quick | Detailed */
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
+                      /* Reading Depth Segmented Toggle */
+                      .sv-hdr-segmented-toggle {
+                        position: relative;
+                        display: inline-flex;
+                        align-items: center;
+                        background: #f1f5f9;
+                        border: 1.5px solid #cbd5e1;
+                        border-radius: 9999px;
+                        padding: 3px;
+                        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+                        user-select: none;
+                        gap: 0;
+                        box-sizing: border-box;
+                      }
+                      .sv-hdr-toggle-pill-bg {
+                        position: absolute;
+                        top: 3px;
+                        bottom: 3px;
+                        left: 3px;
+                        width: calc(50% - 3px);
+                        background: #15803d;
+                        border-radius: 9999px;
+                        box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
+                        transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+                        pointer-events: none;
+                        z-index: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="summary"] .sv-hdr-toggle-pill-bg {
+                        transform: translateX(0);
+                        opacity: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="detailed"] .sv-hdr-toggle-pill-bg {
+                        transform: translateX(100%);
+                        opacity: 1;
+                      }
+                      .sv-hdr-segmented-toggle[data-active="none"] .sv-hdr-toggle-pill-bg {
+                        opacity: 0;
+                      }
+                      .sv-hdr-toggle-btn {
+                        position: relative;
+                        z-index: 2;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 6px;
+                        padding: 7px 22px;
+                        border-radius: 9999px;
+                        border: none;
+                        background: transparent;
+                        font-size: 0.84rem;
+                        font-weight: 600;
+                        cursor: pointer;
+                        white-space: nowrap;
+                        line-height: 1;
+                        color: #475569;
+                        transition: color 0.18s ease;
+                        flex: 1;
+                      }
+                      .sv-hdr-toggle-btn:hover {
+                        color: #0f172a;
+                      }
+                      .sv-hdr-toggle-btn.active {
+                        color: #ffffff;
+                        font-weight: 700;
+                      }
+                      .sv-hdr-toggle-btn svg {
+                        transition: transform 0.18s ease;
+                      }
+                      .sv-hdr-toggle-btn:hover svg {
+                        transform: scale(1.1);
+                      }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
                         padding: 6px 16px; border-radius: 20px;
@@ -3150,7 +3259,7 @@ export default function StudyTable() {
                         line-height: 1;
                       }
                       .sv-hdr-mode-btn:hover { border-color: #94a3b8; color: #0f172a; background: #f8fafc; }
-                      .sv-hdr-mode-btn.active-quick    { background: #3b82f6; border-color: #3b82f6; color: #ffffff; box-shadow: 0 2px 8px rgba(59,130,246,0.4); }
+                      .sv-hdr-mode-btn.active-quick    { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
                       .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
                       .sv-hdr-mode-btn.active-key      { background: #d97706; border-color: #d97706; color: #ffffff; box-shadow: 0 2px 8px rgba(217,119,6,0.4); }
                     `}</style>
@@ -3192,20 +3301,38 @@ export default function StudyTable() {
                       {/* RIGHT: mode toggles — Quick | Detailed only */}
                       <div className="sv-hdr-controls">
                         <div className="sv-hdr-modes">
-                          <button id="studybar-mode-quick" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "summary" ? " active-quick" : ""}`}
-                            onClick={() => setActiveTool("summary")} title="Essentials"
+                          <div
+                            className="sv-hdr-segmented-toggle"
+                            data-active={activeTool === "summary" ? "summary" : activeTool === "detailed" ? "detailed" : "none"}
+                            role="radiogroup"
+                            aria-label="Reading depth toggle"
                           >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                            Essentials
-                          </button>
-                          <button id="studybar-mode-detailed" type="button"
-                            className={`sv-hdr-mode-btn${activeTool === "detailed" ? " active-detailed" : ""}`}
-                            onClick={() => setActiveTool("detailed")} title="In-depth"
-                          >
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
-                            In-depth
-                          </button>
+                            <div className="sv-hdr-toggle-pill-bg" />
+                            <button
+                              id="studybar-mode-quick"
+                              type="button"
+                              role="radio"
+                              aria-checked={activeTool === "summary"}
+                              className={`sv-hdr-toggle-btn${activeTool === "summary" ? " active" : ""}`}
+                              onClick={() => setActiveTool("summary")}
+                              title="Essentials"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                              Essentials
+                            </button>
+                            <button
+                              id="studybar-mode-detailed"
+                              type="button"
+                              role="radio"
+                              aria-checked={activeTool === "detailed"}
+                              className={`sv-hdr-toggle-btn${activeTool === "detailed" ? " active" : ""}`}
+                              onClick={() => setActiveTool("detailed")}
+                              title="In-depth"
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg>
+                              In-depth
+                            </button>
+                          </div>
                           {/* Read Aloud — inline, right of mode buttons */}
                           <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
                           <ReadAloudBar
