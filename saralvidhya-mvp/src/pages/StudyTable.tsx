@@ -886,6 +886,15 @@ export default function StudyTable() {
         };
       case "key_takeaways":
         return {
+          tool: "study_plan",
+          label: "Study Plan",
+          subLabel: "Study Plan",
+          description: "Curriculum roadmap and schedule",
+          color: "#4F7B64",
+          action: () => setActiveTool("study_plan"),
+        };
+      case "study_plan":
+        return {
           tool: "pyq",
           label: "PYQ",
           subLabel: "Previous Year Questions",
@@ -1292,6 +1301,10 @@ export default function StudyTable() {
       getResourceContent(internalSubId, chapterNumber, "key_takeaways.md", persona, activeVideoDir)
         .then(apply)
         .catch(() => apply("Key Takeaways not available for this chapter."));
+    } else if (activeTool === "study_plan") {
+      getResourceContent(internalSubId, chapterNumber, "study_plan.md", persona, activeVideoDir)
+        .then(apply)
+        .catch(() => apply("Study Plan not available for this chapter."));
     } else if (activeTool === "detailed") {
       getResourceContent(
         internalSubId,
@@ -1413,6 +1426,7 @@ export default function StudyTable() {
     switch (activeTool) {
       case "summary":
       case "key_takeaways":
+      case "study_plan":
       case "detailed": {
         const parseDetailedHeadings = (markdown: string) => {
           const lines = markdown.split('\n');
@@ -2660,6 +2674,7 @@ export default function StudyTable() {
     summary: "Study Table",
     detailed: "Study Table",
     key_takeaways: "Key Takeaways",
+    study_plan: "Study Plan",
     mindmap: "Mindmap",
     foundation: "Mindmap",
     flashcards: "Flashcards",
@@ -2726,7 +2741,7 @@ export default function StudyTable() {
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
       case "detailed":
-      case "summary": case "key_takeaways": case "podcasts": case "videos": case "mindmap": case "foundation":
+      case "summary": case "key_takeaways": case "study_plan": case "podcasts": case "videos": case "mindmap": case "foundation":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
       case "flashcards": case "revision_flashcards":
         return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #6F9A7F 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
@@ -2833,6 +2848,7 @@ export default function StudyTable() {
 
                     // Prepare (Pink)
                     key_takeaways: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
@@ -2956,6 +2972,32 @@ export default function StudyTable() {
                             <path d="M26.5 24.5L29 22" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
                             {/* Sparkle badge */}
                             <path d="M7 7C7 8.5 5.8 9.5 4.5 9.5C5.8 9.5 7 10.5 7 12C7 10.5 8.2 9.5 9.5 9.5C8.2 9.5 7 8.5 7 7Z" fill={active ? keyColor : "#94A3B8"} />
+                          </svg>
+                        );
+                      }
+                      case "study_plan": {
+                        const planColor = active ? "#4F7B64" : blackColor;
+                        const planAccent = active ? "#6F9A7F" : blackMuted;
+                        const planBg = active ? "#EAF2ED" : "#FFFFFF";
+                        return (
+                          <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
+                            {/* Calendar / Planner base board */}
+                            <rect x="6" y="7" width="24" height="23" rx="3.5" fill={planBg} stroke={planColor} strokeWidth="2" />
+                            {/* Top calendar header strip */}
+                            <path d="M6 10.5C6 8.567 7.567 7 9.5 7H26.5C28.433 7 30 8.567 30 10.5V13H6V10.5Z" fill={planColor} />
+                            {/* Binder rings */}
+                            <rect x="10" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
+                            <rect x="17" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
+                            <rect x="23.5" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
+                            {/* Grid cells / tasks inside calendar */}
+                            <rect x="9.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
+                            <rect x="16" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
+                            <rect x="22.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
+                            {/* Checklist items in bottom half */}
+                            <path d="M10 23.5L11.8 25.2L14.5 22.2" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="23.5" x2="26" y2="23.5" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.75" />
+                            <circle cx="11" cy="27.5" r="1.5" fill={planAccent} />
+                            <line x1="17" y1="27.5" x2="24" y2="27.5" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
                           </svg>
                         );
                       }
@@ -3334,6 +3376,7 @@ export default function StudyTable() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {renderNode("mindmap", "Mindmaps", "#4F7B64")}
                             {renderNode("key_takeaways", "Key Takeaways", "#4F7B64")}
+                            {renderNode("study_plan", "Study Plan", "#4F7B64")}
                           </div>
                         </div>
 
@@ -3932,7 +3975,7 @@ export default function StudyTable() {
                       </div>
                     </div>
                   </>
-                ) : activeTool === "key_takeaways" ? (
+                ) : (activeTool === "key_takeaways" || activeTool === "study_plan") ? (
                   <div className="sv-hdr" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '4px 0 8px 0' }}>
                     <div className="sv-hdr-card">
                       <span className="sv-hdr-crumb">
@@ -3944,13 +3987,13 @@ export default function StudyTable() {
                     <div style={{ flex: 1 }} />
                     <div className="sv-hdr-controls">
                       <ReadAloudBar
-                        key={`${persona}-key_takeaways`}
+                        key={`${persona}-${activeTool}`}
                         text={preprocessSummaryText(typeof content === "string" ? content : "")}
                         subjectId={subjectId}
                         persona={persona}
                         onPlay={() => { setIsSidebarOpen(false); }}
                         onHighlightChange={(payload) => setReadingHighlight(payload)}
-                        activeTool="key_takeaways"
+                        activeTool={activeTool}
                         onSwitchTool={setActiveTool}
                       />
                     </div>
@@ -3959,7 +4002,7 @@ export default function StudyTable() {
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
                       <div style={{ display: "flex", flexDirection: "column" }}>
-                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation"].includes(activeTool) && (
+                        {!isMoocMode && !["videos", "pyq", "summary", "detailed", "assessment", "flashcards", "revision_flashcards", "ask", "foundation", "study_plan"].includes(activeTool) && (
                           <h1 className="st-page-title" style={{ margin: 0, fontSize: "1.6rem" }}>
                             {TOOL_LABELS[activeTool]}
                           </h1>
@@ -4002,7 +4045,7 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" ||
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
                     activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam"
                     ? "transparent"
                     : "#ffffff",
@@ -4020,7 +4063,7 @@ export default function StudyTable() {
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || (activeTool === "mindmap" && mindmapTopicOpen)
+                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
                         ? "1px solid #22c55e4D"
                         : "1px solid #E2E8F0",
                 overflowX: "hidden",
@@ -4040,12 +4083,12 @@ export default function StudyTable() {
                           ? "16px"
                           : activeTool === "deep_dive"
                             ? "8px"
-                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || (activeTool === "mindmap" && mindmapTopicOpen)
+                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
                               ? "0px"
                               : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways") ? "48px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >

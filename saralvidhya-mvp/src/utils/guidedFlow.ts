@@ -21,6 +21,7 @@ export const GUIDED_LABELS: Record<string, string> = {
   flashcards: "Flashcards",
   summary: "Quick Study",
   key_takeaways: "Key Takeaways",
+  study_plan: "Study Plan",
   detailed: "Detailed Study",
   assessment: "Assessments",
   mindmap: "Mindmap",
@@ -35,6 +36,7 @@ export const GUIDED_ICONS: Record<string, string> = {
   flashcards: "🗂️",
   summary: "📖",
   key_takeaways: "🔑",
+  study_plan: "📅",
   detailed: "📝",
   assessment: "🎯",
   mindmap: "🧠",
@@ -155,7 +157,7 @@ export function isToolUnlocked(
   const idx = flow.indexOf(tool);
   if (idx === -1) return true;
 
-  if (["podcasts", "summary", "detailed", "mindmap", "foundation", "course_offerings", "youtube_links", "podcast_script", "study_guide", "learning_path"].includes(tool)) {
+  if (["podcasts", "summary", "detailed", "mindmap", "foundation", "course_offerings", "youtube_links", "podcast_script", "study_guide", "learning_path", "study_plan", "key_takeaways"].includes(tool)) {
     return true;
   }
 

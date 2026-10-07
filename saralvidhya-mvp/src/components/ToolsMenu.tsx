@@ -4,6 +4,7 @@ export type ToolId =
   | "summary"
   | "detailed"
   | "key_takeaways"
+  | "study_plan"
   | "flashcards"
   | "podcasts"
   | "ask"
@@ -41,6 +42,7 @@ const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string; disabl
   { id: "assessment", icon: "🎯", label: "Assessments", desc: "Test knowledge" },
   { id: "qbank", icon: "🏦", label: "Question Bank", desc: "Practice more" },
   { id: "key_takeaways", icon: "🔑", label: "Key Takeaways", desc: "Key Takeaways" },
+  { id: "study_plan", icon: "📅", label: "Study Plan", desc: "Curriculum roadmap and schedule" },
   { id: "pyq", icon: "📄", label: "PYQ", desc: "Previous Year Questions" },
   { id: "prep_exam", icon: "📝", label: "Preparation Exam", desc: "Test your preparation" },
   { id: "swot", icon: "💡", label: "SWOT", desc: "SWOT Analysis", disabled: true },
