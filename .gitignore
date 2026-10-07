@@ -66,3 +66,9 @@ Thumbs.db
 
 # Vite cache
 .vite/
+
+# ProjectBrain
+.projectbrain*
+*.projectbrain*
+project_brain.py
+test_projectbrain.json

@@ -255,13 +255,13 @@ export default function FlashcardsView({
   }
 
   return (
-    <div className="flashcards-rich flashcards-fast" style={{ width: "100%", height: "100%", flex: 1, display: "flex", flexDirection: "column", alignItems: "stretch" }}>
+    <div className="flashcards-rich flashcards-fast" style={{ width: "100%", height: "100%", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", alignItems: "stretch", overflow: "hidden" }}>
       {currentIndex === totalCards - 1 && levelControls && (
-        <div style={{ marginBottom: "20px", display: "flex", justifyContent: "center" }}>
+        <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center", flexShrink: 0 }}>
           {levelControls}
         </div>
       )}
-      <div className="flashcards-stage" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", width: "100%", maxWidth: "min(98%, 1320px)", margin: "0 auto", padding: "4px 12px 14px", flex: 1, minHeight: 0 }}>
+      <div className="flashcards-stage" style={{ display: "flex", alignItems: "stretch", justifyContent: "center", gap: "12px", width: "100%", maxWidth: "min(98%, 1320px)", margin: "0 auto", padding: "0 12px 2px", flex: 1, height: "100%", minHeight: 0, overflow: "hidden" }}>
         {/* Left Navigation Button */}
         <button
           type="button"
@@ -270,25 +270,26 @@ export default function FlashcardsView({
           disabled={currentIndex === 0}
           aria-label="Previous card"
           style={{
-            width: "40px",
-            height: "40px",
+            width: "36px",
+            height: "36px",
             borderRadius: "50%",
             border: "none",
             background: "#ffffff",
             color: "#0f172a",
             fontWeight: "800",
-            fontSize: "20px",
-            boxShadow: "0 6px 18px rgba(0, 0, 0, 0.1)",
+            fontSize: "18px",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
             cursor: currentIndex === 0 ? "default" : "pointer",
             opacity: currentIndex === 0 ? 0.4 : 1,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
+            alignSelf: "center",
             transition: "all 0.2s ease",
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
@@ -300,10 +301,10 @@ export default function FlashcardsView({
             width: "100%",
             maxWidth: "min(96%, 1240px)",
             flex: 1,
-            height: "calc((100vh - 220px) * 0.94)",
-            maxHeight: "calc(100vh - 220px)",
-            minHeight: "340px",
-            borderRadius: "24px",
+            height: "100%",
+            maxHeight: "100%",
+            minHeight: 0,
+            borderRadius: "20px",
             border: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
                 ? "2px solid #CB30E080"
@@ -333,7 +334,7 @@ export default function FlashcardsView({
                 : (cards[currentIndex]?.level || persona) === "advanced"
                   ? "0 16px 44px rgba(45, 62, 54, 0.28)"
                   : "0 16px 44px rgba(45, 62, 54, 0.14)",
-            padding: "16px 22px 12px",
+            padding: "10px 18px 8px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
@@ -359,8 +360,8 @@ export default function FlashcardsView({
               borderBottomRightRadius: "12px",
               color: isPurpleTheme ? "#0f172a" : "#2D3E36",
               fontWeight: "800",
-              fontSize: "15px",
-              padding: "6px 16px",
+              fontSize: "12.5px",
+              padding: "3px 12px",
               zIndex: 10,
               display: "flex",
               alignItems: "center",
@@ -374,14 +375,15 @@ export default function FlashcardsView({
             {currentIndex + 1}/{totalCards}
           </div>
 
-          {/* Progress badge */}
-
           <div
             style={{
               display: 'flex',
               flexDirection: 'column',
               flex: 1,
+              height: '100%',
+              maxHeight: '100%',
               minHeight: 0,
+              overflow: 'hidden',
               transformOrigin: 'center center',
               transform: flipPhase === 'out' ? 'perspective(1400px) rotateY(90deg)' : 'perspective(1400px) rotateY(0deg)',
               transition: flipPhase === 'out'
@@ -428,16 +430,18 @@ export default function FlashcardsView({
               // ── FRONT FACE: Question only ─────────────────────────────────
               return (
                 <div
-                  style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'center', alignItems: 'center', gap: '32px', cursor: 'pointer' }}
+                  style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, justifyContent: 'center', alignItems: 'center', gap: '18px', cursor: 'pointer', overflow: 'hidden' }}
                   onClick={() => flipCard(true)}
                 >
                   <div style={{
-                    fontSize: '26px',
+                    fontSize: '22px',
                     fontWeight: '800',
                     color: '#0f172a',
                     lineHeight: '1.35',
                     textAlign: 'center',
-                    maxWidth: '82%',
+                    maxWidth: '85%',
+                    maxHeight: '75%',
+                    overflowY: 'auto',
                   }}>
                     <MarkdownView content={cleanTitle} />
                   </div>
@@ -449,8 +453,8 @@ export default function FlashcardsView({
                       background: 'rgba(255,255,255,0.4)',
                       border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(111,154,127,0.6)'}`,
                       borderRadius: '999px',
-                      padding: '10px 28px',
-                      fontSize: '15px',
+                      padding: '8px 24px',
+                      fontSize: '14px',
                       fontWeight: 600,
                       color: isPurpleTheme ? '#7e22ce' : '#2D3E36',
                       cursor: 'pointer',
@@ -459,6 +463,7 @@ export default function FlashcardsView({
                       gap: '8px',
                       backdropFilter: 'blur(4px)',
                       transition: 'all 0.18s ease',
+                      flexShrink: 0,
                     }}
                   >
                     Click to reveal Answer
@@ -480,14 +485,14 @@ export default function FlashcardsView({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: hasImage ? 'flex-start' : 'center',
-                  gap: hasImage ? '8px' : '16px',
+                  gap: hasImage ? '4px' : '10px',
                   flex: 1,
                   height: '100%',
+                  maxHeight: '100%',
                   minHeight: 0,
-                  overflowY: 'auto',
-                  overflowX: 'hidden',
+                  overflow: 'hidden',
                   cursor: 'pointer',
-                  paddingTop: hasImage ? '4px' : '16px',
+                  paddingTop: hasImage ? '2px' : '10px',
                   boxSizing: 'border-box',
                 }}
               >
@@ -500,15 +505,15 @@ export default function FlashcardsView({
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    fontSize: hasImage ? '16px' : '22px',
-                    lineHeight: '1.45',
+                    fontSize: hasImage ? '14px' : '17px',
+                    lineHeight: '1.35',
                     color: '#1e293b',
                     fontWeight: 500,
-                    padding: hasImage ? '0 16px 4px' : '20px 32px',
+                    padding: hasImage ? '0 50px 2px' : '12px 30px',
                     boxSizing: 'border-box',
                     overflowY: 'auto',
                     flexShrink: 0,
-                    maxHeight: hasImage ? '35%' : '100%',
+                    maxHeight: hasImage ? '33%' : '100%',
                   }}
                 >
                   <style>{`
@@ -522,19 +527,20 @@ export default function FlashcardsView({
                   </div>
                 </div>
 
-                {/* Infographic: Bottom center div — clear, generously sized and NEVER cut off */}
+                {/* Infographic: Bottom center div — contained with absolute fitting to prevent layout explosion */}
                 {hasImage && (
                   <div
                     style={{
                       width: '100%',
                       flex: 1,
                       minHeight: 0,
+                      position: 'relative',
                       display: 'flex',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      padding: '2px 8px 6px',
+                      padding: '2px 8px 4px',
                       boxSizing: 'border-box',
-                      position: 'relative',
+                      overflow: 'hidden',
                     }}
                   >
                     <img
@@ -544,14 +550,18 @@ export default function FlashcardsView({
                       onError={() => setImgFailed(true)}
                       title="Click to view full screen"
                       style={{
-                        maxWidth: '100%',
-                        maxHeight: '100%',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        maxWidth: 'calc(100% - 16px)',
+                        maxHeight: 'calc(100% - 8px)',
                         width: 'auto',
                         height: 'auto',
                         objectFit: 'contain',
                         borderRadius: '12px',
                         backgroundColor: '#ffffff',
-                        padding: '6px',
+                        padding: '4px',
                         border: '1px solid rgba(111, 154, 127, 0.35)',
                         boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
                         cursor: 'zoom-in',
@@ -575,24 +585,25 @@ export default function FlashcardsView({
             onClick={nextCard}
             aria-label="Next card"
             style={{
-              width: "40px",
-              height: "40px",
+              width: "36px",
+              height: "36px",
               borderRadius: "50%",
               border: "none",
               background: "#ffffff",
               color: "#0f172a",
               fontWeight: "800",
-              fontSize: "20px",
-              boxShadow: "0 6px 18px rgba(0, 0, 0, 0.1)",
+              fontSize: "18px",
+              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
+              alignSelf: "center",
               transition: "all 0.2s ease",
             }}
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -605,6 +616,7 @@ export default function FlashcardsView({
               alignItems: "center",
               gap: "8px",
               flexShrink: 0,
+              alignSelf: "center",
             }}
           >
             <button
