@@ -1216,273 +1216,287 @@ export default function MockTestView({
               </div>
             </div>
 
-            {/* 2x2 Grid: Units */}
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gap: "20px",
-              }}
-            >
-              {allUnits.map((unit) => {
-                const isSelected = selectedUnitNumbers.includes(unit.number);
-
-                const unitName = (() => {
-                  const raw = (unit.name || unit.title || "").trim();
-                  if (!raw || /^unit\s*[-:_]?\s*\d+$/i.test(raw)) {
-                    const defaults: Record<number, string> = {
-                      1: "Nature and Scope of Marketing",
-                      2: "Marketing Environment & Buyer Behavior",
-                      3: "Product & Price Decisions",
-                      4: "Place & Promotion Decisions",
-                      5: "Emerging Trends in Marketing",
-                    };
-                    return defaults[unit.number] || `Unit ${unit.number} Concepts`;
-                  }
-                  return raw;
-                })();
-
-                return (
-                  <div
-                    key={unit.number}
-                    onClick={() => toggleUnitSelection(unit.number)}
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: "26px 20px 32px 20px",
-                      minHeight: "160px",
-                      borderRadius: "18px",
-                      position: "relative",
-                      cursor: "pointer",
-                      userSelect: "none",
-                      boxSizing: "border-box",
-                      transition: "all 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
-                      // Subtle, refined card styling per request
-                      background: isSelected
-                        ? "linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(235, 245, 239, 0.92) 100%)"
-                        : "linear-gradient(165deg, rgba(255, 255, 255, 0.82) 0%, rgba(242, 248, 244, 0.68) 100%)",
-                      border: isSelected
-                        ? "2px solid #4F7B64"
-                        : "1.5px solid rgba(79, 123, 100, 0.22)",
-                      boxShadow: isSelected
-                        ? "0 8px 24px rgba(79, 123, 100, 0.12)"
-                        : "0 2px 10px rgba(45, 62, 54, 0.04)",
-                      backdropFilter: "blur(6px)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "translateY(-3px)";
-                      e.currentTarget.style.boxShadow = "0 10px 24px rgba(45, 62, 54, 0.10)";
-                      if (!isSelected) {
-                        e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.4)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = isSelected
-                        ? "0 8px 24px rgba(79, 123, 100, 0.12)"
-                        : "0 2px 10px rgba(45, 62, 54, 0.04)";
-                      if (!isSelected) {
-                        e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.22)";
-                      }
-                    }}
-                  >
-                    {/* Unit Title */}
-                    <div
-                      style={{
-                        fontSize: "1.65rem",
-                        fontWeight: 700,
-                        color: "#1e293b",
-                        lineHeight: 1.2,
-                        marginBottom: "8px",
-                      }}
-                    >
-                      Unit {unit.number}
-                    </div>
-
-                    {/* Unit Subtitle */}
-                    <div
-                      style={{
-                        fontSize: "0.92rem",
-                        fontWeight: 500,
-                        color: "#475569",
-                        textAlign: "center",
-                        maxWidth: "88%",
-                        lineHeight: 1.35,
-                      }}
-                    >
-                      {unitName}
-                    </div>
-
-                    {/* Bottom-Right Checkbox */}
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "14px",
-                        right: "14px",
-                        width: "22px",
-                        height: "22px",
-                        borderRadius: "5px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        transition: "all 0.15s ease",
-                        border: isSelected ? "2px solid #467360" : "1.8px solid #94a3b8",
-                        background: isSelected ? "#467360" : "#ffffff",
-                      }}
-                    >
-                      {isSelected && (
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Bottom Actions Row: Center-Right Aligned */}
+            {/* Two-Column Layout: Left (2x2 Units Grid) + Right (Center-Right Options) */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "flex-end",
-                gap: "20px",
-                marginTop: "24px",
+                gap: "24px",
+                width: "100%",
               }}
             >
-              {/* Green Config Box */}
+              {/* Left: 2x2 Grid of Unit Cards */}
               <div
                 style={{
-                  background: "#467360",
-                  borderRadius: "14px",
-                  padding: "12px 20px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  boxShadow: "0 6px 18px rgba(70, 115, 96, 0.22)",
-                  boxSizing: "border-box",
+                  flex: 1,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: "18px",
                 }}
               >
-                {/* Clipboard Icon */}
+                {allUnits.map((unit) => {
+                  const isSelected = selectedUnitNumbers.includes(unit.number);
+
+                  const unitName = (() => {
+                    const raw = (unit.name || unit.title || "").trim();
+                    if (!raw || /^unit\s*[-:_]?\s*\d+$/i.test(raw)) {
+                      const defaults: Record<number, string> = {
+                        1: "Nature and Scope of Marketing",
+                        2: "Marketing Environment & Buyer Behavior",
+                        3: "Product & Price Decisions",
+                        4: "Place & Promotion Decisions",
+                        5: "Emerging Trends in Marketing",
+                      };
+                      return defaults[unit.number] || `Unit ${unit.number} Concepts`;
+                    }
+                    return raw;
+                  })();
+
+                  return (
+                    <div
+                      key={unit.number}
+                      onClick={() => toggleUnitSelection(unit.number)}
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: "24px 18px 28px 18px",
+                        minHeight: "155px",
+                        borderRadius: "18px",
+                        position: "relative",
+                        cursor: "pointer",
+                        userSelect: "none",
+                        boxSizing: "border-box",
+                        transition: "all 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
+                        // Subtle, refined card styling per request
+                        background: isSelected
+                          ? "linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(235, 245, 239, 0.92) 100%)"
+                          : "linear-gradient(165deg, rgba(255, 255, 255, 0.82) 0%, rgba(242, 248, 244, 0.68) 100%)",
+                        border: isSelected
+                          ? "2px solid #4F7B64"
+                          : "1.5px solid rgba(79, 123, 100, 0.22)",
+                        boxShadow: isSelected
+                          ? "0 8px 24px rgba(79, 123, 100, 0.12)"
+                          : "0 2px 10px rgba(45, 62, 54, 0.04)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "translateY(-3px)";
+                        e.currentTarget.style.boxShadow = "0 10px 24px rgba(45, 62, 54, 0.10)";
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.4)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = isSelected
+                          ? "0 8px 24px rgba(79, 123, 100, 0.12)"
+                          : "0 2px 10px rgba(45, 62, 54, 0.04)";
+                        if (!isSelected) {
+                          e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.22)";
+                        }
+                      }}
+                    >
+                      {/* Unit Title */}
+                      <div
+                        style={{
+                          fontSize: "1.65rem",
+                          fontWeight: 700,
+                          color: "#1e293b",
+                          lineHeight: 1.2,
+                          marginBottom: "8px",
+                        }}
+                      >
+                        Unit {unit.number}
+                      </div>
+
+                      {/* Unit Subtitle */}
+                      <div
+                        style={{
+                          fontSize: "0.9rem",
+                          fontWeight: 500,
+                          color: "#475569",
+                          textAlign: "center",
+                          maxWidth: "88%",
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {unitName}
+                      </div>
+
+                      {/* Bottom-Right Checkbox */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          bottom: "14px",
+                          right: "14px",
+                          width: "22px",
+                          height: "22px",
+                          borderRadius: "5px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transition: "all 0.15s ease",
+                          border: isSelected ? "2px solid #467360" : "1.8px solid #94a3b8",
+                          background: isSelected ? "#467360" : "#ffffff",
+                        }}
+                      >
+                        {isSelected && (
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Right Side: Center-Right Options (No. of questions & Start Button) */}
+              <div
+                style={{
+                  width: "290px",
+                  flexShrink: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "18px",
+                }}
+              >
+                {/* Green Config Box */}
                 <div
                   style={{
-                    width: "38px",
-                    height: "38px",
-                    borderRadius: "10px",
-                    background: "rgba(255, 255, 255, 0.16)",
+                    width: "100%",
+                    background: "#467360",
+                    borderRadius: "14px",
+                    padding: "13px 18px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "14px",
+                    boxShadow: "0 6px 18px rgba(70, 115, 96, 0.22)",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {/* Clipboard Icon */}
+                  <div
+                    style={{
+                      width: "38px",
+                      height: "38px",
+                      borderRadius: "10px",
+                      background: "rgba(255, 255, 255, 0.16)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      <path d="M9 12h6" />
+                      <path d="M9 16h6" />
+                      <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
+                    </svg>
+                  </div>
+
+                  {/* Question count radio options */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
+                    <span style={{ fontSize: "0.8rem", color: "rgba(255, 255, 255, 0.92)", fontWeight: 600 }}>
+                      No. of questions
+                    </span>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      {[option1Count, option2Count].map((count) => {
+                        const isChosen = selectedQuestionCount === count;
+                        return (
+                          <div
+                            key={count}
+                            onClick={() => setSelectedQuestionCount(count)}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: "14px",
+                                height: "14px",
+                                borderRadius: "50%",
+                                border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {isChosen && (
+                                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
+                              )}
+                            </div>
+                            <div
+                              style={{
+                                minWidth: "42px",
+                                height: "23px",
+                                padding: "0 8px",
+                                borderRadius: "6px",
+                                border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
+                                background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
+                                color: "#ffffff",
+                                fontSize: "0.82rem",
+                                fontWeight: 700,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                transition: "all 0.15s ease",
+                              }}
+                            >
+                              {count}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Start Button */}
+                <button
+                  onClick={handleStartExam}
+                  style={{
+                    background: "#467360",
+                    color: "#ffffff",
+                    border: "none",
+                    borderRadius: "12px",
+                    padding: "13px 48px",
+                    fontSize: "1.05rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    flexShrink: 0,
+                    gap: "8px",
+                    boxShadow: "0 4px 16px rgba(70, 115, 96, 0.3)",
+                    transition: "all 0.2s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#3c6453";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(70, 115, 96, 0.38)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#467360";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(70, 115, 96, 0.3)";
                   }}
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                    <path d="M9 12h6" />
-                    <path d="M9 16h6" />
-                    <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
-                  </svg>
-                </div>
-
-                {/* Question count radio options */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  <span style={{ fontSize: "0.8rem", color: "rgba(255, 255, 255, 0.92)", fontWeight: 600 }}>
-                    No. of questions
-                  </span>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    {[option1Count, option2Count].map((count) => {
-                      const isChosen = selectedQuestionCount === count;
-                      return (
-                        <div
-                          key={count}
-                          onClick={() => setSelectedQuestionCount(count)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <div
-                            style={{
-                              width: "14px",
-                              height: "14px",
-                              borderRadius: "50%",
-                              border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            {isChosen && (
-                              <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
-                            )}
-                          </div>
-                          <div
-                            style={{
-                              minWidth: "42px",
-                              height: "23px",
-                              padding: "0 8px",
-                              borderRadius: "6px",
-                              border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
-                              background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
-                              color: "#ffffff",
-                              fontSize: "0.82rem",
-                              fontWeight: 700,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            {count}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                  <span>Start</span>
+                  <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>→</span>
+                </button>
               </div>
-
-              {/* Start Button */}
-              <button
-                onClick={handleStartExam}
-                style={{
-                  background: "#467360",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: "12px",
-                  padding: "13px 44px",
-                  fontSize: "1.05rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  boxShadow: "0 4px 16px rgba(70, 115, 96, 0.3)",
-                  transition: "all 0.2s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#3c6453";
-                  e.currentTarget.style.transform = "translateY(-1px)";
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(70, 115, 96, 0.38)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#467360";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.boxShadow = "0 4px 16px rgba(70, 115, 96, 0.3)";
-                }}
-              >
-                <span>Start</span>
-                <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>→</span>
-              </button>
             </div>
           </div>
         </div>
