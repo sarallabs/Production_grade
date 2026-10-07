@@ -272,7 +272,6 @@ export default function ClassSubjectSelection() {
                   const visited = getUniqueVisitedChaptersForSubject(subject.id);
                   const displayTotal = totalChapters > 0 ? totalChapters : (isEntomology ? 4 : 0);
                   const displayVisited = Math.min(visited, displayTotal > 0 ? displayTotal : visited);
-
                   const manifestSub = manifestSubjects.find(
                     (s) => s.id === subject.id || (isEntomology && (s.id === 'ento_131' || s.id.toLowerCase().includes('ento')))
                   );
@@ -299,6 +298,7 @@ export default function ClassSubjectSelection() {
                     rawChName = `Chapter ${currentChNum}`;
                   }
                   const cleanChName = rawChName.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || rawChName;
+                  const coverage = displayTotal > 0 ? Math.round((displayVisited / displayTotal) * 100) : 0;
 
                   return (
                     <div

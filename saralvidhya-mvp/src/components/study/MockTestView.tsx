@@ -453,6 +453,47 @@ function DescriptiveQuestionCard({
             <span>★</span> {question.marks} {question.marks === 1 ? "Mark" : "Marks"}
           </span>
 
+          {/* Bloom Level Pill */}
+          {question.bloomLevel && (
+            <span
+              style={{
+                fontSize: "0.78rem",
+                fontWeight: 600,
+                padding: "4px 10px",
+                borderRadius: "6px",
+                background: "#F1F5F9",
+                color: "#475569",
+                border: "1px solid #E2E8F0",
+              }}
+            >
+              🧠 {question.bloomLevel}
+            </span>
+          )}
+
+          {/* Mindmap Breadcrumb */}
+          {question.mindmapPath && (
+            <div
+              style={{
+                fontSize: "0.76rem",
+                color: "#64748B",
+                fontWeight: 500,
+                background: "#F8FAF9",
+                padding: "3px 10px",
+                borderRadius: "6px",
+                border: "1px solid #E2ECE6",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span style={{ color: "#467360" }}>🗺️</span>
+              <span>{question.mindmapPath}</span>
+            </div>
+          )}
         </div>
       </div>
 

@@ -94,11 +94,41 @@ export function getAnalytics(): AnalyticsData {
 
 export function getUniqueVisitedChaptersForSubject(subjectId: string) {
   const data = load();
-  return new Set(
-    data.chapterVisits
-      .filter((visit) => visit.subjectId === subjectId)
-      .map((visit) => visit.chapterNumber)
-  ).size;
+  const cleanId = (id?: string) => (id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const target = cleanId(subjectId);
+
+  const set = new Set<number>();
+
+  data.chapterVisits.forEach((visit) => {
+    const v = cleanId(visit.subjectId);
+    if (v === target || (target.includes('ento') && v.includes('ento'))) {
+      if (typeof visit.chapterNumber === 'number') {
+        set.add(visit.chapterNumber);
+      }
+    }
+  });
+
+  try {
+    const raw = localStorage.getItem('completed_chapters');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed.forEach((item) => {
+          if (typeof item === 'number') set.add(item);
+          else if (item && typeof item === 'object' && (cleanId(item.subjectId) === target || (target.includes('ento') && cleanId(item.subjectId).includes('ento')))) {
+            set.add(Number(item.chapterNumber));
+          }
+        });
+      } else if (typeof parsed === 'object') {
+        const subList = parsed[subjectId] || (target.includes('ento') ? parsed['ento_131'] || parsed['entomology'] : null);
+        if (Array.isArray(subList)) {
+          subList.forEach((n: any) => set.add(Number(n)));
+        }
+      }
+    }
+  } catch { /* ignore */ }
+
+  return set.size;
 }
 
 export function getUniqueVisitedChaptersOverall() {
