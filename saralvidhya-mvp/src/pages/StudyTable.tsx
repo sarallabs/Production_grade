@@ -945,14 +945,7 @@ export default function StudyTable() {
           action: () => setActiveTool("summary"),
         };
       case "ask":
-        return {
-          tool: "summary",
-          label: "Read",
-          subLabel: "Chapter Notes",
-          description: "Return to chapter notes and continue learning",
-          color: "#4F7B64",
-          action: () => setActiveTool("summary"),
-        };
+        return null;
       default:
         return {
           tool: "summary",
@@ -2833,9 +2826,6 @@ export default function StudyTable() {
                     summary: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     quick_study: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     detailed: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    detailed_notes: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    mindmap: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
 
                     // Practice (Forest Green / SV Sage)
@@ -2848,7 +2838,6 @@ export default function StudyTable() {
 
                     // Prepare (Pink)
                     key_takeaways: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
                     pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
@@ -2856,15 +2845,20 @@ export default function StudyTable() {
                     pre_final_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
                     certification_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
 
+                    // Resources (Green)
+                    study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    mindmap: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+
                     // AI & Analytics
                     swot: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
                     ask: { main: "#2D473B", badge: "#2D473B", text: "#2D473B", bg: "#f0fdf4" },
                   };
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
-                    const blackColor = "#475569";
-                    const blackMuted = "#475569";
-                    const blackSubtle = "#334155";
+                    const blackColor = "#18221D";
+                    const blackMuted = "#18221D";
+                    const blackSubtle = "#18221D";
 
                     switch (toolId) {
                       case "summary":
@@ -2959,11 +2953,11 @@ export default function StudyTable() {
                         );
                       }
                       case "key_takeaways": {
-                        const keyColor = active ? "#DB2777" : blackColor;
+                        const keyColor = active ? color : blackColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Key head */}
-                            <circle cx="14" cy="14" r="6.5" stroke={keyColor} strokeWidth="2.2" fill={active ? "#FCE7F3" : "#FFFFFF"} />
+                            <circle cx="14" cy="14" r="6.5" stroke={keyColor} strokeWidth="2.2" fill={active ? (color === "#DB2777" ? "#FCE7F3" : "#EAF2ED") : "#FFFFFF"} />
                             <circle cx="14" cy="14" r="2.5" fill={keyColor} />
                             {/* Key shaft */}
                             <path d="M19.5 17.5L29 27" stroke={keyColor} strokeWidth="2.4" strokeLinecap="round" />
@@ -2971,14 +2965,14 @@ export default function StudyTable() {
                             <path d="M24 22L26.5 19.5" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
                             <path d="M26.5 24.5L29 22" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
                             {/* Sparkle badge */}
-                            <path d="M7 7C7 8.5 5.8 9.5 4.5 9.5C5.8 9.5 7 10.5 7 12C7 10.5 8.2 9.5 9.5 9.5C8.2 9.5 7 8.5 7 7Z" fill={active ? keyColor : "#94A3B8"} />
+                            <path d="M7 7C7 8.5 5.8 9.5 4.5 9.5C5.8 9.5 7 10.5 7 12C7 10.5 8.2 9.5 9.5 9.5C8.2 9.5 7 8.5 7 7Z" fill={active ? keyColor : blackColor} />
                           </svg>
                         );
                       }
                       case "study_plan": {
-                        const planColor = active ? "#4F7B64" : blackColor;
-                        const planAccent = active ? "#6F9A7F" : blackMuted;
-                        const planBg = active ? "#EAF2ED" : "#FFFFFF";
+                        const planColor = active ? color : blackColor;
+                        const planAccent = active ? (color === "#DB2777" ? "#F472B6" : "#6F9A7F") : blackColor;
+                        const planBg = active ? (color === "#DB2777" ? "#FDF2F8" : "#EAF2ED") : "#FFFFFF";
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Calendar / Planner base board */}
@@ -2990,9 +2984,9 @@ export default function StudyTable() {
                             <rect x="17" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
                             <rect x="23.5" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
                             {/* Grid cells / tasks inside calendar */}
-                            <rect x="9.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
-                            <rect x="16" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
-                            <rect x="22.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : "#94A3B8"} opacity={active ? 0.9 : 0.6} />
+                            <rect x="9.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
+                            <rect x="16" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
+                            <rect x="22.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
                             {/* Checklist items in bottom half */}
                             <path d="M10 23.5L11.8 25.2L14.5 22.2" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
                             <line x1="17" y1="23.5" x2="26" y2="23.5" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.75" />
@@ -3155,7 +3149,11 @@ export default function StudyTable() {
 
                   const renderNode = (toolId: ToolId, labelOverride?: string, colorOverride?: string) => {
                     const locked = false;
-                    const active = activeTool === toolId;
+                    const active = activeTool === toolId ||
+                      (toolId === "summary" && activeTool === "detailed") ||
+                      (toolId === "prep_exam" && (activeTool === "mocktest" || activeTool === "pre_final_test")) ||
+                      (toolId === "revision_flashcards" && activeTool === "flashcards") ||
+                      (toolId === "mindmap" && activeTool === "foundation");
                     const theme = TOOL_THEMES[toolId] || { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" };
                     const themeColor = colorOverride || theme.main;
 
@@ -3176,17 +3174,20 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '6px 10px',
+                          padding: '6px 4px',
                           borderRadius: '10px',
                           background: active ? '#ffffff' : 'transparent',
                           border: active ? `1.8px solid ${themeColor}` : '1.8px solid transparent',
                           boxShadow: active ? `0 3px 12px ${themeColor}2e, 0 1px 3px rgba(0,0,0,0.06)` : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
-                          opacity: 1, // All options look fully open and accessible!
+                          opacity: 1,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           position: 'relative',
-                          gap: '4px',
-                          minWidth: '56px',
+                          gap: '2px',
+                          flex: '1 1 0',
+                          minWidth: 0,
+                          width: '100%',
+                          boxSizing: 'border-box',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
@@ -3198,18 +3199,22 @@ export default function StudyTable() {
                           (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '36px', width: '38px', transition: 'transform 0.18s ease', transform: active ? 'scale(1.05)' : 'scale(1)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', width: '36px', transition: 'transform 0.18s ease', transform: active ? 'scale(1.05)' : 'scale(1)' }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
                           fontSize: '11px',
                           fontWeight: active ? 700 : 600,
-                          color: active ? themeColor : '#475569',
+                          color: active ? themeColor : '#18221D',
                           textAlign: 'center',
                           lineHeight: '1.2',
-                          whiteSpace: 'nowrap',
-                          letterSpacing: '-0.1px',
+                          letterSpacing: '-0.2px',
                           transition: 'color 0.18s ease',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                          height: '26px',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
                         </span>
@@ -3268,133 +3273,177 @@ export default function StudyTable() {
                         </div>
                       </div>
 
-                      {/* CENTER TOOL NODES (Figma Toolbar Layout) */}
-                      <div
-                        style={{
+                      {/* CENTER TOOL NODES (Balanced Toolbar Layout: Learn, Practice, Prepare with even sizes, Resources & standalone Ask me) */}
+                      {(() => {
+                        const isLearnActive = activeTool === "summary" || activeTool === "detailed" || activeTool === "podcasts" || activeTool === "videos";
+                        const isPracticeActive = activeTool === "revision_flashcards" || activeTool === "flashcards" || activeTool === "assessment" || activeTool === "qbank";
+                        const isPrepareActive = activeTool === "pyq" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "mocktest" || activeTool === "pre_final_test";
+                        const isResourcesActive = activeTool === "mindmap" || activeTool === "foundation" || activeTool === "study_plan";
+                        const isAskActive = activeTool === "ask";
+
+                        const groupCardStyle = (isActive: boolean, groupColor: string, width: string): React.CSSProperties => ({
                           display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '16px',
-                          padding: '4px 16px',
-                          background: '#FFFFFF',
-                          margin: '0 auto',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {/* 1. LEARN SECTION (Green #4F7B64) */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            border: '1.5px solid #4F7B64',
-                            borderRadius: '16px',
-                            padding: '6px 12px 8px',
-                            background: 'rgba(79, 123, 100, 0.02)',
-                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
-                          }}
-                        >
-                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>Learn</span>
-                            {isSegmented && (
-                              <span
-                                title={activeVideo?.title}
-                                style={{ background: '#4F7B64', color: '#fff', borderRadius: '6px', padding: '0 7px', fontSize: '11px', fontWeight: 800 }}
+                          border: isActive ? `1.5px solid ${groupColor}` : '1.5px solid #D5E2D9',
+                          borderRadius: '16px',
+                          padding: '6px 8px 8px',
+                          background: isActive
+                            ? (groupColor === "#DB2777" ? 'rgba(219, 39, 119, 0.02)' : 'rgba(79, 123, 100, 0.02)')
+                            : '#FFFFFF',
+                          boxShadow: isActive
+                            ? (groupColor === "#DB2777" ? '0 2px 8px rgba(219, 39, 119, 0.08)' : '0 2px 8px rgba(79, 123, 100, 0.08)')
+                            : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                          width,
+                          minWidth: width,
+                          maxWidth: width,
+                          boxSizing: 'border-box',
+                          flex: `0 0 ${width}`,
+                          transition: 'all 0.2s ease',
+                        });
+
+                        return (
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'stretch',
+                              justifyContent: 'center',
+                              gap: '12px',
+                              padding: '4px 8px',
+                              background: '#FFFFFF',
+                              margin: '0 auto',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {/* 1. LEARN SECTION (3 items) */}
+                            <div style={groupCardStyle(isLearnActive, "#4F7B64", "232px")}>
+                              <div style={{
+                                height: '22px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px',
+                                marginBottom: '4px',
+                                color: isLearnActive ? '#4F7B64' : '#18221D',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                textAlign: 'center',
+                              }}>
+                                <span>Learn</span>
+                                {isSegmented && (
+                                  <span
+                                    title={activeVideo?.title}
+                                    style={{ background: '#4F7B64', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
+                                  >
+                                    Video {videoIndex}/{chapterVideos.length}
+                                  </span>
+                                )}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                                {renderNode("summary", "Read", "#4F7B64")}
+                                {renderNode("podcasts", "Listen", "#4F7B64")}
+                                {renderNode("videos", "Watch", "#4F7B64")}
+                              </div>
+                            </div>
+
+                            {/* 2. PRACTICE SECTION (3 items) */}
+                            <div style={groupCardStyle(isPracticeActive, "#4F7B64", "232px")}>
+                              <div style={{
+                                height: '22px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '4px',
+                                color: isPracticeActive ? '#4F7B64' : '#18221D',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                textAlign: 'center',
+                              }}>
+                                Practice
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                                {renderNode("revision_flashcards", "Revise", "#4F7B64")}
+                                {renderNode("assessment", "Assessment", "#4F7B64")}
+                                {renderNode("qbank", "Question Bank", "#4F7B64")}
+                              </div>
+                            </div>
+
+                            {/* 3. PREPARE SECTION (3 items: PYQ, Prep Exam, Key Takeaways) */}
+                            <div style={groupCardStyle(isPrepareActive, "#DB2777", "232px")}>
+                              <div style={{
+                                height: '22px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '4px',
+                                color: isPrepareActive ? '#DB2777' : '#18221D',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                textAlign: 'center',
+                              }}>
+                                Prepare
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                                {renderNode("pyq", "PYQ", "#DB2777")}
+                                {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
+                                {renderNode("key_takeaways", "Key Takeaways", "#DB2777")}
+                              </div>
+                            </div>
+
+                            {/* 4. RESOURCES SECTION (2 items: Mindmaps, Study Plan) */}
+                            <div style={groupCardStyle(isResourcesActive, "#4F7B64", "162px")}>
+                              <div style={{
+                                height: '22px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                marginBottom: '4px',
+                                color: isResourcesActive ? '#4F7B64' : '#18221D',
+                                fontSize: '13px',
+                                fontWeight: 700,
+                                textAlign: 'center',
+                              }}>
+                                Resources
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                                {renderNode("mindmap", "Mindmaps", "#4F7B64")}
+                                {renderNode("study_plan", "Study Plan", "#4F7B64")}
+                              </div>
+                            </div>
+
+                            {/* 5. SEPARATE TOOL: ASK ME */}
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                alignSelf: 'stretch',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  border: isAskActive ? '1.5px solid #2D473B' : '1.5px solid #D5E2D9',
+                                  borderRadius: '16px',
+                                  padding: '6px 8px 8px',
+                                  background: isAskActive ? 'rgba(45, 71, 59, 0.04)' : '#FFFFFF',
+                                  boxShadow: isAskActive ? '0 2px 8px rgba(45, 71, 59, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  height: '100%',
+                                  boxSizing: 'border-box',
+                                  transition: 'all 0.2s ease',
+                                  width: '74px',
+                                  flex: '0 0 74px',
+                                }}
                               >
-                                Video {videoIndex}/{chapterVideos.length}
-                              </span>
-                            )}
+                                {renderNode("ask", "Ask me", "#2D473B")}
+                              </div>
+                            </div>
                           </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("summary", "Read", "#4F7B64")}
-                            {renderNode("podcasts", "Listen", "#4F7B64")}
-                            {renderNode("videos", "Watch", "#4F7B64")}
-                          </div>
-                        </div>
-
-                        {/* 2. PRACTICE SECTION (Forest Green #4F7B64) */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            border: '1.5px solid #4F7B64',
-                            borderRadius: '16px',
-                            padding: '6px 12px 8px',
-                            background: 'rgba(79, 123, 100, 0.02)',
-                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
-                          }}
-                        >
-                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
-                            Practice
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("revision_flashcards", "Revise", "#4F7B64")}
-                            {renderNode("assessment", "Assessment", "#4F7B64")}
-                            {renderNode("qbank", "Question Bank", "#4F7B64")}
-                          </div>
-                        </div>
-
-                        {/* 3. PREPARE SECTION (Pink #DB2777) */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            border: '1.5px solid #DB2777',
-                            borderRadius: '16px',
-                            padding: '6px 12px 8px',
-                            background: 'rgba(219, 39, 119, 0.02)',
-                            boxShadow: '0 2px 8px rgba(219, 39, 119, 0.06)',
-                          }}
-                        >
-                          <div style={{ color: '#DB2777', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
-                            Prepare
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("pyq", "PYQ", "#DB2777")}
-                            {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
-                          </div>
-                        </div>
-
-                        {/* 4. RESOURCES SECTION (Green #4F7B64) */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            border: '1.5px solid #4F7B64',
-                            borderRadius: '16px',
-                            padding: '6px 12px 8px',
-                            background: 'rgba(79, 123, 100, 0.02)',
-                            boxShadow: '0 2px 6px rgba(79, 123, 100, 0.06)',
-                          }}
-                        >
-                          <div style={{ color: '#4F7B64', fontSize: '13px', fontWeight: 700, marginBottom: '6px', textAlign: 'center' }}>
-                            Resources
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            {renderNode("mindmap", "Mindmaps", "#4F7B64")}
-                            {renderNode("key_takeaways", "Key Takeaways", "#4F7B64")}
-                            {renderNode("study_plan", "Study Plan", "#4F7B64")}
-                          </div>
-                        </div>
-
-                        {/* 5. SEPARATE TOOL: ASK ME */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            alignSelf: 'center',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            {renderNode("ask", "Ask me", "#2D473B")}
-                          </div>
-                        </div>
-                      </div>
+                        );
+                      })()}
 
                       {/* RIGHT SIDE / END OF PAGE: ACTIONS */}
                       <div
@@ -4097,8 +4146,10 @@ export default function StudyTable() {
 
 
 
-            {/* Universal Floating "Up next: {Study tool}" Button */}
-            {!isFocusModeActive && upNext && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
+            {/* Universal Floating "Up next: {Study tool}" Button (hidden on Read/notes where inline card exists, as well as tests and ask) */}
+            {!isFocusModeActive &&
+              upNext &&
+              !["summary", "detailed", "key_takeaways", "study_plan", "mocktest", "pre_final_test", "ask"].includes(activeTool) && (
               <div
                 className="sv-floating-up-next"
                 style={{
