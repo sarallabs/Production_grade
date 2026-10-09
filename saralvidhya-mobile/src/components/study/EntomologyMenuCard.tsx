@@ -4,44 +4,45 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Subject, Chapter, manifestService } from '@/api/manifestService';
 
-export interface ChapterProgress {
-  chapter: number;
-  percentage: number;
-  statusColor: string;
-}
-
-export interface EntomologyMenuCardProps {
+export interface SubjectMenuCardProps {
+  subject: Subject;
+  degree?: string;
   isDark: boolean;
   onPress: () => void;
-  title?: string;
-  subtitle?: string;
-  progress?: number;
-  chapters?: ChapterProgress[];
 }
 
-const DEFAULT_CHAPTERS: ChapterProgress[] = [
-  { chapter: 1, percentage: 100, statusColor: '#22c55e' },
-  { chapter: 2, percentage: 100, statusColor: '#22c55e' },
-  { chapter: 3, percentage: 25, statusColor: '#3b82f6' },
-  { chapter: 4, percentage: 0, statusColor: '#f97316' },
-  { chapter: 5, percentage: 0, statusColor: '#f97316' },
-  { chapter: 6, percentage: 0, statusColor: '#f97316' },
-];
-
-export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
+export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
+  subject,
+  degree = 'B.Sc Agriculture',
   isDark,
   onPress,
-  title = 'Entomology',
-  subtitle = 'B.Sc Agriculture',
-  progress = 50,
-  chapters = DEFAULT_CHAPTERS,
 }) => {
+  // DB-Driven calculations:
+  // 1. Title from Subject database
+  const title = subject.name || subject.code;
+
+  // 2. Subtitle from Student degree/board
+  const subtitle = degree;
+
+  // 3. Dynamic overall progress calculated from DB chapters
+  const overallProgress = manifestService.calculateSubjectProgress(subject);
+
+  // 4. Dynamic chapter status list calculated from DB chapters
+  const chaptersData = (subject.chapters || []).map((ch: Chapter) => {
+    const progressInfo = manifestService.calculateChapterProgress(ch);
+    return {
+      chapter: ch.number,
+      percentage: progressInfo.percentage,
+      statusColor: progressInfo.statusColor,
+    };
+  });
+
   // Color tokens matching user reference images
   // In Dark Theme (Screen is #2D3E36): Card is #FFF6F1
   // In Light Theme (Screen is #FFF6F1): Card is #2D3E36
@@ -63,6 +64,10 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
     onPress();
   };
 
+  const thumbSource = isDark
+    ? require('@/assets/images/card_thumb_light.png')
+    : require('@/assets/images/card_thumb_dark.png');
+
   return (
     <TouchableOpacity
       style={[
@@ -78,15 +83,15 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
       {/* Top Section: Thumbnail + Info + Progress Ring */}
       <View style={styles.topRow}>
         {/* Left Book Illustration Box */}
-        <View style={[styles.thumbnailBox, { backgroundColor: imgBoxBg }]}>
+        <View style={styles.thumbnailBox}>
           <Image
-            source={require('@/assets/images/subject-entomology-icon.png')}
+            source={thumbSource}
             style={styles.bookIllustration}
-            contentFit="contain"
+            contentFit="cover"
           />
         </View>
 
-        {/* Center Title & Subtitle */}
+        {/* Center Title & Subtitle (DB Driven placeholders) */}
         <View style={styles.infoColumn}>
           <Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
             {title}
@@ -96,7 +101,7 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
           </Text>
         </View>
 
-        {/* Right Circular Progress Indicator */}
+        {/* Right Circular Progress Indicator (DB Driven %) */}
         <View style={styles.progressContainer}>
           <View
             style={[
@@ -109,15 +114,15 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
             ]}
           >
             <Text style={[styles.progressNumber, { color: ringTextColor }]}>
-              {progress}%
+              {overallProgress}%
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Bottom Section: Chapter Numbers & Progress Checkmarks */}
+      {/* Bottom Section: Chapter Numbers & Progress Checkmarks (DB Driven Chapters) */}
       <View style={styles.chaptersRow}>
-        {chapters.map((item) => (
+        {chaptersData.map((item) => (
           <View key={item.chapter} style={styles.chapterCol}>
             {/* Number Circle */}
             <View style={[styles.numberCircle, { backgroundColor: circleBg }]}>
@@ -144,6 +149,8 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
     </TouchableOpacity>
   );
 };
+
+export const SubjectMenuCard = EntomologyMenuCard;
 
 const styles = StyleSheet.create({
   cardContainer: {

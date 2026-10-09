@@ -37,14 +37,14 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
+      style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
       contentContainerStyle={styles.scrollContent}
     >
       {/* Header Profile Card */}
       <View
         style={[
           styles.profileCard,
-          { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1e293b' : '#e2e8f0' },
+          { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' },
         ]}
       >
         <View style={styles.avatarCircle}>
@@ -53,16 +53,16 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        <Text style={[styles.profileName, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
-          {user?.name || 'ANGRAU Student'}
+        <Text style={[styles.profileName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
+          {user?.name || 'Student'}
         </Text>
-        <Text style={styles.profileRoll}>{user?.rollNumber || 'AG-2023-131'}</Text>
+        <Text style={[styles.profileRoll, { color: isDark ? '#A6C5B3' : '#688875' }]}>{user?.rollNumber || 'AG-2023-131'}</Text>
 
         <View style={styles.uniBadge}>
           <Ionicons name="business" size={14} color="#22c55e" />
-          <Text style={styles.uniBadgeText}>{user?.university}</Text>
+          <Text style={styles.uniBadgeText}>{user?.university || 'University'}</Text>
         </View>
-        <Text style={styles.programText}>
+        <Text style={[styles.programText, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           {user?.program || 'B.Sc (Hons) Agriculture'} • {user?.semester || 'Semester 3'}
         </Text>
       </View>
@@ -71,13 +71,13 @@ export default function ProfileScreen() {
       <View
         style={[
           styles.sectionCard,
-          { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1e293b' : '#e2e8f0' },
+          { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' },
         ]}
       >
         <View style={styles.sectionHeaderRow}>
           <View>
-            <Text style={styles.sectionLabel}>CURRENT LEARNING PERSONA</Text>
-            <Text style={[styles.personaTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            <Text style={[styles.sectionLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>CURRENT LEARNING PERSONA</Text>
+            <Text style={[styles.personaTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               {persona.toUpperCase()}
             </Text>
           </View>
@@ -89,11 +89,11 @@ export default function ProfileScreen() {
             <Ionicons name="chevron-forward" size={14} color="#22c55e" />
           </TouchableOpacity>
         </View>
-        <Text style={styles.personaDesc}>
+        <Text style={[styles.personaDesc, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           {persona === 'beginner'
             ? 'Foundations first with simplified summaries and step-by-step guidance.'
             : persona === 'intermediate'
-            ? 'Standard ANGRAU syllabus speed with balanced study guides and quizzes.'
+            ? 'Standard syllabus speed with balanced study guides and quizzes.'
             : 'Deep-dive mode with 10-mark past question papers and advanced taxonomy.'}
         </Text>
       </View>
@@ -102,17 +102,21 @@ export default function ProfileScreen() {
       <View
         style={[
           styles.sectionCard,
-          { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1e293b' : '#e2e8f0' },
+          { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' },
         ]}
       >
-        <Text style={styles.sectionLabel}>APP THEME & FOCUS MODE</Text>
+        <Text style={[styles.sectionLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>APP THEME & FOCUS MODE</Text>
         <View style={styles.themeOptionsRow}>
           {(['light', 'dark', 'focus'] as const).map((mode) => {
             const isSelected = themeMode === mode;
             return (
               <TouchableOpacity
                 key={mode}
-                style={[styles.themePill, isSelected && styles.themePillActive]}
+                style={[
+                  styles.themePill,
+                  { backgroundColor: isDark ? '#374B41' : '#F7EBE3' },
+                  isSelected && styles.themePillActive,
+                ]}
                 onPress={() => {
                   Haptics.selectionAsync();
                   setThemeMode(mode);
@@ -121,9 +125,15 @@ export default function ProfileScreen() {
                 <Ionicons
                   name={mode === 'light' ? 'sunny' : mode === 'dark' ? 'moon' : 'eye-off'}
                   size={16}
-                  color={isSelected ? '#ffffff' : '#94a3b8'}
+                  color={isSelected ? '#ffffff' : (isDark ? '#A6C5B3' : '#688875')}
                 />
-                <Text style={[styles.themePillText, isSelected && styles.themePillTextActive]}>
+                <Text
+                  style={[
+                    styles.themePillText,
+                    { color: isDark ? '#A6C5B3' : '#688875' },
+                    isSelected && styles.themePillTextActive,
+                  ]}
+                >
                   {mode.charAt(0).toUpperCase() + mode.slice(1)}
                 </Text>
               </TouchableOpacity>
@@ -136,7 +146,7 @@ export default function ProfileScreen() {
       <TouchableOpacity
         style={[
           styles.actionRow,
-          { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1e293b' : '#e2e8f0' },
+          { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' },
         ]}
         onPress={() => router.push('/(auth)/questionnaire')}
       >
@@ -144,12 +154,12 @@ export default function ProfileScreen() {
           <Ionicons name="clipboard-outline" size={20} color="#22c55e" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.actionTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+          <Text style={[styles.actionTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
             Retake Diagnostic Questionnaire
           </Text>
-          <Text style={styles.actionSubtitle}>Re-evaluate your learning style & pace</Text>
+          <Text style={[styles.actionSubtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>Re-evaluate your learning style & pace</Text>
         </View>
-        <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+        <Ionicons name="chevron-forward" size={18} color={isDark ? '#A6C5B3' : '#688875'} />
       </TouchableOpacity>
 
       {/* Sign Out Button */}

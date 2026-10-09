@@ -76,7 +76,7 @@ const GUIDED_FLOW: StudyToolId[] = [
 ];
 
 export default function StudyTableScreen() {
-  const params = useLocalSearchParams<{ subjectId?: string; chapter?: string }>();
+  const params = useLocalSearchParams<{ subjectId?: string; chapter?: string; tool?: string }>();
   const { persona, updatePersona } = useAuth();
   const { isDark } = useAppTheme();
 
@@ -97,7 +97,10 @@ export default function StudyTableScreen() {
     if (params.chapter) {
       setSelectedChapterNum(parseInt(params.chapter, 10));
     }
-  }, [params.chapter]);
+    if (params.tool && STUDY_TOOLS.some((t) => t.id === params.tool)) {
+      setActiveTool(params.tool as StudyToolId);
+    }
+  }, [params.chapter, params.tool]);
 
   useEffect(() => {
     let isMounted = true;
@@ -157,8 +160,15 @@ export default function StudyTableScreen() {
     updatePersona(lvl);
   };
 
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
+  const cardBg = isDark ? '#23322B' : '#FFFFFF';
+  const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
+  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
+  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
+  const pillBg = isDark ? '#1E2B24' : '#EFE5DF';
+
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}>
+    <View style={[styles.container, { backgroundColor: screenBg }]}>
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.courseHeaderRow}>
@@ -169,7 +179,7 @@ export default function StudyTableScreen() {
               onPress={() => setShowChapterModal(true)}
               activeOpacity={0.8}
             >
-              <Text style={[styles.chapterTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]} numberOfLines={1}>
+              <Text style={[styles.chapterTitle, { color: textColor }]} numberOfLines={1}>
                 Ch {currentChapter.number}: {currentChapter.name}
               </Text>
               <Ionicons name="chevron-down" size={18} color="#22c55e" />
@@ -179,8 +189,8 @@ export default function StudyTableScreen() {
 
         {/* Level Switcher */}
         <View style={styles.levelRow}>
-          <Text style={styles.levelLabel}>Reading Depth:</Text>
-          <View style={styles.levelPills}>
+          <Text style={[styles.levelLabel, { color: subtextColor }]}>Reading Depth:</Text>
+          <View style={[styles.levelPills, { backgroundColor: pillBg }]}>
             {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
               const isSelected = persona === lvl;
               return (
@@ -190,7 +200,7 @@ export default function StudyTableScreen() {
                   onPress={() => handleLevelChange(lvl)}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.levelText, isSelected && styles.levelTextActive]}>
+                  <Text style={[styles.levelText, isSelected && styles.levelTextActive, { color: isSelected ? '#ffffff' : subtextColor }]}>
                     {lvl.charAt(0).toUpperCase() + lvl.slice(1)}
                   </Text>
                 </TouchableOpacity>
@@ -201,7 +211,7 @@ export default function StudyTableScreen() {
       </View>
 
       {/* Horizontal Tool Ribbon */}
-      <View style={styles.ribbonContainer}>
+      <View style={[styles.ribbonContainer, { borderBottomColor: cardBorder }]}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -215,13 +225,13 @@ export default function StudyTableScreen() {
                 style={[
                   styles.toolTab,
                   isActive && styles.toolTabActive,
-                  { backgroundColor: isDark ? '#111827' : '#ffffff' },
+                  { backgroundColor: cardBg, borderColor: isActive ? '#22c55e' : cardBorder },
                 ]}
                 onPress={() => handleToolSelect(tool.id)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.toolIcon}>{tool.icon}</Text>
-                <Text style={[styles.toolLabel, isActive && styles.toolLabelActive]}>
+                <Text style={[styles.toolLabel, isActive && styles.toolLabelActive, { color: isActive ? '#22c55e' : subtextColor }]}>
                   {tool.label}
                 </Text>
                 {tool.badge && (
@@ -241,7 +251,7 @@ export default function StudyTableScreen() {
         contentContainerStyle={styles.workspaceContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.activeToolCard, { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: isDark ? '#1e293b' : '#e2e8f0' }]}>
+        <View style={[styles.activeToolCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
           <View style={styles.toolHeader}>
             <View style={styles.toolHeaderIcon}>
               <Text style={{ fontSize: 24 }}>
@@ -249,7 +259,7 @@ export default function StudyTableScreen() {
               </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.toolHeading, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+              <Text style={[styles.toolHeading, { color: textColor }]}>
                 {STUDY_TOOLS.find((t) => t.id === activeTool)?.label}
               </Text>
               <Text style={styles.toolSubheading}>
@@ -258,7 +268,7 @@ export default function StudyTableScreen() {
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: cardBorder }]} />
 
           {/* Active Tool Content */}
           {isLoadingContent ? (
@@ -388,13 +398,13 @@ export default function StudyTableScreen() {
           activeOpacity={1}
           onPress={() => setShowChapterModal(false)}
         >
-          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#111827' : '#ffffff' }]}>
+          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#23322B' : '#FFF6F1' }]}>
             <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+              <Text style={[styles.modalTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
                 Select Chapter ({activeSubject.code})
               </Text>
               <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-                <Ionicons name="close" size={24} color="#94a3b8" />
+                <Ionicons name="close" size={24} color={isDark ? '#A6C5B3' : '#557A65'} />
               </TouchableOpacity>
             </View>
 
@@ -420,7 +430,7 @@ export default function StudyTableScreen() {
                       style={[
                         styles.modalChapterText,
                         isCur && styles.modalChapterTextActive,
-                        { color: isDark ? '#f8fafc' : '#0f172a' },
+                        { color: isDark ? '#FFFFFF' : '#1C2E24' },
                       ]}
                     >
                       {ch.name}

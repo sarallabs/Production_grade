@@ -17,9 +17,9 @@ import { useAppTheme } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
-// Brand Colors matching user reference images
+// Brand Colors matching user specification
 const LIGHT_BG = '#FFF6F1';
-const DARK_BG = '#6E997E'; // Muted Sage Green from user 2nd image
+const DARK_BG = '#2D3E36';
 
 export default function LandingScreen() {
   const router = useRouter();
@@ -33,14 +33,18 @@ export default function LandingScreen() {
   const buttonOpacity = useRef(new RNAnimated.Value(0)).current;
   const progressAnim = useRef(new RNAnimated.Value(0)).current;
 
-  const [hasNavigated, setHasNavigated] = useState(false);
+  const hasNavigatedRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    hasNavigatedRef.current = false;
+
     // 1. Entrance sequence
-    RNAnimated.parallel([
+    const entranceAnim = RNAnimated.parallel([
       RNAnimated.timing(logoOpacity, {
         toValue: 1,
-        duration: 700,
+        duration: 500,
         useNativeDriver: true,
       }),
       RNAnimated.spring(logoScale, {
@@ -49,44 +53,49 @@ export default function LandingScreen() {
         tension: 40,
         useNativeDriver: true,
       }),
-    ]).start(() => {
-      // Fade in greeting and button
+    ]);
+
+    entranceAnim.start(() => {
+      if (!isMountedRef.current) return;
       RNAnimated.parallel([
         RNAnimated.timing(textOpacity, {
           toValue: 1,
-          duration: 400,
+          duration: 300,
           useNativeDriver: true,
         }),
         RNAnimated.timing(buttonOpacity, {
           toValue: 1,
-          duration: 500,
+          duration: 400,
           useNativeDriver: true,
         }),
       ]).start();
     });
 
-    // 2. Auto-transition progress bar (2.5 seconds)
-    RNAnimated.timing(progressAnim, {
+    // 2. Auto-transition progress bar (exactly 2.0 seconds)
+    const progressAnimation = RNAnimated.timing(progressAnim, {
       toValue: 1,
-      duration: 2500,
+      duration: 2000,
       useNativeDriver: false,
-    }).start(({ finished }) => {
-      if (finished && !hasNavigated) {
+    });
+
+    progressAnimation.start(({ finished }) => {
+      if (finished && isMountedRef.current && !hasNavigatedRef.current) {
         handleProceed();
       }
     });
+
+    return () => {
+      isMountedRef.current = false;
+      entranceAnim.stop();
+      progressAnimation.stop();
+    };
   }, []);
 
   const handleProceed = () => {
-    if (hasNavigated) return;
-    setHasNavigated(true);
+    if (hasNavigatedRef.current) return;
+    hasNavigatedRef.current = true;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-
-    if (onboardingCompleted) {
-      router.replace('/(tabs)/index');
-    } else {
-      router.replace('/(tabs)/index');
-    }
+    router.replace('/(tabs)');
   };
 
   const toggleTheme = () => {
@@ -95,9 +104,9 @@ export default function LandingScreen() {
   };
 
   const currentBg = isDark ? DARK_BG : LIGHT_BG;
-  const textColor = isDark ? '#143323' : '#1e3a2b';
-  const subtextColor = isDark ? '#234d36' : '#4b6354';
-  const buttonBg = isDark ? '#1a3a28' : '#22c55e';
+  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
+  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
+  const buttonBg = isDark ? '#22c55e' : '#2D3E36';
   const buttonTextColor = '#ffffff';
 
   const progressWidth = progressAnim.interpolate({
@@ -175,13 +184,13 @@ export default function LandingScreen() {
         </TouchableOpacity>
 
         {/* Subtle timer progress bar */}
-        <View style={styles.progressTrack}>
+        <View style={[styles.progressTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.06)' }]}>
           <RNAnimated.View
             style={[
               styles.progressBar,
               {
                 width: progressWidth,
-                backgroundColor: isDark ? '#143323' : '#22c55e',
+                backgroundColor: isDark ? '#4ade80' : '#22c55e',
               },
             ]}
           />

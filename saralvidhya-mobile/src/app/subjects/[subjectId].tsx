@@ -47,7 +47,7 @@ export default function SubjectChaptersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}>
         <ActivityIndicator size="large" color="#22c55e" />
       </View>
     );
@@ -55,7 +55,7 @@ export default function SubjectChaptersScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
+      style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
       contentContainerStyle={styles.scrollContent}
     >
       {/* Back button and title */}
@@ -69,7 +69,7 @@ export default function SubjectChaptersScreen() {
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.codeText}>{subject?.code} • {subject?.credits} Credits</Text>
-          <Text style={[styles.titleText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+          <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
             {subject?.name}
           </Text>
         </View>
@@ -79,13 +79,13 @@ export default function SubjectChaptersScreen() {
       <View style={styles.uniBanner}>
         <Ionicons name="school" size={20} color="#22c55e" />
         <Text style={styles.uniBannerText}>
-          {subject?.university} • Official Syllabus
+          Official Syllabus
         </Text>
       </View>
 
       {/* Chapters list */}
       <View style={styles.chaptersContainer}>
-        <Text style={[styles.chaptersHeading, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        <Text style={[styles.chaptersHeading, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           Syllabus Chapters ({subject?.chapters.length || 0})
         </Text>
 
@@ -97,8 +97,8 @@ export default function SubjectChaptersScreen() {
               style={[
                 styles.chapterCard,
                 {
-                  backgroundColor: isDark ? '#111827' : '#ffffff',
-                  borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                  backgroundColor: isDark ? '#23322B' : '#ffffff',
+                  borderColor: isDark ? '#3D5449' : '#E5DDD8',
                 },
               ]}
               onPress={() => handleOpenChapter(ch)}
@@ -111,7 +111,7 @@ export default function SubjectChaptersScreen() {
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.chapterName, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+                  <Text style={[styles.chapterName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
                     {ch.name}
                   </Text>
                   <Text style={styles.toolsCountText}>

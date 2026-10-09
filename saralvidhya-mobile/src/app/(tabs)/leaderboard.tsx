@@ -26,15 +26,15 @@ export default function LeaderboardScreen() {
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: isDark ? '#090d16' : '#f8fafc' }]}
+      style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.header}>
-        <Text style={styles.badge}>ANGRAU STATEWIDE RANKINGS</Text>
-        <Text style={[styles.title, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        <Text style={styles.badge}>STATEWIDE RANKINGS</Text>
+        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           Study Leaderboard
         </Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.subtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Earn points by completing reading notes, scoring above 80% on assessments, and maintaining study streaks.
         </Text>
       </View>
@@ -47,7 +47,7 @@ export default function LeaderboardScreen() {
           <View style={[styles.podiumBar, styles.podiumBar2]}>
             <Text style={styles.podiumRank}>2</Text>
           </View>
-          <Text style={styles.podiumName} numberOfLines={1}>{LEADERBOARD_STUDENTS[1].name}</Text>
+          <Text style={[styles.podiumName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]} numberOfLines={1}>{LEADERBOARD_STUDENTS[1].name}</Text>
           <Text style={styles.podiumPoints}>{LEADERBOARD_STUDENTS[1].points} pts</Text>
         </View>
 
@@ -57,7 +57,7 @@ export default function LeaderboardScreen() {
           <View style={[styles.podiumBar, styles.podiumBar1]}>
             <Text style={styles.podiumRank}>1</Text>
           </View>
-          <Text style={styles.podiumName} numberOfLines={1}>{LEADERBOARD_STUDENTS[0].name}</Text>
+          <Text style={[styles.podiumName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]} numberOfLines={1}>{LEADERBOARD_STUDENTS[0].name}</Text>
           <Text style={styles.podiumPoints}>{LEADERBOARD_STUDENTS[0].points} pts</Text>
         </View>
 
@@ -67,7 +67,7 @@ export default function LeaderboardScreen() {
           <View style={[styles.podiumBar, styles.podiumBar3]}>
             <Text style={styles.podiumRank}>3</Text>
           </View>
-          <Text style={styles.podiumName} numberOfLines={1}>{LEADERBOARD_STUDENTS[2].name}</Text>
+          <Text style={[styles.podiumName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]} numberOfLines={1}>{LEADERBOARD_STUDENTS[2].name}</Text>
           <Text style={styles.podiumPoints}>{LEADERBOARD_STUDENTS[2].points} pts</Text>
         </View>
       </View>
@@ -80,23 +80,28 @@ export default function LeaderboardScreen() {
             style={[
               styles.studentRow,
               item.isUser && styles.studentRowUser,
-              { backgroundColor: isDark ? '#111827' : '#ffffff', borderColor: item.isUser ? '#22c55e' : (isDark ? '#1e293b' : '#e2e8f0') },
+              {
+                backgroundColor: item.isUser
+                  ? (isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.12)')
+                  : (isDark ? '#23322B' : '#ffffff'),
+                borderColor: item.isUser ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+              },
             ]}
           >
-            <View style={[styles.rankBadge, item.isUser && styles.rankBadgeUser]}>
-              <Text style={[styles.rankText, item.isUser && styles.rankTextUser]}>
+            <View style={[styles.rankBadge, item.isUser && styles.rankBadgeUser, !item.isUser && { backgroundColor: isDark ? '#374B41' : '#F7EBE3' }]}>
+              <Text style={[styles.rankText, item.isUser && styles.rankTextUser, !item.isUser && { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
                 #{item.rank}
               </Text>
             </View>
 
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.studentName, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+                <Text style={[styles.studentName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
                   {item.isUser ? `${user?.name || item.name} (You)` : item.name}
                 </Text>
                 {item.badge ? <Text>{item.badge}</Text> : null}
               </View>
-              <Text style={styles.studentRoll}>{item.roll}</Text>
+              <Text style={[styles.studentRoll, { color: isDark ? '#A6C5B3' : '#688875' }]}>{item.roll}</Text>
             </View>
 
             <View style={styles.scoreCol}>

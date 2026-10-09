@@ -133,16 +133,16 @@ export default function PYQView({
         style={[
           styles.headerCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
-        <Text style={styles.uniBadge}>ANGRAU OFFICIAL PAST PAPERS</Text>
-        <Text style={[styles.heading, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        <Text style={styles.uniBadge}>OFFICIAL PAST PAPERS</Text>
+        <Text style={[styles.heading, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           Previous Year Questions (PYQs)
         </Text>
-        <Text style={styles.subheading}>
+        <Text style={[styles.subheading, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Model answers with marking schemes and diagram requirements for Chapter {chapterNumber}.
         </Text>
 
@@ -155,6 +155,7 @@ export default function PYQView({
                 key={String(f)}
                 style={[
                   styles.filterPill,
+                  { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' },
                   isSelected && styles.filterPillActive,
                 ]}
                 onPress={() => {
@@ -162,7 +163,7 @@ export default function PYQView({
                   setFilter(f);
                 }}
               >
-                <Text style={[styles.filterText, isSelected && styles.filterTextActive]}>
+                <Text style={[styles.filterText, { color: isDark ? '#A6C5B3' : '#688875' }, isSelected && styles.filterTextActive]}>
                   {f === 'all' ? 'All Questions' : `${f} Marks`}
                 </Text>
               </TouchableOpacity>
@@ -183,8 +184,8 @@ export default function PYQView({
               style={[
                 styles.questionCard,
                 {
-                  backgroundColor: isDark ? '#111827' : '#ffffff',
-                  borderColor: isExpanded ? '#22c55e66' : (isDark ? '#1e293b' : '#e2e8f0'),
+                  backgroundColor: isDark ? '#23322B' : '#ffffff',
+                  borderColor: isExpanded ? '#22c55e66' : (isDark ? '#3D5449' : '#E5DDD8'),
                 },
               ]}
             >

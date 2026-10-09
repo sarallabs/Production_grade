@@ -66,8 +66,8 @@ export default function ReadAloudBar({ title, content, onClose }: ReadAloudBarPr
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#111827' : '#ffffff',
-          borderColor: isDark ? '#1e293b' : '#e2e8f0',
+          backgroundColor: isDark ? '#23322B' : '#ffffff',
+          borderColor: isDark ? '#3D5449' : '#E5DDD8',
         },
       ]}
     >
@@ -82,7 +82,7 @@ export default function ReadAloudBar({ title, content, onClose }: ReadAloudBarPr
         <View style={styles.textContainer}>
           <Text style={styles.preLabel}>READ ALOUD (TTS)</Text>
           <Text
-            style={[styles.titleLabel, { color: isDark ? '#f8fafc' : '#0f172a' }]}
+            style={[styles.titleLabel, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
             numberOfLines={1}
           >
             {title}
@@ -93,11 +93,11 @@ export default function ReadAloudBar({ title, content, onClose }: ReadAloudBarPr
       <View style={styles.controlsRow}>
         {/* Speed toggle pill */}
         <TouchableOpacity
-          style={styles.speedBtn}
+          style={[styles.speedBtn, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' }]}
           onPress={handleCycleSpeed}
           activeOpacity={0.7}
         >
-          <Text style={styles.speedText}>{SPEED_OPTIONS[speedIndex]}x</Text>
+          <Text style={[styles.speedText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{SPEED_OPTIONS[speedIndex]}x</Text>
         </TouchableOpacity>
 
         {/* Play / Pause toggle */}

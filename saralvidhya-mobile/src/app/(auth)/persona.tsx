@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, PersonaType } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 interface PersonaCard {
@@ -40,7 +41,7 @@ const PERSONAS: PersonaCard[] = [
     title: 'Intermediate',
     badge: 'Standard University Pace',
     icon: 'book-outline',
-    description: 'Balanced depth matching the standard ANGRAU syllabus speed with comprehensive reading guides and topic quizzes.',
+    description: 'Balanced depth matching the standard syllabus speed with comprehensive reading guides and topic quizzes.',
     highlights: [
       'Complete chapter study guides',
       'Full flashcard decks with terminology',
@@ -64,6 +65,7 @@ const PERSONAS: PersonaCard[] = [
 export default function PersonaSelectionScreen() {
   const router = useRouter();
   const { persona: currentPersona, updatePersona } = useAuth();
+  const { isDark } = useAppTheme();
   const [selected, setSelected] = useState<PersonaType>(currentPersona || 'intermediate');
 
   const handleSelect = async (personaId: PersonaType) => {
@@ -78,12 +80,12 @@ export default function PersonaSelectionScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.stepBadge}>STEP 2 OF 3</Text>
-        <Text style={styles.title}>Choose Your Learning Persona</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Choose Your Learning Persona</Text>
+        <Text style={[styles.subtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Saral Vidhya customizes the depth of notes, quiz difficulty, and study recommendations based on your persona.
         </Text>
       </View>
@@ -95,36 +97,43 @@ export default function PersonaSelectionScreen() {
           return (
             <TouchableOpacity
               key={item.id}
-              style={[styles.card, isSelected && styles.cardSelected]}
+              style={[
+                styles.card,
+                {
+                  backgroundColor: isDark ? '#23322B' : '#ffffff',
+                  borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+                },
+                isSelected && (isDark ? { backgroundColor: 'rgba(34, 197, 94, 0.15)' } : { backgroundColor: 'rgba(34, 197, 94, 0.08)' }),
+              ]}
               onPress={() => handleSelect(item.id)}
               activeOpacity={0.8}
             >
               <View style={styles.cardHeader}>
-                <View style={[styles.iconBox, isSelected && styles.iconBoxSelected]}>
+                <View style={[styles.iconBox, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' }, isSelected && styles.iconBoxSelected]}>
                   <Ionicons
                     name={item.icon}
                     size={24}
-                    color={isSelected ? '#22c55e' : '#94a3b8'}
+                    color={isSelected ? '#22c55e' : (isDark ? '#A6C5B3' : '#688875')}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.cardTitle, isSelected && styles.cardTitleSelected]}>
+                  <Text style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }, isSelected && styles.cardTitleSelected]}>
                     {item.title}
                   </Text>
-                  <Text style={styles.cardBadge}>{item.badge}</Text>
+                  <Text style={[styles.cardBadge, { color: isDark ? '#A6C5B3' : '#688875' }]}>{item.badge}</Text>
                 </View>
-                <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                <View style={[styles.radioCircle, { borderColor: isSelected ? '#22c55e' : (isDark ? '#557A65' : '#8A7A70') }, isSelected && styles.radioCircleSelected]}>
                   {isSelected && <View style={styles.radioDot} />}
                 </View>
               </View>
 
-              <Text style={styles.cardDescription}>{item.description}</Text>
+              <Text style={[styles.cardDescription, { color: isDark ? '#A6C5B3' : '#688875' }]}>{item.description}</Text>
 
               <View style={styles.highlightsContainer}>
                 {item.highlights.map((hl, i) => (
                   <View key={i} style={styles.highlightRow}>
                     <Ionicons name="checkmark-sharp" size={14} color="#22c55e" />
-                    <Text style={styles.highlightText}>{hl}</Text>
+                    <Text style={[styles.highlightText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>{hl}</Text>
                   </View>
                 ))}
               </View>
@@ -160,7 +169,7 @@ export default function PersonaSelectionScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#2D3E36',
   },
   scrollContent: {
     padding: Spacing.four,

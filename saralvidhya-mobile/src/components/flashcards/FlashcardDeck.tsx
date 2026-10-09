@@ -124,16 +124,16 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
         style={[
           styles.finishedCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
         <Text style={styles.trophyIcon}>🎉</Text>
-        <Text style={[styles.finishedTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        <Text style={[styles.finishedTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           Deck Completed!
         </Text>
-        <Text style={styles.finishedSubtitle}>
+        <Text style={[styles.finishedSubtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           You have reviewed all {total} flashcards in Chapter {chapterNumber}.
         </Text>
 
@@ -202,8 +202,8 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
             styles.cardFront,
             frontAnimatedStyle,
             {
-              backgroundColor: isDark ? '#111827' : '#ffffff',
-              borderColor: isDark ? '#1e293b' : '#e2e8f0',
+              backgroundColor: isDark ? '#23322B' : '#ffffff',
+              borderColor: isDark ? '#3D5449' : '#E5DDD8',
             },
           ]}
         >
@@ -218,7 +218,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           </View>
 
           <View style={styles.cardBody}>
-            <Text style={[styles.cardFrontText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            <Text style={[styles.cardFrontText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               {currentCard.front}
             </Text>
           </View>
@@ -240,7 +240,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
             styles.cardBack,
             backAnimatedStyle,
             {
-              backgroundColor: isDark ? '#064e3b1c' : '#f0fdf4',
+              backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : '#f0fdf4',
               borderColor: '#22c55e66',
             },
           ]}
@@ -256,7 +256,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           </View>
 
           <View style={styles.cardBody}>
-            <Text style={[styles.cardBackText, { color: isDark ? '#e2e8f0' : '#1e293b' }]}>
+            <Text style={[styles.cardBackText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               {currentCard?.back}
             </Text>
             {currentCard?.infographicUrl ? (

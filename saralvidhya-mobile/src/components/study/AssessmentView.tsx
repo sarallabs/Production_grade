@@ -142,12 +142,12 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
         style={[
           styles.questionCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
-        <Text style={[styles.questionText, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+        <Text style={[styles.questionText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           {currentQ.question}
         </Text>
 
@@ -157,19 +157,19 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
             const isSelected = selectedOptions.includes(idx);
             const isCorrect = currentQ.correctAnswers.includes(idx);
 
-            let cardBg = isDark ? '#1e293b' : '#f8fafc';
-            let cardBorder = isDark ? '#334155' : '#e2e8f0';
+            let cardBg = isDark ? '#1C2822' : '#F7EBE3';
+            let cardBorder = isDark ? '#3D5449' : '#E5DDD8';
 
             if (isAnswerSubmitted) {
               if (isCorrect) {
-                cardBg = isDark ? '#064e3b33' : '#f0fdf4';
+                cardBg = isDark ? 'rgba(34, 197, 94, 0.2)' : '#f0fdf4';
                 cardBorder = '#22c55e';
               } else if (isSelected && !isCorrect) {
-                cardBg = isDark ? '#450a0a33' : '#fef2f2';
+                cardBg = isDark ? 'rgba(239, 68, 68, 0.2)' : '#fef2f2';
                 cardBorder = '#ef4444';
               }
             } else if (isSelected) {
-              cardBg = isDark ? '#064e3b22' : '#f0fdf4';
+              cardBg = isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.08)';
               cardBorder = '#22c55e';
             }
 
@@ -212,7 +212,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
                 <Text
                   style={[
                     styles.optionText,
-                    { color: isDark ? '#f8fafc' : '#0f172a' },
+                    { color: isDark ? '#FFFFFF' : '#1C2E24' },
                     isSelected && { fontWeight: '700' },
                   ]}
                 >

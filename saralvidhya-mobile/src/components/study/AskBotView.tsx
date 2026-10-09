@@ -136,8 +136,8 @@ export default function AskBotView({
         style={[
           styles.botHeaderCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
@@ -145,10 +145,10 @@ export default function AskBotView({
           <Ionicons name="sparkles" size={18} color="#22c55e" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.botName, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+          <Text style={[styles.botName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
             Saral AI Study Tutor
           </Text>
-          <Text style={styles.botStatus}>Grounded in ANGRAU Entomology Syllabus</Text>
+          <Text style={styles.botStatus}>Grounded in Entomology Syllabus</Text>
         </View>
       </View>
 
@@ -161,12 +161,12 @@ export default function AskBotView({
         {QUICK_PROMPTS.map((prompt, i) => (
           <TouchableOpacity
             key={i}
-            style={[styles.quickPromptChip, { backgroundColor: isDark ? '#111827' : '#ffffff' }]}
+            style={[styles.quickPromptChip, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8', borderWidth: 1 }]}
             onPress={() => handleSend(prompt)}
             activeOpacity={0.7}
           >
             <Ionicons name="chatbubble-ellipses-outline" size={12} color="#22c55e" />
-            <Text style={styles.quickPromptText} numberOfLines={1}>{prompt}</Text>
+            <Text style={[styles.quickPromptText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]} numberOfLines={1}>{prompt}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -191,8 +191,8 @@ export default function AskBotView({
                     : [
                         styles.botBubble,
                         {
-                          backgroundColor: isDark ? '#111827' : '#ffffff',
-                          borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                          backgroundColor: isDark ? '#23322B' : '#ffffff',
+                          borderColor: isDark ? '#3D5449' : '#E5DDD8',
                         },
                       ],
                 ]}
@@ -208,7 +208,7 @@ export default function AskBotView({
                     styles.messageText,
                     isUser
                       ? styles.userMessageText
-                      : { color: isDark ? '#cbd5e1' : '#334155' },
+                      : { color: isDark ? '#FFFFFF' : '#1C2E24' },
                   ]}
                 >
                   {msg.text}
@@ -224,12 +224,12 @@ export default function AskBotView({
               style={[
                 styles.messageBubble,
                 styles.botBubble,
-                { backgroundColor: isDark ? '#111827' : '#ffffff' },
+                { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' },
               ]}
             >
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <ActivityIndicator size="small" color="#22c55e" />
-                <Text style={{ color: '#94a3b8', fontSize: 12 }}>Consulting ANGRAU syllabus notes...</Text>
+                <Text style={{ color: isDark ? '#A6C5B3' : '#688875', fontSize: 12 }}>Consulting syllabus notes...</Text>
               </View>
             </View>
           </View>
@@ -241,13 +241,13 @@ export default function AskBotView({
         style={[
           styles.inputContainer,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
         <TextInput
-          style={[styles.textInput, { color: isDark ? '#f8fafc' : '#0f172a' }]}
+          style={[styles.textInput, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
           placeholder="Ask a question about this chapter..."
           placeholderTextColor="#94a3b8"
           value={input}

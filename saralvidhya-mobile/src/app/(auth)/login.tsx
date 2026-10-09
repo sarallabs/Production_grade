@@ -14,11 +14,13 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
 import { Colors, BorderRadius, Spacing } from '@/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loginAsDemoStudent } = useAuth();
+  const { isDark } = useAppTheme();
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,24 +62,24 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
+      style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
     >
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Header / Logo */}
         <View style={styles.brandHeader}>
-          <View style={styles.logoBadge}>
+          <View style={[styles.logoBadge, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
             <Ionicons name="school" size={42} color="#22c55e" />
           </View>
-          <Text style={styles.brandTitle}>Saral Vidhya</Text>
-          <Text style={styles.brandSubtitle}>
+          <Text style={[styles.brandTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Saral Vidhya</Text>
+          <Text style={[styles.brandSubtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
             Acharya N.G. Ranga Agricultural University (ANGRAU)
           </Text>
         </View>
 
         {/* Card */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Student Sign In</Text>
-          <Text style={styles.cardDescription}>
+        <View style={[styles.card, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+          <Text style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Student Sign In</Text>
+          <Text style={[styles.cardDescription, { color: isDark ? '#A6C5B3' : '#688875' }]}>
             Enter your student details to access your courses, study table, and exam prep.
           </Text>
 
@@ -89,13 +91,13 @@ export default function LoginScreen() {
           ) : null}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name / Student Name</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="person-outline" size={20} color="#64748b" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: isDark ? '#A6C5B3' : '#557A65' }]}>Full Name / Student Name</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+              <Ionicons name="person-outline" size={20} color={isDark ? '#A6C5B3' : '#688875'} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                 placeholder="e.g. Aditya Ballari"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={isDark ? '#7E998B' : '#8A7A70'}
                 value={name}
                 onChangeText={(t) => { setName(t); setError(''); }}
                 autoCapitalize="words"
@@ -104,13 +106,13 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Roll Number / Student ID (Optional)</Text>
-            <View style={styles.inputWrapper}>
-              <Ionicons name="card-outline" size={20} color="#64748b" style={styles.inputIcon} />
+            <Text style={[styles.label, { color: isDark ? '#A6C5B3' : '#557A65' }]}>Roll Number / Student ID (Optional)</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+              <Ionicons name="card-outline" size={20} color={isDark ? '#A6C5B3' : '#688875'} style={styles.inputIcon} />
               <TextInput
-                style={styles.input}
+                style={[styles.input, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                 placeholder="e.g. AG-2023-131"
-                placeholderTextColor="#94a3b8"
+                placeholderTextColor={isDark ? '#7E998B' : '#8A7A70'}
                 value={rollNumber}
                 onChangeText={setRollNumber}
                 autoCapitalize="characters"
@@ -135,13 +137,13 @@ export default function LoginScreen() {
           </TouchableOpacity>
 
           <View style={styles.dividerRow}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>OR QUICK ACCESS</Text>
-            <View style={styles.dividerLine} />
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? '#3D5449' : '#E5DDD8' }]} />
+            <Text style={[styles.dividerText, { color: isDark ? '#A6C5B3' : '#688875' }]}>OR QUICK ACCESS</Text>
+            <View style={[styles.dividerLine, { backgroundColor: isDark ? '#3D5449' : '#E5DDD8' }]} />
           </View>
 
           <TouchableOpacity
-            style={styles.demoButton}
+            style={[styles.demoButton, { backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : 'rgba(34, 197, 94, 0.08)', borderColor: '#22c55e' }]}
             onPress={handleDemoLogin}
             disabled={isSubmitting}
             activeOpacity={0.8}
@@ -151,7 +153,7 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.footerNote}>
+        <Text style={[styles.footerNote, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Powered by Saral Labs • AI-Assisted Agricultural Learning
         </Text>
       </ScrollView>
@@ -162,7 +164,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#2D3E36',
   },
   scrollContent: {
     flexGrow: 1,

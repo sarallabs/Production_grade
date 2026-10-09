@@ -59,8 +59,8 @@ export default function AssessmentCompleteView({
         style={[
           styles.scoreCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
@@ -147,7 +147,7 @@ export default function AssessmentCompleteView({
                 style={[
                   styles.reviewItemCard,
                   {
-                    backgroundColor: isDark ? '#111827' : '#ffffff',
+                    backgroundColor: isDark ? '#23322B' : '#ffffff',
                     borderColor: isCorrect ? '#22c55e44' : '#ef444444',
                   },
                 ]}
@@ -165,12 +165,12 @@ export default function AssessmentCompleteView({
                       color={isCorrect ? '#22c55e' : '#ef4444'}
                     />
                   </View>
-                  <Text style={[styles.reviewQNum, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+                  <Text style={[styles.reviewQNum, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
                     Question {idx + 1}
                   </Text>
                 </View>
 
-                <Text style={[styles.reviewQText, { color: isDark ? '#cbd5e1' : '#334155' }]}>
+                <Text style={[styles.reviewQText, { color: isDark ? '#A6C5B3' : '#334155' }]}>
                   {q.question}
                 </Text>
 
@@ -179,8 +179,8 @@ export default function AssessmentCompleteView({
                     const wasChosen = selected.includes(optIdx);
                     const isRight = expected.includes(optIdx);
 
-                    let optBg = isDark ? '#1e293b' : '#f8fafc';
-                    let optBorder = isDark ? '#334155' : '#e2e8f0';
+                    let optBg = isDark ? '#1C2822' : '#F7EBE3';
+                    let optBorder = isDark ? '#3D5449' : '#E5DDD8';
                     let iconName: 'checkmark-circle' | 'close-circle' | 'radio-button-off' =
                       'radio-button-off';
                     let iconColor = '#94a3b8';

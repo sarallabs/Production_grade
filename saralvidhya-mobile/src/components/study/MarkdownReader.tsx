@@ -37,7 +37,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
       lineHeight: 24,
     },
     heading1: {
-      color: isDark ? '#f8fafc' : '#0f172a',
+      color: isDark ? '#FFFFFF' : '#1C2E24',
       fontSize: 22,
       fontWeight: '800' as const,
       marginTop: 20,
@@ -47,7 +47,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
       paddingBottom: 6,
     },
     heading2: {
-      color: isDark ? '#f1f5f9' : '#1e293b',
+      color: isDark ? '#FFFFFF' : '#1C2E24',
       fontSize: 18,
       fontWeight: '700' as const,
       marginTop: 16,
@@ -66,7 +66,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
     },
     strong: {
       fontWeight: '700' as const,
-      color: isDark ? '#ffffff' : '#0f172a',
+      color: isDark ? '#FFFFFF' : '#1C2E24',
     },
     bullet_list: {
       marginTop: 6,
@@ -81,7 +81,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
       marginBottom: 6,
     },
     blockquote: {
-      backgroundColor: isDark ? '#064e3b18' : '#f0fdf4',
+      backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : '#f0fdf4',
       borderLeftWidth: 4,
       borderLeftColor: '#22c55e',
       paddingHorizontal: 12,
@@ -90,7 +90,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
       borderRadius: BorderRadius.sm,
     },
     code_inline: {
-      backgroundColor: isDark ? '#1e293b' : '#f1f5f9',
+      backgroundColor: isDark ? '#374B41' : '#F7EBE3',
       color: '#22c55e',
       paddingHorizontal: 6,
       paddingVertical: 2,
@@ -99,24 +99,24 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
     },
     table: {
       borderWidth: 1,
-      borderColor: isDark ? '#1e293b' : '#e2e8f0',
+      borderColor: isDark ? '#3D5449' : '#E5DDD8',
       borderRadius: BorderRadius.md,
       marginVertical: 12,
     },
     tr: {
       borderBottomWidth: 1,
-      borderBottomColor: isDark ? '#1e293b' : '#e2e8f0',
+      borderBottomColor: isDark ? '#3D5449' : '#E5DDD8',
       flexDirection: 'row' as const,
     },
     th: {
       padding: 8,
-      backgroundColor: isDark ? '#1e293b' : '#f8fafc',
+      backgroundColor: isDark ? '#23322B' : '#F7EBE3',
       fontWeight: '700' as const,
-      color: isDark ? '#f8fafc' : '#0f172a',
+      color: isDark ? '#FFFFFF' : '#1C2E24',
     },
     td: {
       padding: 8,
-      color: isDark ? '#cbd5e1' : '#334155',
+      color: isDark ? '#E5DDD8' : '#334155',
     },
   };
 

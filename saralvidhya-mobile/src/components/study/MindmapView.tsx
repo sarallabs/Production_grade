@@ -194,7 +194,7 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
                 style={[
                   styles.branchCard,
                   {
-                    backgroundColor: isDark ? '#111827' : '#ffffff',
+                    backgroundColor: isDark ? '#23322B' : '#ffffff',
                     borderColor: colorTheme.border,
                   },
                 ]}
@@ -222,7 +222,7 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
                 </View>
 
                 <Text
-                  style={[styles.branchTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}
+                  style={[styles.branchTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                 >
                   {branch.title}
                 </Text>
@@ -233,7 +233,7 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
                       <View key={dIdx} style={styles.bulletRow}>
                         <View style={[styles.bulletDot, { backgroundColor: colorTheme.border }]} />
                         <Text
-                          style={[styles.bulletText, { color: isDark ? '#94a3b8' : '#64748b' }]}
+                          style={[styles.bulletText, { color: isDark ? '#A6C5B3' : '#688875' }]}
                         >
                           {d}
                         </Text>
@@ -252,8 +252,8 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
                       style={[
                         styles.subCard,
                         {
-                          backgroundColor: isDark ? '#1e293b' : '#f8fafc',
-                          borderColor: isDark ? '#334155' : '#e2e8f0',
+                          backgroundColor: isDark ? '#1C2822' : '#F7EBE3',
+                          borderColor: isDark ? '#3D5449' : '#E5DDD8',
                         },
                       ]}
                       onPress={() => handleNodeClick(sub)}
@@ -264,11 +264,11 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
                           <Ionicons name="folder-open" size={16} color={colorTheme.text} />
                         </View>
                         <Text
-                          style={[styles.subTitle, { color: isDark ? '#f1f5f9' : '#1e293b' }]}
+                          style={[styles.subTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                         >
                           {sub.title}
                         </Text>
-                        <Ionicons name="information-circle-outline" size={16} color="#94a3b8" />
+                        <Ionicons name="information-circle-outline" size={16} color={isDark ? '#A6C5B3' : '#688875'} />
                       </View>
 
                       {sub.details && sub.details.length > 0 && (
@@ -318,25 +318,25 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
             style={[
               styles.modalSheet,
               {
-                backgroundColor: isDark ? '#111827' : '#ffffff',
-                borderColor: isDark ? '#1e293b' : '#e2e8f0',
+                backgroundColor: isDark ? '#23322B' : '#ffffff',
+                borderColor: isDark ? '#3D5449' : '#E5DDD8',
               },
             ]}
           >
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderLeft}>
                 <Ionicons name="book" size={20} color="#10b981" />
-                <Text style={styles.modalCategory}>ANGRAU CONCEPT INSPECTOR</Text>
+                <Text style={styles.modalCategory}>CONCEPT INSPECTOR</Text>
               </View>
               <TouchableOpacity onPress={() => setActiveModalNode(null)}>
-                <Ionicons name="close-circle" size={26} color="#94a3b8" />
+                <Ionicons name="close-circle" size={26} color={isDark ? '#A6C5B3' : '#688875'} />
               </TouchableOpacity>
             </View>
 
             {activeModalNode && (
               <ScrollView showsVerticalScrollIndicator={false}>
                 <Text
-                  style={[styles.modalTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}
+                  style={[styles.modalTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                 >
                   {activeModalNode.title}
                 </Text>

@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const UNIVERSITIES = [
@@ -41,6 +42,7 @@ const SEMESTERS = [
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuth();
+  const { isDark } = useAppTheme();
   const [selectedProgram, setSelectedProgram] = useState(PROGRAMS[0].name);
   const [selectedSemester, setSelectedSemester] = useState(SEMESTERS[2]);
 
@@ -55,29 +57,29 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.stepBadge}>STEP 1 OF 3</Text>
-        <Text style={styles.title}>Academic Profile</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Academic Profile</Text>
+        <Text style={[styles.subtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Welcome, {user?.name || 'Student'}! Confirm your university and curriculum details to personalize your study resources.
         </Text>
       </View>
 
       {/* University Card */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>UNIVERSITY & BOARD</Text>
-        <View style={styles.selectedUniCard}>
+        <Text style={[styles.sectionLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>UNIVERSITY & BOARD</Text>
+        <View style={[styles.selectedUniCard, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: '#22c55e' }]}>
           <View style={styles.uniIconBadge}>
-            <Ionicons name="business" size={24} color="#22c55e" />
+            <Ionicons name="school" size={24} color="#22c55e" />
           </View>
           <View style={styles.uniInfo}>
             <View style={styles.badgeRow}>
               <Text style={styles.activeTag}>OFFICIAL ANGRAU</Text>
             </View>
-            <Text style={styles.uniName}>{UNIVERSITIES[0].name}</Text>
-            <Text style={styles.uniLocation}>{UNIVERSITIES[0].location}</Text>
+            <Text style={[styles.uniName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>{UNIVERSITIES[0].name}</Text>
+            <Text style={[styles.uniLocation, { color: isDark ? '#A6C5B3' : '#688875' }]}>{UNIVERSITIES[0].location}</Text>
           </View>
           <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
         </View>
@@ -85,27 +87,34 @@ export default function OnboardingScreen() {
 
       {/* Program Selector */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>SELECT DEGREE PROGRAM</Text>
+        <Text style={[styles.sectionLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>SELECT DEGREE PROGRAM</Text>
         {PROGRAMS.map((prog) => {
           const isSelected = selectedProgram === prog.name;
           return (
             <TouchableOpacity
               key={prog.id}
-              style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+              style={[
+                styles.optionCard,
+                {
+                  backgroundColor: isDark ? '#23322B' : '#ffffff',
+                  borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+                },
+                isSelected && (isDark ? { backgroundColor: 'rgba(34, 197, 94, 0.15)' } : { backgroundColor: 'rgba(34, 197, 94, 0.08)' }),
+              ]}
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedProgram(prog.name);
               }}
               activeOpacity={0.7}
             >
-              <View style={styles.radioOuter}>
+              <View style={[styles.radioOuter, { borderColor: isSelected ? '#22c55e' : (isDark ? '#557A65' : '#8A7A70') }]}>
                 {isSelected && <View style={styles.radioInner} />}
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[styles.optionTitle, isSelected && styles.optionTitleSelected]}>
+                <Text style={[styles.optionTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }, isSelected && { fontWeight: '700' }]}>
                   {prog.name}
                 </Text>
-                <Text style={styles.optionCode}>{prog.code}</Text>
+                <Text style={[styles.optionCode, { color: isDark ? '#A6C5B3' : '#688875' }]}>{prog.code}</Text>
               </View>
             </TouchableOpacity>
           );
@@ -114,21 +123,28 @@ export default function OnboardingScreen() {
 
       {/* Semester Selector */}
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>SELECT CURRENT SEMESTER</Text>
+        <Text style={[styles.sectionLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>SELECT CURRENT SEMESTER</Text>
         <View style={styles.chipGrid}>
           {SEMESTERS.map((sem) => {
             const isSelected = selectedSemester === sem;
             return (
               <TouchableOpacity
                 key={sem}
-                style={[styles.chip, isSelected && styles.chipSelected]}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor: isDark ? '#23322B' : '#ffffff',
+                    borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+                  },
+                  isSelected && (isDark ? { backgroundColor: 'rgba(34, 197, 94, 0.15)' } : { backgroundColor: 'rgba(34, 197, 94, 0.08)' }),
+                ]}
                 onPress={() => {
                   Haptics.selectionAsync();
                   setSelectedSemester(sem);
                 }}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                <Text style={[styles.chipText, { color: isDark ? '#A6C5B3' : '#688875' }, isSelected && { color: '#22c55e', fontWeight: '700' }]}>
                   {sem}
                 </Text>
               </TouchableOpacity>
@@ -153,7 +169,7 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#2D3E36',
   },
   scrollContent: {
     padding: Spacing.four,

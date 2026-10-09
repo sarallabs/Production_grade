@@ -169,8 +169,8 @@ export default function PodcastsView({
         style={[
           styles.playerCard,
           {
-            backgroundColor: isDark ? '#111827' : '#ffffff',
-            borderColor: isDark ? '#1e293b' : '#e2e8f0',
+            backgroundColor: isDark ? '#23322B' : '#ffffff',
+            borderColor: isDark ? '#3D5449' : '#E5DDD8',
           },
         ]}
       >
@@ -181,29 +181,29 @@ export default function PodcastsView({
           <View style={styles.artworkPulse} />
         </View>
 
-        <Text style={styles.seriesTag}>ANGRAU PODCAST SERIES • CH {chapterNumber}</Text>
+        <Text style={styles.seriesTag}>PODCAST SERIES • CH {chapterNumber}</Text>
         <Text
-          style={[styles.episodeTitle, { color: isDark ? '#f8fafc' : '#0f172a' }]}
+          style={[styles.episodeTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
           numberOfLines={2}
         >
           {chapterName}: Anatomy & Physiology Breakdown
         </Text>
-        <Text style={styles.speakerLabel}>Faculty: Prof. K. Rao • 2:00 mins</Text>
+        <Text style={[styles.speakerLabel, { color: isDark ? '#A6C5B3' : '#688875' }]}>Faculty: Prof. K. Rao • 2:00 mins</Text>
 
         {/* Seekbar */}
         <View style={styles.progressSection}>
-          <View style={styles.sliderTrack}>
+          <View style={[styles.sliderTrack, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' }]}>
             <View style={[styles.sliderFill, { width: `${progressPercent}%` }]} />
           </View>
           <View style={styles.timeRow}>
-            <Text style={styles.timeText}>{formatTime(positionMillis)}</Text>
-            <Text style={styles.timeText}>{formatTime(durationMillis)}</Text>
+            <Text style={[styles.timeText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{formatTime(positionMillis)}</Text>
+            <Text style={[styles.timeText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{formatTime(durationMillis)}</Text>
           </View>
         </View>
 
         {/* Playback Controls */}
         <View style={styles.controlsRow}>
-          <TouchableOpacity style={styles.speedPill} onPress={handleCycleSpeed}>
+          <TouchableOpacity style={[styles.speedPill, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' }]} onPress={handleCycleSpeed}>
             <Text style={styles.speedPillText}>{SPEED_OPTIONS[speedIndex]}x</Text>
           </TouchableOpacity>
 
@@ -212,8 +212,8 @@ export default function PodcastsView({
             onPress={() => handleSkip(-15)}
             activeOpacity={0.7}
           >
-            <Ionicons name="play-back" size={20} color="#94a3b8" />
-            <Text style={styles.skipSecText}>15</Text>
+            <Ionicons name="play-back" size={20} color={isDark ? '#A6C5B3' : '#688875'} />
+            <Text style={[styles.skipSecText, { color: isDark ? '#A6C5B3' : '#688875' }]}>15</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -233,8 +233,8 @@ export default function PodcastsView({
             onPress={() => handleSkip(15)}
             activeOpacity={0.7}
           >
-            <Ionicons name="play-forward" size={20} color="#94a3b8" />
-            <Text style={styles.skipSecText}>15</Text>
+            <Ionicons name="play-forward" size={20} color={isDark ? '#A6C5B3' : '#688875'} />
+            <Text style={[styles.skipSecText, { color: isDark ? '#A6C5B3' : '#688875' }]}>15</Text>
           </TouchableOpacity>
 
           <View style={{ width: 44 }} />
@@ -246,11 +246,11 @@ export default function PodcastsView({
         <View style={styles.transcriptHeaderRow}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Ionicons name="document-text-outline" size={16} color="#22c55e" />
-            <Text style={[styles.transcriptHeading, { color: isDark ? '#f8fafc' : '#0f172a' }]}>
+            <Text style={[styles.transcriptHeading, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               Synchronized Transcript
             </Text>
           </View>
-          <Text style={styles.transcriptHint}>Tap timestamp to jump</Text>
+          <Text style={[styles.transcriptHint, { color: isDark ? '#A6C5B3' : '#688875' }]}>Tap timestamp to jump</Text>
         </View>
 
         <View style={styles.transcriptList}>
@@ -267,8 +267,8 @@ export default function PodcastsView({
                   styles.transcriptCard,
                   isLineActive && styles.transcriptCardActive,
                   {
-                    backgroundColor: isDark ? '#111827' : '#ffffff',
-                    borderColor: isLineActive ? '#22c55e' : (isDark ? '#1e293b' : '#e2e8f0'),
+                    backgroundColor: isDark ? '#23322B' : '#ffffff',
+                    borderColor: isLineActive ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
                   },
                 ]}
                 onPress={() => handleSeekToTranscript(line.timeSec)}
@@ -287,14 +287,14 @@ export default function PodcastsView({
                       {line.timeLabel}
                     </Text>
                   </View>
-                  <Text style={styles.speakerTag}>{line.speaker}</Text>
+                  <Text style={[styles.speakerTag, { color: isDark ? '#A6C5B3' : '#688875' }]}>{line.speaker}</Text>
                 </View>
 
                 <Text
                   style={[
                     styles.transcriptBody,
-                    { color: isDark ? '#cbd5e1' : '#334155' },
-                    isLineActive && { color: isDark ? '#ffffff' : '#0f172a', fontWeight: '600' },
+                    { color: isDark ? '#A6C5B3' : '#334155' },
+                    isLineActive && { color: isDark ? '#FFFFFF' : '#1C2E24', fontWeight: '600' },
                   ]}
                 >
                   {line.text}

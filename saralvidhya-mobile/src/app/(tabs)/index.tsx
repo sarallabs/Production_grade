@@ -8,34 +8,39 @@ import {
   Platform,
   RefreshControl,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
-import { manifestService, Subject } from '@/api/manifestService';
-import { EntomologyMenuCard } from '@/components/study/EntomologyMenuCard';
+import { manifestService, CourseOverviewData } from '@/api/manifestService';
+import { CourseOverviewCard } from '@/components/study/CourseOverviewCard';
 
 export default function MainMenuScreen() {
   const router = useRouter();
   const { user, persona } = useAuth();
   const { isDark, setThemeMode } = useAppTheme();
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [courseData, setCourseData] = useState<CourseOverviewData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadSubjects();
-  }, []);
+    loadCourseOverview();
+  }, [user]);
 
-  const loadSubjects = async () => {
-    const list = await manifestService.getSubjects();
-    setSubjects(list);
+  const loadCourseOverview = async () => {
+    setLoading(true);
+    const data = await manifestService.getCourseOverview('Entomology');
+    setCourseData(data);
+    setLoading(false);
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadSubjects();
+    const data = await manifestService.getCourseOverview('Entomology');
+    setCourseData(data);
     setRefreshing(false);
   };
 
@@ -50,7 +55,7 @@ export default function MainMenuScreen() {
     router.push('/subjects');
   };
 
-  // Color tokens matching user reference images
+  // Color tokens matching user reference images:
   // Dark Theme: Screen background is #2D3E36
   // Light Theme: Screen background is #FFF6F1
   const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
@@ -83,7 +88,7 @@ export default function MainMenuScreen() {
               Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'} 👋
             </Text>
             <Text style={[styles.uniBadge, { color: subtextColor }]}>
-              ANGRAU • B.Sc. (Hons) Agriculture
+              {user?.program || 'B.Sc Agriculture'} • {user?.semester || 'Semester 3'}
             </Text>
           </View>
 
@@ -115,28 +120,50 @@ export default function MainMenuScreen() {
           </View>
         </View>
 
-        {/* Section Label */}
+        {/* Section Header */}
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: headerTextColor }]}>
             Course Overview
           </Text>
           <Text style={[styles.semesterTag, { color: subtextColor, backgroundColor: badgeBg }]}>
-            Semester 3
+            {user?.semester || 'Semester 3'}
           </Text>
         </View>
 
-        {/* Featured Main Menu Card (Matching 1st PNG & 2nd PNG) */}
-        <View style={styles.featuredContainer}>
-          <EntomologyMenuCard
-            isDark={isDark}
-            onPress={handleCardPress}
-          />
-        </View>
+        {/* Course Overview Card (100% DB Driven) */}
+        {loading || !courseData ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={isDark ? '#4ade80' : '#22c55e'} />
+            <Text style={[styles.loadingText, { color: subtextColor }]}>
+              Loading course overview from database...
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.cardWrapper}>
+            <CourseOverviewCard
+              data={courseData}
+              isDark={isDark}
+              onPress={handleCardPress}
+            />
+          </View>
+        )}
 
-        {/* Card Interaction Hint */}
-        <Text style={[styles.hintText, { color: subtextColor }]}>
-          Tap the course card above to open chapters & syllabus
-        </Text>
+        {/* Information Callout */}
+        <View
+          style={[
+            styles.infoCallout,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(45, 62, 54, 0.05)' },
+          ]}
+        >
+          <Ionicons
+            name="information-circle-outline"
+            size={18}
+            color={isDark ? '#A6C5B3' : '#688875'}
+          />
+          <Text style={[styles.infoCalloutText, { color: subtextColor }]}>
+            Numbers 1–{courseData?.subjects.length || 5} represent the curriculum subjects in your semester. Tap any number or the card to explore each subject in detail.
+          </Text>
+        </View>
       </ScrollView>
     </View>
   );
@@ -155,7 +182,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   greetingText: {
     fontSize: 22,
@@ -195,11 +222,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     paddingHorizontal: 4,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
   },
   semesterTag: {
@@ -210,16 +237,33 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  featuredContainer: {
+  cardWrapper: {
     width: '100%',
     alignItems: 'center',
     marginVertical: 4,
   },
-  hintText: {
-    fontSize: 12,
+  infoCallout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 14,
+    borderRadius: 16,
+    marginTop: 18,
+    gap: 10,
+  },
+  infoCalloutText: {
+    flex: 1,
+    fontSize: 12.5,
+    lineHeight: 18,
     fontWeight: '500',
-    textAlign: 'center',
-    marginTop: 14,
-    opacity: 0.8,
+  },
+  loadingContainer: {
+    paddingVertical: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

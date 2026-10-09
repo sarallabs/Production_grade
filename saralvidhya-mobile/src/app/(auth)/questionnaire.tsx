@@ -12,12 +12,14 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
+import { useAppTheme } from '@/context/ThemeContext';
 import { QUESTIONS, calculatePersona } from '@/data/questionnaireData';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
   const { completeQuestionnaire } = useAuth();
+  const { isDark } = useAppTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>(new Array(QUESTIONS.length).fill(-1));
   const [isFinishing, setIsFinishing] = useState(false);
@@ -74,26 +76,26 @@ export default function QuestionnaireScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
       {/* Top Bar with Progress */}
       <View style={styles.topBar}>
         <View style={styles.progressRow}>
           <Text style={styles.stepText}>
             QUESTION {currentIndex + 1} OF {QUESTIONS.length}
           </Text>
-          <Text style={styles.percentText}>{progressPercent}%</Text>
+          <Text style={[styles.percentText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{progressPercent}%</Text>
         </View>
-        <View style={styles.progressBarTrack}>
+        <View style={[styles.progressBarTrack, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3' }]}>
           <View style={[styles.progressBarFill, { width: `${progressPercent}%` }]} />
         </View>
       </View>
 
       {/* Question Container */}
-      <View style={styles.questionCard}>
-        <Text style={styles.questionText}>{currentQ.text}</Text>
+      <View style={[styles.questionCard, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+        <Text style={[styles.questionText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>{currentQ.text}</Text>
         {currentQ.description ? (
-          <View style={styles.descriptionBox}>
-            <Text style={styles.descriptionText}>{currentQ.description}</Text>
+          <View style={[styles.descriptionBox, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+            <Text style={[styles.descriptionText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{currentQ.description}</Text>
           </View>
         ) : null}
 
@@ -104,15 +106,22 @@ export default function QuestionnaireScreen() {
             return (
               <TouchableOpacity
                 key={idx}
-                style={[styles.optionRow, isSelected && styles.optionRowSelected]}
+                style={[
+                  styles.optionRow,
+                  {
+                    backgroundColor: isDark ? '#1C2822' : '#F7EBE3',
+                    borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+                  },
+                  isSelected && (isDark ? { backgroundColor: 'rgba(34, 197, 94, 0.15)' } : { backgroundColor: 'rgba(34, 197, 94, 0.08)' }),
+                ]}
                 onPress={() => handleSelectOption(idx)}
                 activeOpacity={0.8}
               >
-                <View style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}>
+                <View style={[styles.radioCircle, { borderColor: isSelected ? '#22c55e' : (isDark ? '#557A65' : '#8A7A70') }, isSelected && styles.radioCircleSelected]}>
                   {isSelected && <View style={styles.radioDot} />}
                 </View>
                 {opt.icon ? <Text style={styles.optionEmoji}>{opt.icon}</Text> : null}
-                <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                <Text style={[styles.optionText, { color: isDark ? '#FFFFFF' : '#1C2E24' }, isSelected && styles.optionTextSelected]}>
                   {opt.text}
                 </Text>
               </TouchableOpacity>
@@ -155,7 +164,7 @@ export default function QuestionnaireScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#090d16',
+    backgroundColor: '#2D3E36',
   },
   scrollContent: {
     padding: Spacing.four,
