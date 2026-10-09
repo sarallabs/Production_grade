@@ -158,14 +158,15 @@ export default function PodcastsView({
   const isNebOrMgmt = subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts;
 
   const getSavedTrack = (): string => {
+    if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc" || resumeTrack === "short" || resumeTrack === "long") {
+      return resumeTrack;
+    }
     const saved = localStorage.getItem(
       `last_track_${subjectId}_${chapterNumber}_${persona}`,
     );
     if (isNebOrMgmt) {
-      if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc") return resumeTrack;
       return saved === "ql" || saved === "dl" || saved === "mc" ? saved : "ql";
     } else {
-      if (resumeTrack === "short" || resumeTrack === "long") return resumeTrack;
       return saved === "short" || saved === "long" ? saved : "short";
     }
   };
@@ -178,6 +179,19 @@ export default function PodcastsView({
   const [selectedMc, setSelectedMc] = useState(initialMcIndex ?? 0);
   // Collapse track grid immediately when an initialMcIndex is supplied (coming from mindmap)
   const [isTrackGridExpanded, setIsTrackGridExpanded] = useState(initialMcIndex == null);
+
+  useEffect(() => {
+    if (initialMcIndex !== undefined && initialMcIndex !== null) {
+      setSelectedMc(initialMcIndex);
+      setIsTrackGridExpanded(false);
+    }
+  }, [initialMcIndex]);
+
+  useEffect(() => {
+    if (resumeTrack) {
+      setSelectedTrack(resumeTrack);
+    }
+  }, [resumeTrack]);
 
   const MICROCASTS = useMemo(() => {
     // GCS subjects use canonical microcast naming
@@ -663,8 +677,13 @@ export default function PodcastsView({
     }
   }, [persona]);
 
+  const isNebMount = useRef(true);
   // ── Reset NEB Nepal and Nagarjuna University player when track, persona, subject, or chapter changes ──
   useEffect(() => {
+    if (isNebMount.current) {
+      isNebMount.current = false;
+      return;
+    }
     if (!subjectId || (!subjectId.startsWith("neb_") && subjectId !== "management")) return;
     const audio = audioRef.current;
     if (audio) {
@@ -833,11 +852,24 @@ export default function PodcastsView({
 
     const onLoadedMetadata = () => {
       handleDurationDetect();
-      if (autoPlay) {
+      if (autoPlay && audio.paused) {
         setIsPlaying(true);
         onPlayingChange?.(true);
         audio.play().catch((e) => {
-          console.warn("Auto-play prevented:", e);
+          console.warn("Auto-play prevented on loadedmetadata:", e);
+          setIsPlaying(false);
+          onPlayingChange?.(false);
+        });
+      }
+    };
+
+    const onCanPlay = () => {
+      handleDurationDetect();
+      if (autoPlay && audio.paused) {
+        setIsPlaying(true);
+        onPlayingChange?.(true);
+        audio.play().catch((e) => {
+          console.warn("Auto-play prevented on canplay:", e);
           setIsPlaying(false);
           onPlayingChange?.(false);
         });
@@ -848,11 +880,20 @@ export default function PodcastsView({
     audio.addEventListener("seeked", onSeeked);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
     audio.addEventListener("durationchange", handleDurationDetect);
-    audio.addEventListener("canplay", handleDurationDetect);
+    audio.addEventListener("canplay", onCanPlay);
     audio.addEventListener("playing", handleDurationDetect);
 
     // Initial check in case audio already loaded
     handleDurationDetect();
+    if (autoPlay && audio.paused) {
+      setIsPlaying(true);
+      onPlayingChange?.(true);
+      audio.play().catch((e) => {
+        console.warn("Auto-play initial check prevented:", e);
+        setIsPlaying(false);
+        onPlayingChange?.(false);
+      });
+    }
 
     return () => {
       audio.removeEventListener("timeupdate", onTimeUpdate);
@@ -1028,9 +1069,25 @@ export default function PodcastsView({
   useEffect(() => { ttsCharIndexRef.current = ttsCharIndex; }, [ttsCharIndex]);
   useEffect(() => { ttsPlaybackStateRef.current = ttsPlaybackState; }, [ttsPlaybackState]);
 
+  // Dedicated effect for autoPlay prop
+  const hasAutoPlayedRef = useRef(false);
+  useEffect(() => {
+    if (!autoPlay || hasAutoPlayedRef.current) return;
+    if (available === null) return; // Wait until HEAD check completes
+
+    hasAutoPlayedRef.current = true;
+    if (available) {
+      handlePlay();
+    } else {
+      if (subjectId === "management") return;
+      handleTtsPlay();
+    }
+  }, [autoPlay, available]);
+
   // React to external play trigger — only re-run when playTrigger or available changes
   useEffect(() => {
     if (!playTrigger) return;
+    if (available === null) return; // Wait until HEAD check completes
     if (available) {
       handlePlay();
     } else {
@@ -1722,6 +1779,9 @@ export default function PodcastsView({
                 setAudioDuration(d);
                 updateProgress(a.currentTime, d);
               }
+              if (autoPlay && a.paused) {
+                handlePlay();
+              }
             }}
             onDurationChange={(e) => {
               const a = e.target as HTMLAudioElement;
@@ -1739,6 +1799,9 @@ export default function PodcastsView({
                 audioDurationRef.current = d;
                 setAudioDuration(d);
                 updateProgress(a.currentTime, d);
+              }
+              if (autoPlay && a.paused) {
+                handlePlay();
               }
             }}
           />

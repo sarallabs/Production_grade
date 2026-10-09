@@ -438,6 +438,19 @@ export default function StudyTable() {
     { key: "advanced", label: "Advanced", imgSrc: `${import.meta.env.BASE_URL}personas/advanced.png` },
   ];
 
+  // Toolbar Dark / Bright theme state (defaults to Dark #2D3E36, saved to localStorage)
+  const [isDarkToolbar, setIsDarkToolbar] = useState<boolean>(() => {
+    const saved = localStorage.getItem("sv_toolbar_theme");
+    return saved ? saved === "dark" : true;
+  });
+  const toggleToolbarTheme = () => {
+    setIsDarkToolbar((prev) => {
+      const next = !prev;
+      localStorage.setItem("sv_toolbar_theme", next ? "dark" : "light");
+      return next;
+    });
+  };
+
   const [chapterNumberState, setChapterNumberState] = useState<number>(() => {
     return parseInt(searchParams.get("chapter") || "1", 10) || 1;
   });
@@ -609,6 +622,9 @@ export default function StudyTable() {
   const [autoResumeTrack, setAutoResumeTrack] = useState<
     "long" | "short" | null
   >(null);
+  const [podcastTargetTrack, setPodcastTargetTrack] = useState<string | null>(null);
+  const [podcastTargetMcIndex, setPodcastTargetMcIndex] = useState<number | null>(null);
+  const [podcastAutoPlay, setPodcastAutoPlay] = useState<boolean>(false);
 
   // Segmented chapters walk the per-video loop; everything else the chapter flow.
   const activeFlow = isSegmented ? VIDEO_FLOW : GUIDED_FLOW;
@@ -702,6 +718,11 @@ export default function StudyTable() {
     const completed = completedOverride ?? completedTools;
     if (tool !== activeTool) {
       triggerToolTransition(tool);
+    }
+    if (tool !== "podcasts") {
+      setPodcastAutoPlay(false);
+      setPodcastTargetMcIndex(null);
+      setPodcastTargetTrack(null);
     }
     setActiveToolState(tool);
     setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
@@ -818,146 +839,7 @@ export default function StudyTable() {
   // Guided chapter gating has been removed per user request so they can freely 
   // navigate between unit tabs in MOOC mode.
 
-  // ── UNIVERSAL STUDY TOOL UP-NEXT FLOW ENGINE ──
-  const getUpNext = (): {
-    tool?: ToolId;
-    label: string;
-    subLabel: string;
-    description: string;
-    color: string;
-    action: () => void;
-  } | null => {
-    switch (activeTool) {
-      case "summary":
-      case "detailed":
-        return {
-          tool: "podcasts",
-          label: "Listen",
-          subLabel: "Podcasts",
-          description: "Conversational audio discussions & topic microcasts",
-          color: "#4F7B64",
-          action: () => setActiveTool("podcasts"),
-        };
-      case "podcasts":
-        return {
-          tool: "videos",
-          label: "Watch",
-          subLabel: "Videos",
-          description: "Curated video demonstrations and lecture clips",
-          color: "#4F7B64",
-          action: () => setActiveTool("videos"),
-        };
-      case "videos":
-        return {
-          tool: "revision_flashcards",
-          label: "Revise",
-          subLabel: "Flashcards",
-          description: "Reinforce key concepts with interactive flashcards",
-          color: "#4F7B64",
-          action: () => setActiveTool("revision_flashcards"),
-        };
-      case "flashcards":
-      case "revision_flashcards":
-        return {
-          tool: "assessment",
-          label: "Assessment",
-          subLabel: "Practice Questions",
-          description: "Multi-format questions to test chapter understanding",
-          color: "#4F7B64",
-          action: () => setActiveTool("assessment"),
-        };
-      case "assessment":
-        return {
-          tool: "qbank",
-          label: "Question Bank",
-          subLabel: "Question Bank",
-          description: "Explore the comprehensive topic question bank",
-          color: "#4F7B64",
-          action: () => setActiveTool("qbank"),
-        };
-      case "qbank":
-        return {
-          tool: "key_takeaways",
-          label: "Key Takeaways",
-          subLabel: "Key Takeaways",
-          description: "High-yield summaries and essential bullet points",
-          color: "#DB2777",
-          action: () => setActiveTool("key_takeaways"),
-        };
-      case "key_takeaways":
-        return {
-          tool: "study_plan",
-          label: "Study Plan",
-          subLabel: "Study Plan",
-          description: "Curriculum roadmap and schedule",
-          color: "#4F7B64",
-          action: () => setActiveTool("study_plan"),
-        };
-      case "study_plan":
-        return {
-          tool: "pyq",
-          label: "PYQ",
-          subLabel: "Previous Year Questions",
-          description: "Real past university examination questions",
-          color: "#DB2777",
-          action: () => setActiveTool("pyq"),
-        };
-      case "pyq":
-        return {
-          tool: "prep_exam",
-          label: "Preparation Exam",
-          subLabel: "Simulated Exam",
-          description: "Take a full simulated chapter test under exam conditions",
-          color: "#DB2777",
-          action: () => setActiveTool("prep_exam"),
-        };
-      case "prep_exam":
-      case "mocktest":
-      case "pre_final_test":
-        if (nextUnit) {
-          return {
-            label: `${getChapterPrefix(subjectId)} ${nextUnit.number}`,
-            subLabel: toTitleCase(nextUnit.name),
-            description: `Advance to next chapter: ${toTitleCase(nextUnit.name)}`,
-            color: "#2563EB",
-            action: () => {
-              handleChapterChange(nextUnit.number);
-              setActiveTool("summary");
-            },
-          };
-        }
-        return {
-          tool: "ask",
-          label: "Ask Me",
-          subLabel: "AI Subject Tutor",
-          description: "Clear your lingering doubts with the AI tutor",
-          color: "#4F7B64",
-          action: () => setIsAskOpen(true),
-        };
-      case "mindmap":
-      case "foundation":
-        return {
-          tool: "summary",
-          label: "Read",
-          subLabel: "Chapter Notes",
-          description: "Dive into complete chapter notes and study text",
-          color: "#4F7B64",
-          action: () => setActiveTool("summary"),
-        };
-      case "ask":
-        return null;
-      default:
-        return {
-          tool: "summary",
-          label: "Read",
-          subLabel: "Study Notes",
-          description: "Explore chapter reading materials",
-          color: "#4F7B64",
-          action: () => setActiveTool("summary"),
-        };
-    }
-  };
-  const upNext = getUpNext();
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1033,27 +915,8 @@ export default function StudyTable() {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isHoverExpanded, setIsHoverExpanded] = useState(false);
-  // Toolbar state: stays intact and open at all times unless user explicitly toggles it
-  const [isToolbarOpen, setIsToolbarOpen] = useState<boolean>(() => {
-    try {
-      const stored = localStorage.getItem("sv_study_toolbar_open");
-      return stored !== null ? stored === "true" : true;
-    } catch {
-      return true;
-    }
-  });
-
-  const toggleToolbarOpen = useCallback(() => {
-    setIsToolbarOpen((prev) => {
-      const next = !prev;
-      try {
-        localStorage.setItem("sv_study_toolbar_open", String(next));
-      } catch {
-        // ignore storage errors
-      }
-      return next;
-    });
-  }, []);
+  // Toolbar state: permanently open and displayed at all times
+  const isToolbarOpen = true;
 
   const railCollapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -1507,83 +1370,6 @@ export default function StudyTable() {
               startWord={readingHighlight.startWord}
               endWord={readingHighlight.endWord}
             />
-
-            {/* Inline Up Next Card at bottom of reading notes */}
-            {upNext && (
-              <div
-                className="sv-up-next-banner"
-                style={{
-                  marginTop: "48px",
-                  marginBottom: "36px",
-                  padding: "22px 28px",
-                  background: upNext.color === "#DB2777" ? "linear-gradient(135deg, #FDF2F8 0%, #FFFFFF 100%)" : "linear-gradient(135deg, #F0F7F4 0%, #FFFFFF 100%)",
-                  border: `1.5px solid ${upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9"}`,
-                  borderRadius: "16px",
-                  boxShadow: "0 4px 20px rgba(15, 23, 42, 0.06)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "20px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "220px", flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <span style={{
-                      fontSize: "11.5px",
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.6px",
-                      color: upNext.color,
-                      background: upNext.color === "#DB2777" ? "rgba(219, 39, 119, 0.12)" : "rgba(79, 123, 100, 0.12)",
-                      padding: "3px 9px",
-                      borderRadius: "6px"
-                    }}>
-                      Up Next
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "18px", fontWeight: 700, color: "#18221D", marginTop: "2px" }}>
-                    {upNext.subLabel ? `${upNext.label}: ${upNext.subLabel}` : upNext.label}
-                  </div>
-                  <div style={{ fontSize: "13.5px", color: "#64748B", lineHeight: 1.4 }}>
-                    {upNext.description}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={upNext.action}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "12px 26px",
-                    borderRadius: "30px",
-                    background: upNext.color,
-                    color: "#FFFFFF",
-                    fontWeight: 700,
-                    fontSize: "14.5px",
-                    border: "none",
-                    cursor: "pointer",
-                    boxShadow: `0 4px 14px ${upNext.color}55`,
-                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                    whiteSpace: "nowrap",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = `0 6px 20px ${upNext.color}77`;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "none";
-                    e.currentTarget.style.boxShadow = `0 4px 14px ${upNext.color}55`;
-                  }}
-                >
-                  <span>Up next: {upNext.label}</span>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </button>
-              </div>
-            )}
           </div>
         );
       }
@@ -1988,12 +1774,14 @@ export default function StudyTable() {
             const podcastBase = `${import.meta.env.BASE_URL}generated_resources/angrau/chapter_0${chapterNumber}/Podcasts`;
 
             if (action === 'podcast') {
-              setMindmapInlineType('audio');
-              setMindmapMediaUrl(`${podcastBase}/${match.podcastFile}.m4a`);
-              // Store which microcast index this topic maps to (0-based)
               const mcIdx = angrauChapCfg.topics.indexOf(match);
-              setMindmapMicrocastIdx(mcIdx >= 0 ? mcIdx : 0);
-              setMindmapTopicOpen(true);
+              const targetIdx = mcIdx >= 0 ? mcIdx : 0;
+              setMindmapTopicOpen(false);
+              setPodcastTargetTrack('mc');
+              setPodcastTargetMcIndex(targetIdx);
+              setPodcastAutoPlay(true);
+              setPodcastPlayTrigger(Date.now());
+              setActiveTool('podcasts');
               return;
             }
 
@@ -2064,10 +1852,7 @@ export default function StudyTable() {
             return;
           }
 
-          if (action === 'podcast' && mappedMedia?.audio) {
-            setMindmapInlineType('audio');
-            setMindmapMediaUrl(`${import.meta.env.BASE_URL}generated_resources/neb_nepal/class_12/biology/chapter_06/Podcasts/${mappedMedia.audio}.mp3`);
-            // Find the MC index for NEB Biology (index in MICROCASTS array)
+          if (action === 'podcast') {
             const nebMcNames = [
               'MC1_Histology_pioneers_and_the_first_tissues',
               'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
@@ -2082,9 +1867,14 @@ export default function StudyTable() {
               'MC11_Why_Some_Muscles_Never_Get_Tired',
               'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
             ];
-            const nebIdx = nebMcNames.indexOf(mappedMedia.audio);
-            setMindmapMicrocastIdx(nebIdx >= 0 ? nebIdx : 0);
-            setMindmapTopicOpen(true);
+            const nebIdx = mappedMedia?.audio ? nebMcNames.indexOf(mappedMedia.audio) : -1;
+            const targetIdx = nebIdx >= 0 ? nebIdx : 0;
+            setMindmapTopicOpen(false);
+            setPodcastTargetTrack('mc');
+            setPodcastTargetMcIndex(targetIdx);
+            setPodcastAutoPlay(true);
+            setPodcastPlayTrigger(Date.now());
+            setActiveTool('podcasts');
             return;
           }
 
@@ -2145,6 +1935,16 @@ export default function StudyTable() {
               console.error(e);
               setMindmapTopicLoading(false);
             }
+          }
+
+          if (action === 'podcast') {
+            setMindmapTopicOpen(false);
+            setPodcastTargetTrack('mc');
+            setPodcastTargetMcIndex(0);
+            setPodcastAutoPlay(true);
+            setPodcastPlayTrigger(Date.now());
+            setActiveTool('podcasts');
+            return;
           }
         };
 
@@ -2524,10 +2324,18 @@ export default function StudyTable() {
       case "podcasts":
         return (
           <PodcastsView
+            key={`podcasts-${subjectId}-${chapterNumber}-${podcastTargetTrack ?? 'default'}-${podcastTargetMcIndex ?? 0}`}
             chapterName={chapterName}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             persona={persona}
+            resumeTrack={podcastTargetTrack || undefined}
+            initialMcIndex={podcastTargetMcIndex !== null ? podcastTargetMcIndex : undefined}
+            autoPlay={podcastAutoPlay}
+            playTrigger={podcastPlayTrigger}
+            pauseTrigger={podcastPauseTrigger}
+            stopTrigger={podcastStopTrigger}
+            onPlayingChange={setPodcastIsPlaying}
           />
         );
 
@@ -2733,21 +2541,12 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
-      case "detailed":
-      case "summary": case "key_takeaways": case "study_plan": case "podcasts": case "videos": case "mindmap": case "foundation":
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
-      case "flashcards": case "revision_flashcards":
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #6F9A7F 0%, #4F7B64 100%)", shadow: "0 4px 12px rgba(111, 154, 127, 0.35)" };
-      case "assessment": case "qbank":
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
-      case "pyq": case "prep_exam": case "mocktest":
-        return { bg: "#fdf2f8", gradient: "linear-gradient(90deg, #DB2777 0%, #BE185D 100%)", shadow: "0 4px 12px rgba(219, 39, 119, 0.35)" };
       case "swot":
         return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
-      case "deep_dive": case "ask":
+      case "deep_dive":
         return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
       default:
-        return { bg: "#ffffff", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
+        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
     }
   };
   const activeToolTheme = getToolTheme(activeTool);
@@ -2787,7 +2586,7 @@ export default function StudyTable() {
             gap: "0"
           }}
         >
-          {/* Study Toolbar (MVP Project) */}
+          {/* Study Toolbar (MVP Project) - Toggleable Dark (#2D3E36) / Bright Theme */}
           {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
             <div
               className="study-toolbar-wrapper"
@@ -2795,24 +2594,19 @@ export default function StudyTable() {
                 position: "relative",
                 width: "100%",
                 flexShrink: 0,
-                background: "#ffffff",
-                borderBottom: isToolbarOpen ? "1px solid #e2e8f0" : "none",
-                boxShadow: isToolbarOpen ? "0 10px 30px rgba(15, 23, 42, 0.15)" : "none",
+                background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
+                borderBottom: isDarkToolbar ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E2E8F0",
+                boxShadow: isDarkToolbar ? "0 4px 24px rgba(0, 0, 0, 0.22)" : "0 2px 12px rgba(0, 0, 0, 0.05)",
                 zIndex: 100,
-                transition: "box-shadow 0.25s ease",
+                transition: "background 0.25s ease, border-color 0.25s ease",
               }}
             >
-              {/* Collapsible Content Drawer (GPU Accelerated 60fps) */}
+              {/* Permanent Content Drawer */}
               <div
                 style={{
-                  maxHeight: isToolbarOpen ? "160px" : "0px",
-                  opacity: isToolbarOpen ? 1 : 0,
-                  transform: isToolbarOpen ? "translate3d(0, 0, 0)" : "translate3d(0, -12px, 0)",
-                  willChange: "transform, opacity, max-height",
-                  overflow: "hidden",
-                  transition: "max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease",
-                  padding: isToolbarOpen ? "2px 16px" : "0px 16px",
-                  background: "#ffffff",
+                  padding: "4px 16px",
+                  background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
+                  transition: "background 0.25s ease",
                 }}
               >
                 {(() => {
@@ -2820,81 +2614,91 @@ export default function StudyTable() {
                   // chapter, so the rail shows that video's progress rather than
                   // a chapter-wide mix.
                   const unitCompleted = completedTools;
-                  const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    // Learn (Forest Green)
-                    videos: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    summary: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    quick_study: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    detailed: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    podcasts: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
+                    // Learn (#159A5B)
+                    videos: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    summary: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    quick_study: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    detailed: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    podcasts: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
 
-                    // Practice (Forest Green / SV Sage)
-                    flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    master_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    revision_flashcards: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    revise: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    assessment: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    qbank: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
+                    // Practice (#8658EC)
+                    flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    master_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    revision_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    revise: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    assessment: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    qbank: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
 
-                    // Prepare (Pink)
-                    key_takeaways: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    pyq: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    prep_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    prep_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    mocktest: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    pre_final_test: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
-                    certification_exam: { main: "#DB2777", badge: "#DB2777", text: "#DB2777", bg: "#fdf2f8" },
+                    // Prepare (#FF2476)
+                    study_plan: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    pyq: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    prep_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    prep_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    mocktest: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    pre_final_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    certification_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
 
-                    // Resources (Green)
-                    study_plan: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    mindmap: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-                    foundation: { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" },
-
-                    // AI & Analytics
-                    swot: { main: "#7C3AED", badge: "#7C3AED", text: "#7C3AED", bg: "#f5f3ff" },
-                    ask: { main: "#2D473B", badge: "#2D473B", text: "#2D473B", bg: "#f0fdf4" },
+                    // Resources (#3886D7)
+                    mindmap: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    foundation: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    key_takeaways: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    ask: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    swot: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    deep_dive: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
                   };
 
+                  // In Dark Theme (#2D3E36): ONLY the selected icon and active tab card use #FDBE8A (no glow).
+                  // All other (idle) icons and text are crisp white (#FFFFFF) / black-and-white monochrome.
+                  const DARK_THEME_COLOR = "#FDBE8A";
+
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
-                    const blackColor = "#18221D";
-                    const blackMuted = "#18221D";
-                    const blackSubtle = "#18221D";
+                    // Selected icon displays color (#FDBE8A in dark mode; section color in bright mode).
+                    // Idle icons display clean black/white monochrome (#FFFFFF in dark mode; #18221D in bright mode).
+                    const iconColor = active
+                      ? (isDarkToolbar ? DARK_THEME_COLOR : color)
+                      : (isDarkToolbar ? "#FFFFFF" : "#18221D");
+                    const iconMuted = active
+                      ? (isDarkToolbar ? "rgba(253, 190, 138, 0.65)" : `${color}99`)
+                      : (isDarkToolbar ? "rgba(255, 255, 255, 0.65)" : "rgba(24, 34, 29, 0.55)");
+                    const innerBg = isDarkToolbar ? "#23322B" : "#FFFFFF";
+                    const contrastBg = isDarkToolbar ? "#23322B" : "#FFFFFF";
 
                     switch (toolId) {
                       case "summary":
                       case "quick_study":
                       case "detailed":
                       case "detailed_notes": {
-                        const bookCover = active ? "#4F7B64" : blackColor;
-                        const bookBase = active ? "#1E3227" : "#0F172A";
+                        const bookCover = iconColor;
+                        const bookBase = isDarkToolbar ? (active ? "#3F3229" : "#1F2B25") : (active ? color : "#E2E8F0");
                         return (
                           <svg width="36" height="34" viewBox="0 0 38 34" fill="none">
                             {/* Book cover base */}
                             <path d="M4 27C10 27 15 28.5 19 31C23 28.5 28 27 34 27V29C28 29 23 30.5 19 33C15 30.5 10 29 4 29V27Z" fill={bookBase} />
                             <path d="M3 25C10 25 15 26.5 19 29C23 26.5 28 25 35 25V28C28 28 23 29.5 19 32C15 29.5 10 28 3 28V25Z" fill={bookCover} />
                             {/* Left page */}
-                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill="#FFFFFF" stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M4 8C10 8 15 9.5 19 12V28C15 25.5 10 24 4 24V8Z" fill={innerBg} stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Right page */}
-                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill="#FFFFFF" stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
+                            <path d="M34 8C28 8 23 9.5 19 12V28C23 25.5 28 24 34 24V8Z" fill={innerBg} stroke={bookCover} strokeWidth="1.6" strokeLinejoin="round" />
                             {/* Cover edges visible underneath */}
                             <path d="M3 9C2 9 2 24.5 3 25" stroke={bookCover} strokeWidth="2.5" strokeLinecap="round" />
                             <path d="M35 9C36 9 36 24.5 35 25" stroke={bookCover} strokeWidth="2.5" strokeLinecap="round" />
                             {/* Left page text lines */}
-                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
-                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
-                            <line x1="7.5" y1="20" x2="13" y2="21" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="7.5" y1="13" x2="15.5" y2="14.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+                            <line x1="7.5" y1="16.5" x2="15.5" y2="18" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+                            <line x1="7.5" y1="20" x2="13" y2="21" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
                             {/* Right page text lines */}
-                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
-                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
-                            <line x1="25" y1="21" x2="30.5" y2="20" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.75" />
+                            <line x1="22.5" y1="14.5" x2="30.5" y2="13" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+                            <line x1="22.5" y1="18" x2="30.5" y2="16.5" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
+                            <line x1="25" y1="21" x2="30.5" y2="20" stroke={bookCover} strokeWidth="1.4" strokeLinecap="round" opacity="0.8" />
                             {/* Center spine */}
                             <line x1="19" y1="12" x2="19" y2="29" stroke={bookCover} strokeWidth="1.8" strokeLinecap="round" />
                           </svg>
                         );
                       }
                       case "podcasts": {
-                        const podColor = active ? "#4F7B64" : blackColor;
-                        const podCushion = active ? "#7BA88B" : blackMuted;
+                        const podColor = iconColor;
+                        const podCushion = iconMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Headband */}
@@ -2917,21 +2721,21 @@ export default function StudyTable() {
                         );
                       }
                       case "videos": {
-                        const vidColor = active ? "#4F7B64" : blackColor;
+                        const vidColor = iconColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Bottom slate */}
                             <rect x="5" y="13" width="26" height="16" rx="3" fill={vidColor} />
                             {/* Play button triangle */}
-                            <polygon points="16,17 23,21 16,25" fill="#FFFFFF" />
+                            <polygon points="16,17 23,21 16,25" fill={contrastBg} />
                             {/* Top clapperboard bar */}
                             <g transform="rotate(-6 5 12)">
                               <rect x="5" y="6" width="26" height="6.5" rx="2" fill={vidColor} />
-                              {/* White diagonal stripes */}
-                              <polygon points="9,6 12,6 9,12.5 6,12.5" fill="#FFFFFF" />
-                              <polygon points="16,6 19,6 16,12.5 13,12.5" fill="#FFFFFF" />
-                              <polygon points="23,6 26,6 23,12.5 20,12.5" fill="#FFFFFF" />
-                              <polygon points="30,6 31,6 30,12.5 27,12.5" fill="#FFFFFF" />
+                              {/* Dark diagonal stripes */}
+                              <polygon points="9,6 12,6 9,12.5 6,12.5" fill={contrastBg} />
+                              <polygon points="16,6 19,6 16,12.5 13,12.5" fill={contrastBg} />
+                              <polygon points="23,6 26,6 23,12.5 20,12.5" fill={contrastBg} />
+                              <polygon points="30,6 31,6 30,12.5 27,12.5" fill={contrastBg} />
                             </g>
                           </svg>
                         );
@@ -2940,111 +2744,121 @@ export default function StudyTable() {
                       case "mindmap": {
                         return (
                           <img
-                            src={active ? `${import.meta.env.BASE_URL}mindmap_icon.png` : `${import.meta.env.BASE_URL}mindmap_icon_black.png`}
+                            src={
+                              isDarkToolbar
+                                ? (active ? "/mindmap_brain_fdbe8a.png" : "/mindmap_brain_white.png")
+                                : (active ? "/mindmap_brain_blue.png" : "/mindmap_brain_black.png")
+                            }
                             alt="Mindmaps"
                             style={{
-                              width: '34px',
-                              height: '32px',
-                              objectFit: 'contain',
-                              opacity: active ? 1 : 0.7,
-                              transition: 'all 0.18s ease',
+                              width: "34px",
+                              height: "26px",
+                              objectFit: "contain",
+                              display: "block",
                             }}
                           />
                         );
                       }
                       case "key_takeaways": {
-                        const keyColor = active ? color : blackColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            {/* Key head */}
-                            <circle cx="14" cy="14" r="6.5" stroke={keyColor} strokeWidth="2.2" fill={active ? (color === "#DB2777" ? "#FCE7F3" : "#EAF2ED") : "#FFFFFF"} />
-                            <circle cx="14" cy="14" r="2.5" fill={keyColor} />
-                            {/* Key shaft */}
-                            <path d="M19.5 17.5L29 27" stroke={keyColor} strokeWidth="2.4" strokeLinecap="round" />
-                            {/* Key teeth */}
-                            <path d="M24 22L26.5 19.5" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
-                            <path d="M26.5 24.5L29 22" stroke={keyColor} strokeWidth="2.2" strokeLinecap="round" />
-                            {/* Sparkle badge */}
-                            <path d="M7 7C7 8.5 5.8 9.5 4.5 9.5C5.8 9.5 7 10.5 7 12C7 10.5 8.2 9.5 9.5 9.5C8.2 9.5 7 8.5 7 7Z" fill={active ? keyColor : blackColor} />
+                            {/* Notepad base board */}
+                            <rect x="6" y="6" width="20" height="23" rx="3.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
+                            {/* 3 Top spiral/binder rings */}
+                            <rect x="9.5" y="3" width="2.2" height="5" rx="1.1" fill={iconColor} />
+                            <rect x="15" y="3" width="2.2" height="5" rx="1.1" fill={iconColor} />
+                            <rect x="20.5" y="3" width="2.2" height="5" rx="1.1" fill={iconColor} />
+                            {/* Checklist item 1 */}
+                            <path d="M9.5 12L11 13.5L13.5 10.8" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="15.5" y1="12" x2="22.5" y2="12" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            {/* Checklist item 2 */}
+                            <path d="M9.5 17L11 18.5L13.5 15.8" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="15.5" y1="17" x2="20.5" y2="17" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            {/* Checklist item 3 */}
+                            <path d="M9.5 22L11 23.5L13.5 20.8" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="15.5" y1="22" x2="19" y2="22" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            {/* Angled Pencil on the right */}
+                            <g transform="translate(19, 13) rotate(35)">
+                              <rect x="0" y="0" width="5" height="13" rx="1" fill={iconColor} />
+                              <polygon points="0,13 5,13 2.5,18" fill={innerBg} stroke={iconColor} strokeWidth="0.8" />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill={iconColor} />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={iconColor} opacity="0.75" />
+                            </g>
                           </svg>
                         );
                       }
                       case "study_plan": {
-                        const planColor = active ? color : blackColor;
-                        const planAccent = active ? (color === "#DB2777" ? "#F472B6" : "#6F9A7F") : blackColor;
-                        const planBg = active ? (color === "#DB2777" ? "#FDF2F8" : "#EAF2ED") : "#FFFFFF";
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            {/* Calendar / Planner base board */}
-                            <rect x="6" y="7" width="24" height="23" rx="3.5" fill={planBg} stroke={planColor} strokeWidth="2" />
+                            {/* Calendar base board */}
+                            <rect x="5.5" y="7" width="21" height="22" rx="3.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
                             {/* Top calendar header strip */}
-                            <path d="M6 10.5C6 8.567 7.567 7 9.5 7H26.5C28.433 7 30 8.567 30 10.5V13H6V10.5Z" fill={planColor} />
-                            {/* Binder rings */}
-                            <rect x="10" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
-                            <rect x="17" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
-                            <rect x="23.5" y="4" width="2.5" height="5" rx="1.25" fill={planAccent} stroke="#FFFFFF" strokeWidth="0.8" />
-                            {/* Grid cells / tasks inside calendar */}
-                            <rect x="9.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
-                            <rect x="16" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
-                            <rect x="22.5" y="16.5" width="4" height="3.5" rx="1" fill={active ? planColor : blackColor} opacity={active ? 0.9 : 0.6} />
-                            {/* Checklist items in bottom half */}
-                            <path d="M10 23.5L11.8 25.2L14.5 22.2" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="23.5" x2="26" y2="23.5" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.75" />
-                            <circle cx="11" cy="27.5" r="1.5" fill={planAccent} />
-                            <line x1="17" y1="27.5" x2="24" y2="27.5" stroke={planColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <path d="M5.5 10.5C5.5 8.567 7.067 7 9 7H24.5C25.5 7 26.5 7.8 26.5 9V12.5H5.5V10.5Z" fill={iconColor} />
+                            {/* 2 Binder rings on top left */}
+                            <rect x="8.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
+                            <rect x="13.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
+                            {/* Graduation Cap (Mortarboard) on top right */}
+                            <polygon points="23,3 29.5,5.5 23,8 16.5,5.5" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
+                            <path d="M19.5 6.5V8.5C19.5 9.5 21 10.2 23 10.2C25 10.2 26.5 9.5 26.5 8.5V6.5" fill={iconColor} />
+                            <path d="M23 5.5L29 7.8V11.5" stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" />
+                            <circle cx="29" cy="12" r="1" fill={iconColor} />
+                            {/* Checklist items inside calendar */}
+                            <path d="M8.5 16.5L10 18L12.5 15.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="14.5" y1="16.5" x2="20" y2="16.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+                            <path d="M8.5 21L10 22.5L12.5 20" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="14.5" y1="21" x2="19" y2="21" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+                            {/* Clock badge at bottom right */}
+                            <circle cx="26" cy="23.5" r="5.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
+                            <polyline points="26,21 26,23.5 28,23.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       }
                       case "flashcards":
                       case "revision_flashcards":
                       case "revise": {
-                        const revColor = active ? "#4F7B64" : blackColor;
-                        const revAccent = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Clipboard board */}
-                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill="#FFFFFF" stroke={revColor} strokeWidth="2" />
+                            <rect x="7" y="5" width="20" height="25" rx="3.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
                             {/* Top Clip */}
-                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill={revColor} />
-                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill={revAccent} />
+                            <rect x="13" y="3" width="8" height="4" rx="1.5" fill={iconColor} />
+                            <rect x="15" y="1.5" width="4" height="2" rx="1" fill={iconMuted} />
                             {/* Checkmarks & lines */}
-                            <path d="M10.5 11L12 12.5L15 9.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="11" x2="23" y2="11" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 16L12 17.5L15 14.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="16" x2="23" y2="16" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M10.5 21L12 22.5L15 19.5" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="17" y1="21" x2="20" y2="21" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M10.5 11L12 12.5L15 9.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="11" x2="23" y2="11" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+                            <path d="M10.5 16L12 17.5L15 14.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="16" x2="23" y2="16" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+                            <path d="M10.5 21L12 22.5L15 19.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="17" y1="21" x2="20" y2="21" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="26" cy="24" r="5.5" fill="#FFFFFF" stroke={revColor} strokeWidth="2" />
-                            <polyline points="26,21.5 26,24 28,24" stroke={revColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="26" cy="24" r="5.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
+                            <polyline points="26,21.5 26,24 28,24" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       }
                       case "assessment": {
-                        const assColor = active ? "#4F7B64" : blackColor;
-                        const assRing = active ? "#6F9A7F" : blackMuted;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Notepad body */}
-                            <rect x="6" y="7" width="20" height="23" rx="3" fill="#FFFFFF" stroke={assColor} strokeWidth="2" />
+                            <rect x="6" y="7" width="20" height="23" rx="3" fill={innerBg} stroke={iconColor} strokeWidth="2" />
                             {/* Spiral wire rings */}
-                            <rect x="8" y="4" width="2" height="5" rx="1" fill={assRing} />
-                            <rect x="13" y="4" width="2" height="5" rx="1" fill={assRing} />
-                            <rect x="18" y="4" width="2" height="5" rx="1" fill={assRing} />
-                            <rect x="23" y="4" width="2" height="5" rx="1" fill={assRing} />
+                            <rect x="8" y="4" width="2" height="5" rx="1" fill={iconMuted} />
+                            <rect x="13" y="4" width="2" height="5" rx="1" fill={iconMuted} />
+                            <rect x="18" y="4" width="2" height="5" rx="1" fill={iconMuted} />
+                            <rect x="23" y="4" width="2" height="5" rx="1" fill={iconMuted} />
                             {/* Lines & checks on pad */}
-                            <path d="M9.5 13L11 14.5L14 11.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="13" x2="22" y2="13" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 18L11 19.5L14 16.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="18" x2="20" y2="18" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
-                            <path d="M9.5 23L11 24.5L14 21.5" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                            <line x1="16" y1="23" x2="19" y2="23" stroke={assColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+                            <path d="M9.5 13L11 14.5L14 11.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="13" x2="22" y2="13" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+                            <path d="M9.5 18L11 19.5L14 16.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="18" x2="20" y2="18" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
+                            <path d="M9.5 23L11 24.5L14 21.5" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <line x1="16" y1="23" x2="19" y2="23" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.75" />
                             {/* Angled pencil writing on pad */}
                             <g transform="translate(19, 13) rotate(35)">
-                              <rect x="0" y="0" width="5" height="13" rx="1" fill={assColor} />
-                              <polygon points="0,13 5,13 2.5,18" fill={active ? "#E8F0EB" : "#E2E8F0"} />
-                              <polygon points="1.5,16 3.5,16 2.5,18" fill={active ? "#4F7B64" : blackColor} />
-                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={active ? "#6F9A7F" : blackMuted} />
+                              <rect x="0" y="0" width="5" height="13" rx="1" fill={iconColor} />
+                              <polygon points="0,13 5,13 2.5,18" fill={innerBg} />
+                              <polygon points="1.5,16 3.5,16 2.5,18" fill={iconColor} />
+                              <rect x="0" y="-3" width="5" height="3" rx="0.8" fill={iconMuted} />
                             </g>
                           </svg>
                         );
@@ -3052,42 +2866,37 @@ export default function StudyTable() {
                       case "qbank": {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            <defs>
-                              <linearGradient id="qbankGradActive" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stopColor="#6F9A7F" />
-                                <stop offset="100%" stopColor="#4F7B64" />
-                              </linearGradient>
-                            </defs>
-                            {/* 3D Glossy Speech bubble */}
+                            {/* Speech bubble */}
                             <path
                               d="M18 5C10.5 5 5 10 5 16.5C5 20.2 7.2 23.4 10.7 25.4L9 30L15.2 27.8C16.1 27.9 17 28 18 28C25.5 28 31 23 31 16.5C31 10 25.5 5 18 5Z"
-                              fill={active ? "url(#qbankGradActive)" : blackColor}
+                              fill={iconColor}
                             />
                             {/* Subtle highlight arc */}
-                            <path d="M9 11C11 8 14.5 7 18 7" stroke={active ? "#E8F0EB" : blackMuted} strokeWidth="1.8" strokeLinecap="round" opacity="0.75" />
-                            {/* White Question mark */}
-                            <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke="#FFFFFF" strokeWidth="2.6" strokeLinecap="round" />
-                            <circle cx="18" cy="22.5" r="1.5" fill="#FFFFFF" />
+                            <path d="M9 11C11 8 14.5 7 18 7" stroke={contrastBg} strokeWidth="1.8" strokeLinecap="round" opacity="0.4" />
+                            {/* Question mark */}
+                            <path d="M15 13.5C15 11.5 16.2 10.5 18 10.5C19.8 10.5 21 11.5 21 13C21 14.5 19.8 15.5 18.5 16.5C18 17 18 18 18 18.8" stroke={contrastBg} strokeWidth="2.6" strokeLinecap="round" />
+                            <circle cx="18" cy="22.5" r="1.5" fill={contrastBg} />
                           </svg>
                         );
                       }
                       case "pyq": {
-                        const pyqColor = active ? "#DB2777" : blackColor;
-                        const pyqFold = active ? "#FCE7F3" : "#E2E8F0";
+                        const pyqFold = isDarkToolbar
+                          ? (active ? "rgba(253, 190, 138, 0.25)" : "rgba(255, 255, 255, 0.18)")
+                          : (active ? `${color}33` : "rgba(24, 34, 29, 0.12)");
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Document outline */}
-                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill="#FFFFFF" stroke={pyqColor} strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M8 5C8 3.89543 8.89543 3 10 3H20L27 10V27C27 28.1046 26.1046 29 25 29H10C8.89543 29 8 28.1046 8 27V5Z" fill={innerBg} stroke={iconColor} strokeWidth="2" strokeLinejoin="round" />
                             {/* Dog-ear fold */}
-                            <path d="M20 3V10H27" fill={pyqFold} stroke={pyqColor} strokeWidth="2" strokeLinejoin="round" />
+                            <path d="M20 3V10H27" fill={pyqFold} stroke={iconColor} strokeWidth="2" strokeLinejoin="round" />
                             {/* Document text lines */}
-                            <line x1="12" y1="9" x2="16" y2="9" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="13" x2="22" y2="13" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="17" x2="20" y2="17" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
-                            <line x1="12" y1="21" x2="16" y2="21" stroke={pyqColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.6" />
+                            <line x1="12" y1="9" x2="16" y2="9" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            <line x1="12" y1="13" x2="22" y2="13" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            <line x1="12" y1="17" x2="20" y2="17" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
+                            <line x1="12" y1="21" x2="16" y2="21" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" opacity="0.8" />
                             {/* PYQ Badge */}
-                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill={pyqColor} />
-                            <text x="23.5" y="27.8" fill="#FFFFFF" fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">PYQ</text>
+                            <rect x="16" y="21" width="15" height="9" rx="3.5" fill={iconColor} />
+                            <text x="23.5" y="27.8" fill={contrastBg} fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">PYQ</text>
                           </svg>
                         );
                       }
@@ -3096,51 +2905,49 @@ export default function StudyTable() {
                       case "mocktest":
                       case "pre_final_test":
                       case "certification_exam": {
-                        const examColor = active ? "#DB2777" : blackColor;
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Calendar body */}
-                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill="#FFFFFF" stroke={examColor} strokeWidth="2" />
+                            <rect x="6" y="6" width="22" height="23" rx="3.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
                             {/* Calendar header bar */}
-                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill={examColor} />
+                            <path d="M6 9.5C6 7.567 7.567 6 9.5 6H24.5C26.433 6 28 7.567 28 9.5V11H6V9.5Z" fill={iconColor} />
                             {/* Spiral binder rings */}
-                            <rect x="10" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
-                            <rect x="16" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
-                            <rect x="22" y="3" width="2" height="5" rx="1" fill="#FFFFFF" stroke={examColor} strokeWidth="1" />
+                            <rect x="10" y="3" width="2" height="5" rx="1" fill={innerBg} stroke={iconColor} strokeWidth="1" />
+                            <rect x="16" y="3" width="2" height="5" rx="1" fill={innerBg} stroke={iconColor} strokeWidth="1" />
+                            <rect x="22" y="3" width="2" height="5" rx="1" fill={innerBg} stroke={iconColor} strokeWidth="1" />
                             {/* Grid of date checkmarks */}
-                            <path d="M9.5 15L10.5 16L12.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 15L16.5 16L18.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M21.5 15L22.5 16L24.5 14" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M9.5 20L10.5 21L12.5 19" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                            <path d="M15.5 20L16.5 21L18.5 19" stroke={examColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 15L10.5 16L12.5 14" stroke={iconColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 15L16.5 16L18.5 14" stroke={iconColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M21.5 15L22.5 16L24.5 14" stroke={iconColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M9.5 20L10.5 21L12.5 19" stroke={iconColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M15.5 20L16.5 21L18.5 19" stroke={iconColor} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                             {/* Clock badge at bottom right */}
-                            <circle cx="27" cy="24" r="5.5" fill="#FFFFFF" stroke={examColor} strokeWidth="2" />
-                            <polyline points="27,21.5 27,24 29,24" stroke={examColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="27" cy="24" r="5.5" fill={innerBg} stroke={iconColor} strokeWidth="2" />
+                            <polyline points="27,21.5 27,24 29,24" stroke={iconColor} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                           </svg>
                         );
                       }
                       case "ask": {
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
-                            <defs>
-                              <radialGradient id="saralCircleGradActive" cx="35%" cy="35%" r="70%">
-                                <stop offset="0%" stopColor="#4F7B64" />
-                                <stop offset="55%" stopColor="#355846" />
-                                <stop offset="100%" stopColor="#243D30" />
-                              </radialGradient>
-                            </defs>
-                            {/* Circle badge */}
-                            <circle cx="18" cy="17" r="13" fill={active ? "url(#saralCircleGradActive)" : blackColor} />
-                            {/* Big 4-point sparkle star in center */}
-                            <path d="M18 9C18 12.8 14.5 15 10.5 15C14.5 15 18 17.2 18 21C18 17.2 21.5 15 25.5 15C21.5 15 18 12.8 18 9Z" fill="#FFFFFF" />
+                            {/* Circular badge base */}
+                            <circle cx="18" cy="17" r="13" fill={iconColor} />
+                            {/* Large 4-point sparkle star in center */}
+                            <path
+                              d="M18 8.5C18 12.5 14.5 15 10.5 15C14.5 15 18 17.5 18 21.5C18 17.5 21.5 15 25.5 15C21.5 15 18 12.5 18 8.5Z"
+                              fill={contrastBg}
+                            />
                             {/* Small 4-point sparkle star on top right */}
-                            <path d="M25 8C25 9.8 23.3 11 21.5 11C23.3 11 25 12.2 25 14C25 12.2 26.7 11 28.5 11C26.7 11 25 9.8 25 8Z" fill="#FFFFFF" />
+                            <path
+                              d="M25.5 7.5C25.5 9.5 23.8 10.8 22 10.8C23.8 10.8 25.5 12.1 25.5 14.1C25.5 12.1 27.2 10.8 29 10.8C27.2 10.8 25.5 9.5 25.5 7.5Z"
+                              fill={contrastBg}
+                            />
                           </svg>
                         );
                       }
                       default:
                         return (
-                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={active ? color : blackColor} strokeWidth="1.75">
+                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={active ? (isDarkToolbar ? DARK_THEME_COLOR : color) : (isDarkToolbar ? "#FFFFFF" : "#18221D")} strokeWidth="1.75">
                             <circle cx="12" cy="12" r="8" />
                           </svg>
                         );
@@ -3151,11 +2958,13 @@ export default function StudyTable() {
                     const locked = false;
                     const active = activeTool === toolId ||
                       (toolId === "summary" && activeTool === "detailed") ||
-                      (toolId === "prep_exam" && (activeTool === "mocktest" || activeTool === "pre_final_test")) ||
+                      (toolId === "prep_exam" && ((activeTool as string) === "mocktest" || (activeTool as string) === "pre_final_test")) ||
                       (toolId === "revision_flashcards" && activeTool === "flashcards") ||
                       (toolId === "mindmap" && activeTool === "foundation");
                     const theme = TOOL_THEMES[toolId] || { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" };
                     const themeColor = colorOverride || theme.main;
+                    const activeThemeColor = isDarkToolbar ? DARK_THEME_COLOR : themeColor;
+                    const activeBorderColor = isDarkToolbar ? DARK_THEME_COLOR : themeColor;
 
                     return (
                       <div
@@ -3174,11 +2983,15 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '6px 4px',
+                          padding: '4px 2px',
                           borderRadius: '10px',
-                          background: active ? '#ffffff' : 'transparent',
-                          border: active ? `1.8px solid ${themeColor}` : '1.8px solid transparent',
-                          boxShadow: active ? `0 3px 12px ${themeColor}2e, 0 1px 3px rgba(0,0,0,0.06)` : 'none',
+                          background: active ? (isDarkToolbar ? 'rgba(253, 190, 138, 0.14)' : '#ffffff') : 'transparent',
+                          border: active ? `1.8px solid ${activeBorderColor}` : '1.8px solid transparent',
+                          boxShadow: active
+                            ? (isDarkToolbar
+                                ? '0 2px 6px rgba(0, 0, 0, 0.25)'
+                                : `0 3px 12px ${themeColor}2e, 0 1px 3px rgba(0,0,0,0.06)`)
+                            : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
                           opacity: 1,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -3187,11 +3000,14 @@ export default function StudyTable() {
                           flex: '1 1 0',
                           minWidth: 0,
                           width: '100%',
+                          height: '70px',
+                          minHeight: '70px',
+                          maxHeight: '70px',
                           boxSizing: 'border-box',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.background = 'rgba(15, 23, 42, 0.04)';
+                          (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)';
                           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
@@ -3199,15 +3015,24 @@ export default function StudyTable() {
                           (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', width: '36px', transition: 'transform 0.18s ease', transform: active ? 'scale(1.05)' : 'scale(1)' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '32px',
+                          width: '34px',
+                          transition: 'transform 0.18s ease',
+                          transform: active ? 'scale(1.06)' : 'scale(1)',
+                          flexShrink: 0
+                        }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
                           fontSize: '11px',
                           fontWeight: active ? 700 : 600,
-                          color: active ? themeColor : '#18221D',
+                          color: active ? activeThemeColor : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                           textAlign: 'center',
-                          lineHeight: '1.2',
+                          lineHeight: '1.15',
                           letterSpacing: '-0.2px',
                           transition: 'color 0.18s ease',
                           display: '-webkit-box',
@@ -3215,6 +3040,9 @@ export default function StudyTable() {
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
                           height: '26px',
+                          minHeight: '26px',
+                          maxHeight: '26px',
+                          width: '100%',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
                         </span>
@@ -3227,7 +3055,7 @@ export default function StudyTable() {
                               width: '22px',
                               height: '2.5px',
                               borderRadius: '2px',
-                              background: themeColor,
+                              background: activeBorderColor,
                             }}
                           />
                         )}
@@ -3273,172 +3101,161 @@ export default function StudyTable() {
                         </div>
                       </div>
 
-                      {/* CENTER TOOL NODES (Balanced Toolbar Layout: Learn, Practice, Prepare with even sizes, Resources & standalone Ask me) */}
+                      {/* CENTER TOOL NODES (Balanced Toolbar Layout: Learn, Practice, Prepare, Resources - exactly even width & height) */}
                       {(() => {
                         const isLearnActive = activeTool === "summary" || activeTool === "detailed" || activeTool === "podcasts" || activeTool === "videos";
                         const isPracticeActive = activeTool === "revision_flashcards" || activeTool === "flashcards" || activeTool === "assessment" || activeTool === "qbank";
-                        const isPrepareActive = activeTool === "pyq" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "mocktest" || activeTool === "pre_final_test";
-                        const isResourcesActive = activeTool === "mindmap" || activeTool === "foundation" || activeTool === "study_plan";
-                        const isAskActive = activeTool === "ask";
+                        const isPrepareActive = activeTool === "pyq" || activeTool === "prep_exam" || activeTool === "study_plan" || (activeTool as string) === "mocktest" || (activeTool as string) === "pre_final_test";
+                        const isResourcesActive = activeTool === "mindmap" || activeTool === "foundation" || activeTool === "key_takeaways" || activeTool === "ask";
 
-                        const groupCardStyle = (isActive: boolean, groupColor: string, width: string): React.CSSProperties => ({
+                        const groupCardStyle = (isActive: boolean, groupColor: string): React.CSSProperties => ({
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          border: isActive ? `1.5px solid ${groupColor}` : '1.5px solid #D5E2D9',
+                          justifyContent: 'space-between',
+                          border: isActive
+                            ? (isDarkToolbar ? `1.8px solid ${DARK_THEME_COLOR}` : `1.5px solid ${groupColor}`)
+                            : (isDarkToolbar ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid #D5E2D9'),
                           borderRadius: '16px',
                           padding: '6px 8px 8px',
                           background: isActive
-                            ? (groupColor === "#DB2777" ? 'rgba(219, 39, 119, 0.02)' : 'rgba(79, 123, 100, 0.02)')
-                            : '#FFFFFF',
+                            ? (isDarkToolbar ? 'rgba(253, 190, 138, 0.08)' : `${groupColor}0a`)
+                            : (isDarkToolbar ? 'rgba(0, 0, 0, 0.20)' : '#FFFFFF'),
                           boxShadow: isActive
-                            ? (groupColor === "#DB2777" ? '0 2px 8px rgba(219, 39, 119, 0.08)' : '0 2px 8px rgba(79, 123, 100, 0.08)')
-                            : '0 1px 3px rgba(0, 0, 0, 0.04)',
-                          width,
-                          minWidth: width,
-                          maxWidth: width,
+                            ? (isDarkToolbar
+                                ? '0 2px 8px rgba(0, 0, 0, 0.28)'
+                                : `0 3px 12px ${groupColor}33, 0 1px 3px rgba(0, 0, 0, 0.2)`)
+                            : (isDarkToolbar ? '0 1px 4px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'),
+                          width: '236px',
+                          minWidth: '236px',
+                          maxWidth: '236px',
+                          height: '112px',
+                          minHeight: '112px',
+                          maxHeight: '112px',
                           boxSizing: 'border-box',
-                          flex: `0 0 ${width}`,
-                          transition: 'all 0.2s ease',
+                          flex: '0 0 236px',
+                          transition: 'all 0.25s ease',
                         });
 
                         return (
                           <div
                             style={{
                               display: 'flex',
-                              alignItems: 'stretch',
+                              alignItems: 'center',
                               justifyContent: 'center',
                               gap: '12px',
                               padding: '4px 8px',
-                              background: '#FFFFFF',
+                              background: 'transparent',
                               margin: '0 auto',
                               flexShrink: 0,
                             }}
                           >
-                            {/* 1. LEARN SECTION (3 items) */}
-                            <div style={groupCardStyle(isLearnActive, "#4F7B64", "232px")}>
+                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - #159A5B */}
+                            <div style={groupCardStyle(isLearnActive, "#159A5B")}>
                               <div style={{
-                                height: '22px',
+                                height: '20px',
+                                minHeight: '20px',
+                                maxHeight: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
-                                marginBottom: '4px',
-                                color: isLearnActive ? '#4F7B64' : '#18221D',
+                                color: isLearnActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#159A5B') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
+                                lineHeight: '20px',
+                                width: '100%',
                               }}>
                                 <span>Learn</span>
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
-                                    style={{ background: '#4F7B64', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
+                                    style={{ background: isDarkToolbar ? DARK_THEME_COLOR : '#159A5B', color: isDarkToolbar ? '#2D3E36' : '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
                                   >
                                     Video {videoIndex}/{chapterVideos.length}
                                   </span>
                                 )}
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                                {renderNode("summary", "Read", "#4F7B64")}
-                                {renderNode("podcasts", "Listen", "#4F7B64")}
-                                {renderNode("videos", "Watch", "#4F7B64")}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                                {renderNode("summary", "Read", "#159A5B")}
+                                {renderNode("podcasts", "Listen", "#159A5B")}
+                                {renderNode("videos", "Watch", "#159A5B")}
                               </div>
                             </div>
 
-                            {/* 2. PRACTICE SECTION (3 items) */}
-                            <div style={groupCardStyle(isPracticeActive, "#4F7B64", "232px")}>
+                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - #8658EC */}
+                            <div style={groupCardStyle(isPracticeActive, "#8658EC")}>
                               <div style={{
-                                height: '22px',
+                                height: '20px',
+                                minHeight: '20px',
+                                maxHeight: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                marginBottom: '4px',
-                                color: isPracticeActive ? '#4F7B64' : '#18221D',
+                                color: isPracticeActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#8658EC') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
+                                lineHeight: '20px',
+                                width: '100%',
                               }}>
                                 Practice
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                                {renderNode("revision_flashcards", "Revise", "#4F7B64")}
-                                {renderNode("assessment", "Assessment", "#4F7B64")}
-                                {renderNode("qbank", "Question Bank", "#4F7B64")}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                                {renderNode("revision_flashcards", "Revise", "#8658EC")}
+                                {renderNode("assessment", "Assessment", "#8658EC")}
+                                {renderNode("qbank", "Question Bank", "#8658EC")}
                               </div>
                             </div>
 
-                            {/* 3. PREPARE SECTION (3 items: PYQ, Prep Exam, Key Takeaways) */}
-                            <div style={groupCardStyle(isPrepareActive, "#DB2777", "232px")}>
+                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - #FF2476 */}
+                            <div style={groupCardStyle(isPrepareActive, "#FF2476")}>
                               <div style={{
-                                height: '22px',
+                                height: '20px',
+                                minHeight: '20px',
+                                maxHeight: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                marginBottom: '4px',
-                                color: isPrepareActive ? '#DB2777' : '#18221D',
+                                color: isPrepareActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#FF2476') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
+                                lineHeight: '20px',
+                                width: '100%',
                               }}>
                                 Prepare
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                                {renderNode("pyq", "PYQ", "#DB2777")}
-                                {renderNode("prep_exam", "Preparation Exam", "#DB2777")}
-                                {renderNode("key_takeaways", "Key Takeaways", "#DB2777")}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                                {renderNode("pyq", "PYQ", "#FF2476")}
+                                {renderNode("prep_exam", "Preparation Exam", "#FF2476")}
+                                {renderNode("study_plan", "Study Plan", "#FF2476")}
                               </div>
                             </div>
 
-                            {/* 4. RESOURCES SECTION (2 items: Mindmaps, Study Plan) */}
-                            <div style={groupCardStyle(isResourcesActive, "#4F7B64", "162px")}>
+                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - #3886D7 */}
+                            <div style={groupCardStyle(isResourcesActive, "#3886D7")}>
                               <div style={{
-                                height: '22px',
+                                height: '20px',
+                                minHeight: '20px',
+                                maxHeight: '20px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                marginBottom: '4px',
-                                color: isResourcesActive ? '#4F7B64' : '#18221D',
+                                color: isResourcesActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#3886D7') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
+                                lineHeight: '20px',
+                                width: '100%',
                               }}>
                                 Resources
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
-                                {renderNode("mindmap", "Mindmaps", "#4F7B64")}
-                                {renderNode("study_plan", "Study Plan", "#4F7B64")}
-                              </div>
-                            </div>
-
-                            {/* 5. SEPARATE TOOL: ASK ME */}
-                            <div
-                              style={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                alignSelf: 'stretch',
-                              }}
-                            >
-                              <div
-                                style={{
-                                  border: isAskActive ? '1.5px solid #2D473B' : '1.5px solid #D5E2D9',
-                                  borderRadius: '16px',
-                                  padding: '6px 8px 8px',
-                                  background: isAskActive ? 'rgba(45, 71, 59, 0.04)' : '#FFFFFF',
-                                  boxShadow: isAskActive ? '0 2px 8px rgba(45, 71, 59, 0.1)' : '0 1px 3px rgba(0, 0, 0, 0.04)',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  height: '100%',
-                                  boxSizing: 'border-box',
-                                  transition: 'all 0.2s ease',
-                                  width: '74px',
-                                  flex: '0 0 74px',
-                                }}
-                              >
-                                {renderNode("ask", "Ask me", "#2D473B")}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                                {renderNode("mindmap", "Mindmaps", "#3886D7")}
+                                {renderNode("key_takeaways", "Key Takeaways", "#3886D7")}
+                                {renderNode("ask", "Ask me", "#3886D7")}
                               </div>
                             </div>
                           </div>
@@ -3455,40 +3272,61 @@ export default function StudyTable() {
                           paddingRight: '6px',
                         }}
                       >
-                        {/* Explicit Collapse Toolbar Button (Only collapses when user clicks it) */}
+                        {/* Theme Switcher Toggle Button (Dark #2D3E36 <-> Bright) */}
                         <button
                           type="button"
-                          onClick={() => toggleToolbarOpen()}
-                          title="Collapse toolbar"
-                          aria-label="Collapse toolbar"
+                          onClick={toggleToolbarTheme}
+                          title={isDarkToolbar ? "Switch to Bright Mode" : "Switch to Dark Mode"}
+                          aria-label="Toggle Dark / Bright Theme"
                           style={{
-                            width: "36px",
-                            height: "36px",
-                            borderRadius: "50%",
                             display: "flex",
                             alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #E2E8F0",
-                            background: "#F8FAFC",
-                            color: "#64748B",
+                            gap: "6px",
+                            padding: "6px 12px",
+                            borderRadius: "20px",
+                            border: isDarkToolbar ? "1.5px solid rgba(255, 255, 255, 0.18)" : "1.5px solid #CBD5E1",
+                            background: isDarkToolbar ? "rgba(0, 0, 0, 0.25)" : "#F8FAFC",
+                            color: isDarkToolbar ? "#F8FAFC" : "#1E293B",
                             cursor: "pointer",
-                            flexShrink: 0,
+                            fontSize: "12px",
+                            fontWeight: 600,
                             transition: "all 0.2s ease",
+                            boxShadow: isDarkToolbar ? "0 2px 6px rgba(0,0,0,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
                           }}
                           onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#F1F5F9";
-                            (e.currentTarget as HTMLButtonElement).style.color = "#1E293B";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.06)";
+                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = isDarkToolbar ? "#FFFFFF" : "#64748B";
                           }}
                           onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#F8FAFC";
-                            (e.currentTarget as HTMLButtonElement).style.color = "#64748B";
                             (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                            (e.currentTarget as HTMLButtonElement).style.borderColor = isDarkToolbar ? "rgba(255, 255, 255, 0.18)" : "#CBD5E1";
                           }}
                         >
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="18 15 12 9 6 15" />
-                          </svg>
+                          {isDarkToolbar ? (
+                            <>
+                              {/* Sun Icon */}
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="5" fill="#F59E0B" fillOpacity="0.2" />
+                                <line x1="12" y1="1" x2="12" y2="3" />
+                                <line x1="12" y1="21" x2="12" y2="23" />
+                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                <line x1="1" y1="12" x2="3" y2="12" />
+                                <line x1="21" y1="12" x2="23" y2="12" />
+                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                              </svg>
+                              <span>Bright</span>
+                            </>
+                          ) : (
+                            <>
+                              {/* Moon Icon */}
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#6366F1" fillOpacity="0.15" />
+                              </svg>
+                              <span>Dark</span>
+                            </>
+                          )}
                         </button>
 
                         {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
@@ -3669,49 +3507,6 @@ export default function StudyTable() {
               </div>
 
               {/* Old Collapse Pull-Tab removed */}
-            </div>
-          )}
-
-          {/* Top Hover Trigger Notch */}
-          {!isToolbarOpen && activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
-            <div
-              onClick={() => setIsToolbarOpen(true)}
-              onMouseEnter={() => setIsToolbarOpen(true)}
-              title="Show Study Tools"
-              aria-label="Show Study Tools"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: "50%",
-                transform: "translateX(-50%) translate3d(0, 0, 0)",
-                padding: "2px 24px 10px 24px",
-                cursor: "pointer",
-                zIndex: 99,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: "48px",
-                  height: "5px",
-                  borderRadius: "999px",
-                  backgroundColor: "#94A3B8",
-                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.15)",
-                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "#0F766E";
-                  (e.currentTarget as HTMLDivElement).style.width = "64px";
-                  (e.currentTarget as HTMLDivElement).style.height = "6px";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLDivElement).style.backgroundColor = "#94A3B8";
-                  (e.currentTarget as HTMLDivElement).style.width = "48px";
-                  (e.currentTarget as HTMLDivElement).style.height = "5px";
-                }}
-              />
             </div>
           )}
 
@@ -4143,81 +3938,6 @@ export default function StudyTable() {
             >
               {renderContent()}
             </div>
-
-
-
-            {/* Universal Floating "Up next: {Study tool}" Button (hidden on Read/notes where inline card exists, as well as tests and ask) */}
-            {!isFocusModeActive &&
-              upNext &&
-              !["summary", "detailed", "key_takeaways", "study_plan", "mocktest", "pre_final_test", "ask"].includes(activeTool) && (
-              <div
-                className="sv-floating-up-next"
-                style={{
-                  position: "absolute",
-                  bottom: activeTool === "videos" ? "88px" : activeTool === "podcasts" ? "84px" : "28px",
-                  right: "28px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "10px",
-                  zIndex: 70,
-                }}
-              >
-                <button
-                  type="button"
-                  onClick={upNext.action}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    padding: "9px 18px 9px 20px",
-                    borderRadius: "999px",
-                    background: "rgba(255, 255, 255, 0.95)",
-                    backdropFilter: "blur(8px)",
-                    border: `1.5px solid ${upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9"}`,
-                    boxShadow: "0 6px 20px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.05)",
-                    cursor: "pointer",
-                    transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
-                    e.currentTarget.style.boxShadow = "0 10px 28px rgba(15, 23, 42, 0.18)";
-                    e.currentTarget.style.borderColor = upNext.color;
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "none";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(15, 23, 42, 0.12), 0 1px 4px rgba(0, 0, 0, 0.05)";
-                    e.currentTarget.style.borderColor = upNext.color === "#DB2777" ? "#FBCFE8" : "#D5E2D9";
-                  }}
-                  title={`Up next: ${upNext.label}`}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
-                    <span style={{ fontSize: "10.5px", fontWeight: 700, color: "#64748B", textTransform: "uppercase", letterSpacing: "0.5px", lineHeight: 1.1 }}>
-                      Up next
-                    </span>
-                    <span style={{ fontSize: "13.5px", fontWeight: 700, color: upNext.color, lineHeight: 1.3 }}>
-                      {upNext.label}
-                    </span>
-                  </div>
-                  <div
-                    style={{
-                      width: "30px",
-                      height: "30px",
-                      borderRadius: "50%",
-                      background: upNext.color,
-                      color: "#FFFFFF",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </div>
-                </button>
-              </div>
-            )}
           </div>
         </div>
       </main>
