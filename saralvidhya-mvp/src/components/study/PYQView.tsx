@@ -34,14 +34,51 @@ export default function PYQView({
     "anu_physics",
     "anu_characterization",
     "neb_xii_biology",
-    "ento_131"
+    "ento_131",
+    "dbms"
   ];
   const isSupported = supportedSubjects.includes(subjectId);
 
   useEffect(() => {
     async function loadPYQs() {
       setIsLoading(true);
-      if (subjectId === "neb_xii_biology") {
+      if (subjectId === "dbms" || subjectId.includes("dbms")) {
+        try {
+          const res = await fetch(`${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Prepare/PYQ/dbms_pyq.json`);
+          const ct = res.headers.get('content-type') || '';
+          if (res.ok && !ct.includes('text/html')) {
+            const data = await res.json();
+            const items = Array.isArray(data) ? data : data.pyqs || data.items || [];
+            const mapped = items.map((q: any, i: number) => {
+              const years = q.repetition_metadata?.repeated_years || [];
+              const latestYearStr = years[years.length - 1] || '2024';
+              const yrNum = parseInt(latestYearStr.replace(/[^0-9]/g, '').slice(0, 4)) || 2024;
+              return {
+                id: (q.pyq_id && parseInt(q.pyq_id.replace(/[^0-9]/g, ''))) || (i + 1),
+                text: q.canonical_question_stem || q.question || '',
+                shortAnswer: q.model_answer || '',
+                longAnswer: q.examiner_notes 
+                  ? `${q.model_answer}\n\n**Examiner Notes:** ${q.examiner_notes}` 
+                  : (q.model_answer || ''),
+                chapter: `Unit: ${chapterNumber}`,
+                section: q.designated_mark_tier || '2M',
+                marks: q.designated_mark_tier === '10M' ? 10 : q.designated_mark_tier === '5M' ? 5 : 2,
+                subjectId,
+                chapterNumber,
+                year: yrNum,
+                frequency: q.repetition_metadata?.total_frequency_count,
+                repeatedYears: years.join(', '),
+              };
+            });
+            setBaseQuestions(mapped);
+          } else {
+            setBaseQuestions([]);
+          }
+        } catch (e) {
+          console.error("Failed to load DBMS PYQs", e);
+          setBaseQuestions([]);
+        }
+      } else if (subjectId === "neb_xii_biology") {
         try {
           const res = await fetch(`/generated_resources/neb_nepal/class_12/biology/chapter_06/Prepare/PYQs/Chapter_Level/pyq_chapter_6.json`);
           const ct = res.headers.get('content-type') || '';

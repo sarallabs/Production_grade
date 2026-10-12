@@ -1,10 +1,9 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getStorage } from "firebase/storage";
-// import { getAnalytics } from "firebase/analytics";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getAuth, GoogleAuthProvider, Auth } from "firebase/auth";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
-// Your web app's Firebase configuration
+// Web app's Firebase configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
@@ -15,18 +14,34 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || '',
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
+let googleProvider: GoogleAuthProvider | undefined;
+let storage: FirebaseStorage | undefined;
 
-// Optional: Initialize Analytics (Uncomment if needed)
-// const analytics = getAnalytics(app);
+const hasValidApiKey = Boolean(firebaseConfig.apiKey && firebaseConfig.apiKey.trim().length > 5);
 
-// Initialize Firestore
-export const db = getFirestore(app);
+if (hasValidApiKey) {
+  try {
+    app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    try {
+      auth = getAuth(app);
+      googleProvider = new GoogleAuthProvider();
+    } catch (authErr) {
+      console.warn("[Firebase] Auth initialization skipped:", authErr);
+    }
+    try {
+      storage = getStorage(app);
+    } catch (storageErr) {
+      console.warn("[Firebase] Storage initialization skipped:", storageErr);
+    }
+  } catch (initErr) {
+    console.warn("[Firebase] App initialization skipped/failed:", initErr);
+  }
+} else {
+  console.warn("[Firebase] API key missing. Operating in offline/local storage fallback mode.");
+}
 
-// Initialize Auth
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-
-// Initialize Firebase Storage
-export const storage = getStorage(app);
+export { app, db, auth, googleProvider, storage };

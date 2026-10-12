@@ -45,6 +45,7 @@ export default function QuestionBankView({
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [revealedCards, setRevealedCards] = useState<Record<string, boolean>>({});
   const [answerModes, setAnswerModes] = useState<Record<string, 'short' | 'long' | 'ten'>>({});
+  const [globalMark, setGlobalMark] = useState<'all' | 'short' | 'long' | 'ten'>('all');
 
   const visibleSubjects = useMemo(() => {
     if (!manifest) return [];
@@ -109,6 +110,13 @@ export default function QuestionBankView({
                 const parsed = parseQuestionBankMarkdown(markdown, subjectId, subject.name, chapterNumber, chapterLabel);
                 if (parsed.length > 0) return parsed;
               }
+              try {
+                const jsonText = await getResourceContent(subjectId, chapterNumber, 'question_bank.json', persona);
+                if (jsonText && jsonText.trim().length > 0 && !jsonText.includes('Content not available')) {
+                  const parsedJson = parseQuestionBankMarkdown(jsonText, subjectId, subject.name, chapterNumber, chapterLabel);
+                  if (parsedJson.length > 0) return parsedJson;
+                }
+              } catch {}
               const pooled = await getChapterExamQuestions(subjectId, chapterNumber, 'certification');
               return pooled.map((q, idx): QuestionBankEntry => ({
                 id: `cert-${subjectId}-${chapterNumber}-${idx}`,
@@ -161,6 +169,41 @@ export default function QuestionBankView({
     });
   };
 
+  const handleGlobalMarkChange = (mark: 'all' | 'short' | 'long' | 'ten') => {
+    setGlobalMark(mark);
+    if (mark !== 'all') {
+      const updatedModes: Record<string, 'short' | 'long' | 'ten'> = {};
+      questions.forEach((q) => {
+        if (mark === 'ten' && q.tenMarkAnswer) updatedModes[q.id] = 'ten';
+        else if (mark === 'long' && q.longAnswer) updatedModes[q.id] = 'long';
+        else if (mark === 'short' && q.shortAnswer) updatedModes[q.id] = 'short';
+      });
+      setAnswerModes((prev) => ({ ...prev, ...updatedModes }));
+    }
+  };
+
+  const filteredQuestions = useMemo(() => {
+    if (globalMark === 'all') return questions;
+    if (globalMark === 'short') return questions.filter((q) => q.shortAnswer);
+    if (globalMark === 'long') return questions.filter((q) => q.longAnswer);
+    if (globalMark === 'ten') return questions.filter((q) => q.tenMarkAnswer);
+    return questions;
+  }, [questions, globalMark]);
+
+  const allExpanded = useMemo(() => {
+    if (filteredQuestions.length === 0) return false;
+    return filteredQuestions.every((q) => revealedCards[q.id]);
+  }, [filteredQuestions, revealedCards]);
+
+  const toggleAllAnswers = () => {
+    const nextState = !allExpanded;
+    const nextRevealed: Record<string, boolean> = {};
+    filteredQuestions.forEach((q) => {
+      nextRevealed[q.id] = nextState;
+    });
+    setRevealedCards((prev) => ({ ...prev, ...nextRevealed }));
+  };
+
   const toggleCardFlip = (id: string) => {
     setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -179,14 +222,14 @@ export default function QuestionBankView({
 
   return (
     <div className="qbank-root" ref={qbankContainerRef}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, minWidth: '300px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '20px', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1 1 300px' }}>
           {/* Icon badge */}
           <div style={{
             background: `linear-gradient(135deg, ${G.mid} 0%, ${G.dark} 100%)`,
             borderRadius: '16px',
-            width: '72px',
-            height: '72px',
+            width: '64px',
+            height: '64px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -194,19 +237,27 @@ export default function QuestionBankView({
             position: 'relative',
             border: `3px solid ${G.paleBorder}`
           }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: G.dark, margin: 0 }}>Question Bank</h1>
+          <div>
+            <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: G.dark, margin: 0 }}>Question Bank</h1>
+            {questions.length > 0 && (
+              <p style={{ margin: '4px 0 0', color: G.mid, fontSize: '0.88rem', fontWeight: 600 }}>
+                {filteredQuestions.length} {filteredQuestions.length === 1 ? 'question' : 'questions'} available (2M, 5M & 10M Model Answers)
+              </p>
+            )}
+          </div>
         </div>
 
-        {focusedSubject && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flex: 1, minWidth: '300px' }}>
-              <div className="qbank-simple-chapter-row" style={{ gap: '12px', display: 'flex' }}>
+        {/* Action controls row: Chapters, Global Mark Toggles, Expand/Collapse */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+          {focusedSubject && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="qbank-simple-chapter-row" style={{ gap: '8px', display: 'flex' }}>
                 {focusedSubject.chapters.map((chapter) => {
                   const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
                   return (
@@ -214,10 +265,11 @@ export default function QuestionBankView({
                       key={`${focusedSubject.id}-${chapter.number}`}
                       onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
                       className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
+                      title={chapter.name}
                       style={{
-                        width: '32px',
-                        height: '32px',
-                        minWidth: '32px',
+                        width: '34px',
+                        height: '34px',
+                        minWidth: '34px',
                         padding: 0,
                         display: 'flex',
                         alignItems: 'center',
@@ -230,6 +282,7 @@ export default function QuestionBankView({
                         color: selected ? 'white' : G.dark,
                         boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
                         transition: 'all 0.18s ease',
+                        cursor: 'pointer',
                       }}
                     >
                       {chapter.number}
@@ -248,7 +301,7 @@ export default function QuestionBankView({
                   color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  padding: '6px 20px',
+                  padding: '6px 18px',
                   fontSize: '0.9rem',
                   fontWeight: 600,
                   cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
@@ -260,9 +313,92 @@ export default function QuestionBankView({
                 {loading ? '...' : 'Go'}
               </button>
             </div>
-            <div style={{ flex: 1, minWidth: '300px' }}></div>
-          </>
-        )}
+          )}
+
+          {/* Global 2M / 5M / 10M Mark Toggle */}
+          {questions.length > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                background: G.pale,
+                border: `1.5px solid ${G.paleBorder}`,
+                borderRadius: '999px',
+                padding: '3px',
+                gap: '2px',
+                boxShadow: '0 2px 6px rgba(47,79,64,0.08)',
+              }}
+            >
+              {[
+                { key: 'all' as const, label: 'All Marks' },
+                { key: 'short' as const, label: '2M' },
+                { key: 'long' as const, label: '5M' },
+                { key: 'ten' as const, label: '10M' },
+              ].map((tier) => {
+                const isSelected = globalMark === tier.key;
+                return (
+                  <button
+                    key={tier.key}
+                    type="button"
+                    onClick={() => handleGlobalMarkChange(tier.key)}
+                    title={tier.key === 'all' ? 'Show all question marks' : `Switch all cards to ${tier.label}`}
+                    style={{
+                      border: 'none',
+                      cursor: 'pointer',
+                      borderRadius: '999px',
+                      padding: '5px 14px',
+                      fontSize: '0.82rem',
+                      fontWeight: isSelected ? 700 : 600,
+                      background: isSelected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : 'transparent',
+                      color: isSelected ? 'white' : G.dark,
+                      boxShadow: isSelected ? '0 2px 6px rgba(47,79,64,0.22)' : 'none',
+                      transition: 'all 0.18s ease',
+                    }}
+                  >
+                    {tier.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Expand All / Collapse All Toggle Button */}
+          {questions.length > 0 && (
+            <button
+              type="button"
+              onClick={toggleAllAnswers}
+              style={{
+                border: `1px solid ${G.paleBorder}`,
+                borderRadius: '8px',
+                padding: '6px 14px',
+                fontSize: '0.82rem',
+                fontWeight: 600,
+                background: 'white',
+                color: G.dark,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 1px 4px rgba(47,79,64,0.06)',
+                transition: 'all 0.18s ease',
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                {allExpanded ? (
+                  <>
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </>
+                ) : (
+                  <>
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </>
+                )}
+              </svg>
+              {allExpanded ? 'Collapse All' : 'Expand All'}
+            </button>
+          )}
+        </div>
       </div>
 
       {!focusedSubject && selectedSubjects.length > 0 ? (
@@ -347,9 +483,13 @@ export default function QuestionBankView({
         <div className="qbank-empty">
           Select chapters and click Go to load questions.
         </div>
+      ) : filteredQuestions.length === 0 ? (
+        <div className="qbank-empty">
+          No questions found matching the selected mark tier. Click &quot;All Marks&quot; to view all questions.
+        </div>
       ) : (
         <div className="qbank-card-list">
-          {questions.map((entry, index) => {
+          {filteredQuestions.map((entry, index) => {
             const modeOptions = [
               entry.shortAnswer ? { key: 'short' as const, label: '2M' } : null,
               entry.longAnswer ? { key: 'long' as const, label: '5M' } : null,
@@ -358,7 +498,6 @@ export default function QuestionBankView({
             const defaultMode = modeOptions[0]?.key ?? 'short';
             const mode = answerModes[entry.id] ?? defaultMode;
             const isRevealed = revealedCards[entry.id] ?? false;
-            const hasBoth = modeOptions.length > 1;
             const shownAnswer =
               (mode === 'ten' && entry.tenMarkAnswer) ||
               (mode === 'long' && entry.longAnswer) ||
@@ -407,12 +546,14 @@ export default function QuestionBankView({
                         <div style={{
                           display: 'flex',
                           background: G.pale,
-                          border: `1px solid ${G.paleBorder}`,
+                          border: `1.5px solid ${G.paleBorder}`,
                           borderRadius: '999px',
                           padding: '2px',
+                          gap: '2px',
                         }}>
                           {modeOptions.map((opt) => {
-                            const active = mode === opt.key && isRevealed;
+                            const isCurrentMode = mode === opt.key;
+                            const active = isCurrentMode && isRevealed;
                             return (
                               <button
                                 key={opt.key}
@@ -421,17 +562,17 @@ export default function QuestionBankView({
                                   e.stopPropagation();
                                   setAnswerMode(entry.id, opt.key);
                                 }}
-                                title={active ? 'Click to hide answer' : `Click for ${opt.label} answer`}
+                                title={active ? `Click to hide ${opt.label} answer` : `Click for ${opt.label} answer`}
                                 style={{
-                                  border: 'none',
+                                  border: isCurrentMode && !isRevealed ? `1px dashed ${G.mid}` : 'none',
                                   cursor: 'pointer',
                                   borderRadius: '999px',
-                                  padding: '3px 12px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: active ? 700 : 600,
-                                  background: active ? 'white' : 'transparent',
-                                  color: active ? G.dark : G.mid,
-                                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                                  padding: '4px 13px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: active ? 700 : isCurrentMode ? 600 : 500,
+                                  background: active ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : isCurrentMode ? 'white' : 'transparent',
+                                  color: active ? 'white' : isCurrentMode ? G.dark : G.mid,
+                                  boxShadow: active ? '0 2px 6px rgba(47,79,64,0.3)' : 'none',
                                   transition: 'all 0.18s ease',
                                 }}
                               >

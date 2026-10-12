@@ -26,7 +26,7 @@ export default function ResumePodcastToast() {
       }
 
       // 2. Check Firestore (authoritative)
-      if (userId && userId !== 'anonymous') {
+      if (db && userId && userId !== 'anonymous') {
         try {
           const docRef = doc(db, 'global_podcast_progress', `user_${userId}`);
           const docSnap = await getDoc(docRef);

@@ -368,6 +368,36 @@ function buildAngrauMermaid(cfg: (typeof ANGRAU_CHAPTER_CONFIG)[number] | null):
   return lines.join('\n');
 }
 
+// ── In-memory cache for MLRIT Mindmap Topic Markdown content ─────────────────
+const mlritTopicCache = new Map<string, { quick: string; detailed?: string }>();
+
+type MlritTopic = { label: string; topicNum: number; folder: string; podcastTitle: string };
+const MLRIT_CHAPTER_CONFIG: Record<number, {
+  chapterTitle: string;
+  topics: MlritTopic[];
+}> = {
+  1: {
+    chapterTitle: 'Database System Concepts, ER Model & Relational Design',
+    topics: [
+      { label: 'Database Fundamentals & Engine Architecture', topicNum: 1, folder: 'Topic_1_Database_Fundamentals', podcastTitle: '1. How 3-Schema Architecture Prevents Data Chaos' },
+      { label: 'Conceptual Database Design & ER Modeling', topicNum: 2, folder: 'Topic_2_Conceptual_Database_Design', podcastTitle: '2. ER Diagram Rules for DBMS Exams' },
+      { label: 'Advanced ER & Extended ER (EER) Mechanisms', topicNum: 3, folder: 'Topic_3_Advanced_ER_EER', podcastTitle: '3. Weak Entities and Extended ER Mechanics' },
+      { label: 'Relational Model Foundations & Integrity Constraints', topicNum: 4, folder: 'Topic_4_Relational_Model_Constraints', podcastTitle: '4. Relational Keys and Integrity Constraints' },
+      { label: 'Logical Database Design (ER-to-Relational Translation)', topicNum: 5, folder: 'Topic_5_Logical_Database_Design', podcastTitle: '5. How ER Diagrams Become SQL Tables' },
+      { label: 'Relational Querying, Views & Schema Evolution', topicNum: 6, folder: 'Topic_6_Relational_Querying_Views', podcastTitle: '6. SQL Views and Safe Schema Evolution' },
+    ],
+  },
+};
+
+function buildMlritMermaid(cfg: (typeof MLRIT_CHAPTER_CONFIG)[number] | null): string {
+  if (!cfg) return '';
+  const lines = ['mindmap', `  root(("${cfg.chapterTitle}"))`];
+  for (const t of cfg.topics) {
+    lines.push(`    "${t.label}"`);
+  }
+  return lines.join('\n');
+}
+
 export default function StudyTable() {
   // Mindmap inline topic view (no popup — content shown in-place below the map)
   const [mindmapTopicTitle, setMindmapTopicTitle] = useState<string | null>(null);
@@ -438,18 +468,8 @@ export default function StudyTable() {
     { key: "advanced", label: "Advanced", imgSrc: `${import.meta.env.BASE_URL}personas/advanced.png` },
   ];
 
-  // Toolbar Dark / Bright theme state (defaults to Dark #2D3E36, saved to localStorage)
-  const [isDarkToolbar, setIsDarkToolbar] = useState<boolean>(() => {
-    const saved = localStorage.getItem("sv_toolbar_theme");
-    return saved ? saved === "dark" : true;
-  });
-  const toggleToolbarTheme = () => {
-    setIsDarkToolbar((prev) => {
-      const next = !prev;
-      localStorage.setItem("sv_toolbar_theme", next ? "dark" : "light");
-      return next;
-    });
-  };
+  // Toolbar Theme: Dark mode toolbar only (#2D3E36)
+  const isDarkToolbar = true;
 
   const [chapterNumberState, setChapterNumberState] = useState<number>(() => {
     return parseInt(searchParams.get("chapter") || "1", 10) || 1;
@@ -517,6 +537,34 @@ export default function StudyTable() {
       });
     });
   }, [subjectId, chapterNumber]);
+
+  // Prefetch MLRIT mindmap topic notes in background so node clicks are instant (0ms)
+  useEffect(() => {
+    if (subjectId !== 'dbms') return;
+    const cfg = MLRIT_CHAPTER_CONFIG[chapterNumber];
+    if (!cfg) return;
+
+    const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
+    const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
+    cfg.topics.forEach((t) => {
+      const cacheKey = `mlrit_${chapterNumber}_${t.topicNum}_${normLevel}`;
+      if (mlritTopicCache.has(cacheKey)) return;
+
+      const quickPath = `${base}/${t.folder}/DBMS_UNIT_I_Topic_${t.topicNum}_${normLevel}.md`;
+      const detailedPath = `${base}/${t.folder}/DBMS_UNIT_I_Topic_${t.topicNum}_advanced.md`;
+
+      Promise.all([
+        fetch(quickPath).then(r => (r.ok ? r.text() : '')),
+        fetch(detailedPath).then(r => (r.ok ? r.text() : '')),
+      ]).then(([quick, detailed]) => {
+        if (quick || detailed) {
+          mlritTopicCache.set(cacheKey, { quick, detailed });
+        }
+      }).catch(err => {
+        console.warn('Prefetch MLRIT topic failed', t.topicNum, err);
+      });
+    });
+  }, [subjectId, chapterNumber, persona]);
 
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
@@ -1682,8 +1730,26 @@ export default function StudyTable() {
           },
           'neurone': {
             ytId: 'ajlWgPjEa5Y'
-          }
+          },
+          'database fundamentals & engine architecture': { ytId: 'A4RwGJPb9I4' },
+          'conceptual database design & er modeling': { ytId: 'A4RwGJPb9I4' },
+          'advanced er & extended er (eer) mechanisms': { ytId: 'A4RwGJPb9I4' },
+          'relational model foundations & integrity constraints': { ytId: 'A4RwGJPb9I4' },
+          'logical database design (er-to-relational translation)': { ytId: 'A4RwGJPb9I4' },
+          'relational querying, views & schema evolution': { ytId: 'A4RwGJPb9I4' },
         };
+
+        // ── MLRIT mindmap config ─────────────────────────────────────────────
+        const isMlrit = subjectId === 'dbms';
+        const mlritChapCfg = isMlrit ? MLRIT_CHAPTER_CONFIG[chapterNumber] : null;
+
+        const mlritMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
+        if (mlritChapCfg) {
+          for (const t of mlritChapCfg.topics) {
+            mlritMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
+            mlritMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+          }
+        }
 
         // ── ANGRAU mindmap config ────────────────────────────────────────────
         const isAngrau = subjectId === 'ento_131';
@@ -1699,7 +1765,9 @@ export default function StudyTable() {
           }
         }
 
-        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isAngrau && angrauChapCfg
+        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isMlrit && mlritChapCfg
+          ? mlritMmIcons
+          : isAngrau && angrauChapCfg
           ? angrauMmIcons
           : isNebBiologyChap6 ? {
           'ANIMAL TISSUE': { hasRead: true },
@@ -1755,15 +1823,98 @@ export default function StudyTable() {
         }
 
         // Compute the final mermaid content:
-        // – ANGRAU: use the cleanly generated mermaid (no messy mindmap.md)
+        // – MLRIT / ANGRAU: use the cleanly generated mermaid (no messy mindmap.md)
         // – Others: use the extracted mermaid block from the loaded file, truncated to 1 level
-        const mermaidContent = isAngrau && angrauChapCfg
+        const mermaidContent = isMlrit && mlritChapCfg
+          ? buildMlritMermaid(mlritChapCfg)
+          : isAngrau && angrauChapCfg
           ? buildAngrauMermaid(angrauChapCfg)
           : truncateMindmapToLevels(rawMermaid, 2);
 
         const handleTopicClick = async (label: string, action?: 'read' | 'podcast' | 'video') => {
           setMindmapTopicTitle(label);
           const lowerLabel = label.toLowerCase().trim();
+
+          // ── MLRIT path ───────────────────────────────────────────────────────
+          if (isMlrit && mlritChapCfg) {
+            const match = mlritChapCfg.topics.find(t => t.label.toLowerCase() === lowerLabel);
+            if (!match) return; // root node or unmapped — ignore
+
+            if (action === 'video') {
+              setMindmapInlineType('video');
+              setMindmapMediaUrl(`https://www.youtube.com/embed/A4RwGJPb9I4?autoplay=1`);
+              setMindmapTopicOpen(true);
+              return;
+            }
+
+            if (action === 'podcast') {
+              const mcIdx = mlritChapCfg.topics.indexOf(match);
+              const targetIdx = mcIdx >= 0 ? mcIdx : 0;
+              setMindmapTopicOpen(false);
+              setPodcastTargetTrack('mc');
+              setPodcastTargetMcIndex(targetIdx);
+              setPodcastAutoPlay(true);
+              setPodcastPlayTrigger(Date.now());
+              setActiveTool('podcasts');
+              return;
+            }
+
+            // Default: read (quick + detailed)
+            setMindmapInlineType('text');
+            setMindmapInlineTab('quick');
+            setMindmapTopicOpen(true);
+
+            const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
+            const cacheKey = `mlrit_${chapterNumber}_${match.topicNum}_${normLevel}`;
+            const cached = mlritTopicCache.get(cacheKey);
+
+            if (cached && cached.quick) {
+              setMindmapTopicContent(cached.quick);
+              setMindmapDetailedContent(cached.detailed || '');
+              setMindmapTopicLoading(false);
+              return;
+            }
+
+            setMindmapTopicLoading(true);
+            setMindmapTopicContent(null);
+            setMindmapDetailedContent(null);
+
+            try {
+              const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
+              const quickPath = `${base}/${match.folder}/DBMS_UNIT_I_Topic_${match.topicNum}_${normLevel}.md`;
+              const detailedPath = `${base}/${match.folder}/DBMS_UNIT_I_Topic_${match.topicNum}_advanced.md`;
+
+              fetch(quickPath)
+                .then(r => (r.ok ? r.text() : 'Quick content not found.'))
+                .then(quickText => {
+                  setMindmapTopicContent(quickText);
+                  setMindmapTopicLoading(false);
+                  const entry = mlritTopicCache.get(cacheKey) || { quick: quickText };
+                  entry.quick = quickText;
+                  mlritTopicCache.set(cacheKey, entry);
+                })
+                .catch(e => {
+                  console.error('MLRIT quick fetch error', e);
+                  setMindmapTopicLoading(false);
+                });
+
+              fetch(detailedPath)
+                .then(r => (r.ok ? r.text() : 'Detailed content not found.'))
+                .then(detailedText => {
+                  setMindmapDetailedContent(detailedText);
+                  const entry = mlritTopicCache.get(cacheKey) || { quick: '' };
+                  entry.detailed = detailedText;
+                  mlritTopicCache.set(cacheKey, entry);
+                })
+                .catch(e => {
+                  console.error('MLRIT detailed fetch error', e);
+                });
+            } catch (e) {
+              console.error('MLRIT mindmap fetch error', e);
+              setMindmapTopicLoading(false);
+            }
+            return;
+          }
 
           // ── ANGRAU path ──────────────────────────────────────────────────────
           if (isAngrau && angrauChapCfg) {
@@ -1937,7 +2088,7 @@ export default function StudyTable() {
             }
           }
 
-          if (action === 'podcast') {
+          if ((action as any) === 'podcast') {
             setMindmapTopicOpen(false);
             setPodcastTargetTrack('mc');
             setPodcastTargetMcIndex(0);
@@ -1949,8 +2100,10 @@ export default function StudyTable() {
         };
 
 
-        // Compute next/prev topic for inline navigation (ANGRAU and NEB)
-        const allTopicLabels: string[] = angrauChapCfg
+        // Compute next/prev topic for inline navigation (MLRIT, ANGRAU, and NEB)
+        const allTopicLabels: string[] = mlritChapCfg
+          ? mlritChapCfg.topics.map(t => t.label)
+          : angrauChapCfg
           ? angrauChapCfg.topics.map(t => t.label)
           : [];
         const currentTopicIdx = allTopicLabels.indexOf(mindmapTopicTitle ?? '');
@@ -3272,62 +3425,6 @@ export default function StudyTable() {
                           paddingRight: '6px',
                         }}
                       >
-                        {/* Theme Switcher Toggle Button (Dark #2D3E36 <-> Bright) */}
-                        <button
-                          type="button"
-                          onClick={toggleToolbarTheme}
-                          title={isDarkToolbar ? "Switch to Bright Mode" : "Switch to Dark Mode"}
-                          aria-label="Toggle Dark / Bright Theme"
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "6px 12px",
-                            borderRadius: "20px",
-                            border: isDarkToolbar ? "1.5px solid rgba(255, 255, 255, 0.18)" : "1.5px solid #CBD5E1",
-                            background: isDarkToolbar ? "rgba(0, 0, 0, 0.25)" : "#F8FAFC",
-                            color: isDarkToolbar ? "#F8FAFC" : "#1E293B",
-                            cursor: "pointer",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            transition: "all 0.2s ease",
-                            boxShadow: isDarkToolbar ? "0 2px 6px rgba(0,0,0,0.2)" : "0 1px 3px rgba(0,0,0,0.06)",
-                          }}
-                          onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.05)";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = isDarkToolbar ? "#FFFFFF" : "#64748B";
-                          }}
-                          onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
-                            (e.currentTarget as HTMLButtonElement).style.borderColor = isDarkToolbar ? "rgba(255, 255, 255, 0.18)" : "#CBD5E1";
-                          }}
-                        >
-                          {isDarkToolbar ? (
-                            <>
-                              {/* Sun Icon */}
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="5" fill="#F59E0B" fillOpacity="0.2" />
-                                <line x1="12" y1="1" x2="12" y2="3" />
-                                <line x1="12" y1="21" x2="12" y2="23" />
-                                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-                                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-                                <line x1="1" y1="12" x2="3" y2="12" />
-                                <line x1="21" y1="12" x2="23" y2="12" />
-                                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-                                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-                              </svg>
-                              <span>Bright</span>
-                            </>
-                          ) : (
-                            <>
-                              {/* Moon Icon */}
-                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill="#6366F1" fillOpacity="0.15" />
-                              </svg>
-                              <span>Dark</span>
-                            </>
-                          )}
-                        </button>
 
                         {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
                         <button

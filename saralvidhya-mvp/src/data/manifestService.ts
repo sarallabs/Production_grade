@@ -65,6 +65,7 @@ const DEFAULT_SUBJECT_PATHS: Record<string, string> = {
   neb_xii_biology: 'neb_nepal/class_12/biology',
   ento_131: 'angrau',
   entomology: 'angrau',
+  dbms: 'mlrit/dbms',
 };
 
 /** Files that are NOT level-specific — same content for all difficulty levels. */
@@ -197,6 +198,7 @@ export function resolveSubjectId(id: string): string {
     mba: 'management',
     msc: 'anu_physics',
     entomology: 'ento_131',
+    dbms: 'dbms',
   };
   return aliases[lower] || id;
 }
@@ -204,6 +206,31 @@ export function resolveSubjectId(id: string): string {
 export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
   const targetId = resolveSubjectId(subjectId);
   const subject = manifest.subjects.find((s) => s.id === targetId || s.id === subjectId);
+
+  if (targetId === 'dbms' || targetId.includes('dbms')) {
+    return [
+      {
+        number: 1,
+        name: 'Database System Concepts, ER Model & Relational Design',
+        dir: 'chapter_01',
+        completed: [
+          'summary',
+          'detailed_view',
+          'flashcards',
+          'quiz',
+          'podcasts',
+          'mindmap',
+          'qbank',
+          'pyq',
+          'prep_exam',
+          'pre_final_test',
+          'key_takeaways',
+          'study_plan',
+        ],
+        resourceCount: 12,
+      },
+    ];
+  }
 
   if (targetId === 'ento_131' || targetId.includes('ento')) {
     const entoChapters: Chapter[] = [
@@ -272,6 +299,9 @@ export function getSubject(manifest: Manifest, subjectId: string): Subject | und
 
 export function getSubjectResourcePath(subjectId: string): string {
   const targetId = resolveSubjectId(subjectId);
+  if (targetId === 'dbms' || targetId.includes('dbms')) {
+    return 'mlrit/dbms';
+  }
   if (targetId === 'ento_131' || targetId.includes('ento')) {
     return 'angrau';
   }

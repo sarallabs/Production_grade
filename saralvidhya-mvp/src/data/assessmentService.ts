@@ -132,8 +132,8 @@ export async function fetchAndParseFirst(
               return textIdx;
             };
 
-            const rawAnswer = q.answer ?? q.correct_answer ?? q.correct_answers ?? q.RightAnswers;
-            const isMSQ = Array.isArray(rawAnswer) || (typeof rawAnswer === 'string' && rawAnswer.includes(',') && !rawAnswer.startsWith('A)')) || prefix.startsWith('msq');
+            const rawAnswer = q.correct_keys ?? q.correct_key ?? q.answer ?? q.correct_answer ?? q.correct_answers ?? q.RightAnswers;
+            const isMSQ = Array.isArray(rawAnswer) || (typeof rawAnswer === 'string' && rawAnswer.includes(',') && !rawAnswer.startsWith('A)')) || prefix.startsWith('msq') || q.assessment_type === 'MSQ';
 
             let answerIndices: number | number[];
             if (Array.isArray(rawAnswer)) {
@@ -257,6 +257,8 @@ export async function getAssessments(
       `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.md`,
     ] : []),
+    `${subjectBase}/${chDir}/Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${DIFFICULTY_MAP[level] || 'Medium'}.json`,
+    `${subjectBase}/${chDir}/Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${DIFFICULTY_MAP[level] || 'Medium'}.md`,
     `${subjectBase}/${chDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.json`,
     `${subjectBase}/${chDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.md`,
     `${subjectBase}/${chDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.json`,
@@ -283,6 +285,8 @@ export async function getAssessments(
       `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.md`,
     ] : []),
+    `${subjectBase}/${chDir}/Practice/Assessment/MSQ/DBMS_UNIT_I_MSQ_${DIFFICULTY_MAP[level] || 'Medium'}.json`,
+    `${subjectBase}/${chDir}/Practice/Assessment/MSQ/DBMS_UNIT_I_MSQ_${DIFFICULTY_MAP[level] || 'Medium'}.md`,
     `${subjectBase}/${chDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.json`,
     `${subjectBase}/${chDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.md`,
     `${subjectBase}/${chDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.json`,
@@ -391,6 +395,11 @@ export async function getChapterExamQuestions(
       `${subjectBase}/${chDir}/${fileName}`,
       `${subjectBase}/${chDir}/Examination/${baseWithoutExt}.json`,
       `${subjectBase}/${chDir}/Examination/${baseName}`,
+      `${subjectBase}/${chDir}/Prepare/Preparation Exam/${baseWithoutExt}.json`,
+      `${subjectBase}/${chDir}/Prepare/Preparation Exam/${baseName}`,
+      `${subjectBase}/${chDir}/Prepare/Preparation Exam/certification_exam.json`,
+      `${subjectBase}/${chDir}/Prepare/Preparation Exam/pre_final_exam.json`,
+      `${subjectBase}/${chDir}/Prepare/Preparation Exam/final_examination.json`,
       `${subjectBase}/${chDir}/Prepare/${baseWithoutExt}.json`,
       `${subjectBase}/${chDir}/Prepare/${baseName}`,
       `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
@@ -508,6 +517,8 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
       prefix.startsWith('msq') ||
       answers.length > 1 ||
       /select all that apply/i.test(block);
+
+    const rationaleMatch = block.match(/\*{0,2}(?:Rationale|Explanation):\*{0,2}\s*([\s\S]*?)(?=\n\s*\n\s*---|\n\s*#{1,6}\s|\n\s*\*{0,2}Question|\n\s*\*{0,2}Q\d|\n\s*DOK:|$)/i);
 
     questions.push({
       id: `${prefix}${i + 1}`,
