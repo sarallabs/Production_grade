@@ -24,6 +24,7 @@ const ResourceTabs = React.lazy(() => import('./pages/ResourceTabs'));
 const Questionnaire = React.lazy(() => import('./pages/Questionnaire'));
 const AssessmentComplete = React.lazy(() => import('./pages/AssessmentComplete'));
 const PreviousYearQuestions = React.lazy(() => import('./pages/PreviousYearQuestions'));
+const SectionalReadWorkspace = React.lazy(() => import('./components/read/SectionalReadWorkspace'));
 
 /** Returns true if the user has passed the login screen */
 function isAuthenticated() {
@@ -134,6 +135,11 @@ export default function App() {
                 <Login />
               </GuestOnly>
             } />
+
+            {/* ── Sectional Read Workspace (Standalone Immersive Layout) ── */}
+            <Route path="/read" element={<SectionalReadWorkspace />} />
+            <Route path="/read/:subjectId" element={<SectionalReadWorkspace />} />
+            <Route path="/read/:subjectId/:chapterNumber" element={<SectionalReadWorkspace />} />
 
             {/* /expert route disabled for MVP — re-enable by uncommenting ExpertDashboard import above */}
 
