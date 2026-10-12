@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { getManifest, getChapters, getSubject, type Chapter } from '@/data/contentRepository';
 import { getChapterToolCoveragePercent, getAnalytics } from '@/utils/analytics';
-import { getCompletedTools, isChapterComplete } from '@/utils/guidedFlow';
+import { getCompletedTools, isChapterComplete, snapToQuarter } from '@/utils/guidedFlow';
 import { getTopicsForChapter } from '@/data/chapterTopics';
 import './ChapterCard.css';
 
@@ -306,7 +306,7 @@ export default function ChapterList() {
                 const totalSessions = 6;
                 const isFullyDone = isChapterComplete(sId, flipCh.number);
                 const completedSessions = isFullyDone ? totalSessions : Math.min(uniqueToolsDone.size, totalSessions);
-                const chapterPct = Math.round((completedSessions / totalSessions) * 100);
+                const chapterPct = isFullyDone ? 100 : snapToQuarter((completedSessions / totalSessions) * 100);
 
                 // Clean real chapter name without duplicate "Chapter X" prefix
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;

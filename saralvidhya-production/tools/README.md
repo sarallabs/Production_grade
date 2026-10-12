@@ -1,0 +1,29 @@
+# SaralVidhya Content Publishing & Admin CLI
+
+This package provides:
+- `sv-publish`: For content creators / backend developers to validate canonical folders, upload to staging, and submit publish requests.
+- `sv-admin`: For platform administrators to review pending requests, approve promotion into live paths, update tenant settings, and rotate tenant passwords.
+
+## Installation
+
+```bash
+pip install -e .
+```
+
+## Commands
+
+### Publisher
+```bash
+sv-publish validate ./mlrit
+sv-publish submit ./mlrit --api-url https://saralvidhya-api-193782571555.asia-south1.run.app
+sv-publish status <requestId>
+```
+
+### Admin / Approver
+```bash
+sv-admin requests
+sv-admin show <requestId>
+sv-admin approve <requestId>
+sv-admin reject <requestId> --note "Clarify Chapter 2 MCQs"
+sv-admin set-password mlrit --generate
+```

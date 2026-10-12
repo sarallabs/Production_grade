@@ -1,0 +1,25 @@
+{
+  "$schema": "../../contract/v1/tenant.schema.json",
+  "id": "apex_tech",
+  "name": "Apex Institute of Technology",
+  "shortName": "Apex Tech",
+  "branding": {
+    "appName": "Apex Medha",
+    "primaryColor": "#0f766e",
+    "programLabel": "Faculty"
+  },
+  "hierarchy": ["faculty", "subject"],
+  "nodes": [
+    {
+      "id": "school_of_computing",
+      "type": "faculty",
+      "name": "School of Computing",
+      "parentId": null,
+      "order": 1
+    }
+  ],
+  "features": {
+    "pyq": true,
+    "ask": true
+  }
+}

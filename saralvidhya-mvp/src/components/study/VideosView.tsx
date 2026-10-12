@@ -73,7 +73,7 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; d
 };
 
 /** Faint green insect outline watermark matching Figma */
-const InsectWatermark = () => (
+const InsectWatermark = ({ width = "165px", height = "165px", opacity = 0.22 }: { width?: string; height?: string; opacity?: number }) => (
   <svg
     viewBox="0 0 200 200"
     fill="none"
@@ -85,9 +85,9 @@ const InsectWatermark = () => (
       position: "absolute",
       right: "12px",
       bottom: "6px",
-      width: "165px",
-      height: "165px",
-      opacity: 0.22,
+      width,
+      height,
+      opacity,
       pointerEvents: "none",
       zIndex: 0,
     }}
@@ -126,13 +126,13 @@ const InsectWatermark = () => (
 );
 
 /** Dedicated Figma topic icon per row (0 to 4) */
-const renderTopicIcon = (index: number) => {
+const renderTopicIcon = (index: number, size = 18) => {
   const iconIdx = index % 5;
   switch (iconIdx) {
     case 0:
       // Document sheet with folded corner and lines
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="9" y1="13" x2="15" y2="13" />
@@ -142,7 +142,7 @@ const renderTopicIcon = (index: number) => {
     case 1:
       // Leaf with central vein
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
           <line x1="16" y1="8" x2="2" y2="22" />
         </svg>
@@ -150,7 +150,7 @@ const renderTopicIcon = (index: number) => {
     case 2:
       // Organism / insect head / microbe
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="13" r="7" />
           <line x1="12" y1="6" x2="12" y2="2" />
           <path d="M8 3.5l2 2.5" />
@@ -162,7 +162,7 @@ const renderTopicIcon = (index: number) => {
     case 3:
       // Gear / settings cog
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
@@ -171,7 +171,7 @@ const renderTopicIcon = (index: number) => {
     default:
       // Chemistry laboratory flask
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M10 2v5.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 7.5V2" />
           <line x1="8" y1="2" x2="16" y2="2" />
           <line x1="7" y1="15" x2="17" y2="15" />
@@ -953,18 +953,23 @@ export default function VideosView({
   }, [currentVideo.duration, duration]);
 
   const topicsList = useMemo(() => {
+    let rawTopics: string[] = [];
     if (currentVideo.topics && currentVideo.topics.length > 0) {
-      return currentVideo.topics;
+      rawTopics = currentVideo.topics;
+    } else {
+      const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
+      if (curated?.topics) {
+        rawTopics = curated.topics;
+      } else {
+        rawTopics = [
+          "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
+          "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
+          "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+        ];
+      }
     }
-    const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
-    if (curated?.topics) return curated.topics;
-    return [
-      "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-      "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
-      "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-      "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
-      "Enzymatic Digestion & Nutritional Adaptations in Insects"
-    ];
+    // Limit to 2–3 bullet points so thumbnail, title, and bullet points fit in a single frame
+    return rawTopics.slice(0, 3);
   }, [currentVideo]);
 
   // Video switching handler for multi-video
@@ -990,17 +995,18 @@ export default function VideosView({
       style={{
         position: "relative",
         width: "100%",
-        maxWidth: "min(960px, calc(58vh * 16 / 9))",
+        maxWidth: isFullscreen ? "100%" : "min(880px, calc((100vh - 270px) * 16 / 9))",
+        maxHeight: isFullscreen ? "100%" : "min(495px, calc(100vh - 270px))",
         aspectRatio: "16 / 9",
-        maxHeight: "58vh",
-        background: "#000000",
-        borderRadius: "16px",
+        background: `#000 url(https://img.youtube.com/vi/${currentVideo.ytId}/hqdefault.jpg) center/cover no-repeat`,
+        borderRadius: "14px",
         overflow: "hidden",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+        boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
         cursor: isPlaying && !showControls ? "none" : "default",
+        margin: "0 auto",
       }}
     >
       {/* YouTube Iframe */}
@@ -1086,12 +1092,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "80px",
-            height: "80px",
+            width: isFullscreen ? "80px" : "68px",
+            height: isFullscreen ? "80px" : "68px",
             borderRadius: "50%",
             border: "none",
             background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -1100,7 +1106,7 @@ export default function VideosView({
             transition: "transform 0.2s ease, background 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.1)";
+            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
@@ -1110,10 +1116,10 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: "15px solid transparent",
-              borderBottom: "15px solid transparent",
-              borderLeft: "26px solid #1E293B",
-              marginLeft: "6px",
+              borderTop: isFullscreen ? "15px solid transparent" : "13px solid transparent",
+              borderBottom: isFullscreen ? "15px solid transparent" : "13px solid transparent",
+              borderLeft: isFullscreen ? "26px solid #1E293B" : "22px solid #1E293B",
+              marginLeft: isFullscreen ? "6px" : "5px",
             }}
           />
         </button>
@@ -1638,53 +1644,97 @@ export default function VideosView({
     </div>
   );
 
-  // Topics Detail Section
+  // Topics Detail Section (Positioned directly BELOW thumbnail in a wide single screen)
   const renderTopicsSection = () => (
     <div
       style={{
         display: "flex",
         flexDirection: "column",
+        justifyContent: "flex-start",
         width: "100%",
         position: "relative",
         zIndex: 1,
+        gap: "6px",
       }}
     >
-      {/* Main Chapter / Video Title (Center aligned) */}
-      <h2
+      {/* Chapter / Video Title (Centered) and Time Duration (Left) */}
+      <div
         style={{
-          fontSize: "22px",
-          fontWeight: 800,
-          color: "#111827",
-          margin: "4px 0 16px 0",
-          letterSpacing: "-0.3px",
-          lineHeight: 1.25,
-          textAlign: "center",
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+          minHeight: "28px",
+          marginBottom: "4px",
         }}
       >
-        {displayTitle}
-      </h2>
+        {/* Left: Time Duration */}
+        <div style={{ position: "absolute", left: 0, display: "flex", alignItems: "center" }}>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              background: "#F3F4F6",
+              color: "#4B5563",
+              padding: "2.5px 8.5px",
+              borderRadius: "6px",
+              fontSize: "11.5px",
+              fontWeight: 600,
+            }}
+          >
+            ⏱ {displayDuration}
+          </span>
+        </div>
 
-      {/* Topic Rows with Dedicated Icons */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 1 }}>
-        {topicsList.map((topic, idx) => (
+        {/* Center: Title */}
+        <h2
+          style={{
+            fontSize: "15.5px",
+            fontWeight: 800,
+            color: "#111827",
+            margin: 0,
+            letterSpacing: "-0.2px",
+            lineHeight: 1.25,
+            textAlign: "center",
+            padding: "0 90px",
+          }}
+        >
+          {displayTitle}
+        </h2>
+      </div>
+
+      {/* Topic Rows (2-3 items arranged horizontally across the wide card) */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: topicsList.length <= 2 ? `repeat(${topicsList.length}, 1fr)` : "repeat(auto-fit, minmax(220px, 1fr))",
+          gap: "8px",
+          width: "100%",
+          zIndex: 1,
+        }}
+      >
+        {topicsList.slice(0, 3).map((topic, idx) => (
           <div
             key={idx}
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "14px",
-              padding: "10px 16px",
+              gap: "10px",
+              padding: "6px 12px",
               background: "#FAF8F6",
-              borderRadius: "14px",
+              borderRadius: "10px",
               border: "1px solid #ECE7E1",
               transition: "transform 0.15s ease, background 0.15s ease",
+              minWidth: 0,
             }}
           >
             {/* Circular Icon Container */}
             <div
               style={{
-                width: "36px",
-                height: "36px",
+                width: "26px",
+                height: "26px",
                 borderRadius: "50%",
                 background: "#EDEAE5",
                 display: "flex",
@@ -1693,17 +1743,23 @@ export default function VideosView({
                 flexShrink: 0,
               }}
             >
-              {renderTopicIcon(idx)}
+              {renderTopicIcon(idx, 15)}
             </div>
 
             {/* Topic Text */}
             <span
               style={{
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 500,
                 color: "#1F2937",
-                lineHeight: 1.35,
+                lineHeight: 1.3,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
               }}
+              title={topic}
             >
               {topic}
             </span>
@@ -1712,7 +1768,7 @@ export default function VideosView({
       </div>
 
       {/* Watermark in Bottom-Right Corner */}
-      <InsectWatermark />
+      <InsectWatermark width="90px" height="90px" opacity={0.12} />
     </div>
   );
 
@@ -1721,17 +1777,26 @@ export default function VideosView({
       className="videos-figma-container"
       style={{
         width: "100%",
+        height: "100%",
         minHeight: "100%",
+        maxHeight: "100%",
         background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
-        padding: "20px 20px 36px 20px",
+        padding: "8px 20px 12px 20px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "flex-start",
+        justifyContent: "center",
+        overflowY: "auto",
       }}
     >
       <style>{`
+        .videos-player-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+        }
         .custom-details-scroll::-webkit-scrollbar {
           width: 6px;
         }
@@ -1748,120 +1813,90 @@ export default function VideosView({
         }
       `}</style>
 
-      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (70% Video, 30% Down Details with Unified Page Scroll) ── */}
-      {isSingleVideo ? (
+      {/* Wide Single Frame Card for Thumbnail, Title, and Bullet Points */}
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "1040px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        {/* Video Selector Tabs for Chapter Playlist (if multiple videos) */}
+        {videos.length > 1 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "8px",
+              overflowX: "auto",
+              paddingBottom: "2px",
+              width: "100%",
+              maxWidth: "880px",
+            }}
+          >
+            <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Chapter Videos:
+            </span>
+            {videos.map((vid, idx) => {
+              const isActive = idx === robustActive;
+              return (
+                <button
+                  key={vid.ytId || idx}
+                  onClick={() => handleSelectVideo(idx)}
+                  style={{
+                    padding: "4px 12px",
+                    borderRadius: "14px",
+                    border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
+                    background: isActive ? "#2D3E36" : "#FFFFFF",
+                    color: isActive ? "#FFFFFF" : "#374151",
+                    fontSize: "12px",
+                    fontWeight: isActive ? 700 : 500,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    whiteSpace: "nowrap",
+                    boxShadow: isActive ? "0 2px 4px rgba(45,62,54,0.18)" : "none",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <span>{isActive ? "▶" : "•"}</span>
+                  <span>Video {idx + 1}: {vid.title.length > 28 ? vid.title.slice(0, 28) + "..." : vid.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Wide Card containing Video Player on TOP and Title + 2-3 Bullet Points BELOW */}
         <div
+          className="videos-player-card"
           style={{
             width: "100%",
-            maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))",
+            maxWidth: "960px",
             background: "#FFFFFF",
-            borderRadius: "24px",
-            padding: "20px 24px 28px 24px",
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
-            display: "flex",
-            flexDirection: "column",
+            borderRadius: "20px",
+            padding: "14px 20px 16px 20px",
+            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.07)",
+            border: "1px solid #ECE7E1",
             position: "relative",
             boxSizing: "border-box",
           }}
         >
-          {/* Top: Video Player Preview (70% screen ratio) */}
-          <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
+          {/* Top: Video Player / Thumbnail Preview (Centered & Wide) */}
+          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
             {renderVideoPlayer(true)}
           </div>
 
-          {/* Bottom Down Details (No nested scroll; total page scrolls) */}
-          <div
-            style={{
-              marginTop: "20px",
-              width: "100%",
-              position: "relative",
-            }}
-          >
+          {/* Below: Title, Badges & 2-3 Key Concepts */}
+          <div style={{ width: "100%", maxWidth: "880px" }}>
             {renderTopicsSection()}
           </div>
         </div>
-      ) : (
-        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (70% Video, 30% Down Details with Playlist Tabs) ── */
-        <div style={{ width: "100%", maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Video Selector Tabs for Chapter Playlist */}
-          {videos.length > 1 && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginBottom: "14px",
-                overflowX: "auto",
-                paddingBottom: "4px",
-                width: "100%",
-              }}
-            >
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Chapter Videos:
-              </span>
-              {videos.map((vid, idx) => {
-                const isActive = idx === robustActive;
-                return (
-                  <button
-                    key={vid.ytId || idx}
-                    onClick={() => handleSelectVideo(idx)}
-                    style={{
-                      padding: "6px 14px",
-                      borderRadius: "16px",
-                      border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
-                      background: isActive ? "#2D3E36" : "#FFFFFF",
-                      color: isActive ? "#FFFFFF" : "#374151",
-                      fontSize: "12.5px",
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      whiteSpace: "nowrap",
-                      boxShadow: isActive ? "0 2px 6px rgba(45,62,54,0.2)" : "none",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    <span>{isActive ? "▶" : "•"}</span>
-                    <span>Video {idx + 1}: {vid.title.length > 24 ? vid.title.slice(0, 24) + "..." : vid.title}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Unified Card for Video and Down Details */}
-          <div
-            style={{
-              width: "100%",
-              background: "#FFFFFF",
-              borderRadius: "24px",
-              padding: "20px 24px 28px 24px",
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-              boxSizing: "border-box",
-            }}
-          >
-            {/* Top: Video Player Preview (70% screen ratio) */}
-            <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
-              {renderVideoPlayer(true)}
-            </div>
-
-            {/* Bottom Down Details (No nested scroll; total page scrolls) */}
-            <div
-              style={{
-                marginTop: "20px",
-                width: "100%",
-                position: "relative",
-              }}
-            >
-              {renderTopicsSection()}
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

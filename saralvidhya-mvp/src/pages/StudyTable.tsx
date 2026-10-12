@@ -5,6 +5,7 @@ import JsMindView from "@/components/JsMindView";
 import MindMapView from "@/components/MindMapView";
 import FlashcardsView from "@/components/FlashcardsView";
 import QuestionBankView from "@/components/QuestionBankView";
+import SectionizedReadView from "@/components/study/SectionizedReadView";
 import type { ToolId } from "@/components/ToolsMenu";
 import appLogo from "@/logo.png";
 import {
@@ -89,6 +90,7 @@ import VideosView from "@/components/study/VideosView";
 import { AssessmentView } from "@/components/study/AssessmentView";
 import SwotView from "@/components/study/SwotView";
 import LeaderboardView from "@/components/study/LeaderboardView";
+import { getRegistryTenantId } from "@/data/manifestService";
 
 
 export function StudyToolLoadingWaitScreen() {
@@ -299,20 +301,28 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
 };
 
 // ── In-memory cache for Mindmap Topic Markdown content ───────────────────────
-const angrauTopicCache = new Map<string, { quick: string; detailed?: string }>();
+const topicNotesCache = new Map<string, { quick: string; detailed?: string }>();
+const angrauTopicCache = topicNotesCache;
+const mlritTopicCache = topicNotesCache;
 
-// ANGRAU Chapter Configuration for Mindmaps
-type AngrauTopic = { label: string; topicNum: number; podcastFile: string };
+export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label: string }>): string {
+  if (!chapterTitle && (!topics || topics.length === 0)) return '';
+  const lines = ['mindmap', `  root(("${chapterTitle || 'Chapter Overview'}"))`];
+  for (const t of topics || []) {
+    lines.push(`    "${t.label}"`);
+  }
+  return lines.join('\n');
+}
+
+// Fallback Chapter Configurations for Mindmaps (offline/legacy compatibility)
+type MindmapTopic = { label: string; topicNum?: number; folder?: string; podcastFile?: string; podcastTitle?: string };
+
 const ANGRAU_CHAPTER_CONFIG: Record<number, {
   chapterTitle: string;
-  quickFolder: string;
-  detailedFolder: string;
-  topics: AngrauTopic[];
+  topics: MindmapTopic[];
 }> = {
   1: {
     chapterTitle: 'Insect Digestive System',
-    quickFolder: 'Digestive_system_quick_Topic_Level',
-    detailedFolder: 'Digestive_system_detailed_Topic_Level',
     topics: [
       { label: 'Three Primary Gut Regions',              topicNum: 1, podcastFile: '1. Anatomy of the three-part insect gut' },
       { label: 'Salivary Glands & Specialised Secretions', topicNum: 2, podcastFile: '2. Inside the Insect Foregut and Gizzard' },
@@ -322,8 +332,6 @@ const ANGRAU_CHAPTER_CONFIG: Record<number, {
   },
   2: {
     chapterTitle: 'Metamorphosis & Diapause',
-    quickFolder: 'Metamorphosis_quick_Topic_Level',
-    detailedFolder: 'Metamorphosis_detailed_Topic_Level',
     topics: [
       { label: 'Morphogenesis Framework',         topicNum: 1, podcastFile: '1.Three Categories of Insect Metamorphosis' },
       { label: 'Types of Metamorphosis',          topicNum: 2, podcastFile: '2.Identify Insect Larvae to Protect Crops' },
@@ -335,8 +343,6 @@ const ANGRAU_CHAPTER_CONFIG: Record<number, {
   },
   3: {
     chapterTitle: 'Weathering of Rocks and Minerals',
-    quickFolder: 'Weathering_quick_Topic_Level',
-    detailedFolder: 'Weathering_Detailed_Topic_Level',
     topics: [
       { label: 'Fundamentals & Regolith Genesis',          topicNum: 1, podcastFile: '1. How weathering transforms bedrock into regolith' },
       { label: 'Physical Weathering (Mechanical Agents)',   topicNum: 2, podcastFile: '2. Mechanical forces breaking down Indian landscapes' },
@@ -346,8 +352,6 @@ const ANGRAU_CHAPTER_CONFIG: Record<number, {
   },
   4: {
     chapterTitle: 'Pollination, Pollinizers & Parthenocarpy',
-    quickFolder: 'Pollination_Quick_Topic_Level',
-    detailedFolder: 'Pollination_detailed_Topic_Level',
     topics: [
       { label: 'Fundamentals of Floral Biology & Pollination Anatomy',     topicNum: 1, podcastFile: '1. Floral architecture and double fertilization' },
       { label: 'Self-Pollination (Autogamy) & Inbreeding Mechanisms',      topicNum: 2, podcastFile: '2. Self-Pollination Mechanisms in Indian Crops' },
@@ -359,22 +363,9 @@ const ANGRAU_CHAPTER_CONFIG: Record<number, {
   },
 };
 
-function buildAngrauMermaid(cfg: (typeof ANGRAU_CHAPTER_CONFIG)[number] | null): string {
-  if (!cfg) return '';
-  const lines = ['mindmap', `  root(("${cfg.chapterTitle}"))`];
-  for (const t of cfg.topics) {
-    lines.push(`    "${t.label}"`);
-  }
-  return lines.join('\n');
-}
-
-// ── In-memory cache for MLRIT Mindmap Topic Markdown content ─────────────────
-const mlritTopicCache = new Map<string, { quick: string; detailed?: string }>();
-
-type MlritTopic = { label: string; topicNum: number; folder: string; podcastTitle: string };
 const MLRIT_CHAPTER_CONFIG: Record<number, {
   chapterTitle: string;
-  topics: MlritTopic[];
+  topics: MindmapTopic[];
 }> = {
   1: {
     chapterTitle: 'Database System Concepts, ER Model & Relational Design',
@@ -389,13 +380,36 @@ const MLRIT_CHAPTER_CONFIG: Record<number, {
   },
 };
 
+function buildAngrauMermaid(cfg: (typeof ANGRAU_CHAPTER_CONFIG)[number] | null): string {
+  if (!cfg) return '';
+  return buildMindmapMermaid(cfg.chapterTitle, cfg.topics);
+}
+
 function buildMlritMermaid(cfg: (typeof MLRIT_CHAPTER_CONFIG)[number] | null): string {
   if (!cfg) return '';
-  const lines = ['mindmap', `  root(("${cfg.chapterTitle}"))`];
-  for (const t of cfg.topics) {
-    lines.push(`    "${t.label}"`);
+  return buildMindmapMermaid(cfg.chapterTitle, cfg.topics);
+}
+
+function getChapterTopicConfig(subjectId: string, chapterNumber: number, curCh?: Chapter): { chapterTitle: string; topics: MindmapTopic[] } | null {
+  if (curCh?.topics && curCh.topics.length > 0) {
+    return {
+      chapterTitle: curCh.title || curCh.name || `Chapter ${chapterNumber}`,
+      topics: curCh.topics,
+    };
   }
-  return lines.join('\n');
+  if (subjectId === 'ento_131' && ANGRAU_CHAPTER_CONFIG[chapterNumber]) {
+    return ANGRAU_CHAPTER_CONFIG[chapterNumber];
+  }
+  if ((subjectId === 'dbms' || subjectId.includes('dbms')) && MLRIT_CHAPTER_CONFIG[chapterNumber]) {
+    return MLRIT_CHAPTER_CONFIG[chapterNumber];
+  }
+  return null;
+}
+
+/** Topic-level notes live in the bucket at {chapter}/learn/topics/{quick|detailed}/topic_{n}.md */
+function angrauTopicUrl(subjectId: string, chapterNumber: number, kind: 'quick' | 'detailed', topicNum: number): string {
+  const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+  return `${getSubjectBaseUrl(subjectId)}/${chDir}/learn/topics/${kind}/topic_${topicNum}.md`;
 }
 
 export default function StudyTable() {
@@ -511,60 +525,66 @@ export default function StudyTable() {
     };
   }, [subjectId, chapterNumber]);
 
-  // Prefetch ANGRAU mindmap topic notes in background so node clicks are instant (0ms)
+  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
+
   useEffect(() => {
-    if (subjectId !== 'ento_131') return;
-    const cfg = ANGRAU_CHAPTER_CONFIG[chapterNumber];
-    if (!cfg) return;
-
-    const base = `${import.meta.env.BASE_URL}generated_resources/angrau/mindmaps topic level`;
-    cfg.topics.forEach((t) => {
-      const cacheKey = `angrau_${chapterNumber}_${t.topicNum}`;
-      if (angrauTopicCache.has(cacheKey)) return;
-
-      const quickPath = `${base}/${cfg.quickFolder}/quick_summary_topic${t.topicNum}.md`;
-      const detailedPath = `${base}/${cfg.detailedFolder}/detailed_summary_topic${t.topicNum}.md`;
-
-      Promise.all([
-        fetch(quickPath).then(r => (r.ok ? r.text() : '')),
-        fetch(detailedPath).then(r => (r.ok ? r.text() : '')),
-      ]).then(([quick, detailed]) => {
-        if (quick || detailed) {
-          angrauTopicCache.set(cacheKey, { quick, detailed });
-        }
-      }).catch(err => {
-        console.warn('Prefetch topic failed', t.topicNum, err);
-      });
+    if (!subjectId) return;
+    getManifest().then((m) => {
+      const list = getChapters(m, subjectId);
+      setSubjectChapters(list);
     });
-  }, [subjectId, chapterNumber]);
+  }, [subjectId]);
 
-  // Prefetch MLRIT mindmap topic notes in background so node clicks are instant (0ms)
+  // Prefetch mindmap topic notes in background so node clicks are instant (0ms)
   useEffect(() => {
-    if (subjectId !== 'dbms') return;
-    const cfg = MLRIT_CHAPTER_CONFIG[chapterNumber];
-    if (!cfg) return;
+    const curCh = subjectChapters.find((c) => c.number === chapterNumber);
+    const cfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
+    if (!cfg || !cfg.topics) return;
 
     const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
-    const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
-    cfg.topics.forEach((t) => {
-      const cacheKey = `mlrit_${chapterNumber}_${t.topicNum}_${normLevel}`;
-      if (mlritTopicCache.has(cacheKey)) return;
+    const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+    const subBase = getSubjectBaseUrl(subjectId);
 
-      const quickPath = `${base}/${t.folder}/DBMS_UNIT_I_Topic_${t.topicNum}_${normLevel}.md`;
-      const detailedPath = `${base}/${t.folder}/DBMS_UNIT_I_Topic_${t.topicNum}_advanced.md`;
+    const fetchSafeMd = async (url: string) => {
+      try {
+        const res = await fetch(url);
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || ct.includes('text/html')) return '';
+        const txt = await res.text();
+        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
+        return txt;
+      } catch { return ''; }
+    };
 
-      Promise.all([
-        fetch(quickPath).then(r => (r.ok ? r.text() : '')),
-        fetch(detailedPath).then(r => (r.ok ? r.text() : '')),
-      ]).then(([quick, detailed]) => {
-        if (quick || detailed) {
-          mlritTopicCache.set(cacheKey, { quick, detailed });
+    cfg.topics.forEach(async (t: any, idx: number) => {
+      const topicNum = t.topicNum ?? (idx + 1);
+      const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+      if (topicNotesCache.has(cacheKey)) return;
+
+      const isAngrau = subjectId === 'ento_131' || subjectId === 'entomology';
+      const isMlrit = subjectId === 'dbms' || subjectId.includes('dbms');
+
+      let quick = '';
+      let detailed = '';
+
+      if (isAngrau) {
+        // ANGRAU schema: learn/topics/quick/topic_{n}.md
+        quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+        // Chapter 3 in ANGRAU only has quick notes, other chapters (1, 2, 4) have detailed notes
+        if (chapterNumber !== 3) {
+          detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
         }
-      }).catch(err => {
-        console.warn('Prefetch MLRIT topic failed', t.topicNum, err);
-      });
+      } else if (isMlrit) {
+        // MLRIT schema: learn/topics/topic_{n}/{persona}.md
+        quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+        detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+      }
+
+      if (quick || detailed) {
+        topicNotesCache.set(cacheKey, { quick, detailed });
+      }
     });
-  }, [subjectId, chapterNumber, persona]);
+  }, [subjectId, chapterNumber, persona, subjectChapters]);
 
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
@@ -673,6 +693,32 @@ export default function StudyTable() {
   const [podcastTargetTrack, setPodcastTargetTrack] = useState<string | null>(null);
   const [podcastTargetMcIndex, setPodcastTargetMcIndex] = useState<number | null>(null);
   const [podcastAutoPlay, setPodcastAutoPlay] = useState<boolean>(false);
+  const [readTargetSection, setReadTargetSection] = useState<number | null>(() => {
+    const fromUrl = searchParams.get("section");
+    return fromUrl ? parseInt(fromUrl, 10) : null;
+  });
+
+  const handlePodcastNavigateToRead = (secIdx?: number) => {
+    if (secIdx !== undefined && secIdx !== null) {
+      setReadTargetSection(secIdx);
+    }
+    const targetTool = activeTool === "detailed" ? "detailed" : "summary";
+    // Direct state switch to avoid 1100ms artificial transition wait screen
+    setActiveToolState(targetTool);
+    setSearchParams((prev) => {
+      prev.set("tool", targetTool);
+      if (secIdx !== undefined && secIdx !== null) {
+        prev.set("section", String(secIdx));
+      }
+      return prev;
+    }, { replace: true });
+    trackToolUsage({
+      tool: targetTool,
+      subjectId,
+      chapterNumber,
+      chapterName: `Chapter ${chapterNumber}`,
+    });
+  };
 
   // Segmented chapters walk the per-video loop; everything else the chapter flow.
   const activeFlow = isSegmented ? VIDEO_FLOW : GUIDED_FLOW;
@@ -782,15 +828,7 @@ export default function StudyTable() {
     });
   };
 
-  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
 
-  useEffect(() => {
-    if (!subjectId) return;
-    getManifest().then((m) => {
-      const list = getChapters(m, subjectId);
-      setSubjectChapters(list);
-    });
-  }, [subjectId]);
 
   // Index of the current (first incomplete) unit — everything after it is locked.
   // Depends on completedTools so finishing a unit's last tool unlocks the next
@@ -1138,14 +1176,19 @@ export default function StudyTable() {
   };
 
   const handleAuthClick = () => {
-    if (isAuthenticated) {
-      localStorage.removeItem("app_authenticated");
-      localStorage.removeItem("app_role");
-      setIsAuthenticated(false);
+    localStorage.removeItem("app_authenticated");
+    localStorage.removeItem("app_role");
+    localStorage.removeItem("app_user_id");
+    localStorage.removeItem("username");
+    localStorage.removeItem("questionnaire_completed");
+    setIsAuthenticated(false);
+    const activeTenant = getRegistryTenantId();
+    if (activeTenant) {
+      localStorage.removeItem(`sv_session_${activeTenant}`);
+      navigate(`/${activeTenant}/login`, { replace: true });
+    } else {
       navigate("/login", { replace: true });
-      return;
     }
-    navigate("/login", { replace: true });
   };
 
   const { startFocusMode, isFocusModeActive } = useFocusMode();
@@ -1329,9 +1372,31 @@ export default function StudyTable() {
 
     switch (activeTool) {
       case "summary":
-      case "key_takeaways":
-      case "study_plan":
       case "detailed": {
+        const isDbms = subjectId === "dbms" || subjectId.includes("dbms");
+        if (isDbms) {
+          return (
+            <SectionizedReadView
+              key={`sectionized-read-${subjectId}-${chapterNumber}-${persona}-${activeTool}`}
+              subjectId={subjectId}
+              chapterNumber={chapterNumber}
+              persona={persona}
+              track={activeTool === "detailed" ? "detailed" : "quick"}
+              targetSectionIndex={readTargetSection}
+              onPersonaChange={(lvl) => setPersona(lvl)}
+              isPurpleTheme={isDbms || subjectId.includes("mlrit")}
+              onLoadedContent={(txt) => {
+                if (typeof content !== "string" || content.length < 50) {
+                  setContent(txt);
+                }
+              }}
+            />
+          );
+        }
+      }
+      // fall-through for non-DBMS subjects or other tools
+      case "key_takeaways":
+      case "study_plan": {
         const parseDetailedHeadings = (markdown: string) => {
           const lines = markdown.split('\n');
           const headings: { text: string }[] = [];
@@ -1605,6 +1670,7 @@ export default function StudyTable() {
                     <FlashcardsView
                       cards={mmCards}
                       subjectId={subjectId}
+                      chapterNumber={chapterNumber}
                     />
                   ) : (
                     <MarkdownView content={sections.flashcards} />
@@ -1739,36 +1805,20 @@ export default function StudyTable() {
           'relational querying, views & schema evolution': { ytId: 'A4RwGJPb9I4' },
         };
 
-        // ── MLRIT mindmap config ─────────────────────────────────────────────
-        const isMlrit = subjectId === 'dbms';
-        const mlritChapCfg = isMlrit ? MLRIT_CHAPTER_CONFIG[chapterNumber] : null;
+        // ── Dynamic mindmap config (Multi-Tenant & Schema Compliant) ────────
+        const curCh = subjectChapters.find((c) => c.number === chapterNumber);
+        const dynamicTopicCfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
 
-        const mlritMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
-        if (mlritChapCfg) {
-          for (const t of mlritChapCfg.topics) {
-            mlritMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
-            mlritMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+        const dynamicMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
+        if (dynamicTopicCfg) {
+          for (const t of dynamicTopicCfg.topics) {
+            dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
+            dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
           }
         }
 
-        // ── ANGRAU mindmap config ────────────────────────────────────────────
-        const isAngrau = subjectId === 'ento_131';
-        const angrauChapCfg = isAngrau ? ANGRAU_CHAPTER_CONFIG[chapterNumber] : null;
-
-        // Build mmIcons for ANGRAU: every topic node gets hasRead + hasPodcast
-        const angrauMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
-        if (angrauChapCfg) {
-          for (const t of angrauChapCfg.topics) {
-            // Register with both exact label and lowercase — MermaidView uses the node text directly
-            angrauMmIcons[t.label] = { hasRead: true, hasPodcast: true };
-            angrauMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true };
-          }
-        }
-
-        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isMlrit && mlritChapCfg
-          ? mlritMmIcons
-          : isAngrau && angrauChapCfg
-          ? angrauMmIcons
+        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = dynamicTopicCfg
+          ? dynamicMmIcons
           : isNebBiologyChap6 ? {
           'ANIMAL TISSUE': { hasRead: true },
           'History': { hasRead: true },
@@ -1823,32 +1873,30 @@ export default function StudyTable() {
         }
 
         // Compute the final mermaid content:
-        // – MLRIT / ANGRAU: use the cleanly generated mermaid (no messy mindmap.md)
-        // – Others: use the extracted mermaid block from the loaded file, truncated to 1 level
-        const mermaidContent = isMlrit && mlritChapCfg
-          ? buildMlritMermaid(mlritChapCfg)
-          : isAngrau && angrauChapCfg
-          ? buildAngrauMermaid(angrauChapCfg)
+        const mermaidContent = dynamicTopicCfg
+          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
           : truncateMindmapToLevels(rawMermaid, 2);
 
         const handleTopicClick = async (label: string, action?: 'read' | 'podcast' | 'video') => {
           setMindmapTopicTitle(label);
           const lowerLabel = label.toLowerCase().trim();
 
-          // ── MLRIT path ───────────────────────────────────────────────────────
-          if (isMlrit && mlritChapCfg) {
-            const match = mlritChapCfg.topics.find(t => t.label.toLowerCase() === lowerLabel);
+          // ── Dynamic topic path (Works for all subjects with topics) ───────
+          if (dynamicTopicCfg) {
+            const match = dynamicTopicCfg.topics.find((t: any) => t.label.toLowerCase() === lowerLabel);
             if (!match) return; // root node or unmapped — ignore
 
             if (action === 'video') {
               setMindmapInlineType('video');
-              setMindmapMediaUrl(`https://www.youtube.com/embed/A4RwGJPb9I4?autoplay=1`);
+              const mappedMedia = MEDIA_MAPPING[lowerLabel];
+              const ytId = mappedMedia?.ytId || 'A4RwGJPb9I4';
+              setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
               setMindmapTopicOpen(true);
               return;
             }
 
             if (action === 'podcast') {
-              const mcIdx = mlritChapCfg.topics.indexOf(match);
+              const mcIdx = dynamicTopicCfg.topics.indexOf(match);
               const targetIdx = mcIdx >= 0 ? mcIdx : 0;
               setMindmapTopicOpen(false);
               setPodcastTargetTrack('mc');
@@ -1865,8 +1913,9 @@ export default function StudyTable() {
             setMindmapTopicOpen(true);
 
             const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
-            const cacheKey = `mlrit_${chapterNumber}_${match.topicNum}_${normLevel}`;
-            const cached = mlritTopicCache.get(cacheKey);
+            const topicNum = (match as any).topicNum ?? (dynamicTopicCfg.topics.indexOf(match) + 1);
+            const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+            const cached = topicNotesCache.get(cacheKey);
 
             if (cached && cached.quick) {
               setMindmapTopicContent(cached.quick);
@@ -1880,112 +1929,56 @@ export default function StudyTable() {
             setMindmapDetailedContent(null);
 
             try {
-              const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
-              const quickPath = `${base}/${match.folder}/DBMS_UNIT_I_Topic_${match.topicNum}_${normLevel}.md`;
-              const detailedPath = `${base}/${match.folder}/DBMS_UNIT_I_Topic_${match.topicNum}_advanced.md`;
+              const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+              const subBase = getSubjectBaseUrl(subjectId);
 
-              fetch(quickPath)
-                .then(r => (r.ok ? r.text() : 'Quick content not found.'))
-                .then(quickText => {
-                  setMindmapTopicContent(quickText);
-                  setMindmapTopicLoading(false);
-                  const entry = mlritTopicCache.get(cacheKey) || { quick: quickText };
-                  entry.quick = quickText;
-                  mlritTopicCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error('MLRIT quick fetch error', e);
-                  setMindmapTopicLoading(false);
-                });
+              const fetchSafeMd = async (url: string) => {
+                try {
+                  const res = await fetch(url);
+                  const ct = res.headers.get('content-type') || '';
+                  if (!res.ok || ct.includes('text/html')) return '';
+                  const txt = await res.text();
+                  if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
+                  return txt;
+                } catch { return ''; }
+              };
 
-              fetch(detailedPath)
-                .then(r => (r.ok ? r.text() : 'Detailed content not found.'))
-                .then(detailedText => {
-                  setMindmapDetailedContent(detailedText);
-                  const entry = mlritTopicCache.get(cacheKey) || { quick: '' };
-                  entry.detailed = detailedText;
-                  mlritTopicCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error('MLRIT detailed fetch error', e);
-                });
+              const isAngrau = subjectId === 'ento_131' || subjectId === 'entomology';
+              const isMlrit = subjectId === 'dbms' || subjectId.includes('dbms');
+
+              let quickText = '';
+              let detailedText = '';
+
+              if (isAngrau) {
+                // ANGRAU schema: learn/topics/quick/topic_{n}.md
+                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+                if (chapterNumber !== 3) {
+                  detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+                }
+              } else if (isMlrit) {
+                // MLRIT schema: learn/topics/topic_{n}/{persona}.md
+                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+
+                // Local fallback for offline MLRIT test files if server is not reachable
+                if (!quickText && (match as any).folder) {
+                  const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
+                  const mlritQuick = `${base}/${(match as any).folder}/DBMS_UNIT_I_Topic_${topicNum}_${normLevel}.md`;
+                  const mlritDetail = `${base}/${(match as any).folder}/DBMS_UNIT_I_Topic_${topicNum}_advanced.md`;
+                  const q = await fetchSafeMd(mlritQuick);
+                  const d = await fetchSafeMd(mlritDetail);
+                  if (q) quickText = q;
+                  if (d) detailedText = d;
+                }
+              }
+
+              setMindmapTopicContent(quickText || `Summary content for ${match.label}`);
+              setMindmapDetailedContent(detailedText || `Detailed notes for ${match.label}`);
+              topicNotesCache.set(cacheKey, { quick: quickText, detailed: detailedText });
             } catch (e) {
-              console.error('MLRIT mindmap fetch error', e);
-              setMindmapTopicLoading(false);
-            }
-            return;
-          }
-
-          // ── ANGRAU path ──────────────────────────────────────────────────────
-          if (isAngrau && angrauChapCfg) {
-            const match = angrauChapCfg.topics.find(t => t.label.toLowerCase() === lowerLabel);
-            if (!match) return; // root node or unmapped — ignore
-
-            const base = `${import.meta.env.BASE_URL}generated_resources/angrau/mindmaps topic level`;
-            const podcastBase = `${import.meta.env.BASE_URL}generated_resources/angrau/chapter_0${chapterNumber}/Podcasts`;
-
-            if (action === 'podcast') {
-              const mcIdx = angrauChapCfg.topics.indexOf(match);
-              const targetIdx = mcIdx >= 0 ? mcIdx : 0;
-              setMindmapTopicOpen(false);
-              setPodcastTargetTrack('mc');
-              setPodcastTargetMcIndex(targetIdx);
-              setPodcastAutoPlay(true);
-              setPodcastPlayTrigger(Date.now());
-              setActiveTool('podcasts');
-              return;
-            }
-
-            // Default: read (quick + detailed)
-            setMindmapInlineType('text');
-            setMindmapInlineTab('quick');
-            setMindmapTopicOpen(true);
-
-            const cacheKey = `angrau_${chapterNumber}_${match.topicNum}`;
-            const cached = angrauTopicCache.get(cacheKey);
-
-            if (cached && cached.quick) {
-              setMindmapTopicContent(cached.quick);
-              setMindmapDetailedContent(cached.detailed || '');
-              setMindmapTopicLoading(false);
-              return;
-            }
-
-            setMindmapTopicLoading(true);
-            setMindmapTopicContent(null);
-            setMindmapDetailedContent(null);
-
-            try {
-              const quickPath = `${base}/${angrauChapCfg.quickFolder}/quick_summary_topic${match.topicNum}.md`;
-              const detailedPath = `${base}/${angrauChapCfg.detailedFolder}/detailed_summary_topic${match.topicNum}.md`;
-
-              fetch(quickPath)
-                .then(r => (r.ok ? r.text() : 'Quick content not found.'))
-                .then(quickText => {
-                  setMindmapTopicContent(quickText);
-                  setMindmapTopicLoading(false);
-                  const entry = angrauTopicCache.get(cacheKey) || { quick: quickText };
-                  entry.quick = quickText;
-                  angrauTopicCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error('Quick fetch error', e);
-                  setMindmapTopicLoading(false);
-                });
-
-              fetch(detailedPath)
-                .then(r => (r.ok ? r.text() : 'Detailed content not found.'))
-                .then(detailedText => {
-                  setMindmapDetailedContent(detailedText);
-                  const entry = angrauTopicCache.get(cacheKey) || { quick: '' };
-                  entry.detailed = detailedText;
-                  angrauTopicCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error('Detailed fetch error', e);
-                });
-            } catch (e) {
-              console.error('ANGRAU mindmap fetch error', e);
+              console.error('Dynamic mindmap topic fetch error', e);
+              setMindmapTopicContent(`Content for ${match.label}`);
+            } finally {
               setMindmapTopicLoading(false);
             }
             return;
@@ -2100,11 +2093,9 @@ export default function StudyTable() {
         };
 
 
-        // Compute next/prev topic for inline navigation (MLRIT, ANGRAU, and NEB)
-        const allTopicLabels: string[] = mlritChapCfg
-          ? mlritChapCfg.topics.map(t => t.label)
-          : angrauChapCfg
-          ? angrauChapCfg.topics.map(t => t.label)
+        // Compute next/prev topic for inline navigation (Multi-Tenant)
+        const allTopicLabels: string[] = dynamicTopicCfg
+          ? dynamicTopicCfg.topics.map(t => t.label)
           : [];
         const currentTopicIdx = allTopicLabels.indexOf(mindmapTopicTitle ?? '');
         const prevTopicLabel = currentTopicIdx > 0 ? allTopicLabels[currentTopicIdx - 1] : null;
@@ -2408,6 +2399,7 @@ export default function StudyTable() {
             key={`flashcards-${videoIndex}-${persona}`}
             cards={content}
             subjectId={subjectId}
+            chapterNumber={chapterNumber}
             persona={persona}
             speakTrigger={flashcardSpeakTrigger}
             stopTrigger={flashcardStopTrigger}
@@ -2435,6 +2427,7 @@ export default function StudyTable() {
             key={`revision-${videoIndex}-${persona}`}
             cards={content}
             subjectId={subjectId}
+            chapterNumber={chapterNumber}
             persona={persona}
             isPurpleTheme={false}
             speakTrigger={flashcardSpeakTrigger}
@@ -2462,7 +2455,12 @@ export default function StudyTable() {
           <p>No revision flashcards available.</p>
         );
       case "deep_dive":
-        return <MarkdownView content={typeof content === "string" ? content : ""} />;
+        return (
+          <MarkdownView
+            content={typeof content === "string" ? content : ""}
+            isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
+          />
+        );
       case "ask":
         return (
           <AskBotView
@@ -2489,6 +2487,7 @@ export default function StudyTable() {
             pauseTrigger={podcastPauseTrigger}
             stopTrigger={podcastStopTrigger}
             onPlayingChange={setPodcastIsPlaying}
+            onNavigateToRead={handlePodcastNavigateToRead}
           />
         );
 
@@ -2801,21 +2800,17 @@ export default function StudyTable() {
                     deep_dive: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
                   };
 
-                  // In Dark Theme (#2D3E36): ONLY the selected icon and active tab card use #FDBE8A (no glow).
-                  // All other (idle) icons and text are crisp white (#FFFFFF) / black-and-white monochrome.
-                  const DARK_THEME_COLOR = "#FDBE8A";
+                  // In Dark Theme (#2D3E36): Use the vibrant section colors (#159A5B, #8658EC, #FF2476, #3886D7)
+                  // matching the bright theme for the active icon and active group card.
+                  // All other (idle) icons and text are crisp white (#FFFFFF) in dark mode / #18221D in bright mode.
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
-                    // Selected icon displays color (#FDBE8A in dark mode; section color in bright mode).
-                    // Idle icons display clean black/white monochrome (#FFFFFF in dark mode; #18221D in bright mode).
-                    const iconColor = active
-                      ? (isDarkToolbar ? DARK_THEME_COLOR : color)
-                      : (isDarkToolbar ? "#FFFFFF" : "#18221D");
-                    const iconMuted = active
-                      ? (isDarkToolbar ? "rgba(253, 190, 138, 0.65)" : `${color}99`)
-                      : (isDarkToolbar ? "rgba(255, 255, 255, 0.65)" : "rgba(24, 34, 29, 0.55)");
-                    const innerBg = isDarkToolbar ? "#23322B" : "#FFFFFF";
-                    const contrastBg = isDarkToolbar ? "#23322B" : "#FFFFFF";
+                    // Active icon: vibrant bright section color with crisp white highlights.
+                    // Inactive icons (the other icons): disabled look, black & white only (no colors).
+                    const iconColor = active ? color : (isDarkToolbar ? "#FFFFFF" : "#475569");
+                    const iconMuted = active ? `${color}BB` : (isDarkToolbar ? "rgba(255, 255, 255, 0.55)" : "#94A3B8");
+                    const innerBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
+                    const contrastBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
 
                     switch (toolId) {
                       case "summary":
@@ -2823,7 +2818,7 @@ export default function StudyTable() {
                       case "detailed":
                       case "detailed_notes": {
                         const bookCover = iconColor;
-                        const bookBase = isDarkToolbar ? (active ? "#3F3229" : "#1F2B25") : (active ? color : "#E2E8F0");
+                        const bookBase = active ? `${color}40` : (isDarkToolbar ? "rgba(255, 255, 255, 0.15)" : "#CBD5E1");
                         return (
                           <svg width="36" height="34" viewBox="0 0 38 34" fill="none">
                             {/* Book cover base */}
@@ -2884,7 +2879,7 @@ export default function StudyTable() {
                             {/* Top clapperboard bar */}
                             <g transform="rotate(-6 5 12)">
                               <rect x="5" y="6" width="26" height="6.5" rx="2" fill={vidColor} />
-                              {/* Dark diagonal stripes */}
+                              {/* White diagonal stripes */}
                               <polygon points="9,6 12,6 9,12.5 6,12.5" fill={contrastBg} />
                               <polygon points="16,6 19,6 16,12.5 13,12.5" fill={contrastBg} />
                               <polygon points="23,6 26,6 23,12.5 20,12.5" fill={contrastBg} />
@@ -2897,17 +2892,16 @@ export default function StudyTable() {
                       case "mindmap": {
                         return (
                           <img
-                            src={
-                              isDarkToolbar
-                                ? (active ? "/mindmap_brain_fdbe8a.png" : "/mindmap_brain_white.png")
-                                : (active ? "/mindmap_brain_blue.png" : "/mindmap_brain_black.png")
-                            }
+                            src="/mindmap_brain_blue.png"
                             alt="Mindmaps"
                             style={{
                               width: "34px",
                               height: "26px",
                               objectFit: "contain",
                               display: "block",
+                              filter: active
+                                ? "brightness(1.1) drop-shadow(0 0 6px rgba(56, 134, 215, 0.6))"
+                                : "grayscale(100%) brightness(1.7) opacity(0.7)",
                             }}
                           />
                         );
@@ -2948,10 +2942,10 @@ export default function StudyTable() {
                             {/* Top calendar header strip */}
                             <path d="M5.5 10.5C5.5 8.567 7.067 7 9 7H24.5C25.5 7 26.5 7.8 26.5 9V12.5H5.5V10.5Z" fill={iconColor} />
                             {/* 2 Binder rings on top left */}
-                            <rect x="8.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
-                            <rect x="13.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
+                            <rect x="8.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke="#FFFFFF" strokeWidth="0.8" />
+                            <rect x="13.5" y="4" width="2.2" height="5" rx="1.1" fill={iconColor} stroke="#FFFFFF" strokeWidth="0.8" />
                             {/* Graduation Cap (Mortarboard) on top right */}
-                            <polygon points="23,3 29.5,5.5 23,8 16.5,5.5" fill={iconColor} stroke={isDarkToolbar ? "#23322B" : "#FFFFFF"} strokeWidth="0.8" />
+                            <polygon points="23,3 29.5,5.5 23,8 16.5,5.5" fill={iconColor} stroke="#FFFFFF" strokeWidth="0.8" />
                             <path d="M19.5 6.5V8.5C19.5 9.5 21 10.2 23 10.2C25 10.2 26.5 9.5 26.5 8.5V6.5" fill={iconColor} />
                             <path d="M23 5.5L29 7.8V11.5" stroke={iconColor} strokeWidth="1.2" strokeLinecap="round" />
                             <circle cx="29" cy="12" r="1" fill={iconColor} />
@@ -3033,9 +3027,7 @@ export default function StudyTable() {
                         );
                       }
                       case "pyq": {
-                        const pyqFold = isDarkToolbar
-                          ? (active ? "rgba(253, 190, 138, 0.25)" : "rgba(255, 255, 255, 0.18)")
-                          : (active ? `${color}33` : "rgba(24, 34, 29, 0.12)");
+                        const pyqFold = active ? `${color}33` : (isDarkToolbar ? "rgba(255, 255, 255, 0.2)" : "#E2E8F0");
                         return (
                           <svg width="36" height="34" viewBox="0 0 36 34" fill="none">
                             {/* Document outline */}
@@ -3100,7 +3092,7 @@ export default function StudyTable() {
                       }
                       default:
                         return (
-                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={active ? (isDarkToolbar ? DARK_THEME_COLOR : color) : (isDarkToolbar ? "#FFFFFF" : "#18221D")} strokeWidth="1.75">
+                          <svg width="36" height="34" viewBox="0 0 24 24" fill="none" stroke={iconColor} strokeWidth="1.75">
                             <circle cx="12" cy="12" r="8" />
                           </svg>
                         );
@@ -3116,8 +3108,8 @@ export default function StudyTable() {
                       (toolId === "mindmap" && activeTool === "foundation");
                     const theme = TOOL_THEMES[toolId] || { main: "#4F7B64", badge: "#4F7B64", text: "#4F7B64", bg: "#f0f7f4" };
                     const themeColor = colorOverride || theme.main;
-                    const activeThemeColor = isDarkToolbar ? DARK_THEME_COLOR : themeColor;
-                    const activeBorderColor = isDarkToolbar ? DARK_THEME_COLOR : themeColor;
+                    const activeThemeColor = themeColor;
+                    const activeBorderColor = themeColor;
 
                     return (
                       <div
@@ -3138,11 +3130,11 @@ export default function StudyTable() {
                           justifyContent: 'center',
                           padding: '4px 2px',
                           borderRadius: '10px',
-                          background: active ? (isDarkToolbar ? 'rgba(253, 190, 138, 0.14)' : '#ffffff') : 'transparent',
+                          background: active ? (isDarkToolbar ? `${themeColor}26` : '#ffffff') : 'transparent',
                           border: active ? `1.8px solid ${activeBorderColor}` : '1.8px solid transparent',
                           boxShadow: active
                             ? (isDarkToolbar
-                                ? '0 2px 6px rgba(0, 0, 0, 0.25)'
+                                ? `0 2px 8px ${themeColor}40, 0 1px 3px rgba(0, 0, 0, 0.3)`
                                 : `0 3px 12px ${themeColor}2e, 0 1px 3px rgba(0,0,0,0.06)`)
                             : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
@@ -3160,7 +3152,7 @@ export default function StudyTable() {
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
-                          (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.06)' : 'rgba(15, 23, 42, 0.04)';
+                          (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.04)';
                           (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
@@ -3174,16 +3166,18 @@ export default function StudyTable() {
                           justifyContent: 'center',
                           height: '32px',
                           width: '34px',
-                          transition: 'transform 0.18s ease',
-                          transform: active ? 'scale(1.06)' : 'scale(1)',
+                          transition: 'transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease',
+                          transform: active ? 'scale(1.08)' : 'scale(1)',
+                          filter: active ? `drop-shadow(0 2px 8px ${themeColor}90)` : 'none',
+                          opacity: active ? 1 : 0.72,
                           flexShrink: 0
                         }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
                           fontSize: '11px',
-                          fontWeight: active ? 700 : 600,
-                          color: active ? activeThemeColor : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                          fontWeight: active ? 700 : 500,
+                          color: active ? activeThemeColor : (isDarkToolbar ? 'rgba(255, 255, 255, 0.75)' : '#64748B'),
                           textAlign: 'center',
                           lineHeight: '1.15',
                           letterSpacing: '-0.2px',
@@ -3267,16 +3261,16 @@ export default function StudyTable() {
                           alignItems: 'center',
                           justifyContent: 'space-between',
                           border: isActive
-                            ? (isDarkToolbar ? `1.8px solid ${DARK_THEME_COLOR}` : `1.5px solid ${groupColor}`)
+                            ? `1.8px solid ${groupColor}`
                             : (isDarkToolbar ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid #D5E2D9'),
                           borderRadius: '16px',
                           padding: '6px 8px 8px',
                           background: isActive
-                            ? (isDarkToolbar ? 'rgba(253, 190, 138, 0.08)' : `${groupColor}0a`)
+                            ? (isDarkToolbar ? `${groupColor}14` : `${groupColor}0a`)
                             : (isDarkToolbar ? 'rgba(0, 0, 0, 0.20)' : '#FFFFFF'),
                           boxShadow: isActive
                             ? (isDarkToolbar
-                                ? '0 2px 8px rgba(0, 0, 0, 0.28)'
+                                ? `0 2px 10px ${groupColor}2a, 0 2px 8px rgba(0, 0, 0, 0.28)`
                                 : `0 3px 12px ${groupColor}33, 0 1px 3px rgba(0, 0, 0, 0.2)`)
                             : (isDarkToolbar ? '0 1px 4px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'),
                           width: '236px',
@@ -3313,7 +3307,7 @@ export default function StudyTable() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
-                                color: isLearnActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#159A5B') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isLearnActive ? '#159A5B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -3324,7 +3318,7 @@ export default function StudyTable() {
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
-                                    style={{ background: isDarkToolbar ? DARK_THEME_COLOR : '#159A5B', color: isDarkToolbar ? '#2D3E36' : '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
+                                    style={{ background: '#159A5B', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
                                   >
                                     Video {videoIndex}/{chapterVideos.length}
                                   </span>
@@ -3346,7 +3340,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPracticeActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#8658EC') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isPracticeActive ? '#8658EC' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -3371,7 +3365,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPrepareActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#FF2476') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isPrepareActive ? '#FF2476' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -3396,7 +3390,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isResourcesActive ? (isDarkToolbar ? DARK_THEME_COLOR : '#3886D7') : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isResourcesActive ? '#3886D7' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
                                 fontSize: '13px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -3426,12 +3420,12 @@ export default function StudyTable() {
                         }}
                       >
 
-                        {/* Quit / Log Out Button (Red circular outline with soft red tint from reference) */}
+                        {/* Log Out Button (Red circular outline with soft red tint) */}
                         <button
                           type="button"
-                          onClick={() => navigate("/")}
-                          title="Quit to Landing Page"
-                          aria-label="Quit to Landing Page"
+                          onClick={handleAuthClick}
+                          title="Log Out"
+                          aria-label="Log Out"
                           style={{
                             width: "38px",
                             height: "38px",
@@ -3613,11 +3607,11 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam" || activeTool === "assessment"
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam" || activeTool === "assessment" || activeTool === "videos"
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
+                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "videos"
                   ? "0px"
                   : activeTool === "assessment"
                   ? "4px 16px 0 16px"
@@ -3633,7 +3627,7 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "videos" && (
               <div
                 style={{
                   display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
@@ -3910,6 +3904,7 @@ export default function StudyTable() {
                               onHighlightChange={(payload) => setReadingHighlight(payload)}
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
+                              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
                             />
                           </div>
                         )}
@@ -3957,7 +3952,7 @@ export default function StudyTable() {
                                 </span>
                               </div>
                             )
-                          ) : (activeTool === "videos" || activeTool === "pyq") ? null : (
+                          ) : (activeTool === "pyq") ? null : (
                             !isMoocMode && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
                                 <span className="st-page-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', fontWeight: 500 }}>
@@ -4000,7 +3995,8 @@ export default function StudyTable() {
                     activeTool === "revision_flashcards" ||
                     activeTool === "assessment" ||
                     activeTool === "videos" ||
-                    activeTool === "ask"
+                    activeTool === "ask" ||
+                    ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
@@ -4027,9 +4023,9 @@ export default function StudyTable() {
                             : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
                               ? "0px"
                               : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >

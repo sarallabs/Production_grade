@@ -1,0 +1,33 @@
+{
+  "id": "mlrit",
+  "name": "Mallareddy Institute of Technology",
+  "shortName": "MLRIT",
+  "branding": {
+    "appName": "MLRIT Medha",
+    "primaryColor": "#1e3a8a",
+    "programLabel": "Autonomous Engineering"
+  },
+  "features": {
+    "examinerConsole": true,
+    "expertPanel": true,
+    "pyq": true,
+    "ask": true,
+    "toolOrder": ["read.quick", "learn.mindmap", "practice.mcq", "podcasts"]
+  },
+  "hierarchy": ["department", "semester", "subject"],
+  "nodes": [
+    {
+      "id": "cse",
+      "type": "department",
+      "name": "Computer Science & Engineering",
+      "order": 1
+    },
+    {
+      "id": "sem_3",
+      "type": "semester",
+      "name": "Semester III",
+      "parentId": "cse",
+      "order": 1
+    }
+  ]
+}

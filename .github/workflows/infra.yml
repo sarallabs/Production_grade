@@ -1,0 +1,49 @@
+name: Infrastructure Deploy
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'saralvidhya-production/infra/**'
+      - '.github/workflows/infra.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-infra:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: saralvidhya-production/infra
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER || 'projects/193782571555/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider' }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SA || 'sv-deployer@saralvidhya-production.iam.gserviceaccount.com' }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Firestore Composite Indexes
+        run: |
+          if [ -f "firestore.indexes.json" ]; then
+            gcloud firestore indexes composite create --project=saralvidhya-production --quiet || echo "Indexes up-to-date"
+          fi
+
+      - name: Update GCS Bucket Policies
+        run: |
+          if [ -f "cors.json" ]; then
+            gcloud storage buckets update gs://saralvidhya-artifacts --cors-file=cors.json --quiet
+          fi
+          if [ -f "lifecycle.json" ]; then
+            gcloud storage buckets update gs://saralvidhya-artifacts --lifecycle-file=lifecycle.json --quiet
+          fi

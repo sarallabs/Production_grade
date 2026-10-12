@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState, useMemo } from "react";
+import DottedTerm from "./DottedTerm";
+import { getTermDefinition } from "@/data/glossaryTerms";
 import {
   googleTtsSpeak,
   googleTtsStop,
@@ -12,12 +14,92 @@ import {
   getSubjectBaseUrl,
   DifficultyLevel,
   GCS_BACKEND_SUBJECTS,
+  type Chapter,
 } from "@/data/contentRepository";
 import {
   useAudioProgress,
   saveProgress,
   type AudioProgress,
 } from "@/hooks/useAudioProgress";
+import {
+  getSectionizedReadData,
+  type SectionizedChapterData,
+  type ReadSection,
+  type ReadFigure,
+} from "@/data/sectionizedReadService";
+
+// 120 pencil-skinny bars forming a natural audio waveform curve
+const PENCIL_WAVEFORM_BARS: number[] = Array.from({ length: 120 }, (_, i) => {
+  const t = i / 120;
+  // Natural voice cadence: slight rise at start, high variance in middle, gentle taper
+  const envelope = Math.sin(t * Math.PI) * 0.72 + 0.28;
+  const f1 = Math.sin(i * 0.28) * 0.35;
+  const f2 = Math.cos(i * 0.72 + 0.4) * 0.25;
+  const f3 = Math.sin(i * 1.45 + 1.2) * 0.2;
+  const f4 = Math.cos(i * 2.8) * 0.12;
+  const jitter = Math.sin(i * 4.9) * 0.08;
+  const raw = Math.abs(f1 + f2 + f3 + f4 + jitter) + 0.15;
+  const scaled = Math.min(100, Math.max(14, raw * envelope * 105));
+  return Math.round(scaled);
+});
+
+/**
+ * Cleans transcript preamble, course metadata tables, and headers.
+ */
+export function cleanTranscriptPreamble(text: string): string {
+  if (!text) return "";
+  let t = text.replace(/\r\n/g, "\n");
+
+  // If text is valid JSON string, parse full_text
+  if (t.trim().startsWith("{")) {
+    try {
+      const p = JSON.parse(t);
+      if (p.full_text) return cleanTranscriptPreamble(p.full_text);
+    } catch {}
+  }
+
+  // 1. If structured transcript with "Transcript Flow", skip all preamble (Course, Unit, Table)
+  const flowMatch = t.match(/##\s*\d*\.?\s*[^#\n]*Transcript Flow[^\n]*\n([\s\S]*)/i);
+  if (flowMatch) {
+    t = flowMatch[1];
+    // Strip optional italic preamble note
+    t = t.replace(/^\*[^*]+\*\s*\n*/m, "");
+  } else {
+    // Fallback for "## Timestamped..."
+    const tsIdx = t.indexOf("## Timestamped");
+    if (tsIdx >= 0) {
+      t = t.substring(tsIdx);
+      const nl = t.indexOf("\n");
+      t = nl > 0 ? t.substring(nl + 1) : t;
+    }
+  }
+
+  // 2. If there's an end section like "## 3. Key Takeaways" or "## 3." cut it off
+  const endMatch = t.search(/\n##\s*\d/);
+  if (endMatch > 0) {
+    t = t.substring(0, endMatch);
+  }
+
+  // 3. Strip table blocks if any remain
+  t = t.replace(/\|[^\n]+\|\n\|[-:\s|]+\|\n(?:\|[^\n]+\|\n?)*/g, "");
+
+  // 4. Strip timestamp segment headers: ### `[00:00 - 00:36]` • **Lecture Segment** (100 words)
+  t = t.replace(/###\s*`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
+  t = t.replace(/`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
+
+  // 5. Strip speaker cues: "> **Prof. AI / Host**:" or "**Host**:" but preserve spoken words
+  t = t.replace(/>?\s*\*\*[^*]+\*\*:\s*/gi, "");
+
+  // 6. Strip leading blockquote chevrons (>)
+  t = t.replace(/^>\s*/gm, "");
+
+  // 7. Strip horizontal rules
+  t = t.replace(/^---\s*$/gm, "");
+
+  // 8. Collapse whitespace
+  t = t.replace(/\n{3,}/g, "\n\n");
+  return t.trim();
+}
 
 /**
  * Basic markdown stripper for TTS reading.
@@ -120,6 +202,7 @@ export interface PodcastsViewProps {
   playTrigger?: number;
   pauseTrigger?: number;
   stopTrigger?: number;
+  onNavigateToRead?: (sectionIndex?: number) => void;
 }
 
 /**
@@ -139,6 +222,7 @@ export default function PodcastsView({
   playTrigger,
   pauseTrigger,
   stopTrigger,
+  onNavigateToRead,
 }: PodcastsViewProps) {
   const [currentTime, setCurrentTime] = useState(0);
   const currentTimeRef = useRef(0); // always up-to-date without triggering re-renders
@@ -148,6 +232,19 @@ export default function PodcastsView({
   const [available, setAvailable] = useState<boolean | null>(null); // null = checking
   const [chapterDir, setChapterDir] = useState<string>(`chapter_${String(chapterNumber).padStart(2, "0")}`);
 
+  // Auto-follow and Sleep Timer states
+  const [autoFollow, setAutoFollow] = useState(true);
+  const autoFollowRef = useRef(true);
+  useEffect(() => {
+    autoFollowRef.current = autoFollow;
+  }, [autoFollow]);
+
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [currentChapterInfo, setCurrentChapterInfo] = useState<Chapter | null>(null);
+  const [selectedModuleOverride, setSelectedModuleOverride] = useState<number | null>(null);
+
   useEffect(() => {
     if (!subjectId) return;
     getManifest().then((m) => {
@@ -155,6 +252,9 @@ export default function PodcastsView({
       const ch = list.find((c) => c.number === chapterNumber);
       if (ch?.dir) {
         setChapterDir(ch.dir);
+      }
+      if (ch) {
+        setCurrentChapterInfo(ch);
       }
     });
   }, [subjectId, chapterNumber]);
@@ -167,7 +267,13 @@ export default function PodcastsView({
   const isAngrauWithPodcasts = subjectId === "ento_131" && [1, 2, 3, 4].includes(chapterNumber);
   const isDbmsChap1 = subjectId === "dbms" && chapterNumber === 1;
   const isDbmsWithPodcasts = subjectId === "dbms" && chapterNumber === 1;
-  const isNebOrMgmt = subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts || isDbmsWithPodcasts;
+  const isNebOrMgmt =
+    subjectId.startsWith("neb_") ||
+    subjectId === "management" ||
+    isAngrauWithPodcasts ||
+    isDbmsWithPodcasts ||
+    GCS_BACKEND_SUBJECTS.has(subjectId) ||
+    Boolean(currentChapterInfo?.topics && currentChapterInfo.topics.length > 0);
 
   const getSavedTrack = (): string => {
     if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc" || resumeTrack === "short" || resumeTrack === "long") {
@@ -189,8 +295,61 @@ export default function PodcastsView({
   const [selectedDl, setSelectedDl] = useState(0);
   const [selectedQl, setSelectedQl] = useState(0);
   const [selectedMc, setSelectedMc] = useState(initialMcIndex ?? 0);
+
+  const [readData, setReadData] = useState<SectionizedChapterData | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const trackParam = (selectedTrack === "dl" || selectedTrack === "long") ? "detailed" : "quick";
+    getSectionizedReadData(subjectId, chapterNumber, trackParam, persona as any)
+      .then((data) => {
+        if (!isMounted) return;
+        setReadData(data);
+      })
+      .catch(() => {
+        if (isMounted) setReadData(null);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [subjectId, chapterNumber, selectedTrack, persona]);
   // Collapse track grid immediately when an initialMcIndex is supplied (coming from mindmap)
   const [isTrackGridExpanded, setIsTrackGridExpanded] = useState(initialMcIndex == null);
+
+  // Smooth sliding pill indicator state and refs
+  const [indicatorStyle, setIndicatorStyle] = useState<{ left: number; width: number; ready: boolean }>({
+    left: 0,
+    width: 0,
+    ready: false,
+  });
+  const toggleBtnRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const toggleContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = toggleBtnRefs.current[selectedTrack];
+      const containerEl = toggleContainerRef.current;
+      if (activeEl && containerEl && activeEl.offsetWidth > 0) {
+        setIndicatorStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+          ready: true,
+        });
+      }
+    };
+
+    updateIndicator();
+    const frameId = requestAnimationFrame(updateIndicator);
+    const timer1 = setTimeout(updateIndicator, 40);
+    const timer2 = setTimeout(updateIndicator, 150);
+    window.addEventListener("resize", updateIndicator);
+    return () => {
+      cancelAnimationFrame(frameId);
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+      window.removeEventListener("resize", updateIndicator);
+    };
+  }, [selectedTrack, isNebOrMgmt]);
 
   useEffect(() => {
     if (initialMcIndex !== undefined && initialMcIndex !== null) {
@@ -206,6 +365,14 @@ export default function PodcastsView({
   }, [resumeTrack]);
 
   const MICROCASTS = useMemo(() => {
+    // Dynamic topic outline from registry/catalog v2
+    if (currentChapterInfo?.topics && currentChapterInfo.topics.length > 0) {
+      return currentChapterInfo.topics.map((t, i) => ({
+        title: `${i + 1}. ${t.label}`,
+        audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
+        txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
+      }));
+    }
     // GCS subjects use canonical microcast naming
     if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
       // Use hardcoded titles from the original MVP but canonical filenames
@@ -215,6 +382,16 @@ export default function PodcastsView({
           2: ["Three Categories of Insect Metamorphosis", "Identify Insect Larvae to Protect Crops", "Insect pupal structures and escape tactics", "Blister beetles live multiple larval lives", "Controlling Pests with Hormones and Diapause", "Predicting insect diapause for crop protection"],
           3: ["How weathering transforms bedrock into regolith", "Mechanical forces breaking down Indian landscapes", "How life turns solid rock into soil", "Mathematical Forces Turning Rock into Soil"],
           4: ["Floral architecture and double fertilization", "Self-Pollination Mechanisms in Indian Crops", "How Indian crops force cross pollination", "How nature pollinates India's crops", "Choosing and Arranging Orchard Pollinizers", "How Parthenocarpy Creates Seedless Fruit"],
+        },
+        dbms: {
+          1: [
+            "How 3-Schema Architecture Prevents Data Chaos",
+            "ER Diagram Rules for DBMS Exams",
+            "Weak Entities and Extended ER Mechanics",
+            "Relational Keys and Integrity Constraints",
+            "How ER Diagrams Become SQL Tables",
+            "SQL Views and Safe Schema Evolution",
+          ],
         },
       };
       const titles = gcsTitles[subjectId]?.[chapterNumber] ?? [];
@@ -526,6 +703,89 @@ export default function PodcastsView({
     [subjectId, chapterNumber, chapterName, persona, selectedTrack, selectedMc, selectedDl, selectedQl],
   );
 
+  const sections = readData?.sections || [];
+  const figures = readData?.figures || [];
+  const definitions = readData?.definitions || [];
+
+  const modulesList = useMemo(() => {
+    if (readData?.modules && readData.modules.length > 0) {
+      return readData.modules;
+    }
+    const derived = sections
+      .filter((s) => s.sectionNumber > 0)
+      .map((s) => ({
+        module: s.sectionNumber,
+        title: s.title,
+        shortTitle: s.shortTitle,
+        sectionNumber: s.sectionNumber,
+      }));
+    if (derived.length > 0) return derived;
+    if (selectedTrack === "mc" && MICROCASTS.length > 0) {
+      return MICROCASTS.map((item, idx) => ({
+        module: idx + 1,
+        title: item.title.replace(/^\d+\.\s*/, ''),
+        shortTitle: item.title.replace(/^\d+\.\s*/, '').slice(0, 24),
+        sectionNumber: idx + 1,
+      }));
+    }
+    return [
+      { module: 1, title: chapterName, shortTitle: "Overview", sectionNumber: 1 }
+    ];
+  }, [readData?.modules, sections, selectedTrack, MICROCASTS, chapterName]);
+
+  const effectiveModuleNumber = useMemo(() => {
+    if (selectedModuleOverride !== null) {
+      return selectedModuleOverride;
+    }
+    if (selectedTrack === "mc") {
+      return selectedMc + 1;
+    }
+    const dur = audioDurationRef.current || displayDuration || 1;
+    const progressFraction = dur > 0 ? currentTime / dur : 0;
+    const count = Math.max(1, modulesList.length);
+    const activeIdx = Math.min(count - 1, Math.max(0, Math.floor(progressFraction * count)));
+    const activeMod = modulesList[activeIdx];
+    return activeMod ? activeMod.module : activeIdx + 1;
+  }, [selectedModuleOverride, selectedTrack, selectedMc, displayDuration, currentTime, modulesList]);
+
+  const activeSectionInfo = useMemo(() => {
+    const mod = modulesList.find((m) => m.module === effectiveModuleNumber) || modulesList[0];
+    const targetSecNum = mod ? mod.sectionNumber : effectiveModuleNumber;
+    const sec = sections.find((s) => s.sectionNumber === targetSecNum) || sections[targetSecNum - 1] || sections[0];
+    const fig = figures.find((f) => f.module === `Module ${effectiveModuleNumber}` || f.figure_no.startsWith(`Fig ${effectiveModuleNumber}.`)) || figures[effectiveModuleNumber - 1] || figures[0];
+
+    const fallbackTitle = selectedTrack === "mc"
+      ? (MICROCASTS[selectedMc]?.title.replace(/^\d+\.\s*/, '') || `Module ${effectiveModuleNumber}`)
+      : (mod?.title || currentChapterInfo?.name || chapterName);
+
+    const title = mod?.title || sec?.title || fallbackTitle;
+    const shortTitle = mod?.shortTitle || sec?.shortTitle || title;
+
+    let termsCount = 6;
+    if (definitions.length > 0) {
+      if (sec?.content) {
+        const found = definitions.filter((d) => sec.content.toLowerCase().includes(d.toLowerCase())).length;
+        termsCount = found > 0 ? found : Math.min(definitions.length, 6);
+      } else {
+        termsCount = Math.min(definitions.length, 6);
+      }
+    }
+
+    const upcoming = modulesList.filter((m) => m.module !== effectiveModuleNumber).slice(0, 3);
+
+    return {
+      moduleNumber: effectiveModuleNumber,
+      sectionNumber: targetSecNum,
+      shortTitle,
+      title,
+      figureTitle: fig?.title || `${shortTitle} Visual Diagram`,
+      figureNo: fig?.figure_no || `Fig ${effectiveModuleNumber}.1`,
+      termsCount,
+      quickCheck: sec?.quickCheck,
+      upcomingModules: upcoming,
+    };
+  }, [modulesList, effectiveModuleNumber, sections, figures, definitions, selectedTrack, selectedMc, MICROCASTS, currentChapterInfo, chapterName]);
+
   // Re-expand the grid whenever the user switches tracks
   useEffect(() => {
     setIsTrackGridExpanded(true);
@@ -575,21 +835,21 @@ export default function PodcastsView({
     if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
       const gcsBasePath = `${subjectBaseUrl}/${chapterDir}/podcasts`;
       if (track === "dl") {
-        const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0];
+        const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0] || { audio: "long_podcast.m4a", txt: "long_podcast.md" };
         return {
           audio: `${gcsBasePath}/${dl.audio}`,
           transcript: `${gcsBasePath}/${dl.txt}`,
         };
       }
       if (track === "ql") {
-        const ql = QUICK_LISTENS[selectedQl] || QUICK_LISTENS[0];
+        const ql = QUICK_LISTENS[selectedQl] || QUICK_LISTENS[0] || { audio: "short_podcast.m4a", txt: "short_podcast.md" };
         return {
           audio: `${gcsBasePath}/${ql.audio}`,
           transcript: `${gcsBasePath}/${ql.txt}`,
         };
       }
       if (track === "mc") {
-        const mc = MICROCASTS[selectedMc] || MICROCASTS[0];
+        const mc = MICROCASTS[selectedMc] || MICROCASTS[0] || { audio: "microcast_01.m4a", txt: "microcast_01.md" };
         return {
           audio: `${gcsBasePath}/${mc.audio}`,
           transcript: `${gcsBasePath}/${mc.txt}`,
@@ -766,6 +1026,7 @@ export default function PodcastsView({
       setAudioDuration(0);
       audio.load();
     }
+    setSelectedModuleOverride(null);
   }, [selectedTrack, selectedMc, selectedDl, selectedQl]);
 
   // ── Reset player when persona changes ──
@@ -811,7 +1072,13 @@ export default function PodcastsView({
   const [isMutedUi, setIsMutedUi] = useState(false);
 
   const updateProgress = useCallback((time: number, duration: number) => {
+    const lastSec = Math.floor(currentTimeRef.current);
+    const newSec = Math.floor(time);
     currentTimeRef.current = time;
+    if (newSec !== lastSec) {
+      setCurrentTime(time);
+    }
+
     const pct = duration > 0 ? (time / duration) * 100 : 0;
 
     // Update playhead position directly in DOM (zero React overhead)
@@ -892,16 +1159,16 @@ export default function PodcastsView({
             el.classList.add("active");
             activeWordElRef.current = el;
 
-            // Smooth scroll throttled to prevent layout thrashing
+            // Smooth scroll throttled to prevent layout thrashing (when Auto-follow is enabled)
             const now = performance.now();
-            if (now - lastScrollTimeRef.current > 350 && transcriptRef.current) {
+            if (autoFollowRef.current && now - lastScrollTimeRef.current > 250 && transcriptRef.current) {
               lastScrollTimeRef.current = now;
               const container = transcriptRef.current;
               const containerRect = container.getBoundingClientRect();
               const elRect = el.getBoundingClientRect();
               const relY = elRect.top - containerRect.top;
-              if (relY < containerRect.height * 0.25 || relY > containerRect.height * 0.70) {
-                const targetScroll = container.scrollTop + relY - containerRect.height / 2 + elRect.height / 2;
+              if (relY < containerRect.height * 0.15 || relY > containerRect.height * 0.65) {
+                const targetScroll = container.scrollTop + relY - containerRect.height * 0.35;
                 container.scrollTo({ top: targetScroll, behavior: "smooth" });
               }
             }
@@ -1069,77 +1336,87 @@ export default function PodcastsView({
     setTranscriptDuration(null);
 
     const { transcript: tFile } = getFileNames(selectedTrack);
-    fetch(tFile)
-      .then((r) => {
-        const ct = r.headers.get("content-type") || "";
-        if (!r.ok || ct.includes("text/html")) throw new Error();
-        return r.text();
-      })
-      .then((t) => {
+    const hasJsonTranscript = subjectId === "dbms" || subjectId.includes("dbms");
+    const jsonCandidate = hasJsonTranscript && tFile.endsWith('.md')
+      ? tFile.replace(/\.md$/i, '.transcript.json')
+      : null;
+
+    const tryFetchJson = async (url: string) => {
+      const r = await fetch(url);
+      const ct = r.headers.get("content-type") || "";
+      if (!r.ok || ct.includes("text/html")) throw new Error("not json");
+      const txt = await r.text();
+      const parsed = JSON.parse(txt);
+      if (parsed && typeof parsed.full_text === "string") {
+        setTranscript(cleanTranscriptPreamble(parsed.full_text));
+        if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
+          setTranscriptSegments(parsed.segments);
+        } else {
+          setTranscriptSegments(null);
+        }
+        if (typeof parsed.total_runtime_seconds === "number" && parsed.total_runtime_seconds > 0) {
+          setTranscriptDuration(parsed.total_runtime_seconds);
+        }
+        return true;
+      }
+      return false;
+    };
+
+    const tryFetchMd = async (url: string) => {
+      const r = await fetch(url);
+      const ct = r.headers.get("content-type") || "";
+      if (!r.ok || ct.includes("text/html")) throw new Error("not md");
+      const txt = await r.text();
+      setTranscript(cleanTranscriptPreamble(txt));
+      setTranscriptSegments(null);
+      return true;
+    };
+
+    const loadTranscript = async () => {
+      if (jsonCandidate) {
         try {
-          const parsed = JSON.parse(t);
-          if (parsed && typeof parsed.full_text === "string") {
-            setTranscript(parsed.full_text);
-            if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
-              setTranscriptSegments(parsed.segments);
-            } else {
-              setTranscriptSegments(null);
-            }
-            if (typeof parsed.total_runtime_seconds === "number" && parsed.total_runtime_seconds > 0) {
-              setTranscriptDuration(parsed.total_runtime_seconds);
-            }
-            return;
-          }
-        } catch {}
-        setTranscript(t);
-        setTranscriptSegments(null);
-      })
-      .catch(() => {
+          const ok = await tryFetchJson(jsonCandidate);
+          if (ok) return;
+        } catch {
+          // fall through to md
+        }
+      }
+
+      try {
+        await tryFetchMd(tFile);
+      } catch {
         // Fallback: try .txt version if .json failed
         const txtUrl = tFile.replace(/_transcript\.json$/i, '.txt');
         if (txtUrl !== tFile) {
-          fetch(txtUrl)
-            .then((r) => {
-              if (!r.ok) throw new Error();
-              return r.text();
-            })
-            .then((t) => {
-              setTranscript(t);
-              setTranscriptSegments(null);
-            })
-            .catch(() => {
-              getResourceContent(
-                subjectId,
-                chapterNumber,
-                selectedTrack === "long" ? "long_podcast.md" : "short_podcast.md",
-                persona as DifficultyLevel,
-              ).then((script) => {
-                if (script && !script.includes("Content not available")) {
-                  setTranscript(script);
-                } else {
-                  setTranscript("Content not available.");
-                }
-                setTranscriptSegments(null);
-              });
-            });
-          return;
+          try {
+            await tryFetchMd(txtUrl);
+            return;
+          } catch {
+            // fall through
+          }
         }
-
         // Fallback to getResourceContent
-        getResourceContent(
-          subjectId,
-          chapterNumber,
-          selectedTrack === "long" ? "long_podcast.md" : "short_podcast.md",
-          persona as DifficultyLevel,
-        ).then((script) => {
+        try {
+          const script = await getResourceContent(
+            subjectId,
+            chapterNumber,
+            selectedTrack === "long" ? "long_podcast.md" : "short_podcast.md",
+            persona as DifficultyLevel,
+          );
           if (script && !script.includes("Content not available")) {
-            setTranscript(script);
+            setTranscript(cleanTranscriptPreamble(script));
           } else {
             setTranscript("Content not available.");
           }
           setTranscriptSegments(null);
-        });
-      });
+        } catch {
+          setTranscript("Content not available.");
+          setTranscriptSegments(null);
+        }
+      }
+    };
+
+    loadTranscript();
   }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir]);
 
   const handlePlay = () => {
@@ -1402,6 +1679,178 @@ export default function PodcastsView({
     return `${m}:${sec}`;
   };
 
+  const renderSegmentedTrackToggle = () => {
+    const tracksList = isNebOrMgmt
+      ? [
+          {
+            key: "ql",
+            label: "Quick Listen",
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="9.5" />
+                <polyline points="12 6.5 12 12 15.5 14" />
+              </svg>
+            ),
+          },
+          {
+            key: "dl",
+            label: "Detailed Listen",
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
+                <path d="M12 3 A9 9 0 0 0 12 21 Z" fill="currentColor" />
+              </svg>
+            ),
+          },
+          {
+            key: "mc",
+            label: "Microcasts",
+            icon: (isActive: boolean) => (
+              <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="9.5" fill="currentColor" />
+                <circle cx="8.5" cy="8.5" r="2.3" fill={isActive ? "var(--primary-color, var(--primary, #365345))" : "#ffffff"} opacity={0.9} />
+              </svg>
+            ),
+          },
+        ]
+      : [
+          {
+            key: "short",
+            label: "Quick Listen",
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="9.5" />
+                <polyline points="12 6.5 12 12 15.5 14" />
+              </svg>
+            ),
+          },
+          {
+            key: "long",
+            label: "Detailed Listen",
+            icon: (
+              <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
+                <path d="M12 3 A9 9 0 0 0 12 21 Z" fill="currentColor" />
+              </svg>
+            ),
+          },
+        ];
+
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: "2px auto 16px auto",
+          width: "100%",
+        }}
+      >
+        <div
+          ref={toggleContainerRef}
+          role="tablist"
+          aria-label="Podcast track selector"
+          className="pod-segmented-container"
+          style={{
+            position: "relative",
+            display: "inline-flex",
+            alignItems: "center",
+            background: "#edf3ee",
+            borderRadius: "9999px",
+            padding: "4px",
+            border: "1.5px solid #d5e2d9",
+            boxShadow: "inset 0 1px 2px rgba(54, 83, 69, 0.05)",
+            gap: "0px",
+            maxWidth: "100%",
+            overflowX: "auto",
+          }}
+        >
+          {/* Smooth sliding pill indicator colored with SV app theme */}
+          <div
+            className="pod-segmented-indicator"
+            style={{
+              position: "absolute",
+              top: "4px",
+              left: `${indicatorStyle.left}px`,
+              width: `${indicatorStyle.width}px`,
+              height: "calc(100% - 8px)",
+              borderRadius: "9999px",
+              background: "var(--primary-color, var(--primary, #365345))",
+              boxShadow: "0 2px 10px rgba(54, 83, 69, 0.28), 0 1px 3px rgba(54, 83, 69, 0.16)",
+              transition: indicatorStyle.ready
+                ? "left 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.26s cubic-bezier(0.25, 1, 0.5, 1)"
+                : "none",
+              pointerEvents: "none",
+              zIndex: 1,
+              opacity: indicatorStyle.ready && indicatorStyle.width > 0 ? 1 : 0,
+            }}
+          />
+
+          {tracksList.map(({ key, label, icon }) => {
+            const isActive = selectedTrack === key;
+            const isDisabled = mcOnly && key !== "mc";
+            const renderedIcon = typeof icon === "function" ? icon(isActive) : icon;
+            const isIndicatorSettled = indicatorStyle.ready && indicatorStyle.width > 0;
+
+            return (
+              <button
+                key={key}
+                ref={(el) => {
+                  toggleBtnRefs.current[key] = el;
+                }}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                disabled={isDisabled}
+                onClick={() => !isDisabled && setSelectedTrack(key)}
+                title={isDisabled ? "Not available in topic view — go to Podcasts tab for full access" : undefined}
+                className={`pod-segmented-btn ${isActive ? "active" : ""}`}
+                style={{
+                  position: "relative",
+                  zIndex: 2,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "7px 20px",
+                  borderRadius: "9999px",
+                  border: "none",
+                  outline: "none",
+                  background: isActive
+                    ? isIndicatorSettled
+                      ? "transparent"
+                      : "var(--primary-color, var(--primary, #365345))"
+                    : "transparent",
+                  color: isActive ? "#ffffff" : "#4b6354",
+                  fontSize: "13.5px",
+                  fontWeight: isActive ? 700 : 550,
+                  cursor: isDisabled ? "not-allowed" : "pointer",
+                  transition: "color 0.22s ease, background 0.15s ease",
+                  opacity: isDisabled ? 0.35 : 1,
+                  userSelect: "none",
+                  whiteSpace: "nowrap",
+                  letterSpacing: "-0.01em",
+                }}
+                onMouseEnter={(e) => {
+                  if (!isActive && !isDisabled) {
+                    e.currentTarget.style.color = "#1e3328";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isActive && !isDisabled) {
+                    e.currentTarget.style.color = "#4b6354";
+                  }
+                }}
+              >
+                {renderedIcon}
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   // ── Loading state ──
   if (available === null || transcript === null) {
     return (
@@ -1415,62 +1864,7 @@ export default function PodcastsView({
   if (available === false && (transcript === "Content not available." || subjectId === "management")) {
     return (
       <div className="podcasts-view">
-        <div className="podcast-track-selector">
-          {isNebOrMgmt ? (
-            (["ql", "dl", "mc"] as const).map((t) => {
-              const labelMap: any = { dl: "Detailed Listen", mc: "Microcasts", ql: "Quick Listen" };
-              const descMap: any = { dl: "In-depth Chapter Coverage", mc: "Bite-sized topic podcasts", ql: "Brief Recap of Key Points" };
-              const pillMap: any = { dl: "Deep dive into every concept", mc: "Short · Focused · Crisp", ql: "Quick · Smart · Effective" };
-              const pillBg: any = { dl: "#f5f3ff", mc: "#ecfdf5", ql: "#fff7ed" };
-              const pillText: any = { dl: "#7c3aed", mc: "#16a34a", ql: "#ea580c" };
-              const pillBorder: any = { dl: "#c4b5fd", mc: "#86efac", ql: "#fdba74" };
-              const circleBg: any = { dl: "#f1f0f9", mc: "#ecfdf5", ql: "#fef3c7" };
-              const icons: any = {
-                dl: (<svg width="30" height="30" viewBox="0 0 48 48" fill="none"><path d="M6 12C6 10.8954 6.89543 10 8 10H20C22.2091 10 24 11.7909 24 14V38C24 36.3431 22.6569 35 21 35H8C6.89543 35 6 34.1046 6 33V12Z" fill="#c4b5fd" stroke="#7c3aed" strokeWidth="1.5" /><path d="M42 12C42 10.8954 41.1046 10 40 10H28C25.7909 10 24 11.7909 24 14V38C24 36.3431 25.3431 35 27 35H40C41.1046 35 42 34.1046 42 33V12Z" fill="#ddd6fe" stroke="#7c3aed" strokeWidth="1.5" /><path d="M16 10V20L19 17.5L22 20V10" fill="#a78bfa" stroke="#7c3aed" strokeWidth="1.2" strokeLinejoin="round" /></svg>),
-                mc: (<svg width="32" height="32" viewBox="0 0 48 48" fill="none"><path d="M10 28V24C10 16.268 16.268 10 24 10C31.732 10 38 16.268 38 24V28" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" /><rect x="6" y="26" width="8" height="12" rx="4" fill="#22c55e" /><rect x="34" y="26" width="8" height="12" rx="4" fill="#22c55e" /><rect x="21" y="32" width="6" height="10" rx="3" fill="#16a34a" stroke="#15803d" strokeWidth="1" /></svg>),
-                ql: (<svg width="28" height="28" viewBox="0 0 40 40" fill="none"><path d="M22 3L8 22H18L16 37L32 18H22L22 3Z" fill="url(#qlGrad2)" stroke="#ea580c" strokeWidth="1.5" strokeLinejoin="round" /><defs><linearGradient id="qlGrad2" x1="16" y1="3" x2="24" y2="37" gradientUnits="userSpaceOnUse"><stop stopColor="#fbbf24" /><stop offset="1" stopColor="#f97316" /></linearGradient></defs></svg>),
-              };
-              return (
-                <div
-                  key={t}
-                  data-track={t}
-                  className={`podcast-track-card card ${selectedTrack === t ? "active" : ""}`}
-                  onClick={() => setSelectedTrack(t)}
-                >
-                  <div className="track-icon-circle" style={{ background: circleBg[t] }}>
-                    {icons[t]}
-                  </div>
-                  <div className="track-info">
-                    <strong>{labelMap[t]}</strong>
-                    <span className="track-desc">{descMap[t]}</span>
-                    <div className="track-pill" style={{ background: pillBg[t], color: pillText[t], border: `1px solid ${pillBorder[t]}` }}>
-                      <span>{pillMap[t]}</span>
-                      <span className="pill-chevron">›</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          ) : (
-            (["short", "long"] as const).map((t) => {
-              const labelMap: any = { short: "Quick Podcast", long: "Detailed Podcast" };
-              const descMap: any = { short: "Brief Recap of Key Points", long: "In-depth Chapter Coverage" };
-              return (
-                <div
-                  key={t}
-                  data-track={t}
-                  className={`podcast-track-card card ${selectedTrack === t ? "active" : ""}`}
-                  onClick={() => setSelectedTrack(t)}
-                >
-                  <div className="track-info">
-                    <strong>{labelMap[t]}</strong>
-                    <span className="track-desc">{descMap[t]}</span>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+        {renderSegmentedTrackToggle()}
         <div
           className="card"
           style={{ padding: "48px", textAlign: "center", marginTop: "20px" }}
@@ -1492,793 +1886,689 @@ export default function PodcastsView({
 
   const currentFiles = getFileNames(selectedTrack);
 
+  const isAudioActive = audioRef.current ? !audioRef.current.paused : false;
+  const playing = available ? (isAudioActive || isPlaying) : ttsPlaybackState === "playing";
+
+  const trackTypeLabel = (() => {
+    if (selectedTrack === "ql" || selectedTrack === "short") return "Quick Listen";
+    if (selectedTrack === "dl" || selectedTrack === "long") return "Detailed Listen";
+    if (selectedTrack === "mc") return "Microcast";
+    return "Podcast";
+  })();
+
+  const displayTitle = (() => {
+    if (selectedTrack === "ql" || selectedTrack === "short") return "1. Chapter Quick Recap";
+    if (selectedTrack === "dl" || selectedTrack === "long") return "1. Chapter Complete Coverage";
+    if (selectedTrack === "mc") {
+      const item = MICROCASTS[selectedMc];
+      return item?.title || `Microcast Episode ${selectedMc + 1}`;
+    }
+    return "1. Chapter Audio";
+  })();
+
+  const displaySubtitle = (() => {
+    if (selectedTrack === "mc") {
+      return `Microcast · Episode ${selectedMc + 1} of ${MICROCASTS.length}`;
+    }
+    return `${chapterName} · ${trackTypeLabel}`;
+  })();
+
+  const handleRewind15 = () => {
+    if (audioRef.current) {
+      const dur = audioDurationRef.current || audioRef.current.duration || displayDuration;
+      const target = Math.max(0, audioRef.current.currentTime - 15);
+      audioRef.current.currentTime = target;
+      setCurrentTime(target);
+      updateProgress(target, dur);
+    }
+  };
+
+  const handleForward30 = () => {
+    if (audioRef.current) {
+      const dur = audioDurationRef.current || audioRef.current.duration || displayDuration;
+      const target = Math.min(dur || 999999, audioRef.current.currentTime + 30);
+      audioRef.current.currentTime = target;
+      setCurrentTime(target);
+      updateProgress(target, dur);
+    }
+  };
+
+  const handleWaveformClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const dur = audioDurationRef.current || audioRef.current?.duration || displayDuration;
+    if (dur > 0 && audioRef.current) {
+      const seekTime = pct * dur;
+      audioRef.current.currentTime = seekTime;
+      setCurrentTime(seekTime);
+      updateProgress(seekTime, dur);
+    }
+  };
+
+  const handleToggleSleepTimer = () => {
+    const steps = [null, 5, 15, 30];
+    const cur = steps.indexOf(sleepTimerMinutes);
+    const next = steps[(cur + 1) % steps.length];
+    setSleepTimerMinutes(next);
+    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+    if (next) {
+      sleepTimerRef.current = setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          setIsPlaying(false);
+          onPlayingChange?.(false);
+        }
+        setSleepTimerMinutes(null);
+      }, next * 60 * 1000);
+    }
+  };
+
+  const handlePlayToggle = () => {
+    if (available) {
+      const audio = audioRef.current;
+      if (audio) {
+        if (!audio.paused) {
+          handlePause();
+        } else {
+          handlePlay();
+        }
+      } else {
+        isPlaying ? handlePause() : handlePlay();
+      }
+    } else {
+      ttsPlaybackState === "playing" ? handleTtsPause() : handleTtsPlay();
+    }
+  };
+
+  const handleNavigateToRead = (secIdx: number) => {
+    onNavigateToRead?.(secIdx);
+  };
+
+  const handleWordClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = (e.target as HTMLElement).closest(".transcript-word") as HTMLElement | null;
+    if (!target || !audioRef.current) return;
+    const index = Array.from(target.parentElement?.children || []).indexOf(target);
+    if (index < 0) return;
+    const wt = wordTimingsRef.current;
+    if (!wt) return;
+    const wordIdx = wt.wordIndexes.indexOf(index);
+    if (wordIdx < 0) return;
+    let seekTime = 0;
+    if (wt.exactTimestamps && wt.exactTimestamps[wordIdx] !== undefined) {
+      seekTime = wt.exactTimestamps[wordIdx];
+    } else if (wt.totalWeight > 0) {
+      const dur = audioDurationRef.current || audioRef.current.duration || displayDuration;
+      if (dur > 0) {
+        seekTime = (wt.wordWeights[wordIdx] / wt.totalWeight) * dur;
+      }
+    }
+    if (seekTime >= 0) {
+      audioRef.current.currentTime = seekTime;
+      setCurrentTime(seekTime);
+      updateProgress(seekTime, audioDurationRef.current || audioRef.current.duration || 0);
+      if (audioRef.current.paused) {
+        audioRef.current.play().then(() => {
+          setIsPlaying(true);
+          onPlayingChange?.(true);
+        }).catch(() => {});
+      }
+    }
+  };
+
   return (
     <div className="podcasts-view">
-      {/* ── Fixed top section: track selector + player ── */}
+      {available && (
+        <audio
+          ref={audioRef}
+          src={currentFiles.audio}
+          crossOrigin="anonymous"
+          preload="auto"
+          onPlay={() => {
+            setIsPlaying(true);
+            onPlayingChange?.(true);
+          }}
+          onPlaying={() => {
+            setIsPlaying(true);
+            onPlayingChange?.(true);
+          }}
+          onPause={() => {
+            setIsPlaying(false);
+            onPlayingChange?.(false);
+          }}
+          onEnded={() => {
+            setIsPlaying(false);
+            setCurrentTime(0);
+            onPlayingChange?.(false);
+          }}
+          onLoadedMetadata={(e) => {
+            const a = e.target as HTMLAudioElement;
+            const d = a.duration;
+            if (d && isFinite(d) && d > 0) {
+              audioDurationRef.current = d;
+              setAudioDuration(d);
+              updateProgress(a.currentTime, d);
+            }
+            if (autoPlay && a.paused) {
+              handlePlay();
+            }
+          }}
+          onDurationChange={(e) => {
+            const a = e.target as HTMLAudioElement;
+            const d = a.duration;
+            if (d && isFinite(d) && d > 0) {
+              audioDurationRef.current = d;
+              setAudioDuration(d);
+              updateProgress(a.currentTime, d);
+            }
+          }}
+          onCanPlay={(e) => {
+            const a = e.target as HTMLAudioElement;
+            const d = a.duration;
+            if (d && isFinite(d) && d > 0) {
+              audioDurationRef.current = d;
+              setAudioDuration(d);
+              updateProgress(a.currentTime, d);
+            }
+            if (autoPlay && a.paused) {
+              handlePlay();
+            }
+          }}
+        />
+      )}
+
+      {/* ── Fixed top section: track selector toggle ── */}
       <div className="podcast-sticky-top">
-        <h2 style={{
-          fontSize: "18px",
-          fontWeight: 700,
-          color: "var(--text, #111827)",
-          margin: "0 0 14px 0",
-          letterSpacing: "-0.01em"
-        }}>
-          Choose how you want to listen
-        </h2>
+        {renderSegmentedTrackToggle()}
+      </div>
 
-        {/* Track selector cards */}
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isNebOrMgmt ? "repeat(3, 1fr)" : "repeat(2, 1fr)",
-          gap: "14px",
-          marginBottom: "14px",
-          width: "100%"
-        }}>
-          {isNebOrMgmt ? (
-            (["ql", "dl", "mc"] as const).map((t) => {
-              const isActive = selectedTrack === t;
-              const config: any = {
-                dl: {
-                  title: "Detailed Listen",
-                  subtitle: "In-depth Chapter Coverage",
-                  pill: "Deep dive into every concept",
-                  borderColor: "#8b5cf6",
-                  activeShadow: "0 4px 16px rgba(139, 92, 246, 0.18)",
-                  circleBg: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-                  pillBg: "#faf5ff",
-                  pillBorder: "#c4b5fd",
-                  pillColor: "#7c3aed",
-                  dotsColor: "#ddd6fe",
-                  hasDots: true,
-                  icon: (
-                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                      <path d="M7 13C7 11.8954 7.89543 11 9 11H21C23.2091 11 25 12.7909 25 15V39C25 37.3431 23.6569 36 22 36H9C7.89543 36 7 35.1046 7 34V13Z" fill="#a78bfa" />
-                      <path d="M41 13C41 11.8954 40.1046 11 39 11H27C24.7909 11 23 12.7909 23 15V39C23 37.3431 24.3431 36 26 36H39C40.1046 36 41 35.1046 41 34V13Z" fill="#c4b5fd" />
-                      <path d="M23 15.5C23 14 24.5 13 26 13H38C39.1 13 40 13.9 40 15V34C40 35.1 39.1 36 38 36H26C24.5 36 23 37 23 38.5V15.5Z" fill="#818cf8" opacity="0.9" />
-                      <path d="M25 15.5C25 14 23.5 13 22 13H10C8.9 13 8 13.9 8 15V34C8 35.1 8.9 36 10 36H22C23.5 36 25 37 25 38.5V15.5Z" fill="#6366f1" opacity="0.95" />
-                      <line x1="28" y1="18" x2="36" y2="18" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-                      <line x1="28" y1="22" x2="35" y2="22" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-                      <line x1="28" y1="26" x2="33" y2="26" stroke="#ffffff" strokeWidth="1.5" strokeLinecap="round" />
-                    </svg>
-                  ),
-                },
-                mc: {
-                  title: "Microcast",
-                  subtitle: "Bite-sized topic podcasts",
-                  pill: "Short · Focused · Crisp",
-                  borderColor: "#22c55e",
-                  activeShadow: "0 4px 16px rgba(34, 197, 94, 0.18)",
-                  circleBg: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
-                  pillBg: "#ecfdf5",
-                  pillBorder: "#86efac",
-                  pillColor: "#16a34a",
-                  icon: (
-                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                      <path d="M11 26V23C11 15.82 16.82 10 24 10C31.18 10 37 15.82 37 23V26" stroke="#16a34a" strokeWidth="3" strokeLinecap="round" />
-                      <rect x="7" y="24" width="8" height="13" rx="4" fill="#22c55e" />
-                      <rect x="33" y="24" width="8" height="13" rx="4" fill="#22c55e" />
-                      <circle cx="24" cy="30" r="5.5" fill="#15803d" />
-                      <rect x="22.5" y="30" width="3" height="8" rx="1.5" fill="#16a34a" />
-                      <path d="M19 32C19 35 21 38 24 38C27 38 29 35 29 32" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" />
-                      <path d="M38 18C41 20 42 24 40 27" stroke="#4ade80" strokeWidth="1.8" strokeLinecap="round" />
-                      <path d="M42 16C45 19 46 25 43 29" stroke="#86efac" strokeWidth="1.8" strokeLinecap="round" />
-                    </svg>
-                  ),
-                },
-                ql: {
-                  title: "Quick Listen",
-                  subtitle: "Brief Recap of Key Points",
-                  pill: "Quick · Smart · Effective",
-                  borderColor: "#f97316",
-                  activeShadow: "0 4px 16px rgba(249, 115, 22, 0.18)",
-                  circleBg: "linear-gradient(135deg, #fff7ed, #ffedd5)",
-                  pillBg: "#fff7ed",
-                  pillBorder: "#fdba74",
-                  pillColor: "#ea580c",
-                  icon: (
-                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                      <path d="M26 4L10 26H23L19 44L37 21H24L26 4Z" fill="url(#ql3dGradDistinct)" stroke="#f97316" strokeWidth="1.5" strokeLinejoin="round" />
-                      <path d="M26 4L17 26H23L19 44L22 26H13L26 4Z" fill="#ffedd5" opacity="0.35" />
-                      <defs>
-                        <linearGradient id="ql3dGradDistinct" x1="18" y1="4" x2="28" y2="44" gradientUnits="userSpaceOnUse">
-                          <stop stopColor="#fde047" />
-                          <stop offset="0.45" stopColor="#fb923c" />
-                          <stop offset="1" stopColor="#ea580c" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                  ),
-                },
-              };
-              const c = config[t];
-              const isDisabled = mcOnly && t !== 'mc';
+      {/* ── 1. Top Section: Episode Playlist (Microcasts list stack or Single podcast card) ── */}
+      {selectedTrack === "mc" ? (
+        <div className="pod-episode-list-wrap">
+          <div className="pod-episode-list-header">
+            MICROCASTS · STANDARD DEPTH (auto-filtered — {MICROCASTS.length} of {MICROCASTS.length} match)
+          </div>
+          <div className="pod-episode-list-stack">
+            {MICROCASTS.map((item, idx) => {
+              const isItemActive = selectedMc === idx;
+              const isItemHeard = idx < selectedMc;
+              const isPlayingItem = isItemActive && playing;
 
               return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => !isDisabled && setSelectedTrack(t)}
-                  title={isDisabled ? 'Not available in topic view — go to Podcasts tab for full access' : undefined}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                    padding: "14px 16px",
-                    minHeight: "90px",
-                    cursor: isDisabled ? "not-allowed" : "pointer",
-                    border: isActive ? `2px solid ${c.borderColor}` : "1.5px solid #e5e7eb",
-                    borderRadius: "16px",
-                    background: "#ffffff",
-                    boxShadow: isActive ? c.activeShadow : "0 1px 3px rgba(0,0,0,0.02)",
-                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    opacity: isDisabled ? 0.35 : 1,
-                    filter: isDisabled ? "grayscale(1)" : "none",
-                    pointerEvents: isDisabled ? "none" : undefined,
-                    outline: "none",
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive && !isDisabled) {
-                      e.currentTarget.style.borderColor = c.borderColor;
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.borderColor}20`;
-                      e.currentTarget.style.transform = "translateY(-1.5px)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive && !isDisabled) {
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                      e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.02)";
-                      e.currentTarget.style.transform = "translateY(0)";
+                <div
+                  key={idx}
+                  className={`pod-episode-card ${isItemActive ? "active" : ""}`}
+                  onClick={() => {
+                    if (selectedMc !== idx) {
+                      setSelectedMc(idx);
+                      setTimeout(() => {
+                        if (audioRef.current) {
+                          audioRef.current.play().then(() => {
+                            setIsPlaying(true);
+                            onPlayingChange?.(true);
+                          }).catch(() => {});
+                        }
+                      }, 50);
+                    } else {
+                      handlePlayToggle();
                     }
                   }}
                 >
-                  {/* Corner decorative dots */}
-                  {c.hasDots && (
-                    <div style={{ position: "absolute", bottom: "6px", left: "6px", pointerEvents: "none", opacity: 0.65 }}>
-                      <svg width="22" height="22" viewBox="0 0 22 22" fill={c.dotsColor}>
-                        <circle cx="4" cy="18" r="1.5" />
-                        <circle cx="10" cy="18" r="1.5" />
-                        <circle cx="4" cy="12" r="1.5" />
-                        <circle cx="10" cy="12" r="1.5" />
-                        <circle cx="16" cy="18" r="1.5" />
-                      </svg>
-                    </div>
-                  )}
-
-                  {/* Left Avatar Circle */}
-                  <div style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "50%",
-                    background: c.circleBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    boxShadow: isActive ? `0 2px 8px ${c.borderColor}25` : "none",
-                  }}>
-                    {c.icon}
-                  </div>
-
-                  {/* Right Content */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
-                    <span style={{
-                      fontSize: "15px",
-                      fontWeight: 700,
-                      color: "#111827",
-                      letterSpacing: "-0.01em",
-                      lineHeight: "1.2",
-                    }}>
-                      {c.title}
-                    </span>
-                    <span style={{
-                      fontSize: "12px",
-                      color: "#4b5563",
-                      fontWeight: 450,
-                      marginBottom: "4px",
-                      lineHeight: "1.3",
-                    }}>
-                      {c.subtitle}
-                    </span>
-                    <span style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      border: `1px solid ${c.pillBorder}`,
-                      background: c.pillBg,
-                      color: c.pillColor,
-                      borderRadius: "9999px",
-                      padding: "2.5px 10px",
-                      fontSize: "11px",
-                      fontWeight: 500,
-                      width: "fit-content",
-                      maxWidth: "100%",
-                    }}>
-                      <span>{c.pill}</span>
-                      <span style={{ fontSize: "11px", opacity: 0.8 }}>›</span>
-                    </span>
-                  </div>
-                </button>
-              );
-            })
-          ) : (
-            (["short", "long"] as const).map((t) => {
-              const isActive = selectedTrack === t;
-              const config: any = {
-                long: {
-                  title: "Detailed Listen",
-                  subtitle: "In-depth Chapter Coverage",
-                  pill: "Deep dive into every concept",
-                  borderColor: "#8b5cf6",
-                  activeShadow: "0 4px 16px rgba(139, 92, 246, 0.18)",
-                  circleBg: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-                  pillBg: "#faf5ff",
-                  pillBorder: "#c4b5fd",
-                  pillColor: "#7c3aed",
-                  icon: (
-                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                      <path d="M7 13C7 11.8954 7.89543 11 9 11H21C23.2091 11 25 12.7909 25 15V39C25 37.3431 23.6569 36 22 36H9C7.89543 36 7 35.1046 7 34V13Z" fill="#a78bfa" />
-                      <path d="M41 13C41 11.8954 40.1046 11 39 11H27C24.7909 11 23 12.7909 23 15V39C23 37.3431 24.3431 36 26 36H39C40.1046 36 41 35.1046 41 34V13Z" fill="#c4b5fd" />
-                    </svg>
-                  ),
-                },
-                short: {
-                  title: "Quick Listen",
-                  subtitle: "Brief Recap of Key Points",
-                  pill: "Quick · Smart · Effective",
-                  borderColor: "#f97316",
-                  activeShadow: "0 4px 16px rgba(249, 115, 22, 0.18)",
-                  circleBg: "linear-gradient(135deg, #fff7ed, #ffedd5)",
-                  pillBg: "#fff7ed",
-                  pillBorder: "#fdba74",
-                  pillColor: "#ea580c",
-                  icon: (
-                    <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
-                      <path d="M26 4L10 26H23L19 44L37 21H24L26 4Z" fill="#fb923c" stroke="#f97316" strokeWidth="1.5" strokeLinejoin="round" />
-                    </svg>
-                  ),
-                }
-              };
-              const c = config[t];
-
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => setSelectedTrack(t)}
-                  style={{
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                    padding: "14px 16px",
-                    minHeight: "90px",
-                    cursor: "pointer",
-                    border: isActive ? `2px solid ${c.borderColor}` : "1.5px solid #e5e7eb",
-                    borderRadius: "16px",
-                    background: "#ffffff",
-                    boxShadow: isActive ? c.activeShadow : "0 1px 3px rgba(0,0,0,0.02)",
-                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    outline: "none",
-                    textAlign: "left",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = c.borderColor;
-                      e.currentTarget.style.boxShadow = `0 4px 12px ${c.borderColor}20`;
-                      e.currentTarget.style.transform = "translateY(-1.5px)";
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = "#e5e7eb";
-                      e.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.02)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                    }
-                  }}
-                >
-                  <div style={{
-                    width: "50px",
-                    height: "50px",
-                    borderRadius: "50%",
-                    background: c.circleBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    boxShadow: isActive ? `0 2px 8px ${c.borderColor}25` : "none",
-                  }}>
-                    {c.icon}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "2px", flex: 1, minWidth: 0 }}>
-                    <span style={{ fontSize: "15px", fontWeight: 700, color: "#111827", letterSpacing: "-0.01em" }}>
-                      {c.title}
-                    </span>
-                    <span style={{ fontSize: "12px", color: "#4b5563", fontWeight: 450, marginBottom: "4px" }}>
-                      {c.subtitle}
-                    </span>
-                    <span style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      border: `1px solid ${c.pillBorder}`,
-                      background: c.pillBg,
-                      color: c.pillColor,
-                      borderRadius: "9999px",
-                      padding: "2.5px 10px",
-                      fontSize: "11px",
-                      fontWeight: 500,
-                      width: "fit-content",
-                    }}>
-                      <span>{c.pill}</span>
-                      <span style={{ fontSize: "11px", opacity: 0.8 }}>›</span>
-                    </span>
-                  </div>
-                </button>
-              );
-            })
-          )}
-        </div>
-
-        {selectedTrack === "mc" && (() => {
-          const trackConfig = {
-            items: MICROCASTS,
-            selectedIndex: selectedMc,
-            setSelectedIndex: setSelectedMc,
-            title: "Select Microcasts",
-            theme: { bg: "linear-gradient(135deg, #f0fdfa, #ccfbf1)", text: "#0f766e", border: "#2dd4bf", shadow: "rgba(45, 212, 191, 0.15)", colorTitle: "#22c55e" }
-          };
-
-          return (
-            <div id="microcast-grid-container" style={{ padding: "12px 16px", marginBottom: "12px", background: "#ffffff", borderRadius: "16px", boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}>
-              <div
-                style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", margin: isTrackGridExpanded ? "0 0 12px 0" : "0" }}
-                onClick={() => setIsTrackGridExpanded(!isTrackGridExpanded)}
-              >
-                <h4 style={{ margin: "0", fontSize: "15px", color: trackConfig.theme.colorTitle, fontWeight: 600 }}>
-                  {isTrackGridExpanded ? trackConfig.title : `Playing: ${trackConfig.items[trackConfig.selectedIndex]?.title || ""}`}
-                </h4>
-                <button style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", display: "flex", alignItems: "center", padding: "4px" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isTrackGridExpanded ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.3s ease" }}>
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                  </svg>
-                </button>
-              </div>
-
-              <div style={{
-                display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px",
-                maxHeight: isTrackGridExpanded ? "1000px" : "0px",
-                opacity: isTrackGridExpanded ? 1 : 0,
-                overflow: "hidden",
-                willChange: "max-height, opacity, margin-top",
-                transform: "translateZ(0)",
-                transition: "max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease-in-out, margin-top 0.3s ease-in-out",
-                marginTop: isTrackGridExpanded ? "0" : "-8px"
-              }}>
-                {trackConfig.items.map((item, idx) => {
-                  const isItemActive = trackConfig.selectedIndex === idx;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => {
-                        trackConfig.setSelectedIndex(idx);
-                        setIsTrackGridExpanded(false);
-                      }}
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "12px 16px",
-                        borderRadius: "12px",
-                        background: isItemActive ? trackConfig.theme.bg : "#ffffff",
-                        color: isItemActive ? trackConfig.theme.text : "#334155",
-                        border: `1.5px solid ${isItemActive ? trackConfig.theme.border : "#e2e8f0"}`,
-                        cursor: "pointer",
-                        fontSize: "13px",
-                        fontWeight: isItemActive ? 600 : 500,
-                        transition: "all 0.2s ease",
-                        boxShadow: isItemActive ? `0 4px 10px ${trackConfig.theme.shadow}` : "none",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isItemActive) {
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.05)";
-                          e.currentTarget.style.borderColor = "#cbd5e1";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isItemActive) {
-                          e.currentTarget.style.transform = "translateY(0)";
-                          e.currentTarget.style.boxShadow = "none";
-                          e.currentTarget.style.borderColor = "#e2e8f0";
-                        }
-                      }}
+                  <div className="pod-episode-left">
+                    <button
+                      type="button"
+                      className="pod-episode-play-circle"
+                      aria-label={isPlayingItem ? "Pause" : "Play"}
                     >
-                      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                        <div style={{
-                          width: "28px", height: "28px", borderRadius: "50%",
-                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                          background: isItemActive ? trackConfig.theme.colorTitle : "transparent",
-                          border: isItemActive ? "none" : `1.5px solid ${trackConfig.theme.colorTitle}80`
-                        }}>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill={isItemActive ? "#ffffff" : trackConfig.theme.colorTitle}>
-                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                          </svg>
-                        </div>
-                        <span style={{ lineHeight: "1.3" }}>{item.title}</span>
-                      </div>
+                      {isPlayingItem ? (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                          <rect x="1" y="1" width="3" height="8" rx="1" />
+                          <rect x="6" y="1" width="3" height="8" rx="1" />
+                        </svg>
+                      ) : isItemActive ? (
+                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ marginLeft: "1px" }}>
+                          <polygon points="2,1 8,5 2,9" />
+                        </svg>
+                      ) : (
+                        <span className="pod-episode-index-num">{idx + 1}</span>
+                      )}
+                    </button>
 
-                      <div style={{ flexShrink: 0, marginLeft: "8px" }}>
+                    <div className="pod-episode-info">
+                      <span className="pod-episode-title">{item.title}</span>
+                      <div className="pod-episode-meta">
                         {isItemActive ? (
-                          <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '16px' }}>
-                            <div style={{ width: '3px', height: '10px', background: trackConfig.theme.colorTitle, borderRadius: '2px', animation: 'bounce 1s infinite' }} />
-                            <div style={{ width: '3px', height: '16px', background: trackConfig.theme.colorTitle, borderRadius: '2px', animation: 'bounce 1.2s infinite' }} />
-                            <div style={{ width: '3px', height: '8px', background: trackConfig.theme.colorTitle, borderRadius: '2px', animation: 'bounce 0.8s infinite' }} />
-                            <div style={{ width: '3px', height: '12px', background: trackConfig.theme.colorTitle, borderRadius: '2px', animation: 'bounce 1.1s infinite' }} />
-                          </div>
+                          <>
+                            <span style={{ fontWeight: 600 }}>
+                              {playing ? "Playing" : "Paused"} · {fmtTime(currentTime)} of {displayDuration ? fmtTime(displayDuration) : "--:--"}
+                            </span>
+                            <span>·</span>
+                            <span>Recap: 3 questions</span>
+                            <span>·</span>
+                            <span>Links to Read §{idx + 1}</span>
+                          </>
+                        ) : isItemHeard ? (
+                          <>
+                            <span className="pod-episode-badge-heard">✓ Heard</span>
+                            <span>·</span>
+                            <span>Recap done ✓</span>
+                            <span>·</span>
+                            <span>Links to Read §{idx + 1}</span>
+                          </>
                         ) : (
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                            <line x1="23" y1="9" x2="17" y2="15"></line>
-                            <line x1="17" y1="9" x2="23" y2="15"></line>
-                          </svg>
+                          <>
+                            {idx === 1 && <span className="pod-episode-badge-resume">Resume at 0:48</span>}
+                            <span>{idx === 1 ? "2:10" : idx === 3 ? "2:44" : idx === 4 ? "3:35" : "1:36"}</span>
+                            <span>·</span>
+                            <span>Links to Read §{idx + 1}</span>
+                          </>
                         )}
                       </div>
                     </div>
+                  </div>
+
+                  <div className="pod-episode-right">
+                    {isItemHeard ? (
+                      <div className="pod-episode-check-icon" title="Completed">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="pod-episode-tray-icon" title="Available offline">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="7 10 12 15 17 10" />
+                          <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div className="pod-episode-list-wrap">
+          <div className="pod-episode-list-header">
+            {selectedTrack === "dl" || selectedTrack === "long" ? "DETAILED LISTEN · IN-DEPTH" : "QUICK LISTEN · STANDARD DEPTH"} (1 of 1 match)
+          </div>
+          <div className="pod-episode-list-stack">
+            <div className="pod-episode-card active" onClick={handlePlayToggle}>
+              <div className="pod-episode-left">
+                <button
+                  type="button"
+                  className="pod-episode-play-circle"
+                  aria-label={playing ? "Pause" : "Play"}
+                >
+                  {playing ? (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+                      <rect x="1" y="1" width="3" height="8" rx="1" />
+                      <rect x="6" y="1" width="3" height="8" rx="1" />
+                    </svg>
+                  ) : (
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ marginLeft: "1px" }}>
+                      <polygon points="2,1 8,5 2,9" />
+                    </svg>
+                  )}
+                </button>
+
+                <div className="pod-episode-info">
+                  <span className="pod-episode-title">{displayTitle}</span>
+                  <div className="pod-episode-meta">
+                    <span style={{ fontWeight: 600 }}>
+                      {playing ? "Playing" : "Paused"} · {fmtTime(currentTime)} of {displayDuration ? fmtTime(displayDuration) : "--:--"}
+                    </span>
+                    <span>·</span>
+                    <span>Complete chapter coverage</span>
+                    <span>·</span>
+                    <span>Links to Read §1-§5</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pod-episode-right">
+                <div className="pod-episode-tray-icon" title="Available offline">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── 2. Middle Section: The Exact Horizontal Player Bar ── */}
+      <div className="pod-exact-player-bar">
+        {/* Left: Headphone Icon + Title + Episode Subtitle */}
+        <div className="pod-player-left">
+          <div className="pod-player-headphone-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+            </svg>
+          </div>
+          <div className="pod-player-meta">
+            <span className="pod-player-title">{displayTitle}</span>
+            <span className="pod-player-subtitle">{displaySubtitle}</span>
+          </div>
+        </div>
+
+        {/* Transport Controls: ↺15, Play/Pause, 30↻, 1x */}
+        <div className="pod-player-transport">
+          <button className="pod-transport-btn" onClick={handleRewind15} title="Rewind 15 seconds">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+            </svg>
+            <span>15</span>
+          </button>
+
+          <button className="pod-main-play-btn" onClick={handlePlayToggle} title={playing ? "Pause" : "Play"}>
+            {playing ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
+                <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "2px" }}>
+                <polygon points="5 3 19 12 5 21 5 3" />
+              </svg>
+            )}
+          </button>
+
+          <button className="pod-transport-btn" onClick={handleForward30} title="Forward 30 seconds">
+            <span>30</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="23 4 23 10 17 10" />
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+            </svg>
+          </button>
+
+          <button className="pod-speed-pill" onClick={handleToggleSpeed} title="Playback speed">
+            {playbackRate}x
+          </button>
+        </div>
+
+        {/* Waveform Scrubber + Timestamp */}
+        <div className="pod-player-waveform-wrap" onClick={handleWaveformClick} title="Click anywhere to seek">
+          <div className="pod-player-waveform-bars">
+            {PENCIL_WAVEFORM_BARS.map((h, i) => {
+              const barPct = (i / PENCIL_WAVEFORM_BARS.length) * 100;
+              const isBarActive = barPct <= progressPct;
+              return (
+                <div
+                  key={i}
+                  className={`pod-waveform-bar ${isBarActive ? "active" : ""}`}
+                  style={{ height: `${h}%` }}
+                />
+              );
+            })}
+          </div>
+          <span className="pod-player-time">
+            {fmtTime(currentTime)} / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+          </span>
+        </div>
+
+        {/* Right Controls: ⏱ Timer + Volume */}
+        <div className="pod-player-right">
+          <button className="pod-timer-btn" onClick={handleToggleSleepTimer} title={sleepTimerMinutes ? `Timer set for ${sleepTimerMinutes}m` : "Set sleep timer"}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+            <span>{sleepTimerMinutes ? `${sleepTimerMinutes}m` : "Timer"}</span>
+          </button>
+
+          <div className="pod-player-volume">
+            <button className="pod-vol-icon-btn" onClick={() => {
+              const next = !isMutedUi;
+              setIsMutedUi(next);
+              if (audioRef.current) audioRef.current.muted = next;
+            }}>
+              {isMutedUi || volume === 0 ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              )}
+            </button>
+            <div className="pod-vol-track">
+              <div className="pod-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={isMutedUi ? 0 : volume}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                className="pod-vol-input"
+                aria-label="Volume"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. Bottom Section: Split 2-Column Layout ── */}
+      <div className="pod-split-layout">
+        {/* Left Column: Interactive Transcript */}
+        <div className="pod-transcript-card">
+          <div className="pod-transcript-header">
+            <div className="pod-transcript-title-wrap">
+              <strong className="pod-transcript-title">Transcript</strong>
+              <span className="pod-transcript-subtitle">karaoke sync · click any word to jump · dotted terms tap-to-define</span>
+            </div>
+            <label className="pod-autofollow-label">
+              <input
+                type="checkbox"
+                checked={autoFollow}
+                onChange={(e) => setAutoFollow(e.target.checked)}
+              />
+              <span>Auto-follow</span>
+            </label>
+          </div>
+
+          <div className="pod-transcript-body" ref={transcriptRef}>
+            {transcript ? (
+              <div className="transcript-box transcript-body" ref={transcriptBoxRef} onClick={handleWordClick}>
+                {transcriptTokens.map((token, idx) => {
+                  const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
+                  if (!isWord) {
+                    return <span key={idx}>{token}</span>;
+                  }
+                  const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, '');
+                  const def = getTermDefinition(cleanWord);
+                  if (def) {
+                    return (
+                      <span key={idx} className="transcript-word">
+                        <DottedTerm definition={def} isPurpleTheme={false}>
+                          {token}
+                        </DottedTerm>
+                      </span>
+                    );
+                  }
+                  return (
+                    <span key={idx} className="transcript-word">
+                      {token}
+                    </span>
                   );
                 })}
               </div>
+            ) : (
+              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading transcript…</p>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Contextual Sidebar Panel */}
+        <div className="pod-sidebar-panel">
+          {/* Card 1: FOLLOW ALONG IN READ (Relate to Topics / Modules) */}
+          <div className="pod-follow-card">
+            <div className="pod-sidebar-card-header">
+              <span>Follow Along In Read</span>
+              <span style={{ fontSize: "10.5px", color: "var(--primary, #365345)", fontWeight: 700, letterSpacing: "0.02em" }}>
+                Topic {activeSectionInfo.moduleNumber} of {Math.max(1, modulesList.length)}
+              </span>
             </div>
-          );
-        })()}
 
-      </div>
-
-      {/* ── Player + transcript share one bordered shell (design) ── */}
-      <div className="pod-shell">
-        {available && (
-          <audio
-            ref={audioRef}
-            src={currentFiles.audio}
-            crossOrigin="anonymous"
-            preload="auto"
-            onPlay={() => {
-              setIsPlaying(true);
-              onPlayingChange?.(true);
-            }}
-            onPlaying={() => {
-              setIsPlaying(true);
-              onPlayingChange?.(true);
-            }}
-            onPause={() => {
-              setIsPlaying(false);
-              onPlayingChange?.(false);
-            }}
-            onEnded={() => {
-              setIsPlaying(false);
-              setCurrentTime(0);
-              onPlayingChange?.(false);
-            }}
-            onLoadedMetadata={(e) => {
-              const a = e.target as HTMLAudioElement;
-              const d = a.duration;
-              if (d && isFinite(d) && d > 0) {
-                audioDurationRef.current = d;
-                setAudioDuration(d);
-                updateProgress(a.currentTime, d);
-              }
-              if (autoPlay && a.paused) {
-                handlePlay();
-              }
-            }}
-            onDurationChange={(e) => {
-              const a = e.target as HTMLAudioElement;
-              const d = a.duration;
-              if (d && isFinite(d) && d > 0) {
-                audioDurationRef.current = d;
-                setAudioDuration(d);
-                updateProgress(a.currentTime, d);
-              }
-            }}
-            onCanPlay={(e) => {
-              const a = e.target as HTMLAudioElement;
-              const d = a.duration;
-              if (d && isFinite(d) && d > 0) {
-                audioDurationRef.current = d;
-                setAudioDuration(d);
-                updateProgress(a.currentTime, d);
-              }
-              if (autoPlay && a.paused) {
-                handlePlay();
-              }
-            }}
-          />
-        )}
-
-        {(() => {
-          const isAudioActive = audioRef.current ? !audioRef.current.paused : false;
-          const playing = available ? (isAudioActive || isPlaying) : ttsPlaybackState === "playing";
-          const seekTo = (pct: number) => {
-            if (audioRef.current && displayDuration) {
-              const targetTime = Math.max(0, Math.min(1, pct)) * displayDuration;
-              audioRef.current.currentTime = targetTime;
-              updateProgress(targetTime, displayDuration);
-            }
-          };
-
-          const trackTypeLabel = (() => {
-            if (selectedTrack === "ql" || selectedTrack === "short") return "Quick Listen";
-            if (selectedTrack === "dl" || selectedTrack === "long") return "Detailed Listen";
-            if (selectedTrack === "mc") return "Microcast";
-            return "Podcast";
-          })();
-
-          const displayTitle = (() => {
-            if (selectedTrack === "ql" || selectedTrack === "short") return "1. Chapter Quick Recap";
-            if (selectedTrack === "dl" || selectedTrack === "long") return "1. Chapter Detailed Listen";
-            if (selectedTrack === "mc") {
-              const item = MICROCASTS[selectedMc];
-              return `${selectedMc + 1}. ${item?.title || "Topic Microcast"}`;
-            }
-            return "1. Chapter Audio";
-          })();
-
-          return (
-            <div className="pod-unified-header">
-              {/* Left: Track Avatar + Info */}
-              <div className="pod-unified-track-info">
-                <div className="pod-unified-mic-circle">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                    <line x1="12" y1="19" x2="12" y2="22" />
-                  </svg>
-                </div>
-                <div className="pod-unified-titles">
-                  <span className="pod-unified-title">{displayTitle}</span>
-                  <span className="pod-unified-subtitle">{chapterName} . {trackTypeLabel}</span>
-                </div>
-              </div>
-
-              {/* Right: Audio Player Controls Console */}
-              <div className="pod-unified-controls">
-                {/* Top Sub-row: Scrubber + Speed Pill + Timestamp */}
-                <div className="pod-unified-scrubber-row">
-                  <div
-                    className="pod-custom-timeline-wrap"
-                    onClick={(e) => {
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      seekTo((e.clientX - rect.left) / rect.width);
-                    }}
-                  >
-                    <div className="pod-custom-timeline-track">
-                      <div
-                        ref={progressFillRef}
-                        className="pod-custom-timeline-fill"
-                        style={{ width: `${progressPct}%` }}
-                      />
-                    </div>
-                    <div
-                      ref={playheadRef}
-                      className="pod-custom-timeline-thumb"
-                      style={{ left: `${progressPct}%` }}
+            {/* Module Switcher Pills */}
+            {modulesList.length > 1 && (
+              <div className="pod-module-switcher">
+                {modulesList.map((mod) => {
+                  const isModActive = mod.module === activeSectionInfo.moduleNumber;
+                  return (
+                    <button
+                      key={mod.module}
+                      type="button"
+                      className={`pod-mod-btn ${isModActive ? "active" : ""}`}
+                      onClick={() => {
+                        if (selectedModuleOverride === mod.module) {
+                          setSelectedModuleOverride(null);
+                        } else {
+                          setSelectedModuleOverride(mod.module);
+                          if (selectedTrack === "mc" && mod.module - 1 < MICROCASTS.length) {
+                            setSelectedMc(mod.module - 1);
+                          }
+                        }
+                      }}
+                      title={isModActive && selectedModuleOverride !== null ? "Click again to resume auto-following" : `Focus Module ${mod.module}: ${mod.title}`}
                     >
-                      <span className="pod-custom-thumb-bar" />
-                      <span className="pod-custom-thumb-bar" />
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={displayDuration || 0}
-                      step={0.5}
-                      value={displayCurrent}
-                      onChange={handleSeek}
-                      className="pod-custom-timeline-input"
-                      aria-label="Seek"
-                    />
-                  </div>
+                      M{mod.module}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
+            {/* Active Topic Banner */}
+            <div className="pod-topic-banner">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span className="pod-topic-badge">
+                  Module {activeSectionInfo.moduleNumber} · Topic Focus
+                </span>
+                {selectedModuleOverride !== null && (
                   <button
                     type="button"
-                    className="pod-custom-speed-pill"
-                    title="Playback speed"
-                    aria-label="Change playback speed"
-                    onClick={handleToggleSpeed}
+                    onClick={() => setSelectedModuleOverride(null)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      color: "#166534",
+                      cursor: "pointer",
+                      textDecoration: "underline",
+                      padding: 0,
+                    }}
+                    title="Resume auto-following playback"
                   >
-                    {playbackRate}x
+                    Auto-follow ↺
                   </button>
+                )}
+              </div>
+              <div className="pod-topic-title">
+                {activeSectionInfo.title}
+              </div>
+            </div>
 
-                  <span className="pod-custom-time">
-                    <span ref={currentTimeDisplayRef}>{fmtTime(displayCurrent)}</span> / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+            {/* Topic-Specific Action Cards */}
+            <div className="pod-follow-items">
+              {/* 1. Core Module Study Guide */}
+              <div
+                className="pod-follow-item active"
+                onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
+                title={`Jump directly to Module ${activeSectionInfo.moduleNumber} in Read`}
+              >
+                <div className="pod-follow-item-info">
+                  <span className="pod-follow-kind">Module Study Guide</span>
+                  <span className="pod-follow-title">
+                    §{activeSectionInfo.sectionNumber} {activeSectionInfo.shortTitle}
                   </span>
                 </div>
-
-                {/* Bottom Sub-row: Volume (Left) + Transport Controls (Centered/Right) */}
-                <div className="pod-unified-transport-row">
-                  {/* Volume */}
-                  <div className="pod-unified-vol-wrap">
-                    <button
-                      type="button"
-                      className="pod-custom-icon-btn"
-                      title={isMutedUi ? "Unmute" : "Mute"}
-                      aria-label={isMutedUi ? "Unmute" : "Mute"}
-                      onClick={() => {
-                        const next = !isMutedUi;
-                        setIsMutedUi(next);
-                        if (audioRef.current) audioRef.current.muted = next;
-                      }}
-                    >
-                      {isMutedUi ? (
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                          <line x1="23" y1="9" x2="17" y2="15" />
-                          <line x1="17" y1="9" x2="23" y2="15" />
-                        </svg>
-                      ) : (
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                          <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                        </svg>
-                      )}
-                    </button>
-                    <div className="pod-custom-vol-slider-wrap">
-                      <div className="pod-custom-vol-track">
-                        <div className="pod-custom-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
-                        <div className="pod-custom-vol-dot" style={{ left: `${(isMutedUi ? 0 : volume) * 100}%` }} />
-                      </div>
-                      <input
-                        type="range"
-                        min={0}
-                        max={1}
-                        step={0.05}
-                        value={isMutedUi ? 0 : volume}
-                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                        className="pod-custom-vol-input"
-                        aria-label="Volume"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Transport: Rewind, Play/Pause, Forward */}
-                  <div className="pod-unified-transport-buttons">
-                    <button
-                      type="button"
-                      className="pod-custom-icon-btn"
-                      title="Rewind 10 seconds"
-                      aria-label="Rewind 10 seconds"
-                      onClick={() => {
-                        if (audioRef.current && displayDuration) {
-                          const targetTime = Math.max(audioRef.current.currentTime - 10, 0);
-                          audioRef.current.currentTime = targetTime;
-                          updateProgress(targetTime, displayDuration);
-                        }
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="11 19 4 12 11 5" />
-                        <polyline points="19 19 12 12 19 5" />
-                      </svg>
-                    </button>
-
-                    <button
-                      type="button"
-                      className="pod-custom-play-btn"
-                      title={playing ? "Pause" : "Play"}
-                      aria-label={playing ? "Pause" : "Play"}
-                      onClick={() => {
-                        if (available) {
-                          const audio = audioRef.current;
-                          if (audio) {
-                            if (!audio.paused) {
-                              handlePause();
-                            } else {
-                              handlePlay();
-                            }
-                          } else {
-                            isPlaying ? handlePause() : handlePlay();
-                          }
-                        } else {
-                          ttsPlaybackState === "playing" ? handleTtsPause() : handleTtsPlay();
-                        }
-                      }}
-                    >
-                      {playing ? (
-                        <svg width="10" height="11" viewBox="0 0 10 11" fill="currentColor">
-                          <rect x="1" y="0.5" width="2.4" height="10" rx="0.6" />
-                          <rect x="6.6" y="0.5" width="2.4" height="10" rx="0.6" />
-                        </svg>
-                      ) : (
-                        <svg width="10" height="11" viewBox="0 0 10 11" fill="currentColor" style={{ marginLeft: "1.5px" }}>
-                          <polygon points="2 1, 9 5.5, 2 10" />
-                        </svg>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      className="pod-custom-icon-btn"
-                      title="Forward 10 seconds"
-                      aria-label="Forward 10 seconds"
-                      onClick={() => {
-                        if (audioRef.current && displayDuration) {
-                          const targetTime = Math.min(audioRef.current.currentTime + 10, displayDuration);
-                          audioRef.current.currentTime = targetTime;
-                          updateProgress(targetTime, displayDuration);
-                        }
-                      }}
-                    >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="13 19 20 12 13 5" />
-                        <polyline points="5 19 12 12 5 5" />
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+                <span className="pod-follow-badge">Read Module {activeSectionInfo.moduleNumber} →</span>
               </div>
 
-              {/* Right: Balance spacer to center the controls */}
-              <div className="pod-unified-spacer" />
-            </div>
-          );
-        })()}
-
-        {/* ── Scrollable transcript directly below inside same card ── */}
-        <div className="pod-unified-transcript-wrap" ref={transcriptRef}>
-          <h4 className="pod-unified-transcript-title">Transcript</h4>
-          {transcript ? (
-            <div
-              className="transcript-box transcript-body"
-              ref={transcriptBoxRef}
-              onClick={(e) => {
-                const target = (e.target as HTMLElement).closest(".transcript-word") as HTMLElement | null;
-                if (!target || !audioRef.current) return;
-                const index = Array.from(target.parentElement?.children || []).indexOf(target);
-                if (index < 0) return;
-                const wt = wordTimingsRef.current;
-                if (!wt) return;
-                const wordIdx = wt.wordIndexes.indexOf(index);
-                if (wordIdx < 0) return;
-                let seekTime = 0;
-                if (wt.exactTimestamps && wt.exactTimestamps[wordIdx] !== undefined) {
-                  seekTime = wt.exactTimestamps[wordIdx];
-                } else if (wt.totalWeight > 0) {
-                  const dur = audioDurationRef.current || audioRef.current.duration || displayDuration;
-                  if (dur > 0) {
-                    seekTime = (wt.wordWeights[wordIdx] / wt.totalWeight) * dur;
-                  }
-                }
-                if (seekTime >= 0) {
-                  audioRef.current.currentTime = seekTime;
-                  setCurrentTime(seekTime);
-                  updateProgress(seekTime, audioDurationRef.current || audioRef.current.duration || 0);
-                  if (audioRef.current.paused) {
-                    audioRef.current.play().then(() => {
-                      setIsPlaying(true);
-                      onPlayingChange?.(true);
-                    }).catch(() => {});
-                  }
-                }
-              }}
-            >
-              {transcriptTokens.map((token, idx) => {
-                const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
-                return (
-                  <span
-                    key={idx}
-                    className={isWord ? "transcript-word" : undefined}
-                  >
-                    {token}
+              {/* 2. Visual Architecture Diagram */}
+              <div
+                className="pod-follow-item"
+                onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
+                title={`Open diagram for Module ${activeSectionInfo.moduleNumber} in Read`}
+              >
+                <div className="pod-follow-item-info">
+                  <span className="pod-follow-kind">Visual Architecture</span>
+                  <span className="pod-follow-title">
+                    {activeSectionInfo.figureNo}: {activeSectionInfo.figureTitle}
                   </span>
-                );
-              })}
+                </div>
+                <span className="pod-follow-badge">Inspect Diagram →</span>
+              </div>
+
+              {/* 4. Quick Check Concept Question */}
+              {activeSectionInfo.quickCheck && (
+                <div
+                  className="pod-follow-item"
+                  onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
+                  title={`Practice Module ${activeSectionInfo.moduleNumber} concept check in Read`}
+                >
+                  <div className="pod-follow-item-info">
+                    <span className="pod-follow-kind">Knowledge Check</span>
+                    <span className="pod-follow-title">
+                      Quick Check · Module {activeSectionInfo.moduleNumber} Test
+                    </span>
+                  </div>
+                  <span className="pod-follow-badge">Practice Check →</span>
+                </div>
+              )}
+
+              {/* Other Chapter Topics Quick Switch */}
+              {activeSectionInfo.upcomingModules.map((upMod) => (
+                <div
+                  key={upMod.module}
+                  className="pod-follow-item"
+                  onClick={() => {
+                    setSelectedModuleOverride(upMod.module);
+                    if (selectedTrack === "mc" && upMod.module - 1 < MICROCASTS.length) {
+                      setSelectedMc(upMod.module - 1);
+                    }
+                  }}
+                  title={`Focus Topic ${upMod.module}: ${upMod.title}`}
+                >
+                  <div className="pod-follow-item-info">
+                    <span className="pod-follow-kind">Curriculum Topic</span>
+                    <span className="pod-follow-title">
+                      §{upMod.sectionNumber} {upMod.shortTitle}
+                    </span>
+                  </div>
+                  <span className="pod-follow-badge-muted">Topic {upMod.module} →</span>
+                </div>
+              ))}
             </div>
-          ) : (
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>
-              Loading transcript…
-            </p>
-          )}
+          </div>
+
+          {/* Card 2: THIS EPISODE */}
+          <div className="pod-episode-meta-card">
+            <div className="pod-sidebar-card-header">THIS EPISODE</div>
+            <div className="pod-episode-meta-rows">
+              <div className="pod-episode-meta-row main">
+                {displayDuration ? fmtTime(displayDuration) : "--:--"} · {selectedTrack === "dl" || selectedTrack === "long" ? "Detailed Study" : selectedTrack === "mc" ? "Focused Microcast" : "Standard Depth"}
+              </div>
+              <div className="pod-episode-meta-row muted">
+                {selectedTrack === "mc"
+                  ? "Heard 2× by most students"
+                  : selectedTrack === "dl" || selectedTrack === "long"
+                  ? "Complete curriculum breakdown"
+                  : `High-yield exam recap · ${sections.length > 0 ? `${sections.length} modules` : "All topics"}`}
+              </div>
+              <div className="pod-episode-meta-row muted">
+                {activeSectionInfo.quickCheck
+                  ? `Quick Check: "${activeSectionInfo.quickCheck.stem.length > 38 ? activeSectionInfo.quickCheck.stem.slice(0, 36) + "…" : activeSectionInfo.quickCheck.stem}"`
+                  : "3 recap questions attached"}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
