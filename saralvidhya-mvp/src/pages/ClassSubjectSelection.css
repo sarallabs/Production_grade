@@ -1,21 +1,25 @@
-/* ClassSubjectSelection.css — Custom Styles for Subjects and Entomology Card */
+/* ClassSubjectSelection.css — Custom Styles for Subjects, Entomology and MLRIT Cards */
+
+.sv-subject-card--entomology,
+.sv-subject-card--mlrit {
+  border-radius: 26px !important;
+  padding: 24px 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 24px !important;
+  position: relative !important;
+  overflow: visible !important;
+  min-height: 160px !important;
+  box-sizing: border-box !important;
+  cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
 
 .sv-subject-card--entomology {
   background: #1c2e25 !important;
   background: linear-gradient(145deg, #1f3329 0%, #16261f 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 28px !important;
-  padding: 34px 38px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 28px !important;
   box-shadow: 0 16px 40px rgba(10, 20, 15, 0.28) !important;
-  transition: transform 0.22s ease, box-shadow 0.22s ease !important;
-  position: relative !important;
-  overflow: hidden !important;
-  min-height: 250px !important;
-  box-sizing: border-box !important;
-  cursor: pointer;
 }
 
 .sv-subject-card--entomology:hover {
@@ -23,18 +27,18 @@
   box-shadow: 0 20px 48px rgba(10, 20, 15, 0.36) !important;
 }
 
-/* Hide old gradient accent circle on Entomology card */
+/* Hide old gradient accent circle on rich subject cards */
 .sv-subject-card--entomology .sv-card-accent {
   display: none !important;
 }
 
 /* Icon container */
 .sv-subject-card--entomology .sv-card-icon {
-  width: 140px !important;
-  height: 140px !important;
-  min-width: 140px !important;
-  min-height: 140px !important;
-  border-radius: 24px !important;
+  width: 110px !important;
+  height: 110px !important;
+  min-width: 110px !important;
+  min-height: 110px !important;
+  border-radius: 20px !important;
   background: #FFF6F0 !important;
   display: flex !important;
   align-items: center !important;
@@ -87,7 +91,8 @@
 }
 
 /* Card Body */
-.sv-subject-card--entomology .sv-card-body {
+.sv-subject-card--entomology .sv-card-body,
+.sv-subject-card--mlrit .sv-card-body {
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -110,7 +115,8 @@
   flex-direction: column !important;
 }
 
-.sv-subject-card--entomology .sv-card-title {
+.sv-subject-card--entomology .sv-card-title,
+.sv-subject-card--mlrit .sv-card-title {
   font-size: 32px !important;
   font-weight: 800 !important;
   color: #FFFFFF !important;
@@ -128,6 +134,11 @@
   letter-spacing: 0.2px !important;
 }
 
+.sv-subject-card--mlrit .sv-subject-subtitle {
+  color: rgba(186, 230, 253, 0.85) !important;
+  font-weight: 600 !important;
+}
+
 /* Overall Course Progress Widget (Replaces Bar Lines) */
 .sv-course-progress-widget {
   display: flex !important;
@@ -138,6 +149,11 @@
   border-radius: 9999px !important;
   padding: 6px 16px 6px 8px !important;
   flex-shrink: 0 !important;
+}
+
+.sv-subject-card--mlrit .sv-course-progress-widget {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
 }
 
 .sv-progress-ring-wrap {
@@ -162,6 +178,10 @@
   line-height: 1 !important;
 }
 
+.sv-subject-card--mlrit .sv-progress-ring-text {
+  color: #38bdf8 !important;
+}
+
 .sv-progress-widget-labels {
   display: flex !important;
   flex-direction: column !important;
@@ -184,12 +204,136 @@
 }
 
 /* Progress Wrapper */
-.sv-subject-card--entomology .sv-progress-wrapper {
+.sv-subject-card--entomology .sv-progress-wrapper,
+.sv-subject-card--mlrit .sv-progress-wrapper {
   margin-top: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
   width: 100% !important;
+}
+
+/* ── Chapter Icons Row (Image 1 Style: Circular Chapter Number Buttons) ── */
+.sv-chapter-icons-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 16px !important;
+  margin-top: 14px !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+.sv-ch-circle-group {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.sv-ch-circle-btn {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+
+.sv-ch-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border-color: rgba(226, 177, 142, 0.55) !important;
+  transform: translateY(-2px) scale(1.06) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+.sv-ch-circle-btn.is-completed {
+  background: rgba(226, 177, 142, 0.2) !important;
+  border-color: rgba(226, 177, 142, 0.6) !important;
+}
+
+.sv-ch-circle-btn.is-completed:hover {
+  background: rgba(226, 177, 142, 0.32) !important;
+}
+
+.sv-ch-circle-num {
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* Tooltip on Hover */
+.sv-ch-tooltip {
+  position: absolute !important;
+  bottom: calc(100% + 10px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(4px) !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s !important;
+  z-index: 100 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.sv-ch-tooltip::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  border-width: 5px !important;
+  border-style: solid !important;
+  border-color: #0f172a transparent transparent transparent !important;
+}
+
+.sv-ch-circle-btn:hover .sv-ch-tooltip {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+/* Pill badge under circle */
+.sv-ch-circle-badge {
+  margin-top: 6px !important;
+  background: rgba(14, 24, 19, 0.75) !important;
+  color: #FFFFFF !important;
+  border-radius: 9999px !important;
+  padding: 2px 8px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.sv-ch-circle-check {
+  color: #E2B18E !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+
+.sv-ch-circle-badge.is-done .sv-ch-circle-check {
+  color: #82C785 !important;
 }
 
 /* ── Interactive Chapter Cards Grid (Taller & Spacious) ── */

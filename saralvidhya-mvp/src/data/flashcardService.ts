@@ -146,6 +146,10 @@ export async function getFlashcards(
         );
       }
       paths.push(
+        `${base}/${ch}/Practice/Revise/DBMS_UNIT_I_Flashcards_${normLevel}.json`,
+        `${base}/${ch}/Practice/Revise/DBMS_UNIT_I_Flashcards_${normLevel}.md`,
+        `${base}/${ch}/Practice/Revise/DBMS_UNIT_I_Flashcards_revise.json`,
+        `${base}/${ch}/Practice/Revise/DBMS_UNIT_I_Flashcards_revise.md`,
         `${base}/${ch}/Learn/Flashcards/flashcards_${normLevel}.md`,
         `${base}/${ch}/unit_1/Learn/Flashcards/flashcards_${normLevel}.md`,
         `${base}/${ch}/Prepare/Flashcards/prep_flashcards.md`,
@@ -227,7 +231,7 @@ export async function getFlashcards(
         }
         
         if (!cards?.length) {
-          const regex = /(?:\*\*(?:Q|Front):\*\*|###\s*Q:)\s*([\s\S]*?)\s*(?:\*\*(?:A|Back):\*\*|###\s*Ans:)\s*([\s\S]*?)(?=\n#{1,6}[ \t]+\S|\n---\s*|\n(?:\*\*(?:Q|Front):|###\s*Q:)|$)/g;
+          const regex = /(?:(?:\*\*(?:Q|Front):\*\*|###\s*Q\d*[:.]?)\s*([\s\S]*?)\s*(?:\*\*(?:A|Back|Ans):\*\*|###\s*Ans\d*[:.]?)\s*([\s\S]*?))(?=\n#{1,6}[ \t]+\S|\n---\s*|\n(?:\*\*(?:Q|Front):|###\s*Q\d*[:.]?)|$)/gi;
           const matches = [...data.matchAll(regex)];
           if (matches.length > 0) {
             cards = matches.map(m => {
@@ -239,9 +243,10 @@ export async function getFlashcards(
                 infographicUrl = infoMatch[1].trim();
                 back = back.replace(infoMatch[0], '').trim();
               } else {
-                const imgTagMatch = back.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
+                const imgTagMatch = back.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[\s\S]*?)["'][^>]*>/i);
                 if (imgTagMatch) {
-                  infographicUrl = imgTagMatch[1];
+                  infographicUrl = imgTagMatch[1].replace(/[\r\n\s]+/g, '');
+                  back = back.replace(/<div align="center"[^>]*>[\s\S]*?<\/div>/gi, '').trim();
                   back = back.replace(imgTagMatch[0], '').trim();
                 }
               }

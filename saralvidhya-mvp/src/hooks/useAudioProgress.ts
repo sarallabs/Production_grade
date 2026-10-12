@@ -53,7 +53,7 @@ export async function loadProgress(userId: string, lessonId: string): Promise<Au
     }
   }
 
-  if (!userId || userId === 'anonymous') {
+  if (!userId || userId === 'anonymous' || !db) {
     return localProgress;
   }
 
@@ -104,7 +104,7 @@ export async function saveProgress(
   const localKey = getLocalStorageKey(userId, lessonId);
   localStorage.setItem(localKey, JSON.stringify(progressData));
 
-  if (userId === 'anonymous') {
+  if (userId === 'anonymous' || !db) {
     return;
   }
 
@@ -127,11 +127,13 @@ export async function saveProgress(
 
     localStorage.setItem(`global_last_podcast_${userId}`, JSON.stringify(globalData));
 
-    const globalDocRef = doc(db, 'global_podcast_progress', `user_${userId}`);
-    try {
-      await setDoc(globalDocRef, globalData, { merge: true });
-    } catch (error) {
-      console.warn('Failed to save global progress to Firestore:', error);
+    if (db) {
+      const globalDocRef = doc(db, 'global_podcast_progress', `user_${userId}`);
+      try {
+        await setDoc(globalDocRef, globalData, { merge: true });
+      } catch (error) {
+        console.warn('Failed to save global progress to Firestore:', error);
+      }
     }
   }
 }

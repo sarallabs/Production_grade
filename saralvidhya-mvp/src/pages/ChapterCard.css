@@ -287,6 +287,14 @@
   color: #111827;
 }
 
+.chapter-progress-labels--center {
+  display: flex !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  margin-bottom: 8px !important;
+}
+
 .chapter-progress-track {
   width: 100%;
   height: 10px;
@@ -295,6 +303,11 @@
   overflow: hidden;
   margin-bottom: 0;
   position: relative;
+}
+
+.chapter-progress-track--half {
+  width: 50% !important;
+  margin: 0 auto !important;
 }
 
 .chapter-progress-fill {

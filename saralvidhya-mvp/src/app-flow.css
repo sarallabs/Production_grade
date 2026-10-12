@@ -2350,7 +2350,16 @@
   padding: 1px 2px;
   border-radius: 4px;
   color: inherit;
+  cursor: pointer;
   transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.transcript-word:hover {
+  background: rgba(79, 123, 100, 0.14);
+}
+
+[data-theme*="dark"] .transcript-word:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .transcript-word.active {

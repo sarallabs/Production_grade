@@ -20,6 +20,15 @@ function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
       />
     );
   }
+  if (id.includes('dbms') || id.includes('database')) {
+    return (
+      <img
+        src={`${import.meta.env.BASE_URL}subject-dbms-icon.png`}
+        alt="Database Management Systems"
+        className="subject-header-illustration"
+      />
+    );
+  }
   switch (id) {
     case 'english':
       return (
@@ -247,7 +256,7 @@ export default function ChapterList() {
               {/* Page header */}
               <div className={`book-header ${bookOpen ? 'book-header--visible' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
                 <div className="book-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  {(sId.toLowerCase().includes('ento') || sId === 'ento_131' || resolvedSubjectName.toLowerCase().includes('ento')) ? (
+                  {(sId.toLowerCase().includes('ento') || sId === 'ento_131' || sId.toLowerCase().includes('dbms') || resolvedSubjectName.toLowerCase().includes('ento') || resolvedSubjectName.toLowerCase().includes('database')) ? (
                     <div className="subject-header-img-wrap">
                       <SubjectHeaderIcon subjectId={sId} />
                     </div>
@@ -301,29 +310,40 @@ export default function ChapterList() {
 
                 // Clean real chapter name without duplicate "Chapter X" prefix
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
-                const lowerName = cleanChapterName.toLowerCase();
+                const lowerName = (flipCh.name || '').toLowerCase();
+                const isDbms = sId.toLowerCase().includes('dbms') || lowerName.includes('database');
                 const isDigestive =
-                  lowerName.includes('digestive') ||
-                  flipCh.number === 1 ||
-                  flipIndex === 0;
+                  !isDbms && (
+                    lowerName.includes('digestive') ||
+                    flipCh.number === 1 ||
+                    flipIndex === 0
+                  );
                 const isMetamorphosis =
-                  lowerName.includes('metamorphosis') ||
-                  lowerName.includes('morphology') ||
-                  flipCh.number === 2 ||
-                  flipCh.number === 11 ||
-                  flipIndex === 1;
+                  !isDbms && (
+                    lowerName.includes('metamorphosis') ||
+                    lowerName.includes('morphology') ||
+                    flipCh.number === 2 ||
+                    flipCh.number === 11 ||
+                    flipIndex === 1
+                  );
                 const isWeathering =
-                  lowerName.includes('weathering') ||
-                  lowerName.includes('soil') ||
-                  flipCh.number === 3 ||
-                  flipIndex === 2;
+                  !isDbms && (
+                    lowerName.includes('weathering') ||
+                    lowerName.includes('soil') ||
+                    flipCh.number === 3 ||
+                    flipIndex === 2
+                  );
                 const isPollination =
-                  lowerName.includes('pollination') ||
-                  lowerName.includes('floral') ||
-                  flipCh.number === 4 ||
-                  flipIndex === 3;
+                  !isDbms && (
+                    lowerName.includes('pollination') ||
+                    lowerName.includes('floral') ||
+                    flipCh.number === 4 ||
+                    flipIndex === 3
+                  );
 
-                const heroImgSrc = isDigestive
+                const heroImgSrc = isDbms
+                  ? `${import.meta.env.BASE_URL}chapter-dbms-hero.png`
+                  : isDigestive
                   ? `${import.meta.env.BASE_URL}chapter-digestive-hero.png`
                   : isMetamorphosis
                   ? `${import.meta.env.BASE_URL}chapter-metamorphosis-hero.png`
@@ -415,11 +435,10 @@ export default function ChapterList() {
 
                         {/* Progress Section */}
                         <div className="chapter-progress-box">
-                          <div className="chapter-progress-labels">
-                            <span>Your progress</span>
+                          <div className="chapter-progress-labels chapter-progress-labels--center">
                             <span>{chapterPct}%</span>
                           </div>
-                          <div className="chapter-progress-track">
+                          <div className="chapter-progress-track chapter-progress-track--half">
                             <div
                               className="chapter-progress-fill"
                               style={{ width: `${chapterPct}%` }}

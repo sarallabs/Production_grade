@@ -1,0 +1,75 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "module_name": "Topic 4 Relational Model Constraints",
+  "title": "Topic 4: Relational Model Foundations & Integrity Constraints",
+  "persona": "Intermediate",
+  "cefr_language_tier": "B2-C1",
+  "bloom_tier": "L3 Applying / L4 Analyzing",
+  "l1_mindmap_node": "4. Relational Model Foundations & Integrity Constraints",
+  "word_count": 1439,
+  "infographics_count": 4,
+  "infographics_included": [
+    "4.0",
+    "4.1",
+    "4.2",
+    "4.3"
+  ],
+  "verbatim_definitions_included": [
+    "Relation Schema",
+    "Relation Instance",
+    "Tuple",
+    "Attribute",
+    "Domain",
+    "Arity",
+    "Degree",
+    "Cardinality",
+    "Entity Integrity",
+    "Referential Integrity",
+    "Foreign Key"
+  ],
+  "subtopics_covered": [
+    "4.1 Relational Data Model Foundations & Dr. Codd's Principles",
+    "4.2 Relations, Tuples, Attributes, and Domains",
+    "4.3 Arity, Degree, and Cardinality of Relations",
+    "4.4 Database Integrity Constraints Classification",
+    "4.5 Domain Constraints, Key Constraints & Superkeys",
+    "4.6 Entity Integrity vs Referential Integrity Constraints",
+    "4.7 SQL DDL Constraint Implementation & Foreign Key Cascade Actions",
+    "4.8 Formal Relational Calculus (TRC and DRC) & Relational Completeness"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 4.1",
+      "image_tag": "4.0",
+      "title": "Relational Data Model Foundations: Relations, Tuples, Attributes & Domains",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.2",
+      "image_tag": "4.1",
+      "title": "Fundamental Primitive Relational Algebra Operators (σ, π, ∪, -, ×, ρ)",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.3",
+      "image_tag": "4.2",
+      "title": "Database Integrity Constraints Classification Framework",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.4",
+      "image_tag": "4.3",
+      "title": "SQL Declarative Constraint Enforcement & Table DDL Invariants",
+      "module": "Module 4"
+    }
+  ]
+}

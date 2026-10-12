@@ -57,6 +57,18 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; d
       "Pollinizer Cultivar Proportion & Commercial Orchard Planting Geometry",
       "Parthenocarpy: Vegetative, Stimulative & Stenospermocarpy Mechanisms"
     ]
+  },
+  "A4RwGJPb9I4": {
+    title: "Database System Concepts, ER Model & Relational Design",
+    duration: "15:30min",
+    topics: [
+      "Database Fundamentals & 3-Schema Engine Architecture",
+      "Conceptual Database Design & ER Modeling Rules",
+      "Advanced ER & Extended ER (EER) Specialization/Generalization",
+      "Relational Model Foundations & Key Integrity Constraints",
+      "Logical Database Design: ER-to-Relational Schema Translation",
+      "Relational Querying Foundations, SQL Views & Schema Evolution"
+    ]
   }
 };
 
@@ -281,6 +293,22 @@ export default function VideosView({
             "Comparative Public Administration & Development",
             "Accountability and Control Mechanisms in Public Services",
             "Citizen Charters, Transparency & RTI Act Dynamics"
+          ]
+        }
+      ];
+    } else if (subjectId === "dbms" || subjectId.includes("dbms")) {
+      list = [
+        {
+          title: "Database System Concepts, ER Model & Relational Design",
+          ytId: "A4RwGJPb9I4",
+          duration: "15:30min",
+          topics: [
+            "Database Fundamentals & 3-Schema Engine Architecture",
+            "Conceptual Database Design & ER Modeling Rules",
+            "Advanced ER & Extended ER (EER) Specialization/Generalization",
+            "Relational Model Foundations & Key Integrity Constraints",
+            "Logical Database Design: ER-to-Relational Schema Translation",
+            "Relational Querying Foundations, SQL Views & Schema Evolution"
           ]
         }
       ];

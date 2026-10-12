@@ -83,24 +83,34 @@ export function getResourceFileCandidates(
 
   const aliases: Record<string, string[]> = {
     'summary.md': [
+      `Learn/Read/Quick_Study/DBMS_UNIT_I_Quick_Study_${level}.md`,
       `Learn/Quick_Summary/quick_summary_${level}.md`,
       `Read/Quick_Summary/quick_summary_${level}.md`,
+      `Read/Quick_Study/quick_summary_${level}.md`,
       `Reading/Quick Study/quick_summary_${level}.md`,
+      `summary_${level}.md`,
       'summary.md'
     ],
     'key_takeaways.md': [
+      `Resources/Key Takeaways/key_takeaways.md`,
+      `Resources/Key Takeaways/key_takeaways.json`,
       `Reading/Key Takeaways/key_takeaways.md`,
       `Read/Key Takeaways/key_takeaways.md`,
       `Reading/key_takeaways.md`,
       'key_takeaways.md'
     ],
     'mindmap.md': [
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap.md',
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap_L0_L1.md',
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap.json',
       'Learn/Mindmaps/mindmap.md',
       'Learn/Mindmaps/mindmap.json',
       'mindmap.md',
       'mindmap.json'
     ],
     'study_plan.md': [
+      'Prepare/Study Plan/study_plan.md',
+      'Prepare/Study Plan/study_plan.json',
       'study_plan.md',
       'Foundation/Study Plan/study_plan.md',
       'Foundation/study_plan.md',
@@ -108,6 +118,8 @@ export function getResourceFileCandidates(
       'Foundation/Study Plan/study_plan.json',
     ],
     'mock_test.md': [
+      'Prepare/Preparation Exam/pre_final_exam.md',
+      'Prepare/Preparation Exam/pre_final_exam.json',
       'mock_test.md',
       'Prepare/Mock_Test/mock_test.md',
       'mock_test.json',
@@ -115,20 +127,28 @@ export function getResourceFileCandidates(
     'podcast_script.md': ['podcast_script.md', 'long_podcast.md', 'short_podcast.md'],
     'youtube_links.md': ['youtube_links.md', 'video_script.md'],
     'assessment.md': [
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.md`,
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.json`,
       `Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       'assessment.md', 'quiz.md', 'question_bank.md'
     ],
     'quiz.md': [
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.json`,
       `Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       'quiz.md', 'question_bank.md'
     ],
     'detailed_view.md': [
+      `Learn/Read/Detailed_Study/DBMS_UNIT_I_Detailed_Study_${level}.md`,
       `Learn/Detailed_Summary/detailed_summary_${level}.md`,
       `Read/Detailed_Summary/detailed_summary_${level}.md`,
+      `Read/Detailed_Study/detailed_summary_${level}.md`,
       `Reading/Detailed Study/detailed_summary_${level}.md`,
+      `detailed_summary_${level}.md`,
       'detailed_view.md', 'Detailed Notes'
     ],
     'question_bank.md': [
+      'Practice/Question Bank/dbms_question_bank_v2.md',
+      'Practice/Question Bank/dbms_question_bank_v2.json',
       'question_bank.json',
       'Practice/Question Bank/question_bank.json',
       'question_bank.md',
@@ -140,6 +160,14 @@ export function getResourceFileCandidates(
       `Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.md`,
       'mcq.md',
       'quiz.md'
+    ],
+    'question_bank.json': [
+      'Practice/Question Bank/dbms_question_bank_v2.json',
+      'question_bank.json',
+      'Practice/Question Bank/question_bank.json',
+      'Practice/Question Bank/dbms_question_bank_v2.md',
+      'question_bank.md',
+      'Practice/Question Bank/question_bank.md',
     ]
   };
   const candidates = aliases[resourceName] ?? [resourceName];

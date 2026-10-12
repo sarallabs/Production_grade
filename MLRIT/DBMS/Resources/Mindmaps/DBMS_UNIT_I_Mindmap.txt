@@ -1,0 +1,243 @@
+================================================================================
+ ACADEMIC MINDMAP: DBMS UNIT - I
+ Course: MLRIT | Subject: Database Management Systems
+ Chapter: DBMS UNIT - I (Database System Concepts, ER Model & Relational Design)
+ Sources: DBMS-UNIT-I.pdf, DBMS-UNIT-I.docx, DBMS-UNIT-I.md (Pages 1-41)
+ Architecture: Pruned High-Density Conceptual Tree (D_max = 4)
+ Pruning Policy: Zero Single-Child Bridges | Multi-Child Branching Guaranteed
+================================================================================
+
+DBMS UNIT - I: Database System Concepts, ER Model & Relational Design
+├── 1. Database Fundamentals & Engine Architecture
+│   ├── Database Systems vs. File Systems
+│   │   ├── Enterprise Applications Domain
+│   │   │   ├── Mission-Critical Systems (Banking transactions, Airline reservations & Telecommunication billing)
+│   │   │   └── Enterprise Operations (University student records, Financial accounting & Human Resource payroll)
+│   │   └── File System Critical Drawbacks
+│   │       ├── Data Redundancy & Inconsistency (Duplicate data across multiple files causing wasted storage and desynchronization)
+│   │       ├── Difficulty Accessing Data (Need to write new specialized programs for every ad-hoc request)
+│   │       ├── Data Isolation & Integrity Problems (Data scattered in diverse formats + Inflexible hardcoded integrity constraints)
+│   │       └── Atomicity, Concurrency & Security Flaws (Inconsistent states on power crashes, race condition anomalies & coarse-grained security)
+│   ├── Data Abstraction & Three-Schema Architecture
+│   │   ├── Three Levels of Data Abstraction
+│   │   │   ├── Physical Level (Lowest level describing complex low-level data structures and record layouts on storage media)
+│   │   │   ├── Logical Level (Middle level describing what data is stored and structural relationships among all entities)
+│   │   │   └── View Level (Highest level describing customized subsets of the database tailored to specific user personas)
+│   │   ├── Dual Data Independence Principles
+│   │   │   ├── Physical Data Independence (Capacity to modify physical storage schemas or indexes without altering logical schemas)
+│   │   │   └── Logical Data Independence (Capacity to modify logical schemas without altering external views or application programs)
+│   │   └── Database Instances vs. Schemas
+│   │       ├── Database Schema (Overall static skeleton design and type definitions analogous to variable declarations in programming)
+│   │       └── Database Instance (Dynamic snapshot collection of information stored in the database at a specific moment in time)
+│   ├── Data Models & Database Languages
+│   │   ├── Four Primary Data Model Paradigms
+│   │   │   ├── Relational Model (Collection of tables with rows and columns representing data records and relations)
+│   │   │   ├── Entity-Relationship Model (Collection of basic objects called entities and relationship sets for conceptual design)
+│   │   │   ├── Object-Based Models (Object-oriented and object-relational encapsulating methods, identity, and complex data structures)
+│   │   │   └── Semi-Structured Data Model (Data specifications allowing individual data items of same type to have different attribute sets e.g. XML & JSON)
+│   │   ├── DDL vs. DML Languages
+│   │   │   ├── Data-Definition Language / DDL (Specifies database schema structure, produces system catalog metadata, and enforces integrity constraints)
+│   │   │   ├── Procedural DML (Requires user to specify what data is needed and how to retrieve those data step-by-step)
+│   │   │   └── Declarative / Non-Procedural DML (Requires user to specify what data is needed without specifying how to retrieve it e.g. SQL)
+│   │   └── Application Program Access Methods
+│   │       ├── Embedded SQL (Host language pre-processor converting EXEC SQL statements into procedural runtime API calls)
+│   │       └── Application Program Interfaces (Dynamic SQL execution libraries such as ODBC for C/C++ and JDBC for Java)
+│   ├── DBMS Engine Internals & System Structure
+│   │   ├── Transaction Management & ACID Rules
+│   │   │   ├── Transaction Definition (A collection of operations that performs a single logical function in a database application)
+│   │   │   ├── ACID Invariants (Atomicity all-or-nothing, Consistency preserving invariants, Isolation concurrency protection, Durability persistent commits)
+│   │   │   └── Core Transaction Modules (Concurrency Control Manager coordinating concurrent execution + Recovery Manager ensuring state restoration)
+│   │   ├── Query Processing Engine Components
+│   │   │   ├── DDL Interpreter (Parses and executes DDL schema statements, recording definitions in data dictionary metadata)
+│   │   │   ├── DML Compiler & Optimizer (Parses DML queries, translates into relational algebra expressions, and selects lowest-cost execution plan)
+│   │   │   └── Query Evaluation Engine (Executes low-level primitive physical instructions generated by query optimizer)
+│   │   └── Storage Manager Modules & Data Structures
+│   │       ├── Storage Control Modules (Authorization & Integrity Manager, Transaction Manager, File Manager & Buffer Manager caching blocks)
+│   │       └── Physical Disk Data Structures (Data Files storing records, Data Dictionary storing schema metadata & Indices providing rapid lookup)
+│   └── System Architecture, User Personas & History
+│       ├── Two-Tier vs. Three-Tier Client-Server Architecture
+│       │   ├── Two-Tier Architecture (Client machine runs user interface and business logic, invoking SQL on database system directly via ODBC/JDBC)
+│       │   └── Three-Tier Architecture (Client web browser interfaces with Application Server business logic, which in turn coordinates with Database Server)
+│       ├── User Hierarchy & DBA Responsibilities
+│       │   ├── Four Database User Classes (Naive users via forms, Application programmers writing software, Sophisticated analysts & Specialized engineers)
+│       │   └── Database Administrator / DBA Mandate (Schema definition, Storage structure & access method selection, User privilege authorization & Periodic backups)
+│       └── Historical Evolution Milestones
+│           ├── Early Eras (1950s-1960s magnetic tapes & file systems; CODASYL network model and IBM IMS hierarchical database)
+│           ├── Relational Revolution (1970 Edgar F. Codd relational model paper; IBM System R and UC Berkeley Ingres prototypes)
+│           └── Modern Eras (1980s ANSI SQL standardization; 1990s Data Warehousing & Object-Relational; 2000s Web XML & Cloud Big Data)
+├── 2. Conceptual Database Design & ER Modeling
+│   ├── Database Design Lifecycle Phases
+│   │   ├── Phase 1 - Requirements Analysis
+│   │   │   ├── User Requirement Gathering (Interviews and documentation reviews with prospective database users)
+│   │   │   └── Operational Specification (Identifying functional business workflows and expected query/transaction workloads)
+│   │   ├── Phase 2 & 3 - Conceptual & Logical Design
+│   │   │   ├── Conceptual Database Design (Developing a high-level enterprise ER schema independent of DBMS implementation)
+│   │   │   └── Logical Database Design (Mapping conceptual ER schema into target DBMS data model e.g. Relational tables)
+│   │   └── Phase 4, 5 & 6 - Refinement, Physical & Security
+│   │       ├── Schema Refinement (Analyzing relational schemas using Normalization theory to eliminate update redundancies and anomalies)
+│   │       ├── Physical Design & Tuning (Selecting file organizations, clustering, primary/secondary indexes, and buffer parameters)
+│   │       └── Security Design (Specifying user roles, discretionary access controls, and view-level authorization masks)
+│   ├── ER Diagram Standard Geometric Notations
+│   │   ├── Primary Structural Shapes
+│   │   │   ├── Rectangles (Entity sets) & Double Rectangles (Weak entity sets dependent on identifying owner)
+│   │   │   ├── Diamonds (Relationship sets) & Double Diamonds (Identifying relationship sets for weak entities)
+│   │   │   └── Connecting Lines (Links attributes to entity sets and entity sets to relationship sets)
+│   │   └── Attribute & Constraint Geometric Styles
+│   │       ├── Ellipses (Standard attributes) & Underlined Ellipse Text (Primary key attribute identifiers)
+│   │       ├── Double Ellipses (Multivalued attributes) & Dashed Ellipses (Derived attributes computed dynamically)
+│   │       ├── Dashed Underline Text (Discriminator / Partial key attribute of weak entity set)
+│   │       └── Double Lines (Total participation / existence dependency) & Directed Arrows (Key constraints)
+│   ├── Entity Concepts & Attribute Typologies
+│   │   ├── Entity & Entity Set Definitions
+│   │   │   ├── Entity Definition (A real-world object that is distinguishable from all other objects e.g. specific employee)
+│   │   │   ├── Entity Set Definition (A collection of similar entities of the same type that share identical attribute properties)
+│   │   │   └── Strong vs. Weak Entities (Strong entities possess independent key attributes; Weak entities require owner key)
+│   │   └── Attribute Dimension Matrix
+│   │       ├── Simple / Atomic vs. Composite Attributes (Indivisible units vs Hierarchical components e.g. Name decomposed into First, Middle, Last)
+│   │       ├── Single-Valued vs. Multivalued Attributes (Single scalar value e.g. SSN or DOB vs Set of multiple values e.g. phone_numbers or degrees)
+│   │       ├── Stored vs. Derived Attributes (Physically stored in database vs Dynamically computed on-the-fly e.g. Age computed from DOB and Current_Date)
+│   │       └── Null Value Semantics (Represents missing values, unknown values, or inapplicable attribute contexts)
+│   └── Relationships & Mapping Cardinality Constraints
+│       ├── Relationship Set & Degree Dimensions
+│       │   ├── Relationship Set (A mathematical relation on n >= 2 entity sets, representing associations among entities e.g. Works_In or Enrolls)
+│       │   ├── Degree of Relationship (Number of participating entity sets: Binary = 2 sets, Ternary = 3 sets, n-ary = general)
+│       │   └── Descriptive Attributes (Attributes belonging to relationship set itself rather than participating entities e.g. since or hours)
+│       ├── Four Mapping Cardinalities
+│       │   ├── One-to-One / 1:1 Cardinality (An entity in A is associated with at most one entity in B, and B with at most one in A)
+│       │   ├── One-to-Many / 1:N Cardinality (An entity in A is associated with any number in B, while an entity in B is associated with at most one in A)
+│       │   ├── Many-to-One / N:1 Cardinality (Entities in A are associated with at most one in B, while an entity in B is associated with any number in A)
+│       │   └── Many-to-Many / M:N Cardinality (An entity in A is associated with any number in B, and an entity in B is associated with any number in A)
+│       └── Key Constraints on Relationships
+│           ├── Directed Arrow Representation (Arrow from relationship pointing to entity set indicates at most one relationship instance per entity)
+│           ├── Department Manages Example (Arrow towards Departments in Manages indicates each department has at most one manager)
+│           └── Strict 1:1 Arrow Rule (Arrows pointing to both entity sets enforce strict one-to-one mapping across both domains)
+├── 3. Advanced ER & Extended ER (EER) Mechanisms
+│   ├── Participation Constraints & Existence Dependency
+│   │   ├── Total Participation Semantics
+│   │   │   ├── Double-Line Representation (Signifies that every entity in the entity set must participate in at least one relationship instance)
+│   │   │   └── Existence Dependency (Entities cannot exist in the database without an associated relationship instance e.g. every Department must have a Manager)
+│   │   └── Partial Participation Semantics
+│   │       ├── Single-Line Representation (Signifies that entities in the entity set can optionally participate in relationship instances)
+│   │       └── Selective Association (e.g. only a small subset of Employees participate as managers in the Manages relationship set)
+│   ├── Weak Entity Sets & Identifying Relationships
+│   │   ├── Structural Anatomy of Weak Entity Sets
+│   │   │   ├── Identifying Owner Entity Set (Strong entity set providing primary key context for weak entity existence)
+│   │   │   ├── Identifying Relationship Set (Represented by double diamond, linking weak entity to owner with mandatory total participation)
+│   │   │   └── Partial Key / Discriminator (Underlined with dashed line, uniquely distinguishes weak entities associated with same owner)
+│   │   └── Formulation & Academic Examples
+│   │       ├── Primary Key Synthesis Rule (Primary Key = Owner Entity Primary Key + Weak Entity Partial Key / Discriminator)
+│   │       ├── Dependents of Employees (Dependents weak entity identified by pname discriminator combined with Employee ssn)
+│   │       └── Course Offerings of University (Course_Offering weak entity identified by sec_no and semester combined with Course_No)
+│   ├── Class Hierarchies & ISA Abstractions
+│   │   ├── Specialization vs. Generalization
+│   │   │   ├── Generalization (Bottom-up design process synthesizing common attributes of lower-level entity sets into a higher-level superclass)
+│   │   │   ├── Specialization (Top-down design process decomposing a higher-level entity set into specialized sub-groups based on distinct roles)
+│   │   │   └── Attribute Inheritance (Subclasses automatically inherit all attributes and relationship memberships of their superclass)
+│   │   └── Hierarchy Constraint Dimensions
+│   │       ├── Overlap Constraints (Overlapping allows an entity instance to belong to multiple subclasses vs Disjoint enforcing mutual exclusivity)
+│   │       └── Covering / Completeness Constraints (Total Covering requires every superclass entity to be in at least one subclass vs Partial Covering)
+│   └── Aggregation & Enterprise Conceptual Design
+│       ├── Aggregation Modeling Pattern
+│       │   ├── Aggregation Construct (Encapsulates a relationship set and participating entities as a higher-level abstract entity)
+│       │   ├── Overcoming ER Relationship Boundaries (Allows associating a relationship set with another relationship set e.g. Sponsors relationship linking to Projects-Monitors)
+│       │   └── Aggregation vs. Ternary Relationship (Aggregation preserves independent binary relationship semantics and permits distinct key constraints)
+│       └── Enterprise Design Decision Dilemmas
+│           ├── Entity vs. Attribute Choice (Use entity if object has internal attributes or dynamic lifecycle; use attribute if atomic descriptor)
+│           ├── Entity vs. Relationship Choice (Use relationship for pure associations; use entity if association itself has rich attributes or connects other relationships)
+│           └── Binary vs. Ternary Relationship Selection (Decompose ternary into binary if independent constraints apply; retain ternary if relationship is atomic)
+├── 4. Relational Model Foundations & Integrity Constraints
+│   ├── Relational Data Model Structure & Terminology
+│   │   ├── Core Relational Building Blocks
+│   │   │   ├── Relation Schema & Instance (Schema defines relation name, column names and types; Instance is a set of distinct tuples/records)
+│   │   │   ├── Tuples & Attributes (Tuple corresponds to a row or record; Attribute corresponds to a column or named field with a defined domain)
+│   │   │   └── Domain / Data Type (Set of permitted atomic scalar values e.g. INTEGER, CHAR(20), REAL)
+│   │   └── Mathematical Dimensions of Relations
+│   │       ├── Relation Degree / Arity (The total number of attributes / columns in the relation schema)
+│   │       └── Relation Cardinality (The total number of tuples / rows currently stored in the relation instance)
+│   ├── Integrity Constraints Classification
+│   │   ├── Domain Constraints & Entity Integrity
+│   │   │   ├── Domain Constraint (Every attribute value must be an atomic element drawn from the specified domain)
+│   │   │   └── Entity Integrity Rule (No attribute participating in the primary key of a relation can accept NULL values)
+│   │   ├── Key Constraints Hierarchy
+│   │   │   ├── Super Key (Any subset of attributes that uniquely identifies every tuple within the relation)
+│   │   │   ├── Candidate Key (A minimal super key such that no proper subset can uniquely identify tuples)
+│   │   │   └── Primary Key (A designated candidate key chosen by the database designer as the principal tuple identifier)
+│   │   └── Foreign Key & General Semantic Constraints
+│   │       ├── Foreign Key & Referential Integrity (A set of fields in referencing relation referring to primary key of referenced relation)
+│   │       ├── Referential Integrity Invariant (Foreign key value must match an existing primary key value in referenced relation or be NULL)
+│   │       └── General Semantic Constraints (Table CHECK constraints and assertions restricting allowable data states e.g. CHECK (rating BETWEEN 1 AND 10))
+│   └── Constraint Enforcement & Referential Actions
+│       ├── Violation Triggers on DML Operations
+│       │   ├── Insert Violations (Can violate domain, entity integrity, primary key uniqueness, or foreign key target validity)
+│       │   ├── Delete Violations (Can violate referential integrity if a referenced primary key tuple is deleted while referencing foreign keys exist)
+│       │   └── Update Violations (Can violate both primary key uniqueness and foreign key referential integrity on either side)
+│       └── SQL Referential Integrity Actions
+│           ├── NO ACTION / RESTRICT (Default action rejecting the deletion or update of referenced tuple with an error)
+│           ├── CASCADE (Automatically propagates the deletion or update of referenced tuple to all matching referencing tuples)
+│           ├── SET NULL (Sets the foreign key columns of all referencing tuples to NULL when referenced tuple is deleted or updated)
+│           └── SET DEFAULT (Sets the foreign key columns of all referencing tuples to a specified default value upon modification)
+├── 5. Logical Database Design (ER-to-Relational Translation)
+│   ├── Translating Entity Sets to Relations
+│   │   ├── Strong Entity Set Mapping Protocol
+│   │   │   ├── Direct Column Mapping (Each simple attribute of entity set maps to a column in the newly created table)
+│   │   │   └── Primary Key Preservation (The primary key of the strong entity set directly becomes the PRIMARY KEY of the relation)
+│   │   └── Complex Attribute Decompositions
+│   │       ├── Composite Attribute Flattening (Flattened into individual atomic component columns e.g. Address -> Street, City, State, Zip)
+│   │       └── Multivalued Attribute Extraction (Extracted into a separate relation containing owner primary key + attribute value as composite key)
+│   ├── Translating Relationship Sets to Relations
+│   │   ├── Many-to-Many / M:N Relationship Translation
+│   │   │   ├── Junction Relation Creation (Creates a dedicated relation containing foreign keys referencing both participating entity tables)
+│   │   │   ├── Composite Primary Key Formation (The primary key of the junction table is the composite union of both entity primary keys)
+│   │   │   └── Descriptive Attribute Retention (Any descriptive attributes of the relationship set become columns in the junction table)
+│   │   ├── Key Constraints & Relation Folding (1:N and 1:1)
+│   │   │   ├── Option 1 - Dedicated Relation (Create separate table where primary key is strictly the primary key of the entity on the constrained side)
+│   │   │   └── Option 2 - Relation Folding / Combination (Fold relationship attributes and foreign key directly into the relation of the entity on the many side e.g. Dept_Mgr)
+│   │   └── Enforcing Participation Constraints in SQL
+│   │       ├── NOT NULL Constraint Enforcement (In folded table, declare foreign key as NOT NULL to enforce total participation e.g. mgr_ssn in Departments)
+│   │       └── Combining 1:1 Total Relations (When both sides have total participation, combine both entities and relationship into a single unified table)
+│   ├── Translating Weak Entity Sets
+│   │   ├── Relational Formulation of Weak Entities
+│   │   │   ├── Composite Primary Key Structure (Primary key consists of Owner Entity Primary Key + Weak Entity Partial Key / Discriminator)
+│   │   │   ├── Foreign Key with ON DELETE CASCADE (Foreign key references owner relation with mandatory ON DELETE CASCADE clause)
+│   │   │   └── Identifying Relationship Subsumption (Identifying relationship set is eliminated as a separate table and folded into weak entity relation)
+│   │   └── SQL DDL Implementation Example
+│   │       ├── Dependents Schema (CREATE TABLE Dependents (pname CHAR(20), ssn CHAR(11), cost REAL, PRIMARY KEY (pname, ssn), FOREIGN KEY (ssn) REFERENCES Employees ON DELETE CASCADE))
+│   │       └── Cascading Lifecycle Guarantee (Deleting an employee record automatically triggers immediate cascading purge of all corresponding dependent tuples)
+│   └── Translating ISA Class Hierarchies & Aggregations
+│       ├── General 3-Table ISA Mapping Approach
+│       │   ├── Superclass Base Table (Creates relation for superclass storing primary key and all common shared attributes)
+│       │   ├── Subclass Specialized Tables (Creates relations for subclasses storing primary key and specific attributes, where primary key is foreign key to superclass)
+│       │   └── Universal Constraint Support (Works flawlessly across all combinations of overlap and covering constraints)
+│       ├── Alternative 2-Table ISA Mapping Approach
+│       │   ├── Subclass-Only Relations (Creates relations only for subclasses, copying all superclass attributes into each subclass table)
+│       │   └── Prerequisite Condition (Only valid when specialization is strictly Disjoint and Total/Covering; duplicate superclass updates are avoided)
+│       └── Translating Aggregations & Binary Decompositions
+│           ├── Aggregation Relational Translation (Creates table for aggregated relationship, and higher-level relationship contains foreign key to it)
+│           └── Binary vs. Ternary Decomposition in SQL (Binary decomposition uses separate relations e.g. Policies and Dependents with specific foreign keys, avoiding ternary null anomalies)
+└── 6. Relational Querying, Views & Schema Evolution
+    ├── Relational Querying Principles
+    │   ├── Declarative SQL Query Paradigm
+    │   │   ├── Query Definition & Result (A question about the data resulting in a newly computed relation containing matching answer tuples)
+    │   │   └── Core Relational Operators (SELECT projection choosing columns, WHERE restriction filtering rows, FROM join combining relations)
+    │   └── Academic Query Examples
+    │       ├── Projection & Restriction Queries (e.g. SELECT sname, gpa FROM Students WHERE gpa > 3.0)
+    │       └── Multi-Table Relational Joins (e.g. SELECT S.sname, E.cid FROM Students S, Enrolled E WHERE S.sid = E.sid AND E.grade = 'A')
+    ├── Relational Views Architecture & Applications
+    │   ├── View Definition & Virtual Semantics
+    │   │   ├── Virtual Table Concept (A relation that is not part of the conceptual physical model but is made visible to users as a virtual relation)
+    │   │   ├── SQL View Definition Syntax (CREATE VIEW view_name AS SELECT query_expression; stored as query definition in data dictionary)
+    │   │   └── Dynamic Query Re-evaluation (Standard views are computed on-the-fly dynamically whenever referenced in queries)
+    │   ├── Core Architectural View Benefits
+    │   │   ├── Logical Data Independence (Shields user applications from disruptions when base relation schemas are restructured)
+    │   │   ├── Security & Fine-Grained Access Control (Hides sensitive attributes and rows from unauthorized users without multiple base copies)
+    │   │   └── Query Simplification (Encapsulates frequently-used complex multi-table joins into clean virtual relations)
+    │   └── Materialized Views Mechanism
+    │       ├── Physical Result Caching (Precomputes and physically persists the view result on disk for high-performance decision support)
+    │       └── View Maintenance Overhead (Requires systematic maintenance protocols: Periodic batch refresh vs Incremental immediate refresh on base table updates)
+    └── DDL Schema Evolution & Object Destruction
+        ├── Destroying Database Objects
+        │   ├── DROP TABLE Semantics (Deletes all rows and purges table definition; RESTRICT blocks if foreign keys exist, CASCADE automatically purges referencing objects)
+        │   └── DROP VIEW Semantics (Deletes view query definition from system catalog without deleting or altering underlying base table data)
+        └── Modifying Relational Table Schemas
+            ├── ALTER TABLE ADD Column (Adds a new column definition to existing table; existing tuples receive NULL or defined DEFAULT value)
+            └── ALTER TABLE DROP Column (Deletes an existing column from table schema and removes attribute data across all tuples)

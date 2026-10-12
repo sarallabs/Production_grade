@@ -1,0 +1,77 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "module_name": "Topic 5 Logical Database Design",
+  "title": "Topic 5: Logical Database Design (ER-to-Relational Translation)",
+  "persona": "Intermediate",
+  "cefr_language_tier": "B2-C1",
+  "bloom_tier": "L3 Applying / L4 Analyzing",
+  "l1_mindmap_node": "5. Logical Database Design",
+  "word_count": 1230,
+  "infographics_count": 5,
+  "infographics_included": [
+    "5.0",
+    "5.1",
+    "5.2",
+    "5.3",
+    "5.4"
+  ],
+  "verbatim_definitions_included": [
+    "Logical Database Design",
+    "7-Step Mapping Algorithm",
+    "Relation Folding",
+    "Functional Dependency",
+    "Lossless-Join Decomposition",
+    "Dependency Preservation"
+  ],
+  "subtopics_covered": [
+    "5.1 Logical Database Design Principles & 7-Step Translation Algorithm",
+    "5.2 Translating Strong Entity Sets & Composite Attributes",
+    "5.3 Translating Multivalued Attributes into Child Tables",
+    "5.4 Translating Weak Entity Sets with Cascading Deletes",
+    "5.5 Translating Binary Relationships (1:1, 1:N, M:N) & Relation Folding",
+    "5.6 Translating Specialization / Generalization Hierarchies (ISA)",
+    "5.7 Translating Aggregation Constructs into Relational Tables",
+    "5.8 Theoretical Foundations of Schema Refinement: Functional Dependencies & Lossless Joins"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 5.1",
+      "image_tag": "5.0",
+      "title": "Conceptual ER-to-Relational Logical Schema Reduction Pipeline",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.2",
+      "image_tag": "5.1",
+      "title": "Mapping Strong Entity Sets & Composite Attributes to Relations",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.4",
+      "image_tag": "5.3",
+      "title": "Mapping Weak Entity Sets & Foreign Key Cascading Identifiers",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.3",
+      "image_tag": "5.2",
+      "title": "Mapping Binary & Ternary Relationship Sets to Relational Tables",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.5",
+      "image_tag": "5.4",
+      "title": "Mapping EER Specialization/Generalization (4 Distinct Relational Strategies)",
+      "module": "Module 5"
+    }
+  ]
+}

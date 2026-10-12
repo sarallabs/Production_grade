@@ -89,6 +89,19 @@ export const CHAPTER_TOPICS: ChapterTopics[] = [
       'Nervous Tissue',
     ],
   },
+  // ── MLRIT B.Tech CSE - DBMS ───────────────────────────
+  {
+    subject: 'dbms',
+    chapterNumber: 1,
+    topics: [
+      'Database Fundamentals & Engine Architecture',
+      'Conceptual Database Design & ER Modeling',
+      'Advanced ER & Extended ER (EER) Mechanisms',
+      'Relational Model Foundations & Integrity Constraints',
+      'Logical Database Design (ER-to-Relational Translation)',
+      'Relational Querying, Views & Schema Evolution',
+    ],
+  },
 ];
 
 export function getTopicsForChapter(subject: string, chapterNumber: number): string[] {

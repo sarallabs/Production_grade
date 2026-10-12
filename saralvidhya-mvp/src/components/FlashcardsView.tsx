@@ -423,8 +423,12 @@ export default function FlashcardsView({
                 finalUrl = PHYSICS_REAL_INFOGRAPHICS[currentIndex % PHYSICS_REAL_INFOGRAPHICS.length];
               }
             }
+            const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
+            if (isDbms && (!finalUrl || imgFailed)) {
+              finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/Resources/Mindmaps/NotebookLM%20Mind%20Map.png`.replace(/\/\//g, '/');
+            }
 
-            const hasImage = !!finalUrl && !imgFailed;
+            const hasImage = !!finalUrl;
 
             if (!isFlipped) {
               // ── FRONT FACE: Question only ─────────────────────────────────
@@ -676,6 +680,10 @@ export default function FlashcardsView({
           if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
             finalUrl = PHYSICS_REAL_INFOGRAPHICS[currentIndex % PHYSICS_REAL_INFOGRAPHICS.length];
           }
+        }
+        const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
+        if (isDbms && !finalUrl) {
+          finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/Resources/Mindmaps/NotebookLM%20Mind%20Map.png`.replace(/\/\//g, '/');
         }
 
         if (!finalUrl) return null;

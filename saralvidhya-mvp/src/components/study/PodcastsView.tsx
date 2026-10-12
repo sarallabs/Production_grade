@@ -25,21 +25,31 @@ import {
 export function stripMarkdown(text: string): string {
   if (!text) return "";
   let t = text;
-  t = t.replace(/<img\b[^>]*>/gi, "");
-  t = t.replace(/<[^>]+>/g, " ");
+  // Remove multiline base64 data URLs
+  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[\s\S]*?(?=["'\s>)]|$)/gi, "");
+  // Remove markdown images
   t = t.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, "");
-  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
-  return t
-    .replace(/#{1,6}\s*/g, "")
-    .replace(/\*\*([^*]+)\*\*/g, "$1")
-    .replace(/\*([^*]+)\*/g, "$1")
-    .replace(/`([^`]+)`/g, "$1")
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[>*_~`#]/g, "")
-    .replace(/⚠️|📖|📚|💙|🚫|🙏|👋/g, "")
-    .replace(/---+/g, "")
-    .trim();
+  // Remove html img tags
+  t = t.replace(/<img\b[^>]*>/gi, "");
+  // Remove html tags
+  t = t.replace(/<[^>]+>/g, " ");
+  // Remove code blocks (including mermaid)
+  t = t.replace(/```[\s\S]*?```/g, "");
+  // Remove inline code
+  t = t.replace(/`([^`]+)`/g, "$1");
+  // Remove markdown headers
+  t = t.replace(/#{1,6}\s*/g, "");
+  // Remove bold and italics
+  t = t.replace(/\*\*([^*]+)\*\*/g, "$1");
+  t = t.replace(/\*([^*]+)\*/g, "$1");
+  // Remove markdown links
+  t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  // Remove blockquotes and symbols
+  t = t.replace(/[>*_~`#]/g, "");
+  t = t.replace(/⚠️|📖|📚|💙|🚫|🙏|👋|💡/g, "");
+  t = t.replace(/---+/g, "");
+  // Normalize whitespace
+  return t.replace(/[ \t]+/g, " ").replace(/\n{3,}/g, "\n\n").trim();
 }
 
 export const SUBJECT_LANG: Record<string, string> = {
@@ -155,7 +165,9 @@ export default function PodcastsView({
   const isAngrauChap3 = subjectId === "ento_131" && chapterNumber === 3;
   const isAngrauChap4 = subjectId === "ento_131" && chapterNumber === 4;
   const isAngrauWithPodcasts = subjectId === "ento_131" && [1, 2, 3, 4].includes(chapterNumber);
-  const isNebOrMgmt = subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts;
+  const isDbmsChap1 = subjectId === "dbms" && chapterNumber === 1;
+  const isDbmsWithPodcasts = subjectId === "dbms" && chapterNumber === 1;
+  const isNebOrMgmt = subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts || isDbmsWithPodcasts;
 
   const getSavedTrack = (): string => {
     if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc" || resumeTrack === "short" || resumeTrack === "long") {
@@ -212,7 +224,14 @@ export default function PodcastsView({
         txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
       }));
     }
-    return isNebBiologyChap6 ? [
+    return isDbmsChap1 ? [
+      { title: "1. How 3-Schema Architecture Prevents Data Chaos", audio: "1.How 3-Schema Architecture Prevents Data Chaos.m4a", txt: "1.How 3-Schema Architecture Prevents Data Chaos_transcript.json" },
+      { title: "2. ER Diagram Rules for DBMS Exams", audio: "2.ER Diagram Rules for DBMS Exams.m4a", txt: "2.ER Diagram Rules for DBMS Exams_transcript.json" },
+      { title: "3. Weak Entities and Extended ER Mechanics", audio: "3.Weak Entities and Extended ER Mechanics.m4a", txt: "3.Weak Entities and Extended ER Mechanics_transcript.json" },
+      { title: "4. Relational Keys and Integrity Constraints", audio: "4.Relational Keys and Integrity Constraints.m4a", txt: "4.Relational Keys and Integrity Constraints_transcript.json" },
+      { title: "5. How ER Diagrams Become SQL Tables", audio: "5.How ER Diagrams Become SQL Tables.m4a", txt: "5.How ER Diagrams Become SQL Tables_transcript.json" },
+      { title: "6. SQL Views and Safe Schema Evolution", audio: "6.SQL Views and Safe Schema Evolution.m4a", txt: "6.SQL Views and Safe Schema Evolution_transcript.json" },
+    ] : isNebBiologyChap6 ? [
     { title: "1. Histology pioneers and the first tissues", audio: "MC1_Histology_pioneers_and_the_first_tissues.mp3", txt: "MC1_Histology_pioneers_and_the_first_tissues.txt" },
     { title: "2. How Avascular Epithelium Survives and Stays Intact", audio: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.mp3", txt: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.txt" },
     { title: "3. Simple Epithelium Types and Functions", audio: "MC3_Simple_Epithelium_Types_and_Functions.mp3", txt: "MC3_Simple_Epithelium_Types_and_Functions.txt" },
@@ -253,13 +272,15 @@ export default function PodcastsView({
   ] : [
     { title: "1. Topic Overview", audio: "MC1.mp3", txt: "MC1.txt" }
   ];
-  }, [isNebBiologyChap6, chapterNumber, subjectId]);
+  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
 
   const DETAILED_LISTENS = useMemo(() => {
     if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
       return [{ title: "1. Chapter Complete Coverage", audio: "long_podcast.m4a", txt: "long_podcast.md" }];
     }
-    return isNebBiologyChap6 ? [
+    return isDbmsChap1 ? [
+      { title: "1. DBMS Unit 1 Complete Coverage", audio: "DBMS_Long_Podcast.m4a", txt: "DBMS_Long_Podcast_transcript.json" }
+    ] : isNebBiologyChap6 ? [
     { title: "1. Animal Tissue Complete Coverage", audio: "DL_Animal Tissue Podcast.mp3", txt: "DL_Animal Tissue Podcast.txt" }
   ] : isAngrauChap1 ? [
     { title: "1. Digestive System Complete Coverage", audio: "Digestive system Long Podcast.m4a", txt: "Digestive system Long Podcast.txt" }
@@ -272,13 +293,15 @@ export default function PodcastsView({
   ] : [
     { title: "1. Chapter Complete Coverage", audio: "DL.mp3", txt: "DL.txt" }
   ];
-  }, [isNebBiologyChap6, chapterNumber, subjectId]);
+  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
 
   const QUICK_LISTENS = useMemo(() => {
     if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
       return [{ title: "1. Chapter Quick Recap", audio: "short_podcast.m4a", txt: "short_podcast.md" }];
     }
-    return isNebBiologyChap6 ? [
+    return isDbmsChap1 ? [
+      { title: "1. DBMS Unit 1 Quick Recap", audio: "DBMS_Short_Podcast.m4a", txt: "DBMS_Short_Podcast_transcript.json" }
+    ] : isNebBiologyChap6 ? [
     { title: "1. The Four Pillars of Animal Tissue", audio: "QL_The_Four_Pillars_of_Animal_Tissue.mp3", txt: "QL_The_Four_Pillars_of_Animal_Tissue.txt" }
   ] : isAngrauChap1 ? [
     { title: "1. Digestive System Quick Recap", audio: "Digestive system Short Podcast.m4a", txt: "Digestive system Short Podcast.txt" }
@@ -291,7 +314,7 @@ export default function PodcastsView({
   ] : [
     { title: "1. Chapter Quick Recap", audio: "QL.mp3", txt: "QL.txt" }
   ];
-  }, [isNebBiologyChap6, chapterNumber, subjectId]);
+  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
 
   useEffect(() => {
     localStorage.setItem(
@@ -306,6 +329,12 @@ export default function PodcastsView({
   const [showWave, setShowWave] = useState(false);
   const [showClickWave, setShowClickWave] = useState(false);
   const [transcript, setTranscript] = useState<string | null>(null);
+  const [transcriptSegments, setTranscriptSegments] = useState<Array<{
+    start_sec: number;
+    end_sec: number;
+    transcript: string;
+  }> | null>(null);
+  const [transcriptDuration, setTranscriptDuration] = useState<number | null>(null);
   const transcriptRef = useRef<HTMLDivElement>(null);
   const transcriptBoxRef = useRef<HTMLDivElement>(null);
 
@@ -345,9 +374,10 @@ export default function PodcastsView({
   const cleanText = useMemo(() => stripMarkdown(transcript || ""), [transcript]);
 
   const displayDuration = useMemo(() => {
-    if (available) return audioDuration;
+    if (available && audioDuration > 0) return audioDuration;
+    if (transcriptDuration && transcriptDuration > 0) return transcriptDuration;
     return Math.max(1, cleanText.length / 15);
-  }, [available, audioDuration, cleanText]);
+  }, [available, audioDuration, transcriptDuration, cleanText]);
 
   const displayCurrent = useMemo(() => {
     if (available) return currentTime;
@@ -357,9 +387,9 @@ export default function PodcastsView({
   const progressPct = displayDuration ? (displayCurrent / displayDuration) * 100 : 0;
 
   const transcriptTokens = useMemo(() => {
-    if (!transcript) return [] as string[];
-    return transcript.split(/(\s+|[.,!?;:]+)/g).filter(Boolean);
-  }, [transcript]);
+    if (!cleanText) return [] as string[];
+    return cleanText.split(/(\s+|[.,!?;:]+)/g).filter(Boolean);
+  }, [cleanText]);
 
   const wordTimings = useMemo(() => {
     if (!transcriptTokens.length)
@@ -367,11 +397,52 @@ export default function PodcastsView({
         totalWeight: 0,
         wordWeights: [] as number[],
         wordIndexes: [] as number[],
+        exactTimestamps: null as number[] | null,
       };
+
+    const wordIndexes: number[] = [];
+    for (let i = 0; i < transcriptTokens.length; i++) {
+      const token = transcriptTokens[i];
+      const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
+      if (isWord) {
+        wordIndexes.push(i);
+      }
+    }
+
+    // High-precision Whisper/Groq segment timestamps
+    if (transcriptSegments && transcriptSegments.length > 0) {
+      const exactTimestamps: number[] = [];
+      transcriptSegments.forEach((seg) => {
+        const segTokens = (seg.transcript || "").split(/(\s+|[.,!?;:]+)/g).filter(Boolean);
+        const segWords: string[] = [];
+        segTokens.forEach((t) => {
+          if (t.trim() !== "" && !/^[.,!?;:]+$/.test(t)) {
+            segWords.push(t);
+          }
+        });
+        const segDur = Math.max(0.05, seg.end_sec - seg.start_sec);
+        const totalChars = segWords.reduce((acc, w) => acc + w.length, 0) || 1;
+        let runningChars = 0;
+        segWords.forEach((w) => {
+          const frac = runningChars / totalChars;
+          const wordTime = seg.start_sec + frac * segDur;
+          exactTimestamps.push(wordTime);
+          runningChars += w.length;
+        });
+      });
+
+      if (exactTimestamps.length === wordIndexes.length) {
+        return {
+          totalWeight: 0,
+          wordWeights: [] as number[],
+          wordIndexes,
+          exactTimestamps,
+        };
+      }
+    }
 
     let cumulativeChars = 0;
     const wordWeights: number[] = [];
-    const wordIndexes: number[] = [];
 
     for (let i = 0; i < transcriptTokens.length; i++) {
       const token = transcriptTokens[i];
@@ -381,7 +452,6 @@ export default function PodcastsView({
         // Pure character count makes TTS sync much more accurate since reading speed is roughly constant in chars/sec
         cumulativeChars += token.length;
         wordWeights.push(cumulativeChars);
-        wordIndexes.push(i);
       } else {
         // Equivalent pause lengths in "characters" (assuming ~15 chars/sec reading speed)
         if (token.includes(".")) cumulativeChars += 12;
@@ -403,8 +473,8 @@ export default function PodcastsView({
 
     const shiftedWeights = wordWeights.map((w) => w + START_SILENCE_CHARS);
 
-    return { totalWeight, wordWeights: shiftedWeights, wordIndexes };
-  }, [transcriptTokens]);
+    return { totalWeight, wordWeights: shiftedWeights, wordIndexes, exactTimestamps: null };
+  }, [transcriptTokens, transcriptSegments]);
 
   const wordTimingsRef = useRef(wordTimings);
   useEffect(() => {
@@ -530,6 +600,39 @@ export default function PodcastsView({
       return {
         audio: `${gcsBasePath}/${fileName}.m4a`,
         transcript: `${gcsBasePath}/${fileName}.md`,
+      };
+    }
+
+    if (subjectId === "dbms") {
+      const dbmsAudioPath = `${subjectBaseUrl}/${chapterDir}/Learn/Listen`;
+      const dbmsTranscriptPath = `${subjectBaseUrl}/${chapterDir}/Learn/Listen/Transcript`;
+      if (track === "dl") {
+        const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0];
+        const tFile = dl.txt || `${dl.audio.replace(/\.m4a$/i, '')}_transcript.json`;
+        return {
+          audio: `${dbmsAudioPath}/${encodeURIComponent(dl.audio)}`,
+          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
+        };
+      }
+      if (track === "ql") {
+        const ql = QUICK_LISTENS[selectedQl] || QUICK_LISTENS[0];
+        const tFile = ql.txt || `${ql.audio.replace(/\.m4a$/i, '')}_transcript.json`;
+        return {
+          audio: `${dbmsAudioPath}/${encodeURIComponent(ql.audio)}`,
+          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
+        };
+      }
+      if (track === "mc") {
+        const mc = MICROCASTS[selectedMc] || MICROCASTS[0];
+        const tFile = mc.txt || `${mc.audio.replace(/\.m4a$/i, '')}_transcript.json`;
+        return {
+          audio: `${dbmsAudioPath}/${encodeURIComponent(mc.audio)}`,
+          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
+        };
+      }
+      return {
+        audio: `${dbmsAudioPath}/DBMS_Short_Podcast.m4a`,
+        transcript: `${dbmsTranscriptPath}/DBMS_Short_Podcast_transcript.json`,
       };
     }
 
@@ -745,18 +848,34 @@ export default function PodcastsView({
 
     // Direct DOM transcript word highlighting (zero React virtual-DOM diffing)
     const wt = wordTimingsRef.current;
-    if (wt && wt.totalWeight > 0 && duration > 0) {
-      const clamped = Math.min(time, duration);
-      const targetWeight = (clamped / duration) * wt.totalWeight;
-      const weights = wt.wordWeights;
-      let lo = 0, hi = weights.length - 1, wordIdx = 0;
-      while (lo <= hi) {
-        const mid = (lo + hi) >> 1;
-        if (weights[mid] >= targetWeight) {
-          wordIdx = mid;
-          hi = mid - 1;
-        } else {
-          lo = mid + 1;
+    if (wt && wt.wordIndexes.length > 0 && duration > 0) {
+      let wordIdx = 0;
+      if (wt.exactTimestamps && wt.exactTimestamps.length > 0) {
+        // High-precision segment timestamps binary search
+        const ts = wt.exactTimestamps;
+        let lo = 0, hi = ts.length - 1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (ts[mid] <= time) {
+            wordIdx = mid;
+            lo = mid + 1;
+          } else {
+            hi = mid - 1;
+          }
+        }
+      } else if (wt.totalWeight > 0) {
+        const clamped = Math.min(time, duration);
+        const targetWeight = (clamped / duration) * wt.totalWeight;
+        const weights = wt.wordWeights;
+        let lo = 0, hi = weights.length - 1;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (weights[mid] >= targetWeight) {
+            wordIdx = mid;
+            hi = mid - 1;
+          } else {
+            lo = mid + 1;
+          }
         }
       }
       const tokenIdx = wt.wordIndexes[wordIdx] ?? -1;
@@ -923,10 +1042,31 @@ export default function PodcastsView({
     return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, [updateProgress]);
 
+  // 60fps continuous RAF loop while audio is actively playing for smooth word-by-word tracking
+  useEffect(() => {
+    let animId: number | null = null;
+    const loop = () => {
+      const audio = audioRef.current;
+      if (audio && !audio.paused && isPlaying) {
+        const dur = audioDurationRef.current || audio.duration || displayDuration || 0;
+        updateProgress(audio.currentTime, dur);
+        animId = requestAnimationFrame(loop);
+      }
+    };
+    if (isPlaying) {
+      animId = requestAnimationFrame(loop);
+    }
+    return () => {
+      if (animId !== null) cancelAnimationFrame(animId);
+    };
+  }, [isPlaying, displayDuration, updateProgress]);
+
   // ── Load transcript when track, subject, chapter, or level changes ──
   useEffect(() => {
     if (!subjectId) return;
     setTranscript(null);
+    setTranscriptSegments(null);
+    setTranscriptDuration(null);
 
     const { transcript: tFile } = getFileNames(selectedTrack);
     fetch(tFile)
@@ -935,8 +1075,56 @@ export default function PodcastsView({
         if (!r.ok || ct.includes("text/html")) throw new Error();
         return r.text();
       })
-      .then((t) => setTranscript(t))
+      .then((t) => {
+        try {
+          const parsed = JSON.parse(t);
+          if (parsed && typeof parsed.full_text === "string") {
+            setTranscript(parsed.full_text);
+            if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
+              setTranscriptSegments(parsed.segments);
+            } else {
+              setTranscriptSegments(null);
+            }
+            if (typeof parsed.total_runtime_seconds === "number" && parsed.total_runtime_seconds > 0) {
+              setTranscriptDuration(parsed.total_runtime_seconds);
+            }
+            return;
+          }
+        } catch {}
+        setTranscript(t);
+        setTranscriptSegments(null);
+      })
       .catch(() => {
+        // Fallback: try .txt version if .json failed
+        const txtUrl = tFile.replace(/_transcript\.json$/i, '.txt');
+        if (txtUrl !== tFile) {
+          fetch(txtUrl)
+            .then((r) => {
+              if (!r.ok) throw new Error();
+              return r.text();
+            })
+            .then((t) => {
+              setTranscript(t);
+              setTranscriptSegments(null);
+            })
+            .catch(() => {
+              getResourceContent(
+                subjectId,
+                chapterNumber,
+                selectedTrack === "long" ? "long_podcast.md" : "short_podcast.md",
+                persona as DifficultyLevel,
+              ).then((script) => {
+                if (script && !script.includes("Content not available")) {
+                  setTranscript(script);
+                } else {
+                  setTranscript("Content not available.");
+                }
+                setTranscriptSegments(null);
+              });
+            });
+          return;
+        }
+
         // Fallback to getResourceContent
         getResourceContent(
           subjectId,
@@ -949,9 +1137,10 @@ export default function PodcastsView({
           } else {
             setTranscript("Content not available.");
           }
+          setTranscriptSegments(null);
         });
       });
-  }, [selectedTrack, selectedMc, subjectId, chapterNumber, persona, chapterDir]);
+  }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir]);
 
   const handlePlay = () => {
     const audio = audioRef.current;
@@ -2042,6 +2231,36 @@ export default function PodcastsView({
             <div
               className="transcript-box transcript-body"
               ref={transcriptBoxRef}
+              onClick={(e) => {
+                const target = (e.target as HTMLElement).closest(".transcript-word") as HTMLElement | null;
+                if (!target || !audioRef.current) return;
+                const index = Array.from(target.parentElement?.children || []).indexOf(target);
+                if (index < 0) return;
+                const wt = wordTimingsRef.current;
+                if (!wt) return;
+                const wordIdx = wt.wordIndexes.indexOf(index);
+                if (wordIdx < 0) return;
+                let seekTime = 0;
+                if (wt.exactTimestamps && wt.exactTimestamps[wordIdx] !== undefined) {
+                  seekTime = wt.exactTimestamps[wordIdx];
+                } else if (wt.totalWeight > 0) {
+                  const dur = audioDurationRef.current || audioRef.current.duration || displayDuration;
+                  if (dur > 0) {
+                    seekTime = (wt.wordWeights[wordIdx] / wt.totalWeight) * dur;
+                  }
+                }
+                if (seekTime >= 0) {
+                  audioRef.current.currentTime = seekTime;
+                  setCurrentTime(seekTime);
+                  updateProgress(seekTime, audioDurationRef.current || audioRef.current.duration || 0);
+                  if (audioRef.current.paused) {
+                    audioRef.current.play().then(() => {
+                      setIsPlaying(true);
+                      onPlayingChange?.(true);
+                    }).catch(() => {});
+                  }
+                }
+              }}
             >
               {transcriptTokens.map((token, idx) => {
                 const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
