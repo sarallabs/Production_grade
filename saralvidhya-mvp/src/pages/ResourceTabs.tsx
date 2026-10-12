@@ -254,7 +254,7 @@ export default function ResourceTabs() {
             }
           `}</style>
           {activeFile === 'flashcards' && flashcards !== null && (
-            <FlashcardsView cards={flashcards} />
+            <FlashcardsView cards={flashcards} subjectId={subject} chapterNumber={chNum} />
           )}
           {isQuizOrAssessment && content !== null && (
             <AssessmentView
@@ -381,7 +381,7 @@ export default function ResourceTabs() {
       <div className="tab-content">
         {error && <p className="error">{error}</p>}
         {activeFile === 'flashcards' && flashcards !== null && (
-          <FlashcardsView cards={flashcards} />
+          <FlashcardsView cards={flashcards} subjectId={subject} chapterNumber={chNum} />
         )}
         {isQuizOrAssessment && content !== null && (
           <AssessmentView

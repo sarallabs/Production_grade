@@ -1,0 +1,34 @@
+{
+  "id": "angrau",
+  "name": "Acharya N.G. Ranga Agricultural University",
+  "shortName": "ANGRAU",
+  "branding": {
+    "appName": "ANGRAU Medha",
+    "primaryColor": "#059669",
+    "programLabel": "B.Sc. (Hons.) Agriculture"
+  },
+  "features": {
+    "examinerConsole": true,
+    "expertPanel": true,
+    "pyq": true,
+    "ask": true,
+    "toolOrder": [
+      "read.quick",
+      "read.detailed",
+      "learn.mindmap",
+      "practice.mcq",
+      "practice.msq",
+      "podcasts",
+      "prepare.pre_final_exam"
+    ]
+  },
+  "hierarchy": ["program", "subject"],
+  "nodes": [
+    {
+      "id": "bsc_agri",
+      "type": "program",
+      "name": "B.Sc. (Hons.) Agriculture",
+      "order": 1
+    }
+  ]
+}

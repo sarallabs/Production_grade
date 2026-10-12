@@ -1,22 +1,29 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { googleTtsSpeak, googleTtsStop } from '@/services/googleTtsService';
 import MarkdownView from '@/components/MarkdownView';
+import { GCS_API_BASE } from '@/data/manifestService';
 import type { ToolId } from '@/components/ToolsMenu';
 
 interface Card {
+  id?: string;
   front?: string;
   back?: string;
   question?: string;
   answer?: string;
+  definition?: string;
   infographicUrl?: string;
+  mermaidDiagram?: string;
+  mermaid_diagram?: string;
+  mermaid?: string;
   level?: "beginner" | "intermediate" | "advanced";
 }
 
 interface Props {
   cards: Card[];
   subjectId?: string;
+  chapterNumber?: number;
   persona?: string;
-  /** Called whenever speaking state changes â€” true = currently speaking */
+  /** Called whenever speaking state changes — true = currently speaking */
   onSpeakingChange?: (speaking: boolean) => void;
   /** Incremented by parent to toggle play/pause */
   speakTrigger?: number;
@@ -41,6 +48,7 @@ const SUBJECT_LANG: Record<string, string> = {
 export default function FlashcardsView({
   cards,
   subjectId = 'english',
+  chapterNumber = 1,
   persona = 'beginner',
   onSpeakingChange,
   speakTrigger,
@@ -406,29 +414,47 @@ export default function FlashcardsView({
               `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Mind_Map.png`.replace(/\/\//g, '/'),
             ];
 
+            const mermaidCode = currentCard?.mermaidDiagram 
+              || (currentCard as any)?.mermaid_diagram 
+              || (currentCard as any)?.mermaid;
+
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
             if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
-              const imgBase = import.meta.env.VITE_GCS_API_BASE
-                ? `${import.meta.env.VITE_GCS_API_BASE}/api/content/angrau/entomology`
-                : '/generated_resources/angrau';
+              const chStr = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
+              const imgBase = `${GCS_API_BASE}/api/content/angrau/entomology`;
               if (finalUrl.startsWith('../Mindmaps/')) {
-                finalUrl = `${imgBase}/chapter_01/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
-              } else if (finalUrl.startsWith('/api/') && import.meta.env.VITE_GCS_API_BASE) {
-                finalUrl = `${import.meta.env.VITE_GCS_API_BASE}${finalUrl}`;
+                finalUrl = `${imgBase}/${chStr}/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
+              } else if (finalUrl.includes('generated_infographics')) {
+                const cleanRel = finalUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
+                finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${chStr}/${cleanRel}`;
+              } else if (finalUrl.startsWith('/api/')) {
+                finalUrl = `${GCS_API_BASE}${finalUrl}`;
+              } else if (finalUrl.startsWith('/generated_resources/')) {
+                if (subjectId.includes('angrau') || subjectId.includes('entomology')) {
+                  const subRel = finalUrl.replace(/^\/generated_resources\/[^\/]+\//, '');
+                  finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${subRel}`;
+                } else {
+                  finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
+                }
               }
             }
+
             if (isPhysics) {
               const urlLower = (finalUrl || '').toLowerCase();
               if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
                 finalUrl = PHYSICS_REAL_INFOGRAPHICS[currentIndex % PHYSICS_REAL_INFOGRAPHICS.length];
               }
             }
+
             const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
             if (isDbms && (!finalUrl || imgFailed)) {
-              finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/Resources/Mindmaps/NotebookLM%20Mind%20Map.png`.replace(/\/\//g, '/');
+              const normPersona = persona === 'beginner' || persona === 'easy' ? 'beginner' : persona === 'advanced' || persona === 'hard' ? 'advanced' : 'intermediate';
+              finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/practice/flashcards/images/card_${normPersona}_${currentIndex + 1}.webp`.replace(/\/\//g, '/');
             }
 
-            const hasImage = !!finalUrl;
+            const hasValidImage = !!finalUrl && !imgFailed;
+            const hasMermaid = !!mermaidCode;
+            const hasVisual = hasValidImage || hasMermaid;
 
             if (!isFlipped) {
               // ── FRONT FACE: Question only ─────────────────────────────────
@@ -479,7 +505,7 @@ export default function FlashcardsView({
               );
             }
 
-            // ── BACK FACE: Answer on Top (Centered) + Infographic Below (Centered) ──
+            // ── BACK FACE: Answer on Top (Centered) + Infographic / Diagram Below (Centered) ──
             return (
               <div
                 title="Click to flip back to the question"
@@ -488,15 +514,15 @@ export default function FlashcardsView({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: hasImage ? 'flex-start' : 'center',
-                  gap: hasImage ? '4px' : '10px',
+                  justifyContent: hasVisual ? 'flex-start' : 'center',
+                  gap: hasVisual ? '4px' : '10px',
                   flex: 1,
                   height: '100%',
                   maxHeight: '100%',
                   minHeight: 0,
                   overflow: 'hidden',
                   cursor: 'pointer',
-                  paddingTop: hasImage ? '2px' : '10px',
+                  paddingTop: hasVisual ? '2px' : '10px',
                   boxSizing: 'border-box',
                 }}
               >
@@ -509,15 +535,15 @@ export default function FlashcardsView({
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    fontSize: hasImage ? '14px' : '17px',
-                    lineHeight: '1.35',
+                    fontSize: hasVisual ? '14.5px' : '17px',
+                    lineHeight: '1.4',
                     color: '#1e293b',
                     fontWeight: 500,
-                    padding: hasImage ? '0 50px 2px' : '12px 30px',
+                    padding: hasVisual ? '0 50px 2px' : '12px 30px',
                     boxSizing: 'border-box',
                     overflowY: 'auto',
                     flexShrink: 0,
-                    maxHeight: hasImage ? '33%' : '100%',
+                    maxHeight: hasVisual ? '36%' : '100%',
                   }}
                 >
                   <style>{`
@@ -531,8 +557,8 @@ export default function FlashcardsView({
                   </div>
                 </div>
 
-                {/* Infographic: Bottom center div — contained with absolute fitting to prevent layout explosion */}
-                {hasImage && (
+                {/* Infographic or Diagram: Bottom center div */}
+                {hasVisual && (
                   <div
                     style={{
                       width: '100%',
@@ -547,32 +573,56 @@ export default function FlashcardsView({
                       overflow: 'hidden',
                     }}
                   >
-                    <img
-                      src={finalUrl}
-                      alt="Infographic"
-                      onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
-                      onError={() => setImgFailed(true)}
-                      title="Click to view full screen"
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        maxWidth: 'calc(100% - 16px)',
-                        maxHeight: 'calc(100% - 8px)',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        borderRadius: '12px',
-                        backgroundColor: '#ffffff',
-                        padding: '4px',
-                        border: '1px solid rgba(111, 154, 127, 0.35)',
-                        boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
-                        cursor: 'zoom-in',
-                        boxSizing: 'border-box',
-                        display: 'block',
-                      }}
-                    />
+                    {hasValidImage ? (
+                      <img
+                        src={finalUrl}
+                        alt="Infographic"
+                        onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
+                        onError={() => setImgFailed(true)}
+                        title="Click to view full screen"
+                        style={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          maxWidth: 'calc(100% - 16px)',
+                          maxHeight: 'calc(100% - 8px)',
+                          width: 'auto',
+                          height: 'auto',
+                          objectFit: 'contain',
+                          borderRadius: '12px',
+                          backgroundColor: '#ffffff',
+                          padding: '4px',
+                          border: '1px solid rgba(111, 154, 127, 0.35)',
+                          boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
+                          cursor: 'zoom-in',
+                          boxSizing: 'border-box',
+                          display: 'block',
+                        }}
+                      />
+                    ) : hasMermaid ? (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: '#ffffff',
+                          borderRadius: '12px',
+                          border: '1px solid rgba(111, 154, 127, 0.35)',
+                          boxShadow: '0 4px 18px rgba(45, 62, 54, 0.08)',
+                          padding: '8px',
+                          boxSizing: 'border-box',
+                          overflow: 'auto',
+                        }}
+                      >
+                        <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
+                          <MarkdownView content={"```mermaid\n" + mermaidCode + "\n```"} />
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -675,6 +725,25 @@ export default function FlashcardsView({
         ];
 
         let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
+        if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
+          const chStr = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
+          const imgBase = `${GCS_API_BASE}/api/content/angrau/entomology`;
+          if (finalUrl.startsWith('../Mindmaps/')) {
+            finalUrl = `${imgBase}/${chStr}/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
+          } else if (finalUrl.includes('generated_infographics')) {
+            const cleanRel = finalUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
+            finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${chStr}/${cleanRel}`;
+          } else if (finalUrl.startsWith('/api/')) {
+            finalUrl = `${GCS_API_BASE}${finalUrl}`;
+          } else if (finalUrl.startsWith('/generated_resources/')) {
+            if (subjectId.includes('angrau') || subjectId.includes('entomology')) {
+              const subRel = finalUrl.replace(/^\/generated_resources\/[^\/]+\//, '');
+              finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${subRel}`;
+            } else {
+              finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
+            }
+          }
+        }
         if (isPhysics) {
           const urlLower = (finalUrl || '').toLowerCase();
           if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
@@ -683,7 +752,8 @@ export default function FlashcardsView({
         }
         const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
         if (isDbms && !finalUrl) {
-          finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/Resources/Mindmaps/NotebookLM%20Mind%20Map.png`.replace(/\/\//g, '/');
+          const normPersona = persona === 'beginner' || persona === 'easy' ? 'beginner' : persona === 'advanced' || persona === 'hard' ? 'advanced' : 'intermediate';
+          finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/practice/flashcards/images/card_${normPersona}_${currentIndex + 1}.webp`.replace(/\/\//g, '/');
         }
 
         if (!finalUrl) return null;

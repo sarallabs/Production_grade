@@ -1,0 +1,21 @@
+# Legacy files allowlist for tenant literals
+# These files contain legacy ANGRAU/ento_131 references.
+# During Phase 5 refactoring, as each file is made fully registry-driven,
+# it will be removed from this list until the allowlist is completely empty.
+
+components/study/PodcastsView.tsx
+components/study/PYQView.tsx
+components/study/VideosView.tsx
+components/study/ReadAloudBar.tsx
+components/FlashcardsView.tsx
+components/MarkdownView.tsx
+data/angrauPlaceholderPyqs.ts
+data/chapterTopics.ts
+data/flashcardService.ts
+data/manifestService.ts
+pages/ChapterList.tsx
+pages/ClassSubjectSelection.tsx
+pages/ExaminerConsole.tsx
+pages/StudyTable.tsx
+tenant/TenantProvider.tsx
+utils/analytics.ts

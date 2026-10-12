@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import React, { useEffect, useState, Suspense } from 'react';
 import Layout from './components/Layout';
 import { FocusModeProvider } from './context/FocusModeContext';
+import { TenantProvider } from './tenant/TenantProvider';
 import branding from './config/branding.json';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -106,144 +107,165 @@ export default function App() {
 
   if (!initDone) return null;
 
+  const renderAppRoutes = () => (
+    <>
+      <Route index element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <ClassSubjectSelection />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="dashboard" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="subjects" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <Subjects />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="subjects/:subjectId" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <ChapterList />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="subjects/:subjectId/chapter/:chapterNumber" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <ResourceTabs />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="profile" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="leaderboard" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <GlobalLeaderboard />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="persona" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <PersonaSelection />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="questionnaire" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <Questionnaire />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="assessment-complete" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <AssessmentComplete />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="study-table" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <StudyTable />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="previous-year-questions" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <PreviousYearQuestions />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+      <Route path="chapters" element={
+        <AuthGuard>
+          <ProtectedRoute>
+            <ChapterList />
+          </ProtectedRoute>
+        </AuthGuard>
+      } />
+    </>
+  );
+
   return (
-    <FocusModeProvider>
-      <ErrorBoundary resetKey={location.pathname}>
-        <Suspense fallback={<LoadingSpinner />}>
-          <Routes>
-            {/* ── Config & Admin: Protected by AdminGuard ── */}
-            <Route path="/config" element={
-              <AdminGuard>
-                <ConfigPage />
-              </AdminGuard>
-            } />
-            <Route path="/examiner" element={
-              <AdminGuard>
-                <ExaminerConsole />
-              </AdminGuard>
-            } />
-            <Route path="/x" element={
-              <AdminGuard>
-                <ExpertPanel />
-              </AdminGuard>
-            } />
+    <TenantProvider>
+      <FocusModeProvider>
+        <ErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={<LoadingSpinner />}>
+            <Routes>
+              {/* ── Config & Admin: Protected by AdminGuard ── */}
+              <Route path="/config" element={
+                <AdminGuard>
+                  <ConfigPage />
+                </AdminGuard>
+              } />
+              <Route path="/examiner" element={
+                <AdminGuard>
+                  <ExaminerConsole />
+                </AdminGuard>
+              } />
+              <Route path="/x" element={
+                <AdminGuard>
+                  <ExpertPanel />
+                </AdminGuard>
+              } />
 
-            {/* ── Public: Login ── */}
-            <Route path="/login" element={
-              <GuestOnly>
-                <Login />
-              </GuestOnly>
-            } />
+              {/* ── Direct / Root Public & Protected Routes ── */}
+              <Route path="/login" element={
+                <GuestOnly>
+                  <Login />
+                </GuestOnly>
+              } />
+              <Route path="/onboarding" element={
+                <AuthGuard>
+                  <ProtectedRoute>
+                    <Onboarding />
+                  </ProtectedRoute>
+                </AuthGuard>
+              } />
+              <Route element={<Layout />}>
+                {renderAppRoutes()}
+              </Route>
 
-            {/* /expert route disabled for MVP — re-enable by uncommenting ExpertDashboard import above */}
+              {/* ── Multi-Tenant Prefixed Routes (/:tenantId/...) ── */}
+              <Route path="/:tenantId/login" element={
+                <GuestOnly>
+                  <Login />
+                </GuestOnly>
+              } />
+              <Route path="/:tenantId/onboarding" element={
+                <AuthGuard>
+                  <ProtectedRoute>
+                    <Onboarding />
+                  </ProtectedRoute>
+                </AuthGuard>
+              } />
+              <Route path="/:tenantId" element={<Layout />}>
+                {renderAppRoutes()}
+              </Route>
 
-            {/* ── Onboarding (authenticated but no profile yet) ── */}
-            <Route path="/onboarding" element={
-              <AuthGuard>
-                <ProtectedRoute>
-                  <Onboarding />
-                </ProtectedRoute>
-              </AuthGuard>
-            } />
-
-            {/* ── Main app (authenticated + onboarded) ── */}
-            <Route element={<Layout />}>
-              <Route path="/" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <ClassSubjectSelection />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/dashboard" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Dashboard />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/subjects" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Subjects />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/subjects/:subjectId" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <ChapterList />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/subjects/:subjectId/chapter/:chapterNumber" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <ResourceTabs />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/profile" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Profile />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/leaderboard" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <GlobalLeaderboard />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/persona" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <PersonaSelection />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/questionnaire" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Questionnaire />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/assessment-complete" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <AssessmentComplete />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/study-table" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <StudyTable />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/previous-year-questions" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <PreviousYearQuestions />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/chapters" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <ChapterList />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
+              {/* ── Fallback ── */}
               <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
-    </FocusModeProvider>
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
+      </FocusModeProvider>
+    </TenantProvider>
   );
 }

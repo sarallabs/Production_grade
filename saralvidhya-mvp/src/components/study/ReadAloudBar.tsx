@@ -73,6 +73,7 @@ export default function ReadAloudBar({
   onHighlightChange,
   activeTool,
   onSwitchTool,
+  isPurpleTheme,
 }: {
   text: string;
   subjectId: string;
@@ -85,10 +86,12 @@ export default function ReadAloudBar({
   }) => void;
   activeTool?: string;
   onSwitchTool?: (tool: ToolId) => void;
+  isPurpleTheme?: boolean;
 }) {
   const [playbackState, setPlaybackState] = useState<
     "idle" | "playing" | "paused"
   >("idle");
+  const isPurple = isPurpleTheme ?? (subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit"));
   const lang = SUBJECT_LANG[subjectId] ?? "en-IN";
   const playbackRef = useRef<"idle" | "playing" | "paused">("idle");
   const cooldownRef = useRef(false);
@@ -283,82 +286,120 @@ export default function ReadAloudBar({
     };
   }, [progressStorageKey]);
 
+  const durationString = useMemo(() => {
+    if (!text) return "3:42";
+    const clean = stripMarkdown(text);
+    const words = clean.split(/\s+/).filter(Boolean).length;
+    if (words === 0) return "3:42";
+    // Average speech rate: ~140 words per minute
+    const totalSeconds = Math.max(30, Math.round((words / 140) * 60));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }, [text]);
+
   if (!text) return null;
 
   return (
-    <div className="read-aloud-toolbar-row">
-      <div
-        className="read-aloud-toolbar-split"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === " " || e.key === "Enter") {
-            e.preventDefault();
-            handlePlayPause();
-          }
-          if (e.key.toLowerCase() === "s") {
-            e.preventDefault();
-            handleStop();
-          }
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+      }}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          handlePlayPause();
+        }
+        if (e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          handleStop();
+        }
+      }}
+      aria-label="Read aloud controls"
+    >
+      <button
+        onClick={handlePlayPause}
+        type="button"
+        className="sv-read-aloud-pill-btn"
+        aria-label={playbackState === "playing" ? "Pause reading" : "Read aloud"}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "6px 16px",
+          borderRadius: "999px",
+          border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
+          background: playbackState === "playing"
+            ? (isPurple ? "#7c3aed" : "#16a34a")
+            : (isPurple ? "rgba(139, 92, 246, 0.04)" : "rgba(22, 163, 74, 0.04)"),
+          color: playbackState === "playing"
+            ? "#ffffff"
+            : (isPurple ? "#7c3aed" : "#16a34a"),
+          fontSize: "13px",
+          fontWeight: 700,
+          cursor: "pointer",
+          transition: "all 0.18s ease",
+          whiteSpace: "nowrap",
+          lineHeight: 1,
+          boxShadow: playbackState === "playing"
+            ? (isPurple ? "0 2px 10px rgba(124, 58, 237, 0.35)" : "0 2px 10px rgba(22, 163, 74, 0.35)")
+            : "none",
         }}
-        aria-label="Read aloud controls"
       >
+        {/* Headphone icon */}
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          style={{ flexShrink: 0 }}
+        >
+          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+        </svg>
 
-        <div className="read-aloud-tool-pill read-aloud-tool-pill--transport">
-          <div className="read-aloud-play-cluster">
-            <button
-              onClick={handlePlayPause}
-              className="read-aloud-play-btn"
-              type="button"
-              aria-label={
-                playbackState === "playing" ? "Pause reading" : "Play reading"
-              }
-              data-label={playbackState === "playing" ? "Pause" : "Read aloud"}
-            >
-              {playbackState === "playing" ? (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
-              ) : (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  style={{
-                    marginLeft: playbackState === "paused" ? "0" : "2px",
-                  }}
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
+        <span>
+          {playbackState === "playing"
+            ? `Pause · ${durationString}`
+            : playbackState === "paused"
+            ? `Resume · ${durationString}`
+            : `Read Aloud · ${durationString}`}
+        </span>
+      </button>
 
-            {playbackState !== "idle" && (
-              <button
-                onClick={handleStop}
-                className="read-aloud-action-btn"
-                type="button"
-                aria-label="Stop reading"
-                data-label="Stop"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M6 6h12v12H6z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+      {playbackState !== "idle" && (
+        <button
+          onClick={handleStop}
+          type="button"
+          title="Stop reading"
+          aria-label="Stop reading"
+          style={{
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            border: `1px solid ${isPurple ? "#ddd6fe" : "#bbf7d0"}`,
+            background: "#ffffff",
+            color: isPurple ? "#7c3aed" : "#16a34a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 6h12v12H6z" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

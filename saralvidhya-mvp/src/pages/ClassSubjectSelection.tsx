@@ -6,6 +6,8 @@ import {
   getCatalog,
   getManifest,
   getChapters,
+  getVisibleBoardIds,
+  getRegistryTenantId,
   type Catalog,
   type CatalogBoard,
   type CatalogClass,
@@ -15,8 +17,8 @@ import {
   type Chapter,
 } from '@/data/contentRepository';
 import { getVisitedChapterNumbersForSubject, getAnalytics } from '@/utils/analytics';
-import { isChapterComplete, getCompletedTools } from '@/utils/guidedFlow';
-import { getVisibleBoardIds } from '@/pages/ConfigPage';
+import { isChapterComplete, getCompletedTools, snapToQuarter } from '@/utils/guidedFlow';
+import { useTenant } from '@/tenant/TenantProvider';
 import './ClassSubjectSelection.css';
 
 function SubjectIcon({ subjectId }: { subjectId: string }) {
@@ -135,6 +137,9 @@ function getChapterProgressStats(subjectId: string, chapterNumber: number) {
 
 export default function ClassSubjectSelection() {
   const navigate = useNavigate();
+  const { tenantId, tenantPath } = useTenant();
+  const activeTenantId = tenantId || getRegistryTenantId();
+
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const treeLogoSrc = selectedBoardId?.startsWith('neb') 
     ? `${import.meta.env.BASE_URL}neb-logo.png` 
@@ -147,15 +152,25 @@ export default function ClassSubjectSelection() {
 
   useEffect(() => {
     getCatalog().then((nextCatalog) => {
-      const visibleIds = getVisibleBoardIds();
-      const filtered = visibleIds
-        ? { ...nextCatalog, boards: nextCatalog.boards.filter((b) => visibleIds.includes(b.id)) }
-        : nextCatalog;
+      let boards = nextCatalog.boards;
+      if (activeTenantId) {
+        boards = boards.filter(
+          (b) => b.id === activeTenantId || b.id === `${activeTenantId}_university` || (activeTenantId === 'angrau' && b.id === 'angrau_university')
+        );
+      } else {
+        const visibleIds = getVisibleBoardIds();
+        if (visibleIds && visibleIds.length > 0) {
+          boards = boards.filter((b) => visibleIds.includes(b.id));
+        }
+      }
+
+      const filtered = { ...nextCatalog, boards };
       setCatalog(filtered);
       const firstBoard = filtered.boards[0];
-      if (firstBoard && filtered.boards.length === 1) {
-        setSelectedBoardId(firstBoard.id);
-        if (firstBoard.id === 'angrau_university' || firstBoard.id === 'mlrit') {
+      if (firstBoard) {
+        // Auto-select the board and class immediately for tenant-specific or single-board sessions
+        if (filtered.boards.length === 1 || activeTenantId) {
+          setSelectedBoardId(firstBoard.id);
           setSelectedClassId(firstBoard.classes[0]?.id ?? null);
         }
       }
@@ -168,7 +183,7 @@ export default function ClassSubjectSelection() {
         Object.fromEntries(m.subjects.map((subject) => [subject.id, subject.chapters.length])),
       );
     });
-  }, []);
+  }, [activeTenantId]);
 
   const selectedBoard = useMemo(
     () => catalog.boards.find((board) => board.id === selectedBoardId) ?? null,
@@ -178,20 +193,25 @@ export default function ClassSubjectSelection() {
   const selectedClass = useMemo(
     () => {
       if (!selectedBoard) return null;
-      // In ANGRAU and MLRIT we have only one course, take student straight to subjects
-      if (selectedBoard.id === 'angrau_university' || selectedBoard.id === 'mlrit') {
+      // In single-tenant or single-class sessions, take student straight to subjects
+      if (
+        selectedBoard.id === 'angrau_university' ||
+        selectedBoard.id === 'mlrit' ||
+        selectedBoard.classes.length === 1 ||
+        !!activeTenantId
+      ) {
         return selectedBoard.classes[0] ?? null;
       }
       return selectedBoard.classes.find((klass) => klass.id === selectedClassId) ?? null;
     },
-    [selectedBoard, selectedClassId],
+    [selectedBoard, selectedClassId, activeTenantId],
   );
 
   const step = !selectedBoard ? 0 : !selectedClass ? 1 : 2;
 
   const handleBoardClick = (board: CatalogBoard) => {
     setSelectedBoardId(board.id);
-    if (board.id === 'angrau_university' || board.id === 'mlrit') {
+    if (board.id === 'angrau_university' || board.id === 'mlrit' || board.classes.length === 1) {
       setSelectedClassId(board.classes[0]?.id ?? null);
     } else {
       setSelectedClassId(null);
@@ -230,18 +250,20 @@ export default function ClassSubjectSelection() {
     if (targetChapter) {
       params.set('chapter', targetChapter.toString());
     }
-    navigate(`/chapters?${params.toString()}`);
+    navigate(tenantPath(`/chapters?${params.toString()}`));
   };
 
   const handleBackToBoard = () => {
-    if (catalog.boards.length > 1) {
+    if (!activeTenantId && catalog.boards.length > 1) {
       setSelectedBoardId(null);
       setSelectedClassId(null);
     }
   };
 
   const handleBackToClass = () => {
-    setSelectedClassId(null);
+    if (!activeTenantId) {
+      setSelectedClassId(null);
+    }
   };
 
   const logout = () => {
@@ -250,7 +272,12 @@ export default function ClassSubjectSelection() {
     localStorage.removeItem('app_user_id');
     localStorage.removeItem('username');
     localStorage.removeItem('questionnaire_completed');
-    navigate('/login', { replace: true });
+    if (activeTenantId) {
+      localStorage.removeItem(`sv_session_${activeTenantId}`);
+      navigate(`/${activeTenantId}/login`, { replace: true });
+    } else {
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
@@ -271,12 +298,16 @@ export default function ClassSubjectSelection() {
             {step > 0 && (
               <div className="sv-breadcrumb">
                 <span className="sv-bc-sep">/</span>
-                <span className="sv-bc-link" onClick={handleBackToBoard}>
-                  {selectedBoard?.shortName || selectedBoard?.name}
-                </span>
+                {activeTenantId ? (
+                  <span className="sv-bc-current">{selectedBoard?.shortName || selectedBoard?.name}</span>
+                ) : (
+                  <span className="sv-bc-link" onClick={handleBackToBoard}>
+                    {selectedBoard?.shortName || selectedBoard?.name}
+                  </span>
+                )}
                 {step > 1 && (
                   <>
-                    {selectedBoard?.id !== 'angrau_university' && selectedBoard?.id !== 'mlrit' && (
+                    {!activeTenantId && selectedBoard?.id !== 'angrau_university' && selectedBoard?.id !== 'mlrit' && (
                       <>
                         <span className="sv-bc-sep">/</span>
                         <span className="sv-bc-link" onClick={handleBackToClass}>
@@ -291,9 +322,42 @@ export default function ClassSubjectSelection() {
               </div>
             )}
           </div>
-          <div className="sv-topbar-right">
-            <button className="sv-logout-btn" onClick={logout}>
-              Log Out
+          <div className="sv-topbar-right" style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {/* Log Out Button (Red circular outline with soft red tint) */}
+            <button
+              type="button"
+              onClick={logout}
+              title="Log Out"
+              aria-label="Log Out"
+              style={{
+                width: "38px",
+                height: "38px",
+                borderRadius: "50%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "1.5px solid #EF4444",
+                background: "#FEF2F2",
+                color: "#EF4444",
+                cursor: "pointer",
+                flexShrink: 0,
+                boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
+                (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
+                (e.currentTarget as HTMLButtonElement).style.transform = "none";
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                <polyline points="15 8 19 12 15 16" />
+                <line x1="9" y1="12" x2="19" y2="12" />
+              </svg>
             </button>
             <button className="sv-profile-btn" onClick={() => navigate('/profile')}>
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
@@ -347,17 +411,15 @@ export default function ClassSubjectSelection() {
 
               <div className={`sv-subjects-grid ${selectedClass.subjects.length === 1 ? 'sv-subjects-grid--single' : ''}`}>
                 {selectedClass.subjects.map((subject, idx) => {
-                  const isEntomology = subject.id === 'ento_131' || subject.name.toLowerCase().includes('entomology');
-                  const isMlrit = subject.id === 'dbms' || subject.id.includes('dbms') || subject.name.toLowerCase().includes('database') || selectedBoard?.id === 'mlrit';
                   let chaptersList: Chapter[] = manifest ? getChapters(manifest, subject.id) : [];
-                  if (chaptersList.length === 0 && isEntomology) {
+                  if (chaptersList.length === 0 && (subject.id === 'ento_131' || subject.name.toLowerCase().includes('entomology'))) {
                     chaptersList = [
                       { number: 1, name: 'Digestive System', dir: 'chapter_01', completed: [], resourceCount: 7 },
                       { number: 2, name: 'Metamorphosis', dir: 'chapter_02', completed: [], resourceCount: 6 },
                       { number: 3, name: 'Weathering', dir: 'chapter_03', completed: [], resourceCount: 7 },
                       { number: 4, name: 'Pollination', dir: 'chapter_04', completed: [], resourceCount: 7 },
                     ];
-                  } else if (chaptersList.length === 0 && isMlrit) {
+                  } else if (chaptersList.length === 0 && (subject.id === 'dbms' || subject.id.includes('dbms'))) {
                     chaptersList = [
                       { number: 1, name: 'Database System Concepts, ER Model & Relational Design', dir: 'chapter_01', completed: [], resourceCount: 12 },
                     ];
@@ -365,17 +427,17 @@ export default function ClassSubjectSelection() {
 
                   const totalChapters = chaptersList.length > 0 
                     ? chaptersList.length 
-                    : (chapterCounts[subject.id] ?? (isEntomology ? 4 : isMlrit ? 1 : 0));
+                    : (chapterCounts[subject.id] ?? 0);
                   
                   const chapterStatsList = chaptersList.map((ch) => getChapterProgressStats(subject.id, ch.number));
                   const totalCompletedChapters = chapterStatsList.filter((s) => s.isFullyDone || s.percent >= 100).length;
                   const activeChaptersCount = chapterStatsList.filter((s) => s.percent > 0).length;
                   const displayTotal = totalChapters;
                   const overallCoverage = displayTotal > 0
-                    ? Math.round(chapterStatsList.reduce((acc, s) => acc + s.percent, 0) / displayTotal)
+                    ? snapToQuarter(chapterStatsList.reduce((acc, s) => acc + s.percent, 0) / displayTotal)
                     : 0;
 
-                  const isRichSubjectCard = isEntomology || isMlrit;
+                  const isRichSubjectCard = chaptersList.length > 0;
 
                   return (
                     <div
@@ -388,7 +450,6 @@ export default function ClassSubjectSelection() {
                       } as React.CSSProperties}
                       onClick={() => handleSubjectClick(subject)}
                     >
-                      <div className="sv-card-accent" />
                       <div className="sv-card-icon">
                         <SubjectIcon subjectId={subject.id} />
                       </div>
@@ -396,17 +457,30 @@ export default function ClassSubjectSelection() {
                         <div className="sv-subject-head-row">
                           <div className="sv-subject-head-info">
                             <h3 className="sv-card-title">
-                              {subject.name === 'Characterization Techniques' ? 'Analytics' : subject.name}
+                              {subject.name}
                             </h3>
-                            <span className="sv-subject-subtitle">
-                              {isMlrit
-                                ? `Malla Reddy Institute of Technology • ${displayTotal} Core Chapter`
-                                : isEntomology
-                                ? `ANGRAU B.Sc. Agriculture • ${displayTotal} Core Chapters`
-                                : `${selectedClass?.name || 'Class'} • ${displayTotal} Chapters`}
-                            </span>
+                            {(() => {
+                              const norm = (subject.id + ' ' + subject.name).toLowerCase();
+                              const sub = norm.includes('ento')
+                                ? 'B.Sc Agriculture'
+                                : (norm.includes('dbms') || norm.includes('database'))
+                                ? 'B.Tech CSE'
+                                : norm.includes('physics')
+                                ? 'B.Tech'
+                                : (norm.includes('management') || norm.includes('marketing'))
+                                ? 'MBA'
+                                : '';
+
+                              return sub ? (
+                                <span className="sv-subject-subtitle">
+                                  {sub}
+                                </span>
+                              ) : null;
+                            })()}
                           </div>
-                          {displayTotal > 0 && (
+
+                          {/* Top-Right Progress Donut (shown for standard subjects, hidden on rich cards to match Figma) */}
+                          {displayTotal > 0 && !isRichSubjectCard && (
                             <div className="sv-course-progress-widget">
                               <div className="sv-progress-ring-wrap" title={`Overall Progress: ${overallCoverage}%`}>
                                 <svg className="sv-progress-ring" width="46" height="46" viewBox="0 0 46 46">
@@ -450,8 +524,28 @@ export default function ClassSubjectSelection() {
                                   percent: isDone ? 100 : rawStats.percent,
                                 };
                                 const formattedTitle = toTitleCase(ch.name);
+
+                                // Checkmark color matching screenshot:
+                                // 100%: Green (#22c55e)
+                                // In-progress (> 0%): Blue (#38bdf8)
+                                // 0%: Orange (#f97316)
+                                const tickColor = stats.isFullyDone
+                                  ? '#22c55e'
+                                  : stats.percent > 0
+                                  ? '#38bdf8'
+                                  : '#f97316';
+
                                 return (
                                   <div key={ch.number} className="sv-ch-circle-group">
+                                    <span
+                                      className="sv-ch-circle-tick"
+                                      style={{ color: tickColor }}
+                                      aria-hidden="true"
+                                    >
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    </span>
                                     <button
                                       type="button"
                                       className={`sv-ch-circle-btn ${stats.isFullyDone ? 'is-completed' : stats.percent > 0 ? 'is-visited' : ''}`}
@@ -467,9 +561,8 @@ export default function ClassSubjectSelection() {
                                         {formattedTitle}
                                       </div>
                                     </button>
-                                    <div className={`sv-ch-circle-badge ${stats.isFullyDone ? 'is-done' : ''}`}>
+                                    <div className="sv-ch-circle-percent">
                                       <span>{stats.percent}%</span>
-                                      <span className="sv-ch-circle-check">✓</span>
                                     </div>
                                   </div>
                                 );

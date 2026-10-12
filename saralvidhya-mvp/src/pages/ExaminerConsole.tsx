@@ -1292,22 +1292,24 @@ export default function ExaminerConsole() {
 
                 {/* Options List A, B, C, D (Markdown & KaTeX Rendered) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {q.options.map((opt) => (
-                    <div
-                      key={opt.label}
-                      style={{
-                        padding: '12px 18px',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
-                        background: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#334155',
-                      }}
-                    >
+                  {q.options.map((opt, optIdx) => {
+                    const isEven = optIdx % 2 === 0;
+                    return (
+                      <div
+                        key={opt.label}
+                        style={{
+                          padding: '12px 18px',
+                          borderRadius: '8px',
+                          border: isEven ? '1px solid #e2e8f0' : '1px solid #cbdcd1',
+                          background: isEven ? '#ffffff' : '#f4f7f5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#334155',
+                        }}
+                      >
                       {/* Option Indicator: Square Checkbox for MSQ, Round Radio Circle for MCQ */}
                       <div
                         style={{
@@ -1327,7 +1329,8 @@ export default function ExaminerConsole() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
 
                   {/* Bottom Row: Green Highlighted Correct Answer + Blue Swap Button */}
                   <div

@@ -1,14 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
+import { useTenant } from "@/tenant/TenantProvider";
 import logoClean from "../logo-clean.png";
 import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { tenantId, tenant, login: tenantLogin } = useTenant();
 
-  const from = (location.state as { from?: string })?.from || "/";
+  const from = (location.state as { from?: string })?.from || (tenantId ? `/${tenantId}` : "/");
 
   const [studentPassword, setStudentPassword] = useState("");
   const [studentError, setStudentError] = useState("");
@@ -28,7 +30,7 @@ function Login() {
   }, []);
 
   // LOGIN FUNCTION
-  const handleStudentLogin = (e: React.FormEvent) => {
+  const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setStudentError("");
 
@@ -39,11 +41,53 @@ function Login() {
 
     setLoading(true);
 
+    // If a tenant is active, authenticate against v2 registry backend
+    if (tenantId) {
+      try {
+        const ok = await tenantLogin(studentPassword);
+        if (ok) {
+          localStorage.setItem("app_authenticated", "true");
+          localStorage.setItem("app_role", "student");
+          const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
+          localStorage.setItem("username", displayName);
+          localStorage.setItem(
+            "saral_student_profile",
+            JSON.stringify({
+              firstName: displayName,
+              lastName: "",
+              bypassed: true,
+            })
+          );
+          localStorage.setItem("questionnaire_completed", "true");
+
+          const isSubdomain = window.location.hostname.includes(tenantId);
+          const targetUrl =
+            from === "/login" || from === `/${tenantId}/login`
+              ? (isSubdomain ? "/" : `/${tenantId}`)
+              : from;
+
+          navigate(targetUrl, {
+            replace: true,
+          });
+          return;
+        } else {
+          setStudentError("Incorrect password");
+          setLoading(false);
+          return;
+        }
+      } catch (err: any) {
+        setStudentError(err.message || "Incorrect password");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Fallback: Legacy credentials check (only for central/root portal)
     setTimeout(() => {
       const creds = loadCredentials();
 
       const defaultPass = import.meta.env.VITE_DEFAULT_PASSWORD || 'Ekam@2026';
-      const isDefaultMatch = studentPassword === defaultPass || studentPassword === 'Ekam@2026' || studentPassword === 'MLR@2026' || studentPassword === 'MLRIT@2026';
+      const isDefaultMatch = studentPassword === defaultPass || studentPassword === 'Ekam@2026';
 
       const match = creds.find(
         c => c.role === "student" && (c.password === studentPassword || isDefaultMatch)
