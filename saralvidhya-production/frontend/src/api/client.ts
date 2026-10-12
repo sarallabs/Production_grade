@@ -41,6 +41,105 @@ export type ReadType  = 'quick' | 'detailed' | 'key_takeaways' | 'glossary';
 export type LearnAsset = 'mindmap' | 'mindmap.png' | 'study_plan';
 export type PracticeType = 'flashcards' | 'mcq' | 'msq' | 'mock_test' | 'question_bank';
 export type PrepareFile = 'pre_final_exam' | 'certification_exam' | 'mock_test' | 'previous_year';
+export type ReadMode = 'essentials' | 'indepth';
+
+export interface SubtopicAnchor {
+  anchorId: string;
+  title: string;
+}
+
+export interface SectionSummary {
+  sectionId: string;
+  moduleId: string;
+  order: number;
+  title: string;
+  subtitle: string;
+  estimatedMinutes: number;
+  status: 'completed' | 'active' | 'locked';
+  hasQuickCheck: boolean;
+  isLocked: boolean;
+  prerequisiteSectionId?: string;
+  subtopics: SubtopicAnchor[];
+}
+
+export interface ReadManifest {
+  chapter: string;
+  subject: string;
+  mode: ReadMode;
+  persona: Persona;
+  totalSections: number;
+  chapterProgressPercent: number;
+  resumedSectionId: string;
+  resumedTimestamp: string;
+  sections: SectionSummary[];
+}
+
+export interface DottedTerm {
+  term: string;
+  definition: string;
+  examTip?: string;
+}
+
+export interface FigureHotspot {
+  id: number;
+  label: string;
+  description: string;
+  xPercent?: number;
+  yPercent?: number;
+}
+
+export interface InteractiveFigure {
+  figureNo: string;
+  title: string;
+  imageUrl: string;
+  zoomable: boolean;
+  caption?: string;
+  hotspots?: FigureHotspot[];
+}
+
+export interface QuickCheckOption {
+  key: string;
+  text: string;
+}
+
+export interface QuickCheckQuestion {
+  questionId: string;
+  moduleId: string;
+  type: string;
+  promptType: string;
+  stem: string;
+  options: QuickCheckOption[];
+}
+
+export interface SectionAudioInfo {
+  duration: string;
+  streamUrl: string;
+}
+
+export interface SectionPayload {
+  sectionId: string;
+  moduleId: string;
+  title: string;
+  subtitle?: string;
+  mode: ReadMode;
+  persona: Persona;
+  contentMarkdown: string;
+  estimatedMinutes: number;
+  audio?: SectionAudioInfo;
+  dottedTerms: DottedTerm[];
+  figures: InteractiveFigure[];
+  quickCheck?: QuickCheckQuestion;
+}
+
+export interface QuickCheckEvaluationResult {
+  isCorrect: boolean;
+  correctKey: string;
+  rationale: string;
+  keyTakeaway?: string;
+  unlockedNextSectionId?: string;
+  nextSectionTitle?: string;
+  chapterProgressPercent: number;
+}
 
 // ── Auth helper ───────────────────────────────────────────────────────────────
 
@@ -118,6 +217,86 @@ export async function fetchReadShared(
     `${contentBase(university, subject, chapter)}/read/${type}`,
   );
   return res.text();
+}
+
+// ── Sectional Read Engine (Interactive Micro-Learning) ──────────────────────
+
+/**
+ * Fetch chapter reading outline and manifest with user progress overlay.
+ */
+export async function fetchReadManifest(
+  university: string,
+  subject: string,
+  chapter: string,
+  mode: ReadMode = 'essentials',
+  persona: Persona = 'beginner'
+): Promise<ReadManifest> {
+  const res = await apiFetch(
+    `${contentBase(university, subject, chapter)}/read/manifest?mode=${mode}&persona=${persona}`
+  );
+  return res.json();
+}
+
+/**
+ * Fetch a specific sliced section content, interactive figures, dotted terms, and quick check.
+ */
+export async function fetchSectionContent(
+  university: string,
+  subject: string,
+  chapter: string,
+  sectionId: string,
+  mode: ReadMode = 'essentials',
+  persona: Persona = 'beginner'
+): Promise<SectionPayload> {
+  const res = await apiFetch(
+    `${contentBase(university, subject, chapter)}/read/sections/${sectionId}?mode=${mode}&persona=${persona}`
+  );
+  return res.json();
+}
+
+/**
+ * Submit an answer to a section's inline Quick Check question.
+ */
+export async function submitQuickCheck(
+  university: string,
+  subject: string,
+  chapter: string,
+  sectionId: string,
+  selectedKey: string,
+  moduleId?: string,
+  mode: ReadMode = 'essentials',
+  persona: Persona = 'beginner'
+): Promise<QuickCheckEvaluationResult> {
+  const res = await apiFetch(
+    `${contentBase(university, subject, chapter)}/read/sections/${sectionId}/quick-check`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedKey, moduleId, mode, persona }),
+    }
+  );
+  return res.json();
+}
+
+/**
+ * Save user reading position bookmark for the "Resumed where you left off" indicator.
+ */
+export async function saveReadBookmark(
+  university: string,
+  subject: string,
+  chapter: string,
+  lastActiveSectionId: string,
+  scrollOffsetRatio: number = 0
+): Promise<{ success: boolean }> {
+  const res = await apiFetch(
+    `${contentBase(university, subject, chapter)}/read/progress/bookmark`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lastActiveSectionId, scrollOffsetRatio }),
+    }
+  );
+  return res.json();
 }
 
 // ── LEARN section ─────────────────────────────────────────────────────────────

@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { Storage } from '@google-cloud/storage';
+import readRouter from './read.js';
 
 const router = Router();
 const storage = new Storage();
@@ -172,6 +173,10 @@ router.get('/:uni/:subj/:chapter/metadata', async (req: Request, res: Response) 
   }
 });
 
+// ── Sectional Read Engine (Manifest, Sliced Sections, Quick Check) ───────────
+router.use('/:uni/:subj/:chapter/read', readRouter);
+
+// ── Legacy read routes ───────────────────────────────────────────────────────
 // ── GET read/quick?persona=beginner ──────────────────────────────────────────
 // ── GET read/detailed?persona=intermediate ────────────────────────────────────
 router.get('/:uni/:subj/:chapter/read/:type', async (req: Request, res: Response) => {
