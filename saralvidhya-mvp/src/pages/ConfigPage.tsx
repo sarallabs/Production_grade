@@ -32,7 +32,7 @@ export default function ConfigPage() {
   const [logo, setLogo] = useState<string>(defaultLogo);
   const [brandName, setBrandName] = useState<string>('Saral Vidhya');
   const [isDragging, setIsDragging] = useState(false);
-  const [geminiModel, setGeminiModel] = useState<string>('gemini-3.6-flash');
+  const [geminiModel, setGeminiModel] = useState<string>('gemini-3.8-flash');
   const [moocsMode, setMoocsMode] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -637,7 +637,8 @@ export default function ConfigPage() {
                 value={geminiModel}
                 onChange={(e) => setGeminiModel(e.target.value)}
               >
-                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended)</option>
+                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Recommended)</option>
+                <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                 <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                 <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
                 <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>

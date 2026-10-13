@@ -62,6 +62,27 @@ export default function ReadingHighlightView({
     buildWordMap();
   }, [content, buildWordMap]);
 
+  const userScrollPauseUntilRef = useRef<number>(0);
+  const lastScrollTimeRef = useRef<number>(0);
+
+  // Attach passive scroll/touch listener to detect user intervention
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollParent = (container.closest('.st-mainview') as HTMLElement | null) || window;
+
+    const onUserInteraction = () => {
+      userScrollPauseUntilRef.current = Date.now() + 3500;
+    };
+
+    scrollParent.addEventListener('wheel', onUserInteraction, { passive: true });
+    scrollParent.addEventListener('touchmove', onUserInteraction, { passive: true });
+    return () => {
+      scrollParent.removeEventListener('wheel', onUserInteraction);
+      scrollParent.removeEventListener('touchmove', onUserInteraction);
+    };
+  }, []);
+
   // Update highlight position without DOM destruction
   useEffect(() => {
     const overlay = overlayRef.current;
@@ -117,20 +138,45 @@ export default function ReadingHighlightView({
         overlay.style.width = `${rect.width + 4}px`;
         overlay.style.height = `${rect.height + 2}px`;
 
-        // 3. Smooth scroll within actual scroll parent when word drifts (throttled)
-        if (Math.abs(startWord - lastScrolledWordRef.current) >= 2) {
-          lastScrolledWordRef.current = startWord;
-          let scrollParent: HTMLElement | null = container.parentElement;
-          while (scrollParent && scrollParent !== document.body) {
-            const style = window.getComputedStyle(scrollParent);
-            if (style.overflowY === "auto" || style.overflowY === "scroll") break;
-            scrollParent = scrollParent.parentElement;
+        // 3. Smooth scroll within actual scroll parent only when word drifts significantly
+        const now = Date.now();
+        const userIsScrolling = now < userScrollPauseUntilRef.current;
+        const timeSinceLastScroll = now - lastScrollTimeRef.current;
+        const wordDelta = Math.abs(startWord - lastScrolledWordRef.current);
+
+        // Only consider auto-scrolling if user isn't manually scrolling, at least 3 seconds have passed,
+        // and we have advanced at least 10 words
+        if (!userIsScrolling && timeSinceLastScroll >= 3000 && wordDelta >= 10) {
+          let scrollParent: HTMLElement | null = container.closest('.st-mainview') as HTMLElement | null;
+          if (!scrollParent) {
+            let p: HTMLElement | null = container.parentElement;
+            while (p && p !== document.body && p !== document.documentElement) {
+              const style = window.getComputedStyle(p);
+              if (style.overflowY === "auto" || style.overflowY === "scroll") {
+                scrollParent = p;
+                break;
+              }
+              p = p.parentElement;
+            }
           }
+
           if (scrollParent) {
             const sRect = scrollParent.getBoundingClientRect();
             const relY = rect.top - sRect.top;
-            if (relY < sRect.height * 0.25 || relY > sRect.height * 0.70) {
-              const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.45;
+
+            // Only scroll if:
+            // 1. Word is past 78% of the viewport (approaching bottom of container)
+            // 2. Word is scrolled above top of viewport (< 30px)
+            // NEVER scroll if the word is comfortably in view (between 30px and 78% height)!
+            if (relY > sRect.height * 0.78) {
+              lastScrolledWordRef.current = startWord;
+              lastScrollTimeRef.current = now;
+              const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.35;
+              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
+            } else if (relY < 30 && scrollParent.scrollTop > 10) {
+              lastScrolledWordRef.current = startWord;
+              lastScrollTimeRef.current = now;
+              const targetScroll = Math.max(0, scrollParent.scrollTop + relY - sRect.height * 0.25);
               scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
             }
           }
