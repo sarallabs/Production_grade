@@ -32,13 +32,15 @@ export default function SectionizedReadView({
   const [loading, setLoading] = useState(true);
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
+  const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
   const [activeQuickCheckIdx, setActiveQuickCheckIdx] = useState<number | null>(null);
 
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
 
-  // Storage key for persisting completion
+  // Storage keys for persisting reading progress and answered quick checks separately
   const storageKey = `sv_read_progress_${subjectId}_${chapterNumber}_${persona}_${track}`;
+  const qcStorageKey = `sv_qc_done_${subjectId}_${chapterNumber}_${persona}_${track}`;
 
   useEffect(() => {
     try {
@@ -56,7 +58,23 @@ export default function SectionizedReadView({
     } catch {
       setCompletedSections(new Set());
     }
-  }, [storageKey]);
+
+    try {
+      const savedQc = localStorage.getItem(qcStorageKey);
+      if (savedQc) {
+        const parsedQc = JSON.parse(savedQc);
+        if (Array.isArray(parsedQc) && parsedQc.length > 0) {
+          setCompletedQuickChecks(new Set<number>(parsedQc));
+        } else {
+          setCompletedQuickChecks(new Set());
+        }
+      } else {
+        setCompletedQuickChecks(new Set());
+      }
+    } catch {
+      setCompletedQuickChecks(new Set());
+    }
+  }, [storageKey, qcStorageKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -137,7 +155,6 @@ export default function SectionizedReadView({
       });
 
       setActiveVisibleIndex(bestIdx);
-      markSectionCompleted(bestIdx);
     };
 
     const scrollParent = document.querySelector('.st-mainview') || window;
@@ -159,14 +176,14 @@ export default function SectionizedReadView({
     };
   }, [sections]);
 
-  const markSectionCompleted = (idx: number) => {
-    setCompletedSections((prev) => {
+  const markQuickCheckCompleted = (idx: number) => {
+    setCompletedQuickChecks((prev) => {
       const updated = new Set(prev);
       updated.add(idx);
       try {
-        localStorage.setItem(storageKey, JSON.stringify(Array.from(updated)));
+        localStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
       } catch (err) {
-        console.warn('Failed to save read progress', err);
+        console.warn('Failed to save quick check progress', err);
       }
       return updated;
     });
@@ -176,7 +193,6 @@ export default function SectionizedReadView({
     const el = sectionRefs.current[idx];
     if (el) {
       setActiveVisibleIndex(idx);
-      markSectionCompleted(idx);
       isAutoScrollingRef.current = true;
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => {
@@ -187,7 +203,7 @@ export default function SectionizedReadView({
 
   const handleNextSectionFromModal = () => {
     if (activeQuickCheckIdx !== null) {
-      markSectionCompleted(activeQuickCheckIdx);
+      markQuickCheckCompleted(activeQuickCheckIdx);
       const nextIdx = activeQuickCheckIdx + 1;
       setActiveQuickCheckIdx(null);
 
@@ -199,8 +215,12 @@ export default function SectionizedReadView({
     }
   };
 
+  const completedCount = useMemo(() => {
+    return sections.filter((s, i) => (s.quickCheck ? completedQuickChecks.has(i) : completedSections.has(i))).length;
+  }, [sections, completedQuickChecks, completedSections]);
+
   const progressPercent = totalSections > 0
-    ? Math.min(100, Math.round((completedSections.size / totalSections) * 100))
+    ? Math.min(100, Math.round((completedCount / totalSections) * 100))
     : 0;
 
   const totalReadingMinutes = useMemo(() => {
@@ -270,7 +290,7 @@ export default function SectionizedReadView({
             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
           }}
         >
-          {completedSections.size > 0 ? 'Resumed where you left off' : 'Reading Guide'}
+          {completedCount > 0 ? 'Resumed where you left off' : 'Reading Guide'}
         </div>
 
         {/* Section Checklist Card */}
@@ -303,7 +323,7 @@ export default function SectionizedReadView({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {sections.map((sec, idx) => {
               const isSelected = idx === activeVisibleIndex;
-              const isDone = completedSections.has(idx);
+              const isDone = sec.quickCheck ? completedQuickChecks.has(idx) : completedSections.has(idx);
 
               return (
                 <button
@@ -492,7 +512,7 @@ export default function SectionizedReadView({
 
         {/* Vertical stream of all sections */}
         {sections.map((sec, idx) => {
-          const isCompleted = completedSections.has(idx);
+          const isQcDone = completedQuickChecks.has(idx);
 
           return (
             <div
@@ -576,7 +596,7 @@ export default function SectionizedReadView({
                     {sec.quickCheck && (
                       <span
                         style={{
-                          background: isCompleted ? '#dcfce7' : '#f0fdf4',
+                          background: isQcDone ? '#dcfce7' : '#f0fdf4',
                           color: '#15803d',
                           border: '1px solid #bbf7d0',
                           borderRadius: '6px',
@@ -585,7 +605,7 @@ export default function SectionizedReadView({
                           fontWeight: 700,
                         }}
                       >
-                        {isCompleted ? '✓ Quick check answered' : '✔ 1 quick check'}
+                        {isQcDone ? '✓ Quick check answered' : '✔ 1 quick check'}
                       </span>
                     )}
                   </div>
@@ -646,7 +666,7 @@ export default function SectionizedReadView({
                       Check your understanding of {sec.shortTitle}
                     </div>
 
-                    {isCompleted ? (
+                    {isQcDone ? (
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
                         <div
                           style={{
@@ -729,9 +749,9 @@ export default function SectionizedReadView({
           isPurpleTheme={false}
           onClose={() => setActiveQuickCheckIdx(null)}
           onNextSection={handleNextSectionFromModal}
-          onAnswerSubmitted={(isCorrect) => {
-            if (isCorrect && activeQuickCheckIdx !== null) {
-              markSectionCompleted(activeQuickCheckIdx);
+          onAnswerSubmitted={(_isCorrect) => {
+            if (activeQuickCheckIdx !== null) {
+              markQuickCheckCompleted(activeQuickCheckIdx);
             }
           }}
         />
