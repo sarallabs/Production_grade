@@ -72,3 +72,6 @@ Thumbs.db
 *.projectbrain*
 project_brain.py
 test_projectbrain.json
+
+# Scratch directories
+**/scratch_*

@@ -346,6 +346,12 @@ export function isChapterComplete(subjectId: string, chapterNumber: number): boo
   return completed.includes("assessment");
 }
 
+/** Snaps a 0–100 percentage to the nearest of 0, 25, 50, 75, 100 for display. */
+export function snapToQuarter(percent: number): number {
+  const clamped = Math.max(0, Math.min(100, percent || 0));
+  return Math.round(clamped / 25) * 25;
+}
+
 /**
  * Index of the current (frontier) chapter in display order: the first chapter whose
  * predecessors are not all complete. Every chapter at index <= frontier is unlocked;

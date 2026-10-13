@@ -10,6 +10,7 @@ import {
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
+  resolveSubjectId,
 } from './manifestService';
 
 export interface FlashCard {
@@ -17,6 +18,7 @@ export interface FlashCard {
   front: string;
   back: string;
   infographicUrl?: string;
+  mermaidDiagram?: string;
 }
 
 export interface FlashCardSet {
@@ -33,21 +35,24 @@ export async function getFlashcards(
 ): Promise<FlashCard[]> {
   await getManifest();
 
+  const normSubject = resolveSubjectId(subject) || subject;
+  const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
+
   // ── GCS Cloud Run subjects ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const subjectPath = GCS_SUBJECT_MAP[subject];
-    const chDir = getChapterDir(subject, chapterNumber);
+  if (isGcs) {
+    const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(normSubject, chapterNumber);
     const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/practice/flashcards?persona=${level}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         const cards = Array.isArray(data) ? data : (data.flashcards || data.cards || []);
         if (cards.length > 0) {
-          return cards.map((c: any) => {
+          return cards.map((c: any, index: number) => {
             let infoUrl = c.infographicUrl || c.infographic || c.image;
             if (!infoUrl && c.img) {
               const m = typeof c.img === 'string' ? c.img.match(/!\[.*?\]\((.+?)\)/) : null;
@@ -68,13 +73,28 @@ export async function getFlashcards(
                      || c.definition.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
               if (m) infoUrl = m[1].trim();
             }
-            // Resolve relative URLs to GCS_API_BASE
+
+            // Fallback for MLRIT DBMS if no infographicUrl was provided by API
+            if (!infoUrl && (normSubject === 'dbms' || normSubject.includes('dbms') || subject === 'dbms')) {
+              const lvl = (level as string) || 'intermediate';
+              const normLvl = lvl === 'beginner' || lvl === 'easy' ? 'beginner' : lvl === 'advanced' || lvl === 'hard' ? 'advanced' : 'intermediate';
+              infoUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/practice/flashcards/images/card_${normLvl}_${index + 1}.webp`.replace(/\/\//g, '/');
+            }
+
+            // Resolve relative URLs to GCS_API_BASE or local base
             if (infoUrl && !infoUrl.startsWith('http://') && !infoUrl.startsWith('https://') && !infoUrl.startsWith('data:')) {
               if (infoUrl.startsWith('/api/')) {
                 infoUrl = `${GCS_API_BASE}${infoUrl}`;
               } else if (infoUrl.includes('generated_infographics')) {
                 const cleanRel = infoUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
                 infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cleanRel}`;
+              } else if (infoUrl.startsWith('/generated_resources/')) {
+                if (subjectPath.includes('angrau')) {
+                  const subRel = infoUrl.replace(/^\/generated_resources\/[^\/]+\//, '');
+                  infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${subRel}`;
+                } else {
+                  infoUrl = `${import.meta.env.BASE_URL || '/'}${infoUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
+                }
               } else if (infoUrl.startsWith('/')) {
                 infoUrl = `${GCS_API_BASE}${infoUrl}`;
               } else {
@@ -82,9 +102,11 @@ export async function getFlashcards(
               }
             }
             return {
+              id: c.id || c.card_id,
               front: c.front ?? c.question ?? c.term ?? '',
               back:  c.back  ?? c.answer  ?? c.definition ?? '',
               infographicUrl: infoUrl,
+              mermaidDiagram: c.mermaid_diagram || c.mermaid || undefined,
             };
           });
         }
@@ -92,7 +114,8 @@ export async function getFlashcards(
     } catch (e) {
       console.warn('[GCS] Failed or timed out fetching flashcards', url, e);
     }
-    // Fall through to local static files
+    // For GCS canonical subjects, content is served via API; avoid cascading into local 404s
+    return [];
   }
 
   if (BACKEND_SUBJECTS.has(subject)) {
@@ -130,10 +153,12 @@ export async function getFlashcards(
     `chapter_${chapterNumber}`,
   ]));
 
-  const basesToTry = Array.from(new Set([
-    localBase,
-    subjectBase,
-  ]));
+  const basesToTry = GCS_BACKEND_SUBJECTS.has(subject)
+    ? [subjectBase]
+    : Array.from(new Set([
+        localBase,
+        subjectBase,
+      ]));
 
   const paths: string[] = [];
   for (const base of basesToTry) {

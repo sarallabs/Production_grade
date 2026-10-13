@@ -1,0 +1,72 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TenantConfig",
+  "type": "object",
+  "required": ["id", "name", "branding", "hierarchy"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "shortName": {
+      "type": "string"
+    },
+    "branding": {
+      "type": "object",
+      "required": ["appName", "primaryColor"],
+      "properties": {
+        "appName": { "type": "string" },
+        "primaryColor": { "type": "string" },
+        "logoBlob": { "type": "string" },
+        "faviconBlob": { "type": "string" },
+        "programLabel": { "type": "string" }
+      }
+    },
+    "features": {
+      "type": "object",
+      "properties": {
+        "examinerConsole": { "type": "boolean" },
+        "expertPanel": { "type": "boolean" },
+        "pyq": { "type": "boolean" },
+        "ask": { "type": "boolean" },
+        "toolOrder": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "hierarchy": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+      "minItems": 1,
+      "description": "Ordered level names, last must be 'subject'. e.g. [department, semester, subject]"
+    },
+    "nodes": {
+      "type": "array",
+      "description": "Grouping nodes. A node's type must be one of hierarchy (except the last level, subject).",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "name"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9_-]+$" },
+          "type": { "type": "string" },
+          "name": { "type": "string", "minLength": 1 },
+          "parentId": { "type": ["string", "null"] },
+          "order": { "type": "number" }
+        }
+      }
+    },
+    "contractVersion": { "type": "string" },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "bucket": { "type": "string" },
+        "prefix": { "type": "string" }
+      }
+    }
+  }
+}

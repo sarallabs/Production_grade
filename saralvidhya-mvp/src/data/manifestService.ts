@@ -1,4 +1,6 @@
 import universityConfig from '@/config/university_config.json';
+import { registryClient } from './registryClient';
+import { detectTenantId } from '../tenant/TenantProvider';
 
 export const BASE = '/generated_resources';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/assets` : '';
@@ -17,6 +19,8 @@ export const GCS_API_BASE =
  */
 export const GCS_SUBJECT_MAP: Record<string, string> = {
   ento_131: 'angrau/entomology',
+  entomology: 'angrau/entomology',
+  dbms: 'mlrit/dbms',
 };
 
 /**
@@ -44,7 +48,23 @@ export const LEVEL_TO_PERSONA: Record<DifficultyLevel, 'Beginner' | 'Intermediat
 
 const SESSION_KEY = 'sv_visible_boards';
 
+/**
+ * The active registry-driven tenant, or null. Legacy single-tenant builds
+ * (VITE_VISIBLE_BOARDS set) never use the registry overlay.
+ */
+export function getRegistryTenantId(): string | null {
+  if (import.meta.env.VITE_VISIBLE_BOARDS) return null;
+  return detectTenantId();
+}
+
 export function getVisibleBoardIds(): string[] {
+  const regTenant = getRegistryTenantId();
+  if (regTenant) {
+    if (regTenant === 'angrau' || regTenant === 'angrau_university') {
+      return ['angrau_university'];
+    }
+    return [regTenant];
+  }
   const raw = sessionStorage.getItem(SESSION_KEY);
   if (raw) {
     try {
@@ -95,6 +115,8 @@ export interface Chapter {
   dir?: string;
   completed?: string[];
   resourceCount?: number;
+  topics?: Array<{ id: string; label: string; order: number; topicNum?: number }>;
+  tools?: Record<string, any>;
 }
 
 export interface Subject {
@@ -157,36 +179,170 @@ export const DEFAULT_RESOURCE_TABS: [string, string][] = [
 let cachedManifest: Manifest | null = null;
 let cachedCatalog: Catalog | null = null;
 
-export async function getCatalog(): Promise<Catalog> {
-  if (cachedCatalog) return cachedCatalog;
+// ── Registry overlay (multi-tenant, published via sv-publish) ───────────
+interface RegistryOverlay {
+  board: CatalogBoard;
+  subjects: Subject[];
+}
+const registryOverlays: Record<string, RegistryOverlay> = {};
+const overlayPromises: Record<string, Promise<RegistryOverlay | null>> = {};
+
+function buildOverlay(tenantId: string, data: Awaited<ReturnType<typeof registryClient.getCatalog>>): RegistryOverlay {
+  let tenantName = tenantId;
+  let shortName = tenantId;
   try {
-    const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
-    const ct = res.headers.get('content-type') || '';
-    if (!res.ok || ct.includes('text/html')) {
-      return { version: 1, boards: [] };
-    }
-    const data = (await res.json()) as Catalog;
-    cachedCatalog = data;
-    return data;
+    const cfg = JSON.parse(localStorage.getItem(`tenant_cfg_${tenantId}`) || '{}');
+    tenantName = cfg.name || tenantId;
+    shortName = cfg.shortName || tenantName;
   } catch {
-    return { version: 1, boards: [] };
+    // ignore
   }
+
+  const nodeName = new Map<string, string>(data.nodes.map((n: any) => [n.id, n.name || n.label || n.id]));
+  const classes = new Map<string, CatalogClass>();
+  const subjects: Subject[] = [];
+
+  for (const s of data.subjects as any[]) {
+    // Preserve canonical GCS mapping if known (e.g. ento_131 / entomology -> angrau/entomology).
+    // Do NOT overwrite with angrau/ento_131 as the Cloud Run backend serves from angrau/entomology!
+    let path = GCS_SUBJECT_MAP[s.id];
+    if (!path) {
+      if (s.id === 'ento_131' || s.id === 'entomology') {
+        path = 'angrau/entomology';
+      } else {
+        path = `${tenantId}/${s.id}`;
+      }
+    }
+    GCS_SUBJECT_MAP[s.id] = path;
+    if (s.id === 'ento_131') GCS_SUBJECT_MAP['entomology'] = path;
+    if (s.id === 'entomology') GCS_SUBJECT_MAP['ento_131'] = path;
+    GCS_BACKEND_SUBJECTS.add(s.id);
+
+    const classId = s.parentNodeId || 'courses';
+    const className = (s.parentNodeId && nodeName.get(s.parentNodeId)) || 'Courses';
+    if (!classes.has(classId)) classes.set(classId, { id: classId, name: className, subjects: [] });
+
+    const chapters: Chapter[] = ((s.chapters || []) as any[]).map((c) => ({
+      number: c.number,
+      name: c.title,
+      title: c.title,
+      dir: c.id,
+      completed: [],
+      resourceCount: 7,
+      topics: c.topics,
+      tools: c.tools,
+    }));
+
+    classes.get(classId)!.subjects.push({
+      id: s.id,
+      name: s.name,
+      path,
+      chapterNumbers: chapters.map((c) => c.number),
+    });
+    subjects.push({
+      id: s.id,
+      name: s.name,
+      path,
+      boardId: tenantId,
+      boardName: tenantName,
+      classId,
+      className,
+      chapters,
+    });
+  }
+
+  return {
+    board: { id: tenantId, name: tenantName, shortName, classes: [...classes.values()] },
+    subjects,
+  };
+}
+
+async function loadRegistryOverlay(): Promise<RegistryOverlay | null> {
+  const tenantId = getRegistryTenantId();
+  if (!tenantId) return null;
+  if (registryOverlays[tenantId]) return registryOverlays[tenantId];
+  if (!localStorage.getItem(`sv_session_${tenantId}`)) return null; // not logged in yet
+  if (!overlayPromises[tenantId]) {
+    overlayPromises[tenantId] = registryClient
+      .getCatalog(tenantId)
+      .then((data) => {
+        const overlay = buildOverlay(tenantId, data);
+        registryOverlays[tenantId] = overlay;
+        return overlay;
+      })
+      .catch((err) => {
+        console.warn('[manifestService] Registry catalog unavailable:', err?.message);
+        return null;
+      })
+      .finally(() => {
+        delete overlayPromises[tenantId];
+      });
+  }
+  return overlayPromises[tenantId];
+}
+
+export async function getCatalog(): Promise<Catalog> {
+  let base: Catalog = { version: 1, boards: [] };
+  if (cachedCatalog) {
+    base = cachedCatalog;
+  } else {
+    try {
+      const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && !ct.includes('text/html')) {
+        base = (await res.json()) as Catalog;
+        cachedCatalog = base;
+      }
+    } catch {
+      // fall through with empty base
+    }
+  }
+  const overlay = await loadRegistryOverlay();
+  const regTenant = getRegistryTenantId();
+
+  // If in a tenant-specific context, return ONLY this tenant's board
+  if (regTenant) {
+    if (overlay?.board) {
+      return { version: 1, boards: [overlay.board] };
+    }
+    const matched = base.boards.filter(
+      (b) => b.id === regTenant || b.id === `${regTenant}_university` || (regTenant === 'angrau' && b.id === 'angrau_university')
+    );
+    if (matched.length > 0) {
+      return { version: 1, boards: matched };
+    }
+  }
+
+  if (!overlay) return base;
+  return { ...base, boards: [...base.boards.filter((b) => b.id !== overlay.board.id), overlay.board] };
 }
 
 export async function getManifest(): Promise<Manifest> {
-  if (cachedManifest) return cachedManifest;
-  try {
-    const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
-    const ct = res.headers.get('content-type') || '';
-    if (!res.ok || ct.includes('text/html')) {
-      return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+  let base: Manifest = { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+  if (cachedManifest) {
+    base = cachedManifest;
+  } else {
+    try {
+      const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && !ct.includes('text/html')) {
+        base = (await res.json()) as Manifest;
+        cachedManifest = base;
+      }
+    } catch {
+      // fall through with empty base
     }
-    const data = (await res.json()) as Manifest;
-    cachedManifest = data;
-    return data;
-  } catch {
-    return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
   }
+  const overlay = await loadRegistryOverlay();
+  const regTenant = getRegistryTenantId();
+  if (regTenant && overlay?.subjects && overlay.subjects.length > 0) {
+    return { ...base, subjects: overlay.subjects };
+  }
+  if (!overlay) return base;
+  const ids = new Set(overlay.subjects.map((s) => s.id));
+  const merged: Manifest = { ...base, subjects: [...base.subjects.filter((s) => !ids.has(s.id)), ...overlay.subjects] };
+  cachedManifest = merged;
+  return merged;
 }
 
 export function resolveSubjectId(id: string): string {
@@ -206,6 +362,9 @@ export function resolveSubjectId(id: string): string {
 export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
   const targetId = resolveSubjectId(subjectId);
   const subject = manifest.subjects.find((s) => s.id === targetId || s.id === subjectId);
+  if (subject?.chapters && subject.chapters.length > 0) {
+    return subject.chapters;
+  }
 
   if (targetId === 'dbms' || targetId.includes('dbms')) {
     return [
@@ -228,6 +387,14 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
           'study_plan',
         ],
         resourceCount: 12,
+        topics: [
+          { id: 'topic_1', label: 'How 3-Schema Architecture Prevents Data Chaos', order: 1 },
+          { id: 'topic_2', label: 'ER Diagram Rules for DBMS Exams', order: 2 },
+          { id: 'topic_3', label: 'Weak Entities and Extended ER Mechanics', order: 3 },
+          { id: 'topic_4', label: 'Relational Keys and Integrity Constraints', order: 4 },
+          { id: 'topic_5', label: 'How ER Diagrams Become SQL Tables', order: 5 },
+          { id: 'topic_6', label: 'SQL Views and Safe Schema Evolution', order: 6 },
+        ],
       },
     ];
   }
@@ -240,6 +407,13 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
         dir: 'chapter_01',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
+        topics: [
+          { id: 'topic_1', label: 'Anatomy of the three-part insect gut', order: 1 },
+          { id: 'topic_2', label: 'Inside the Insect Foregut and Gizzard', order: 2 },
+          { id: 'topic_3', label: 'How Insect Digestion Activates Bt Toxins', order: 3 },
+          { id: 'topic_4', label: 'How insects recycle water from waste', order: 4 },
+          { id: 'topic_5', label: 'How insects digest wood and sap', order: 5 },
+        ],
       },
       {
         number: 2,
@@ -247,6 +421,14 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
         dir: 'chapter_02',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'mindmap'],
         resourceCount: 6,
+        topics: [
+          { id: 'topic_1', label: 'Three Categories of Insect Metamorphosis', order: 1 },
+          { id: 'topic_2', label: 'Identify Insect Larvae to Protect Crops', order: 2 },
+          { id: 'topic_3', label: 'Insect pupal structures and escape tactics', order: 3 },
+          { id: 'topic_4', label: 'Blister beetles live multiple larval lives', order: 4 },
+          { id: 'topic_5', label: 'Controlling Pests with Hormones and Diapause', order: 5 },
+          { id: 'topic_6', label: 'Predicting insect diapause for crop protection', order: 6 },
+        ],
       },
       {
         number: 3,
@@ -254,6 +436,12 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
         dir: 'chapter_03',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
+        topics: [
+          { id: 'topic_1', label: 'Fundamentals & Regolith Genesis', order: 1 },
+          { id: 'topic_2', label: 'Physical Weathering (Mechanical Agents)', order: 2 },
+          { id: 'topic_3', label: 'Biological Weathering (Living Agents)', order: 3 },
+          { id: 'topic_4', label: 'Mathematical Forces Turning Rock into Soil', order: 4 },
+        ],
       },
       {
         number: 4,
@@ -261,6 +449,14 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
         dir: 'chapter_04',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
         resourceCount: 7,
+        topics: [
+          { id: 'topic_1', label: 'Floral architecture and double fertilization', order: 1 },
+          { id: 'topic_2', label: 'Self-Pollination Mechanisms in Indian Crops', order: 2 },
+          { id: 'topic_3', label: 'How Indian crops force cross pollination', order: 3 },
+          { id: 'topic_4', label: 'How nature pollinates India\'s crops', order: 4 },
+          { id: 'topic_5', label: 'Choosing and Arranging Orchard Pollinizers', order: 5 },
+          { id: 'topic_6', label: 'How Parthenocarpy Creates Seedless Fruit', order: 6 },
+        ],
       },
     ];
 
@@ -349,8 +545,15 @@ export async function getChapterVideos(
   subjectId: string,
   chapterNumber: number,
 ): Promise<ChapterVideo[]> {
-  const key = `${subjectId}_${chapterNumber}`;
+  const normSubject = resolveSubjectId(subjectId) || subjectId;
+  const key = `${normSubject}_${chapterNumber}`;
   if (key in chapterVideosCache) return chapterVideosCache[key];
+
+  // GCS backend subjects do not use segmented videos.json; return empty array immediately to avoid 404
+  if (GCS_BACKEND_SUBJECTS.has(subjectId) || GCS_BACKEND_SUBJECTS.has(normSubject)) {
+    chapterVideosCache[key] = [];
+    return [];
+  }
 
   if (!cachedManifest) await getManifest();
   const url = `${getSubjectBaseUrl(subjectId)}/${getChapterDir(subjectId, chapterNumber)}/videos.json`;

@@ -2256,14 +2256,16 @@ export default function MockTestView({
                         {(q.options || []).map((opt, optIdx) => {
                           const isSelected = userSelected.includes(optIdx);
                           const isOptCorrect = correct.includes(optIdx);
+                          const isEven = optIdx % 2 === 0;
 
-                          let optBg = "#ffffff";
-                          let optBorder = "1.5px solid #f1f5f9";
-                          let optColor = "#334155";
-                          let radioBorder = isSelected ? "#467360" : "#cbd5e1";
+                          // Alternating lighter (#ffffff) and darker (#f1f6f3) shades:
+                          let optBg = isEven ? "#ffffff" : "#f1f6f3";
+                          let optBorder = isEven ? "1.5px solid #e2e8f0" : "1.5px solid #cad9cf";
+                          let optColor = "#1e293b";
+                          let radioBorder = isSelected ? "#467360" : (isEven ? "#cbd5e1" : "#94a3b8");
                           let radioBg = isSelected ? "#467360" : "#ffffff";
-                          let badgeBg = "#f1f5f9";
-                          let badgeColor = "#475569";
+                          let badgeBg = isEven ? "#f1f5f9" : "#dbe8df";
+                          let badgeColor = "#334155";
 
                           if (isSubmitted) {
                             if (isOptCorrect) {
@@ -2822,10 +2824,12 @@ export default function MockTestView({
                     {(q.options || []).map((opt, optIdx) => {
                       const isSelected = userSelected.includes(optIdx);
                       const isOptCorrect = correct.includes(optIdx);
+                      const isEven = optIdx % 2 === 0;
 
-                      let optBg = "#ffffff";
-                      let optBorder = "1.5px solid #f1f5f9";
-                      let optColor = "#334155";
+                      // Alternating lighter (#ffffff) and darker (#f1f6f3) shades:
+                      let optBg = isEven ? "#ffffff" : "#f1f6f3";
+                      let optBorder = isEven ? "1.5px solid #e2e8f0" : "1.5px solid #cad9cf";
+                      let optColor = "#1e293b";
 
                       if (isSubmitted) {
                         if (isOptCorrect) {

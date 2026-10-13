@@ -57,7 +57,7 @@ export async function fetchAndParseFirst(
   for (const url of urls) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(url, { cache: 'no-cache', signal: controller.signal });
       clearTimeout(timeoutId);
       if (!res.ok) continue;
@@ -194,33 +194,7 @@ export async function getAssessments(
       [`${base}/practice/mcq?difficulty=${difficulty}`], 'mcq_');
     const msqRes = await fetchAndParseFirst(
       [`${base}/practice/msq?difficulty=${difficulty}`], 'msq_');
-    const combined = [...mcqRes, ...msqRes];
-    if (combined.length > 0) return combined;
-
-    const GCS_LOCAL_PATH: Record<string, string> = {
-      'angrau/entomology': 'angrau',
-    };
-    const localSubjectPath = GCS_LOCAL_PATH[subjectPath] ?? subjectPath;
-    const chDirs = Array.from(new Set([chDir, `chapter_${String(chapterNumber).padStart(2, '0')}`, `chapter_${chapterNumber}`]));
-    const mcqCandidates: string[] = [];
-    const msqCandidates: string[] = [];
-    for (const c of chDirs) {
-      const b = `${BASE}/${localSubjectPath}/${c}`;
-      mcqCandidates.push(
-        `${b}/${level}/mcq.md`,
-        `${b}/${level}/assessment.md`,
-        `${b}/${level}/quiz.md`,
-        `${b}/assessment.md`,
-        `${b}/quiz.md`,
-      );
-      msqCandidates.push(
-        `${b}/${level}/msq.md`,
-        `${b}/msq.md`,
-      );
-    }
-    const localMcq = await fetchAndParseFirst(mcqCandidates, 'mcq_');
-    const localMsq = await fetchAndParseFirst(msqCandidates, 'msq_');
-    return [...localMcq, ...localMsq];
+    return [...mcqRes, ...msqRes];
   }
 
   if (BACKEND_SUBJECTS.has(subject)) {
@@ -348,32 +322,17 @@ export async function getChapterExamQuestions(
     try {
       const questions = await fetchAndParseFirst([url], `${kind}_`);
       if (questions.length > 0) {
-        // For pre_final / certification: only accept if the remote API actually
-        // returned descriptive questions. If GCS has stale MCQ data for what
-        // should be a structured descriptive exam, fall through to local files.
-        const isDescriptiveExam = kind === 'pre_final' || kind === 'certification';
-        const hasDescriptive = questions.some(
-          (q) => (q as any).modelAnswer || q.type === 'short_answer' || q.type === 'long_answer' || q.type === 'descriptive'
-        );
-        if (!isDescriptiveExam || hasDescriptive) {
-          return questions;
-        }
-        // else: GCS returned MCQs for a descriptive exam → fall through to local files
+        return questions;
       }
-    } catch {
-      // Fall through to local resources if GCS returns error or empty
+    } catch (e) {
+      console.warn(`[GCS] Failed fetching ${kindPath}`, e);
     }
+    return [];
   }
 
   const videos = await getChapterVideos(subject, chapterNumber);
   const chDir = getChapterDir(subject, chapterNumber);
-  // For GCS subjects the cloud API is canonical but for dev we fall back to
-  // /generated_resources so files placed under public/ are found before they
-  // are uploaded to Cloud Run.  getSubjectResourcePath returns the manifest
-  // path (e.g. "angrau"), so the base becomes /generated_resources/angrau.
-  const subjectBase = GCS_BACKEND_SUBJECTS.has(subject)
-    ? `${BASE}/${getSubjectResourcePath(subject)}`
-    : getSubjectBaseUrl(subject);
+  const subjectBase = getSubjectBaseUrl(subject);
   const fileName = CHAPTER_EXAM_FILES[kind];
 
   let rawQuestions: AssessmentQuestion[] = [];

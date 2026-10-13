@@ -1,15 +1,45 @@
 {
   "version": "1.0",
   "threshold": "24MB",
-  "totalFiles": 1,
-  "generatedAt": "2026-10-10T09:16:29.872Z",
+  "totalFiles": 6,
+  "generatedAt": "2026-10-12T19:14:37.598Z",
   "note": "These files are stored in Google Drive and fetched on-demand",
   "files": [
     {
-      "path": "mlrit/dbms/chapter_01/Practice/Revise/DBMS_UNIT_I_Flashcards_revise.json",
-      "size": 27.8,
-      "extension": ".json",
-      "createdAt": "2026-10-10T09:16:29.865Z"
+      "path": "master_minds/ca_final/advanced_financial_management/chapter_02 (derivatives_options)/beginner/podcasts/08_Derivative_Options_Beginner_Long.mp3",
+      "size": 24.13,
+      "extension": ".mp3",
+      "createdAt": "2026-10-12T19:14:37.517Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_advanced.md",
+      "size": 31.07,
+      "extension": ".md",
+      "createdAt": "2026-10-12T19:14:37.564Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/detailed_summary_intermediate.md",
+      "size": 24.87,
+      "extension": ".md",
+      "createdAt": "2026-10-12T19:14:37.564Z"
+    },
+    {
+      "path": "neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/quick_summary_advanced.md",
+      "size": 28.06,
+      "extension": ".md",
+      "createdAt": "2026-10-12T19:14:37.569Z"
+    },
+    {
+      "path": "Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/beginner/long_podcast.mp3",
+      "size": 61.02,
+      "extension": ".mp3",
+      "createdAt": "2026-10-12T19:14:37.576Z"
+    },
+    {
+      "path": "Telangana_Intermediate/Inter 1st year/11th_physics/chapter_01/intermediate/long_podcast.mp3",
+      "size": 51.58,
+      "extension": ".mp3",
+      "createdAt": "2026-10-12T19:14:37.577Z"
     }
   ],
   "instructions": {

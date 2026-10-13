@@ -2,29 +2,28 @@
 
 .sv-subject-card--entomology,
 .sv-subject-card--mlrit {
-  border-radius: 26px !important;
-  padding: 24px 32px !important;
+  border-radius: 36px !important;
+  padding: 28px 36px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 24px !important;
+  gap: 32px !important;
   position: relative !important;
   overflow: visible !important;
-  min-height: 160px !important;
+  min-height: 220px !important;
   box-sizing: border-box !important;
   cursor: pointer;
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
 }
 
 .sv-subject-card--entomology {
-  background: #1c2e25 !important;
-  background: linear-gradient(145deg, #1f3329 0%, #16261f 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  box-shadow: 0 16px 40px rgba(10, 20, 15, 0.28) !important;
+  background: #23342b !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 44px rgba(10, 20, 15, 0.32) !important;
 }
 
 .sv-subject-card--entomology:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 20px 48px rgba(10, 20, 15, 0.36) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 22px 52px rgba(10, 20, 15, 0.4) !important;
 }
 
 /* Hide old gradient accent circle on rich subject cards */
@@ -32,27 +31,27 @@
   display: none !important;
 }
 
-/* Icon container */
+/* Icon container: pure white squircle badge matching mockup */
 .sv-subject-card--entomology .sv-card-icon {
-  width: 110px !important;
-  height: 110px !important;
-  min-width: 110px !important;
-  min-height: 110px !important;
-  border-radius: 20px !important;
-  background: #FFF6F0 !important;
+  width: 172px !important;
+  height: 172px !important;
+  min-width: 172px !important;
+  min-height: 172px !important;
+  border-radius: 28px !important;
+  background: #ffffff !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
-  box-shadow: none !important;
-  padding: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  padding: 14px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   transition: transform 0.22s ease !important;
 }
 
 .sv-subject-card--entomology:hover .sv-card-icon {
-  transform: scale(1.03) !important;
+  transform: scale(1.02) !important;
 }
 
 .sv-card-book-img {
@@ -103,11 +102,10 @@
 /* Title & Header Row */
 .sv-subject-head-row {
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: space-between !important;
   gap: 16px !important;
-  margin-bottom: 20px !important;
-  flex-wrap: wrap !important;
+  margin-bottom: 16px !important;
 }
 
 .sv-subject-head-info {
@@ -117,12 +115,22 @@
 
 .sv-subject-card--entomology .sv-card-title,
 .sv-subject-card--mlrit .sv-card-title {
-  font-size: 32px !important;
+  font-size: 38px !important;
   font-weight: 800 !important;
   color: #FFFFFF !important;
   margin: 0 !important;
-  letter-spacing: -0.4px !important;
-  line-height: 1.15 !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.12 !important;
+}
+
+.sv-subject-card--entomology .sv-subject-subtitle {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #E07A5F !important;
+  margin-top: 6px !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+  letter-spacing: 0.1px !important;
 }
 
 .sv-subject-subtitle {
@@ -213,12 +221,12 @@
   width: 100% !important;
 }
 
-/* ── Chapter Icons Row (Image 1 Style: Circular Chapter Number Buttons) ── */
+/* ── Chapter Icons Row (Circular Chapter Number Buttons matching Screenshot) ── */
 .sv-chapter-icons-row {
   display: flex !important;
   align-items: center !important;
-  gap: 16px !important;
-  margin-top: 14px !important;
+  gap: 22px !important;
+  margin-top: 16px !important;
   width: 100% !important;
   flex-wrap: wrap !important;
 }
@@ -231,42 +239,37 @@
 }
 
 .sv-ch-circle-btn {
-  width: 48px !important;
-  height: 48px !important;
+  width: 64px !important;
+  height: 64px !important;
   border-radius: 50% !important;
-  background: rgba(255, 255, 255, 0.12) !important;
-  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  background: rgba(255, 255, 255, 0.11) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #FFFFFF !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
   outline: none !important;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.22) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
   padding: 0 !important;
   position: relative !important;
 }
 
 .sv-ch-circle-btn:hover {
-  background: rgba(255, 255, 255, 0.24) !important;
-  border-color: rgba(226, 177, 142, 0.55) !important;
-  transform: translateY(-2px) scale(1.06) !important;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35) !important;
+  background: rgba(255, 255, 255, 0.22) !important;
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
 }
 
 .sv-ch-circle-btn.is-completed {
-  background: rgba(226, 177, 142, 0.2) !important;
-  border-color: rgba(226, 177, 142, 0.6) !important;
-}
-
-.sv-ch-circle-btn.is-completed:hover {
-  background: rgba(226, 177, 142, 0.32) !important;
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .sv-ch-circle-num {
-  font-size: 18px !important;
-  font-weight: 800 !important;
+  font-size: 26px !important;
+  font-weight: 700 !important;
   color: #FFFFFF !important;
   line-height: 1 !important;
 }
@@ -310,30 +313,33 @@
   transform: translateX(-50%) translateY(0) !important;
 }
 
-/* Pill badge under circle */
+/* Plain percentage text below circle */
+.sv-ch-circle-percent,
+.sv-subject-card--entomology .sv-ch-circle-badge,
 .sv-ch-circle-badge {
-  margin-top: 6px !important;
-  background: rgba(14, 24, 19, 0.75) !important;
+  margin-top: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
   color: #FFFFFF !important;
-  border-radius: 9999px !important;
-  padding: 2px 8px !important;
-  font-size: 11px !important;
-  font-weight: 700 !important;
-  line-height: 1.2 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  letter-spacing: 0.1px !important;
+  box-shadow: none !important;
+}
+
+/* Tick mark sits above the circle (always visible) */
+.sv-ch-circle-tick {
   display: inline-flex !important;
   align-items: center !important;
-  gap: 3px !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-}
-
-.sv-ch-circle-check {
-  color: #E2B18E !important;
-  font-size: 11px !important;
-  font-weight: 800 !important;
-}
-
-.sv-ch-circle-badge.is-done .sv-ch-circle-check {
-  color: #82C785 !important;
+  justify-content: center !important;
+  height: 18px !important;
+  margin-bottom: 6px !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* ── Interactive Chapter Cards Grid (Taller & Spacious) ── */

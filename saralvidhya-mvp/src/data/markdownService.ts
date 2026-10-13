@@ -12,6 +12,7 @@ import {
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
+  resolveSubjectId,
 } from './manifestService';
 
 /**
@@ -24,7 +25,8 @@ function getGcsApiUrl(
   resourceName: string,
   level: DifficultyLevel,
 ): string | null {
-  const subjectPath = GCS_SUBJECT_MAP[subjectId];
+  const normSubject = resolveSubjectId(subjectId) || subjectId;
+  const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subjectId];
   if (!subjectPath) return null;
   const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
   const map: Record<string, string> = {
@@ -34,6 +36,9 @@ function getGcsApiUrl(
     'glossary.md':      `${base}/read/glossary`,
     'mindmap.md':       `${base}/learn/mindmap`,
     'mindmap.json':     `${base}/learn/mindmap`,
+    'study_plan.md':    `${base}/learn/study_plan`,
+    'study_plan.json':  `${base}/learn/study_plan`,
+    'study_plan':       `${base}/learn/study_plan`,
     'question_bank.md':   `${base}/practice/question_bank`,
     'question_bank.json': `${base}/practice/question_bank`,
     'mock_test.md':       `${base}/practice/mock_test`,
@@ -83,6 +88,8 @@ export function getResourceFileCandidates(
 
   const aliases: Record<string, string[]> = {
     'summary.md': [
+      `Learn/Read/Quick_Study/${level}.md`,
+      `learn/read/quick_study/${level}.md`,
       `Learn/Read/Quick_Study/DBMS_UNIT_I_Quick_Study_${level}.md`,
       `Learn/Quick_Summary/quick_summary_${level}.md`,
       `Read/Quick_Summary/quick_summary_${level}.md`,
@@ -138,6 +145,8 @@ export function getResourceFileCandidates(
       'quiz.md', 'question_bank.md'
     ],
     'detailed_view.md': [
+      `Learn/Read/Detailed_Study/${level}.md`,
+      `learn/read/detailed_study/${level}.md`,
       `Learn/Read/Detailed_Study/DBMS_UNIT_I_Detailed_Study_${level}.md`,
       `Learn/Detailed_Summary/detailed_summary_${level}.md`,
       `Read/Detailed_Summary/detailed_summary_${level}.md`,
@@ -303,6 +312,8 @@ export function cleanAiPreamble(text: string): string {
   for (const pattern of preamblePatterns) {
     cleaned = cleaned.replace(pattern, '').trim();
   }
+  // Convert local filesystem file:/// links into clean bold text
+  cleaned = cleaned.replace(/\[([^\]]+)\]\(file:\/\/\/[^)]+\)/g, '**$1**');
   return cleaned;
 }
 
@@ -335,15 +346,30 @@ export async function getResourceContent(
   const localBase = getLocalSubjectBaseUrl(subject);
   const subjectBase = getSubjectBaseUrl(subject);
 
-  // ── GCS Cloud Run subjects: use canonical API routes (with 2s timeout) ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const apiUrl = getGcsApiUrl(subject, chDir, resourceName, level);
+  const normSubject = resolveSubjectId(subject) || subject;
+  const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
+
+  // ── GCS Cloud Run subjects: use canonical API routes (with 35s timeout for large markdown files) ──
+  if (isGcs) {
+    const apiUrl = getGcsApiUrl(normSubject, chDir, resourceName, level);
     if (apiUrl) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const res = await fetch(apiUrl, { signal: controller.signal, cache: 'no-cache' });
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
+        let res = await fetch(apiUrl, { signal: controller.signal, cache: 'no-cache' });
         clearTimeout(timeoutId);
+
+        // If learn/study_plan returned non-ok, attempt fallback to read/study_plan
+        if (!res.ok && resourceName.includes('study_plan') && apiUrl.includes('/learn/study_plan')) {
+          try {
+            const fallbackUrl = apiUrl.replace('/learn/study_plan', '/read/study_plan');
+            const fallbackRes = await fetch(fallbackUrl, { cache: 'no-cache' });
+            if (fallbackRes.ok) {
+              res = fallbackRes;
+            }
+          } catch {}
+        }
+
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {
@@ -351,7 +377,7 @@ export async function getResourceContent(
             // Rewrite relative image paths to absolute API URLs
             // ../../extracted_images/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/extracted_images/X
             // ../Mindmaps/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/Mindmaps/X
-            const subjectPath = GCS_SUBJECT_MAP[subject];
+            const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
             const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
             // Replace ../../ first (two levels up), then ../ (one level up)
             md = md.replace(
@@ -368,7 +394,9 @@ export async function getResourceContent(
       } catch (e) {
         console.warn('[GCS] Failed or timed out fetching', apiUrl, e);
       }
-      // Fall through to local static files if GCS fetch was unsuccessful
+      // For mapped GCS resources, canonical API is the single source of truth;
+      // return immediately so we do not blast 12 non-existent legacy relative URLs against Cloud Run.
+      return `Content not available.`;
     }
     // For unmapped resources (e.g. podcast transcripts) fall through to path-based fetch below.
   }
@@ -440,10 +468,12 @@ export async function getResourceContent(
     `chapter_${chapterNumber}`,
   ]));
 
-  const basesToTry = Array.from(new Set([
-    localBase,
-    subjectBase,
-  ]));
+  const basesToTry = GCS_BACKEND_SUBJECTS.has(subject)
+    ? [subjectBase]
+    : Array.from(new Set([
+        localBase,
+        subjectBase,
+      ]));
 
   for (const base of basesToTry) {
     for (const ch of chDirsToTry) {

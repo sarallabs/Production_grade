@@ -1,0 +1,158 @@
+{
+  "course_id": "MLRIT_DBMS_U1",
+  "course_name": "Database Management Systems",
+  "unit": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "study_track": "Detailed_Study",
+  "persona": "intermediate",
+  "total_questions": 6,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Fundamentals and Engine Architecture",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which component of the DBMS Storage Manager is responsible for loading disk blocks into main memory frames and implementing cache eviction policies?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Query Compiler \u2014 it generates optimized relational algebra execution plans",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Buffer Manager \u2014 it allocates RAM frames and flushes dirty pages using algorithms like LRU",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Data Dictionary \u2014 it computes mathematical joins across non-indexed attributes",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "The Buffer Manager is the core subsystem of the storage manager that interfaces with secondary storage to cache disk blocks in main memory and maintain page replacement policies. (Key Takeaway: The Buffer Manager controls memory caching and page replacement.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Conceptual Database Design & ER Modeling",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In an ER diagram, Total Participation of an entity set in a relationship set is visually denoted by a double line, indicating that every entity in the set must participate in at least one relationship instance.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. Total participation (existence dependency) enforces a minimum cardinality of 1 and is drawn with a double line connecting the entity set rectangle to the relationship diamond. (Key Takeaway: Total participation is represented by a double line and indicates existence dependency.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Advanced ER and Extended ER (EER) Concepts",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "In Extended ER (EER) modeling, what does the Disjoint constraint ('d') specify regarding subclass membership?",
+      "options": [
+        {
+          "key": "A",
+          "text": "An entity instance can belong to multiple subclasses within the specialization simultaneously",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "An entity instance can be a member of at most one subclass within the specialization",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Subclasses are forbidden from inheriting attributes from the parent superclass",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "The disjoint constraint ('d') enforces mutual exclusivity among subclasses: an entity can belong to at most one subclass. In contrast, overlapping ('o') permits simultaneous membership in multiple subclasses. (Key Takeaway: Disjoint specialization enforces mutual exclusivity among subclasses.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Relational Model Foundations & Integrity Constraints",
+      "type": "yes_no",
+      "prompt_type": "Question",
+      "stem": "When a foreign key is declared with ON DELETE CASCADE, will deleting a record in the parent table automatically delete all matching referencing records in the child table?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "No",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (Yes)",
+      "rationale": "Yes. ON DELETE CASCADE ensures referential integrity by automatically propagating parent record deletions down to referencing child records, preventing orphaned foreign key references. (Key Takeaway: ON DELETE CASCADE automatically deletes associated child records.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Logical Database Design (ER-to-Relational Translation)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "When mapping a 1:N Binary Relationship Set into relations, where should the Foreign Key be placed to ensure single-valued attributes without creating unnecessary extra tables?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In the '1'-side relation \u2014 embed an array of primary keys from the 'N'-side relation",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "In the 'N'-side relation \u2014 embed the primary key of the '1'-side relation as a foreign key attribute",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "In an auxiliary bridge table \u2014 a separate third relation is mandatory for every binary relationship",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "In a 1:N relationship (e.g., Department to Employee), each entity on the 'N'-side is associated with at most one entity on the '1'-side. Embedding Dept_ID inside Employee guarantees an atomic single-valued foreign key without null proliferation. (Key Takeaway: In 1:N mappings, embed the foreign key on the 'N'-side relation.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Relational Querying, Views & Schema Evolution",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In Relational Algebra, the Selection operator ($\\sigma$) filters columns vertically, while the Projection operator ($\\pi$) filters tuples horizontally.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "B (False)",
+      "rationale": "False \u2014 swapped_term. Selection ($\\sigma$) filters tuples (rows) horizontally based on a condition, whereas Projection ($\\pi$) selects specified attributes (columns) vertically and eliminates duplicates. (Key Takeaway: Selection filters rows horizontally; Projection filters columns vertically.)",
+      "alteration_type": "swapped_term",
+      "bloom_level": "L2"
+    }
+  ]
+}
