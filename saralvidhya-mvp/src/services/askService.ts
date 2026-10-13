@@ -33,9 +33,10 @@ const hasApiKey = Boolean(
 // NOTE: As Google updates or releases new Gemini models in the future,
 // please ensure they are added to this FALLBACK_MODELS list and updated in ConfigPage.tsx.
 const FALLBACK_MODELS = [
+  'gemini-3.8-flash',
   'gemini-3.6-flash',
-  'gemini-3.5-flash',
   'gemini-3-flash-preview',
+  'gemini-3.5-flash',
   'gemini-3.1-pro-preview',
 ];
 
@@ -261,9 +262,9 @@ ${chapterContext ? `\nHere is the complete chapter content you MUST use as your 
 
   const modelsToTry: string[] = [];
 
-  // Try the user-configured model first (if valid/supported, else use default gemini-3.6-flash)
+  // Try the user-configured model first (if valid/supported, else use default gemini-3.8-flash)
   const configSelectedModel = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('sv_gemini_model') : null;
-  const effectiveConfigModel = (configSelectedModel && FALLBACK_MODELS.includes(configSelectedModel))
+  const effectiveConfigModel = (configSelectedModel && (FALLBACK_MODELS.includes(configSelectedModel) || configSelectedModel.startsWith('gemini-')))
     ? configSelectedModel
     : FALLBACK_MODELS[0];
   if (effectiveConfigModel) {

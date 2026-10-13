@@ -1035,10 +1035,11 @@ export default function StudyTable() {
   useEffect(() => {
     if (!isSidebarOpen) {
       const timer = setTimeout(() => {
-        const container = document.querySelector('.sv-rail-items');
-        const activeItem = document.querySelector('.sv-rail-item.active');
+        const container = document.querySelector('.sv-rail-items') as HTMLElement | null;
+        const activeItem = document.querySelector('.sv-rail-item.active') as HTMLElement | null;
         if (container && activeItem) {
-          activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          const targetTop = activeItem.offsetTop - container.offsetTop;
+          container.scrollTo({ top: Math.max(0, targetTop - 20), behavior: 'smooth' });
         }
       }, 150);
       return () => clearTimeout(timer);
@@ -3902,7 +3903,11 @@ export default function StudyTable() {
                               text={preprocessSummaryText(typeof content === "string" ? content : "")}
                               subjectId={subjectId}
                               persona={persona}
-                              onPlay={() => { setIsSidebarOpen(false); }}
+                              onPlay={() => {
+                                if (window.innerWidth < 768) {
+                                  setIsSidebarOpen(false);
+                                }
+                              }}
                               onHighlightChange={(payload) => setReadingHighlight(payload)}
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
@@ -3929,7 +3934,11 @@ export default function StudyTable() {
                         text={preprocessSummaryText(typeof content === "string" ? content : "")}
                         subjectId={subjectId}
                         persona={persona}
-                        onPlay={() => { setIsSidebarOpen(false); }}
+                        onPlay={() => {
+                          if (window.innerWidth < 768) {
+                            setIsSidebarOpen(false);
+                          }
+                        }}
                         onHighlightChange={(payload) => setReadingHighlight(payload)}
                         activeTool={activeTool}
                         onSwitchTool={setActiveTool}
