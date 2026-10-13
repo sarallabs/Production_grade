@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   LayoutChangeEvent,
+  Platform,
 } from 'react-native';
 import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
 import * as Linking from 'expo-linking';
@@ -19,6 +20,7 @@ import {
   getWatchedVideos,
   markVideoWatched,
 } from '@/services/contentService';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 const WATCHED_THRESHOLD_PCT = 90;
 
@@ -30,6 +32,7 @@ interface VideosViewProps {
 
 export default function VideosView({ subjectId, chapterNumber, chapterName }: VideosViewProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const playerRef = useRef<YoutubeIframeRef>(null);
   const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -176,10 +179,28 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
   }
 
   return (
-    <View onLayout={onLayout} style={styles.container}>
+    <View onLayout={onLayout} style={[styles.container, isTablet && { maxWidth: 820, alignSelf: 'center' }]}>
       {/* Player */}
-      <View style={[styles.playerWrap, { height: playerHeight || 200 }]}>
-        {containerWidth > 0 && !playerError && (
+      <View
+        style={[
+          styles.playerWrap,
+          Platform.OS === 'web' ? { aspectRatio: 16 / 9 } : { height: playerHeight || 200 },
+        ]}
+      >
+        {!playerError && Platform.OS === 'web' && (
+          React.createElement('iframe', {
+            key: currentVideo.ytId,
+            src: `https://www.youtube.com/embed/${currentVideo.ytId}?rel=0&modestbranding=1`,
+            width: '100%',
+            height: '100%',
+            style: { border: 0, display: 'block' },
+            allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
+            allowFullScreen: true,
+            title: currentVideo.title,
+            onLoad: () => setPlayerReady(true),
+          })
+        )}
+        {containerWidth > 0 && !playerError && Platform.OS !== 'web' && (
           <YoutubePlayer
             key={currentVideo.ytId}
             ref={playerRef}
@@ -244,6 +265,7 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
       </View>
 
       <View style={styles.actionRow}>
+        {Platform.OS !== 'web' && (
         <TouchableOpacity
           style={styles.playButton}
           onPress={() => {
@@ -256,6 +278,7 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
           <Ionicons name={playing ? 'pause' : 'play'} size={18} color="#ffffff" />
           <Text style={styles.playButtonText}>{playing ? 'Pause' : 'Play'}</Text>
         </TouchableOpacity>
+        )}
         <TouchableOpacity
           style={[styles.secondaryButton, { borderColor: itemBorder }]}
           onPress={openInYouTube}

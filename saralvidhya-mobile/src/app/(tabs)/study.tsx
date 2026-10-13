@@ -9,7 +9,7 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth, PersonaType } from '@/context/AuthContext';
@@ -34,6 +34,7 @@ import {
   fetchMindmap,
   MindmapData,
 } from '@/services/contentService';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export type StudyToolId =
   | 'summary'
@@ -81,6 +82,8 @@ export default function StudyTableScreen() {
   const params = useLocalSearchParams<{ subjectId?: string; chapter?: string; tool?: string }>();
   const { persona, updatePersona } = useAuth();
   const { isDark } = useAppTheme();
+  const router = useRouter();
+  const { isTablet, isLandscape } = useDeviceLayout();
 
   const activeSubject = ANGRAU_SUBJECTS[0]; // ENTO 131
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
@@ -170,7 +173,54 @@ export default function StudyTableScreen() {
   const pillBg = isDark ? '#1E2B24' : '#EFE5DF';
 
   return (
-    <View style={[styles.container, { backgroundColor: screenBg }]}>
+    <View style={[styles.container, { backgroundColor: screenBg }, isTablet && { flexDirection: 'row' }]}>
+      {/* Tablet master pane: chapter list */}
+      {isTablet && (
+        <View
+          style={[
+            tabletStyles.sidebar,
+            { width: isLandscape ? 320 : 264, backgroundColor: cardBg, borderRightColor: cardBorder },
+          ]}
+        >
+          <Text style={tabletStyles.sidebarCode}>{activeSubject.code} • ANGRAU</Text>
+          <Text style={[tabletStyles.sidebarTitle, { color: textColor }]}>Chapters</Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {activeSubject.chapters.map((ch) => {
+              const isCur = ch.number === selectedChapterNum;
+              return (
+                <TouchableOpacity
+                  key={ch.number}
+                  style={[
+                    tabletStyles.chapterRow,
+                    isCur && { backgroundColor: isDark ? 'rgba(34,197,94,0.15)' : 'rgba(34,197,94,0.1)', borderColor: '#22c55e' },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setSelectedChapterNum(ch.number);
+                    router.setParams({ chapter: String(ch.number) });
+                  }}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isCur }}
+                >
+                  <View style={[tabletStyles.chapterBadge, isCur && { backgroundColor: '#22c55e' }]}>
+                    <Text style={[tabletStyles.chapterBadgeText, { color: isCur ? '#FFFFFF' : subtextColor }]}>{ch.number}</Text>
+                  </View>
+                  <Text
+                    style={[tabletStyles.chapterName, { color: textColor }, isCur && { fontWeight: '700' }]}
+                    numberOfLines={2}
+                  >
+                    {ch.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Detail pane (the existing study UI) */}
+      <View style={{ flex: 1 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.courseHeaderRow}>
@@ -178,13 +228,13 @@ export default function StudyTableScreen() {
             <Text style={styles.courseCodeBadge}>{activeSubject.code} • ANGRAU</Text>
             <TouchableOpacity
               style={styles.chapterSelector}
-              onPress={() => setShowChapterModal(true)}
-              activeOpacity={0.8}
+              onPress={() => { if (!isTablet) setShowChapterModal(true); }}
+              activeOpacity={isTablet ? 1 : 0.8}
             >
               <Text style={[styles.chapterTitle, { color: textColor }]} numberOfLines={1}>
                 Ch {currentChapter.number}: {currentChapter.name}
               </Text>
-              <Ionicons name="chevron-down" size={18} color="#22c55e" />
+              {!isTablet && <Ionicons name="chevron-down" size={18} color="#22c55e" />}
             </TouchableOpacity>
           </View>
         </View>
@@ -250,10 +300,10 @@ export default function StudyTableScreen() {
       {/* Main Study Workspace Area */}
       <ScrollView
         style={styles.workspace}
-        contentContainerStyle={styles.workspaceContent}
+        contentContainerStyle={[styles.workspaceContent, isTablet && { alignItems: 'center' }]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.activeToolCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        <View style={[styles.activeToolCard, isTablet && { width: '100%', maxWidth: 960 }, { backgroundColor: cardBg, borderColor: cardBorder }]}>
           <View style={styles.toolHeader}>
             <View style={styles.toolHeaderIcon}>
               <Text style={{ fontSize: 24 }}>
@@ -450,6 +500,7 @@ export default function StudyTableScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+      </View>
     </View>
   );
 }
@@ -735,5 +786,57 @@ const styles = StyleSheet.create({
   modalChapterTextActive: {
     color: '#22c55e',
     fontWeight: '700',
+  },
+});
+
+/** Tablet-only styles for the chapter sidebar (master pane). */
+const tabletStyles = StyleSheet.create({
+  sidebar: {
+    borderRightWidth: 1,
+    paddingTop: Platform.OS === 'android' ? 45 : 30,
+    paddingHorizontal: 14,
+    paddingBottom: 16,
+  },
+  sidebarCode: {
+    color: '#22c55e',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  sidebarTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 2,
+    marginBottom: 14,
+  },
+  chapterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    marginBottom: 6,
+  },
+  chapterBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(128,128,128,0.15)',
+  },
+  chapterBadgeText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  chapterName: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
   },
 });

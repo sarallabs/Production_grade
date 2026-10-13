@@ -17,11 +17,13 @@ import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { manifestService, Subject, Chapter } from '@/api/manifestService';
 import { ChapterCard } from '@/components/study/ChapterCard';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function SubjectUnitsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { isDark, setThemeMode } = useAppTheme();
+  const { isTablet, columns } = useDeviceLayout();
 
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -126,7 +128,7 @@ export default function SubjectUnitsScreen() {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -136,6 +138,7 @@ export default function SubjectUnitsScreen() {
             />
           }
         >
+          <View style={isTablet ? styles.tabletColumn : undefined}>
           {/* Card interaction helper banner */}
           <View
             style={[
@@ -153,19 +156,26 @@ export default function SubjectUnitsScreen() {
             </Text>
           </View>
 
+          <View style={isTablet ? styles.tabletGrid : undefined}>
           {chapters.map((chapter) => (
-            <ChapterCard
+            <View
               key={chapter.number}
-              chapter={chapter}
-              subjectName={activeSubject?.name || 'Entomology'}
-              courseName={user?.program || 'B.Sc Agriculture'}
-              isDark={isDark}
-              onPress={() => handleOpenStudyMaterials(chapter)}
-              onToolPress={(toolId) => handleOpenStudyMaterials(chapter, toolId)}
-            />
+              style={isTablet ? { width: columns === 3 ? '32%' : '48.5%' } : undefined}
+            >
+              <ChapterCard
+                chapter={chapter}
+                subjectName={activeSubject?.name || 'Entomology'}
+                courseName={user?.program || 'B.Sc Agriculture'}
+                isDark={isDark}
+                onPress={() => handleOpenStudyMaterials(chapter)}
+                onToolPress={(toolId) => handleOpenStudyMaterials(chapter, toolId)}
+              />
+            </View>
           ))}
+          </View>
 
           <View style={{ height: 32 }} />
+          </View>
         </ScrollView>
       )}
     </View>
@@ -210,6 +220,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 8,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 1100,
+  },
+  tabletGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    alignItems: 'stretch',
   },
   helperBanner: {
     flexDirection: 'row',

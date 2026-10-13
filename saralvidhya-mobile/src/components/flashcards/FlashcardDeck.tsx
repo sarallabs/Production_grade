@@ -18,6 +18,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { Flashcard } from '@/data/sampleFlashcards';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width - 48;
@@ -29,6 +30,7 @@ interface FlashcardDeckProps {
 
 export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [deck, setDeck] = useState<Flashcard[]>(cards);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -123,6 +125,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       <View
         style={[
           styles.finishedCard,
+          isTablet && tabletStyles.finishedCard,
           {
             backgroundColor: isDark ? '#23322B' : '#ffffff',
             borderColor: isDark ? '#3D5449' : '#E5DDD8',
@@ -168,7 +171,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && tabletStyles.container]}>
       {/* Top Deck Status */}
       <View style={styles.statusBar}>
         <View style={styles.counterBadge}>
@@ -193,7 +196,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       <TouchableOpacity
         activeOpacity={1}
         onPress={handleFlip}
-        style={styles.cardTouchArea}
+        style={[styles.cardTouchArea, isTablet && tabletStyles.cardTouchArea]}
       >
         {/* Front Face */}
         <Animated.View
@@ -218,7 +221,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           </View>
 
           <View style={styles.cardBody}>
-            <Text style={[styles.cardFrontText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
+            <Text style={[styles.cardFrontText, isTablet && tabletStyles.frontText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               {currentCard.front}
             </Text>
           </View>
@@ -256,7 +259,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           </View>
 
           <View style={styles.cardBody}>
-            <Text style={[styles.cardBackText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
+            <Text style={[styles.cardBackText, isTablet && tabletStyles.backText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
               {currentCard?.back}
             </Text>
             {currentCard?.infographicUrl ? (
@@ -278,7 +281,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       {/* Swipe / Action Buttons */}
       <View style={styles.actionsContainer}>
         <TouchableOpacity
-          style={[styles.actionBtn, styles.reviewBtn]}
+          style={[styles.actionBtn, styles.reviewBtn, isTablet && tabletStyles.actionBtn]}
           onPress={() => advanceCard(false)}
           activeOpacity={0.8}
         >
@@ -287,7 +290,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionBtn, styles.masteredBtn]}
+          style={[styles.actionBtn, styles.masteredBtn, isTablet && tabletStyles.actionBtn]}
           onPress={() => advanceCard(true)}
           activeOpacity={0.8}
         >
@@ -531,4 +534,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+});
+
+// Tablet-only overrides (>= 768dp): bounded, centered, larger card and controls.
+const tabletStyles = StyleSheet.create({
+  container: { maxWidth: 720, alignSelf: 'center' },
+  cardTouchArea: { height: 380 },
+  frontText: { fontSize: 28, lineHeight: 38 },
+  backText: { fontSize: 20, lineHeight: 32 },
+  actionBtn: { height: 60 },
+  finishedCard: { maxWidth: 720, alignSelf: 'center', padding: 40 },
 });

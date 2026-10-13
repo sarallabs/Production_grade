@@ -14,11 +14,13 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, persona, logout } = useAuth();
   const { themeMode, setThemeMode, isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out of Saral Vidhya?', [
@@ -38,8 +40,10 @@ export default function ProfileScreen() {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, isTablet && { alignItems: 'center' }]}
     >
+      <View style={isTablet ? [tabletStyles.columns, { maxWidth: 1000 }] : undefined}>
+      <View style={isTablet ? tabletStyles.col : undefined}>
       {/* Header Profile Card */}
       <View
         style={[
@@ -97,7 +101,9 @@ export default function ProfileScreen() {
             : 'Deep-dive mode with 10-mark past question papers and advanced taxonomy.'}
         </Text>
       </View>
+      </View>
 
+      <View style={isTablet ? tabletStyles.col : undefined}>
       {/* Theme Controls */}
       <View
         style={[
@@ -169,6 +175,8 @@ export default function ProfileScreen() {
       </TouchableOpacity>
 
       <Text style={styles.versionInfo}>Saral Vidhya Mobile • v1.0.0 (Expo Android)</Text>
+      </View>
+      </View>
     </ScrollView>
   );
 }
@@ -353,4 +361,10 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: Spacing.four,
   },
+});
+
+// Tablet-only (>= 768dp): two columns, profile/persona left, settings right.
+const tabletStyles = StyleSheet.create({
+  columns: { flexDirection: 'row', gap: 24, width: '100%', alignItems: 'flex-start' },
+  col: { flex: 1 },
 });

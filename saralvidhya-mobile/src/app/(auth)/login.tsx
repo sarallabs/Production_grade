@@ -15,12 +15,14 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
-import { Colors, BorderRadius, Spacing } from '@/constants/theme';
+import { Colors, BorderRadius, Spacing, TabletFontSize } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, loginAsDemoStudent } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [name, setName] = useState('');
   const [rollNumber, setRollNumber] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,17 +66,22 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]} keyboardShouldPersistTaps="handled">
+       <View style={isTablet ? styles.tabletRow : undefined}>
+        <View style={isTablet ? styles.tabletLeft : undefined}>
         {/* Header / Logo */}
         <View style={styles.brandHeader}>
-          <View style={[styles.logoBadge, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
-            <Ionicons name="school" size={42} color="#22c55e" />
+          <View style={[styles.logoBadge, isTablet && styles.tabletLogoBadge, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
+            <Ionicons name="school" size={isTablet ? 56 : 42} color="#22c55e" />
           </View>
-          <Text style={[styles.brandTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Saral Vidhya</Text>
-          <Text style={[styles.brandSubtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
+          <Text style={[styles.brandTitle, isTablet && { fontSize: TabletFontSize.display }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Saral Vidhya</Text>
+          <Text style={[styles.brandSubtitle, isTablet && { fontSize: TabletFontSize.body, maxWidth: 360 }, { color: isDark ? '#A6C5B3' : '#688875' }]}>
             Acharya N.G. Ranga Agricultural University (ANGRAU)
           </Text>
         </View>
+        </View>
+
+        <View style={isTablet ? styles.tabletRight : undefined}>
 
         {/* Card */}
         <View style={[styles.card, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
@@ -156,6 +163,8 @@ export default function LoginScreen() {
         <Text style={[styles.footerNote, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Powered by Saral Labs • AI-Assisted Agricultural Learning
         </Text>
+        </View>
+       </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -172,6 +181,31 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingTop: Platform.OS === 'android' ? 60 : 40,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    padding: 48,
+  },
+  tabletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 56,
+    width: '100%',
+    maxWidth: 1000,
+  },
+  tabletLeft: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabletRight: {
+    flex: 1,
+    maxWidth: 520,
+  },
+  tabletLogoBadge: {
+    width: 104,
+    height: 104,
+    borderRadius: 52,
   },
   brandHeader: {
     alignItems: 'center',

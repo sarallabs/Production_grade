@@ -15,6 +15,7 @@ import {
 } from '@/services/assessmentService';
 import AssessmentCompleteView from './AssessmentCompleteView';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface AssessmentViewProps {
   chapterNumber: number;
@@ -22,6 +23,7 @@ interface AssessmentViewProps {
 
 export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const questions: AssessmentQuestion[] =
     SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1];
 
@@ -106,7 +108,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { maxWidth: 820, alignSelf: 'center' }]}>
       {/* Top Question Tracker */}
       <View style={styles.trackerRow}>
         <View style={styles.qBadge}>
@@ -147,7 +149,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
           },
         ]}
       >
-        <Text style={[styles.questionText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
+        <Text style={[styles.questionText, isTablet && { fontSize: 20, lineHeight: 29 }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
           {currentQ.question}
         </Text>
 
@@ -178,6 +180,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
                 key={idx}
                 style={[
                   styles.optionCard,
+                  isTablet && { minHeight: 56, paddingVertical: 14 },
                   { backgroundColor: cardBg, borderColor: cardBorder },
                 ]}
                 onPress={() => handleSelectOption(idx)}
@@ -212,6 +215,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
                 <Text
                   style={[
                     styles.optionText,
+                    isTablet && { fontSize: 16 },
                     { color: isDark ? '#FFFFFF' : '#1C2E24' },
                     isSelected && { fontWeight: '700' },
                   ]}

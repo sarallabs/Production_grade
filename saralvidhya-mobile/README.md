@@ -54,3 +54,11 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+## Tablet support
+
+- **Breakpoint:** window width >= 768 dp is treated as a tablet (`TABLET_MIN_WIDTH` in `src/constants/theme.ts`). Below that, the original phone UI is shown.
+- **Hook:** `useDeviceLayout()` from `@/hooks/use-device-layout` returns `isTablet`, `isLandscape`, `columns`, `contentMaxWidth`, `scale`, `width` and `height`. It updates live on rotation, split-screen and foldable changes. Don't use `Dimensions.get` for layout decisions.
+- **Adding a tablet layout:** keep the phone path untouched; branch on `isTablet` or add tablet-only styles (see `tabletStyles` in `study.tsx`). Shared helpers: `ResponsiveContainer` and `MasterDetail` in `src/components/common`, `SideRail` in `src/components/navigation`.
+- **Orientation:** `app.json` uses `"orientation": "default"`. `src/app/_layout.tsx` locks portrait on phones (physical short side < 600 dp) and unlocks rotation on tablets.
+- **Native rebuild required:** the orientation setting and `expo-screen-orientation` need a new native build (e.g. rebuild `SaralVidhya.apk`). Fast refresh alone won't apply them.

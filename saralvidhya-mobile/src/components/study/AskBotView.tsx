@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface ChatMessage {
   id: string;
@@ -37,6 +38,7 @@ export default function AskBotView({
 }) {
   const { persona } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
 
   const [input, setInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -130,7 +132,7 @@ export default function AskBotView({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 820, alignSelf: 'center' }]}>
       {/* Bot Header Card */}
       <View
         style={[
@@ -206,6 +208,7 @@ export default function AskBotView({
                 <Text
                   style={[
                     styles.messageText,
+                    isTablet && { fontSize: 16, lineHeight: 24 },
                     isUser
                       ? styles.userMessageText
                       : { color: isDark ? '#FFFFFF' : '#1C2E24' },

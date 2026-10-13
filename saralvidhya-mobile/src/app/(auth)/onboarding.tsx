@@ -12,7 +12,8 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Spacing, TabletFontSize } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 const UNIVERSITIES = [
   {
@@ -43,6 +44,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { user, updateProfile } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [selectedProgram, setSelectedProgram] = useState(PROGRAMS[0].name);
   const [selectedSemester, setSelectedSemester] = useState(SEMESTERS[2]);
 
@@ -57,11 +59,12 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}>
+     <View style={isTablet ? styles.tabletColumn : undefined}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.stepBadge}>STEP 1 OF 3</Text>
-        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Academic Profile</Text>
+        <Text style={[styles.title, isTablet && { fontSize: TabletFontSize.title + 4 }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Academic Profile</Text>
         <Text style={[styles.subtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Welcome, {user?.name || 'Student'}! Confirm your university and curriculum details to personalize your study resources.
         </Text>
@@ -162,6 +165,7 @@ export default function OnboardingScreen() {
         <Text style={styles.continueButtonText}>Next: Select Learning Persona</Text>
         <Ionicons name="arrow-forward" size={18} color="#ffffff" />
       </TouchableOpacity>
+     </View>
     </ScrollView>
   );
 }
@@ -175,6 +179,14 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingTop: Platform.OS === 'android' ? 50 : 30,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    padding: 48,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 720,
   },
   header: {
     marginBottom: Spacing.four,

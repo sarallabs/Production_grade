@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface TranscriptLine {
   timeSec: number;
@@ -63,6 +64,7 @@ export default function PodcastsView({
   chapterName: string;
 }) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [isPlaying, setIsPlaying] = useState(false);
   const [positionMillis, setPositionMillis] = useState(0);
   const [durationMillis, setDurationMillis] = useState(120000); // 2 min demo
@@ -163,7 +165,7 @@ export default function PodcastsView({
   const progressPercent = Math.min(100, (positionMillis / durationMillis) * 100);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { maxWidth: 720, alignSelf: 'center' }]}>
       {/* Podcast Player Hero Card */}
       <View
         style={[
@@ -183,7 +185,7 @@ export default function PodcastsView({
 
         <Text style={styles.seriesTag}>PODCAST SERIES • CH {chapterNumber}</Text>
         <Text
-          style={[styles.episodeTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
+          style={[styles.episodeTitle, isTablet && { fontSize: 22 }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
           numberOfLines={2}
         >
           {chapterName}: Anatomy & Physiology Breakdown
@@ -293,6 +295,7 @@ export default function PodcastsView({
                 <Text
                   style={[
                     styles.transcriptBody,
+                    isTablet && { fontSize: 15, lineHeight: 22 },
                     { color: isDark ? '#A6C5B3' : '#334155' },
                     isLineActive && { color: isDark ? '#FFFFFF' : '#1C2E24', fontWeight: '600' },
                   ]}

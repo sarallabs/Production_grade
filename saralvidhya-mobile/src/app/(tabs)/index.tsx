@@ -17,11 +17,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { manifestService, CourseOverviewData } from '@/api/manifestService';
 import { CourseOverviewCard } from '@/components/study/CourseOverviewCard';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { TabletFontSize } from '@/constants/theme';
 
 export default function MainMenuScreen() {
   const router = useRouter();
   const { user, persona } = useAuth();
   const { isDark, setThemeMode } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [courseData, setCourseData] = useState<CourseOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -71,7 +74,7 @@ export default function MainMenuScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -81,10 +84,11 @@ export default function MainMenuScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
+       <View style={isTablet ? styles.tabletColumn : undefined}>
         {/* Top Header Bar */}
         <View style={styles.topHeader}>
           <View>
-            <Text style={[styles.greetingText, { color: headerTextColor }]}>
+            <Text style={[styles.greetingText, isTablet && { fontSize: TabletFontSize.title + 2 }, { color: headerTextColor }]}>
               Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'} 👋
             </Text>
             <Text style={[styles.uniBadge, { color: subtextColor }]}>
@@ -164,6 +168,7 @@ export default function MainMenuScreen() {
             Numbers 1–{courseData?.subjects.length || 5} represent the curriculum subjects in your semester. Tap any number or the card to explore each subject in detail.
           </Text>
         </View>
+       </View>
       </ScrollView>
     </View>
   );
@@ -177,6 +182,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: Platform.OS === 'android' ? 52 : 36,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 900,
   },
   topHeader: {
     flexDirection: 'row',

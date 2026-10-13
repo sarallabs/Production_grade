@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Stack, useRouter, useSegments, DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme, View, ActivityIndicator, LogBox } from 'react-native';
+import { useColorScheme, View, ActivityIndicator, LogBox, Dimensions, Platform } from 'react-native';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 import { ThemeProvider as SaralThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -14,7 +15,31 @@ LogBox.ignoreLogs([
 
 SplashScreen.preventAutoHideAsync();
 
+/**
+ * Phones stay portrait; tablets (physical short side >= 600dp) may rotate.
+ * Uses the physical screen (not the window) so split-screen on a tablet
+ * doesn't lock rotation. Re-evaluated on foldable/size changes.
+ */
+function useOrientationPolicy() {
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const apply = () => {
+      const s = Dimensions.get('screen');
+      const isTabletDevice = Math.min(s.width, s.height) >= 600;
+      if (isTabletDevice) {
+        ScreenOrientation.unlockAsync().catch(() => {});
+      } else {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      }
+    };
+    apply();
+    const sub = Dimensions.addEventListener('change', apply);
+    return () => sub.remove();
+  }, []);
+}
+
 function RootNavigation() {
+  useOrientationPolicy();
   const { isAuthenticated, isLoading } = useAuth();
   const { isDark } = useAppTheme();
   const segments = useSegments();

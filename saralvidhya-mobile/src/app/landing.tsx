@@ -14,6 +14,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { TabletFontSize } from '@/constants/theme';
 
 const { width } = Dimensions.get('window');
 
@@ -25,6 +27,8 @@ export default function LandingScreen() {
   const router = useRouter();
   const { user, onboardingCompleted } = useAuth();
   const { isDark, setThemeMode } = useAppTheme();
+  const { isTablet, width: layoutWidth, height: layoutHeight } = useDeviceLayout();
+  const tabletLogoSize = Math.min(layoutWidth * 0.45, layoutHeight * 0.5, 480);
 
   // Animation values
   const logoOpacity = useRef(new RNAnimated.Value(0)).current;
@@ -145,6 +149,7 @@ export default function LandingScreen() {
         <RNAnimated.View
           style={[
             styles.logoWrapper,
+            isTablet && { width: tabletLogoSize, height: tabletLogoSize },
             {
               opacity: logoOpacity,
               transform: [{ scale: logoScale }],
@@ -161,19 +166,19 @@ export default function LandingScreen() {
 
         {/* Personalized Student Greeting */}
         <RNAnimated.View style={[styles.textWrapper, { opacity: textOpacity }]}>
-          <Text style={[styles.welcomeGreeting, { color: textColor }]}>
+          <Text style={[styles.welcomeGreeting, { color: textColor }, isTablet && { fontSize: TabletFontSize.title + 4 }]}>
             Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
           </Text>
-          <Text style={[styles.universityTag, { color: subtextColor }]}>
+          <Text style={[styles.universityTag, { color: subtextColor }, isTablet && { fontSize: TabletFontSize.subtitle }]}>
             B.Sc. (Hons) Agriculture • Semester 3
           </Text>
         </RNAnimated.View>
       </View>
 
       {/* Bottom Action Section with Auto-transition Progress */}
-      <RNAnimated.View style={[styles.bottomSection, { opacity: buttonOpacity }]}>
+      <RNAnimated.View style={[styles.bottomSection, isTablet && { maxWidth: 520 }, { opacity: buttonOpacity }]}>
         <TouchableOpacity
-          style={[styles.continueButton, { backgroundColor: buttonBg }]}
+          style={[styles.continueButton, isTablet && { height: 60, borderRadius: 30 }, { backgroundColor: buttonBg }]}
           onPress={handleProceed}
           activeOpacity={0.85}
         >

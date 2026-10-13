@@ -12,7 +12,8 @@ import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, PersonaType } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Spacing, TabletFontSize } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface PersonaCard {
   id: PersonaType;
@@ -66,6 +67,8 @@ export default function PersonaSelectionScreen() {
   const router = useRouter();
   const { persona: currentPersona, updatePersona } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet, columns } = useDeviceLayout();
+  const cardsInRow = columns === 3;
   const [selected, setSelected] = useState<PersonaType>(currentPersona || 'intermediate');
 
   const handleSelect = async (personaId: PersonaType) => {
@@ -80,18 +83,19 @@ export default function PersonaSelectionScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}>
+     <View style={isTablet ? [styles.tabletColumn, cardsInRow && { maxWidth: 1000 }] : undefined}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.stepBadge}>STEP 2 OF 3</Text>
-        <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Choose Your Learning Persona</Text>
+        <Text style={[styles.title, isTablet && { fontSize: TabletFontSize.title + 4 }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Choose Your Learning Persona</Text>
         <Text style={[styles.subtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
           Saral Vidhya customizes the depth of notes, quiz difficulty, and study recommendations based on your persona.
         </Text>
       </View>
 
       {/* Cards */}
-      <View style={styles.cardsContainer}>
+      <View style={[styles.cardsContainer, cardsInRow && { flexDirection: 'row', gap: 16, alignItems: 'stretch' }]}>
         {PERSONAS.map((item) => {
           const isSelected = selected === item.id;
           return (
@@ -99,6 +103,7 @@ export default function PersonaSelectionScreen() {
               key={item.id}
               style={[
                 styles.card,
+                cardsInRow && { flex: 1, marginBottom: 0 },
                 {
                   backgroundColor: isDark ? '#23322B' : '#ffffff',
                   borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
@@ -162,6 +167,7 @@ export default function PersonaSelectionScreen() {
       >
         <Text style={styles.skipButtonText}>Skip Questionnaire & Start Studying</Text>
       </TouchableOpacity>
+     </View>
     </ScrollView>
   );
 }
@@ -175,6 +181,14 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingTop: Platform.OS === 'android' ? 50 : 30,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    padding: 48,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 720,
   },
   header: {
     marginBottom: Spacing.four,

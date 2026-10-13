@@ -118,3 +118,23 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** Tablet layout tokens (additive; phone UI does not use these). */
+export const TABLET_MIN_WIDTH = 768;
+export const TABLET_CONTENT_MAX_WIDTH = 1100;
+
+export const TabletSpacing = {
+  xs: 6,
+  sm: 12,
+  md: 20,
+  lg: 32,
+  xl: 48,
+} as const;
+
+export const TabletFontSize = {
+  caption: 14,
+  body: 17,
+  subtitle: 20,
+  title: 28,
+  display: 36,
+} as const;

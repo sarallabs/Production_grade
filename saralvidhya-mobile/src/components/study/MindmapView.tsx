@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { MindmapData, MindmapNode } from '@/services/contentService';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface MindmapViewProps {
   data: MindmapData;
@@ -29,6 +30,7 @@ const BRANCH_COLORS = [
 
 export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBranchId, setSelectedBranchId] = useState<string>('all');
   const [collapsedBranches, setCollapsedBranches] = useState<Record<string, boolean>>({});
@@ -66,7 +68,7 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
     });
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 900, alignSelf: 'center' }]}>
       {/* Search and Filter Ribbon */}
       <View style={styles.searchBarContainer}>
         <View
@@ -98,6 +100,7 @@ export default function MindmapView({ data, chapterNumber }: MindmapViewProps) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
         contentContainerStyle={styles.chipsScroll}
       >
         <TouchableOpacity

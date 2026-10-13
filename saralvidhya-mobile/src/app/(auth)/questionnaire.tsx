@@ -14,12 +14,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { QUESTIONS, calculatePersona } from '@/data/questionnaireData';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { BorderRadius, Spacing, TabletFontSize } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function QuestionnaireScreen() {
   const router = useRouter();
   const { completeQuestionnaire } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<number[]>(new Array(QUESTIONS.length).fill(-1));
   const [isFinishing, setIsFinishing] = useState(false);
@@ -76,7 +78,8 @@ export default function QuestionnaireScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]} contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}>
+     <View style={isTablet ? styles.tabletColumn : undefined}>
       {/* Top Bar with Progress */}
       <View style={styles.topBar}>
         <View style={styles.progressRow}>
@@ -92,7 +95,7 @@ export default function QuestionnaireScreen() {
 
       {/* Question Container */}
       <View style={[styles.questionCard, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
-        <Text style={[styles.questionText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>{currentQ.text}</Text>
+        <Text style={[styles.questionText, isTablet && { fontSize: TabletFontSize.title - 2, lineHeight: 34 }, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>{currentQ.text}</Text>
         {currentQ.description ? (
           <View style={[styles.descriptionBox, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
             <Text style={[styles.descriptionText, { color: isDark ? '#A6C5B3' : '#688875' }]}>{currentQ.description}</Text>
@@ -100,7 +103,7 @@ export default function QuestionnaireScreen() {
         ) : null}
 
         {/* Options */}
-        <View style={styles.optionsList}>
+        <View style={[styles.optionsList, isTablet && currentQ.options.length >= 4 && { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }]}>
           {currentQ.options.map((opt, idx) => {
             const isSelected = answers[currentIndex] === idx;
             return (
@@ -108,6 +111,7 @@ export default function QuestionnaireScreen() {
                 key={idx}
                 style={[
                   styles.optionRow,
+                  isTablet && currentQ.options.length >= 4 && { width: '48.5%', marginBottom: 0 },
                   {
                     backgroundColor: isDark ? '#1C2822' : '#F7EBE3',
                     borderColor: isSelected ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
@@ -157,6 +161,7 @@ export default function QuestionnaireScreen() {
           />
         </TouchableOpacity>
       </View>
+     </View>
     </ScrollView>
   );
 }
@@ -170,6 +175,14 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     paddingTop: Platform.OS === 'android' ? 50 : 30,
     paddingBottom: 40,
+  },
+  tabletScrollContent: {
+    alignItems: 'center',
+    padding: 48,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 720,
   },
   topBar: {
     marginBottom: Spacing.four,

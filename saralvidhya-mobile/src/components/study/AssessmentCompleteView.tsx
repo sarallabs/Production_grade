@@ -11,6 +11,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { AssessmentQuestion } from '@/services/assessmentService';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface AssessmentCompleteViewProps {
   questions: AssessmentQuestion[];
@@ -28,6 +29,7 @@ export default function AssessmentCompleteView({
   onFinish,
 }: AssessmentCompleteViewProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [showReview, setShowReview] = useState(false);
 
   // Calculate score
@@ -53,7 +55,7 @@ export default function AssessmentCompleteView({
   const tier = getTier();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 820, alignSelf: 'center' }]}>
       {/* Score Card Header */}
       <View
         style={[
@@ -66,7 +68,7 @@ export default function AssessmentCompleteView({
       >
         <Text style={styles.badgeLabel}>ASSESSMENT REPORT • CH {chapterNumber}</Text>
 
-        <View style={[styles.scoreRing, { borderColor: tier.color }]}>
+        <View style={[styles.scoreRing, isTablet && { transform: [{ scale: 1.2 }], marginVertical: 12 }, { borderColor: tier.color }]}>
           <Text style={[styles.percentageText, { color: tier.color }]}>{percentage}%</Text>
           <Text style={styles.scoreFraction}>{correctCount} / {totalQuestions}</Text>
         </View>

@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 const LEADERBOARD_STUDENTS = [
   { rank: 1, name: 'Priya K.', roll: 'AG-2023-014', points: 2840, streak: 18, badge: '🥇' },
@@ -23,12 +24,14 @@ const LEADERBOARD_STUDENTS = [
 export default function LeaderboardScreen() {
   const { user } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
 
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
-      contentContainerStyle={styles.scrollContent}
+      contentContainerStyle={[styles.scrollContent, isTablet && { alignItems: 'center' }]}
     >
+      <View style={isTablet ? { width: '100%', maxWidth: 1000 } : undefined}>
       <View style={styles.header}>
         <Text style={styles.badge}>STATEWIDE RANKINGS</Text>
         <Text style={[styles.title, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
@@ -40,6 +43,8 @@ export default function LeaderboardScreen() {
       </View>
 
       {/* Top 3 Podium */}
+      <View style={isTablet ? tabletStyles.row : undefined}>
+      <View style={isTablet ? tabletStyles.podiumPane : undefined}>
       <View style={styles.podiumContainer}>
         {/* Rank 2 */}
         <View style={styles.podiumCol}>
@@ -71,9 +76,10 @@ export default function LeaderboardScreen() {
           <Text style={styles.podiumPoints}>{LEADERBOARD_STUDENTS[2].points} pts</Text>
         </View>
       </View>
+      </View>
 
       {/* Full Leaderboard List */}
-      <View style={styles.listContainer}>
+      <View style={[styles.listContainer, isTablet && tabletStyles.listPane]}>
         {LEADERBOARD_STUDENTS.map((item) => (
           <View
             key={item.rank}
@@ -110,6 +116,8 @@ export default function LeaderboardScreen() {
             </View>
           </View>
         ))}
+      </View>
+      </View>
       </View>
     </ScrollView>
   );
@@ -252,4 +260,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
+});
+
+// Tablet-only (>= 768dp): podium on the left, ranked list on the right.
+const tabletStyles = StyleSheet.create({
+  row: { flexDirection: 'row', gap: 32, alignItems: 'flex-start' },
+  podiumPane: { flex: 1, justifyContent: 'center' },
+  listPane: { flex: 1.4, marginTop: 0 },
 });

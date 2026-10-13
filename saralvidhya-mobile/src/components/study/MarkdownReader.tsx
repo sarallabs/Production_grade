@@ -13,6 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import ReadAloudBar from './ReadAloudBar';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface MarkdownReaderProps {
   content: string;
@@ -21,6 +22,7 @@ interface MarkdownReaderProps {
 
 export default function MarkdownReader({ content, title }: MarkdownReaderProps) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [showReadAloud, setShowReadAloud] = useState(false);
 
   // Clean raw HTML or comments from markdown
@@ -33,12 +35,12 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
   const markdownStyles = {
     body: {
       color: isDark ? '#e2e8f0' : '#334155',
-      fontSize: 15,
-      lineHeight: 24,
+      fontSize: isTablet ? 17 : 15,
+      lineHeight: isTablet ? 28 : 24,
     },
     heading1: {
       color: isDark ? '#FFFFFF' : '#1C2E24',
-      fontSize: 22,
+      fontSize: isTablet ? 26 : 22,
       fontWeight: '800' as const,
       marginTop: 20,
       marginBottom: 10,
@@ -48,14 +50,14 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
     },
     heading2: {
       color: isDark ? '#FFFFFF' : '#1C2E24',
-      fontSize: 18,
+      fontSize: isTablet ? 21 : 18,
       fontWeight: '700' as const,
       marginTop: 16,
       marginBottom: 8,
     },
     heading3: {
       color: '#22c55e',
-      fontSize: 15,
+      fontSize: isTablet ? 17 : 15,
       fontWeight: '700' as const,
       marginTop: 14,
       marginBottom: 6,
@@ -121,7 +123,7 @@ export default function MarkdownReader({ content, title }: MarkdownReaderProps) 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 760, alignSelf: 'center' }]}>
       {/* Top Reading Actions Bar */}
       <View style={styles.actionBar}>
         <View style={styles.readingTimeBadge}>

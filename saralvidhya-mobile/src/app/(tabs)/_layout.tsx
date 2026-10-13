@@ -3,13 +3,18 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Platform } from 'react-native';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
+import SideRail from '@/components/navigation/SideRail';
 
 export default function TabsLayout() {
   const { isDark, colors } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
 
   return (
     <Tabs
+      tabBar={isTablet ? (props) => <SideRail {...(props as any)} /> : undefined}
       screenOptions={{
+        ...(isTablet ? { tabBarPosition: 'left' as const } : {}),
         headerShown: false,
         tabBarActiveTintColor: isDark ? '#4ade80' : '#22c55e',
         tabBarInactiveTintColor: isDark ? '#7E998B' : '#8A7A70',

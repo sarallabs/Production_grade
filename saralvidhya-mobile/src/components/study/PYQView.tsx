@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 interface PYQItem {
   id: number;
@@ -101,6 +102,7 @@ export default function PYQView({
   chapterName: string;
 }) {
   const { isDark } = useAppTheme();
+  const { isTablet } = useDeviceLayout();
   const [filter, setFilter] = useState<FilterMarks>('all');
   const [expandedIds, setExpandedIds] = useState<number[]>([1]); // first expanded by default
 
@@ -127,7 +129,7 @@ export default function PYQView({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 860, alignSelf: 'center' }]}>
       {/* Header Banner */}
       <View
         style={[
