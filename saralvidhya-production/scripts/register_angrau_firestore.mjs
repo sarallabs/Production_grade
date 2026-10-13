@@ -71,7 +71,7 @@ async function main() {
       status: 'active',
       domains: [],
       branding: {
-        appName: 'ANGRAU Medha',
+        appName: 'Saral Vidhya',
         primaryColor: '#059669',
         programLabel: 'B.Sc. (Hons.) Agriculture',
       },
