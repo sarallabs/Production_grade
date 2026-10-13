@@ -11,11 +11,13 @@ export default function ReadingHighlightView({
   active,
   startWord,
   endWord,
+  isPurpleTheme = false,
 }: {
   content: string;
   active: boolean;
   startWord: number;
   endWord: number;
+  isPurpleTheme?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -27,15 +29,28 @@ export default function ReadingHighlightView({
   >([]);
   const mapBuiltRef = useRef(false);
 
-  // Build the word map ONCE when content renders
+  // Build the word map when content renders
   const buildWordMap = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
-    wordMapRef.current = [];
-    mapBuiltRef.current = false;
+    const newMap: Array<{ node: Text; offset: number; length: number }> = [];
 
-    // Collect all text nodes in document order
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    // Collect all text nodes in document order (excluding overlay if any)
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, {
+      acceptNode: (node) => {
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.classList.contains('reading-highlight-overlay')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        // Skip content that TTS never speaks (math, code, diagrams, figures, scripts)
+        if (parent.closest('.katex, .katex-display, pre, svg, figure, script, style, .mermaid')) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
     const textNodes: Text[] = [];
     let n: Text | null;
     while ((n = walker.nextNode() as Text | null)) {
@@ -51,15 +66,22 @@ export default function ReadingHighlightView({
       let m: RegExpExecArray | null;
       wordRegex.lastIndex = 0;
       while ((m = wordRegex.exec(text)) !== null) {
-        wordMapRef.current.push({ node, offset: m.index, length: m[0].length });
+        newMap.push({ node, offset: m.index, length: m[0].length });
       }
     }
-    mapBuiltRef.current = true;
+
+    if (newMap.length > 0) {
+      wordMapRef.current = newMap;
+      mapBuiltRef.current = true;
+    }
   }, []);
 
-  // Build map immediately when content changes
+  // Build map when content changes, with a quick follow-up to catch Markdown render passes
   useEffect(() => {
+    mapBuiltRef.current = false;
     buildWordMap();
+    const timer = setTimeout(buildWordMap, 70);
+    return () => clearTimeout(timer);
   }, [content, buildWordMap]);
 
   const userScrollPauseUntilRef = useRef<number>(0);
@@ -96,7 +118,7 @@ export default function ReadingHighlightView({
       return;
     }
 
-    if (!mapBuiltRef.current) {
+    if (!mapBuiltRef.current || wordMapRef.current.length === 0) {
       buildWordMap();
     }
 
@@ -107,7 +129,10 @@ export default function ReadingHighlightView({
     if (idx < 0 || idx >= map.length) return;
 
     const startEntry = map[idx];
-    if (!startEntry || !startEntry.node.parentNode) return;
+    if (!startEntry || !startEntry.node.parentNode) {
+      buildWordMap();
+      return;
+    }
 
     const endIdx = Math.max(idx, Math.min(endWord, map.length - 1));
     const endEntry = endIdx === idx ? startEntry : map[endIdx];
@@ -125,28 +150,41 @@ export default function ReadingHighlightView({
         CSS.highlights.set("reading-active-word", new Highlight(range));
       }
 
-      // 2. High-performance non-destructive floating overlay box
-      const rect = range.getBoundingClientRect();
+      // 2. High-performance non-destructive floating overlay box (GPU transform)
+      let rect = range.getBoundingClientRect();
+      if ((rect.width <= 0 || rect.height <= 0) && startEntry.node.parentElement) {
+        rect = startEntry.node.parentElement.getBoundingClientRect();
+      }
       if (rect.width > 0 && rect.height > 0 && overlay) {
         const containerRect = container.getBoundingClientRect();
         const top = rect.top - containerRect.top;
         const left = rect.left - containerRect.left;
 
         overlay.style.display = "block";
-        overlay.style.top = `${top - 1}px`;
-        overlay.style.left = `${left - 2}px`;
+        overlay.style.transform = `translate3d(${left - 2}px, ${top - 1}px, 0)`;
         overlay.style.width = `${rect.width + 4}px`;
         overlay.style.height = `${rect.height + 2}px`;
 
-        // 3. Smooth scroll within actual scroll parent only when word drifts significantly
+        // Check if current word is inside a table element
+        let isInTable = false;
+        let parentEl: HTMLElement | null = startEntry.node.parentElement;
+        while (parentEl && parentEl !== container) {
+          const tag = parentEl.tagName.toUpperCase();
+          if (tag === "TABLE" || tag === "TBODY" || tag === "THEAD" || tag === "TR" || tag === "TD" || tag === "TH") {
+            isInTable = true;
+            break;
+          }
+          parentEl = parentEl.parentElement;
+        }
+
+        // 3. Smooth scroll ONLY when reading progresses past 82% of viewport (reading forward)
+        // Suppress auto-scroll while reading inside tables to prevent any coordinate jumps
         const now = Date.now();
         const userIsScrolling = now < userScrollPauseUntilRef.current;
         const timeSinceLastScroll = now - lastScrollTimeRef.current;
         const wordDelta = Math.abs(startWord - lastScrolledWordRef.current);
 
-        // Only consider auto-scrolling if user isn't manually scrolling, at least 3 seconds have passed,
-        // and we have advanced at least 10 words
-        if (!userIsScrolling && timeSinceLastScroll >= 3000 && wordDelta >= 10) {
+        if (!isInTable && !userIsScrolling && timeSinceLastScroll >= 3500 && wordDelta >= 10 && startWord >= 12) {
           let scrollParent: HTMLElement | null = container.closest('.st-mainview') as HTMLElement | null;
           if (!scrollParent) {
             let p: HTMLElement | null = container.parentElement;
@@ -164,20 +202,15 @@ export default function ReadingHighlightView({
             const sRect = scrollParent.getBoundingClientRect();
             const relY = rect.top - sRect.top;
 
-            // Only scroll if:
-            // 1. Word is past 78% of the viewport (approaching bottom of container)
-            // 2. Word is scrolled above top of viewport (< 30px)
-            // NEVER scroll if the word is comfortably in view (between 30px and 78% height)!
-            if (relY > sRect.height * 0.78) {
-              lastScrolledWordRef.current = startWord;
-              lastScrollTimeRef.current = now;
+            // Only scroll forward if the word has truly reached the bottom area of the viewport
+            if (relY > sRect.height * 0.82) {
               const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.35;
-              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
-            } else if (relY < 30 && scrollParent.scrollTop > 10) {
-              lastScrolledWordRef.current = startWord;
-              lastScrollTimeRef.current = now;
-              const targetScroll = Math.max(0, scrollParent.scrollTop + relY - sRect.height * 0.25);
-              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
+              // Strictly forward/downward scrolling
+              if (targetScroll > scrollParent.scrollTop + 10) {
+                lastScrolledWordRef.current = startWord;
+                lastScrollTimeRef.current = now;
+                scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
+              }
             }
           }
         }
@@ -191,11 +224,11 @@ export default function ReadingHighlightView({
     <div ref={containerRef} style={{ position: "relative" }}>
       <div
         ref={overlayRef}
-        className="reading-highlight-overlay"
+        className={`reading-highlight-overlay${isPurpleTheme ? " is-purple" : ""}`}
         style={{ display: "none" }}
         aria-hidden="true"
       />
-      <MarkdownView content={content} />
+      <MarkdownView content={content} isPurpleTheme={isPurpleTheme} />
     </div>
   );
 }

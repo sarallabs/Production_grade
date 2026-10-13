@@ -983,6 +983,10 @@ export default function StudyTable() {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleLoadedReadContent = useCallback((txt: string) => {
+    setContent((prev: any) => (prev === txt ? prev : txt));
+  }, []);
+
   // Masterminds mindmap concept panel state
   const [mmActiveNodeId, setMmActiveNodeId] = useState<string | null>(null);
   const [mmConceptRaw, setMmConceptRaw] = useState<string>('');
@@ -1387,11 +1391,8 @@ export default function StudyTable() {
               targetSectionIndex={readTargetSection}
               onPersonaChange={(lvl) => setPersona(lvl)}
               isPurpleTheme={isDbms || subjectId.includes("mlrit")}
-              onLoadedContent={(txt) => {
-                if (typeof content !== "string" || content.length < 50) {
-                  setContent(txt);
-                }
-              }}
+              readingHighlight={readingHighlight}
+              onLoadedContent={handleLoadedReadContent}
             />
           );
         }
@@ -1485,6 +1486,7 @@ export default function StudyTable() {
               active={readingHighlight.active}
               startWord={readingHighlight.startWord}
               endWord={readingHighlight.endWord}
+              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
             />
           </div>
         );
