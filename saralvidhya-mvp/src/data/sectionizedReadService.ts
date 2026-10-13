@@ -117,9 +117,24 @@ const ANGRAU_CHAPTER_NAMES: Record<number, string> = {
   4: 'Pollination, Pollinizers & Parthenocarpy',
 };
 
-// Bounded LRU cache: keeps only up to 4 most recently viewed chapters in memory (~10-15MB max)
-const READ_CACHE_MAX_ENTRIES = 4;
+// Bounded LRU cache: keeps only up to 6 most recently viewed chapters in memory (~15-20MB max)
+const READ_CACHE_MAX_ENTRIES = 6;
 const sectionizedReadCache = new Map<string, SectionizedChapterData>();
+
+/**
+ * Synchronously retrieves cached section data if available, enabling 0ms instant rendering
+ */
+export function getCachedSectionizedReadDataSync(
+  subjectId: string,
+  chapterNumber: number,
+  track: 'quick' | 'detailed' = 'quick',
+  persona: DifficultyLevel = 'intermediate'
+): SectionizedChapterData | null {
+  const pStr = (persona as string) || 'intermediate';
+  const normPersona = pStr === 'beginner' || pStr === 'easy' ? 'beginner' : pStr === 'advanced' || pStr === 'hard' ? 'advanced' : 'intermediate';
+  const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
+  return sectionizedReadCache.get(cacheKey) || null;
+}
 
 /**
  * Loads sectionized reading data and pairs it with Quick Check questions

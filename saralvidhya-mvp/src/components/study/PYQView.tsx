@@ -6,6 +6,7 @@ import {
   ANU_CHARACTERIZATION_MOCKED_QUESTIONS,
 } from "@/pages/PreviousYearQuestions";
 import { ANGRAU_PLACEHOLDER_PYQS } from "@/data/angrauPlaceholderPyqs";
+import { MLRIT_DBMS_PLACEHOLDER_PYQS } from "@/data/mlritPlaceholderPyqs";
 
 /**
  * Displays Previous Year Questions for the selected subject and chapter.
@@ -37,46 +38,59 @@ export default function PYQView({
     "ento_131",
     "dbms"
   ];
-  const isSupported = supportedSubjects.includes(subjectId);
+  const isSupported =
+    supportedSubjects.includes(subjectId) ||
+    subjectId.includes("dbms") ||
+    subjectId.includes("mlrit");
 
   useEffect(() => {
     async function loadPYQs() {
       setIsLoading(true);
-      if (subjectId === "dbms" || subjectId.includes("dbms")) {
+      if (subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")) {
+        const chDir = `chapter_${String(chapterNumber).padStart(2, "0")}`;
+        const fallback = MLRIT_DBMS_PLACEHOLDER_PYQS.filter((q) => q.chapterNumber === chapterNumber);
         try {
-          const res = await fetch(`${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Prepare/PYQ/dbms_pyq.json`);
+          const res = await fetch(`${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/${chDir}/Prepare/PYQ/dbms_pyq.json`);
           const ct = res.headers.get('content-type') || '';
           if (res.ok && !ct.includes('text/html')) {
             const data = await res.json();
             const items = Array.isArray(data) ? data : data.pyqs || data.items || [];
-            const mapped = items.map((q: any, i: number) => {
-              const years = q.repetition_metadata?.repeated_years || [];
-              const latestYearStr = years[years.length - 1] || '2024';
-              const yrNum = parseInt(latestYearStr.replace(/[^0-9]/g, '').slice(0, 4)) || 2024;
-              return {
-                id: (q.pyq_id && parseInt(q.pyq_id.replace(/[^0-9]/g, ''))) || (i + 1),
-                text: q.canonical_question_stem || q.question || '',
-                shortAnswer: q.model_answer || '',
-                longAnswer: q.examiner_notes 
-                  ? `${q.model_answer}\n\n**Examiner Notes:** ${q.examiner_notes}` 
-                  : (q.model_answer || ''),
-                chapter: `Unit: ${chapterNumber}`,
-                section: q.designated_mark_tier || '2M',
-                marks: q.designated_mark_tier === '10M' ? 10 : q.designated_mark_tier === '5M' ? 5 : 2,
-                subjectId,
-                chapterNumber,
-                year: yrNum,
-                frequency: q.repetition_metadata?.total_frequency_count,
-                repeatedYears: years.join(', '),
-              };
-            });
-            setBaseQuestions(mapped);
-          } else {
-            setBaseQuestions([]);
+            if (items.length > 0) {
+              const mapped = items.map((q: any, i: number) => {
+                const years: string[] = q.repetition_metadata?.repeated_years || [];
+                const latestYearStr = years[years.length - 1] || '2024';
+                const yrNum = parseInt(latestYearStr.replace(/[^0-9]/g, '').slice(0, 4)) || 2024;
+                const tier = q.designated_mark_tier;
+                const model: string = q.model_answer || '';
+                // Short answer = first paragraph of the model answer (full answer stays in Long)
+                const firstPara = model.split(/\n\s*\n/)[0]?.trim() || model;
+                return {
+                  id: (q.pyq_id && parseInt(q.pyq_id.replace(/[^0-9]/g, ''))) || (i + 1),
+                  text: q.canonical_question_stem || q.question || '',
+                  shortAnswer: firstPara,
+                  longAnswer: q.examiner_notes
+                    ? `${model}\n\n> **Examiner Notes:** ${q.examiner_notes}`
+                    : model,
+                  chapter: `Unit: ${chapterNumber}`,
+                  section: tier || '2M',
+                  marks: tier === '10M' ? 10 : tier === '5M' ? 5 : 2,
+                  subjectId,
+                  chapterNumber,
+                  year: yrNum,
+                  frequency: q.repetition_metadata?.total_frequency_count,
+                  repeatedYears: years.join(', '),
+                };
+              });
+              mapped.sort((a: any, b: any) => (b.frequency ?? 0) - (a.frequency ?? 0) || b.marks - a.marks);
+              setBaseQuestions(mapped);
+              setIsLoading(false);
+              return;
+            }
           }
+          setBaseQuestions(fallback);
         } catch (e) {
           console.error("Failed to load DBMS PYQs", e);
-          setBaseQuestions([]);
+          setBaseQuestions(fallback);
         }
       } else if (subjectId === "neb_xii_biology") {
         try {
@@ -131,16 +145,28 @@ export default function PYQView({
     }
   }, [subjectId, chapterNumber, isSupported]);
 
+  const yearsOf = (q: any): number[] => {
+    const rep = typeof q.repeatedYears === "string" && q.repeatedYears
+      ? q.repeatedYears.split(",").map((s: string) => parseInt(s.trim())).filter((n: number) => !isNaN(n))
+      : [];
+    return rep.length ? rep : typeof q.year === "number" ? [q.year] : [];
+  };
+
   const availableYearsForSubject = useMemo(() => {
-    const years = baseQuestions
-      .map(q => q.year)
-      .filter((y): y is number => typeof y === 'number' && !isNaN(y));
+    const years = baseQuestions.flatMap(yearsOf);
     return Array.from(new Set(years)).sort((a, b) => b - a);
   }, [baseQuestions]);
 
+  const [selectedMarks, setSelectedMarks] = useState<number | null>(null);
+  const availableMarks = useMemo(
+    () => Array.from(new Set(baseQuestions.map((q) => q.marks as number))).sort((a, b) => a - b),
+    [baseQuestions],
+  );
+
   useEffect(() => {
     setSelectedYear("All Years");
-  }, [subjectId]);
+    setSelectedMarks(null);
+  }, [subjectId, chapterNumber]);
 
   useEffect(() => {
     if (selectedYear !== "All Years" && !availableYearsForSubject.includes(parseInt(selectedYear))) {
@@ -148,9 +174,11 @@ export default function PYQView({
     }
   }, [subjectId, availableYearsForSubject, selectedYear]);
 
-  const displayQuestions = selectedYear === "All Years"
-    ? baseQuestions
-    : baseQuestions.filter(q => q.year === parseInt(selectedYear));
+  const displayQuestions = baseQuestions.filter(
+    (q) =>
+      (selectedYear === "All Years" || yearsOf(q).includes(parseInt(selectedYear))) &&
+      (selectedMarks === null || q.marks === selectedMarks),
+  );
 
   if (isLoading) {
     return (
@@ -238,6 +266,26 @@ export default function PYQView({
           ))}
         </div>
       </div>
+
+      {availableMarks.length > 1 && (
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center", marginBottom: "16px" }}>
+          <button
+            onClick={() => setSelectedMarks(null)}
+            className={`pyq-year-btn ${selectedMarks === null ? "active" : ""}`}
+          >
+            All Marks
+          </button>
+          {availableMarks.map((m) => (
+            <button
+              key={m}
+              onClick={() => setSelectedMarks(m)}
+              className={`pyq-year-btn ${selectedMarks === m ? "active" : ""}`}
+            >
+              {m}M
+            </button>
+          ))}
+        </div>
+      )}
 
       <div
         style={{

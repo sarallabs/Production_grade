@@ -1,8 +1,11 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import MarkdownView from '@/components/MarkdownView';
+import ReadingHighlightView from './ReadingHighlightView';
+import { stripMarkdown } from './ReadAloudBar';
 import QuickCheckModal from './QuickCheckModal';
 import {
   getSectionizedReadData,
+  getCachedSectionizedReadDataSync,
   type SectionizedChapterData,
   type ReadSection,
 } from '@/data/sectionizedReadService';
@@ -17,6 +20,11 @@ interface SectionizedReadViewProps {
   isPurpleTheme?: boolean;
   onLoadedContent?: (text: string) => void;
   targetSectionIndex?: number | null;
+  readingHighlight?: {
+    active: boolean;
+    startWord: number;
+    endWord: number;
+  };
 }
 
 export default function SectionizedReadView({
@@ -27,9 +35,11 @@ export default function SectionizedReadView({
   isPurpleTheme = true,
   onLoadedContent,
   targetSectionIndex,
+  readingHighlight,
 }: SectionizedReadViewProps) {
-  const [data, setData] = useState<SectionizedChapterData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const initialCache = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
+  const [data, setData] = useState<SectionizedChapterData | null>(initialCache);
+  const [loading, setLoading] = useState(!initialCache);
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
@@ -37,6 +47,11 @@ export default function SectionizedReadView({
 
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
+  const onLoadedContentRef = useRef(onLoadedContent);
+
+  useEffect(() => {
+    onLoadedContentRef.current = onLoadedContent;
+  });
 
   // Storage keys for persisting reading progress and answered quick checks separately
   const storageKey = `sv_read_progress_${subjectId}_${chapterNumber}_${persona}_${track}`;
@@ -78,6 +93,17 @@ export default function SectionizedReadView({
 
   useEffect(() => {
     let isMounted = true;
+    const cached = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
+    if (cached) {
+      setData(cached);
+      setLoading(false);
+      if (cached.sections && onLoadedContentRef.current) {
+        const fullText = cached.sections.map((s) => s.content).join('\n\n---\n\n');
+        onLoadedContentRef.current(fullText);
+      }
+      return;
+    }
+
     setLoading(true);
 
     getSectionizedReadData(subjectId, chapterNumber, track, persona)
@@ -87,9 +113,9 @@ export default function SectionizedReadView({
         setLoading(false);
 
         // Notify parent with concatenated markdown so ReadAloud gets accurate duration
-        if (res?.sections && onLoadedContent) {
+        if (res?.sections && onLoadedContentRef.current) {
           const fullText = res.sections.map((s) => s.content).join('\n\n---\n\n');
-          onLoadedContent(fullText);
+          onLoadedContentRef.current(fullText);
         }
       })
       .catch(() => {
@@ -101,10 +127,23 @@ export default function SectionizedReadView({
     return () => {
       isMounted = false;
     };
-  }, [subjectId, chapterNumber, track, persona, onLoadedContent]);
+  }, [subjectId, chapterNumber, track, persona]);
 
   const sections = useMemo(() => data?.sections || [], [data]);
   const totalSections = sections.length;
+
+  const secWordRanges = useMemo(() => {
+    let currentWord = 0;
+    return sections.map((sec) => {
+      const clean = stripMarkdown(sec.content);
+      const matches = clean.match(/\S+/g);
+      const words = matches ? matches.length : 0;
+      const start = currentWord;
+      const end = currentWord + Math.max(1, words);
+      currentWord = end;
+      return { start, end };
+    });
+  }, [sections]);
 
   // Auto-scroll directly to target section from podcasts or external tool navigation
   useEffect(() => {
@@ -620,7 +659,28 @@ export default function SectionizedReadView({
                     fontSize: '15.5px',
                   }}
                 >
-                  <MarkdownView content={sec.content} isPurpleTheme={isPurpleTheme} />
+                  <ReadingHighlightView
+                    content={sec.content}
+                    active={
+                      Boolean(
+                        readingHighlight?.active &&
+                        secWordRanges[idx] &&
+                        readingHighlight.startWord >= secWordRanges[idx].start &&
+                        readingHighlight.startWord < secWordRanges[idx].end
+                      )
+                    }
+                    startWord={
+                      secWordRanges[idx]
+                        ? Math.max(0, (readingHighlight?.startWord ?? 0) - secWordRanges[idx].start)
+                        : -1
+                    }
+                    endWord={
+                      secWordRanges[idx]
+                        ? Math.max(0, (readingHighlight?.endWord ?? 0) - secWordRanges[idx].start)
+                        : -1
+                    }
+                    isPurpleTheme={isPurpleTheme}
+                  />
                 </div>
 
                 {/* Compact Centered Quick Check Card (SV Green Theme) */}
