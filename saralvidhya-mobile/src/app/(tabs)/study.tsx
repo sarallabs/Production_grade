@@ -26,6 +26,7 @@ import PodcastsView from '@/components/study/PodcastsView';
 import AskBotView from '@/components/study/AskBotView';
 import PYQView from '@/components/study/PYQView';
 import MindmapView from '@/components/study/MindmapView';
+import VideosView from '@/components/study/VideosView';
 import {
   fetchQuickStudyGuide,
   fetchDetailedNotes,
@@ -66,6 +67,7 @@ const STUDY_TOOLS: StudyTool[] = [
 
 const GUIDED_FLOW: StudyToolId[] = [
   'summary',
+  'videos',
   'flashcards',
   'detailed',
   'podcasts',
@@ -322,6 +324,12 @@ export default function StudyTableScreen() {
             <AssessmentView chapterNumber={currentChapter.number} />
           ) : activeTool === 'podcasts' ? (
             <PodcastsView
+              chapterNumber={currentChapter.number}
+              chapterName={currentChapter.name}
+            />
+          ) : activeTool === 'videos' ? (
+            <VideosView
+              subjectId={activeSubject.id}
               chapterNumber={currentChapter.number}
               chapterName={currentChapter.name}
             />

@@ -405,3 +405,186 @@ function getDefaultMindmapData(chapterNum: number): MindmapData {
     },
   };
 }
+
+// ─────────────────────────────────────────────────────────────
+// Videos
+// ─────────────────────────────────────────────────────────────
+
+export interface ChapterVideo {
+  index: number;
+  title: string;
+  ytId: string;
+  topics?: string[];
+  duration?: string;
+}
+
+const DEFAULT_TOPICS = [
+  'Key conceptual overview & core principles',
+  'Structural anatomy and physiological pathways',
+  'Specialized adaptations and functional dynamics',
+  'Synthesis of key takeaways and summary points',
+];
+
+/** Curated videos (mirrors the web VideosView) used as an offline/last-resort fallback. */
+const CURATED_VIDEOS: Record<number, ChapterVideo[]> = {
+  1: [
+    {
+      index: 1,
+      title: 'Insects Digestive System',
+      ytId: 'Ioa25iYy53g',
+      duration: '10:15 min',
+      topics: [
+        'Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut',
+        'Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)',
+        'Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane',
+        'Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption',
+        'Enzymatic Digestion & Nutritional Adaptations in Insects',
+      ],
+    },
+  ],
+  3: [
+    {
+      index: 1,
+      title: 'Weathering of Rocks and Minerals',
+      ytId: 'UMJFfCFFF4M',
+      duration: '11:45 min',
+      topics: [
+        'Foundations of Weathering & Regolith-Saprolite Boundary Dynamics',
+        'Physical Weathering: Hydraulic Forces, Frost Wedging & Exfoliation',
+        'Chemical Weathering: Hydrolysis, Hydration, Carbonation, Oxidation & Reduction',
+        'Biological Agents: Pioneer Lichens, Microbial Geochemistry & Root Wedging',
+        "Goldich Mineral Weathering Stability Series vs Bowen's Reaction Series",
+      ],
+    },
+  ],
+  4: [
+    {
+      index: 1,
+      title: 'Pollination, Pollinizers & Parthenocarpy in Fruit Crops',
+      ytId: 'elWWuKv5b9Q',
+      duration: '14:20 min',
+      topics: [
+        'Floral Biology Architecture & Angiosperm Double Fertilization',
+        'Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy',
+        'Cross-Pollination (Allogamy) & Self-Incompatibility (GSI vs SSI)',
+        'Pollinizer Cultivar Proportion & Orchard Planting Geometry',
+        'Parthenocarpy: Vegetative, Stimulative & Stenospermocarpy Mechanisms',
+      ],
+    },
+  ],
+};
+
+const YT_ID_REGEX = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
+
+/** Extracts unique YouTube IDs from arbitrary markdown/text. */
+export function extractYouTubeIds(text: string): string[] {
+  const ids: string[] = [];
+  let m: RegExpExecArray | null;
+  const re = new RegExp(YT_ID_REGEX.source, 'g');
+  while ((m = re.exec(text)) !== null) {
+    if (!ids.includes(m[1])) ids.push(m[1]);
+  }
+  return ids;
+}
+
+async function fetchWithTimeout(url: string, ms = 6000): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Fetches the list of videos for a chapter.
+ * Order: videos.json (API) → youtube_links.md (API) → local cache → curated fallback.
+ */
+export async function fetchChapterVideos(
+  subjectId: string,
+  chapterNum: number
+): Promise<ChapterVideo[]> {
+  const cacheKey = `study_videos_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const base = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}`;
+  const curated = CURATED_VIDEOS[chapterNum] ?? [];
+
+  // 1. videos.json registry
+  try {
+    const res = await fetchWithTimeout(`${base}/videos.json`);
+    const ct = res.headers.get('content-type') || '';
+    if (res.ok && !ct.includes('text/html')) {
+      const parsed = JSON.parse(await res.text());
+      if (Array.isArray(parsed?.videos)) {
+        const list: ChapterVideo[] = parsed.videos
+          .filter((v: any) => v && typeof v.ytId === 'string' && v.ytId.length === 11)
+          .sort((a: any, b: any) => (a.index ?? 0) - (b.index ?? 0))
+          .map((v: any, i: number) => ({
+            index: v.index ?? i + 1,
+            title: v.title || `Video Lecture Part ${i + 1}`,
+            ytId: v.ytId,
+            topics: v.topics,
+            duration: v.duration,
+          }));
+        if (list.length > 0) {
+          await storage.setItem(cacheKey, list);
+          return list;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(`[ContentService] videos.json fetch failed: ${err}`);
+  }
+
+  // 2. youtube_links.md
+  try {
+    const res = await fetchWithTimeout(`${base}/youtube_links.md`);
+    if (res.ok) {
+      const ids = extractYouTubeIds(await res.text());
+      if (ids.length > 0) {
+        const list: ChapterVideo[] = ids.map((id, i) => {
+          const known = Object.values(CURATED_VIDEOS).flat().find((v) => v.ytId === id);
+          return {
+            index: i + 1,
+            title: known?.title || `Video Lecture Part ${i + 1}`,
+            ytId: id,
+            topics: known?.topics || DEFAULT_TOPICS,
+            duration: known?.duration,
+          };
+        });
+        await storage.setItem(cacheKey, list);
+        return list;
+      }
+    }
+  } catch (err) {
+    console.warn(`[ContentService] youtube_links.md fetch failed: ${err}`);
+  }
+
+  // 3. Local cache
+  const cached = await storage.getItem<ChapterVideo[]>(cacheKey);
+  if (cached && cached.length > 0) return cached;
+
+  // 4. Curated fallback (default to chapter 1 video so the screen is never empty)
+  return curated.length > 0 ? curated : CURATED_VIDEOS[1];
+}
+
+/** Watched-video persistence (local only). */
+const watchedKey = (subjectId: string, chapterNum: number) =>
+  `study_videos_watched_${subjectId}_${chapterNum}`;
+
+export async function getWatchedVideos(subjectId: string, chapterNum: number): Promise<string[]> {
+  return (await storage.getItem<string[]>(watchedKey(subjectId, chapterNum))) ?? [];
+}
+
+export async function markVideoWatched(
+  subjectId: string,
+  chapterNum: number,
+  ytId: string
+): Promise<string[]> {
+  const current = await getWatchedVideos(subjectId, chapterNum);
+  if (current.includes(ytId)) return current;
+  const next = [...current, ytId];
+  await storage.setItem(watchedKey(subjectId, chapterNum), next);
+  return next;
+}

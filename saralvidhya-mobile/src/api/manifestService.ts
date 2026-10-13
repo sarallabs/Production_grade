@@ -83,14 +83,6 @@ export const ANGRAU_SUBJECTS: Subject[] = [
         completed: [],
         resourceCount: 4,
       },
-      {
-        number: 5,
-        name: 'Morphology & Physiology',
-        dir: 'chapter_05',
-        description: 'Exoskeleton, head orientation, mouthparts, antennae, wings, circulatory and respiratory systems.',
-        completed: [],
-        resourceCount: 4,
-      },
     ],
   },
   {
@@ -333,9 +325,9 @@ export const ANGRAU_SUBJECTS: Subject[] = [
 
 export const manifestService = {
   async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_cached_subjects_v2';
+    const cacheKey = 'saral_cached_subjects_v4';
     const cached = await storage.getItem<Subject[]>(cacheKey);
-    if (cached && cached.length >= ANGRAU_SUBJECTS.length && cached[0].chapters?.length === 5 && cached[0].chapters[1]?.name === 'Metamorphosis') {
+    if (cached && cached.length >= ANGRAU_SUBJECTS.length && cached[0].chapters?.length === ANGRAU_SUBJECTS[0].chapters.length && cached[0].chapters[0]?.name === 'Digestive System') {
       return cached;
     }
 
@@ -376,7 +368,7 @@ export const manifestService = {
     const subjects = await this.getSubjects();
     const ento = subjects[0];
     
-    // The 5 units of Entomology (Digestive System, Metamorphosis, Weathering, Pollination, Morphology & Physiology)
+    // The dynamic units of Entomology (Digestive System, Metamorphosis, Weathering, Pollination) from database
     const unitProgressList: CourseSubjectProgress[] = (ento?.chapters || []).map((ch) => {
       const chProgress = this.calculateChapterProgress(ch);
       return {
