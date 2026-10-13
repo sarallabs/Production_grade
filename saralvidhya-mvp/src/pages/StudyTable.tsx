@@ -1374,7 +1374,8 @@ export default function StudyTable() {
       case "summary":
       case "detailed": {
         const isDbms = subjectId === "dbms" || subjectId.includes("dbms");
-        if (isDbms) {
+        const isAngrau = subjectId === "ento_131" || subjectId === "entomology" || subjectId.includes("ento") || subjectId.includes("angrau");
+        if (isDbms || isAngrau) {
           return (
             <SectionizedReadView
               key={`sectionized-read-${subjectId}-${chapterNumber}-${persona}-${activeTool}`}
@@ -1393,6 +1394,7 @@ export default function StudyTable() {
             />
           );
         }
+
       }
       // fall-through for non-DBMS subjects or other tools
       case "key_takeaways":

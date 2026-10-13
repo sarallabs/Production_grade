@@ -17,5 +17,6 @@ pages/ChapterList.tsx
 pages/ClassSubjectSelection.tsx
 pages/ExaminerConsole.tsx
 pages/StudyTable.tsx
+data/sectionizedReadService.ts
 tenant/TenantProvider.tsx
 utils/analytics.ts
