@@ -64,7 +64,7 @@ describe('Gemini Fallback and Client SDK Integration', () => {
 
     const result = await askGemini('What is gravity?', 'science', 'Gravity', 1);
     expect(result.answer).toBe('Mocked academic response');
-    expect(result.model).toBe('gemini-3.5-flash'); // Default configured model first in fallback
+    expect(result.model).toBe('gemini-3.8-flash'); // Default configured model first in fallback
     expect(mockGetGenerativeModel).toHaveBeenCalled();
   });
 
