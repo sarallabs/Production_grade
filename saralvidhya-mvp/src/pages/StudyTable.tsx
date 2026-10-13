@@ -2642,7 +2642,7 @@ export default function StudyTable() {
     assessment: "Assessments",
     qbank: "Question Bank",
     swot: "SWOT Analysis",
-    pyq: "PYQ",
+    pyq: "PYQs",
     leaderboard: "Leaderboard",
     deep_dive: "Deep Dive",
     mocktest: "Mock Test",
@@ -3380,7 +3380,7 @@ export default function StudyTable() {
                                 Prepare
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("pyq", "PYQ", "#FF2476")}
+                                {renderNode("pyq", "PYQs", "#FF2476")}
                                 {renderNode("prep_exam", "Preparation Exam", "#FF2476")}
                                 {renderNode("study_plan", "Study Plan", "#FF2476")}
                               </div>

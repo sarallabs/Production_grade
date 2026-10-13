@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import MarkdownView from '@/components/MarkdownView';
 import ReadingHighlightView from './ReadingHighlightView';
-import { stripMarkdown } from './ReadAloudBar';
 import QuickCheckModal from './QuickCheckModal';
 import {
   getSectionizedReadData,
@@ -131,19 +130,6 @@ export default function SectionizedReadView({
 
   const sections = useMemo(() => data?.sections || [], [data]);
   const totalSections = sections.length;
-
-  const secWordRanges = useMemo(() => {
-    let currentWord = 0;
-    return sections.map((sec) => {
-      const clean = stripMarkdown(sec.content);
-      const matches = clean.match(/\S+/g);
-      const words = matches ? matches.length : 0;
-      const start = currentWord;
-      const end = currentWord + Math.max(1, words);
-      currentWord = end;
-      return { start, end };
-    });
-  }, [sections]);
 
   // Auto-scroll directly to target section from podcasts or external tool navigation
   useEffect(() => {
@@ -661,24 +647,9 @@ export default function SectionizedReadView({
                 >
                   <ReadingHighlightView
                     content={sec.content}
-                    active={
-                      Boolean(
-                        readingHighlight?.active &&
-                        secWordRanges[idx] &&
-                        readingHighlight.startWord >= secWordRanges[idx].start &&
-                        readingHighlight.startWord < secWordRanges[idx].end
-                      )
-                    }
-                    startWord={
-                      secWordRanges[idx]
-                        ? Math.max(0, (readingHighlight?.startWord ?? 0) - secWordRanges[idx].start)
-                        : -1
-                    }
-                    endWord={
-                      secWordRanges[idx]
-                        ? Math.max(0, (readingHighlight?.endWord ?? 0) - secWordRanges[idx].start)
-                        : -1
-                    }
+                    active={Boolean(readingHighlight?.active)}
+                    startWord={readingHighlight?.startWord ?? -1}
+                    endWord={readingHighlight?.endWord ?? -1}
                     isPurpleTheme={isPurpleTheme}
                   />
                 </div>

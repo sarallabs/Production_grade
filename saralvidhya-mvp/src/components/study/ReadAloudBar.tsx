@@ -6,6 +6,7 @@ import {
   googleTtsResume,
 } from "@/services/googleTtsService";
 import type { ToolId } from "@/components/ToolsMenu";
+import { getSpeakableDomText } from "@/utils/readAloudDom";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -171,7 +172,7 @@ export default function ReadAloudBar({
         endWord: Math.max(0, lastHighlightRef.current.startWord),
       });
     } else {
-      const clean = stripMarkdown(text);
+      const clean = getSpeakableDomText() ?? stripMarkdown(text);
       if (!clean) {
         cooldownRef.current = false;
         return;
