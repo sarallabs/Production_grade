@@ -334,6 +334,10 @@ export function resolveRelativeUrl(baseUrl: string, relativePath: string): strin
   return baseParts.join('/');
 }
 
+// Bounded LRU cache: keeps up to 6 recently fetched markdown resources in memory (~10-15MB max)
+const RESOURCE_CACHE_MAX = 6;
+const resourceContentCache = new Map<string, string>();
+
 export async function getResourceContent(
   subject: string,
   chapterNumber: number,
@@ -341,6 +345,25 @@ export async function getResourceContent(
   level: DifficultyLevel = 'intermediate',
   videoDir?: string,
 ): Promise<string> {
+  const cacheKey = `${subject}:${chapterNumber}:${resourceName}:${level}:${videoDir || ''}`;
+  if (resourceContentCache.has(cacheKey)) {
+    const cached = resourceContentCache.get(cacheKey)!;
+    resourceContentCache.delete(cacheKey);
+    resourceContentCache.set(cacheKey, cached);
+    return cached;
+  }
+
+  const cacheAndReturn = (text: string): string => {
+    if (text && text !== 'Content not available.') {
+      if (resourceContentCache.size >= RESOURCE_CACHE_MAX) {
+        const oldest = resourceContentCache.keys().next().value;
+        if (oldest) resourceContentCache.delete(oldest);
+      }
+      resourceContentCache.set(cacheKey, text);
+    }
+    return text;
+  };
+
   await getManifest();
   const chDir = getChapterDir(subject, chapterNumber);
   const localBase = getLocalSubjectBaseUrl(subject);
@@ -388,7 +411,7 @@ export async function getResourceContent(
               /!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g,
               (_, alt, path) => `![${alt}](${apiBase}/${path})`
             );
-            return md;
+            return cacheAndReturn(md);
           }
         }
       } catch (e) {
@@ -408,7 +431,7 @@ export async function getResourceContent(
   ) {
     const guide = await fetchBackendStudyGuide(subject, level);
     const text = resourceName === 'summary.md' ? guide?.quick_study : guide?.detailed_notes;
-    if (text && text.trim()) return cleanAiPreamble(text);
+    if (text && text.trim()) return cacheAndReturn(cleanAiPreamble(text));
   }
 
   const tryFetch = async (url: string, fileName: string): Promise<string | null> => {
@@ -479,10 +502,10 @@ export async function getResourceContent(
     for (const ch of chDirsToTry) {
       for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
         const leveledResult = await tryFetch(`${base}/${ch}/${level}/${fileName}`, fileName);
-        if (leveledResult !== null) return leveledResult;
+        if (leveledResult !== null) return cacheAndReturn(leveledResult);
 
         const rootResult = await tryFetch(`${base}/${ch}/${fileName}`, fileName);
-        if (rootResult !== null) return rootResult;
+        if (rootResult !== null) return cacheAndReturn(rootResult);
       }
     }
   }

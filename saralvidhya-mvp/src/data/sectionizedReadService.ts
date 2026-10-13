@@ -117,6 +117,10 @@ const ANGRAU_CHAPTER_NAMES: Record<number, string> = {
   4: 'Pollination, Pollinizers & Parthenocarpy',
 };
 
+// Bounded LRU cache: keeps only up to 4 most recently viewed chapters in memory (~10-15MB max)
+const READ_CACHE_MAX_ENTRIES = 4;
+const sectionizedReadCache = new Map<string, SectionizedChapterData>();
+
 /**
  * Loads sectionized reading data and pairs it with Quick Check questions
  */
@@ -128,6 +132,17 @@ export async function getSectionizedReadData(
 ): Promise<SectionizedChapterData | null> {
   const pStr = (persona as string) || 'intermediate';
   const normPersona = pStr === 'beginner' || pStr === 'easy' ? 'beginner' : pStr === 'advanced' || pStr === 'hard' ? 'advanced' : 'intermediate';
+
+  // Instant in-memory cache lookup
+  const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
+  if (sectionizedReadCache.has(cacheKey)) {
+    const cached = sectionizedReadCache.get(cacheKey)!;
+    // Move to end (most recently used)
+    sectionizedReadCache.delete(cacheKey);
+    sectionizedReadCache.set(cacheKey, cached);
+    return cached;
+  }
+
   const trackFolder = track === 'detailed' ? 'detailed_study' : 'quick_study';
   const trackFolderAlt = track === 'detailed' ? 'detailed' : 'quick';
   const baseUrl = import.meta.env.BASE_URL || '/';
@@ -303,7 +318,7 @@ export async function getSectionizedReadData(
         }));
     }
 
-    return {
+    const result: SectionizedChapterData = {
       chapterTitle,
       track,
       persona: normPersona,
@@ -312,6 +327,15 @@ export async function getSectionizedReadData(
       figures,
       definitions,
     };
+
+    // Store in bounded LRU cache (evict oldest if over capacity)
+    if (sectionizedReadCache.size >= READ_CACHE_MAX_ENTRIES) {
+      const oldestKey = sectionizedReadCache.keys().next().value;
+      if (oldestKey) sectionizedReadCache.delete(oldestKey);
+    }
+    sectionizedReadCache.set(cacheKey, result);
+
+    return result;
   } catch (e) {
     console.error('[sectionizedReadService] Error building sectionized data', e);
     return null;
