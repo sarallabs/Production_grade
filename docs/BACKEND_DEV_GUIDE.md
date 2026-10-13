@@ -100,8 +100,8 @@ JSON Schemas defining the exact validation rules are in `saralvidhya-production/
   "name": "Marri Laxman Reddy Institute of Technology",
   "shortName": "MLRIT",
   "branding": {
-    "appName": "MLRIT Medha",
-    "primaryColor": "#1e3a8a",
+    "appName": "Saral Vidhya",
+    "primaryColor": "#365345",
     "programLabel": "Autonomous Engineering"
   },
   "features": {

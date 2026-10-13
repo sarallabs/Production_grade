@@ -65,14 +65,23 @@ function estimateReadingTime(text: string): number {
 }
 
 /**
+ * Extracts clean heading text without markdown syntax or leading emojis
+ */
+function cleanHeadingText(text: string): string {
+  return text
+    .replace(/^#+\s*/, '')
+    .replace(/^[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]+/u, '')
+    .replace(/^[🎯📋🔍🎴🖼️\s]+/u, '')
+    .trim();
+}
+
+/**
  * Extracts a concise short title for the sidebar list
  */
 function getShortTitle(rawTitle: string): string {
-  let cleaned = rawTitle
-    .replace(/^#+\s*/, '')
+  let cleaned = cleanHeadingText(rawTitle)
     .replace(/^Module\s*\d+\s*:\s*/i, '')
     .replace(/^\d+\.\s*/, '')
-    .replace(/^[🎯📋🔍🎴]\s*/, '')
     .trim();
 
   // If title has a colon or dash, use the primary topic
@@ -88,6 +97,26 @@ function getShortTitle(rawTitle: string): string {
   return cleaned;
 }
 
+async function fetchFirstValid(candidates: string[]): Promise<Response | null> {
+  for (const c of candidates) {
+    try {
+      const cleanUrl = c.replace(/([^:])\/\//g, '$1/');
+      const res = await fetch(cleanUrl);
+      if (res.ok) return res;
+    } catch {
+      // try next
+    }
+  }
+  return null;
+}
+
+const ANGRAU_CHAPTER_NAMES: Record<number, string> = {
+  1: 'Insect Digestive System',
+  2: 'Metamorphosis & Diapause',
+  3: 'Weathering of Rocks and Minerals',
+  4: 'Pollination, Pollinizers & Parthenocarpy',
+};
+
 /**
  * Loads sectionized reading data and pairs it with Quick Check questions
  */
@@ -100,22 +129,64 @@ export async function getSectionizedReadData(
   const pStr = (persona as string) || 'intermediate';
   const normPersona = pStr === 'beginner' || pStr === 'easy' ? 'beginner' : pStr === 'advanced' || pStr === 'hard' ? 'advanced' : 'intermediate';
   const trackFolder = track === 'detailed' ? 'detailed_study' : 'quick_study';
+  const trackFolderAlt = track === 'detailed' ? 'detailed' : 'quick';
   const baseUrl = import.meta.env.BASE_URL || '/';
 
-  // Path to local files in public/generated_resources/
-  const mdUrl = `${baseUrl}generated_resources/mlrit/dbms/chapter_01/learn/read/${trackFolder}/${normPersona}.md`.replace(/\/\//g, '/');
-  const qcUrl = `${baseUrl}generated_resources/mlrit/dbms/chapter_01/learn/read/quick_check/${trackFolder}/${normPersona}.json`.replace(/\/\//g, '/');
-  const studyJsonUrl = `${baseUrl}generated_resources/mlrit/dbms/chapter_01/learn/read/${trackFolder}/${normPersona}.json`.replace(/\/\//g, '/');
+  const normSub = (subjectId || '').toLowerCase();
+  const isAngrau = normSub === 'ento_131' || normSub.includes('ento') || normSub.includes('angrau');
+  const chDir = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
+
+  const mdCandidates: string[] = [];
+  const qcCandidates: string[] = [];
+  const studyJsonCandidates: string[] = [];
+
+  if (isAngrau) {
+    const subPaths = [
+      `generated_resources/angrau/entomology/${chDir}`,
+      `generated_resources/angrau/${chDir}`,
+    ];
+    for (const sp of subPaths) {
+      mdCandidates.push(
+        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.md`,
+        `${baseUrl}${sp}/read/${trackFolderAlt}/${normPersona}.md`,
+        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.md`
+      );
+      qcCandidates.push(
+        `${baseUrl}${sp}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
+        `${baseUrl}${sp}/read/quick_check/${trackFolder}/${normPersona}.json`,
+        `${baseUrl}${sp}/read/Quick Check/${trackFolder === 'detailed_study' ? 'Detailed_Study' : 'Quick_Study'}/${normPersona}.json`
+      );
+    }
+  } else {
+    const subPaths = [
+      `generated_resources/mlrit/dbms/${chDir}`,
+      `generated_resources/mlrit/dbms/chapter_01`,
+    ];
+    for (const sp of subPaths) {
+      mdCandidates.push(
+        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.md`,
+        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.md`
+      );
+      qcCandidates.push(
+        `${baseUrl}${sp}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
+        `${baseUrl}${sp}/read/quick_check/${trackFolder}/${normPersona}.json`
+      );
+      studyJsonCandidates.push(
+        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.json`,
+        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.json`
+      );
+    }
+  }
 
   try {
     const [mdRes, qcRes, studyJsonRes] = await Promise.all([
-      fetch(mdUrl),
-      fetch(qcUrl).catch(() => null),
-      fetch(studyJsonUrl).catch(() => null),
+      fetchFirstValid(mdCandidates),
+      fetchFirstValid(qcCandidates),
+      studyJsonCandidates.length ? fetchFirstValid(studyJsonCandidates) : Promise.resolve(null),
     ]);
 
-    if (!mdRes.ok) {
-      console.warn('[sectionizedReadService] Failed to fetch markdown', mdUrl, mdRes.status);
+    if (!mdRes || !mdRes.ok) {
+      console.warn('[sectionizedReadService] Failed to fetch markdown for', subjectId, chapterNumber, mdCandidates);
       return null;
     }
 
@@ -153,14 +224,18 @@ export async function getSectionizedReadData(
       }
     }
 
-    // Split markdown into sections by top-level `## `
-    const rawParts = markdown.split(/(?=^##\s+)/m);
+    // Split markdown by section headers (## or # with number/module, or standard ##)
+    let rawParts = markdown.split(/(?=^#{1,2}\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.|\bModule\s*\d+|\bUnit\s*\d+))/miu);
+    if (rawParts.length <= 1) {
+      rawParts = markdown.split(/(?=^##\s+)/m);
+    }
     const sections: ReadSection[] = [];
 
     // Check if Part 0 has meaningful text (Intro / Overview)
     const part0 = rawParts[0]?.trim() || '';
     const mainTitleMatch = part0.match(/^#\s+(.+)$/m);
-    const chapterTitle = mainTitleMatch ? mainTitleMatch[1].trim() : 'Chapter Study Guide';
+    const fallbackChapterTitle = isAngrau && ANGRAU_CHAPTER_NAMES[chapterNumber] ? ANGRAU_CHAPTER_NAMES[chapterNumber] : 'Chapter Study Guide';
+    const chapterTitle = mainTitleMatch ? mainTitleMatch[1].trim() : fallbackChapterTitle;
 
     // If Part 0 has body text besides just the # Title, treat it as Section 0
     const part0Body = part0.replace(/^#\s+[^\n]+(\r?\n)*/, '').trim();
@@ -183,23 +258,26 @@ export async function getSectionizedReadData(
       const part = rawParts[i].trim();
       if (!part) continue;
 
-      const firstLineMatch = part.match(/^##\s+([^\n\r]+)/);
+      const firstLineMatch = part.match(/^#{1,2}\s+([^\n\r]+)/);
       const rawHeading = firstLineMatch ? firstLineMatch[1].trim() : `Section ${i}`;
-      const cleanTitle = rawHeading.replace(/^[🎯📋🔍🎴]\s*/, '').trim();
+      const cleanTitle = cleanHeadingText(rawHeading);
       const shortTitle = getShortTitle(rawHeading);
 
       // Determine module match (M1 to M6)
       let matchedQuestion: QuickCheckQuestion | undefined;
-      const modMatch = rawHeading.match(/Module\s*(\d+)/i) || rawHeading.match(/^(\d+)\./);
+      const cleanHead = cleanHeadingText(rawHeading);
+      const modMatch = cleanHead.match(/Module\s*(\d+)/i) || cleanHead.match(/^(\d+)\./) || cleanHead.match(/\bTopic\s*(\d+)/i);
       let secNumber = sections.length + 1;
       if (modMatch) {
         const modNum = parseInt(modMatch[1], 10);
         secNumber = modNum;
         matchedQuestion = questions.find(q => q.module_id === `M${modNum}`) || questions[modNum - 1];
+      } else if (questions[i - 1]) {
+        matchedQuestion = questions[i - 1];
       }
 
       // Extract subtitle if present
-      const subtitleMatch = part.match(/^(?:##[^\n]+\n+)([A-Z][^\n.]+—[^\n]+)/m);
+      const subtitleMatch = part.match(/^(?:#{1,2}[^\n]+\n+)([A-Z][^\n.]+—[^\n]+)/m);
       const subtitle = subtitleMatch ? subtitleMatch[1].trim() : undefined;
 
       sections.push({
@@ -239,3 +317,4 @@ export async function getSectionizedReadData(
     return null;
   }
 }
+

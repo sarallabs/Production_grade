@@ -260,11 +260,12 @@ export default function PodcastsView({
   }, [subjectId, chapterNumber]);
 
   const isNebBiologyChap6 = subjectId === "neb_xii_biology" && chapterNumber === 6;
-  const isAngrauChap1 = subjectId === "ento_131" && chapterNumber === 1;
-  const isAngrauChap2 = subjectId === "ento_131" && chapterNumber === 2;
-  const isAngrauChap3 = subjectId === "ento_131" && chapterNumber === 3;
-  const isAngrauChap4 = subjectId === "ento_131" && chapterNumber === 4;
-  const isAngrauWithPodcasts = subjectId === "ento_131" && [1, 2, 3, 4].includes(chapterNumber);
+  const isAngrau = subjectId === "ento_131" || subjectId === "entomology" || subjectId.includes("ento") || subjectId.includes("angrau");
+  const isAngrauChap1 = isAngrau && chapterNumber === 1;
+  const isAngrauChap2 = isAngrau && chapterNumber === 2;
+  const isAngrauChap3 = isAngrau && chapterNumber === 3;
+  const isAngrauChap4 = isAngrau && chapterNumber === 4;
+  const isAngrauWithPodcasts = isAngrau && [1, 2, 3, 4].includes(chapterNumber);
   const isDbmsChap1 = subjectId === "dbms" && chapterNumber === 1;
   const isDbmsWithPodcasts = subjectId === "dbms" && chapterNumber === 1;
   const isNebOrMgmt =
@@ -394,12 +395,13 @@ export default function PodcastsView({
           ],
         },
       };
-      const titles = gcsTitles[subjectId]?.[chapterNumber] ?? [];
+      const titles = (gcsTitles[subjectId] || (subjectId.includes('ento') ? gcsTitles.ento_131 : undefined))?.[chapterNumber] ?? [];
       return titles.map((title, i) => ({
         title: `${i + 1}. ${title}`,
         audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
         txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
       }));
+
     }
     return isDbmsChap1 ? [
       { title: "1. How 3-Schema Architecture Prevents Data Chaos", audio: "1.How 3-Schema Architecture Prevents Data Chaos.m4a", txt: "1.How 3-Schema Architecture Prevents Data Chaos_transcript.json" },
@@ -614,6 +616,23 @@ export default function PodcastsView({
           wordWeights: [] as number[],
           wordIndexes,
           exactTimestamps,
+        };
+      }
+
+      // If tokenization differs slightly, align wordIndexes proportionally to exact segment timestamps
+      if (exactTimestamps.length > 0 && wordIndexes.length > 0) {
+        const alignedTimestamps: number[] = [];
+        const exactLen = exactTimestamps.length;
+        const targetLen = wordIndexes.length;
+        for (let i = 0; i < targetLen; i++) {
+          const mappedIdx = Math.min(exactLen - 1, Math.floor((i / targetLen) * exactLen));
+          alignedTimestamps.push(exactTimestamps[mappedIdx]);
+        }
+        return {
+          totalWeight: 0,
+          wordWeights: [] as number[],
+          wordIndexes,
+          exactTimestamps: alignedTimestamps,
         };
       }
     }
@@ -1336,10 +1355,30 @@ export default function PodcastsView({
     setTranscriptDuration(null);
 
     const { transcript: tFile } = getFileNames(selectedTrack);
-    const hasJsonTranscript = subjectId === "dbms" || subjectId.includes("dbms");
+    const isAngrauSubject = isAngrau || isAngrauWithPodcasts || subjectId.includes("ento") || subjectId.includes("angrau");
+    const hasJsonTranscript = subjectId === "dbms" || subjectId.includes("dbms") || isAngrauSubject;
     const jsonCandidate = hasJsonTranscript && tFile.endsWith('.md')
       ? tFile.replace(/\.md$/i, '.transcript.json')
       : null;
+
+    const chDirName = chapterDir || `chapter_${String(chapterNumber).padStart(2, '0')}`;
+    const fileBase = tFile.split('/').pop()?.replace(/\.(md|txt|transcript\.json)$/i, '') || '';
+    const localCandidates: string[] = [];
+    if (hasJsonTranscript) {
+      if (isAngrauSubject) {
+        localCandidates.push(`/generated_resources/angrau/entomology/${chDirName}/podcasts/${fileBase}.transcript.json`);
+        localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${fileBase}.transcript.json`);
+        localCandidates.push(`/generated_resources/angrau/${chDirName}/podcasts/${fileBase}.transcript.json`);
+        if (selectedTrack === "ql" && QUICK_LISTENS[selectedQl]?.txt) {
+          const qlRaw = QUICK_LISTENS[selectedQl].txt.replace(/\.(txt|md)$/i, '.json');
+          localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${encodeURIComponent(qlRaw)}`);
+        }
+        if (selectedTrack === "dl" && DETAILED_LISTENS[selectedDl]?.txt) {
+          const dlRaw = DETAILED_LISTENS[selectedDl].txt.replace(/\.(txt|md)$/i, '.json');
+          localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${encodeURIComponent(dlRaw)}`);
+        }
+      }
+    }
 
     const tryFetchJson = async (url: string) => {
       const r = await fetch(url);
@@ -1347,15 +1386,22 @@ export default function PodcastsView({
       if (!r.ok || ct.includes("text/html")) throw new Error("not json");
       const txt = await r.text();
       const parsed = JSON.parse(txt);
-      if (parsed && typeof parsed.full_text === "string") {
-        setTranscript(cleanTranscriptPreamble(parsed.full_text));
+      if (parsed && (typeof parsed.full_text === "string" || Array.isArray(parsed.segments))) {
+        const fullText = parsed.full_text || parsed.transcript || (Array.isArray(parsed.segments) ? parsed.segments.map((s: any) => s.transcript || s.text || '').join(' ') : '');
+        setTranscript(cleanTranscriptPreamble(fullText));
         if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
-          setTranscriptSegments(parsed.segments);
+          const normalized = parsed.segments.map((s: any) => ({
+            start_sec: typeof s.start_sec === "number" ? s.start_sec : (typeof s.start === "number" ? s.start : 0),
+            end_sec: typeof s.end_sec === "number" ? s.end_sec : (typeof s.end === "number" ? s.end : 0),
+            transcript: s.transcript || s.text || "",
+          }));
+          setTranscriptSegments(normalized);
         } else {
           setTranscriptSegments(null);
         }
-        if (typeof parsed.total_runtime_seconds === "number" && parsed.total_runtime_seconds > 0) {
-          setTranscriptDuration(parsed.total_runtime_seconds);
+        const runtime = parsed.total_runtime_seconds || parsed.metadata?.duration_seconds || null;
+        if (typeof runtime === "number" && runtime > 0) {
+          setTranscriptDuration(runtime);
         }
         return true;
       }
@@ -1373,12 +1419,17 @@ export default function PodcastsView({
     };
 
     const loadTranscript = async () => {
-      if (jsonCandidate) {
+      const allJsonCandidates = [
+        ...(jsonCandidate ? [jsonCandidate] : []),
+        ...localCandidates,
+      ];
+
+      for (const cand of allJsonCandidates) {
         try {
-          const ok = await tryFetchJson(jsonCandidate);
+          const ok = await tryFetchJson(cand);
           if (ok) return;
         } catch {
-          // fall through to md
+          // try next json candidate
         }
       }
 
@@ -2167,18 +2218,10 @@ export default function PodcastsView({
                   </div>
 
                   <div className="pod-episode-right">
-                    {isItemHeard ? (
+                    {isItemHeard && (
                       <div className="pod-episode-check-icon" title="Completed">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="pod-episode-tray-icon" title="Available offline">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="7 10 12 15 17 10" />
-                          <line x1="12" y1="15" x2="12" y2="3" />
                         </svg>
                       </div>
                     )}
@@ -2227,15 +2270,7 @@ export default function PodcastsView({
                 </div>
               </div>
 
-              <div className="pod-episode-right">
-                <div className="pod-episode-tray-icon" title="Available offline">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
