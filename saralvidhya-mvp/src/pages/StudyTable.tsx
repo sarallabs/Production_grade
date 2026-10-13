@@ -983,6 +983,10 @@ export default function StudyTable() {
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
+  const handleLoadedReadContent = useCallback((txt: string) => {
+    setContent((prev: any) => (prev === txt ? prev : txt));
+  }, []);
+
   // Masterminds mindmap concept panel state
   const [mmActiveNodeId, setMmActiveNodeId] = useState<string | null>(null);
   const [mmConceptRaw, setMmConceptRaw] = useState<string>('');
@@ -1387,11 +1391,8 @@ export default function StudyTable() {
               targetSectionIndex={readTargetSection}
               onPersonaChange={(lvl) => setPersona(lvl)}
               isPurpleTheme={isDbms || subjectId.includes("mlrit")}
-              onLoadedContent={(txt) => {
-                if (typeof content !== "string" || content.length < 50) {
-                  setContent(txt);
-                }
-              }}
+              readingHighlight={readingHighlight}
+              onLoadedContent={handleLoadedReadContent}
             />
           );
         }
@@ -1485,6 +1486,7 @@ export default function StudyTable() {
               active={readingHighlight.active}
               startWord={readingHighlight.startWord}
               endWord={readingHighlight.endWord}
+              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
             />
           </div>
         );
@@ -2640,7 +2642,7 @@ export default function StudyTable() {
     assessment: "Assessments",
     qbank: "Question Bank",
     swot: "SWOT Analysis",
-    pyq: "PYQ",
+    pyq: "PYQs",
     leaderboard: "Leaderboard",
     deep_dive: "Deep Dive",
     mocktest: "Mock Test",
@@ -3378,7 +3380,7 @@ export default function StudyTable() {
                                 Prepare
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("pyq", "PYQ", "#FF2476")}
+                                {renderNode("pyq", "PYQs", "#FF2476")}
                                 {renderNode("prep_exam", "Preparation Exam", "#FF2476")}
                                 {renderNode("study_plan", "Study Plan", "#FF2476")}
                               </div>

@@ -2499,44 +2499,61 @@
 }
 
 ::highlight(reading-active-word) {
-  background-color: #fde047;
-  color: #0f172a;
+  background-color: rgba(54, 83, 69, 0.16);
+  color: inherit;
 }
 [data-theme*="dark"] ::highlight(reading-active-word) {
-  background-color: #eab308;
-  color: #09090b;
+  background-color: rgba(96, 165, 250, 0.22);
+  color: inherit;
 }
 
 .reading-highlight-overlay {
   position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
-  background: rgba(253, 224, 71, 0.40);
-  border-radius: 5px;
-  border: 2px solid #eab308;
-  box-shadow: 0 2px 10px rgba(234, 179, 8, 0.35);
+  background: rgba(54, 83, 69, 0.12);
+  border-radius: 6px;
+  border: 1px solid rgba(54, 83, 69, 0.35);
+  box-shadow: 0 1px 4px rgba(54, 83, 69, 0.08);
   box-sizing: border-box;
   z-index: 2;
-  transition: top 0.08s ease-out, left 0.08s ease-out, width 0.08s ease-out, height 0.08s ease-out;
+  will-change: transform, width, height;
+  contain: paint layout;
+  transform: translate3d(0, 0, 0);
+  transition: transform 0.06s cubic-bezier(0.25, 0.8, 0.25, 1), width 0.06s ease-out, height 0.06s ease-out;
+}
+
+.reading-highlight-overlay.is-purple {
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.35);
+  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.08);
 }
 
 [data-theme*="dark"] .reading-highlight-overlay {
-  background: rgba(234, 179, 8, 0.45);
-  border: 2px solid #facc15;
-  box-shadow: 0 0 14px rgba(234, 179, 8, 0.55);
+  background: rgba(59, 130, 246, 0.22);
+  border: 1px solid rgba(96, 165, 250, 0.4);
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.3);
 }
 
 /* Read-aloud active word — matches .transcript-word.active (podcasts) */
 mark.reading-mark,
 mark.reading-mark.reading-phrase-active {
-  background: rgba(79, 123, 100, 0.07);
+  background: rgba(54, 83, 69, 0.12);
   color: inherit;
   border-radius: 6px;
   padding: 0 3px;
-  border: 1px solid rgba(79, 123, 100, 0.35);
+  border: 1px solid rgba(54, 83, 69, 0.35);
   box-shadow: none;
   text-shadow: none;
   font-style: inherit;
   font-weight: inherit;
+}
+
+mark.reading-mark.is-purple,
+mark.reading-mark.reading-phrase-active.is-purple {
+  background: rgba(124, 58, 237, 0.12);
+  border: 1px solid rgba(124, 58, 237, 0.35);
 }
 
 [data-theme*="dark"] mark.reading-mark {

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFocusMode } from '@/context/FocusModeContext';
+import MarkdownView from '@/components/MarkdownView';
 
 export interface QuestionData {
   id: number;
@@ -13,6 +14,8 @@ export interface QuestionData {
   subjectId: string;
   chapterNumber: number;
   year?: number;
+  frequency?: number;
+  repeatedYears?: string;
 }
 
 export const MATH_MOCKED_QUESTIONS: QuestionData[] = [
@@ -300,6 +303,14 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
               {question.year && (
                 <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>📅 {question.year}</span>
               )}
+              {typeof question.frequency === 'number' && question.frequency > 1 && (
+                <span
+                  title={question.repeatedYears ? `Asked in: ${question.repeatedYears}` : undefined}
+                  style={{ background: '#ede9fe', color: '#6d28d9', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}
+                >
+                  🔁 Asked {question.frequency}×
+                </span>
+              )}
             </div>
             <span style={{ background: '#e2e8f0', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>
               {question.marks}M
@@ -371,8 +382,8 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
               </span>
             </div>
           </div>
-          <div style={{ fontSize: '15px', color: '#14532d', lineHeight: '1.6', paddingLeft: '8px', whiteSpace: 'pre-wrap' }}>
-            {isLongAnswer ? question.longAnswer : question.shortAnswer}
+          <div style={{ fontSize: '15px', color: '#14532d', lineHeight: '1.6', paddingLeft: '8px' }}>
+            <MarkdownView content={isLongAnswer ? question.longAnswer : question.shortAnswer} />
           </div>
         </div>
 

@@ -6,6 +6,7 @@ import {
   googleTtsResume,
 } from "@/services/googleTtsService";
 import type { ToolId } from "@/components/ToolsMenu";
+import { getSpeakableDomText } from "@/utils/readAloudDom";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -22,44 +23,73 @@ export function preprocessSummaryText(md: string): string {
   // Remove " — Chapter Name" from "Quick Summary — Chapter Name"
   processed = processed.replace(/^(#*\s*(?:Quick|Detailed)\s+Summary)\s*—[^\n]*/im, "$1");
   // Remove Persona line and the following horizontal rule
-  processed = processed.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/ig, "");
+  processed = processed.replace(/^[#*\s]*Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/gim, "");
+  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
   return processed;
 }
 
 /**
- * Strips markdown from text for reading aloud.
+ * Strips markdown and metadata from text for accurate text-to-speech reading and highlighting synchronization.
  */
 export function stripMarkdown(md: string): string {
   if (!md) return "";
   let t = md;
 
-  // 1. Remove HTML img tags and all HTML tags (including huge base64 data URIs) BEFORE stripping '>'
+  // 1. Remove YAML frontmatter at document start
+  t = t.replace(/^---[\s\S]*?---\n*/m, "");
+
+  // 2. Remove Persona / D_target / Word count metadata lines
+  t = t.replace(/^[#*\s]*(?:Persona|D_target|Word count|Bloom|Alteration)[^\n]*$/gmi, "");
+  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  t = t.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*/gi, "");
+
+  // 3. Remove Mermaid diagrams and code blocks
+  t = t.replace(/```mermaid[\s\S]*?```/gi, "");
+  t = t.replace(/```[\s\S]*?```/g, "");
+
+  // 4. Remove HTML figure tags, img tags, and all HTML tags (including huge base64 data URIs)
+  t = t.replace(/<figure\b[\s\S]*?<\/figure>/gi, "");
   t = t.replace(/<img\b[^>]*>/gi, "");
+  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
   t = t.replace(/<[^>]+>/g, " ");
 
-  // 2. Remove markdown images: ![alt](url)
+  // 5. Remove markdown images: ![alt](url)
   t = t.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, "");
 
-  // 3. Remove standalone base64 data URIs if any leaked
-  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
+  // 6. Remove Markdown table separator lines (e.g. | :--- | :---: | ---: | or |---|---|)
+  // This is vital: DOM tables do not contain these separator tokens!
+  t = t.replace(/^[ \t]*\|?\s*:?-{2,}:?\s*(\|?\s*:?-{2,}:?\s*)+\|?[ \t]*$/gm, "");
 
-  // 4. Drop list bullets / ordered-list numbers — the rendered page doesn't show
-  //    them as text, so keeping them would shift the word highlight.
+  // 7. Clean Markdown table rows: strip outer pipes and turn internal pipes into spaces
+  t = t.replace(/^[ \t]*\|/gm, "");
+  t = t.replace(/\|[ \t]*$/gm, "");
+  t = t.replace(/\|/g, " ");
+
+  // 8. Clean LaTeX math formulas
+  t = t.replace(/\$\$[\s\S]*?\$\$/g, " ");
+  t = t.replace(/\$[^$\n]+\$/g, " ");
+  t = t.replace(/\\[a-zA-Z]+/g, " ");
+  t = t.replace(/[{}]/g, "");
+
+  // 9. Drop list bullets / ordered-list numbers — the rendered page doesn't show
+  // them as text, so keeping them would shift the word highlight.
   t = t.replace(/^[ \t]*[-*+][ \t]+/gm, "").replace(/^[ \t]*\d+[.)][ \t]+/gm, "");
 
-  // 5. Standard markdown stripping
-  return t
-    .replace(/```[\s\S]*?```/g, "")
+  // 10. Standard markdown syntax stripping
+  t = t
     .replace(/#{1,6}\s*/g, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .replace(/_([^_]+)_/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[>*_~`#|]/g, "")
+    .replace(/[>*_~`#]/g, "")
     .replace(/---+/g, "")
+    .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return t;
 }
 
 /**
@@ -142,19 +172,14 @@ export default function ReadAloudBar({
         endWord: Math.max(0, lastHighlightRef.current.startWord),
       });
     } else {
-      const clean = stripMarkdown(text);
+      const clean = getSpeakableDomText() ?? stripMarkdown(text);
       if (!clean) {
         cooldownRef.current = false;
         return;
       }
       cleanTextRef.current = clean;
-      const savedProgress = Number(
-        localStorage.getItem(progressStorageKey) || "0",
-      );
-      const startChar = Number.isFinite(savedProgress)
-        ? Math.max(0, Math.min(clean.length - 1, savedProgress))
-        : 0;
-      resumeCharRef.current = startChar;
+      const startChar = 0;
+      resumeCharRef.current = 0;
       const ranges: { start: number; end: number }[] = [];
       const re = /\S+/g;
       let m: RegExpExecArray | null;
@@ -242,9 +267,12 @@ export default function ReadAloudBar({
             }
           }
 
-          // Single active word — only notify parent when the active word actually changes
+          // Single active word. Ignore tiny backward jitter (<=2 words) but always
+          // resync on larger corrections so the highlight can never get stuck ahead.
           const windowStart = Math.max(0, idx);
-          if (lastHighlightRef.current.startWord !== windowStart) {
+          const prevWord = lastHighlightRef.current.startWord;
+          const isTinyBackJitter = windowStart < prevWord && prevWord - windowStart <= 2;
+          if (!isTinyBackJitter && prevWord !== windowStart) {
             lastHighlightRef.current = {
               startWord: windowStart,
               endWord: windowStart,
