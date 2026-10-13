@@ -61,6 +61,10 @@ export default function MarkdownView({ content, isPurpleTheme = true }: Props) {
     return processed;
   };
 
+  const processedContent = useMemo(() => {
+    return preprocessMathContent(content);
+  }, [content]);
+
   const PHRASE_REGEX = useMemo(() => {
     const keys = Object.keys(GLOSSARY_DEFINITIONS)
       .filter((k) => k.length >= 4)
@@ -230,7 +234,7 @@ export default function MarkdownView({ content, isPurpleTheme = true }: Props) {
           }
         }}
       >
-        {preprocessMathContent(content)}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );
