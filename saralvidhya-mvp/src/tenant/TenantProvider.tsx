@@ -113,7 +113,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         const cached = localStorage.getItem(`tenant_cfg_${nextTenantId}`);
         if (cached) {
           try {
-            setTenant(JSON.parse(cached));
+            const parsed = JSON.parse(cached);
+            setTenant(parsed);
+            if (parsed.branding?.primaryColor) {
+              const color = parsed.branding.primaryColor.toLowerCase() === '#1e3a8a' ? '#365345' : parsed.branding.primaryColor;
+              document.documentElement.style.setProperty('--primary-color', color);
+            }
           } catch {
             // ignore
           }
@@ -151,7 +156,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             document.title = `${data.tenant.branding.appName} – Student Learning`;
           }
           if (data.tenant.branding?.primaryColor) {
-            document.documentElement.style.setProperty('--primary-color', data.tenant.branding.primaryColor);
+            const color = data.tenant.branding.primaryColor.toLowerCase() === '#1e3a8a' ? '#365345' : data.tenant.branding.primaryColor;
+            document.documentElement.style.setProperty('--primary-color', color);
           }
         }
       } catch (err: any) {

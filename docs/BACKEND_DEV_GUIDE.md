@@ -101,7 +101,7 @@ JSON Schemas defining the exact validation rules are in `saralvidhya-production/
   "shortName": "MLRIT",
   "branding": {
     "appName": "MLRIT Medha",
-    "primaryColor": "#1e3a8a",
+    "primaryColor": "#365345",
     "programLabel": "Autonomous Engineering"
   },
   "features": {
