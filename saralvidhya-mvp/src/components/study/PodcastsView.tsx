@@ -297,6 +297,53 @@ export default function PodcastsView({
   const [selectedQl, setSelectedQl] = useState(0);
   const [selectedMc, setSelectedMc] = useState(initialMcIndex ?? 0);
 
+  const completedStorageKey = `sv_listen_done_${subjectId}_ch${chapterNumber}_${selectedTrack}`;
+  const [completedEpisodes, setCompletedEpisodes] = useState<Set<number>>(() => {
+    try {
+      const raw = localStorage.getItem(completedStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(completedStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setCompletedEpisodes(new Set(parsed));
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setCompletedEpisodes(new Set());
+  }, [completedStorageKey]);
+
+  const markEpisodeDone = useCallback(
+    (idx: number) => {
+      setCompletedEpisodes((prev) => {
+        if (prev.has(idx)) return prev;
+        const next = new Set(prev);
+        next.add(idx);
+        try {
+          localStorage.setItem(completedStorageKey, JSON.stringify(Array.from(next)));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [completedStorageKey],
+  );
+
   const [readData, setReadData] = useState<SectionizedChapterData | null>(null);
 
   useEffect(() => {
@@ -1947,9 +1994,25 @@ export default function PodcastsView({
     return "Podcast";
   })();
 
+  const activeEpisodesList = (() => {
+    if (selectedTrack === "mc") return MICROCASTS;
+    if (selectedTrack === "dl" || selectedTrack === "long") return DETAILED_LISTENS;
+    return QUICK_LISTENS;
+  })();
+
+  const activeEpisodeIdx = (() => {
+    if (selectedTrack === "mc") return selectedMc;
+    if (selectedTrack === "dl" || selectedTrack === "long") return selectedDl;
+    return selectedQl;
+  })();
+
   const displayTitle = (() => {
-    if (selectedTrack === "ql" || selectedTrack === "short") return "1. Chapter Quick Recap";
-    if (selectedTrack === "dl" || selectedTrack === "long") return "1. Chapter Complete Coverage";
+    if (selectedTrack === "ql" || selectedTrack === "short") {
+      return QUICK_LISTENS[selectedQl]?.title || "1. Chapter Quick Recap";
+    }
+    if (selectedTrack === "dl" || selectedTrack === "long") {
+      return DETAILED_LISTENS[selectedDl]?.title || "1. Chapter Complete Coverage";
+    }
     if (selectedTrack === "mc") {
       const item = MICROCASTS[selectedMc];
       return item?.title || `Microcast Episode ${selectedMc + 1}`;
@@ -1963,6 +2026,51 @@ export default function PodcastsView({
     }
     return `${chapterName} · ${trackTypeLabel}`;
   })();
+
+  const handleSelectEpisode = (idx: number) => {
+    if (selectedTrack === "mc") {
+      if (selectedMc !== idx) {
+        setSelectedMc(idx);
+        setTimeout(() => {
+          if (audioRef.current) {
+            audioRef.current.play().then(() => {
+              setIsPlaying(true);
+              onPlayingChange?.(true);
+            }).catch(() => {});
+          }
+        }, 50);
+      } else {
+        handlePlayToggle();
+      }
+    } else if (selectedTrack === "dl" || selectedTrack === "long") {
+      if (selectedDl !== idx) {
+        setSelectedDl(idx);
+      } else {
+        handlePlayToggle();
+      }
+    } else {
+      if (selectedQl !== idx) {
+        setSelectedQl(idx);
+      } else {
+        handlePlayToggle();
+      }
+    }
+  };
+
+  const totalEpisodes = Math.max(1, activeEpisodesList.length);
+  const completedCount = activeEpisodesList.reduce((acc, _, idx) => {
+    const isDone = completedEpisodes.has(idx) || (selectedTrack === "mc" && idx < selectedMc);
+    return acc + (isDone ? 1 : 0);
+  }, 0);
+  const activePartialFraction =
+    completedEpisodes.has(activeEpisodeIdx) || (selectedTrack === "mc" && activeEpisodeIdx < selectedMc)
+      ? 0
+      : Math.min(1, Math.max(0, progressPct / 100));
+  const listenProgressPercent = Math.min(
+    100,
+    Math.round(((completedCount + activePartialFraction) / totalEpisodes) * 100),
+  );
+  const accentColor = "#15803d";
 
   const handleRewind15 = () => {
     if (audioRef.current) {
@@ -2031,10 +2139,6 @@ export default function PodcastsView({
     }
   };
 
-  const handleNavigateToRead = (secIdx: number) => {
-    onNavigateToRead?.(secIdx);
-  };
-
   const handleWordClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const target = (e.target as HTMLElement).closest(".transcript-word") as HTMLElement | null;
     if (!target || !audioRef.current) return;
@@ -2090,6 +2194,7 @@ export default function PodcastsView({
             setIsPlaying(false);
             setCurrentTime(0);
             onPlayingChange?.(false);
+            markEpisodeDone(activeEpisodeIdx);
           }}
           onLoadedMetadata={(e) => {
             const a = e.target as HTMLAudioElement;
@@ -2132,476 +2237,464 @@ export default function PodcastsView({
         {renderSegmentedTrackToggle()}
       </div>
 
-      {/* ── 1. Top Section: Episode Playlist (Microcasts list stack or Single podcast card) ── */}
-      {selectedTrack === "mc" ? (
-        <div className="pod-episode-list-wrap">
-          <div className="pod-episode-list-header">
-            MICROCASTS · STANDARD DEPTH (auto-filtered — {MICROCASTS.length} of {MICROCASTS.length} match)
+      {/* ── Section-Wise 2-Column Layout (Matching Read UI) ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: "24px",
+          width: "100%",
+          margin: 0,
+          padding: "0 0 60px",
+          boxSizing: "border-box",
+          alignItems: "flex-start",
+        }}
+      >
+        {/* ── LEFT NAVIGATION SIDEBAR (Sticky, matching Read's 'IN THIS CHAPTER' sidebar) ── */}
+        <div
+          style={{
+            width: "260px",
+            flexShrink: 0,
+            position: "sticky",
+            top: "8px",
+            alignSelf: "flex-start",
+            maxHeight: "calc(100vh - 80px)",
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+            zIndex: 10,
+          }}
+        >
+          {/* Resumed / Listening Guide Pill */}
+          <div
+            style={{
+              background: "#e0f2fe",
+              color: "#0369a1",
+              borderRadius: "999px",
+              padding: "6px 14px",
+              fontSize: "12.5px",
+              fontWeight: 700,
+              textAlign: "center",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+            }}
+          >
+            {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Listening Guide"}
           </div>
-          <div className="pod-episode-list-stack">
-            {MICROCASTS.map((item, idx) => {
-              const isItemActive = selectedMc === idx;
-              const isItemHeard = idx < selectedMc;
-              const isPlayingItem = isItemActive && playing;
 
-              return (
-                <div
-                  key={idx}
-                  className={`pod-episode-card ${isItemActive ? "active" : ""}`}
-                  onClick={() => {
-                    if (selectedMc !== idx) {
-                      setSelectedMc(idx);
-                      setTimeout(() => {
-                        if (audioRef.current) {
-                          audioRef.current.play().then(() => {
-                            setIsPlaying(true);
-                            onPlayingChange?.(true);
-                          }).catch(() => {});
-                        }
-                      }, 50);
-                    } else {
-                      handlePlayToggle();
-                    }
-                  }}
-                >
-                  <div className="pod-episode-left">
-                    <button
-                      type="button"
-                      className="pod-episode-play-circle"
-                      aria-label={isPlayingItem ? "Pause" : "Play"}
-                    >
-                      {isPlayingItem ? (
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                          <rect x="1" y="1" width="3" height="8" rx="1" />
-                          <rect x="6" y="1" width="3" height="8" rx="1" />
-                        </svg>
-                      ) : isItemActive ? (
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ marginLeft: "1px" }}>
-                          <polygon points="2,1 8,5 2,9" />
-                        </svg>
-                      ) : (
-                        <span className="pod-episode-index-num">{idx + 1}</span>
-                      )}
-                    </button>
-
-                    <div className="pod-episode-info">
-                      <span className="pod-episode-title">{item.title}</span>
-                      <div className="pod-episode-meta">
-                        {isItemActive ? (
-                          <>
-                            <span style={{ fontWeight: 600 }}>
-                              {playing ? "Playing" : "Paused"} · {fmtTime(currentTime)} of {displayDuration ? fmtTime(displayDuration) : "--:--"}
-                            </span>
-                            <span>·</span>
-                            <span>Recap: 3 questions</span>
-                            <span>·</span>
-                            <span>Links to Read §{idx + 1}</span>
-                          </>
-                        ) : isItemHeard ? (
-                          <>
-                            <span className="pod-episode-badge-heard">✓ Heard</span>
-                            <span>·</span>
-                            <span>Recap done ✓</span>
-                            <span>·</span>
-                            <span>Links to Read §{idx + 1}</span>
-                          </>
-                        ) : (
-                          <>
-                            {idx === 1 && <span className="pod-episode-badge-resume">Resume at 0:48</span>}
-                            <span>{idx === 1 ? "2:10" : idx === 3 ? "2:44" : idx === 4 ? "3:35" : "1:36"}</span>
-                            <span>·</span>
-                            <span>Links to Read §{idx + 1}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="pod-episode-right">
-                    {isItemHeard && (
-                      <div className="pod-episode-check-icon" title="Completed">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      ) : (
-        <div className="pod-episode-list-wrap">
-          <div className="pod-episode-list-header">
-            {selectedTrack === "dl" || selectedTrack === "long" ? "DETAILED LISTEN · IN-DEPTH" : "QUICK LISTEN · STANDARD DEPTH"} (1 of 1 match)
-          </div>
-          <div className="pod-episode-list-stack">
-            <div className="pod-episode-card active" onClick={handlePlayToggle}>
-              <div className="pod-episode-left">
-                <button
-                  type="button"
-                  className="pod-episode-play-circle"
-                  aria-label={playing ? "Pause" : "Play"}
-                >
-                  {playing ? (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-                      <rect x="1" y="1" width="3" height="8" rx="1" />
-                      <rect x="6" y="1" width="3" height="8" rx="1" />
-                    </svg>
-                  ) : (
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" style={{ marginLeft: "1px" }}>
-                      <polygon points="2,1 8,5 2,9" />
-                    </svg>
-                  )}
-                </button>
-
-                <div className="pod-episode-info">
-                  <span className="pod-episode-title">{displayTitle}</span>
-                  <div className="pod-episode-meta">
-                    <span style={{ fontWeight: 600 }}>
-                      {playing ? "Playing" : "Paused"} · {fmtTime(currentTime)} of {displayDuration ? fmtTime(displayDuration) : "--:--"}
-                    </span>
-                    <span>·</span>
-                    <span>Complete chapter coverage</span>
-                    <span>·</span>
-                    <span>Links to Read §1-§5</span>
-                  </div>
-                </div>
-              </div>
-
-
+          {/* Podcast Checklist Card */}
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              padding: "16px 12px",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "11px",
+                fontWeight: 800,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "#64748b",
+                padding: "0 8px 6px",
+                borderBottom: "1px solid #f1f5f9",
+              }}
+            >
+              IN THIS CHAPTER
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* ── 2. Middle Section: The Exact Horizontal Player Bar ── */}
-      <div className="pod-exact-player-bar">
-        {/* Left: Headphone Icon + Title + Episode Subtitle */}
-        <div className="pod-player-left">
-          <div className="pod-player-headphone-badge">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-            </svg>
-          </div>
-          <div className="pod-player-meta">
-            <span className="pod-player-title">{displayTitle}</span>
-            <span className="pod-player-subtitle">{displaySubtitle}</span>
-          </div>
-        </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+              {activeEpisodesList.map((item, idx) => {
+                const isSelected = idx === activeEpisodeIdx;
+                const isDone = completedEpisodes.has(idx) || (selectedTrack === "mc" && idx < selectedMc);
+                const cleanEpisodeTitle = item.title.replace(/^\d+\.\s*/, "");
 
-        {/* Transport Controls: ↺15, Play/Pause, 30↻, 1x */}
-        <div className="pod-player-transport">
-          <button className="pod-transport-btn" onClick={handleRewind15} title="Rewind 15 seconds">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-            </svg>
-            <span>15</span>
-          </button>
-
-          <button className="pod-main-play-btn" onClick={handlePlayToggle} title={playing ? "Pause" : "Play"}>
-            {playing ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
-                <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "2px" }}>
-                <polygon points="5 3 19 12 5 21 5 3" />
-              </svg>
-            )}
-          </button>
-
-          <button className="pod-transport-btn" onClick={handleForward30} title="Forward 30 seconds">
-            <span>30</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10" />
-              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-            </svg>
-          </button>
-
-          <button className="pod-speed-pill" onClick={handleToggleSpeed} title="Playback speed">
-            {playbackRate}x
-          </button>
-        </div>
-
-        {/* Waveform Scrubber + Timestamp */}
-        <div className="pod-player-waveform-wrap" onClick={handleWaveformClick} title="Click anywhere to seek">
-          <div className="pod-player-waveform-bars">
-            {PENCIL_WAVEFORM_BARS.map((h, i) => {
-              const barPct = (i / PENCIL_WAVEFORM_BARS.length) * 100;
-              const isBarActive = barPct <= progressPct;
-              return (
-                <div
-                  key={i}
-                  className={`pod-waveform-bar ${isBarActive ? "active" : ""}`}
-                  style={{ height: `${h}%` }}
-                />
-              );
-            })}
-          </div>
-          <span className="pod-player-time">
-            {fmtTime(currentTime)} / {displayDuration ? fmtTime(displayDuration) : "--:--"}
-          </span>
-        </div>
-
-        {/* Right Controls: ⏱ Timer + Volume */}
-        <div className="pod-player-right">
-          <button className="pod-timer-btn" onClick={handleToggleSleepTimer} title={sleepTimerMinutes ? `Timer set for ${sleepTimerMinutes}m` : "Set sleep timer"}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="9" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-            <span>{sleepTimerMinutes ? `${sleepTimerMinutes}m` : "Timer"}</span>
-          </button>
-
-          <div className="pod-player-volume">
-            <button className="pod-vol-icon-btn" onClick={() => {
-              const next = !isMutedUi;
-              setIsMutedUi(next);
-              if (audioRef.current) audioRef.current.muted = next;
-            }}>
-              {isMutedUi || volume === 0 ? (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-              ) : (
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-              )}
-            </button>
-            <div className="pod-vol-track">
-              <div className="pod-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={isMutedUi ? 0 : volume}
-                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                className="pod-vol-input"
-                aria-label="Volume"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 3. Bottom Section: Split 2-Column Layout ── */}
-      <div className="pod-split-layout">
-        {/* Left Column: Interactive Transcript */}
-        <div className="pod-transcript-card">
-          <div className="pod-transcript-header">
-            <div className="pod-transcript-title-wrap">
-              <strong className="pod-transcript-title">Transcript</strong>
-              <span className="pod-transcript-subtitle">karaoke sync · click any word to jump · dotted terms tap-to-define</span>
-            </div>
-            <label className="pod-autofollow-label">
-              <input
-                type="checkbox"
-                checked={autoFollow}
-                onChange={(e) => setAutoFollow(e.target.checked)}
-              />
-              <span>Auto-follow</span>
-            </label>
-          </div>
-
-          <div className="pod-transcript-body" ref={transcriptRef}>
-            {transcript ? (
-              <div className="transcript-box transcript-body" ref={transcriptBoxRef} onClick={handleWordClick}>
-                {transcriptTokens.map((token, idx) => {
-                  const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
-                  if (!isWord) {
-                    return <span key={idx}>{token}</span>;
-                  }
-                  const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, '');
-                  const def = getTermDefinition(cleanWord);
-                  if (def) {
-                    return (
-                      <span key={idx} className="transcript-word">
-                        <DottedTerm definition={def} isPurpleTheme={false}>
-                          {token}
-                        </DottedTerm>
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleSelectEpisode(idx)}
+                    title={item.title}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      border: "1.5px solid transparent",
+                      background: isSelected ? "#dbe6df" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
+                    {isDone ? (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "#0f172a",
+                          color: "#ffffff",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
                       </span>
-                    );
-                  }
-                  return (
-                    <span key={idx} className="transcript-word">
-                      {token}
+                    ) : isSelected ? (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "transparent",
+                          border: "1.5px solid #0f172a",
+                          color: "#0f172a",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "transparent",
+                          border: "1.5px solid #cbd5e1",
+                        }}
+                      />
+                    )}
+
+                    {/* Podcast Episode Title */}
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
+                        color: isSelected ? "#0f172a" : "#475569",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {cleanEpisodeTitle}
                     </span>
-                  );
-                })}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Progress Bar Footer */}
+            <div
+              style={{
+                marginTop: "10px",
+                paddingTop: "10px",
+                borderTop: "1px solid #f1f5f9",
+                paddingLeft: "6px",
+                paddingRight: "6px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#64748b",
+                  marginBottom: "6px",
+                }}
+              >
+                <span>Chapter progress</span>
+                <span style={{ color: "#0f172a", fontWeight: 700 }}>{listenProgressPercent}%</span>
               </div>
-            ) : (
-              <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading transcript…</p>
-            )}
+              <div
+                style={{
+                  height: "6px",
+                  width: "100%",
+                  background: "#f1f5f9",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${listenProgressPercent}%`,
+                    background: accentColor,
+                    borderRadius: "999px",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right Column: Contextual Sidebar Panel */}
-        <div className="pod-sidebar-panel">
-          {/* Card 1: FOLLOW ALONG IN READ (Relate to Topics / Modules) */}
-          <div className="pod-follow-card">
-            <div className="pod-sidebar-card-header">
-              <span>Follow Along In Read</span>
-              <span style={{ fontSize: "10.5px", color: "var(--primary, #365345)", fontWeight: 700, letterSpacing: "0.02em" }}>
-                Topic {activeSectionInfo.moduleNumber} of {Math.max(1, modulesList.length)}
+        {/* ── RIGHT MAIN CONTENT AREA (Full width Player + Transcript, matching Read) ── */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+          }}
+        >
+          {/* Chapter Overview Meta Line (Matching Read) */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "8px",
+              paddingBottom: "8px",
+              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  background: "rgba(21, 128, 61, 0.08)",
+                  color: accentColor,
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                }}
+              >
+                ⏱ {displayDuration ? `${Math.max(1, Math.round(displayDuration / 60))} min listen` : trackTypeLabel}
+              </span>
+              <span
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                }}
+              >
+                {totalEpisodes} {totalEpisodes === 1 ? "Podcast" : "Podcasts"}
               </span>
             </div>
 
-            {/* Module Switcher Pills */}
-            {modulesList.length > 1 && (
-              <div className="pod-module-switcher">
-                {modulesList.map((mod) => {
-                  const isModActive = mod.module === activeSectionInfo.moduleNumber;
-                  return (
-                    <button
-                      key={mod.module}
-                      type="button"
-                      className={`pod-mod-btn ${isModActive ? "active" : ""}`}
-                      onClick={() => {
-                        if (selectedModuleOverride === mod.module) {
-                          setSelectedModuleOverride(null);
-                        } else {
-                          setSelectedModuleOverride(mod.module);
-                          if (selectedTrack === "mc" && mod.module - 1 < MICROCASTS.length) {
-                            setSelectedMc(mod.module - 1);
-                          }
-                        }
-                      }}
-                      title={isModActive && selectedModuleOverride !== null ? "Click again to resume auto-following" : `Focus Module ${mod.module}: ${mod.title}`}
-                    >
-                      M{mod.module}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Active Topic Banner */}
-            <div className="pod-topic-banner">
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span className="pod-topic-badge">
-                  Module {activeSectionInfo.moduleNumber} · Topic Focus
-                </span>
-                {selectedModuleOverride !== null && (
-                  <button
-                    type="button"
-                    onClick={() => setSelectedModuleOverride(null)}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      color: "#166534",
-                      cursor: "pointer",
-                      textDecoration: "underline",
-                      padding: 0,
-                    }}
-                    title="Resume auto-following playback"
-                  >
-                    Auto-follow ↺
-                  </button>
-                )}
-              </div>
-              <div className="pod-topic-title">
-                {activeSectionInfo.title}
-              </div>
-            </div>
-
-            {/* Topic-Specific Action Cards */}
-            <div className="pod-follow-items">
-              {/* 1. Core Module Study Guide */}
-              <div
-                className="pod-follow-item active"
-                onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
-                title={`Jump directly to Module ${activeSectionInfo.moduleNumber} in Read`}
-              >
-                <div className="pod-follow-item-info">
-                  <span className="pod-follow-kind">Module Study Guide</span>
-                  <span className="pod-follow-title">
-                    §{activeSectionInfo.sectionNumber} {activeSectionInfo.shortTitle}
-                  </span>
-                </div>
-                <span className="pod-follow-badge">Read Module {activeSectionInfo.moduleNumber} →</span>
-              </div>
-
-              {/* 2. Visual Architecture Diagram */}
-              <div
-                className="pod-follow-item"
-                onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
-                title={`Open diagram for Module ${activeSectionInfo.moduleNumber} in Read`}
-              >
-                <div className="pod-follow-item-info">
-                  <span className="pod-follow-kind">Visual Architecture</span>
-                  <span className="pod-follow-title">
-                    {activeSectionInfo.figureNo}: {activeSectionInfo.figureTitle}
-                  </span>
-                </div>
-                <span className="pod-follow-badge">Inspect Diagram →</span>
-              </div>
-
-              {/* 4. Quick Check Concept Question */}
-              {activeSectionInfo.quickCheck && (
-                <div
-                  className="pod-follow-item"
-                  onClick={() => handleNavigateToRead(activeSectionInfo.sectionNumber)}
-                  title={`Practice Module ${activeSectionInfo.moduleNumber} concept check in Read`}
-                >
-                  <div className="pod-follow-item-info">
-                    <span className="pod-follow-kind">Knowledge Check</span>
-                    <span className="pod-follow-title">
-                      Quick Check · Module {activeSectionInfo.moduleNumber} Test
-                    </span>
-                  </div>
-                  <span className="pod-follow-badge">Practice Check →</span>
-                </div>
-              )}
-
-              {/* Other Chapter Topics Quick Switch */}
-              {activeSectionInfo.upcomingModules.map((upMod) => (
-                <div
-                  key={upMod.module}
-                  className="pod-follow-item"
-                  onClick={() => {
-                    setSelectedModuleOverride(upMod.module);
-                    if (selectedTrack === "mc" && upMod.module - 1 < MICROCASTS.length) {
-                      setSelectedMc(upMod.module - 1);
-                    }
-                  }}
-                  title={`Focus Topic ${upMod.module}: ${upMod.title}`}
-                >
-                  <div className="pod-follow-item-info">
-                    <span className="pod-follow-kind">Curriculum Topic</span>
-                    <span className="pod-follow-title">
-                      §{upMod.sectionNumber} {upMod.shortTitle}
-                    </span>
-                  </div>
-                  <span className="pod-follow-badge-muted">Topic {upMod.module} →</span>
-                </div>
-              ))}
+            <div style={{ fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
+              · tap any dotted term for its definition
             </div>
           </div>
 
-          {/* Card 2: THIS EPISODE */}
-          <div className="pod-episode-meta-card">
-            <div className="pod-sidebar-card-header">THIS EPISODE</div>
-            <div className="pod-episode-meta-rows">
-              <div className="pod-episode-meta-row main">
-                {displayDuration ? fmtTime(displayDuration) : "--:--"} · {selectedTrack === "dl" || selectedTrack === "long" ? "Detailed Study" : selectedTrack === "mc" ? "Focused Microcast" : "Standard Depth"}
+          {/* Active Podcast Section Header (Matching Read's SECTION X OF Y) */}
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+              <span
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  color: accentColor,
+                  textTransform: "uppercase",
+                }}
+              >
+                PODCAST {activeEpisodeIdx + 1} OF {totalEpisodes}
+              </span>
+            </div>
+
+            <h2
+              style={{
+                fontSize: "24px",
+                fontWeight: 800,
+                color: "#0f172a",
+                lineHeight: "1.3",
+                margin: "0",
+              }}
+            >
+              {displayTitle.replace(/^\d+\.\s*/, "")}
+            </h2>
+          </div>
+
+          {/* Horizontal Player Bar */}
+          <div className="pod-exact-player-bar" style={{ marginBottom: 0 }}>
+            {/* Left: Headphone Icon + Title + Episode Subtitle */}
+            <div className="pod-player-left">
+              <div className="pod-player-headphone-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                  <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                </svg>
               </div>
-              <div className="pod-episode-meta-row muted">
-                {selectedTrack === "mc"
-                  ? "Heard 2× by most students"
-                  : selectedTrack === "dl" || selectedTrack === "long"
-                  ? "Complete curriculum breakdown"
-                  : `High-yield exam recap · ${sections.length > 0 ? `${sections.length} modules` : "All topics"}`}
+              <div className="pod-player-meta">
+                <span className="pod-player-title">{displayTitle}</span>
+                <span className="pod-player-subtitle">{displaySubtitle}</span>
               </div>
-              <div className="pod-episode-meta-row muted">
-                {activeSectionInfo.quickCheck
-                  ? `Quick Check: "${activeSectionInfo.quickCheck.stem.length > 38 ? activeSectionInfo.quickCheck.stem.slice(0, 36) + "…" : activeSectionInfo.quickCheck.stem}"`
-                  : "3 recap questions attached"}
+            </div>
+
+            {/* Transport Controls: ↺15, Play/Pause, 30↻, 1x */}
+            <div className="pod-player-transport">
+              <button className="pod-transport-btn" onClick={handleRewind15} title="Rewind 15 seconds">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                </svg>
+                <span>15</span>
+              </button>
+
+              <button className="pod-main-play-btn" onClick={handlePlayToggle} title={playing ? "Pause" : "Play"}>
+                {playing ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
+                    <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
+                  </svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "2px" }}>
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                )}
+              </button>
+
+              <button className="pod-transport-btn" onClick={handleForward30} title="Forward 30 seconds">
+                <span>30</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+              </button>
+
+              <button className="pod-speed-pill" onClick={handleToggleSpeed} title="Playback speed">
+                {playbackRate}x
+              </button>
+            </div>
+
+            {/* Waveform Scrubber + Timestamp */}
+            <div className="pod-player-waveform-wrap" onClick={handleWaveformClick} title="Click anywhere to seek">
+              <div className="pod-player-waveform-bars">
+                {PENCIL_WAVEFORM_BARS.map((h, i) => {
+                  const barPct = (i / PENCIL_WAVEFORM_BARS.length) * 100;
+                  const isBarActive = barPct <= progressPct;
+                  return (
+                    <div
+                      key={i}
+                      className={`pod-waveform-bar ${isBarActive ? "active" : ""}`}
+                      style={{ height: `${h}%` }}
+                    />
+                  );
+                })}
               </div>
+              <span className="pod-player-time">
+                {fmtTime(currentTime)} / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+              </span>
+            </div>
+
+            {/* Right Controls: ⏱ Timer + Volume */}
+            <div className="pod-player-right">
+              <button className="pod-timer-btn" onClick={handleToggleSleepTimer} title={sleepTimerMinutes ? `Timer set for ${sleepTimerMinutes}m` : "Set sleep timer"}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <span>{sleepTimerMinutes ? `${sleepTimerMinutes}m` : "Timer"}</span>
+              </button>
+
+              <div className="pod-player-volume">
+                <button className="pod-vol-icon-btn" onClick={() => {
+                  const next = !isMutedUi;
+                  setIsMutedUi(next);
+                  if (audioRef.current) audioRef.current.muted = next;
+                }}>
+                  {isMutedUi || volume === 0 ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                  )}
+                </button>
+                <div className="pod-vol-track">
+                  <div className="pod-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={isMutedUi ? 0 : volume}
+                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                    className="pod-vol-input"
+                    aria-label="Volume"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Full-Width Interactive Transcript Card */}
+          <div className="pod-transcript-card" style={{ width: "100%", boxSizing: "border-box" }}>
+            <div className="pod-transcript-header">
+              <div className="pod-transcript-title-wrap">
+                <strong className="pod-transcript-title">Transcript</strong>
+                <span className="pod-transcript-subtitle">karaoke sync · click any word to jump · dotted terms tap-to-define</span>
+              </div>
+              <label className="pod-autofollow-label">
+                <input
+                  type="checkbox"
+                  checked={autoFollow}
+                  onChange={(e) => setAutoFollow(e.target.checked)}
+                />
+                <span>Auto-follow</span>
+              </label>
+            </div>
+
+            <div className="pod-transcript-body" ref={transcriptRef}>
+              {transcript ? (
+                <div className="transcript-box transcript-body" ref={transcriptBoxRef} onClick={handleWordClick}>
+                  {transcriptTokens.map((token, idx) => {
+                    const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
+                    if (!isWord) {
+                      return <span key={idx}>{token}</span>;
+                    }
+                    const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const def = getTermDefinition(cleanWord);
+                    if (def) {
+                      return (
+                        <span key={idx} className="transcript-word">
+                          <DottedTerm definition={def} isPurpleTheme={false}>
+                            {token}
+                          </DottedTerm>
+                        </span>
+                      );
+                    }
+                    return (
+                      <span key={idx} className="transcript-word">
+                        {token}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading transcript…</p>
+              )}
             </div>
           </div>
         </div>

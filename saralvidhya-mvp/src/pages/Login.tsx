@@ -46,6 +46,7 @@ function Login() {
       try {
         const ok = await tenantLogin(studentPassword);
         if (ok) {
+          sessionStorage.removeItem("sv_video_open_counts");
           localStorage.setItem("app_authenticated", "true");
           localStorage.setItem("app_role", "student");
           const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
@@ -94,6 +95,7 @@ function Login() {
       );
 
       if (match) {
+        sessionStorage.removeItem("sv_video_open_counts");
         localStorage.setItem("app_authenticated", "true");
         localStorage.setItem("app_role", match.role);
         localStorage.setItem("username", match.username);
