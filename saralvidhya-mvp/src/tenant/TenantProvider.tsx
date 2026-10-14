@@ -219,6 +219,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       localStorage.removeItem(`sv_session_${tenantId}`);
     }
     localStorage.removeItem('app_authenticated');
+    sessionStorage.removeItem('sv_video_open_counts');
     setToken(null);
   }, [tenantId]);
 

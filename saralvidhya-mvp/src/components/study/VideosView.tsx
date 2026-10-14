@@ -47,6 +47,17 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; d
       "Goldich Mineral Weathering Stability Series vs Bowen's Reaction Series"
     ]
   },
+  "7TyeiuOEVBo": {
+    title: "Insect Metamorphosis & Diapause",
+    duration: "10:30min",
+    topics: [
+      "Morphogenesis Framework: Three Categories of Insect Metamorphosis",
+      "Types of Metamorphosis: Ametabolous, Hemimetabolous & Holometabolous",
+      "Immature Stages & Pupal Classifications",
+      "Hypermetamorphosis & Endocrine Regulation (Ecdysone & Juvenile Hormone)",
+      "Diapause & Dormancy in Pest Management"
+    ]
+  },
   "elWWuKv5b9Q": {
     title: "Pollination, Pollinizers & Parthenocarpy in Fruit Crops",
     duration: "14:20min",
@@ -67,6 +78,42 @@ const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; d
       "Advanced ER & Extended ER (EER) Specialization/Generalization",
       "Relational Model Foundations & Key Integrity Constraints",
       "Logical Database Design: ER-to-Relational Schema Translation",
+      "Relational Querying Foundations, SQL Views & Schema Evolution"
+    ]
+  },
+  "3C5rpBM1bXU": {
+    title: "Part 1: Database System Concepts & Architecture",
+    duration: "15:30min",
+    topics: [
+      "Database Fundamentals & 3-Schema Engine Architecture",
+      "Data Independence (Logical vs Physical) & DBMS Engine Components",
+      "Database Users, DBA Roles & System Environment"
+    ]
+  },
+  "_UATsTUW7ck": {
+    title: "Part 2: Entity-Relationship (ER) & Extended ER Modeling",
+    duration: "15:30min",
+    topics: [
+      "Entity Types, Attributes, Keys & Relationship Cardinalities",
+      "Weak Entities, Identifying Relationships & Participation Constraints",
+      "Advanced ER & Extended ER (EER) Specialization/Generalization"
+    ]
+  },
+  "lEVbyiGNaIk": {
+    title: "Part 3: Relational Model & Integrity Constraints",
+    duration: "15:30min",
+    topics: [
+      "Relational Model Foundations, Domains & Relation Schemas",
+      "Superkeys, Candidate Keys, Primary Keys & Foreign Key Rules",
+      "Domain, Entity Integrity & Referential Integrity Constraints"
+    ]
+  },
+  "UJutdBotS_I": {
+    title: "Part 4: Logical Database Design, SQL Views & Schema Evolution",
+    duration: "15:30min",
+    topics: [
+      "Logical Database Design: 7-Step ER-to-Relational Schema Translation",
+      "Mapping Weak Entities, M:N Relationships & EER Hierarchies",
       "Relational Querying Foundations, SQL Views & Schema Evolution"
     ]
   }
@@ -213,22 +260,52 @@ export default function VideosView({
   const [showSpeedSelector, setShowSpeedSelector] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [seekFeedback, setSeekFeedback] = useState<"-10s" | "+10s" | null>(null);
+  const [seekFeedback, setSeekFeedback] = useState<"-10s" | "+10s" | "skip" | null>(null);
+
+  // Track how many times each video (ytId) has been opened in the current login session.
+  // First time opening a video (count === 1) -> no Skip button.
+  // Subsequent opens in the session (count >= 2) -> Skip button appears.
+  const [videoOpenCounts, setVideoOpenCounts] = useState<Record<string, number>>(() => {
+    try {
+      const raw = sessionStorage.getItem("sv_video_open_counts");
+      return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const activePlaybackSessionYtIdRef = useRef<string | null>(null);
+
+  const recordVideoOpen = useCallback((ytId?: string) => {
+    if (!ytId) return;
+    if (activePlaybackSessionYtIdRef.current === ytId) return;
+    activePlaybackSessionYtIdRef.current = ytId;
+    setVideoOpenCounts((prev) => {
+      const next = { ...prev, [ytId]: (prev[ytId] || 0) + 1 };
+      try {
+        sessionStorage.setItem("sv_video_open_counts", JSON.stringify(next));
+      } catch {
+        /* ignore storage errors */
+      }
+      return next;
+    });
+  }, []);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const rowPlayerContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const autoPlayOnReadyRef = useRef<boolean>(false);
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
   const isSeekingRef = useRef<boolean>(false);
   const seekFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showSeekBadge = (type: "-10s" | "+10s") => {
+  const showSeekBadge = (type: "-10s" | "+10s" | "skip") => {
     setSeekFeedback(type);
     if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
     seekFeedbackTimerRef.current = setTimeout(() => {
       setSeekFeedback(null);
-    }, 650);
+    }, type === "skip" ? 1100 : 650);
   };
 
   // 1. Build video list
@@ -299,18 +376,29 @@ export default function VideosView({
     } else if (subjectId === "dbms" || subjectId.includes("dbms")) {
       list = [
         {
-          title: "Database System Concepts, ER Model & Relational Design",
-          ytId: "A4RwGJPb9I4",
-          duration: "15:30min",
-          topics: [
-            "Database Fundamentals & 3-Schema Engine Architecture",
-            "Conceptual Database Design & ER Modeling Rules",
-            "Advanced ER & Extended ER (EER) Specialization/Generalization",
-            "Relational Model Foundations & Key Integrity Constraints",
-            "Logical Database Design: ER-to-Relational Schema Translation",
-            "Relational Querying Foundations, SQL Views & Schema Evolution"
-          ]
-        }
+          title: KNOWN_VIDEOS_METADATA["3C5rpBM1bXU"].title,
+          ytId: "3C5rpBM1bXU",
+          duration: KNOWN_VIDEOS_METADATA["3C5rpBM1bXU"].duration,
+          topics: KNOWN_VIDEOS_METADATA["3C5rpBM1bXU"].topics,
+        },
+        {
+          title: KNOWN_VIDEOS_METADATA["_UATsTUW7ck"].title,
+          ytId: "_UATsTUW7ck",
+          duration: KNOWN_VIDEOS_METADATA["_UATsTUW7ck"].duration,
+          topics: KNOWN_VIDEOS_METADATA["_UATsTUW7ck"].topics,
+        },
+        {
+          title: KNOWN_VIDEOS_METADATA["lEVbyiGNaIk"].title,
+          ytId: "lEVbyiGNaIk",
+          duration: KNOWN_VIDEOS_METADATA["lEVbyiGNaIk"].duration,
+          topics: KNOWN_VIDEOS_METADATA["lEVbyiGNaIk"].topics,
+        },
+        {
+          title: KNOWN_VIDEOS_METADATA["UJutdBotS_I"].title,
+          ytId: "UJutdBotS_I",
+          duration: KNOWN_VIDEOS_METADATA["UJutdBotS_I"].duration,
+          topics: KNOWN_VIDEOS_METADATA["UJutdBotS_I"].topics,
+        },
       ];
     } else if ((subjectId === "ento_131" || subjectId.includes("ento") || subjectId.includes("digestive")) && chapterNumber === 1) {
       list = [
@@ -325,6 +413,15 @@ export default function VideosView({
             "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
             "Enzymatic Digestion & Nutritional Adaptations in Insects"
           ]
+        }
+      ];
+    } else if ((subjectId === "ento_131" || subjectId.includes("ento")) && chapterNumber === 2) {
+      list = [
+        {
+          title: KNOWN_VIDEOS_METADATA["7TyeiuOEVBo"].title,
+          ytId: "7TyeiuOEVBo",
+          duration: KNOWN_VIDEOS_METADATA["7TyeiuOEVBo"].duration,
+          topics: KNOWN_VIDEOS_METADATA["7TyeiuOEVBo"].topics
         }
       ];
     } else if ((subjectId === "ento_131" || subjectId.includes("weathering") || subjectId.includes("soil")) && chapterNumber === 3) {
@@ -517,6 +614,10 @@ export default function VideosView({
                   if (typeof event.target.setOption === "function") {
                     event.target.setOption("captions", "track", {});
                   }
+                  if (autoPlayOnReadyRef.current && typeof event.target.playVideo === "function") {
+                    autoPlayOnReadyRef.current = false;
+                    event.target.playVideo();
+                  }
                 }
               } catch (err) {}
             },
@@ -525,6 +626,7 @@ export default function VideosView({
               const YT = (window as any).YT;
               if (state === YT?.PlayerState?.PLAYING || state === 1) {
                 isSeekingRef.current = false;
+                recordVideoOpen(currentVideo.ytId);
                 if (!isCcEnabledRef.current && playerRef.current) {
                   try {
                     playerRef.current.unloadModule?.("captions");
@@ -559,6 +661,7 @@ export default function VideosView({
                 }
               } else if (state === YT?.PlayerState?.ENDED || state === 0) {
                 isSeekingRef.current = false;
+                activePlaybackSessionYtIdRef.current = null;
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -680,6 +783,45 @@ export default function VideosView({
     }
   };
 
+  // Netflix-style Skip Intro (only inside player at start: first 2 minutes / 120s, and only when NOT the first time opening this video)
+  const currentVideoOpenCount = currentVideo?.ytId ? (videoOpenCounts[currentVideo.ytId] || 0) : 0;
+  const isNotFirstWatch = currentVideoOpenCount >= 2;
+  const canSkipIntro =
+    isNotFirstWatch &&
+    (isPlaying || isFullscreen) &&
+    currentTime < 120 &&
+    (duration === 0 || duration > 125);
+  const canSkipIntroRef = useRef(canSkipIntro);
+  useEffect(() => {
+    canSkipIntroRef.current = canSkipIntro;
+  }, [canSkipIntro]);
+
+  const handleSkipIntro = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const target = 120; // 2 minutes (120 seconds)
+    const dur = typeof playerRef.current?.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const safeTarget = dur > 0 ? Math.min(target, Math.max(0, dur - 5)) : target;
+    isSeekingRef.current = true;
+    showSeekBadge("skip");
+    if (playerRef.current) {
+      playerRef.current.seekTo?.(safeTarget, true);
+    }
+    setCurrentTime(safeTarget);
+    if (dur > 0) setProgress((safeTarget / dur) * 100);
+    setIsPlaying(true);
+    try {
+      playerRef.current?.playVideo?.();
+    } catch (err) {}
+    setTimeout(() => {
+      try {
+        playerRef.current?.playVideo?.();
+      } catch (err) {}
+    }, 80);
+  };
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     setVolume(val);
@@ -730,9 +872,10 @@ export default function VideosView({
     } catch (err) {}
   };
 
-  const enterFullscreen = () => {
+  const enterFullscreen = (targetYtId?: string) => {
     const container = playerContainerRef.current;
     if (!container) return;
+    recordVideoOpen(targetYtId || currentVideo?.ytId);
     try {
       if (container.requestFullscreen) {
         container.requestFullscreen().catch(() => {});
@@ -749,6 +892,10 @@ export default function VideosView({
   };
 
   const exitFullscreen = () => {
+    activePlaybackSessionYtIdRef.current = null;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch (e) {}
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
@@ -790,6 +937,12 @@ export default function VideosView({
         (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
+      if (!fs) {
+        activePlaybackSessionYtIdRef.current = null;
+        try {
+          playerRef.current?.pauseVideo?.();
+        } catch (e) {}
+      }
       setIsFullscreen(fs);
       isFullscreenRef.current = fs;
     };
@@ -817,7 +970,7 @@ export default function VideosView({
   // - Center click: Toggle Play / Pause
   const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCurrentlyFullscreen()) {
-      enterFullscreen();
+      enterFullscreen(currentVideo?.ytId);
       if (!isPlayingRef.current && playerRef.current) {
         playerRef.current.playVideo?.();
       }
@@ -877,6 +1030,11 @@ export default function VideosView({
       } else if (e.key === "m" || e.key === "M") {
         e.preventDefault();
         toggleMute();
+      } else if (e.key === "s" || e.key === "S") {
+        if (canSkipIntroRef.current) {
+          e.preventDefault();
+          handleSkipIntro();
+        }
       }
     };
 
@@ -974,11 +1132,13 @@ export default function VideosView({
 
   // Video switching handler for multi-video
   const handleSelectVideo = (index: number) => {
+    activePlaybackSessionYtIdRef.current = null;
     setActiveVideo(index);
     if (onSelectVideoIndex) {
       onSelectVideoIndex(index + 1);
     }
     if (playerRef.current?.loadVideoById && videos[index]) {
+      recordVideoOpen(videos[index].ytId);
       playerRef.current.loadVideoById(videos[index].ytId);
       setCurrentTime(0);
       setProgress(0);
@@ -986,32 +1146,85 @@ export default function VideosView({
     }
   };
 
+  // Handler when clicking a stacked row video in MLRIT 4-video view
+  const handleActivateStackedVideo = (index: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const rowContainer = rowPlayerContainerRefs.current[index];
+    if (rowContainer) {
+      (playerContainerRef as any).current = rowContainer;
+    }
+    const targetYtId = videos[index]?.ytId;
+
+    if (index === robustActive) {
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(targetYtId);
+        if (playerRef.current) {
+          playerRef.current.playVideo?.();
+        }
+      } else {
+        handlePlayPause();
+      }
+      return;
+    }
+
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+
+    activePlaybackSessionYtIdRef.current = null;
+    setCurrentTime(0);
+    setDuration(0);
+    setProgress(0);
+    setIsPlaying(false);
+    autoPlayOnReadyRef.current = true;
+    setActiveVideo(index);
+    if (onSelectVideoIndex) {
+      onSelectVideoIndex(index + 1);
+    }
+    enterFullscreen(targetYtId);
+  };
+
   // Video Player Component
-  const renderVideoPlayer = (isFullWidth = false) => (
+  const renderVideoPlayer = (_isFullWidth = false, isStackedRow = false, rowIndex = robustActive) => (
     <div
-      ref={playerContainerRef}
+      ref={(el) => {
+        rowPlayerContainerRefs.current[rowIndex] = el;
+        if (rowIndex === robustActive) {
+          (playerContainerRef as any).current = el;
+        }
+      }}
       onMouseMove={handlePlayerMouseMove}
       onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
-        width: "100%",
-        maxWidth: isFullscreen ? "100%" : "min(880px, calc((100vh - 270px) * 16 / 9))",
-        maxHeight: isFullscreen ? "100%" : "min(495px, calc(100vh - 270px))",
+        width: isStackedRow && !isFullscreen ? "auto" : "100%",
+        height: isStackedRow && !isFullscreen ? "100%" : undefined,
+        maxWidth: isFullscreen
+          ? "100%"
+          : isStackedRow
+            ? "100%"
+            : "min(880px, calc((100vh - 270px) * 16 / 9))",
+        maxHeight: isFullscreen
+          ? "100%"
+          : isStackedRow
+            ? "100%"
+            : "min(495px, calc(100vh - 270px))",
         aspectRatio: "16 / 9",
+        flexShrink: 0,
         background: `#000 url(https://img.youtube.com/vi/${currentVideo.ytId}/hqdefault.jpg) center/cover no-repeat`,
-        borderRadius: "14px",
+        borderRadius: isStackedRow && !isFullscreen ? "12px" : "14px",
         overflow: "hidden",
-        boxShadow: "0 8px 24px rgba(0,0,0,0.16)",
+        boxShadow: isStackedRow && !isFullscreen ? "0 4px 14px rgba(0,0,0,0.14)" : "0 8px 24px rgba(0,0,0,0.16)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
         cursor: isPlaying && !showControls ? "none" : "default",
-        margin: "0 auto",
+        margin: isStackedRow ? "0" : "0 auto",
       }}
     >
-      {/* YouTube Iframe */}
+      {/* YouTube Iframe wrapped in keyed container so React cleanly unmounts on video switch */}
       <div
-        id={`yt-player-${currentVideo.ytId}`}
+        key={`yt-wrap-${currentVideo.ytId}`}
         style={{
           position: "absolute",
           inset: 0,
@@ -1020,7 +1233,33 @@ export default function VideosView({
           border: 0,
           pointerEvents: "none",
         }}
-      />
+      >
+        <div
+          id={`yt-player-${currentVideo.ytId}`}
+          style={{
+            width: "100%",
+            height: "100%",
+            border: 0,
+          }}
+        />
+      </div>
+
+      {/* Clean Thumbnail Cover: before playback starts, only show the thumbnail & giant middle play button (hiding YouTube branding & controls) */}
+      {!isPlaying && !isFullscreen && (
+        <img
+          src={`https://img.youtube.com/vi/${currentVideo.ytId}/hqdefault.jpg`}
+          alt={currentVideo.title}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            zIndex: 1,
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
       {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
       <div
@@ -1033,23 +1272,24 @@ export default function VideosView({
         }}
       />
 
-      {/* Sleek Seek Feedback Badge (-10s / +10s) */}
+      {/* Sleek Seek Feedback Badge (-10s / +10s / Skip) */}
       {seekFeedback && (
         <div
           style={{
             position: "absolute",
             top: "50%",
-            left: seekFeedback === "-10s" ? "18%" : "82%",
+            left: seekFeedback === "-10s" ? "18%" : seekFeedback === "+10s" ? "82%" : "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.78)",
+            background: "rgba(0, 0, 0, 0.82)",
             backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
             color: "#FFFFFF",
             padding: "16px 24px",
             borderRadius: "50px",
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontSize: "20px",
+            fontSize: seekFeedback === "skip" ? "16px" : "20px",
             fontWeight: 800,
             letterSpacing: "0.5px",
             zIndex: 15,
@@ -1063,10 +1303,15 @@ export default function VideosView({
               <span style={{ fontSize: "24px" }}>«</span>
               <span>10s</span>
             </>
-          ) : (
+          ) : seekFeedback === "+10s" ? (
             <>
               <span>10s</span>
               <span style={{ fontSize: "24px" }}>»</span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: "20px" }}>⏭</span>
+              <span>Skipped to 2:00</span>
             </>
           )}
         </div>
@@ -1092,8 +1337,8 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: isFullscreen ? "80px" : "68px",
-            height: isFullscreen ? "80px" : "68px",
+            width: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
+            height: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
             borderRadius: "50%",
             border: "none",
             background: "rgba(255, 255, 255, 0.95)",
@@ -1116,10 +1361,10 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: isFullscreen ? "15px solid transparent" : "13px solid transparent",
-              borderBottom: isFullscreen ? "15px solid transparent" : "13px solid transparent",
-              borderLeft: isFullscreen ? "26px solid #1E293B" : "22px solid #1E293B",
-              marginLeft: isFullscreen ? "6px" : "5px",
+              borderTop: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
+              borderBottom: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
+              borderLeft: isFullscreen ? "26px solid #1E293B" : isStackedRow ? "14px solid #1E293B" : "22px solid #1E293B",
+              marginLeft: isFullscreen ? "6px" : isStackedRow ? "3px" : "5px",
             }}
           />
         </button>
@@ -1641,6 +1886,60 @@ export default function VideosView({
         </div>
       </div>
       )}
+
+      {/* Netflix-style "Skip" Intro Button (Skips to 2:00 / 120s) */}
+      {canSkipIntro && (
+        <button
+          type="button"
+          onClick={handleSkipIntro}
+          title="Skip intro (skips to 2:00)"
+          aria-label="Skip intro"
+          style={{
+            position: "absolute",
+            bottom: isFullscreen ? (showControls ? "86px" : "28px") : "18px",
+            right: isFullscreen ? "32px" : "18px",
+            zIndex: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            background: "rgba(20, 20, 20, 0.75)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            color: "#FFFFFF",
+            border: "1.5px solid rgba(255, 255, 255, 0.65)",
+            borderRadius: "6px",
+            padding: isFullscreen ? "8px 18px" : "6px 14px",
+            fontSize: isFullscreen ? "14px" : "12.5px",
+            fontWeight: 700,
+            letterSpacing: "0.4px",
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.45)",
+            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            userSelect: "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+            e.currentTarget.style.borderColor = "#FFFFFF";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(20, 20, 20, 0.75)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.65)";
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+        >
+          <span>Skip</span>
+          <svg
+            width={isFullscreen ? "13" : "11"}
+            height={isFullscreen ? "13" : "11"}
+            viewBox="0 0 24 24"
+            fill="currentColor"
+          >
+            <polygon points="5 4 15 12 5 20 5 4" />
+            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 
@@ -1772,6 +2071,10 @@ export default function VideosView({
     </div>
   );
 
+  const isMlritStacked =
+    (subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")) &&
+    videos.length > 1;
+
   return (
     <div
       className="videos-figma-container"
@@ -1781,13 +2084,14 @@ export default function VideosView({
         minHeight: "100%",
         maxHeight: "100%",
         background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
-        padding: "8px 20px 12px 20px",
+        padding: isMlritStacked ? "8px 20px" : "8px 20px 12px 20px",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        overflowY: "auto",
+        overflow: isMlritStacked ? "hidden" : undefined,
+        overflowY: isMlritStacked ? "hidden" : "auto",
       }}
     >
       <style>{`
@@ -1813,90 +2117,353 @@ export default function VideosView({
         }
       `}</style>
 
-      {/* Wide Single Frame Card for Thumbnail, Title, and Bullet Points */}
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "1040px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-        }}
-      >
-        {/* Video Selector Tabs for Chapter Playlist (if multiple videos) */}
-        {videos.length > 1 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              marginBottom: "8px",
-              overflowX: "auto",
-              paddingBottom: "2px",
-              width: "100%",
-              maxWidth: "880px",
-            }}
-          >
-            <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-              Chapter Videos:
-            </span>
-            {videos.map((vid, idx) => {
-              const isActive = idx === robustActive;
-              return (
-                <button
-                  key={vid.ytId || idx}
-                  onClick={() => handleSelectVideo(idx)}
-                  style={{
-                    padding: "4px 12px",
-                    borderRadius: "14px",
-                    border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
-                    background: isActive ? "#2D3E36" : "#FFFFFF",
-                    color: isActive ? "#FFFFFF" : "#374151",
-                    fontSize: "12px",
-                    fontWeight: isActive ? 700 : 500,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    whiteSpace: "nowrap",
-                    boxShadow: isActive ? "0 2px 4px rgba(45,62,54,0.18)" : "none",
-                    transition: "all 0.15s ease",
-                  }}
-                >
-                  <span>{isActive ? "▶" : "•"}</span>
-                  <span>Video {idx + 1}: {vid.title.length > 28 ? vid.title.slice(0, 28) + "..." : vid.title}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Wide Card containing Video Player on TOP and Title + 2-3 Bullet Points BELOW */}
+      {isMlritStacked ? (
+        /* MLRIT DBMS: All 4 video parts stacked vertically in a single no-scroll view, with title + metadata to the right of each thumbnail */
         <div
-          className="videos-player-card"
           style={{
             width: "100%",
-            maxWidth: "960px",
-            background: "#FFFFFF",
-            borderRadius: "20px",
-            padding: "14px 20px 16px 20px",
-            boxShadow: "0 8px 32px rgba(0, 0, 0, 0.07)",
-            border: "1px solid #ECE7E1",
-            position: "relative",
+            maxWidth: "1060px",
+            height: "100%",
+            maxHeight: "100%",
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            justifyContent: "space-between",
             boxSizing: "border-box",
           }}
         >
-          {/* Top: Video Player / Thumbnail Preview (Centered & Wide) */}
-          <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
-            {renderVideoPlayer(true)}
-          </div>
+          {videos.map((vid, idx) => {
+            const isActiveRow = idx === robustActive;
+            const rowTopics = (
+              vid.topics && vid.topics.length > 0
+                ? vid.topics
+                : KNOWN_VIDEOS_METADATA[vid.ytId]?.topics || []
+            ).slice(0, 3);
+            const rowDuration =
+              isActiveRow && duration > 0
+                ? `${Math.floor(duration / 60)}:${String(Math.floor(duration % 60)).padStart(2, "0")}min`
+                : vid.duration || KNOWN_VIDEOS_METADATA[vid.ytId]?.duration || "15:30min";
 
-          {/* Below: Title, Badges & 2-3 Key Concepts */}
-          <div style={{ width: "100%", maxWidth: "880px" }}>
-            {renderTopicsSection()}
+            return (
+              <div
+                key={vid.ytId || idx}
+                style={{
+                  flex: "1 1 0",
+                  minHeight: 0,
+                  width: "100%",
+                  background: "#FFFFFF",
+                  borderRadius: "14px",
+                  padding: "7px 14px",
+                  boxShadow: "0 4px 18px rgba(0, 0, 0, 0.05)",
+                  border: isActiveRow ? "1.5px solid #C8DCD0" : "1px solid #ECE7E1",
+                  display: "flex",
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: "16px",
+                  position: "relative",
+                  boxSizing: "border-box",
+                  overflow: "hidden",
+                }}
+              >
+                {/* Left: Video Thumbnail / Player */}
+                <div
+                  style={{
+                    height: "100%",
+                    aspectRatio: "16 / 9",
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    position: "relative",
+                  }}
+                >
+                  {isActiveRow ? (
+                    renderVideoPlayer(false, true, idx)
+                  ) : (
+                    <div
+                      ref={(el) => {
+                        rowPlayerContainerRefs.current[idx] = el;
+                      }}
+                      onClick={(e) => handleActivateStackedVideo(idx, e)}
+                      style={{
+                        position: "relative",
+                        width: "auto",
+                        height: "100%",
+                        aspectRatio: "16 / 9",
+                        background: `#000 url(https://img.youtube.com/vi/${vid.ytId}/hqdefault.jpg) center/cover no-repeat`,
+                        borderRadius: "10px",
+                        overflow: "hidden",
+                        boxShadow: "0 4px 14px rgba(0,0,0,0.14)",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${vid.ytId}/hqdefault.jpg`}
+                        alt={vid.title}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                          pointerEvents: "none",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={(e) => handleActivateStackedVideo(idx, e)}
+                        aria-label={`Play ${vid.title}`}
+                        style={{
+                          position: "absolute",
+                          top: "50%",
+                          left: "50%",
+                          transform: "translate(-50%, -50%)",
+                          width: "44px",
+                          height: "44px",
+                          borderRadius: "50%",
+                          border: "none",
+                          background: "rgba(255, 255, 255, 0.95)",
+                          boxShadow: "0 6px 20px rgba(0,0,0,0.35)",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          zIndex: 3,
+                          transition: "transform 0.2s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.08)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: 0,
+                            height: 0,
+                            borderTop: "8.5px solid transparent",
+                            borderBottom: "8.5px solid transparent",
+                            borderLeft: "14px solid #1E293B",
+                            marginLeft: "3px",
+                          }}
+                        />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* Right: Title, Duration Badge & Topic Metadata */}
+                <div
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "center",
+                    gap: "4px",
+                    position: "relative",
+                    zIndex: 1,
+                  }}
+                >
+                  {/* Header: Title + Duration Badge */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "12px",
+                      width: "100%",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <h2
+                      style={{
+                        fontSize: "13.5px",
+                        fontWeight: 800,
+                        color: "#111827",
+                        margin: 0,
+                        letterSpacing: "-0.2px",
+                        lineHeight: 1.2,
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                      title={vid.title}
+                    >
+                      {vid.title}
+                    </h2>
+
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        background: "#F3F4F6",
+                        color: "#4B5563",
+                        padding: "1.5px 7px",
+                        borderRadius: "6px",
+                        fontSize: "10.5px",
+                        fontWeight: 600,
+                        flexShrink: 0,
+                      }}
+                    >
+                      ⏱ {rowDuration}
+                    </span>
+                  </div>
+
+                  {/* Topic Metadata Pills */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "3.5px",
+                      width: "100%",
+                      minHeight: 0,
+                      overflow: "hidden",
+                    }}
+                  >
+                    {rowTopics.map((topic, tIdx) => (
+                      <div
+                        key={tIdx}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "3px 9px",
+                          background: "#FAF8F6",
+                          borderRadius: "7px",
+                          border: "1px solid #ECE7E1",
+                          minWidth: 0,
+                          flexShrink: 1,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: "19px",
+                            height: "19px",
+                            borderRadius: "50%",
+                            background: "#EDEAE5",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {renderTopicIcon(tIdx, 11.5)}
+                        </div>
+                        <span
+                          style={{
+                            fontSize: "11.5px",
+                            fontWeight: 500,
+                            color: "#1F2937",
+                            lineHeight: 1.2,
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                          title={topic}
+                        >
+                          {topic}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <InsectWatermark width="56px" height="56px" opacity={0.1} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Wide Single Frame Card for Thumbnail, Title, and Bullet Points (ANGRAU & default single-video subjects) */
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "1040px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          {/* Video Selector Tabs for Chapter Playlist (if multiple videos) */}
+          {videos.length > 1 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                marginBottom: "8px",
+                overflowX: "auto",
+                paddingBottom: "2px",
+                width: "100%",
+                maxWidth: "880px",
+              }}
+            >
+              <span style={{ fontSize: "11.5px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                Chapter Videos:
+              </span>
+              {videos.map((vid, idx) => {
+                const isActive = idx === robustActive;
+                return (
+                  <button
+                    key={vid.ytId || idx}
+                    onClick={() => handleSelectVideo(idx)}
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "14px",
+                      border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
+                      background: isActive ? "#2D3E36" : "#FFFFFF",
+                      color: isActive ? "#FFFFFF" : "#374151",
+                      fontSize: "12px",
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      whiteSpace: "nowrap",
+                      boxShadow: isActive ? "0 2px 4px rgba(45,62,54,0.18)" : "none",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span>{isActive ? "▶" : "•"}</span>
+                    <span>Video {idx + 1}: {vid.title.length > 28 ? vid.title.slice(0, 28) + "..." : vid.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Wide Card containing Video Player on TOP and Title + 2-3 Bullet Points BELOW */}
+          <div
+            className="videos-player-card"
+            style={{
+              width: "100%",
+              maxWidth: "960px",
+              background: "#FFFFFF",
+              borderRadius: "20px",
+              padding: "14px 20px 16px 20px",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.07)",
+              border: "1px solid #ECE7E1",
+              position: "relative",
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Top: Video Player / Thumbnail Preview (Centered & Wide) */}
+            <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
+              {renderVideoPlayer(true)}
+            </div>
+
+            {/* Below: Title, Badges & 2-3 Key Concepts */}
+            <div style={{ width: "100%", maxWidth: "880px" }}>
+              {renderTopicsSection()}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

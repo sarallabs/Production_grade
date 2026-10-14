@@ -272,6 +272,7 @@ export default function ClassSubjectSelection() {
     localStorage.removeItem('app_user_id');
     localStorage.removeItem('username');
     localStorage.removeItem('questionnaire_completed');
+    sessionStorage.removeItem('sv_video_open_counts');
     if (activeTenantId) {
       localStorage.removeItem(`sv_session_${activeTenantId}`);
       navigate(`/${activeTenantId}/login`, { replace: true });
