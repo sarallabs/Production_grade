@@ -42,7 +42,7 @@ export default function SectionizedReadView({
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
-  const [activeQuickCheckIdx, setActiveQuickCheckIdx] = useState<number | null>(null);
+  const [qcAnswers, setQcAnswers] = useState<Record<number, string>>({});
 
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
@@ -55,6 +55,7 @@ export default function SectionizedReadView({
   // Storage keys for persisting reading progress and answered quick checks separately
   const storageKey = `sv_read_progress_${subjectId}_${chapterNumber}_${persona}_${track}`;
   const qcStorageKey = `sv_qc_done_${subjectId}_${chapterNumber}_${persona}_${track}`;
+  const qcAnswersStorageKey = `sv_qc_answers_${subjectId}_${chapterNumber}_${persona}_${track}`;
 
   useEffect(() => {
     try {
@@ -88,7 +89,23 @@ export default function SectionizedReadView({
     } catch {
       setCompletedQuickChecks(new Set());
     }
-  }, [storageKey, qcStorageKey]);
+
+    try {
+      const savedAnswers = localStorage.getItem(qcAnswersStorageKey);
+      if (savedAnswers) {
+        const parsedAnswers = JSON.parse(savedAnswers);
+        if (parsedAnswers && typeof parsedAnswers === 'object') {
+          setQcAnswers(parsedAnswers);
+        } else {
+          setQcAnswers({});
+        }
+      } else {
+        setQcAnswers({});
+      }
+    } catch {
+      setQcAnswers({});
+    }
+  }, [storageKey, qcStorageKey, qcAnswersStorageKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -201,7 +218,7 @@ export default function SectionizedReadView({
     };
   }, [sections]);
 
-  const markQuickCheckCompleted = (idx: number) => {
+  const markQuickCheckCompleted = (idx: number, selectedKey?: string) => {
     setCompletedQuickChecks((prev) => {
       const updated = new Set(prev);
       updated.add(idx);
@@ -212,6 +229,18 @@ export default function SectionizedReadView({
       }
       return updated;
     });
+
+    if (selectedKey) {
+      setQcAnswers((prev) => {
+        const updated = { ...prev, [idx]: selectedKey };
+        try {
+          localStorage.setItem(qcAnswersStorageKey, JSON.stringify(updated));
+        } catch (err) {
+          console.warn('Failed to save quick check answer', err);
+        }
+        return updated;
+      });
+    }
   };
 
   const handleScrollToSection = (idx: number) => {
@@ -226,17 +255,10 @@ export default function SectionizedReadView({
     }
   };
 
-  const handleNextSectionFromModal = () => {
-    if (activeQuickCheckIdx !== null) {
-      markQuickCheckCompleted(activeQuickCheckIdx);
-      const nextIdx = activeQuickCheckIdx + 1;
-      setActiveQuickCheckIdx(null);
-
-      if (nextIdx < totalSections && sectionRefs.current[nextIdx]) {
-        setTimeout(() => {
-          handleScrollToSection(nextIdx);
-        }, 120);
-      }
+  const handleNextSectionInline = (idx: number) => {
+    const nextIdx = idx + 1;
+    if (nextIdx < totalSections && sectionRefs.current[nextIdx]) {
+      handleScrollToSection(nextIdx);
     }
   };
 
@@ -271,8 +293,6 @@ export default function SectionizedReadView({
       </div>
     );
   }
-
-  const currentQcQuestion = activeQuickCheckIdx !== null ? sections[activeQuickCheckIdx]?.quickCheck : undefined;
 
   return (
     <div
@@ -654,139 +674,37 @@ export default function SectionizedReadView({
                   />
                 </div>
 
-                {/* Compact Centered Quick Check Card (SV Green Theme) */}
+                {/* Inline Quick Check Card at the end of the section/module */}
                 {sec.quickCheck && (
-                  <div
-                    style={{
-                      maxWidth: '460px',
-                      width: '100%',
-                      margin: '28px auto 8px',
-                      padding: '20px 24px',
-                      background: '#f4f8f5',
-                      border: '1.5px solid #c8dcd0',
-                      borderRadius: '16px',
-                      boxShadow: '0 2px 12px rgba(45, 71, 59, 0.05)',
-                      textAlign: 'center',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: '10px',
-                      boxSizing: 'border-box',
+                  <QuickCheckModal
+                    key={`inline-qc-${sec.id}`}
+                    isOpen={true}
+                    question={sec.quickCheck}
+                    currentSectionNumber={idx + 1}
+                    totalSections={totalSections}
+                    sectionTitle={sec.shortTitle}
+                    nextSectionTitle={sections[idx + 1]?.shortTitle}
+                    isPurpleTheme={false}
+                    initialSelectedKey={qcAnswers[idx] || null}
+                    isCompleted={isQcDone}
+                    onNextSection={
+                      idx + 1 < totalSections
+                        ? () => {
+                            markQuickCheckCompleted(idx);
+                            handleNextSectionInline(idx);
+                          }
+                        : undefined
+                    }
+                    onAnswerSubmitted={(_isCorrect, selectedKey) => {
+                      markQuickCheckCompleted(idx, selectedKey);
                     }}
-                  >
-                    <div
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '5px',
-                        background: '#dcfce7',
-                        color: '#2D473B',
-                        padding: '3px 10px',
-                        borderRadius: '999px',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                        letterSpacing: '0.05em',
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      <span>⚡</span>
-                      <span>Quick Check · 1 Question</span>
-                    </div>
-
-                    <div style={{ fontSize: '14.5px', fontWeight: 700, color: '#0f172a' }}>
-                      Check your understanding of {sec.shortTitle}
-                    </div>
-
-                    {isQcDone ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-                        <div
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            color: '#15803d',
-                            fontSize: '13px',
-                            fontWeight: 700,
-                          }}
-                        >
-                          <span>✓</span>
-                          <span>Quick check completed</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setActiveQuickCheckIdx(idx)}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            color: '#2D473B',
-                            fontSize: '12.5px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            textDecoration: 'underline',
-                          }}
-                        >
-                          Review Question
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setActiveQuickCheckIdx(idx)}
-                        style={{
-                          background: '#2D473B',
-                          color: '#ffffff',
-                          border: 'none',
-                          borderRadius: '999px',
-                          padding: '10px 24px',
-                          fontSize: '13.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: '0 3px 12px rgba(45, 71, 59, 0.28)',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          transition: 'all 0.15s ease',
-                          marginTop: '4px',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#23382e';
-                          e.currentTarget.style.transform = 'translateY(-1px)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#2D473B';
-                          e.currentTarget.style.transform = 'translateY(0)';
-                        }}
-                      >
-                        <span>Take Quick Check</span>
-                        <span>→</span>
-                      </button>
-                    )}
-                  </div>
+                  />
                 )}
               </div>
             </div>
           );
         })}
       </div>
-
-      {/* ── INTERACTIVE QUICK CHECK POP-UP MODAL ── */}
-      {currentQcQuestion && activeQuickCheckIdx !== null && (
-        <QuickCheckModal
-          isOpen={true}
-          question={currentQcQuestion}
-          currentSectionNumber={activeQuickCheckIdx + 1}
-          totalSections={totalSections}
-          nextSectionTitle={sections[activeQuickCheckIdx + 1]?.shortTitle}
-          isPurpleTheme={false}
-          onClose={() => setActiveQuickCheckIdx(null)}
-          onNextSection={handleNextSectionFromModal}
-          onAnswerSubmitted={(_isCorrect) => {
-            if (activeQuickCheckIdx !== null) {
-              markQuickCheckCompleted(activeQuickCheckIdx);
-            }
-          }}
-        />
-      )}
     </div>
   );
 }

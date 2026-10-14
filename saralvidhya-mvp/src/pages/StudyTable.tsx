@@ -1186,6 +1186,7 @@ export default function StudyTable() {
     localStorage.removeItem("app_user_id");
     localStorage.removeItem("username");
     localStorage.removeItem("questionnaire_completed");
+    sessionStorage.removeItem("sv_video_open_counts");
     setIsAuthenticated(false);
     const activeTenant = getRegistryTenantId();
     if (activeTenant) {
@@ -1802,12 +1803,12 @@ export default function StudyTable() {
           'neurone': {
             ytId: 'ajlWgPjEa5Y'
           },
-          'database fundamentals & engine architecture': { ytId: 'A4RwGJPb9I4' },
-          'conceptual database design & er modeling': { ytId: 'A4RwGJPb9I4' },
-          'advanced er & extended er (eer) mechanisms': { ytId: 'A4RwGJPb9I4' },
-          'relational model foundations & integrity constraints': { ytId: 'A4RwGJPb9I4' },
-          'logical database design (er-to-relational translation)': { ytId: 'A4RwGJPb9I4' },
-          'relational querying, views & schema evolution': { ytId: 'A4RwGJPb9I4' },
+          'database fundamentals & engine architecture': { ytId: '3C5rpBM1bXU' },
+          'conceptual database design & er modeling': { ytId: '_UATsTUW7ck' },
+          'advanced er & extended er (eer) mechanisms': { ytId: '_UATsTUW7ck' },
+          'relational model foundations & integrity constraints': { ytId: 'lEVbyiGNaIk' },
+          'logical database design (er-to-relational translation)': { ytId: 'UJutdBotS_I' },
+          'relational querying, views & schema evolution': { ytId: 'UJutdBotS_I' },
         };
 
         // ── Dynamic mindmap config (Multi-Tenant & Schema Compliant) ────────
@@ -1894,7 +1895,7 @@ export default function StudyTable() {
             if (action === 'video') {
               setMindmapInlineType('video');
               const mappedMedia = MEDIA_MAPPING[lowerLabel];
-              const ytId = mappedMedia?.ytId || 'A4RwGJPb9I4';
+              const ytId = mappedMedia?.ytId || '3C5rpBM1bXU';
               setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
               setMindmapTopicOpen(true);
               return;
@@ -4019,7 +4020,7 @@ export default function StudyTable() {
                 overflowX: "hidden",
                 overflowY:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask" || activeTool === "prep_exam"
+                    activeTool === "ask" || activeTool === "prep_exam" || activeTool === "videos"
                     ? "hidden"
                     : "auto",
                 paddingTop:

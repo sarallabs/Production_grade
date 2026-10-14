@@ -29,6 +29,7 @@ export default function UserMenu() {
     localStorage.removeItem('app_authenticated');
     localStorage.removeItem('app_role');
     localStorage.removeItem('questionnaire_completed');
+    sessionStorage.removeItem('sv_video_open_counts');
     navigate('/login', { replace: true });
   };
 
@@ -38,6 +39,7 @@ export default function UserMenu() {
     localStorage.removeItem('app_authenticated');
     localStorage.removeItem('app_role');
     localStorage.removeItem('questionnaire_completed');
+    sessionStorage.removeItem('sv_video_open_counts');
     navigate('/login', { replace: true, state: { prefill: cred.username } });
   };
 
