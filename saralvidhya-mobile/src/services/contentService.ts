@@ -28,23 +28,68 @@ export function formatChapterDir(chNum: number): string {
   return `chapter_${chNum < 10 ? '0' : ''}${chNum}`;
 }
 
+
+const DEFAULT_TIMEOUT_MS = 15000;
+
+/**
+ * Reusable fetch wrapper with configurable timeout and external AbortSignal chaining.
+ */
+export async function fetchWithTimeout(
+  url: string,
+  ms: number = DEFAULT_TIMEOUT_MS,
+  externalSignal?: AbortSignal
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => {
+    controller.abort(new Error(`Request timed out after ${ms}ms`));
+  }, ms);
+
+  let onExternalAbort: (() => void) | undefined;
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      onExternalAbort = () => controller.abort();
+      externalSignal.addEventListener('abort', onExternalAbort, { once: true });
+    }
+  }
+
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+    if (externalSignal && onExternalAbort) {
+      externalSignal.removeEventListener('abort', onExternalAbort);
+    }
+  }
+}
+
+/**
+ * Helper to check whether an error was caused by an intentional abort/cancellation
+ */
+function isAbortError(err: any, signal?: AbortSignal): boolean {
+  if (signal?.aborted) return true;
+  if (!err) return false;
+  if (err.name === 'AbortError') return true;
+  const msg = String(err.message || err).toLowerCase();
+  return msg.includes('abort') || msg.includes('cancel');
+}
+
 /**
  * Fetches Quick Study Guide markdown with cache & fallback
  */
 export async function fetchQuickStudyGuide(
   subjectId: string,
   chapterNum: number,
-  persona: string = 'intermediate'
+  persona: string = 'intermediate',
+  signal?: AbortSignal
 ): Promise<string> {
   const cacheKey = `study_quick_${subjectId}_${chapterNum}_${persona}`;
   const chDir = formatChapterDir(chapterNum);
   const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/read/quick?persona=${persona}`;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetchWithTimeout(url, 15000, signal);
 
     if (res.ok) {
       const text = await res.text();
@@ -53,8 +98,10 @@ export async function fetchQuickStudyGuide(
         return text;
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] API fetch failed for Quick Study: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Quick Study: ${err?.message || err}`);
+    }
   }
 
   // Fallback to local cache
@@ -75,17 +122,15 @@ export async function fetchQuickStudyGuide(
 export async function fetchDetailedNotes(
   subjectId: string,
   chapterNum: number,
-  persona: string = 'intermediate'
+  persona: string = 'intermediate',
+  signal?: AbortSignal
 ): Promise<string> {
   const cacheKey = `study_detailed_${subjectId}_${chapterNum}_${persona}`;
   const chDir = formatChapterDir(chapterNum);
   const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/read/detailed?persona=${persona}`;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetchWithTimeout(url, 15000, signal);
 
     if (res.ok) {
       const text = await res.text();
@@ -94,8 +139,10 @@ export async function fetchDetailedNotes(
         return text;
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] API fetch failed for Detailed Notes: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Detailed Notes: ${err?.message || err}`);
+    }
   }
 
   // Fallback to local cache
@@ -116,17 +163,15 @@ export async function fetchDetailedNotes(
 export async function fetchFlashcards(
   subjectId: string,
   chapterNum: number,
-  persona: string = 'intermediate'
+  persona: string = 'intermediate',
+  signal?: AbortSignal
 ): Promise<Flashcard[]> {
   const cacheKey = `flashcards_${subjectId}_${chapterNum}_${persona}`;
   const chDir = formatChapterDir(chapterNum);
   const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/flashcards?persona=${persona}`;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetchWithTimeout(url, 15000, signal);
 
     if (res.ok) {
       const data = await res.json();
@@ -153,8 +198,10 @@ export async function fetchFlashcards(
         return formatted;
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] API fetch failed for Flashcards: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Flashcards: ${err?.message || err}`);
+    }
   }
 
   // Fallback to local cache
@@ -170,7 +217,8 @@ export async function fetchFlashcards(
  */
 export async function fetchMindmap(
   subjectId: string,
-  chapterNum: number
+  chapterNum: number,
+  signal?: AbortSignal
 ): Promise<MindmapData> {
   const cacheKey = `mindmap_${subjectId}_${chapterNum}`;
   const chDir = formatChapterDir(chapterNum);
@@ -178,10 +226,7 @@ export async function fetchMindmap(
 
   let raw = '';
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
+    const res = await fetchWithTimeout(url, 15000, signal);
 
     if (res.ok) {
       raw = await res.text();
@@ -189,8 +234,10 @@ export async function fetchMindmap(
         await storage.setItem(cacheKey, raw);
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] API fetch failed for Mindmap: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Mindmap: ${err?.message || err}`);
+    }
   }
 
   if (!raw) {
@@ -487,23 +534,14 @@ export function extractYouTubeIds(text: string): string[] {
   return ids;
 }
 
-async function fetchWithTimeout(url: string, ms = 6000): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), ms);
-  try {
-    return await fetch(url, { signal: controller.signal });
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 /**
  * Fetches the list of videos for a chapter.
  * Order: videos.json (API) → youtube_links.md (API) → local cache → curated fallback.
  */
 export async function fetchChapterVideos(
   subjectId: string,
-  chapterNum: number
+  chapterNum: number,
+  signal?: AbortSignal
 ): Promise<ChapterVideo[]> {
   const cacheKey = `study_videos_${subjectId}_${chapterNum}`;
   const chDir = formatChapterDir(chapterNum);
@@ -512,7 +550,7 @@ export async function fetchChapterVideos(
 
   // 1. videos.json registry
   try {
-    const res = await fetchWithTimeout(`${base}/videos.json`);
+    const res = await fetchWithTimeout(`${base}/videos.json`, 10000, signal);
     const ct = res.headers.get('content-type') || '';
     if (res.ok && !ct.includes('text/html')) {
       const parsed = JSON.parse(await res.text());
@@ -533,13 +571,15 @@ export async function fetchChapterVideos(
         }
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] videos.json fetch failed: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] videos.json fetch failed: ${err?.message || err}`);
+    }
   }
 
   // 2. youtube_links.md
   try {
-    const res = await fetchWithTimeout(`${base}/youtube_links.md`);
+    const res = await fetchWithTimeout(`${base}/youtube_links.md`, 10000, signal);
     if (res.ok) {
       const ids = extractYouTubeIds(await res.text());
       if (ids.length > 0) {
@@ -557,8 +597,10 @@ export async function fetchChapterVideos(
         return list;
       }
     }
-  } catch (err) {
-    console.warn(`[ContentService] youtube_links.md fetch failed: ${err}`);
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] youtube_links.md fetch failed: ${err?.message || err}`);
+    }
   }
 
   // 3. Local cache

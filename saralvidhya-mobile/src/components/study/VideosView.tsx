@@ -58,6 +58,7 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
   // Load video list + watched state when chapter changes
   useEffect(() => {
     let mounted = true;
+    const controller = new AbortController();
     setIsLoadingList(true);
     setActiveIdx(0);
     setPlaying(false);
@@ -66,7 +67,7 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
     setProgressPct(0);
 
     Promise.all([
-      fetchChapterVideos(subjectId, chapterNumber),
+      fetchChapterVideos(subjectId, chapterNumber, controller.signal),
       getWatchedVideos(subjectId, chapterNumber),
     ])
       .then(([list, w]) => {
@@ -74,10 +75,16 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
         setVideos(list);
         setWatched(w);
       })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('Videos loading error:', err);
+        }
+      })
       .finally(() => mounted && setIsLoadingList(false));
 
     return () => {
       mounted = false;
+      controller.abort();
     };
   }, [subjectId, chapterNumber]);
 
@@ -179,7 +186,7 @@ export default function VideosView({ subjectId, chapterNumber, chapterName }: Vi
   }
 
   return (
-    <View onLayout={onLayout} style={[styles.container, isTablet && { maxWidth: 820, alignSelf: 'center' }]}>
+    <View onLayout={onLayout} style={[styles.container, isTablet && { width: '100%', maxWidth: 820, alignSelf: 'center' }]}>
       {/* Player */}
       <View
         style={[

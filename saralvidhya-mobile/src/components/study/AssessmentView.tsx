@@ -108,7 +108,7 @@ export default function AssessmentView({ chapterNumber }: AssessmentViewProps) {
   }
 
   return (
-    <View style={[styles.container, isTablet && { maxWidth: 820, alignSelf: 'center' }]}>
+    <View style={[styles.container, isTablet && { width: '100%', maxWidth: 820, alignSelf: 'center' }]}>
       {/* Top Question Tracker */}
       <View style={styles.trackerRow}>
         <View style={styles.qBadge}>

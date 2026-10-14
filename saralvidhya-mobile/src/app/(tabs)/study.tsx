@@ -100,22 +100,26 @@ export default function StudyTableScreen() {
 
   useEffect(() => {
     if (params.chapter) {
-      setSelectedChapterNum(parseInt(params.chapter, 10));
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
+        setSelectedChapterNum(parsed);
+      }
     }
     if (params.tool && STUDY_TOOLS.some((t) => t.id === params.tool)) {
       setActiveTool(params.tool as StudyToolId);
     }
-  }, [params.chapter, params.tool]);
+  }, [params.chapter, params.tool, selectedChapterNum]);
 
   useEffect(() => {
     let isMounted = true;
+    const controller = new AbortController();
     setIsLoadingContent(true);
 
     Promise.all([
-      fetchQuickStudyGuide(activeSubject.id, selectedChapterNum, persona),
-      fetchDetailedNotes(activeSubject.id, selectedChapterNum, persona),
-      fetchFlashcards(activeSubject.id, selectedChapterNum, persona),
-      fetchMindmap(activeSubject.id, selectedChapterNum),
+      fetchQuickStudyGuide(activeSubject.id, selectedChapterNum, persona, controller.signal),
+      fetchDetailedNotes(activeSubject.id, selectedChapterNum, persona, controller.signal),
+      fetchFlashcards(activeSubject.id, selectedChapterNum, persona, controller.signal),
+      fetchMindmap(activeSubject.id, selectedChapterNum, controller.signal),
     ])
       .then(([quick, detailed, fCards, mMap]) => {
         if (isMounted) {
@@ -127,12 +131,15 @@ export default function StudyTableScreen() {
         }
       })
       .catch((err) => {
-        console.warn('Content loading error:', err);
+        if (!controller.signal.aborted) {
+          console.warn('Content loading error:', err);
+        }
         if (isMounted) setIsLoadingContent(false);
       });
 
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [selectedChapterNum, persona]);
 
@@ -179,7 +186,7 @@ export default function StudyTableScreen() {
         <View
           style={[
             tabletStyles.sidebar,
-            { width: isLandscape ? 320 : 264, backgroundColor: cardBg, borderRightColor: cardBorder },
+            { width: isLandscape ? 280 : 230, backgroundColor: cardBg, borderRightColor: cardBorder },
           ]}
         >
           <Text style={tabletStyles.sidebarCode}>{activeSubject.code} • ANGRAU</Text>
@@ -196,6 +203,7 @@ export default function StudyTableScreen() {
                   ]}
                   onPress={() => {
                     Haptics.selectionAsync();
+                    if (ch.number === selectedChapterNum) return;
                     setSelectedChapterNum(ch.number);
                     router.setParams({ chapter: String(ch.number) });
                   }}
@@ -220,7 +228,7 @@ export default function StudyTableScreen() {
       )}
 
       {/* Detail pane (the existing study UI) */}
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, minWidth: 0 }}>
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.courseHeaderRow}>
@@ -420,12 +428,32 @@ export default function StudyTableScreen() {
           )}
         </View>
 
-        {/* Spacing for floating up next button */}
-        <View style={{ height: 100 }} />
+        {/* Inline Up Next Card on tablet to prevent overlapping interactive tool controls */}
+        {isTablet && nextTool && (
+          <View style={[styles.inlineUpNextWrap, { width: '100%', maxWidth: 960 }]}>
+            <TouchableOpacity
+              style={styles.floatingUpNextBtn}
+              onPress={handleUpNext}
+              activeOpacity={0.85}
+            >
+              <View style={styles.upNextIconCircle}>
+                <Text style={{ fontSize: 16 }}>{nextTool.icon}</Text>
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upNextPreText}>UP NEXT</Text>
+                <Text style={styles.upNextTitleText}>{nextTool.label}</Text>
+              </View>
+              <Ionicons name="arrow-forward-circle" size={26} color="#ffffff" />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Spacing at bottom */}
+        <View style={{ height: isTablet ? 40 : 100 }} />
       </ScrollView>
 
-      {/* Floating "Up Next" Button */}
-      {nextTool && (
+      {/* Floating "Up Next" Button (phone only; on tablet it's inline above) */}
+      {!isTablet && nextTool && (
         <View style={styles.floatingUpNextContainer}>
           <TouchableOpacity
             style={styles.floatingUpNextBtn}
@@ -539,6 +567,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: 4,
+    flexWrap: 'wrap',
+    gap: 8,
   },
   levelLabel: {
     color: '#94a3b8',
@@ -687,6 +717,10 @@ const styles = StyleSheet.create({
   highlightLabel: {
     fontSize: 12,
     color: '#94a3b8',
+  },
+  inlineUpNextWrap: {
+    marginTop: 16,
+    alignSelf: 'center',
   },
   floatingUpNextContainer: {
     position: 'absolute',
