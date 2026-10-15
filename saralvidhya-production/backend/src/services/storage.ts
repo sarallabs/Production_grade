@@ -4,16 +4,26 @@ export const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'saralvidhya-artifacts
 const storage = new Storage();
 export const bucket = storage.bucket(BUCKET_NAME);
 
+const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
+
 /**
- * Generates a v4 signed read URL for a GCS file with short expiration (default: 15 minutes).
+ * Generates a v4 signed read URL for a GCS file with short expiration (default: 60 minutes).
+ * Uses an in-memory cache for half the expiration window to avoid redundant signing overhead.
  */
 export async function getSignedUrlForFile(
   gcsPath: string,
-  expiresInMinutes = 15,
+  expiresInMinutes = 60,
   contentType?: string
 ): Promise<string> {
+  const cacheKey = `${gcsPath}::${contentType || ''}`;
+  const now = Date.now();
+  const cached = signedUrlCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cached.url;
+  }
+
   const file = bucket.file(gcsPath);
-  const expiresAt = Date.now() + expiresInMinutes * 60 * 1000;
+  const expiresAt = now + expiresInMinutes * 60 * 1000;
 
   const [url] = await file.getSignedUrl({
     version: 'v4',
@@ -22,7 +32,44 @@ export async function getSignedUrlForFile(
     responseType: contentType,
   });
 
+  // Cache for half of its validity period (e.g., 30 mins for a 60-min signed URL)
+  signedUrlCache.set(cacheKey, {
+    url,
+    expiresAt: now + Math.floor((expiresInMinutes * 60 * 1000) / 2),
+  });
+
   return url;
+}
+
+/**
+ * Resolves a tenant/subject/chapter asset path to a signed URL, or returns external URLs as-is.
+ */
+export async function resolveStorageAssetUrl(
+  livePrefix: string,
+  assetPath?: string | null,
+  expiresInMinutes = 60
+): Promise<string | undefined> {
+  if (!assetPath || typeof assetPath !== 'string') return undefined;
+  const trimmed = assetPath.trim();
+  if (!trimmed) return undefined;
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed;
+  }
+  const cleanPrefix = livePrefix.replace(/\/+$/, '');
+  const cleanRel = trimmed.replace(/^\/+/, '');
+  const fullGcsPath = cleanRel.startsWith(`${cleanPrefix}/`)
+    ? cleanRel
+    : `${cleanPrefix}/${cleanRel}`;
+  try {
+    return await getSignedUrlForFile(fullGcsPath, expiresInMinutes);
+  } catch (err) {
+    console.warn(`[Storage] Could not sign asset URL for '${fullGcsPath}':`, err);
+    return undefined;
+  }
 }
 
 /**
@@ -81,6 +128,29 @@ export async function readJsonFile<T = any>(gcsPath: string): Promise<T | null> 
 }
 
 /**
+ * Reads a UTF-8 text/markdown file from the bucket. Returns null if missing.
+ */
+export async function readTextFile(gcsPath: string): Promise<string | null> {
+  try {
+    const [buf] = await bucket.file(gcsPath).download();
+    return buf.toString('utf8');
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Writes a JSON object to the bucket (used for server-side caching like TTS).
+ */
+export async function writeJsonFile(gcsPath: string, data: any): Promise<void> {
+  const payload = Buffer.from(JSON.stringify(data), 'utf8');
+  await bucket.file(gcsPath).save(payload, {
+    contentType: 'application/json',
+    resumable: false,
+  });
+}
+
+/**
  * Copies a file from staging to its canonical live path, optionally preserving or updating metadata.
  */
 export async function copyStagingFileToLive(
@@ -112,3 +182,4 @@ export async function promoteStagingFiles(
 
   await Promise.all(copyPromises);
 }
+

@@ -7,6 +7,7 @@ import {
 } from "@/services/googleTtsService";
 import type { ToolId } from "@/components/ToolsMenu";
 import { getSpeakableDomText } from "@/utils/readAloudDom";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -121,7 +122,7 @@ export default function ReadAloudBar({
   const [playbackState, setPlaybackState] = useState<
     "idle" | "playing" | "paused"
   >("idle");
-  const isPurple = isPurpleTheme ?? (subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit"));
+  const isPurple = isPurpleTheme ?? (subjectId === "dbms" || subjectId.includes("dbms"));
   const lang = SUBJECT_LANG[subjectId] ?? "en-IN";
   const playbackRef = useRef<"idle" | "playing" | "paused">("idle");
   const cooldownRef = useRef(false);
@@ -226,7 +227,7 @@ export default function ReadAloudBar({
           // Only clear saved progress if audio ended naturally (not stopped by persona switch)
           if (!stoppedExternallyRef.current) {
             setPlayback("idle");
-            localStorage.removeItem(progressStorageKey);
+            cloudStorage.removeItem(progressStorageKey);
             resumeCharRef.current = 0;
             onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
           }
@@ -241,12 +242,12 @@ export default function ReadAloudBar({
           );
           latestGlobalCharRef.current = globalCharIndex;
 
-          // Throttle synchronous localStorage writes to avoid main-thread jank
+          // Throttle cloudStorage writes to avoid main-thread jank
           const now = Date.now();
           if (now - lastSavedTsRef.current > 1200) {
             lastSavedTsRef.current = now;
             try {
-              localStorage.setItem(progressStorageKey, String(globalCharIndex));
+              cloudStorage.setItem(progressStorageKey, String(globalCharIndex));
             } catch {}
           }
 
@@ -295,7 +296,7 @@ export default function ReadAloudBar({
     stoppedExternallyRef.current = false;
     googleTtsStop();
     setPlayback("idle");
-    localStorage.removeItem(progressStorageKey);
+    cloudStorage.removeItem(progressStorageKey);
     resumeCharRef.current = 0;
     onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
   };
@@ -305,7 +306,7 @@ export default function ReadAloudBar({
       // Flush any pending progress before unmount
       if (latestGlobalCharRef.current > 0) {
         try {
-          localStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
+          cloudStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
         } catch {}
       }
       // Mark as externally stopped so onEnd doesn't clear saved progress

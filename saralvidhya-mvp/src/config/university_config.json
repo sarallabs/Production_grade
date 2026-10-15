@@ -2,5 +2,20 @@
   "defaultVisibleBoards": [
     "angrau_university",
     "mlrit"
-  ]
+  ],
+  "boardTenantAliases": {
+    "angrau": "angrau_university",
+    "angrau_university": "angrau",
+    "mlrit": "mlrit"
+  },
+  "cloudSubjectRoutes": {
+    "ento_131": "angrau/entomology",
+    "entomology": "angrau/entomology",
+    "dbms": "mlrit/dbms"
+  },
+  "localSubjectRoutes": {
+    "ento_131": "angrau",
+    "entomology": "angrau",
+    "dbms": "mlrit/dbms"
+  }
 }

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/services/firebase';
+import { cloudStorage, syncAudioProgressToCloud } from '@/context/CloudStateContext';
 
 export interface AudioProgress {
   userId: string;
@@ -27,59 +26,30 @@ export interface GlobalAudioProgress extends AudioProgressMetadata {
   wasPaused: boolean;
 }
 
-const PROGRESS_COLLECTION = 'podcast_progress';
 const LOCAL_PROGRESS_PREFIX = 'audio_progress_';
 const INTERVAL_SAVE_MS = 20000;
 const MIN_TIME_DELTA = 3;
 
-const getDocId = (userId: string, lessonId: string) => `user_${userId}_${lessonId}`;
-const getLocalStorageKey = (userId: string, lessonId: string) => `${LOCAL_PROGRESS_PREFIX}${userId}_${lessonId}`;
+const getProgressKey = (userId: string, lessonId: string) =>
+  `${LOCAL_PROGRESS_PREFIX}${userId}_${lessonId}`;
 
 export async function loadProgress(userId: string, lessonId: string): Promise<AudioProgress | null> {
   if (!userId || !lessonId) return null;
 
-  const localKey = getLocalStorageKey(userId, lessonId);
-  let localProgress: AudioProgress | null = null;
-
-  const localJson = localStorage.getItem(localKey);
-  if (localJson) {
+  const key = getProgressKey(userId, lessonId);
+  const rawJson = cloudStorage.getItem(key);
+  if (rawJson) {
     try {
-      const parsed = JSON.parse(localJson) as AudioProgress;
+      const parsed = JSON.parse(rawJson) as AudioProgress;
       if (parsed && typeof parsed.currentTime === 'number') {
-        localProgress = parsed;
+        return parsed;
       }
     } catch (error) {
-      console.warn('Failed to parse local audio progress', error);
+      console.warn('Failed to parse cloud audio progress', error);
     }
   }
 
-  if (!userId || userId === 'anonymous' || !db) {
-    return localProgress;
-  }
-
-  try {
-    const docRef = doc(db, PROGRESS_COLLECTION, getDocId(userId, lessonId));
-    const docSnap = await getDoc(docRef);
-
-    if (!docSnap.exists()) {
-      return localProgress;
-    }
-
-    const firestoreProgress = docSnap.data() as AudioProgress;
-    if (!firestoreProgress || typeof firestoreProgress.currentTime !== 'number') {
-      return localProgress;
-    }
-
-    if (!localProgress || firestoreProgress.updatedAt > localProgress.updatedAt) {
-      localStorage.setItem(localKey, JSON.stringify(firestoreProgress));
-      return firestoreProgress;
-    }
-
-    return localProgress;
-  } catch (error) {
-    console.warn('Failed to load progress from Firestore. Falling back to local progress.', error);
-    return localProgress;
-  }
+  return null;
 }
 
 export async function saveProgress(
@@ -101,19 +71,8 @@ export async function saveProgress(
     wasPaused,
   };
 
-  const localKey = getLocalStorageKey(userId, lessonId);
-  localStorage.setItem(localKey, JSON.stringify(progressData));
-
-  if (userId === 'anonymous' || !db) {
-    return;
-  }
-
-  const docRef = doc(db, PROGRESS_COLLECTION, getDocId(userId, lessonId));
-  try {
-    await setDoc(docRef, progressData, { merge: true });
-  } catch (error) {
-    console.error('Failed to save progress to Firestore:', error);
-  }
+  const key = getProgressKey(userId, lessonId);
+  cloudStorage.setItem(key, JSON.stringify(progressData));
 
   if (metadata) {
     const globalData: GlobalAudioProgress = {
@@ -125,16 +84,20 @@ export async function saveProgress(
       wasPaused,
     };
 
-    localStorage.setItem(`global_last_podcast_${userId}`, JSON.stringify(globalData));
+    cloudStorage.setItem(`global_last_podcast_${userId}`, JSON.stringify(globalData));
 
-    if (db) {
-      const globalDocRef = doc(db, 'global_podcast_progress', `user_${userId}`);
-      try {
-        await setDoc(globalDocRef, globalData, { merge: true });
-      } catch (error) {
-        console.warn('Failed to save global progress to Firestore:', error);
-      }
-    }
+    const chapterId = `chapter_${String(metadata.chapterNumber || 1).padStart(2, '0')}`;
+    await syncAudioProgressToCloud({
+      subjectId: metadata.subjectId,
+      chapterId,
+      chapterNumber: metadata.chapterNumber,
+      trackId: metadata.track || lessonId,
+      title: metadata.track || lessonId,
+      chapterTitle: metadata.chapterName,
+      currentTime,
+      duration,
+      completed: duration > 0 && currentTime / duration >= 0.9,
+    });
   }
 }
 
@@ -149,7 +112,9 @@ export function useAudioProgress(
   const lastSaveAtRef = useRef<number>(0);
   const lastSavedTimeRef = useRef<number>(0);
   const isLoadedRef = useRef<boolean>(false);
-  const saveProgressRef = useRef<((currentTime: number, duration: number, wasPaused?: boolean) => Promise<void>) | null>(null);
+  const saveProgressRef = useRef<
+    ((currentTime: number, duration: number, wasPaused?: boolean) => Promise<void>) | null
+  >(null);
 
   const saveProgressCallback = useCallback(
     async (currentTime: number, duration: number, wasPaused: boolean = false) => {
@@ -183,7 +148,8 @@ export function useAudioProgress(
       const progress = await loadProgress(userId, lessonId);
       if (!mounted || !audio || !progress) return;
       const durationKnown = Number.isFinite(audio.duration);
-      if (progress.currentTime <= 0 || (durationKnown && progress.currentTime >= audio.duration)) return;
+      if (progress.currentTime <= 0 || (durationKnown && progress.currentTime >= audio.duration))
+        return;
 
       const seekToSavedTime = () => {
         if (!audio) return;
@@ -251,6 +217,3 @@ export function useAudioProgress(
     };
   }, [audioRef, isReady, lessonId]);
 }
-
-
-

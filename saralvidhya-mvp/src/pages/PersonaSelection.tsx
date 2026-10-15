@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { setStudentPersona } from '@/utils/credentialsStore';
+import { cloudStorage } from '@/context/CloudStateContext';
+import { useTenant } from '@/tenant/TenantProvider';
 
 const PERSONAS = [
   {
@@ -32,10 +34,9 @@ const PERSONAS = [
 export default function PersonaSelection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { branding } = useTenant();
   const sId = searchParams.get('sId') || '';
-  const treeLogoSrc = sId.startsWith('neb_') 
-    ? `${import.meta.env.BASE_URL}neb-logo.png` 
-    : `${import.meta.env.BASE_URL}brand-logo.png`;
+  const treeLogoSrc = branding?.logoPrimaryUrl || `${import.meta.env.BASE_URL}brand-logo.png`;
   const className = searchParams.get('className') || '';
   const semesterName = searchParams.get('semesterName') || '';
   const subjectName = searchParams.get('subjectName') || '';
@@ -44,12 +45,12 @@ export default function PersonaSelection() {
     const cId = searchParams.get('cId') || '';
     const semId = searchParams.get('semId') || '';
     if (cId && sId) {
-      localStorage.setItem(`persona_${cId}_${semId}_${sId}`, personaId);
+      cloudStorage.setItem(`persona_${cId}_${semId}_${sId}`, personaId);
       // Fallback key format used in ClassSubjectSelection
-      localStorage.setItem(`persona_${cId}_${sId}`, personaId);
+      cloudStorage.setItem(`persona_${cId}_${sId}`, personaId);
     }
     // Also persist to credentials store so expert can see & override
-    const username = localStorage.getItem('username') || '';
+    const username = cloudStorage.getItem('username') || '';
     if (username) setStudentPersona(username, personaId);
 
     const params = new URLSearchParams(searchParams);
@@ -60,9 +61,9 @@ export default function PersonaSelection() {
   const handleBackToClass = () => navigate('/');
 
   const logout = () => {
-    localStorage.removeItem('app_authenticated');
-    localStorage.removeItem('app_role');
-    localStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('app_authenticated');
+    cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('questionnaire_completed');
     navigate('/login', { replace: true });
   };
 

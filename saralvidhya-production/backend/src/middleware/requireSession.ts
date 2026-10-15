@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { verifySessionToken, SessionPayload } from '../services/session.js';
+import { verifySessionToken, extractSessionToken, SessionPayload } from '../services/session.js';
 import { getTenantAuth } from '../services/registry.js';
 import { TenantRequest } from './tenant.js';
 
@@ -8,20 +8,19 @@ export interface AuthenticatedRequest extends TenantRequest {
 }
 
 /**
- * Middleware: validates JWT session token and ensures tenant boundary & sessionVersion match.
+ * Middleware: validates JWT session token (from Bearer header or HttpOnly cookie)
+ * and ensures tenant boundary & sessionVersion match.
  */
 export async function requireSession(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> {
-  const authHeader = req.headers.authorization;
-  if (!authHeader?.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' });
+  const token = extractSessionToken(req, req.tenant?.id);
+  if (!token) {
+    res.status(401).json({ error: 'Missing or invalid session token' });
     return;
   }
-
-  const token = authHeader.substring(7).trim();
 
   try {
     const payload = verifySessionToken(token);
@@ -47,3 +46,4 @@ export async function requireSession(
     res.status(401).json({ error: 'Session expired or invalid. Please log in again.' });
   }
 }
+

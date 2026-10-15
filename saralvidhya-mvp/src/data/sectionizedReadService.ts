@@ -1,4 +1,12 @@
-import { DifficultyLevel } from './manifestService';
+import {
+  DifficultyLevel,
+  getManifest,
+  getChapters,
+  getRegistryChapterData,
+  getSubjectBaseUrl,
+  getLocalSubjectBaseUrl,
+  getChapterDir,
+} from './manifestService';
 
 export interface QuickCheckOption {
   key: string;
@@ -55,18 +63,16 @@ export interface SectionizedChapterData {
   definitions?: string[];
 }
 
-/**
- * Calculates estimated reading time based on word count
- */
 function estimateReadingTime(text: string): number {
-  const words = text.replace(/<[^>]+>/g, ' ').replace(/data:image\/[^\s)]+/g, '').trim().split(/\s+/).length;
+  const words = text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/data:image\/[^\s)]+/g, '')
+    .trim()
+    .split(/\s+/).length;
   const minutes = Math.ceil(words / 180);
   return Math.max(2, Math.min(15, minutes));
 }
 
-/**
- * Extracts clean heading text without markdown syntax or leading emojis
- */
 function cleanHeadingText(text: string): string {
   return text
     .replace(/^#+\s*/, '')
@@ -75,16 +81,12 @@ function cleanHeadingText(text: string): string {
     .trim();
 }
 
-/**
- * Extracts a concise short title for the sidebar list
- */
 function getShortTitle(rawTitle: string): string {
   let cleaned = cleanHeadingText(rawTitle)
     .replace(/^Module\s*\d+\s*:\s*/i, '')
     .replace(/^\d+\.\s*/, '')
     .trim();
 
-  // If title has a colon or dash, use the primary topic
   if (cleaned.includes(':')) {
     cleaned = cleaned.split(':')[0].trim();
   } else if (cleaned.includes('—')) {
@@ -97,12 +99,31 @@ function getShortTitle(rawTitle: string): string {
   return cleaned;
 }
 
-async function fetchFirstValid(candidates: string[]): Promise<Response | null> {
+async function fetchFirstValid(
+  candidates: string[],
+  expectJson = false
+): Promise<Response | null> {
   for (const c of candidates) {
+    if (!c) continue;
     try {
-      const cleanUrl = c.replace(/([^:])\/\//g, '$1/');
+      const cleanUrl = c.startsWith('http') ? c : c.replace(/([^:])\/\//g, '$1/');
       const res = await fetch(cleanUrl);
-      if (res.ok) return res;
+      if (!res.ok) continue;
+      const ct = (res.headers.get('content-type') || '').toLowerCase();
+      if (ct.includes('text/html')) continue;
+      const bodyPeek = (await res.clone().text()).trim();
+      if (
+        !bodyPeek ||
+        bodyPeek.startsWith('<!DOCTYPE') ||
+        bodyPeek.startsWith('<html') ||
+        bodyPeek.startsWith('<script')
+      ) {
+        continue;
+      }
+      if (expectJson && !bodyPeek.startsWith('{') && !bodyPeek.startsWith('[')) {
+        continue;
+      }
+      return res;
     } catch {
       // try next
     }
@@ -110,20 +131,9 @@ async function fetchFirstValid(candidates: string[]): Promise<Response | null> {
   return null;
 }
 
-const ANGRAU_CHAPTER_NAMES: Record<number, string> = {
-  1: 'Insect Digestive System',
-  2: 'Metamorphosis & Diapause',
-  3: 'Weathering of Rocks and Minerals',
-  4: 'Pollination, Pollinizers & Parthenocarpy',
-};
-
-// Bounded LRU cache: keeps only up to 6 most recently viewed chapters in memory (~15-20MB max)
 const READ_CACHE_MAX_ENTRIES = 6;
 const sectionizedReadCache = new Map<string, SectionizedChapterData>();
 
-/**
- * Synchronously retrieves cached section data if available, enabling 0ms instant rendering
- */
 export function getCachedSectionizedReadDataSync(
   subjectId: string,
   chapterNumber: number,
@@ -131,13 +141,19 @@ export function getCachedSectionizedReadDataSync(
   persona: DifficultyLevel = 'intermediate'
 ): SectionizedChapterData | null {
   const pStr = (persona as string) || 'intermediate';
-  const normPersona = pStr === 'beginner' || pStr === 'easy' ? 'beginner' : pStr === 'advanced' || pStr === 'hard' ? 'advanced' : 'intermediate';
+  const normPersona =
+    pStr === 'beginner' || pStr === 'easy'
+      ? 'beginner'
+      : pStr === 'advanced' || pStr === 'hard'
+      ? 'advanced'
+      : 'intermediate';
   const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
   return sectionizedReadCache.get(cacheKey) || null;
 }
 
 /**
- * Loads sectionized reading data and pairs it with Quick Check questions
+ * Loads sectionized reading data and pairs it with Quick Check questions using v2 signed URLs
+ * and Cloud Run API endpoints (with zero hardcoded tenant/subject paths).
  */
 export async function getSectionizedReadData(
   subjectId: string,
@@ -146,81 +162,119 @@ export async function getSectionizedReadData(
   persona: DifficultyLevel = 'intermediate'
 ): Promise<SectionizedChapterData | null> {
   const pStr = (persona as string) || 'intermediate';
-  const normPersona = pStr === 'beginner' || pStr === 'easy' ? 'beginner' : pStr === 'advanced' || pStr === 'hard' ? 'advanced' : 'intermediate';
+  const normPersona =
+    pStr === 'beginner' || pStr === 'easy'
+      ? 'beginner'
+      : pStr === 'advanced' || pStr === 'hard'
+      ? 'advanced'
+      : 'intermediate';
 
-  // Instant in-memory cache lookup
   const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
   if (sectionizedReadCache.has(cacheKey)) {
     const cached = sectionizedReadCache.get(cacheKey)!;
-    // Move to end (most recently used)
     sectionizedReadCache.delete(cacheKey);
     sectionizedReadCache.set(cacheKey, cached);
     return cached;
   }
 
+  const manifest = await getManifest();
+  const manifestChapter = getChapters(manifest, subjectId).find((c) => c.number === chapterNumber);
+
   const trackFolder = track === 'detailed' ? 'detailed_study' : 'quick_study';
   const trackFolderAlt = track === 'detailed' ? 'detailed' : 'quick';
-  const baseUrl = import.meta.env.BASE_URL || '/';
-
-  const normSub = (subjectId || '').toLowerCase();
-  const isAngrau = normSub === 'ento_131' || normSub.includes('ento') || normSub.includes('angrau');
-  const chDir = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
 
   const mdCandidates: string[] = [];
   const qcCandidates: string[] = [];
   const studyJsonCandidates: string[] = [];
 
-  if (isAngrau) {
-    const subPaths = [
-      `generated_resources/angrau/entomology/${chDir}`,
-      `generated_resources/angrau/${chDir}`,
-    ];
-    for (const sp of subPaths) {
-      mdCandidates.push(
-        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.md`,
-        `${baseUrl}${sp}/read/${trackFolderAlt}/${normPersona}.md`,
-        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.md`
-      );
-      qcCandidates.push(
-        `${baseUrl}${sp}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
-        `${baseUrl}${sp}/read/quick_check/${trackFolder}/${normPersona}.json`,
-        `${baseUrl}${sp}/read/Quick Check/${trackFolder === 'detailed_study' ? 'Detailed_Study' : 'Quick_Study'}/${normPersona}.json`
-      );
-    }
-  } else {
-    const subPaths = [
-      `generated_resources/mlrit/dbms/${chDir}`,
-      `generated_resources/mlrit/dbms/chapter_01`,
-    ];
-    for (const sp of subPaths) {
-      mdCandidates.push(
-        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.md`,
-        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.md`
-      );
-      qcCandidates.push(
-        `${baseUrl}${sp}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
-        `${baseUrl}${sp}/read/quick_check/${trackFolder}/${normPersona}.json`
-      );
-      studyJsonCandidates.push(
-        `${baseUrl}${sp}/learn/read/${trackFolder}/${normPersona}.json`,
-        `${baseUrl}${sp}/read/${trackFolder}/${normPersona}.json`
-      );
-    }
+  // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
+  const regCh = await getRegistryChapterData(subjectId, chapterNumber);
+  const files = regCh?.files || {};
+  const registryChapterTitle =
+    regCh?.chapter?.title || manifestChapter?.title || manifestChapter?.name;
+
+  const mdKeys = [
+    `read/${trackFolderAlt}/${normPersona}.md`,
+    `learn/read/${trackFolder}/${normPersona}.md`,
+    `read/${trackFolder}/${normPersona}.md`,
+  ];
+  for (const k of mdKeys) {
+    if (files[k]) mdCandidates.push(files[k]);
   }
+
+  const qcKeys = [
+    `read/quick_check/${trackFolderAlt}/${normPersona}.json`,
+    `learn/read/quick_check/${trackFolder}/${normPersona}.json`,
+    `read/quick_check/${trackFolder}/${normPersona}.json`,
+  ];
+  for (const k of qcKeys) {
+    if (files[k]) qcCandidates.push(files[k]);
+  }
+
+  const studyJsonKeys = [
+    `read/${trackFolderAlt}/${normPersona}.json`,
+    `learn/read/${trackFolder}/${normPersona}.json`,
+    `read/${trackFolder}/${normPersona}.json`,
+  ];
+  for (const k of studyJsonKeys) {
+    if (files[k]) studyJsonCandidates.push(files[k]);
+  }
+
+  // 2. Fallback relative to dynamic Cloud Run subjectBase and static localBase
+  const subjectBase = getSubjectBaseUrl(subjectId);
+  const localBase = getLocalSubjectBaseUrl(subjectId);
+  const chDir = getChapterDir(subjectId, chapterNumber);
+  mdCandidates.push(
+    `${subjectBase}/${chDir}/read/${trackFolderAlt}?persona=${normPersona}`,
+    `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
+    `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
+    `${subjectBase}/${chDir}/read/${trackFolder}/${normPersona}.md`,
+    `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
+    `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.md`
+  );
+  qcCandidates.push(
+    `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json`,
+    `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json`
+  );
+  studyJsonCandidates.push(
+    `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
+    `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+    `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+    `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.json`
+  );
 
   try {
     const [mdRes, qcRes, studyJsonRes] = await Promise.all([
-      fetchFirstValid(mdCandidates),
-      fetchFirstValid(qcCandidates),
-      studyJsonCandidates.length ? fetchFirstValid(studyJsonCandidates) : Promise.resolve(null),
+      fetchFirstValid(mdCandidates, false),
+      fetchFirstValid(qcCandidates, true),
+      studyJsonCandidates.length
+        ? fetchFirstValid(studyJsonCandidates, true)
+        : Promise.resolve(null),
     ]);
 
     if (!mdRes || !mdRes.ok) {
-      console.warn('[sectionizedReadService] Failed to fetch markdown for', subjectId, chapterNumber, mdCandidates);
+      console.warn(
+        '[sectionizedReadService] Failed to fetch markdown for',
+        subjectId,
+        chapterNumber
+      );
       return null;
     }
 
-    const markdown = await mdRes.text();
+    let markdown = await mdRes.text();
+    // Rewrite relative image paths (../../extracted_images/X or ../Mindmaps/X) to Cloud Run subjectBase
+    markdown = markdown.replace(
+      /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,
+      (_, alt, path) => `![${alt}](${subjectBase}/${chDir}/${path})`
+    );
+    markdown = markdown.replace(
+      /!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g,
+      (_, alt, path) => `![${alt}](${subjectBase}/${chDir}/${path})`
+    );
+
     let questions: QuickCheckQuestion[] = [];
     let figures: ReadFigure[] = [];
     let definitions: string[] = [];
@@ -239,7 +293,9 @@ export async function getSectionizedReadData(
       try {
         const sData = await studyJsonRes.json();
         if (Array.isArray(sData.figures)) figures = sData.figures;
-        if (Array.isArray(sData.verbatim_definitions_preserved)) definitions = sData.verbatim_definitions_preserved;
+        if (Array.isArray(sData.verbatim_definitions_preserved)) {
+          definitions = sData.verbatim_definitions_preserved;
+        }
         if (Array.isArray(sData.sections)) {
           modules = sData.sections.map((m: any) => ({
             module: m.module,
@@ -254,20 +310,19 @@ export async function getSectionizedReadData(
       }
     }
 
-    // Split markdown by section headers (## or # with number/module, or standard ##)
-    let rawParts = markdown.split(/(?=^#{1,2}\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.|\bModule\s*\d+|\bUnit\s*\d+))/miu);
+    let rawParts = markdown.split(
+      /(?=^#{1,2}\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.|\bModule\s*\d+|\bUnit\s*\d+))/imu
+    );
     if (rawParts.length <= 1) {
       rawParts = markdown.split(/(?=^##\s+)/m);
     }
     const sections: ReadSection[] = [];
 
-    // Check if Part 0 has meaningful text (Intro / Overview)
     const part0 = rawParts[0]?.trim() || '';
     const mainTitleMatch = part0.match(/^#\s+(.+)$/m);
-    const fallbackChapterTitle = isAngrau && ANGRAU_CHAPTER_NAMES[chapterNumber] ? ANGRAU_CHAPTER_NAMES[chapterNumber] : 'Chapter Study Guide';
+    const fallbackChapterTitle = registryChapterTitle || `Chapter ${chapterNumber}`;
     const chapterTitle = mainTitleMatch ? mainTitleMatch[1].trim() : fallbackChapterTitle;
 
-    // If Part 0 has body text besides just the # Title, treat it as Section 0
     const part0Body = part0.replace(/^#\s+[^\n]+(\r?\n)*/, '').trim();
     if (part0Body.length > 50) {
       sections.push({
@@ -282,7 +337,6 @@ export async function getSectionizedReadData(
       });
     }
 
-    // Process parts starting from index 1 (or 0 if part0 was empty)
     const startIndex = 1;
     for (let i = startIndex; i < rawParts.length; i++) {
       const part = rawParts[i].trim();
@@ -293,20 +347,22 @@ export async function getSectionizedReadData(
       const cleanTitle = cleanHeadingText(rawHeading);
       const shortTitle = getShortTitle(rawHeading);
 
-      // Determine module match (M1 to M6)
       let matchedQuestion: QuickCheckQuestion | undefined;
       const cleanHead = cleanHeadingText(rawHeading);
-      const modMatch = cleanHead.match(/Module\s*(\d+)/i) || cleanHead.match(/^(\d+)\./) || cleanHead.match(/\bTopic\s*(\d+)/i);
+      const modMatch =
+        cleanHead.match(/Module\s*(\d+)/i) ||
+        cleanHead.match(/^(\d+)\./) ||
+        cleanHead.match(/\bTopic\s*(\d+)/i);
       let secNumber = sections.length + 1;
       if (modMatch) {
         const modNum = parseInt(modMatch[1], 10);
         secNumber = modNum;
-        matchedQuestion = questions.find(q => q.module_id === `M${modNum}`) || questions[modNum - 1];
+        matchedQuestion =
+          questions.find((q) => q.module_id === `M${modNum}`) || questions[modNum - 1];
       } else if (questions[i - 1]) {
         matchedQuestion = questions[i - 1];
       }
 
-      // Extract subtitle if present
       const subtitleMatch = part.match(/^(?:#{1,2}[^\n]+\n+)([A-Z][^\n.]+—[^\n]+)/m);
       const subtitle = subtitleMatch ? subtitleMatch[1].trim() : undefined;
 
@@ -324,8 +380,8 @@ export async function getSectionizedReadData(
 
     if (!modules.length) {
       modules = sections
-        .filter(s => s.sectionNumber > 0)
-        .map(s => ({
+        .filter((s) => s.sectionNumber > 0)
+        .map((s) => ({
           module: s.sectionNumber,
           title: s.title,
           shortTitle: s.shortTitle,
@@ -343,7 +399,6 @@ export async function getSectionizedReadData(
       definitions,
     };
 
-    // Store in bounded LRU cache (evict oldest if over capacity)
     if (sectionizedReadCache.size >= READ_CACHE_MAX_ENTRIES) {
       const oldestKey = sectionizedReadCache.keys().next().value;
       if (oldestKey) sectionizedReadCache.delete(oldestKey);
@@ -356,4 +411,3 @@ export async function getSectionizedReadData(
     return null;
   }
 }
-

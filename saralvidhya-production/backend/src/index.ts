@@ -9,6 +9,7 @@ import userRoutes from './routes/users.js';
 import assessmentRoutes from './routes/assessment.js';
 import v2PublicRoutes from './routes/v2/public.js';
 import v2ContentRoutes from './routes/v2/content.js';
+import v2AiRoutes from './routes/v2/ai.js';
 import v2PublishRoutes from './routes/v2/publish.js';
 import { verifyToken } from './middleware/auth.js';
 
@@ -20,8 +21,8 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },  // allow audio/image loading from other origins
   crossOriginOpenerPolicy: false,  // needed for audio element
 }));
-app.use(cors({ origin: '*' }));
-app.use(express.json({ limit: '1mb' }));
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json({ limit: '2mb' }));
 
 // ── Health check (no auth needed) ───────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
@@ -34,13 +35,18 @@ app.use('/api/content',    contentRoutes);     // serves from GCS — legacy pub
 app.use('/v2/t', v2PublicRoutes);
 app.use('/api/v2/t', v2PublicRoutes);
 
-// v2 Authenticated Content & Student Progress (requires v2 session JWT)
+// v2 Authenticated Content, Cloud User State & Student Progress (requires v2 session JWT or HttpOnly cookie)
 app.use('/v2/t', v2ContentRoutes);
 app.use('/api/v2/t', v2ContentRoutes);
+
+// v2 Authenticated Server-Side AI Ask & Cloud TTS Proxy
+app.use('/v2/t', v2AiRoutes);
+app.use('/api/v2/t', v2AiRoutes);
 
 // v2 Publishing & Approvals
 app.use('/v2/publish', v2PublishRoutes);
 app.use('/api/v2/publish', v2PublishRoutes);
+
 
 // ── All legacy routes below require a valid Firebase ID token ───
 app.use('/api', verifyToken);

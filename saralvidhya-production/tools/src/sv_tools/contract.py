@@ -59,6 +59,29 @@ def classify(chapter_rel_path: str) -> Optional[str]:
 
 
 def is_chapter_support_file(chapter_rel_path: str) -> bool:
-    """chapter.json and anything under media/ are valid but are not tools."""
+    """chapter.json and anything under chapterSupportPrefixes (e.g. media/, practice/flashcards/images/) are valid support files."""
     reg = load_json("tools.json")
-    return chapter_rel_path in reg.get("chapterMetaFiles", []) or chapter_rel_path.startswith("media/")
+    prefixes = reg.get("assets", {}).get("chapterSupportPrefixes", ["media/"])
+    return (
+        chapter_rel_path in reg.get("chapterMetaFiles", ["chapter.json"])
+        or any(chapter_rel_path.startswith(p) for p in prefixes)
+    )
+
+
+def is_subject_support_file(subject_rel_path: str) -> bool:
+    """subject.json and anything under <subjectId>/assets/ are valid subject-level files."""
+    reg = load_json("tools.json")
+    return (
+        subject_rel_path in reg.get("subjectMetaFiles", ["subject.json"])
+        or subject_rel_path.startswith("assets/")
+    )
+
+
+def is_tenant_support_file(tenant_rel_path: str) -> bool:
+    """tenant.json and anything under root assets/ are valid tenant-level files."""
+    reg = load_json("tools.json")
+    return (
+        tenant_rel_path in reg.get("tenantMetaFiles", ["tenant.json"])
+        or tenant_rel_path.startswith("assets/")
+    )
+

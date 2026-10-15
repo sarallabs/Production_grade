@@ -1,34 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { getManifest, getChapters, getSubject, type Chapter } from '@/data/contentRepository';
-import { getChapterToolCoveragePercent, getAnalytics } from '@/utils/analytics';
+import { getAnalytics } from '@/utils/analytics';
 import { getCompletedTools, isChapterComplete, snapToQuarter } from '@/utils/guidedFlow';
-import { getTopicsForChapter } from '@/data/chapterTopics';
+import { useTenant } from '@/tenant/TenantProvider';
 import './ChapterCard.css';
 
 const PUBADM_UR_ENABLED_COUNT = 1;
 
-function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
+function SubjectHeaderIcon({ subjectId, iconUrl, subjectName }: { subjectId: string; iconUrl?: string; subjectName?: string }) {
+  if (iconUrl) {
+    const resolvedIcon =
+      iconUrl.startsWith('http://') || iconUrl.startsWith('https://') || iconUrl.startsWith('data:')
+        ? iconUrl
+        : `${import.meta.env.BASE_URL}${iconUrl.replace(/^\//, '')}`;
+    return (
+      <img
+        src={resolvedIcon}
+        alt={subjectName || subjectId}
+        className="subject-header-illustration"
+      />
+    );
+  }
   const id = (subjectId || '').toLowerCase();
   const common = { width: 36, height: 36, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
-  if (id.includes('ento') || id === 'ento_131') {
-    return (
-      <img
-        src={`${import.meta.env.BASE_URL}subject-entomology-icon.png`}
-        alt="Entomology"
-        className="subject-header-illustration"
-      />
-    );
-  }
-  if (id.includes('dbms') || id.includes('database')) {
-    return (
-      <img
-        src={`${import.meta.env.BASE_URL}subject-dbms-icon.png`}
-        alt="Database Management Systems"
-        className="subject-header-illustration"
-      />
-    );
-  }
   switch (id) {
     case 'english':
       return (
@@ -90,14 +85,18 @@ export default function ChapterList() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { subjectId } = useParams<{ subjectId: string }>();
-  const treeLogoSrc = subjectId?.startsWith('neb_') 
-    ? `${import.meta.env.BASE_URL}neb-logo.png` 
-    : `${import.meta.env.BASE_URL}brand-logo.png`;
+  const { config, tenantPath } = useTenant();
+  const treeLogoSrc =
+    config?.branding?.logoUrl ||
+    (subjectId?.startsWith('neb_')
+      ? `${import.meta.env.BASE_URL}neb-logo.png`
+      : `${import.meta.env.BASE_URL}brand-logo.png`);
   const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [subjectIconUrl, setSubjectIconUrl] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [bookOpen, setBookOpen] = useState(false);
   const [clickedChapter, setClickedChapter] = useState<number | null>(null);
-  
+
   const initialChapterParam = searchParams.get('chapter');
   const initialChapterNum = initialChapterParam ? parseInt(initialChapterParam, 10) : null;
   const [flipIndex, setFlipIndex] = useState<number>(() => {
@@ -114,6 +113,7 @@ export default function ChapterList() {
       const subject = getSubject(m, sId);
       const chList = getChapters(m, sId);
       setChapters(chList);
+      setSubjectIconUrl(subject?.iconUrl);
       setResolvedSubjectName(searchParams.get('subjectName') || subject?.name || sId);
       setLoading(false);
 
@@ -140,7 +140,6 @@ export default function ChapterList() {
     }
   }, [searchParams, chapters]);
 
-  // Trigger the book-open animation shortly after data loads
   useEffect(() => {
     if (!loading) {
       const t = setTimeout(() => setBookOpen(true), 80);
@@ -148,7 +147,6 @@ export default function ChapterList() {
     }
   }, [loading]);
 
-  // Keyboard navigation for chapters
   useEffect(() => {
     if (chapters.length === 0) return;
 
@@ -187,21 +185,18 @@ export default function ChapterList() {
     setClickedChapter(ch.number);
     setTimeout(() => {
       const params = new URLSearchParams(searchParams);
-      // The subject lives in the route path (/subjects/:subjectId), not the query string
       if (sId) params.set('sId', sId);
       if (resolvedSubjectName && !params.get('subjectName')) params.set('subjectName', resolvedSubjectName);
       params.set('chapter', ch.number.toString());
       params.set('chapterName', toTitleCase(ch.name));
       params.delete('tool');
-      navigate(`/study-table?${params.toString()}`);
+      navigate(tenantPath(`/study-table?${params.toString()}`));
     }, 200);
   };
 
   return (
     <div className="sv-app book-app sv-app--no-rail">
-
       <main className="sv-main book-main">
-
         {/* Frosted topbar */}
         <header className="sv-topbar">
           <div className="sv-topbar-left">
@@ -215,14 +210,14 @@ export default function ChapterList() {
               />
             </div>
             <div className="sv-breadcrumb">
-                <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={() => navigate('/')}>{className || 'Class'}</span>
+              <span className="sv-bc-sep">/</span>
+              <span className="sv-bc-link" onClick={() => navigate(tenantPath('/'))}>{className || 'Class'}</span>
               <span className="sv-bc-sep">/</span>
               <span className="sv-bc-current">{resolvedSubjectName || 'Subject'}</span>
             </div>
           </div>
           <div className="sv-topbar-right">
-            <button className="sv-logout-btn" onClick={() => navigate('/')}>
+            <button className="sv-logout-btn" onClick={() => navigate(tenantPath('/'))}>
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
@@ -230,7 +225,7 @@ export default function ChapterList() {
               </svg>
               Logout
             </button>
-            <button className="sv-profile-btn" onClick={() => navigate('/profile')}>
+            <button className="sv-profile-btn" onClick={() => navigate(tenantPath('/profile'))}>
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
                 <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
@@ -241,7 +236,6 @@ export default function ChapterList() {
 
         {/* Book page content */}
         <div className="book-content">
-
           {loading ? (
             <div className="book-loading">
               <div className="book-loading-icon">
@@ -256,13 +250,13 @@ export default function ChapterList() {
               {/* Page header */}
               <div className={`book-header ${bookOpen ? 'book-header--visible' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
                 <div className="book-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  {(sId.toLowerCase().includes('ento') || sId === 'ento_131' || sId.toLowerCase().includes('dbms') || resolvedSubjectName.toLowerCase().includes('ento') || resolvedSubjectName.toLowerCase().includes('database')) ? (
+                  {subjectIconUrl ? (
                     <div className="subject-header-img-wrap">
-                      <SubjectHeaderIcon subjectId={sId} />
+                      <SubjectHeaderIcon subjectId={sId} iconUrl={subjectIconUrl} subjectName={resolvedSubjectName} />
                     </div>
                   ) : (
                     <div className="book-icon-deco book-icon-deco--subject">
-                      <SubjectHeaderIcon subjectId={sId} />
+                      <SubjectHeaderIcon subjectId={sId} subjectName={resolvedSubjectName} />
                     </div>
                   )}
                   <div>
@@ -276,18 +270,16 @@ export default function ChapterList() {
                 const flipCh = chapters[flipIndex];
                 if (!flipCh) return null;
 
-                const topicList = getTopicsForChapter(sId, flipCh.number);
-                const topicsCount = topicList.length > 0 ? topicList.length : (flipCh ? (flipCh.number * 2 + 6) : 12);
-                
-                // Dynamic estimated time based on actual topic count (approx 12-14 mins per topic)
-                const estMins = Math.round(topicsCount * 13);
+                const topicList = flipCh.topics || [];
+                const topicsCount = topicList.length > 0 ? topicList.length : (flipCh.number * 2 + 6);
+
+                const estMins = flipCh.estimatedMinutes ?? Math.round(topicsCount * 13);
                 const estHours = Math.floor(estMins / 60);
                 const estRemainingMins = estMins % 60;
-                const estimatedTimeStr = estHours > 0 
+                const estimatedTimeStr = estHours > 0
                   ? `${estHours}h ${estRemainingMins > 0 ? `${estRemainingMins}min` : ''}`.trim()
                   : `${estMins}min`;
 
-                // DB-driven real user progress in this chapter
                 const cleanId = (id?: string) => (id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
                 const targetSub = cleanId(sId);
 
@@ -296,67 +288,27 @@ export default function ChapterList() {
                 const toolsFromEvents = analyticsData.toolEvents
                   .filter((e) => {
                     const sub = cleanId(e.subjectId);
-                    return (sub === targetSub || (targetSub.includes('ento') && sub.includes('ento'))) && e.chapterNumber === flipCh.number;
+                    return sub === targetSub && e.chapterNumber === flipCh.number;
                   })
                   .map((e) => e.tool);
 
                 const uniqueToolsDone = new Set([...completedFromGuided, ...toolsFromEvents]);
 
-                // Total standard learning sessions/tools per chapter in StudyTable
                 const totalSessions = 6;
                 const isFullyDone = isChapterComplete(sId, flipCh.number);
                 const completedSessions = isFullyDone ? totalSessions : Math.min(uniqueToolsDone.size, totalSessions);
                 const chapterPct = isFullyDone ? 100 : snapToQuarter((completedSessions / totalSessions) * 100);
 
-                // Clean real chapter name without duplicate "Chapter X" prefix
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
-                const lowerName = (flipCh.name || '').toLowerCase();
-                const isDbms = sId.toLowerCase().includes('dbms') || lowerName.includes('database');
-                const isDigestive =
-                  !isDbms && (
-                    lowerName.includes('digestive') ||
-                    flipCh.number === 1 ||
-                    flipIndex === 0
-                  );
-                const isMetamorphosis =
-                  !isDbms && (
-                    lowerName.includes('metamorphosis') ||
-                    lowerName.includes('morphology') ||
-                    flipCh.number === 2 ||
-                    flipCh.number === 11 ||
-                    flipIndex === 1
-                  );
-                const isWeathering =
-                  !isDbms && (
-                    lowerName.includes('weathering') ||
-                    lowerName.includes('soil') ||
-                    flipCh.number === 3 ||
-                    flipIndex === 2
-                  );
-                const isPollination =
-                  !isDbms && (
-                    lowerName.includes('pollination') ||
-                    lowerName.includes('floral') ||
-                    flipCh.number === 4 ||
-                    flipIndex === 3
-                  );
-
-                const heroImgSrc = isDbms
-                  ? `${import.meta.env.BASE_URL}chapter-dbms-hero.png`
-                  : isDigestive
-                  ? `${import.meta.env.BASE_URL}chapter-digestive-hero.png`
-                  : isMetamorphosis
-                  ? `${import.meta.env.BASE_URL}chapter-metamorphosis-hero.png`
-                  : isWeathering
-                  ? `${import.meta.env.BASE_URL}chapter-weathering-hero.png`
-                  : isPollination
-                  ? `${import.meta.env.BASE_URL}chapter-pollination-hero.png`
-                  : `${import.meta.env.BASE_URL}chapter-entomology-hero.png`;
+                const rawHero = flipCh.heroImageUrl || 'chapter-entomology-hero.png';
+                const heroImgSrc =
+                  rawHero.startsWith('http://') || rawHero.startsWith('https://') || rawHero.startsWith('data:')
+                    ? rawHero
+                    : `${import.meta.env.BASE_URL}${rawHero.replace(/^\//, '')}`;
 
                 return (
                   <div className="flip-mode-stack fade-in">
                     <div className="chapter-hero-nav-wrapper">
-                      {/* Left Navigation Arrow */}
                       <button
                         className="chapter-nav-btn chapter-nav-btn--prev"
                         disabled={flipIndex === 0}
@@ -369,7 +321,6 @@ export default function ChapterList() {
                         </svg>
                       </button>
 
-                      {/* Main Dynamic Chapter Card (Clickable) */}
                       <div
                         className={`chapter-hero-card ${clickedChapter === flipCh.number ? 'chapter-hero-card--opening' : ''} ${isDisabled(flipCh) ? 'chapter-hero-card--disabled' : ''}`}
                         key={`ch-${flipCh.number}`}
@@ -384,7 +335,6 @@ export default function ChapterList() {
                         }}
                         title={isDisabled(flipCh) ? `Chapter ${flipCh.number} is locked` : `Open Chapter ${flipCh.number}: ${toTitleCase(cleanChapterName)}`}
                       >
-                        {/* Hero Illustration */}
                         <div className="chapter-hero-img-wrap">
                           <img
                             src={heroImgSrc}
@@ -393,19 +343,15 @@ export default function ChapterList() {
                           />
                         </div>
 
-                        {/* Chapter Subtitle (Dynamic: Chapter 1, 2, 3, etc.) */}
                         <div className="chapter-hero-sub">
                           Chapter {flipCh.number}
                         </div>
 
-                        {/* Chapter Name (Real Chapter Name) */}
                         <h2 className="chapter-hero-name">
                           {toTitleCase(cleanChapterName)}
                         </h2>
 
-                        {/* 2 Dynamic Metric Cards (Topics & Estimated Time - Compact Squares) */}
                         <div className="chapter-stats-grid">
-                          {/* Card 1: Topics */}
                           <div className="chapter-stat-item chapter-stat-item--topics">
                             <div className="chapter-stat-icon-circle">
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -420,7 +366,6 @@ export default function ChapterList() {
                             <div className="chapter-stat-label">Topics</div>
                           </div>
 
-                          {/* Card 2: Estimated Time */}
                           <div className="chapter-stat-item chapter-stat-item--time">
                             <div className="chapter-stat-icon-circle">
                               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -433,7 +378,6 @@ export default function ChapterList() {
                           </div>
                         </div>
 
-                        {/* Progress Section */}
                         <div className="chapter-progress-box">
                           <div className="chapter-progress-labels chapter-progress-labels--center">
                             <span>{chapterPct}%</span>
@@ -447,7 +391,6 @@ export default function ChapterList() {
                         </div>
                       </div>
 
-                      {/* Right Navigation Arrow */}
                       <button
                         className="chapter-nav-btn chapter-nav-btn--next"
                         disabled={flipIndex === chapters.length - 1}

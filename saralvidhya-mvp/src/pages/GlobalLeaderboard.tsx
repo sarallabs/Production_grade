@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export default function GlobalLeaderboard() {
   const navigate = useNavigate();
@@ -15,11 +16,11 @@ export default function GlobalLeaderboard() {
     ];
 
     let myTotalPoints = 0;
-    // Iterate over all possible subjects in local storage and sum scores
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
+    // Iterate over all possible subjects in cloud storage and sum scores
+    for (let i = 0; i < cloudStorage.length; i++) {
+        const key = cloudStorage.key(i);
         if (key && key.startsWith('ekam_quiz_score_')) {
-            myTotalPoints += parseInt(localStorage.getItem(key) || '0', 10);
+            myTotalPoints += parseInt(cloudStorage.getItem(key) || '0', 10);
         }
     }
     

@@ -1,57 +1,112 @@
 import { API_BASE } from '../tenant/TenantProvider';
+import { getCloudAuthHeaders } from '../context/CloudStateContext';
+
+export interface ChapterSummaryItem {
+  id: string;
+  number: number;
+  title: string;
+  shortTitle?: string;
+  description?: string;
+  estimatedMinutes?: number;
+  heroImageUrl?: string;
+  thumbnailUrl?: string;
+  mindmapImageUrl?: string;
+  assets?: {
+    heroImage?: string;
+    thumbnail?: string;
+    mindmapImage?: string;
+    watermarkSvg?: string;
+    heroImageUrl?: string;
+    thumbnailUrl?: string;
+    mindmapImageUrl?: string;
+    watermarkSvgUrl?: string;
+  };
+  topics?: Array<{
+    id: string;
+    label: string;
+    order: number;
+    topicNum?: number;
+    subtopics?: string[];
+    estimatedMinutes?: number;
+  }>;
+  videos?: Array<{
+    id: string;
+    title: string;
+    provider?: 'youtube' | 'gcs' | 'external';
+    videoId?: string;
+    gcsPath?: string;
+    url?: string;
+    videoUrl?: string;
+    thumbnail?: string;
+    thumbnailUrl?: string;
+    duration?: string;
+    durationSeconds?: number;
+    topics?: string[];
+    order?: number;
+  }>;
+  tools?: Record<string, any>;
+}
 
 export interface SubjectItem {
   id: string;
   name: string;
   code?: string;
+  subtitle?: string;
+  programLabel?: string;
+  description?: string;
+  credits?: number;
   parentNodeId?: string | null;
   iconBlob?: string;
+  iconUrl?: string;
+  bannerUrl?: string;
+  thumbnailUrl?: string;
+  assets?: {
+    icon?: string;
+    banner?: string;
+    thumbnail?: string;
+    iconUrl?: string;
+    bannerUrl?: string;
+    thumbnailUrl?: string;
+  };
+  cardStyle?: {
+    accentColor?: string;
+    gradientFrom?: string;
+    gradientTo?: string;
+    badgeText?: string;
+  };
   order: number;
   status: 'active' | 'archived';
   chaptersCount?: number;
+  chapters?: ChapterSummaryItem[];
   faculty?: {
     name: string;
     title: string;
     avatarBlob?: string;
+    avatarUrl?: string;
   };
   units?: string[];
 }
 
-export interface ChapterDetails {
-  id: string;
-  number: number;
-  title: string;
+export interface ChapterDetails extends ChapterSummaryItem {
   currentVersion: number;
-  topics?: Array<{ id: string; label: string; order: number; topicNum?: number }>;
-  tools?: Record<string, any>;
 }
 
 export interface ChapterResponse {
   chapter: ChapterDetails;
-  files: Record<string, string>; // tool/file relative key -> signed URL
-}
-
-function getAuthHeaders(tenantId: string): HeadersInit {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  const token = localStorage.getItem(`sv_session_${tenantId}`);
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  return headers;
+  files: Record<string, string>; // tool/file relative key -> V4 signed URL
 }
 
 /**
  * Registry client providing typed, authenticated access to v2 multi-tenant endpoints.
+ * Zero browser storage is used; authentication uses in-memory token and HttpOnly cookies.
  */
 export const registryClient = {
   /**
-   * Fetches published catalog of subjects and nodes for the given tenant.
+   * Fetches published catalog of subjects and chapters (with signed icon/hero URLs) for the given tenant.
    */
   async getCatalog(tenantId: string): Promise<{ nodes: any[]; subjects: SubjectItem[] }> {
     const res = await fetch(`${API_BASE}/v2/t/${tenantId}/catalog`, {
-      headers: getAuthHeaders(tenantId),
+      headers: getCloudAuthHeaders(tenantId),
     });
 
     if (!res.ok) {
@@ -66,7 +121,7 @@ export const registryClient = {
   },
 
   /**
-   * Fetches chapter metadata and signed file URLs.
+   * Fetches chapter metadata and V4 signed file URLs.
    */
   async getChapter(
     tenantId: string,
@@ -80,14 +135,21 @@ export const registryClient = {
     }
 
     const res = await fetch(url.toString(), {
-      headers: getAuthHeaders(tenantId),
+      headers: getCloudAuthHeaders(tenantId),
     });
 
     if (!res.ok) {
       throw new Error(`Failed to load chapter ${chapterId}: HTTP ${res.status}`);
     }
 
-    return await res.json();
+    const data = await res.json();
+    return {
+      ...data,
+      files: {
+        ...(data.files || {}),
+        ...(data.chapterFiles || {}),
+      },
+    };
   },
 
   /**
@@ -98,7 +160,7 @@ export const registryClient = {
     url.searchParams.set('path', filePath);
 
     const res = await fetch(url.toString(), {
-      headers: getAuthHeaders(tenantId),
+      headers: getCloudAuthHeaders(tenantId),
     });
 
     if (!res.ok) {
@@ -122,7 +184,7 @@ export const registryClient = {
     try {
       const res = await fetch(`${API_BASE}/v2/t/${tenantId}/progress`, {
         method: 'POST',
-        headers: getAuthHeaders(tenantId),
+        headers: getCloudAuthHeaders(tenantId),
         body: JSON.stringify({ subjectId, chapterId, tool, data }),
       });
       return res.ok;
@@ -142,7 +204,7 @@ export const registryClient = {
   ): Promise<Record<string, any>> {
     try {
       const res = await fetch(`${API_BASE}/v2/t/${tenantId}/progress/${subjectId}/${chapterId}`, {
-        headers: getAuthHeaders(tenantId),
+        headers: getCloudAuthHeaders(tenantId),
       });
       if (!res.ok) return {};
       const data = await res.json();
@@ -152,5 +214,7 @@ export const registryClient = {
     }
   },
 };
+
+export { getRegistryChapterData, resolveAssetUrl } from './manifestService';
 
 export default registryClient;

@@ -84,6 +84,13 @@ export default function QuestionBankView({
     [appliedChapters],
   );
 
+  const currentSelectedCount = useMemo(
+    () => Object.values(selectedChapters).reduce((sum, list) => sum + list.length, 0),
+    [selectedChapters],
+  );
+
+  const isSingleChapterMode = Boolean(currentSubjectId && currentChapterNumber) || (selectedCount === 1 && currentSelectedCount === 1);
+
   const focusedMode = Boolean(currentSubjectId);
   const focusedSubject = useMemo(() => {
     if (!focusedMode) return null;
@@ -262,8 +269,8 @@ export default function QuestionBankView({
           </div>
         </div>
 
-        {/* Center: Chapter Selection Buttons (centered, not far right) */}
-        {focusedSubject && (
+        {/* Center: Chapter Selection Buttons (hidden when only 1 chapter is selected) */}
+        {focusedSubject && !isSingleChapterMode && (
           <div style={{ 
             display: 'flex', 
             alignItems: 'center', 
@@ -331,10 +338,12 @@ export default function QuestionBankView({
         )}
 
         {/* Right Balance Spacer: Balances the left title for true centering */}
-        <div style={{ minWidth: '280px', visibility: 'hidden', pointerEvents: 'none' }} className="qbank-header-balance" aria-hidden="true" />
+        {!isSingleChapterMode && (
+          <div style={{ minWidth: '280px', visibility: 'hidden', pointerEvents: 'none' }} className="qbank-header-balance" aria-hidden="true" />
+        )}
       </div>
 
-      {!focusedSubject && selectedSubjects.length > 0 ? (
+      {!focusedSubject && !isSingleChapterMode && selectedSubjects.length > 0 ? (
         <div className="qbank-section" style={{ marginBottom: '40px' }}>
           <div className="qbank-section-label" style={{ marginBottom: '16px', fontWeight: 600, color: G.dark }}>Chapter selection for chosen subjects</div>
           <div className="qbank-card-grid">
@@ -402,9 +411,9 @@ export default function QuestionBankView({
             </button>
           </div>
         </div>
-      ) : (
+      ) : (!focusedSubject && !isSingleChapterMode) ? (
         <div style={{ marginBottom: '24px', color: '#6B7280' }}>Select subjects to see chapters and load question bank content.</div>
-      )}
+      ) : null}
 
       {loading ? (
         <div className="loading-state">Loading selected question bank content…</div>

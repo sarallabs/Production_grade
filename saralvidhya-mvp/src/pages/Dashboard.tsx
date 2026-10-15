@@ -16,6 +16,7 @@ import ActiveSubjectCard from '@/components/ActiveSubjectCard';
 import PomodoroTimer from '@/components/PomodoroTimer';
 import UpcomingDeadlines from '@/components/UpcomingDeadlines';
 import Toast from '@/components/Toast';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -98,7 +99,7 @@ export default function Dashboard() {
             { id: 8, label: 'Assessment', icon: '⚡', path: `/subjects/${currentChapterSubject}/chapter/${currentChapterNumber}?tab=assessment.md&level=${level}` },
             { id: 9, label: 'Podcasts', icon: '🎙️', path: `/subjects/${currentChapterSubject}/chapter/${currentChapterNumber}?tab=podcast_script.md&level=${level}` },
             { id: 10, label: 'Videos', icon: '🎥', path: `/subjects/${currentChapterSubject}/chapter/${currentChapterNumber}?tab=yt.md&level=${level}` },
-            ...(sessionStorage.getItem('sv_moocs_mode') === 'true'
+            ...(cloudStorage.getItem('sv_moocs_mode') === 'true'
               ? []
               : [
                   { id: 11, label: 'Question Bank', icon: '🏦', path: `/subjects/${currentChapterSubject}/chapter/${currentChapterNumber}?tab=question_bank.md&level=${level}` },

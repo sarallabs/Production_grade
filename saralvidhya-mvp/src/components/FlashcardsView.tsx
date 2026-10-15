@@ -404,57 +404,17 @@ export default function FlashcardsView({
           >
           <style>{`@keyframes sv-fc-flip-in { from { transform: perspective(1400px) rotateY(-90deg); } to { transform: perspective(1400px) rotateY(0deg); } }`}</style>
           {(() => {
-            const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
-            const PHYSICS_REAL_INFOGRAPHICS = [
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Overview.png`.replace(/\/\//g, '/'),
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/1.%20Klein-Gordon%20Equation/klein_gordon_infographic.png`.replace(/\/\//g, '/'),
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/2.%20Difficulties%20of%20K-G/difficulties_infographic.png`.replace(/\/\//g, '/'),
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/3.%20Dirac%20Equation/dirac_equation_infographic.png`.replace(/\/\//g, '/'),
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/4.%20Hydrogen%20Atom/hydrogen_atom_infographic.png`.replace(/\/\//g, '/'),
-              `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Mind_Map.png`.replace(/\/\//g, '/'),
-            ];
-
-            const mermaidCode = currentCard?.mermaidDiagram 
-              || (currentCard as any)?.mermaid_diagram 
-              || (currentCard as any)?.mermaid;
-
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
             if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
-              const chStr = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
-              const imgBase = `${GCS_API_BASE}/api/content/angrau/entomology`;
-              if (finalUrl.startsWith('../Mindmaps/')) {
-                finalUrl = `${imgBase}/${chStr}/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
-              } else if (finalUrl.includes('generated_infographics')) {
-                const cleanRel = finalUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
-                finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${chStr}/${cleanRel}`;
-              } else if (finalUrl.startsWith('/api/')) {
+              if (finalUrl.startsWith('/api/')) {
                 finalUrl = `${GCS_API_BASE}${finalUrl}`;
               } else if (finalUrl.startsWith('/generated_resources/')) {
-                if (subjectId.includes('angrau') || subjectId.includes('entomology')) {
-                  const subRel = finalUrl.replace(/^\/generated_resources\/[^\/]+\//, '');
-                  finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${subRel}`;
-                } else {
-                  finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
-                }
+                finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
               }
-            }
-
-            if (isPhysics) {
-              const urlLower = (finalUrl || '').toLowerCase();
-              if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
-                finalUrl = PHYSICS_REAL_INFOGRAPHICS[currentIndex % PHYSICS_REAL_INFOGRAPHICS.length];
-              }
-            }
-
-            const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
-            if (isDbms && (!finalUrl || imgFailed)) {
-              const normPersona = persona === 'beginner' || persona === 'easy' ? 'beginner' : persona === 'advanced' || persona === 'hard' ? 'advanced' : 'intermediate';
-              finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/practice/flashcards/images/card_${normPersona}_${currentIndex + 1}.webp`.replace(/\/\//g, '/');
             }
 
             const hasValidImage = !!finalUrl && !imgFailed;
-            const hasMermaid = !!mermaidCode;
-            const hasVisual = hasValidImage || hasMermaid;
+            const hasVisual = hasValidImage;
 
             if (!isFlipped) {
               // ── FRONT FACE: Question only ─────────────────────────────────
@@ -505,7 +465,7 @@ export default function FlashcardsView({
               );
             }
 
-            // ── BACK FACE: Answer on Top (Centered) + Infographic / Diagram Below (Centered) ──
+            // ── BACK FACE: Answer on Top (Centered) + Infographic Below (Centered) ──
             return (
               <div
                 title="Click to flip back to the question"
@@ -557,7 +517,7 @@ export default function FlashcardsView({
                   </div>
                 </div>
 
-                {/* Infographic or Diagram: Bottom center div */}
+                {/* Infographic: Bottom center div */}
                 {hasVisual && (
                   <div
                     style={{
@@ -573,56 +533,32 @@ export default function FlashcardsView({
                       overflow: 'hidden',
                     }}
                   >
-                    {hasValidImage ? (
-                      <img
-                        src={finalUrl}
-                        alt="Infographic"
-                        onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
-                        onError={() => setImgFailed(true)}
-                        title="Click to view full screen"
-                        style={{
-                          position: 'absolute',
-                          top: '50%',
-                          left: '50%',
-                          transform: 'translate(-50%, -50%)',
-                          maxWidth: 'calc(100% - 16px)',
-                          maxHeight: 'calc(100% - 8px)',
-                          width: 'auto',
-                          height: 'auto',
-                          objectFit: 'contain',
-                          borderRadius: '12px',
-                          backgroundColor: '#ffffff',
-                          padding: '4px',
-                          border: '1px solid rgba(111, 154, 127, 0.35)',
-                          boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
-                          cursor: 'zoom-in',
-                          boxSizing: 'border-box',
-                          display: 'block',
-                        }}
-                      />
-                    ) : hasMermaid ? (
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          background: '#ffffff',
-                          borderRadius: '12px',
-                          border: '1px solid rgba(111, 154, 127, 0.35)',
-                          boxShadow: '0 4px 18px rgba(45, 62, 54, 0.08)',
-                          padding: '8px',
-                          boxSizing: 'border-box',
-                          overflow: 'auto',
-                        }}
-                      >
-                        <div style={{ maxWidth: '100%', maxHeight: '100%' }}>
-                          <MarkdownView content={"```mermaid\n" + mermaidCode + "\n```"} />
-                        </div>
-                      </div>
-                    ) : null}
+                    <img
+                      src={finalUrl}
+                      alt="Infographic"
+                      onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
+                      onError={() => setImgFailed(true)}
+                      title="Click to view full screen"
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        maxWidth: 'calc(100% - 16px)',
+                        maxHeight: 'calc(100% - 8px)',
+                        width: 'auto',
+                        height: 'auto',
+                        objectFit: 'contain',
+                        borderRadius: '12px',
+                        backgroundColor: '#ffffff',
+                        padding: '4px',
+                        border: '1px solid rgba(111, 154, 127, 0.35)',
+                        boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
+                        cursor: 'zoom-in',
+                        boxSizing: 'border-box',
+                        display: 'block',
+                      }}
+                    />
                   </div>
                 )}
               </div>
@@ -714,46 +650,14 @@ export default function FlashcardsView({
       {/* Full-Screen Infographic Lightbox Modal */}
       {(() => {
         if (!isZoomed) return null;
-        const isPhysics = subjectId === 'anu_physics' || subjectId.includes('physics');
-        const PHYSICS_REAL_INFOGRAPHICS = [
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Overview.png`.replace(/\/\//g, '/'),
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/1.%20Klein-Gordon%20Equation/klein_gordon_infographic.png`.replace(/\/\//g, '/'),
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/2.%20Difficulties%20of%20K-G/difficulties_infographic.png`.replace(/\/\//g, '/'),
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/3.%20Dirac%20Equation/dirac_equation_infographic.png`.replace(/\/\//g, '/'),
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/4.%20Hydrogen%20Atom/hydrogen_atom_infographic.png`.replace(/\/\//g, '/'),
-          `${import.meta.env.BASE_URL || '/'}generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Mind_Map.png`.replace(/\/\//g, '/'),
-        ];
 
         let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
         if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
-          const chStr = `chapter_${String(chapterNumber || 1).padStart(2, '0')}`;
-          const imgBase = `${GCS_API_BASE}/api/content/angrau/entomology`;
-          if (finalUrl.startsWith('../Mindmaps/')) {
-            finalUrl = `${imgBase}/${chStr}/${finalUrl.replace('../Mindmaps/', 'Mindmaps/')}`;
-          } else if (finalUrl.includes('generated_infographics')) {
-            const cleanRel = finalUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
-            finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${chStr}/${cleanRel}`;
-          } else if (finalUrl.startsWith('/api/')) {
+          if (finalUrl.startsWith('/api/')) {
             finalUrl = `${GCS_API_BASE}${finalUrl}`;
           } else if (finalUrl.startsWith('/generated_resources/')) {
-            if (subjectId.includes('angrau') || subjectId.includes('entomology')) {
-              const subRel = finalUrl.replace(/^\/generated_resources\/[^\/]+\//, '');
-              finalUrl = `${GCS_API_BASE}/api/content/angrau/entomology/${subRel}`;
-            } else {
-              finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
-            }
+            finalUrl = `${import.meta.env.BASE_URL || '/'}${finalUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
           }
-        }
-        if (isPhysics) {
-          const urlLower = (finalUrl || '').toLowerCase();
-          if (!finalUrl || urlLower.includes('placeholder') || urlLower.includes('generated_infographics') || urlLower.includes('infographic_card') || urlLower.includes('dummy')) {
-            finalUrl = PHYSICS_REAL_INFOGRAPHICS[currentIndex % PHYSICS_REAL_INFOGRAPHICS.length];
-          }
-        }
-        const isDbms = subjectId === 'dbms' || subjectId.includes('dbms');
-        if (isDbms && !finalUrl) {
-          const normPersona = persona === 'beginner' || persona === 'easy' ? 'beginner' : persona === 'advanced' || persona === 'hard' ? 'advanced' : 'intermediate';
-          finalUrl = `${import.meta.env.BASE_URL || '/'}generated_resources/mlrit/dbms/chapter_01/practice/flashcards/images/card_${normPersona}_${currentIndex + 1}.webp`.replace(/\/\//g, '/');
         }
 
         if (!finalUrl) return null;
