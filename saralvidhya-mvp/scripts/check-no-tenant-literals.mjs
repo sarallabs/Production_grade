@@ -7,13 +7,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const srcDir = path.resolve(__dirname, '../src');
 const allowlistFile = path.resolve(__dirname, 'tenant-literals.allowlist');
 
-// Forbidden client/tenant literals that should never appear in generic code
+// Forbidden client/tenant literals and browser-dependent storage that should never appear in generic code
 const FORBIDDEN_PATTERNS = [
   { pattern: /\bento_131\b/g, name: 'ento_131' },
   { pattern: /['"`]angrau['"`]/gi, name: 'angrau literal' },
   { pattern: /['"`]mlrit['"`]/gi, name: 'mlrit literal' },
   { pattern: /ANGRAU_CHAPTER_CONFIG/g, name: 'ANGRAU_CHAPTER_CONFIG' },
   { pattern: /NGRanga@\d+/g, name: 'hardcoded password' },
+  { pattern: /\blocalStorage\b/g, name: 'browser localStorage' },
+  { pattern: /\bsessionStorage\b/g, name: 'browser sessionStorage' },
 ];
 
 // Load allowlist of legacy files currently permitted to contain legacy literals

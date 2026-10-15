@@ -1,4 +1,5 @@
 import { setStudentPersona } from './credentialsStore';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export interface NavigationCourseInput {
   id: string; // sId
@@ -21,13 +22,13 @@ export function buildChapterUrl(course: NavigationCourseInput, chapterNumber: nu
     subjectName: course.name,
   });
 
-  const userPersona = (localStorage.getItem('user_persona') || 'beginner').toLowerCase();
+  const userPersona = (cloudStorage.getItem('user_persona') || 'beginner').toLowerCase();
   
   const cId = `${course.boardId}_${course.classId}`;
   const sId = course.id;
-  localStorage.setItem(`persona_${cId}_${sId}`, userPersona);
+  cloudStorage.setItem(`persona_${cId}_${sId}`, userPersona);
   
-  const username = localStorage.getItem('username') || '';
+  const username = cloudStorage.getItem('username') || '';
   if (username) {
     setStudentPersona(username, userPersona);
   }

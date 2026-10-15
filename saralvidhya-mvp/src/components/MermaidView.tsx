@@ -379,61 +379,35 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
 
   return (
     <div style={{
+      position: 'relative',
       border: '1px solid #EFE4DC',
       borderRadius: 12,
       overflow: 'hidden',
       background: '#FFF6F1',
       fontFamily: "'Inter','SF Pro Display',system-ui,sans-serif",
     }}>
-      {/* ── Toolbar ── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '8px 16px',
-        borderBottom: '1px solid #EFE4DC',
-        background: '#FAF1EB',
-      }}>
-        {/* Left: label */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{
-            width: 7, height: 7, borderRadius: 2,
-            background: ACCENT, flexShrink: 0,
-          }} />
-          <span style={{
-            fontSize: '0.72rem', fontWeight: 600,
-            color: '#4F7B64', letterSpacing: '0.04em', textTransform: 'uppercase',
-          }}>
-            Mind Map
-          </span>
-          <span style={{ fontSize: '0.68rem', color: '#8A7F77', marginLeft: 4 }}>
-            · Ctrl+scroll to zoom · click to read
-          </span>
-        </div>
-
-        {/* Right: zoom controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {[
-            { l: '−', a: zoomOut, off: zoom <= MIN_Z },
-            { l: `${Math.round(zoom * 100)}%`, a: reset, off: false },
-            { l: '+', a: zoomIn, off: zoom >= MAX_Z },
-          ].map(b => (
-            <button
-              key={b.l}
-              onClick={b.a}
-              disabled={b.off}
-              style={{
-                minWidth: 28, height: 24, borderRadius: 5,
-                border: '1px solid #E2D5CC',
-                background: '#FFFFFF',
-                cursor: b.off ? 'not-allowed' : 'pointer',
-                fontSize: '0.75rem', fontWeight: 600,
-                color: b.off ? '#CBBFB6' : '#45584E',
-                fontFamily: 'inherit',
-              }}
-            >{b.l}</button>
-          ))}
-        </div>
+      {/* ── Floating Zoom Controls ── */}
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {[
+          { l: '−', a: zoomOut, off: zoom <= MIN_Z },
+          { l: `${Math.round(zoom * 100)}%`, a: reset, off: false },
+          { l: '+', a: zoomIn, off: zoom >= MAX_Z },
+        ].map(b => (
+          <button
+            key={b.l}
+            onClick={b.a}
+            disabled={b.off}
+            style={{
+              minWidth: 28, height: 24, borderRadius: 5,
+              border: '1px solid #E2D5CC',
+              background: '#FFFFFF',
+              cursor: b.off ? 'not-allowed' : 'pointer',
+              fontSize: '0.75rem', fontWeight: 600,
+              color: b.off ? '#CBBFB6' : '#45584E',
+              fontFamily: 'inherit',
+            }}
+          >{b.l}</button>
+        ))}
       </div>
 
       {/* ── Canvas ── */}

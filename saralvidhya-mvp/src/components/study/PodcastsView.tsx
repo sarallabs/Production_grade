@@ -27,6 +27,8 @@ import {
   type ReadSection,
   type ReadFigure,
 } from "@/data/sectionizedReadService";
+import { getRegistryChapterData } from "@/data/manifestService";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 // 120 pencil-skinny bars forming a natural audio waveform curve
 const PENCIL_WAVEFORM_BARS: number[] = Array.from({ length: 120 }, (_, i) => {
@@ -243,6 +245,7 @@ export default function PodcastsView({
   const sleepTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const [currentChapterInfo, setCurrentChapterInfo] = useState<Chapter | null>(null);
+  const [chapterFiles, setChapterFiles] = useState<Record<string, string>>({});
   const [selectedModuleOverride, setSelectedModuleOverride] = useState<number | null>(null);
 
   useEffect(() => {
@@ -257,22 +260,24 @@ export default function PodcastsView({
         setCurrentChapterInfo(ch);
       }
     });
+    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
+      if (reg?.files) {
+        setChapterFiles(reg.files);
+      } else {
+        setChapterFiles({});
+      }
+    });
   }, [subjectId, chapterNumber]);
 
   const isNebBiologyChap6 = subjectId === "neb_xii_biology" && chapterNumber === 6;
-  const isAngrau = subjectId === "ento_131" || subjectId === "entomology" || subjectId.includes("ento") || subjectId.includes("angrau");
-  const isAngrauChap1 = isAngrau && chapterNumber === 1;
-  const isAngrauChap2 = isAngrau && chapterNumber === 2;
-  const isAngrauChap3 = isAngrau && chapterNumber === 3;
-  const isAngrauChap4 = isAngrau && chapterNumber === 4;
-  const isAngrauWithPodcasts = isAngrau && [1, 2, 3, 4].includes(chapterNumber);
-  const isDbmsChap1 = subjectId === "dbms" && chapterNumber === 1;
-  const isDbmsWithPodcasts = subjectId === "dbms" && chapterNumber === 1;
+  const hasRegistryPodcasts = useMemo(
+    () => Object.keys(chapterFiles).some((k) => k.startsWith("podcasts/")),
+    [chapterFiles],
+  );
   const isNebOrMgmt =
+    hasRegistryPodcasts ||
     subjectId.startsWith("neb_") ||
     subjectId === "management" ||
-    isAngrauWithPodcasts ||
-    isDbmsWithPodcasts ||
     GCS_BACKEND_SUBJECTS.has(subjectId) ||
     Boolean(currentChapterInfo?.topics && currentChapterInfo.topics.length > 0);
 
@@ -280,7 +285,7 @@ export default function PodcastsView({
     if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc" || resumeTrack === "short" || resumeTrack === "long") {
       return resumeTrack;
     }
-    const saved = localStorage.getItem(
+    const saved = cloudStorage.getItem(
       `last_track_${subjectId}_${chapterNumber}_${persona}`,
     );
     if (isNebOrMgmt) {
@@ -300,7 +305,7 @@ export default function PodcastsView({
   const completedStorageKey = `sv_listen_done_${subjectId}_ch${chapterNumber}_${selectedTrack}`;
   const [completedEpisodes, setCompletedEpisodes] = useState<Set<number>>(() => {
     try {
-      const raw = localStorage.getItem(completedStorageKey);
+      const raw = cloudStorage.getItem(completedStorageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) return new Set(parsed);
@@ -313,7 +318,7 @@ export default function PodcastsView({
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(completedStorageKey);
+      const raw = cloudStorage.getItem(completedStorageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
@@ -334,7 +339,7 @@ export default function PodcastsView({
         const next = new Set(prev);
         next.add(idx);
         try {
-          localStorage.setItem(completedStorageKey, JSON.stringify(Array.from(next)));
+          cloudStorage.setItem(completedStorageKey, JSON.stringify(Array.from(next)));
         } catch {
           // ignore
         }
@@ -421,129 +426,51 @@ export default function PodcastsView({
         txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
       }));
     }
-    // GCS subjects use canonical microcast naming
-    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
-      // Use hardcoded titles from the original MVP but canonical filenames
-      const gcsTitles: Record<string, Record<number, string[]>> = {
-        ento_131: {
-          1: ["Anatomy of the three-part insect gut", "Inside the Insect Foregut and Gizzard", "How Insect Digestion Activates Bt Toxins", "How insects recycle water from waste", "How insects digest wood and sap"],
-          2: ["Three Categories of Insect Metamorphosis", "Identify Insect Larvae to Protect Crops", "Insect pupal structures and escape tactics", "Blister beetles live multiple larval lives", "Controlling Pests with Hormones and Diapause", "Predicting insect diapause for crop protection"],
-          3: ["How weathering transforms bedrock into regolith", "Mechanical forces breaking down Indian landscapes", "How life turns solid rock into soil", "Mathematical Forces Turning Rock into Soil"],
-          4: ["Floral architecture and double fertilization", "Self-Pollination Mechanisms in Indian Crops", "How Indian crops force cross pollination", "How nature pollinates India's crops", "Choosing and Arranging Orchard Pollinizers", "How Parthenocarpy Creates Seedless Fruit"],
-        },
-        dbms: {
-          1: [
-            "How 3-Schema Architecture Prevents Data Chaos",
-            "ER Diagram Rules for DBMS Exams",
-            "Weak Entities and Extended ER Mechanics",
-            "Relational Keys and Integrity Constraints",
-            "How ER Diagrams Become SQL Tables",
-            "SQL Views and Safe Schema Evolution",
-          ],
-        },
-      };
-      const titles = (gcsTitles[subjectId] || (subjectId.includes('ento') ? gcsTitles.ento_131 : undefined))?.[chapterNumber] ?? [];
-      return titles.map((title, i) => ({
-        title: `${i + 1}. ${title}`,
-        audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
-        txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
-      }));
-
+    if (isNebBiologyChap6) {
+      return [
+        { title: "1. Histology pioneers and the first tissues", audio: "MC1_Histology_pioneers_and_the_first_tissues.mp3", txt: "MC1_Histology_pioneers_and_the_first_tissues.txt" },
+        { title: "2. How Avascular Epithelium Survives and Stays Intact", audio: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.mp3", txt: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.txt" },
+        { title: "3. Simple Epithelium Types and Functions", audio: "MC3_Simple_Epithelium_Types_and_Functions.mp3", txt: "MC3_Simple_Epithelium_Types_and_Functions.txt" },
+        { title: "4. Body armor and shape shifting bladders", audio: "MC4_Body_armor_and_shape_shifting_bladders.mp3", txt: "MC4_Body_armor_and_shape_shifting_bladders.txt" },
+        { title: "5. Modified Epithelia and Glandular Secretion Methods", audio: "MC5_Modified_Epithelia_and_Glandular_Secretion_Methods.mp3", txt: "MC5_Modified_Epithelia_and_Glandular_Secretion_Methods.txt" },
+        { title: "6. Connective Tissue Proper Cells and Fibers", audio: "MC6_Connective_Tissue_Proper_Cells_and_Fibers.mp3", txt: "MC6_Connective_Tissue_Proper_Cells_and_Fibers.txt" },
+        { title: "7. Why tendons anchor and ligaments stretch", audio: "MC7_Why_tendons_anchor_and_ligaments_stretch.mp3", txt: "MC7_Why_tendons_anchor_and_ligaments_stretch.txt" },
+        { title: "8. Four unique types of body cartilage", audio: "MC8_Four_unique_types_of_body_cartilage.mp3", txt: "MC8_Four_unique_types_of_body_cartilage.txt" },
+        { title: "9. The microscopic plumbing of mammalian bones", audio: "MC9_The_microscopic_plumbing_of_mammalian_bones.mp3", txt: "MC9_The_microscopic_plumbing_of_mammalian_bones.txt" },
+        { title: "10. How Blood and Lymph Fuel and Protect", audio: "MC10_How_Blood_and_Lymph_Fuel_and_Protect.mp3", txt: "MC10_How_Blood_and_Lymph_Fuel_and_Protect.txt" },
+        { title: "11. Why Some Muscles Never Get Tired", audio: "MC11_Why_Some_Muscles_Never_Get_Tired.mp3", txt: "MC11_Why_Some_Muscles_Never_Get_Tired.txt" },
+        { title: "12. How Myelin Speeds Up Nerve Signals", audio: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.mp3", txt: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.txt" }
+      ];
     }
-    return isDbmsChap1 ? [
-      { title: "1. How 3-Schema Architecture Prevents Data Chaos", audio: "1.How 3-Schema Architecture Prevents Data Chaos.m4a", txt: "1.How 3-Schema Architecture Prevents Data Chaos_transcript.json" },
-      { title: "2. ER Diagram Rules for DBMS Exams", audio: "2.ER Diagram Rules for DBMS Exams.m4a", txt: "2.ER Diagram Rules for DBMS Exams_transcript.json" },
-      { title: "3. Weak Entities and Extended ER Mechanics", audio: "3.Weak Entities and Extended ER Mechanics.m4a", txt: "3.Weak Entities and Extended ER Mechanics_transcript.json" },
-      { title: "4. Relational Keys and Integrity Constraints", audio: "4.Relational Keys and Integrity Constraints.m4a", txt: "4.Relational Keys and Integrity Constraints_transcript.json" },
-      { title: "5. How ER Diagrams Become SQL Tables", audio: "5.How ER Diagrams Become SQL Tables.m4a", txt: "5.How ER Diagrams Become SQL Tables_transcript.json" },
-      { title: "6. SQL Views and Safe Schema Evolution", audio: "6.SQL Views and Safe Schema Evolution.m4a", txt: "6.SQL Views and Safe Schema Evolution_transcript.json" },
-    ] : isNebBiologyChap6 ? [
-    { title: "1. Histology pioneers and the first tissues", audio: "MC1_Histology_pioneers_and_the_first_tissues.mp3", txt: "MC1_Histology_pioneers_and_the_first_tissues.txt" },
-    { title: "2. How Avascular Epithelium Survives and Stays Intact", audio: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.mp3", txt: "MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact.txt" },
-    { title: "3. Simple Epithelium Types and Functions", audio: "MC3_Simple_Epithelium_Types_and_Functions.mp3", txt: "MC3_Simple_Epithelium_Types_and_Functions.txt" },
-    { title: "4. Body armor and shape shifting bladders", audio: "MC4_Body_armor_and_shape_shifting_bladders.mp3", txt: "MC4_Body_armor_and_shape_shifting_bladders.txt" },
-    { title: "5. Modified Epithelia and Glandular Secretion Methods", audio: "MC5_Modified_Epithelia_and_Glandular_Secretion_Methods.mp3", txt: "MC5_Modified_Epithelia_and_Glandular_Secretion_Methods.txt" },
-    { title: "6. Connective Tissue Proper Cells and Fibers", audio: "MC6_Connective_Tissue_Proper_Cells_and_Fibers.mp3", txt: "MC6_Connective_Tissue_Proper_Cells_and_Fibers.txt" },
-    { title: "7. Why tendons anchor and ligaments stretch", audio: "MC7_Why_tendons_anchor_and_ligaments_stretch.mp3", txt: "MC7_Why_tendons_anchor_and_ligaments_stretch.txt" },
-    { title: "8. Four unique types of body cartilage", audio: "MC8_Four_unique_types_of_body_cartilage.mp3", txt: "MC8_Four_unique_types_of_body_cartilage.txt" },
-    { title: "9. The microscopic plumbing of mammalian bones", audio: "MC9_The_microscopic_plumbing_of_mammalian_bones.mp3", txt: "MC9_The_microscopic_plumbing_of_mammalian_bones.txt" },
-    { title: "10. How Blood and Lymph Fuel and Protect", audio: "MC10_How_Blood_and_Lymph_Fuel_and_Protect.mp3", txt: "MC10_How_Blood_and_Lymph_Fuel_and_Protect.txt" },
-    { title: "11. Why Some Muscles Never Get Tired", audio: "MC11_Why_Some_Muscles_Never_Get_Tired.mp3", txt: "MC11_Why_Some_Muscles_Never_Get_Tired.txt" },
-    { title: "12. How Myelin Speeds Up Nerve Signals", audio: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.mp3", txt: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.txt" }
-  ] : isAngrauChap1 ? [
-    { title: "1. Anatomy of the three-part insect gut", audio: "1. Anatomy of the three-part insect gut.m4a", txt: "1. Anatomy of the three-part insect gut.txt" },
-    { title: "2. Inside the Insect Foregut and Gizzard", audio: "2. Inside the Insect Foregut and Gizzard.m4a", txt: "2. Inside the Insect Foregut and Gizzard.txt" },
-    { title: "3. How Insect Digestion Activates Bt Toxins", audio: "3. How Insect Digestion Activates Bt Toxins.m4a", txt: "3. How Insect Digestion Activates Bt Toxins.txt" },
-    { title: "4. How insects recycle water from waste", audio: "4. How insects recycle water from waste.m4a", txt: "4. How insects recycle water from waste.txt" },
-    { title: "5. How insects digest wood and sap", audio: "5. How insects digest wood and sap.m4a", txt: "5. How insects digest wood and sap.txt" }
-  ] : isAngrauChap2 ? [
-    { title: "1. Three Categories of Insect Metamorphosis", audio: "1.Three Categories of Insect Metamorphosis.m4a", txt: "1.Three Categories of Insect Metamorphosis.txt" },
-    { title: "2. Identify Insect Larvae to Protect Crops", audio: "2.Identify Insect Larvae to Protect Crops.m4a", txt: "2.Identify Insect Larvae to Protect Crops.txt" },
-    { title: "3. Insect pupal structures and escape tactics", audio: "3.Insect pupal structures and escape tactics.m4a", txt: "3.Insect pupal structures and escape tactics.txt" },
-    { title: "4. Blister beetles live multiple larval lives", audio: "4.Blister beetles live multiple larval lives.m4a", txt: "4.Blister beetles live multiple larval lives.txt" },
-    { title: "5. Controlling Pests with Hormones and Diapause", audio: "5.Controlling Pests with Hormones and Diapause.m4a", txt: "5.Controlling Pests with Hormones and Diapause.txt" },
-    { title: "6. Predicting insect diapause for crop protection", audio: "6.Predicting insect diapause for crop protection.m4a", txt: "6.Predicting insect diapause for crop protection.txt" }
-  ] : isAngrauChap3 ? [
-    { title: "1. How weathering transforms bedrock into regolith", audio: "1. How weathering transforms bedrock into regolith.m4a", txt: "1. How weathering transforms bedrock into regolith.txt" },
-    { title: "2. Mechanical forces breaking down Indian landscapes", audio: "2. Mechanical forces breaking down Indian landscapes.m4a", txt: "2. Mechanical forces breaking down Indian landscapes.txt" },
-    { title: "3. How life turns solid rock into soil", audio: "3. How life turns solid rock into soil.m4a", txt: "3. How life turns solid rock into soil.txt" },
-    { title: "4. Mathematical Forces Turning Rock into Soil", audio: "4. Mathematical Forces Turning Rock into Soil.m4a", txt: "4. Mathematical Forces Turning Rock into Soil.txt" }
-  ] : isAngrauChap4 ? [
-    { title: "1. Floral architecture and double fertilization", audio: "1. Floral architecture and double fertilization.m4a", txt: "1. Floral architecture and double fertilization.txt" },
-    { title: "2. Self-Pollination Mechanisms in Indian Crops", audio: "2. Self-Pollination Mechanisms in Indian Crops.m4a", txt: "2. Self-Pollination Mechanisms in Indian Crops.txt" },
-    { title: "3. How Indian crops force cross pollination", audio: "3.How Indian crops force cross pollination.m4a", txt: "3.How Indian crops force cross pollination.txt" },
-    { title: "4. How nature pollinates India's crops", audio: "4.How nature pollinates India_s crops.m4a", txt: "4.How nature pollinates India_s crops.txt" },
-    { title: "5. Choosing and Arranging Orchard Pollinizers", audio: "5. Choosing and Arranging Orchard Pollinizers.m4a", txt: "5. Choosing and Arranging Orchard Pollinizers.txt" },
-    { title: "6. How Parthenocarpy Creates Seedless Fruit", audio: "6. How Parthenocarpy Creates Seedless Fruit.m4a", txt: "6. How Parthenocarpy Creates Seedless Fruit.txt" }
-  ] : [
-    { title: "1. Topic Overview", audio: "MC1.mp3", txt: "MC1.txt" }
-  ];
-  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
+    return [
+      { title: "1. Topic Overview", audio: "MC1.mp3", txt: "MC1.txt" }
+    ];
+  }, [currentChapterInfo, isNebBiologyChap6]);
 
   const DETAILED_LISTENS = useMemo(() => {
-    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
-      return [{ title: "1. Chapter Complete Coverage", audio: "long_podcast.m4a", txt: "long_podcast.md" }];
+    if (hasRegistryPodcasts || GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      return [{ title: `1. ${chapterName || "Chapter"} Complete Coverage`, audio: "long_podcast.m4a", txt: "long_podcast.md" }];
     }
-    return isDbmsChap1 ? [
-      { title: "1. DBMS Unit 1 Complete Coverage", audio: "DBMS_Long_Podcast.m4a", txt: "DBMS_Long_Podcast_transcript.json" }
-    ] : isNebBiologyChap6 ? [
-    { title: "1. Animal Tissue Complete Coverage", audio: "DL_Animal Tissue Podcast.mp3", txt: "DL_Animal Tissue Podcast.txt" }
-  ] : isAngrauChap1 ? [
-    { title: "1. Digestive System Complete Coverage", audio: "Digestive system Long Podcast.m4a", txt: "Digestive system Long Podcast.txt" }
-  ] : isAngrauChap2 ? [
-    { title: "1. Metamorphosis Complete Coverage", audio: "Metamorphosis Long Podcast.m4a", txt: "Metamorphosis Long Podcast.txt" }
-  ] : isAngrauChap3 ? [
-    { title: "1. Weathering Complete Coverage", audio: "Long Podcast Weathering.m4a", txt: "Long Podcast Weathering.txt" }
-  ] : isAngrauChap4 ? [
-    { title: "1. Pollination Complete Coverage", audio: "Long Podcast Pollination.m4a", txt: "Long Podcast Pollination.txt" }
-  ] : [
-    { title: "1. Chapter Complete Coverage", audio: "DL.mp3", txt: "DL.txt" }
-  ];
-  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
+    return isNebBiologyChap6 ? [
+      { title: "1. Animal Tissue Complete Coverage", audio: "DL_Animal Tissue Podcast.mp3", txt: "DL_Animal Tissue Podcast.txt" }
+    ] : [
+      { title: "1. Chapter Complete Coverage", audio: "DL.mp3", txt: "DL.txt" }
+    ];
+  }, [hasRegistryPodcasts, isNebBiologyChap6, chapterName, subjectId]);
 
   const QUICK_LISTENS = useMemo(() => {
-    if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
-      return [{ title: "1. Chapter Quick Recap", audio: "short_podcast.m4a", txt: "short_podcast.md" }];
+    if (hasRegistryPodcasts || GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      return [{ title: `1. ${chapterName || "Chapter"} Quick Recap`, audio: "short_podcast.m4a", txt: "short_podcast.md" }];
     }
-    return isDbmsChap1 ? [
-      { title: "1. DBMS Unit 1 Quick Recap", audio: "DBMS_Short_Podcast.m4a", txt: "DBMS_Short_Podcast_transcript.json" }
-    ] : isNebBiologyChap6 ? [
-    { title: "1. The Four Pillars of Animal Tissue", audio: "QL_The_Four_Pillars_of_Animal_Tissue.mp3", txt: "QL_The_Four_Pillars_of_Animal_Tissue.txt" }
-  ] : isAngrauChap1 ? [
-    { title: "1. Digestive System Quick Recap", audio: "Digestive system Short Podcast.m4a", txt: "Digestive system Short Podcast.txt" }
-  ] : isAngrauChap2 ? [
-    { title: "1. Metamorphosis Quick Recap", audio: "Metamorphosis short Podcast.m4a", txt: "Metamorphosis short Podcast.txt" }
-  ] : isAngrauChap3 ? [
-    { title: "1. Weathering Quick Recap", audio: "Short Podcast Weathering.m4a", txt: "Short Podcast Weathering.txt" }
-  ] : isAngrauChap4 ? [
-    { title: "1. Pollination Quick Recap", audio: "Short Podcast Pollination.m4a", txt: "Short Podcast Pollination.txt" }
-  ] : [
-    { title: "1. Chapter Quick Recap", audio: "QL.mp3", txt: "QL.txt" }
-  ];
-  }, [isDbmsChap1, isNebBiologyChap6, isAngrauChap1, isAngrauChap2, isAngrauChap3, isAngrauChap4, chapterNumber, subjectId]);
+    return isNebBiologyChap6 ? [
+      { title: "1. The Four Pillars of Animal Tissue", audio: "QL_The_Four_Pillars_of_Animal_Tissue.mp3", txt: "QL_The_Four_Pillars_of_Animal_Tissue.txt" }
+    ] : [
+      { title: "1. Chapter Quick Recap", audio: "QL.mp3", txt: "QL.txt" }
+    ];
+  }, [hasRegistryPodcasts, isNebBiologyChap6, chapterName, subjectId]);
 
   useEffect(() => {
-    localStorage.setItem(
+    cloudStorage.setItem(
       `last_track_${subjectId}_${chapterNumber}_${persona}`,
       selectedTrack,
     );
@@ -752,7 +679,7 @@ export default function PodcastsView({
   const subjectBaseUrl = getSubjectBaseUrl(subjectId);
   const basePath = `${subjectBaseUrl}/${chapterDir}/podcasts`;
   const lessonId = `${subjectId}_ch${chapterNumber}_${persona}_${selectedTrack}${selectedTrack === "mc" ? "_" + selectedMc : selectedTrack === "dl" ? "_" + selectedDl : selectedTrack === "ql" ? "_" + selectedQl : ""}`;
-  const userId = localStorage.getItem("app_user_id") || "anonymous";
+  const userId = cloudStorage.getItem("app_user_id") || "anonymous";
 
   // Memoize metadata so it doesn't trigger useEffect on every timeupdate re-render
   const metadata = useMemo(
@@ -870,7 +797,7 @@ export default function PodcastsView({
     const audio = audioRef.current;
     if (!audio || available !== true) return;
 
-    const savedData = localStorage.getItem(
+    const savedData = cloudStorage.getItem(
       `audio_progress_${userId}_${lessonId}`,
     );
     if (!savedData) return;
@@ -891,13 +818,57 @@ export default function PodcastsView({
         }
       }
     } catch (error) {
-      console.warn("Failed to restore local audio progress:", error);
+      console.warn("Failed to restore cloud audio progress:", error);
     }
   }, [available, lessonId, userId]);
 
-  /** Resolve filenames per subject naming convention */
-  const getFileNames = (track: string) => {
-    // ── GCS Cloud Run subjects: canonical naming ──
+  /** Resolve filenames via registry chapterFiles signed URLs first, then fallback */
+  const getFileNames = useCallback((track: string): { audio: string; transcript: string; jsonTranscript?: string; fromRegistry?: boolean } => {
+    // 1. Registry signed URLs (100% cloud-native contract/v1)
+    if (hasRegistryPodcasts) {
+      if (track === "dl" || track === "long") {
+        const audio = chapterFiles["podcasts/long_podcast.m4a"] || chapterFiles["podcasts/long_podcast.mp3"];
+        const transcript = chapterFiles["podcasts/long_podcast.md"] || chapterFiles["podcasts/long_podcast.txt"];
+        const jsonTranscript = chapterFiles["podcasts/long_podcast.transcript.json"];
+        if (audio || transcript || jsonTranscript) {
+          return {
+            audio: audio || "",
+            transcript: transcript || jsonTranscript || "",
+            jsonTranscript,
+            fromRegistry: Boolean(audio),
+          };
+        }
+      }
+      if (track === "ql" || track === "short") {
+        const audio = chapterFiles["podcasts/short_podcast.m4a"] || chapterFiles["podcasts/short_podcast.mp3"];
+        const transcript = chapterFiles["podcasts/short_podcast.md"] || chapterFiles["podcasts/short_podcast.txt"];
+        const jsonTranscript = chapterFiles["podcasts/short_podcast.transcript.json"];
+        if (audio || transcript || jsonTranscript) {
+          return {
+            audio: audio || "",
+            transcript: transcript || jsonTranscript || "",
+            jsonTranscript,
+            fromRegistry: Boolean(audio),
+          };
+        }
+      }
+      if (track === "mc") {
+        const pad = String(selectedMc + 1).padStart(2, "0");
+        const audio = chapterFiles[`podcasts/microcast_${pad}.m4a`] || chapterFiles[`podcasts/microcast_${pad}.mp3`];
+        const transcript = chapterFiles[`podcasts/microcast_${pad}.md`] || chapterFiles[`podcasts/microcast_${pad}.txt`];
+        const jsonTranscript = chapterFiles[`podcasts/microcast_${pad}.transcript.json`];
+        if (audio || transcript || jsonTranscript) {
+          return {
+            audio: audio || "",
+            transcript: transcript || jsonTranscript || "",
+            jsonTranscript,
+            fromRegistry: Boolean(audio),
+          };
+        }
+      }
+    }
+
+    // 2. Fallback for non-migrated subjects
     if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
       const gcsBasePath = `${subjectBaseUrl}/${chapterDir}/podcasts`;
       if (track === "dl") {
@@ -921,7 +892,6 @@ export default function PodcastsView({
           transcript: `${gcsBasePath}/${mc.txt}`,
         };
       }
-      // Fallback for old "long"/"short" track keys
       const fileName = track === "long" ? "long_podcast" : "short_podcast";
       return {
         audio: `${gcsBasePath}/${fileName}.m4a`,
@@ -929,40 +899,7 @@ export default function PodcastsView({
       };
     }
 
-    if (subjectId === "dbms") {
-      const dbmsAudioPath = `${subjectBaseUrl}/${chapterDir}/Learn/Listen`;
-      const dbmsTranscriptPath = `${subjectBaseUrl}/${chapterDir}/Learn/Listen/Transcript`;
-      if (track === "dl") {
-        const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0];
-        const tFile = dl.txt || `${dl.audio.replace(/\.m4a$/i, '')}_transcript.json`;
-        return {
-          audio: `${dbmsAudioPath}/${encodeURIComponent(dl.audio)}`,
-          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
-        };
-      }
-      if (track === "ql") {
-        const ql = QUICK_LISTENS[selectedQl] || QUICK_LISTENS[0];
-        const tFile = ql.txt || `${ql.audio.replace(/\.m4a$/i, '')}_transcript.json`;
-        return {
-          audio: `${dbmsAudioPath}/${encodeURIComponent(ql.audio)}`,
-          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
-        };
-      }
-      if (track === "mc") {
-        const mc = MICROCASTS[selectedMc] || MICROCASTS[0];
-        const tFile = mc.txt || `${mc.audio.replace(/\.m4a$/i, '')}_transcript.json`;
-        return {
-          audio: `${dbmsAudioPath}/${encodeURIComponent(mc.audio)}`,
-          transcript: `${dbmsTranscriptPath}/${encodeURIComponent(tFile)}`,
-        };
-      }
-      return {
-        audio: `${dbmsAudioPath}/DBMS_Short_Podcast.m4a`,
-        transcript: `${dbmsTranscriptPath}/DBMS_Short_Podcast_transcript.json`,
-      };
-    }
-
-    if (subjectId.startsWith("neb_") || subjectId === "management" || isAngrauWithPodcasts) {
+    if (subjectId.startsWith("neb_") || subjectId === "management") {
       const nebBasePath = `${subjectBaseUrl}/${chapterDir}/Podcasts`;
       if (track === "dl") {
         const dl = DETAILED_LISTENS[selectedDl] || DETAILED_LISTENS[0];
@@ -990,7 +927,6 @@ export default function PodcastsView({
     }
     if (subjectId === "advanced_financial_management") {
       const trackLabel = track === "long" ? "long" : "short";
-      // e.g. chapter_01 (derivatives_futures)/beginner/short_podcast.md
       const base = `${subjectBaseUrl}/${chapterDir}/${persona}/${trackLabel}_podcast`;
       return { audio: `${base}.mp3`, transcript: `${base}.md` };
     }
@@ -1004,10 +940,7 @@ export default function PodcastsView({
       };
     }
     if (subjectId === "science") {
-      // Chapters 1–3 have persona-aware subfolders with .mp3 files
       if (chapterNumber <= 3) {
-        // Map persona key → label used in filename
-        // Note: intermediate files use "Moderate" not "Intermediate"
         const personaLabel: Record<string, string> = {
           beginner: "Beginner",
           intermediate: "Moderate",
@@ -1018,12 +951,10 @@ export default function PodcastsView({
         const base = `${basePath}/${persona}/Science_Chapter${chapterNumber}_${label}_${trackLabel}`;
         return { audio: `${base}.mp3`, transcript: `${base}.txt` };
       }
-      // Chapters 4+ use the older flat naming (no persona, .m4a)
       const base = `${basePath}/Science_Chapter_${chapterPad}_${track}`;
       return { audio: `${base}.m4a`, transcript: `${base}.txt` };
     }
     if (subjectId === "english") {
-      // Chapters 1–3 have persona-aware subfolders with .mp3 files
       if (chapterNumber <= 3) {
         const personaLabel: Record<string, string> = {
           beginner: "Beginner",
@@ -1035,7 +966,6 @@ export default function PodcastsView({
         const base = `${basePath}/${persona}/English_Chapter_${chapterNumber}_${label}_${trackLabel}`;
         return { audio: `${base}.mp3`, transcript: `${base}.txt` };
       }
-      // Chapters 4+ use the older flat naming (no persona, .m4a)
       const base = `${basePath}/ch${chapterNumber}-${track}`;
       return { audio: `${base}.m4a`, transcript: `${base}.txt` };
     }
@@ -1043,10 +973,9 @@ export default function PodcastsView({
       const base = `${basePath}/ch${chapterNumber}-${track}-${persona}`;
       return { audio: `${base}.mp3`, transcript: `${base}.txt` };
     }
-    // any other subject
     const base = `${basePath}/ch${chapterNumber}-${track}`;
     return { audio: `${base}.m4a`, transcript: `${base}.txt` };
-  };
+  }, [hasRegistryPodcasts, chapterFiles, selectedMc, selectedDl, selectedQl, subjectId, subjectBaseUrl, chapterDir, DETAILED_LISTENS, QUICK_LISTENS, MICROCASTS, persona, basePath, chapterNumber, chapterPad]);
 
   const tracks = {
     long: { label: "Long Podcast", desc: "In-depth Chapter Coverage" },
@@ -1055,8 +984,6 @@ export default function PodcastsView({
 
   // ── Check availability once per chapter/subject change ──
   useEffect(() => {
-    // NEB Nepal subjects now have pre-generated MP3 files, so check availability.
-    // Only advanced_financial_management always uses TTS.
     const NEB_TTS_SUBJECTS = [
       "advanced_financial_management",
     ];
@@ -1064,9 +991,17 @@ export default function PodcastsView({
       setAvailable(false);
       return;
     }
+    const resolved = getFileNames(selectedTrack);
+    if (resolved.fromRegistry && resolved.audio) {
+      setAvailable(true);
+      return;
+    }
+    if (!resolved.audio) {
+      setAvailable(false);
+      return;
+    }
     setAvailable(null);
-    const { audio } = getFileNames(selectedTrack);
-    fetch(audio, { method: "HEAD" })
+    fetch(resolved.audio, { method: "HEAD" })
       .then((res) => {
         const ct = res.headers.get("content-type") || "";
         const hasAudio = res.ok && !ct.includes("text/html");
@@ -1075,7 +1010,7 @@ export default function PodcastsView({
       .catch(() => {
         setAvailable(false);
       });
-  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl]);
+  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl, getFileNames]);
 
   const isTrackMount = useRef(true);
   // ── Reset player when track selection changes ──
@@ -1401,31 +1336,7 @@ export default function PodcastsView({
     setTranscriptSegments(null);
     setTranscriptDuration(null);
 
-    const { transcript: tFile } = getFileNames(selectedTrack);
-    const isAngrauSubject = isAngrau || isAngrauWithPodcasts || subjectId.includes("ento") || subjectId.includes("angrau");
-    const hasJsonTranscript = subjectId === "dbms" || subjectId.includes("dbms") || isAngrauSubject;
-    const jsonCandidate = hasJsonTranscript && tFile.endsWith('.md')
-      ? tFile.replace(/\.md$/i, '.transcript.json')
-      : null;
-
-    const chDirName = chapterDir || `chapter_${String(chapterNumber).padStart(2, '0')}`;
-    const fileBase = tFile.split('/').pop()?.replace(/\.(md|txt|transcript\.json)$/i, '') || '';
-    const localCandidates: string[] = [];
-    if (hasJsonTranscript) {
-      if (isAngrauSubject) {
-        localCandidates.push(`/generated_resources/angrau/entomology/${chDirName}/podcasts/${fileBase}.transcript.json`);
-        localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${fileBase}.transcript.json`);
-        localCandidates.push(`/generated_resources/angrau/${chDirName}/podcasts/${fileBase}.transcript.json`);
-        if (selectedTrack === "ql" && QUICK_LISTENS[selectedQl]?.txt) {
-          const qlRaw = QUICK_LISTENS[selectedQl].txt.replace(/\.(txt|md)$/i, '.json');
-          localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${encodeURIComponent(qlRaw)}`);
-        }
-        if (selectedTrack === "dl" && DETAILED_LISTENS[selectedDl]?.txt) {
-          const dlRaw = DETAILED_LISTENS[selectedDl].txt.replace(/\.(txt|md)$/i, '.json');
-          localCandidates.push(`/generated_resources/angrau/${chDirName}/Podcasts/transcripts/${encodeURIComponent(dlRaw)}`);
-        }
-      }
-    }
+    const { transcript: tFile, jsonTranscript } = getFileNames(selectedTrack);
 
     const tryFetchJson = async (url: string) => {
       const r = await fetch(url);
@@ -1467,8 +1378,8 @@ export default function PodcastsView({
 
     const loadTranscript = async () => {
       const allJsonCandidates = [
-        ...(jsonCandidate ? [jsonCandidate] : []),
-        ...localCandidates,
+        ...(jsonTranscript ? [jsonTranscript] : []),
+        ...(tFile.endsWith(".json") ? [tFile] : []),
       ];
 
       for (const cand of allJsonCandidates) {
@@ -1480,42 +1391,37 @@ export default function PodcastsView({
         }
       }
 
-      try {
-        await tryFetchMd(tFile);
-      } catch {
-        // Fallback: try .txt version if .json failed
-        const txtUrl = tFile.replace(/_transcript\.json$/i, '.txt');
-        if (txtUrl !== tFile) {
-          try {
-            await tryFetchMd(txtUrl);
-            return;
-          } catch {
-            // fall through
-          }
-        }
-        // Fallback to getResourceContent
+      if (tFile) {
         try {
-          const script = await getResourceContent(
-            subjectId,
-            chapterNumber,
-            selectedTrack === "long" ? "long_podcast.md" : "short_podcast.md",
-            persona as DifficultyLevel,
-          );
-          if (script && !script.includes("Content not available")) {
-            setTranscript(cleanTranscriptPreamble(script));
-          } else {
-            setTranscript("Content not available.");
-          }
-          setTranscriptSegments(null);
+          await tryFetchMd(tFile);
+          return;
         } catch {
-          setTranscript("Content not available.");
-          setTranscriptSegments(null);
+          // fall through
         }
+      }
+
+      // Fallback to getResourceContent
+      try {
+        const script = await getResourceContent(
+          subjectId,
+          chapterNumber,
+          selectedTrack === "long" || selectedTrack === "dl" ? "long_podcast.md" : "short_podcast.md",
+          persona as DifficultyLevel,
+        );
+        if (script && !script.includes("Content not available")) {
+          setTranscript(cleanTranscriptPreamble(script));
+        } else {
+          setTranscript("Content not available.");
+        }
+        setTranscriptSegments(null);
+      } catch {
+        setTranscript("Content not available.");
+        setTranscriptSegments(null);
       }
     };
 
     loadTranscript();
-  }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir]);
+  }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir, getFileNames]);
 
   const handlePlay = () => {
     const audio = audioRef.current;
@@ -1782,7 +1688,7 @@ export default function PodcastsView({
       ? [
           {
             key: "ql",
-            label: "Quick Listen",
+            label: "Essentials",
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <circle cx="12" cy="12" r="9.5" />
@@ -1792,7 +1698,7 @@ export default function PodcastsView({
           },
           {
             key: "dl",
-            label: "Detailed Listen",
+            label: "In-depth",
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                 <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
@@ -1814,7 +1720,7 @@ export default function PodcastsView({
       : [
           {
             key: "short",
-            label: "Quick Listen",
+            label: "Essentials",
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
                 <circle cx="12" cy="12" r="9.5" />
@@ -1824,7 +1730,7 @@ export default function PodcastsView({
           },
           {
             key: "long",
-            label: "Detailed Listen",
+            label: "In-depth",
             icon: (
               <svg width="14" height="14" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
                 <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2.2" />
@@ -1988,8 +1894,8 @@ export default function PodcastsView({
   const playing = available ? (isAudioActive || isPlaying) : ttsPlaybackState === "playing";
 
   const trackTypeLabel = (() => {
-    if (selectedTrack === "ql" || selectedTrack === "short") return "Quick Listen";
-    if (selectedTrack === "dl" || selectedTrack === "long") return "Detailed Listen";
+    if (selectedTrack === "ql" || selectedTrack === "short") return "Essentials";
+    if (selectedTrack === "dl" || selectedTrack === "long") return "In-depth";
     if (selectedTrack === "mc") return "Microcast";
     return "Podcast";
   })();
@@ -2503,10 +2409,6 @@ export default function PodcastsView({
                 {totalEpisodes} {totalEpisodes === 1 ? "Podcast" : "Podcasts"}
               </span>
             </div>
-
-            <div style={{ fontSize: "13px", color: "#64748b", fontStyle: "italic" }}>
-              · tap any dotted term for its definition
-            </div>
           </div>
 
           {/* Active Podcast Section Header (Matching Read's SECTION X OF Y) */}
@@ -2654,7 +2556,6 @@ export default function PodcastsView({
             <div className="pod-transcript-header">
               <div className="pod-transcript-title-wrap">
                 <strong className="pod-transcript-title">Transcript</strong>
-                <span className="pod-transcript-subtitle">karaoke sync · click any word to jump · dotted terms tap-to-define</span>
               </div>
               <label className="pod-autofollow-label">
                 <input

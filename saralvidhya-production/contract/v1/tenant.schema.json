@@ -15,15 +15,40 @@
     "shortName": {
       "type": "string"
     },
+    "academicTerm": {
+      "type": "string",
+      "description": "Active academic term label displayed in header/cards, e.g. 'Sem I · 2026'"
+    },
     "branding": {
       "type": "object",
       "required": ["appName", "primaryColor"],
       "properties": {
         "appName": { "type": "string" },
         "primaryColor": { "type": "string" },
-        "logoBlob": { "type": "string" },
-        "faviconBlob": { "type": "string" },
-        "programLabel": { "type": "string" }
+        "accentColor": { "type": "string" },
+        "logoBlob": {
+          "type": "string",
+          "description": "Relative path under tenant root (e.g. 'assets/logo.webp') or external URL"
+        },
+        "faviconBlob": {
+          "type": "string",
+          "description": "Relative path under tenant root (e.g. 'assets/favicon.png') or external URL"
+        },
+        "loginBannerBlob": {
+          "type": "string",
+          "description": "Relative path under tenant root (e.g. 'assets/login-banner.webp') or external URL"
+        },
+        "programLabel": { "type": "string" },
+        "watermarkIcon": { "type": "string" }
+      }
+    },
+    "assets": {
+      "type": "object",
+      "description": "Explicit tenant-level visual assets stored under assets/ in the tenant bundle",
+      "properties": {
+        "logo": { "type": "string" },
+        "favicon": { "type": "string" },
+        "loginBanner": { "type": "string" }
       }
     },
     "features": {
@@ -33,6 +58,7 @@
         "expertPanel": { "type": "boolean" },
         "pyq": { "type": "boolean" },
         "ask": { "type": "boolean" },
+        "guidedFlow": { "type": "boolean" },
         "toolOrder": {
           "type": "array",
           "items": { "type": "string" }

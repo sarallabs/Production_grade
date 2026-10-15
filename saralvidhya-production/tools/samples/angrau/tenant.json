@@ -2,20 +2,32 @@
   "id": "angrau",
   "name": "Acharya N.G. Ranga Agricultural University",
   "shortName": "ANGRAU",
+  "academicTerm": "Sem I · 2026",
   "branding": {
     "appName": "Saral Vidhya",
     "primaryColor": "#059669",
-    "programLabel": "B.Sc. (Hons.) Agriculture"
+    "accentColor": "#10b981",
+    "logoBlob": "assets/logo.png",
+    "faviconBlob": "assets/favicon.png",
+    "programLabel": "B.Sc. (Hons.) Agriculture",
+    "watermarkIcon": "insect"
+  },
+  "assets": {
+    "logo": "assets/logo.png",
+    "favicon": "assets/favicon.png"
   },
   "features": {
     "examinerConsole": true,
     "expertPanel": true,
     "pyq": true,
     "ask": true,
+    "guidedFlow": true,
     "toolOrder": [
       "read.quick",
       "read.detailed",
       "learn.mindmap",
+      "learn.videos",
+      "practice.flashcards",
       "practice.mcq",
       "practice.msq",
       "podcasts",
@@ -32,3 +44,4 @@
     }
   ]
 }
+

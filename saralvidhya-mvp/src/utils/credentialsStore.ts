@@ -1,8 +1,9 @@
 /**
  * credentialsStore.ts
- * Manages login credentials stored in localStorage.
+ * Manages login credentials stored in cloudStorage.
  * Default accounts are seeded on first load.
  */
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export type Role = 'student' | 'expert';
 
@@ -26,7 +27,7 @@ const DEFAULTS: Credential[] = DEFAULT_PASSWORD ? [
 export function loadCredentials(): Credential[] {
   let creds: Credential[];
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = cloudStorage.getItem(KEY);
     if (raw) {
       creds = JSON.parse(raw) as Credential[];
     } else {
@@ -39,7 +40,7 @@ export function loadCredentials(): Credential[] {
     return DEFAULTS;
   }
   // Always sync the default account's password with the build-time value
-  // so deploying a new password takes effect even if localStorage is stale.
+  // so deploying a new password takes effect even if storage is stale.
   const defaultAccount = creds.find(c => c.id === '1');
   if (defaultAccount && defaultAccount.password !== DEFAULT_PASSWORD) {
     defaultAccount.password = DEFAULT_PASSWORD;
@@ -49,7 +50,7 @@ export function loadCredentials(): Credential[] {
 }
 
 export function saveCredentials(creds: Credential[]) {
-  try { localStorage.setItem(KEY, JSON.stringify(creds)); } catch { /* ignore */ }
+  try { cloudStorage.setItem(KEY, JSON.stringify(creds)); } catch { /* ignore */ }
 }
 
 export function findCredential(username: string, password: string): Credential | null {

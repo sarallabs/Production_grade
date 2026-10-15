@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
 import { useTenant } from "@/tenant/TenantProvider";
+import { cloudStorage } from "@/context/CloudStateContext";
 import logoClean from "../logo-clean.png";
 import "./Login.css";
 
@@ -20,12 +21,12 @@ function Login() {
   useEffect(() => {
     // If onboarding (profile + questionnaire) is incomplete, clear bypass flags 
     // on visiting the login page so refreshing the browser returns to the login screen.
-    const profileCompleted = !!localStorage.getItem("saral_student_profile");
-    const questionnaireCompleted = localStorage.getItem("questionnaire_completed") === "true";
+    const profileCompleted = !!cloudStorage.getItem("saral_student_profile");
+    const questionnaireCompleted = cloudStorage.getItem("questionnaire_completed") === "true";
     if (!profileCompleted || !questionnaireCompleted) {
-      localStorage.removeItem("app_authenticated");
-      localStorage.removeItem("app_role");
-      localStorage.removeItem("username");
+      cloudStorage.removeItem("app_authenticated");
+      cloudStorage.removeItem("app_role");
+      cloudStorage.removeItem("username");
     }
   }, []);
 
@@ -46,12 +47,12 @@ function Login() {
       try {
         const ok = await tenantLogin(studentPassword);
         if (ok) {
-          sessionStorage.removeItem("sv_video_open_counts");
-          localStorage.setItem("app_authenticated", "true");
-          localStorage.setItem("app_role", "student");
+          cloudStorage.removeItem("sv_video_open_counts");
+          cloudStorage.setItem("app_authenticated", "true");
+          cloudStorage.setItem("app_role", "student");
           const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
-          localStorage.setItem("username", displayName);
-          localStorage.setItem(
+          cloudStorage.setItem("username", displayName);
+          cloudStorage.setItem(
             "saral_student_profile",
             JSON.stringify({
               firstName: displayName,
@@ -59,7 +60,7 @@ function Login() {
               bypassed: true,
             })
           );
-          localStorage.setItem("questionnaire_completed", "true");
+          cloudStorage.setItem("questionnaire_completed", "true");
 
           const isSubdomain = window.location.hostname.includes(tenantId);
           const targetUrl =
@@ -95,13 +96,13 @@ function Login() {
       );
 
       if (match) {
-        sessionStorage.removeItem("sv_video_open_counts");
-        localStorage.setItem("app_authenticated", "true");
-        localStorage.setItem("app_role", match.role);
-        localStorage.setItem("username", match.username);
+        cloudStorage.removeItem("sv_video_open_counts");
+        cloudStorage.setItem("app_authenticated", "true");
+        cloudStorage.setItem("app_role", match.role);
+        cloudStorage.setItem("username", match.username);
 
         // Bypass onboarding flow for password logins
-        localStorage.setItem(
+        cloudStorage.setItem(
           "saral_student_profile",
           JSON.stringify({
             firstName: match.username,
@@ -109,7 +110,7 @@ function Login() {
             bypassed: true,
           })
         );
-        localStorage.setItem("questionnaire_completed", "true");
+        cloudStorage.setItem("questionnaire_completed", "true");
 
         navigate("/", { replace: true });
       } else {

@@ -2,7 +2,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import React, { useEffect, useState, Suspense } from 'react';
 import Layout from './components/Layout';
 import { FocusModeProvider } from './context/FocusModeContext';
-import { TenantProvider } from './tenant/TenantProvider';
+import { TenantProvider, useTenant } from './tenant/TenantProvider';
+import { cloudStorage } from './context/CloudStateContext';
 import branding from './config/branding.json';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -28,12 +29,12 @@ const PreviousYearQuestions = React.lazy(() => import('./pages/PreviousYearQuest
 
 /** Returns true if the user has passed the login screen */
 function isAuthenticated() {
-  return localStorage.getItem('app_authenticated') === 'true';
+  return cloudStorage.getItem('app_authenticated') === 'true';
 }
 
 /** Protects admin/expert routes with a simple password prompt */
 function AdminGuard({ children }: { children: JSX.Element }) {
-  const [isUnlocked, setIsUnlocked] = useState(sessionStorage.getItem('expert_access') === 'true');
+  const [isUnlocked, setIsUnlocked] = useState(cloudStorage.getItem('expert_access') === 'true');
   if (!isUnlocked) {
     return <ExpertLogin onLogin={() => setIsUnlocked(true)} />;
   }
@@ -43,23 +44,35 @@ function AdminGuard({ children }: { children: JSX.Element }) {
 /** Redirect to /login if not authenticated */
 function AuthGuard({ children }: { children: JSX.Element }) {
   const location = useLocation();
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
+  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+  if (!isAuthenticated() && !tenantAuthed) {
+    const loginRoute = tenantId ? `/${tenantId}/login` : '/login';
+    return <Navigate to={loginRoute} state={{ from: location.pathname + location.search }} replace />;
   }
   return children;
 }
 
 /** Redirect to / if already authenticated (for login page) */
 function GuestOnly({ children }: { children: JSX.Element }) {
-  if (isAuthenticated()) return <Navigate to="/" replace />;
+  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+  if (isAuthenticated() || tenantAuthed) {
+    const homeRoute = tenantId ? `/${tenantId}` : '/';
+    return <Navigate to={homeRoute} replace />;
+  }
   return children;
 }
 
 /** Enforce onboarding after authentication */
 function ProtectedRoute({ children }: { children: JSX.Element }) {
-  const username = localStorage.getItem('username');
-  const questionnaireCompleted = localStorage.getItem('questionnaire_completed') === 'true';
-  const profileCompleted = !!localStorage.getItem('saral_student_profile');
+  const username = cloudStorage.getItem('username');
+  const questionnaireCompleted = cloudStorage.getItem('questionnaire_completed') === 'true';
+  const profileCompleted = !!cloudStorage.getItem('saral_student_profile');
   const location = useLocation();
 
   if (!username && location.pathname !== '/onboarding') {
@@ -95,12 +108,10 @@ export default function App() {
 
   useEffect(() => {
     document.title = `${branding.appName} – Student Learning`;
-    const savedTheme = localStorage.getItem('user_theme') || 'light-blue';
-    const savedFont  = localStorage.getItem('user_font')  || 'sans-serif';
+    const savedTheme = cloudStorage.getItem('user_theme') || 'light-blue';
+    const savedFont  = cloudStorage.getItem('user_font')  || 'sans-serif';
     document.documentElement.setAttribute('data-theme', savedTheme);
     document.documentElement.setAttribute('data-font', savedFont);
-
-    // (Removed aggressive stale auth clearing that was breaking manual URL navigation/refreshes during onboarding)
 
     setInitDone(true);
   }, []);

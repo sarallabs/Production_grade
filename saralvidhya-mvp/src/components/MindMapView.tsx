@@ -258,19 +258,6 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
 
   return (
     <div style={{ border: '1px solid #EFE4DC', borderRadius: 12, overflow: 'hidden', background: '#FFF6F1', fontFamily: FONT }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px', borderBottom: '1px solid #EFE4DC', background: '#FAF1EB' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{ width: 7, height: 7, borderRadius: 2, background: '#4F7B64' }} />
-          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#4F7B64', letterSpacing: '0.04em', textTransform: 'uppercase' }}>Mind Map</span>
-          <span style={{ fontSize: '0.68rem', color: '#8A7F77', marginLeft: 4 }}>· drag to pan · scroll to move · Ctrl+scroll to zoom · click to read</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <button style={tbBtn} onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>
-          <button style={tbBtn} onClick={fit} aria-label="Fit to screen">{Math.round(view.k * 100)}% · Fit</button>
-          <button style={tbBtn} onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
-        </div>
-      </div>
-
       <div
         ref={boxRef}
         onPointerDown={onDown}
@@ -278,13 +265,19 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
         onPointerUp={onUp}
         onPointerCancel={onUp}
         style={{
-          position: 'relative', height: 'min(72vh, 680px)', minHeight: 440, overflow: 'hidden', touchAction: 'none',
+          position: 'relative', height: 'min(76vh, 720px)', minHeight: 480, overflow: 'hidden', touchAction: 'none',
           userSelect: 'none', cursor: panning ? 'grabbing' : 'grab',
           backgroundImage: 'radial-gradient(circle, #EBDDD4 1.2px, transparent 1.2px)',
           backgroundSize: `${24 * view.k}px ${24 * view.k}px`,
           backgroundPosition: `${view.x}px ${view.y}px`,
         }}
       >
+        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <button style={tbBtn} onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>
+          <button style={tbBtn} onClick={fit} aria-label="Fit to screen">{Math.round(view.k * 100)}% · Fit</button>
+          <button style={tbBtn} onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
+        </div>
+
         <div style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
           <svg width="1" height="1" style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}>
             {layout.edges.map(e => (

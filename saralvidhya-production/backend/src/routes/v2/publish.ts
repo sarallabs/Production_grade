@@ -68,8 +68,10 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response) => {
       const newTenantData: Record<string, any> = {
         name: rawTenantConfig.name || tenantId,
         shortName: rawTenantConfig.shortName || tenantId,
+        academicTerm: rawTenantConfig.academicTerm || undefined,
         status: 'pending',
         branding: rawTenantConfig.branding || { primaryColor: '#2563eb', appName: rawTenantConfig.name || tenantId },
+        assets: rawTenantConfig.assets || {},
         features: rawTenantConfig.features || {},
         hierarchy: rawTenantConfig.hierarchy || ['program', 'subject'],
         nodes: rawTenantConfig.nodes || [],
@@ -82,6 +84,13 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response) => {
         domains: [],
       };
       await tenantRef.set(newTenantData, { merge: true });
+      if (Array.isArray(rawTenantConfig.nodes)) {
+        await Promise.all(
+          rawTenantConfig.nodes
+            .filter((n: any) => n && n.id)
+            .map((n: any) => tenantRef.collection('nodes').doc(n.id).set(n, { merge: true }))
+        );
+      }
       tenant = await getTenant(tenantId);
     }
 
@@ -89,8 +98,10 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response) => {
       path: String(f.path),
       stagingPath: '',
       size: f.size,
+      sha256: f.sha256 || undefined,
       contentType: f.contentType || guessContentType(String(f.path)),
     }));
+
 
     const requestId = await createPublishRequest(
       {

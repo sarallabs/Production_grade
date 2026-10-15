@@ -9,6 +9,7 @@ import {
   type ReadSection,
 } from '@/data/sectionizedReadService';
 import type { DifficultyLevel } from '@/data/manifestService';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 interface SectionizedReadViewProps {
   subjectId: string;
@@ -59,7 +60,7 @@ export default function SectionizedReadView({
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(storageKey);
+      const saved = cloudStorage.getItem(storageKey);
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -75,7 +76,7 @@ export default function SectionizedReadView({
     }
 
     try {
-      const savedQc = localStorage.getItem(qcStorageKey);
+      const savedQc = cloudStorage.getItem(qcStorageKey);
       if (savedQc) {
         const parsedQc = JSON.parse(savedQc);
         if (Array.isArray(parsedQc) && parsedQc.length > 0) {
@@ -91,7 +92,7 @@ export default function SectionizedReadView({
     }
 
     try {
-      const savedAnswers = localStorage.getItem(qcAnswersStorageKey);
+      const savedAnswers = cloudStorage.getItem(qcAnswersStorageKey);
       if (savedAnswers) {
         const parsedAnswers = JSON.parse(savedAnswers);
         if (parsedAnswers && typeof parsedAnswers === 'object') {
@@ -223,7 +224,7 @@ export default function SectionizedReadView({
       const updated = new Set(prev);
       updated.add(idx);
       try {
-        localStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
+        cloudStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
       } catch (err) {
         console.warn('Failed to save quick check progress', err);
       }
@@ -234,7 +235,7 @@ export default function SectionizedReadView({
       setQcAnswers((prev) => {
         const updated = { ...prev, [idx]: selectedKey };
         try {
-          localStorage.setItem(qcAnswersStorageKey, JSON.stringify(updated));
+          cloudStorage.setItem(qcAnswersStorageKey, JSON.stringify(updated));
         } catch (err) {
           console.warn('Failed to save quick check answer', err);
         }
@@ -548,10 +549,6 @@ export default function SectionizedReadView({
             >
               {totalSections} Sections
             </span>
-          </div>
-
-          <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic' }}>
-            · tap any dotted term for its definition
           </div>
         </div>
 

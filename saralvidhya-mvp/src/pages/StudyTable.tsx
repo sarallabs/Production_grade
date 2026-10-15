@@ -6,6 +6,8 @@ import MindMapView from "@/components/MindMapView";
 import FlashcardsView from "@/components/FlashcardsView";
 import QuestionBankView from "@/components/QuestionBankView";
 import SectionizedReadView from "@/components/study/SectionizedReadView";
+import KeyTakeawaysView from "@/components/study/KeyTakeawaysView";
+import StudyPlanView from "@/components/study/StudyPlanView";
 import type { ToolId } from "@/components/ToolsMenu";
 import appLogo from "@/logo.png";
 import {
@@ -24,9 +26,12 @@ import {
   getMockTest,
   getChapterVideos,
   getChapterExamQuestions,
+  GCS_BACKEND_SUBJECTS,
+  resolveSubjectId,
   type Chapter,
   type ChapterVideo,
 } from "@/data/contentRepository";
+import { getSectionizedReadData } from "@/data/sectionizedReadService";
 import { truncateMindmapToLevels } from "@/data/markdownService";
 import { toTitleCase } from "@/pages/ChapterList";
 import { askGemini } from "@/services/askService";
@@ -91,6 +96,8 @@ import { AssessmentView } from "@/components/study/AssessmentView";
 import SwotView from "@/components/study/SwotView";
 import LeaderboardView from "@/components/study/LeaderboardView";
 import { getRegistryTenantId } from "@/data/manifestService";
+import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 
 export function StudyToolLoadingWaitScreen() {
@@ -170,7 +177,7 @@ const PERSONA_TO_LEVEL: Record<string, DifficultyLevel> = {
 function getChapterPrefix(subjectId: string): string {
   // MOOCs courses are organised into units, and the sidebar labels them that
   // way — keep the breadcrumb consistent with it.
-  if (sessionStorage.getItem("sv_moocs_mode") === "true") return "Unit";
+  if (cloudStorage.getItem("sv_moocs_mode") === "true") return "Unit";
   const id = (subjectId || "").toLowerCase();
   if (
     id.includes("management") ||
@@ -302,8 +309,6 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
 
 // ── In-memory cache for Mindmap Topic Markdown content ───────────────────────
 const topicNotesCache = new Map<string, { quick: string; detailed?: string }>();
-const angrauTopicCache = topicNotesCache;
-const mlritTopicCache = topicNotesCache;
 
 export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label: string }>): string {
   if (!chapterTitle && (!topics || topics.length === 0)) return '';
@@ -314,81 +319,7 @@ export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label:
   return lines.join('\n');
 }
 
-// Fallback Chapter Configurations for Mindmaps (offline/legacy compatibility)
 type MindmapTopic = { label: string; topicNum?: number; folder?: string; podcastFile?: string; podcastTitle?: string };
-
-const ANGRAU_CHAPTER_CONFIG: Record<number, {
-  chapterTitle: string;
-  topics: MindmapTopic[];
-}> = {
-  1: {
-    chapterTitle: 'Insect Digestive System',
-    topics: [
-      { label: 'Three Primary Gut Regions',              topicNum: 1, podcastFile: '1. Anatomy of the three-part insect gut' },
-      { label: 'Salivary Glands & Specialised Secretions', topicNum: 2, podcastFile: '2. Inside the Insect Foregut and Gizzard' },
-      { label: 'Specialized Physiological Adaptations',  topicNum: 3, podcastFile: '3. How Insect Digestion Activates Bt Toxins' },
-      { label: 'Excretory Integration & Gut Renewal',    topicNum: 4, podcastFile: '4. How insects recycle water from waste' },
-    ],
-  },
-  2: {
-    chapterTitle: 'Metamorphosis & Diapause',
-    topics: [
-      { label: 'Morphogenesis Framework',         topicNum: 1, podcastFile: '1.Three Categories of Insect Metamorphosis' },
-      { label: 'Types of Metamorphosis',          topicNum: 2, podcastFile: '2.Identify Insect Larvae to Protect Crops' },
-      { label: 'Immature & Pupal Classifications',topicNum: 3, podcastFile: '3.Insect pupal structures and escape tactics' },
-      { label: 'Hypermetamorphosis',              topicNum: 4, podcastFile: '4.Blister beetles live multiple larval lives' },
-      { label: 'Endocrine Regulation',            topicNum: 5, podcastFile: '5.Controlling Pests with Hormones and Diapause' },
-      { label: 'Diapause & Dormancy',             topicNum: 6, podcastFile: '6.Predicting insect diapause for crop protection' },
-    ],
-  },
-  3: {
-    chapterTitle: 'Weathering of Rocks and Minerals',
-    topics: [
-      { label: 'Fundamentals & Regolith Genesis',          topicNum: 1, podcastFile: '1. How weathering transforms bedrock into regolith' },
-      { label: 'Physical Weathering (Mechanical Agents)',   topicNum: 2, podcastFile: '2. Mechanical forces breaking down Indian landscapes' },
-      { label: 'Biological Weathering (Living Agents)',     topicNum: 3, podcastFile: '3. How life turns solid rock into soil' },
-      { label: 'Synthesis & Quantitative Summary',          topicNum: 4, podcastFile: '4. Mathematical Forces Turning Rock into Soil' },
-    ],
-  },
-  4: {
-    chapterTitle: 'Pollination, Pollinizers & Parthenocarpy',
-    topics: [
-      { label: 'Fundamentals of Floral Biology & Pollination Anatomy',     topicNum: 1, podcastFile: '1. Floral architecture and double fertilization' },
-      { label: 'Self-Pollination (Autogamy) & Inbreeding Mechanisms',      topicNum: 2, podcastFile: '2. Self-Pollination Mechanisms in Indian Crops' },
-      { label: 'Cross-Pollination (Allogamy / Xenogamy) & Outcrossing',   topicNum: 3, podcastFile: '3.How Indian crops force cross pollination' },
-      { label: 'Pollinators & Pollination Vectors (Abiotic & Biotic)',     topicNum: 4, podcastFile: '4.How nature pollinates India_s crops' },
-      { label: 'Pollinizers & Orchard Layout Management',                  topicNum: 5, podcastFile: '5. Choosing and Arranging Orchard Pollinizers' },
-      { label: 'Parthenocarpy (Seedless Fruit Development)',               topicNum: 6, podcastFile: '6. How Parthenocarpy Creates Seedless Fruit' },
-    ],
-  },
-};
-
-const MLRIT_CHAPTER_CONFIG: Record<number, {
-  chapterTitle: string;
-  topics: MindmapTopic[];
-}> = {
-  1: {
-    chapterTitle: 'Database System Concepts, ER Model & Relational Design',
-    topics: [
-      { label: 'Database Fundamentals & Engine Architecture', topicNum: 1, folder: 'Topic_1_Database_Fundamentals', podcastTitle: '1. How 3-Schema Architecture Prevents Data Chaos' },
-      { label: 'Conceptual Database Design & ER Modeling', topicNum: 2, folder: 'Topic_2_Conceptual_Database_Design', podcastTitle: '2. ER Diagram Rules for DBMS Exams' },
-      { label: 'Advanced ER & Extended ER (EER) Mechanisms', topicNum: 3, folder: 'Topic_3_Advanced_ER_EER', podcastTitle: '3. Weak Entities and Extended ER Mechanics' },
-      { label: 'Relational Model Foundations & Integrity Constraints', topicNum: 4, folder: 'Topic_4_Relational_Model_Constraints', podcastTitle: '4. Relational Keys and Integrity Constraints' },
-      { label: 'Logical Database Design (ER-to-Relational Translation)', topicNum: 5, folder: 'Topic_5_Logical_Database_Design', podcastTitle: '5. How ER Diagrams Become SQL Tables' },
-      { label: 'Relational Querying, Views & Schema Evolution', topicNum: 6, folder: 'Topic_6_Relational_Querying_Views', podcastTitle: '6. SQL Views and Safe Schema Evolution' },
-    ],
-  },
-};
-
-function buildAngrauMermaid(cfg: (typeof ANGRAU_CHAPTER_CONFIG)[number] | null): string {
-  if (!cfg) return '';
-  return buildMindmapMermaid(cfg.chapterTitle, cfg.topics);
-}
-
-function buildMlritMermaid(cfg: (typeof MLRIT_CHAPTER_CONFIG)[number] | null): string {
-  if (!cfg) return '';
-  return buildMindmapMermaid(cfg.chapterTitle, cfg.topics);
-}
 
 function getChapterTopicConfig(subjectId: string, chapterNumber: number, curCh?: Chapter): { chapterTitle: string; topics: MindmapTopic[] } | null {
   if (curCh?.topics && curCh.topics.length > 0) {
@@ -397,19 +328,7 @@ function getChapterTopicConfig(subjectId: string, chapterNumber: number, curCh?:
       topics: curCh.topics,
     };
   }
-  if (subjectId === 'ento_131' && ANGRAU_CHAPTER_CONFIG[chapterNumber]) {
-    return ANGRAU_CHAPTER_CONFIG[chapterNumber];
-  }
-  if ((subjectId === 'dbms' || subjectId.includes('dbms')) && MLRIT_CHAPTER_CONFIG[chapterNumber]) {
-    return MLRIT_CHAPTER_CONFIG[chapterNumber];
-  }
   return null;
-}
-
-/** Topic-level notes live in the bucket at {chapter}/learn/topics/{quick|detailed}/topic_{n}.md */
-function angrauTopicUrl(subjectId: string, chapterNumber: number, kind: 'quick' | 'detailed', topicNum: number): string {
-  const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
-  return `${getSubjectBaseUrl(subjectId)}/${chDir}/learn/topics/${kind}/topic_${topicNum}.md`;
 }
 
 export default function StudyTable() {
@@ -422,7 +341,7 @@ export default function StudyTable() {
   const [mindmapTopicLoading, setMindmapTopicLoading] = useState(false);
   const [mindmapInlineType, setMindmapInlineType] = useState<'text' | 'video' | 'audio'>('text');
   const [mindmapMediaUrl, setMindmapMediaUrl] = useState<string>('');
-  // For microcast inline: which ANGRAU microcast index maps to this topic
+  // For microcast inline: which microcast index maps to this topic
   const [mindmapMicrocastIdx, setMindmapMicrocastIdx] = useState<number>(0);
   const [foundationMindmapContent, setFoundationMindmapContent] = useState<string>('');
   const [foundationLoading, setFoundationLoading] = useState(false);
@@ -432,7 +351,7 @@ export default function StudyTable() {
   // subject (back/forward, bookmark, stripped query) doesn't fall back to "english".
   const COURSE_PARAM_KEYS = ["boardId", "boardName", "cId", "className", "sId", "subjectName", "semesterName"];
   const savedCourseParams: Record<string, string> = (() => {
-    try { return JSON.parse(sessionStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
+    try { return JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
   })();
   const subjectId =
     searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
@@ -440,7 +359,7 @@ export default function StudyTable() {
     if (searchParams.get("sId")) {
       const toSave: Record<string, string> = {};
       COURSE_PARAM_KEYS.forEach((k) => { const v = searchParams.get(k); if (v) toSave[k] = v; });
-      sessionStorage.setItem("sv_last_course_params", JSON.stringify(toSave));
+      cloudStorage.setItem("sv_last_course_params", JSON.stringify(toSave));
     } else if (!searchParams.get("subjectId") && savedCourseParams.sId) {
       setSearchParams((prev) => {
         COURSE_PARAM_KEYS.forEach((k) => { if (!prev.get(k) && savedCourseParams[k]) prev.set(k, savedCourseParams[k]); });
@@ -452,7 +371,7 @@ export default function StudyTable() {
   const treeLogoSrc = subjectId?.startsWith('neb_')
     ? `${import.meta.env.BASE_URL}neb-logo.png`
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
-  const isMoocMode = sessionStorage.getItem('sv_moocs_mode') === 'true';
+  const isMoocMode = cloudStorage.getItem('sv_moocs_mode') === 'true';
 
   const className = searchParams.get("className") || "Class";
   const subjectName = searchParams.get("subjectName") || "Subject";
@@ -561,22 +480,17 @@ export default function StudyTable() {
       const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
       if (topicNotesCache.has(cacheKey)) return;
 
-      const isAngrau = subjectId === 'ento_131' || subjectId === 'entomology';
-      const isMlrit = subjectId === 'dbms' || subjectId.includes('dbms');
+      const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
+        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
+      const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
+        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
 
-      let quick = '';
-      let detailed = '';
-
-      if (isAngrau) {
-        // ANGRAU schema: learn/topics/quick/topic_{n}.md
-        quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
-        // Chapter 3 in ANGRAU only has quick notes, other chapters (1, 2, 4) have detailed notes
-        if (chapterNumber !== 3) {
-          detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
-        }
-      } else if (isMlrit) {
-        // MLRIT schema: learn/topics/topic_{n}/{persona}.md
+      let quick = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+      if (!quick) {
         quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+      }
+      let detailed = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+      if (!detailed) {
         detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
       }
 
@@ -1140,7 +1054,7 @@ export default function StudyTable() {
   }, [activeTool]);
 
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => localStorage.getItem("app_authenticated") === "true",
+    () => cloudStorage.getItem("app_authenticated") === "true",
   );
 
   // Flashcard speak state — button lives in topbar, logic lives in FlashcardsView
@@ -1181,16 +1095,16 @@ export default function StudyTable() {
   };
 
   const handleAuthClick = () => {
-    localStorage.removeItem("app_authenticated");
-    localStorage.removeItem("app_role");
-    localStorage.removeItem("app_user_id");
-    localStorage.removeItem("username");
-    localStorage.removeItem("questionnaire_completed");
-    sessionStorage.removeItem("sv_video_open_counts");
+    cloudStorage.removeItem("app_authenticated");
+    cloudStorage.removeItem("app_role");
+    cloudStorage.removeItem("app_user_id");
+    cloudStorage.removeItem("username");
+    cloudStorage.removeItem("questionnaire_completed");
+    cloudStorage.removeItem("sv_video_open_counts");
     setIsAuthenticated(false);
     const activeTenant = getRegistryTenantId();
     if (activeTenant) {
-      localStorage.removeItem(`sv_session_${activeTenant}`);
+      cloudStorage.removeItem(`sv_session_${activeTenant}`);
       navigate(`/${activeTenant}/login`, { replace: true });
     } else {
       navigate("/login", { replace: true });
@@ -1379,9 +1293,10 @@ export default function StudyTable() {
     switch (activeTool) {
       case "summary":
       case "detailed": {
-        const isDbms = subjectId === "dbms" || subjectId.includes("dbms");
-        const isAngrau = subjectId === "ento_131" || subjectId === "entomology" || subjectId.includes("ento") || subjectId.includes("angrau");
-        if (isDbms || isAngrau) {
+        const isCloudSubject =
+          GCS_BACKEND_SUBJECTS.has(subjectId) ||
+          GCS_BACKEND_SUBJECTS.has(resolveSubjectId(subjectId));
+        if (isCloudSubject) {
           return (
             <SectionizedReadView
               key={`sectionized-read-${subjectId}-${chapterNumber}-${persona}-${activeTool}`}
@@ -1391,17 +1306,13 @@ export default function StudyTable() {
               track={activeTool === "detailed" ? "detailed" : "quick"}
               targetSectionIndex={readTargetSection}
               onPersonaChange={(lvl) => setPersona(lvl)}
-              isPurpleTheme={isDbms || subjectId.includes("mlrit")}
+              isPurpleTheme={false}
               readingHighlight={readingHighlight}
               onLoadedContent={handleLoadedReadContent}
             />
           );
         }
-
-      }
-      // fall-through for non-DBMS subjects or other tools
-      case "key_takeaways":
-      case "study_plan": {
+        // fall-through for non-cloud subjects on summary / detailed
         const parseDetailedHeadings = (markdown: string) => {
           const lines = markdown.split('\n');
           const headings: { text: string }[] = [];
@@ -1487,9 +1398,34 @@ export default function StudyTable() {
               active={readingHighlight.active}
               startWord={readingHighlight.startWord}
               endWord={readingHighlight.endWord}
-              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
+              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}
             />
           </div>
+        );
+      }
+      case "key_takeaways": {
+        return (
+          <KeyTakeawaysView
+            content={typeof content === "string" ? content : ""}
+            subjectId={subjectId}
+            subjectName={subjectName}
+            chapterNumber={chapterNumber}
+            chapterName={chapterName}
+            isPurpleTheme={false}
+          />
+        );
+      }
+      case "study_plan": {
+        return (
+          <StudyPlanView
+            content={typeof content === "string" ? content : ""}
+            subjectId={subjectId}
+            subjectName={subjectName}
+            chapterNumber={chapterNumber}
+            chapterName={chapterName}
+            isPurpleTheme={false}
+            onSwitchTool={(tool) => setActiveTool(tool)}
+          />
         );
       }
       case "mindmap":
@@ -1725,7 +1661,6 @@ export default function StudyTable() {
         const rawMermaid = isNebBiologyChap6
           ? hardcodedMindmap
           : extractMermaidBlock(typeof content === "string" ? content : "");
-        // mermaidContent computed below after ANGRAU config (needs buildAngrauMermaid)
 
         const MINDMAP_MAPPING: Record<string, { type: 'topic' | 'subtopic', id: string }> = {
           'history': { type: 'topic', id: '1' },
@@ -1848,26 +1783,6 @@ export default function StudyTable() {
           'Cardiac / Heart muscle': { hasRead: true },
           'Neuroglia': { hasRead: true },
           'Neurone': { hasRead: true }
-        } : (subjectId === 'ento_131' && chapterNumber === 1) ? {
-          'Foregut / Stomodaeum': { hasPodcast: true },
-          'Proventriculus Anatomy': { hasPodcast: true },
-          'Symbiotic Digestion': { hasPodcast: true },
-          'Termite Hindgut Fermentation': { hasPodcast: true },
-          'Alkaline Midgut - Lepidoptera': { hasPodcast: true },
-          'Bt Cry Toxin Mode of Action': { hasPodcast: true },
-          'Rectal Pads - Water Recovery': { hasPodcast: true },
-        } : (subjectId === 'ento_131' && chapterNumber === 3) ? {
-          'Regolith Formation (Unconsolidated weathered mantle above bedrock)': { hasPodcast: true },
-          'Physical Weathering (Mechanical disintegration into smaller fragments)': { hasPodcast: true },
-          'Biological Weathering (Simultaneous disintegration and decomposition)': { hasPodcast: true },
-          'Master Metric Reference Matrix': { hasPodcast: true },
-        } : (subjectId === 'ento_131' && chapterNumber === 4) ? {
-          '1. Fundamentals of Floral Biology & Pollination Anatomy': { hasPodcast: true },
-          '2. Self-Pollination (Autogamy) & Inbreeding Mechanisms': { hasPodcast: true },
-          '3. Cross-Pollination (Allogamy / Xenogamy) & Outcrossing Adaptations': { hasPodcast: true },
-          '4. Pollinators & Pollination Vectors (Abiotic & Biotic Zoophily)': { hasPodcast: true },
-          '5. Pollinizers & Orchard Layout Management': { hasPodcast: true },
-          '6. Parthenocarpy (Seedless Fruit Development)': { hasPodcast: true },
         } : {};
 
         for (const key of Object.keys(mmIcons)) {
@@ -1949,38 +1864,33 @@ export default function StudyTable() {
                 } catch { return ''; }
               };
 
-              const isAngrau = subjectId === 'ento_131' || subjectId === 'entomology';
-              const isMlrit = subjectId === 'dbms' || subjectId.includes('dbms');
+              const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
+                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
+              const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
+                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
 
-              let quickText = '';
-              let detailedText = '';
-
-              if (isAngrau) {
-                // ANGRAU schema: learn/topics/quick/topic_{n}.md
-                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
-                if (chapterNumber !== 3) {
-                  detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
-                }
-              } else if (isMlrit) {
-                // MLRIT schema: learn/topics/topic_{n}/{persona}.md
+              let quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+              if (!quickText) {
                 quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+              }
+              if (!quickText) {
+                const secQuick = await getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel);
+                const foundSec = secQuick?.sections.find((s) => s.sectionNumber === topicNum) || secQuick?.sections[topicNum];
+                if (foundSec?.content) quickText = foundSec.content;
+              }
+              let detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+              if (!detailedText) {
                 detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
-
-                // Local fallback for offline MLRIT test files if server is not reachable
-                if (!quickText && (match as any).folder) {
-                  const base = `${import.meta.env.BASE_URL}generated_resources/mlrit/dbms/chapter_01/Learn/Read/Topic_Level`;
-                  const mlritQuick = `${base}/${(match as any).folder}/DBMS_UNIT_I_Topic_${topicNum}_${normLevel}.md`;
-                  const mlritDetail = `${base}/${(match as any).folder}/DBMS_UNIT_I_Topic_${topicNum}_advanced.md`;
-                  const q = await fetchSafeMd(mlritQuick);
-                  const d = await fetchSafeMd(mlritDetail);
-                  if (q) quickText = q;
-                  if (d) detailedText = d;
-                }
+              }
+              if (!detailedText) {
+                const secDetailed = await getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel);
+                const foundDet = secDetailed?.sections.find((s) => s.sectionNumber === topicNum) || secDetailed?.sections[topicNum];
+                if (foundDet?.content) detailedText = foundDet.content;
               }
 
               setMindmapTopicContent(quickText || `Summary content for ${match.label}`);
-              setMindmapDetailedContent(detailedText || `Detailed notes for ${match.label}`);
-              topicNotesCache.set(cacheKey, { quick: quickText, detailed: detailedText });
+              setMindmapDetailedContent(detailedText || quickText || `Detailed notes for ${match.label}`);
+              topicNotesCache.set(cacheKey, { quick: quickText, detailed: detailedText || quickText });
             } catch (e) {
               console.error('Dynamic mindmap topic fetch error', e);
               setMindmapTopicContent(`Content for ${match.label}`);
@@ -2034,7 +1944,7 @@ export default function StudyTable() {
 
           if (mapped) {
             const cacheKey = `neb_${mapped.type}_${mapped.id}`;
-            const cached = angrauTopicCache.get(cacheKey);
+            const cached = topicNotesCache.get(cacheKey);
 
             if (cached && cached.quick) {
               setMindmapTopicContent(cached.quick);
@@ -2061,9 +1971,9 @@ export default function StudyTable() {
                   quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
                   setMindmapTopicContent(quickText);
                   setMindmapTopicLoading(false);
-                  const entry = angrauTopicCache.get(cacheKey) || { quick: quickText };
+                  const entry = topicNotesCache.get(cacheKey) || { quick: quickText };
                   entry.quick = quickText;
-                  angrauTopicCache.set(cacheKey, entry);
+                  topicNotesCache.set(cacheKey, entry);
                 })
                 .catch(e => {
                   console.error(e);
@@ -2076,9 +1986,9 @@ export default function StudyTable() {
                   detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
                   detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
                   setMindmapDetailedContent(detailedText);
-                  const entry = angrauTopicCache.get(cacheKey) || { quick: '' };
+                  const entry = topicNotesCache.get(cacheKey) || { quick: '' };
                   entry.detailed = detailedText;
-                  angrauTopicCache.set(cacheKey, entry);
+                  topicNotesCache.set(cacheKey, entry);
                 })
                 .catch(console.error);
             } catch (e) {
@@ -2464,7 +2374,7 @@ export default function StudyTable() {
         return (
           <MarkdownView
             content={typeof content === "string" ? content : ""}
-            isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
+            isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}
           />
         );
       case "ask":
@@ -3617,7 +3527,7 @@ export default function StudyTable() {
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "videos"
+                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
                   ? "0px"
                   : activeTool === "assessment"
                   ? "4px 16px 0 16px"
@@ -3633,7 +3543,7 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "videos" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "videos" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
               <div
                 style={{
                   display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
@@ -3914,40 +3824,13 @@ export default function StudyTable() {
                               onHighlightChange={(payload) => setReadingHighlight(payload)}
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
-                              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms") || subjectId.includes("mlrit")}
+                              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}
                             />
                           </div>
                         )}
                       </div>
                     </div>
                   </>
-                ) : (activeTool === "key_takeaways" || activeTool === "study_plan") ? (
-                  <div className="sv-hdr" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: '48px', padding: '4px 0 8px 0' }}>
-                    <div className="sv-hdr-card">
-                      <span className="sv-hdr-crumb">
-                        <span className="crumb-subject" style={{ color: '#2563eb', fontWeight: 700 }}>{subjectName}</span>
-                        <span className="crumb-sep" style={{ color: '#94a3b8', margin: '0 5px' }}>·</span>
-                        <span className="crumb-chapter" style={{ color: '#4f46e5', fontWeight: 700 }}>{getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}</span>
-                      </span>
-                    </div>
-                    <div style={{ flex: 1 }} />
-                    <div className="sv-hdr-controls">
-                      <ReadAloudBar
-                        key={`${persona}-${activeTool}`}
-                        text={preprocessSummaryText(typeof content === "string" ? content : "")}
-                        subjectId={subjectId}
-                        persona={persona}
-                        onPlay={() => {
-                          if (window.innerWidth < 768) {
-                            setIsSidebarOpen(false);
-                          }
-                        }}
-                        onHighlightChange={(payload) => setReadingHighlight(payload)}
-                        activeTool={activeTool}
-                        onSwitchTool={setActiveTool}
-                      />
-                    </div>
-                  </div>
                 ) : (
                   <>
                     <div style={{ display: "flex", alignItems: "center", width: "200px" }}>
@@ -3999,7 +3882,7 @@ export default function StudyTable() {
                     activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
@@ -4010,11 +3893,13 @@ export default function StudyTable() {
                     activeTool === "assessment" ||
                     activeTool === "videos" ||
                     activeTool === "ask" ||
+                    activeTool === "key_takeaways" ||
+                    activeTool === "study_plan" ||
                     ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
+                      : activeTool === "summary" || activeTool === "detailed" || (activeTool === "mindmap" && mindmapTopicOpen)
                         ? "1px solid #22c55e4D"
                         : "1px solid #E2E8F0",
                 overflowX: "hidden",
@@ -4024,22 +3909,24 @@ export default function StudyTable() {
                     ? "hidden"
                     : "auto",
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam")
+                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "prep_exam")
                     ? "0px"
                     : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                       ? "0px"
                       : activeTool === "assessment"
                         ? "12px"
-                        : activeTool === "podcasts"
-                          ? "16px"
-                          : activeTool === "deep_dive"
-                            ? "8px"
-                            : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
-                              ? "0px"
-                              : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "48px" : "16px",
+                        : activeTool === "videos"
+                          ? "4px"
+                          : activeTool === "podcasts"
+                            ? "16px"
+                            : activeTool === "deep_dive"
+                              ? "8px"
+                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
+                                ? "0px"
+                                : "20px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : activeTool === "videos" ? "8px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >

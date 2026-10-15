@@ -172,12 +172,7 @@ export default function MarkdownView({ content, isPurpleTheme = true }: Props) {
           img(props) {
             let cleanSrc = props.src ? props.src.replace(/base64,\s+/g, 'base64,') : props.src;
             if (cleanSrc && !cleanSrc.startsWith('http://') && !cleanSrc.startsWith('https://') && !cleanSrc.startsWith('data:')) {
-              const imgBase = `${GCS_API_BASE}/api/content/angrau/entomology`;
-              if (cleanSrc.startsWith('../Mindmaps/')) {
-                cleanSrc = `${imgBase}/chapter_01/${cleanSrc.replace('../Mindmaps/', 'Mindmaps/')}`;
-              } else if (cleanSrc.startsWith('../../extracted_images/')) {
-                cleanSrc = `${imgBase}/chapter_02/${cleanSrc.replace('../../', '')}`;
-              } else if (cleanSrc.startsWith('/api/')) {
+              if (cleanSrc.startsWith('/api/')) {
                 cleanSrc = `${GCS_API_BASE}${cleanSrc}`;
               }
             }
