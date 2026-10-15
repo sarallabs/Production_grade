@@ -4,6 +4,7 @@ import { getAssessments } from "@/data/contentRepository";
 import { parseQuestionBank } from "@/utils/quizParser";
 import { type AssessmentQuestion } from "@/utils/assessmentTypes";
 import { StudyToolLoadingWaitScreen } from "@/pages/StudyTable";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * AssessmentView Component
@@ -192,7 +193,7 @@ export function AssessmentView({
     if (step === questions.length - 1) {
       const finalScore = isAnswerCorrect ? score + 1 : score;
       const pct = Math.round((finalScore / questions.length) * 100);
-      localStorage.setItem(`ekam_quiz_score_${subjectId}_${chapterNumber}`, pct.toString());
+      cloudStorage.setItem(`ekam_quiz_score_${subjectId}_${chapterNumber}`, pct.toString());
     }
   };
 

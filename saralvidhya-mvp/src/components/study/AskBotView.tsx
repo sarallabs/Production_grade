@@ -8,6 +8,7 @@ import {
   type SpeechSession,
 } from "@/services/speechService";
 import type { DifficultyLevel } from "@/data/contentRepository";
+import { cloudStorage } from "@/context/CloudStateContext";
 import "./AskBotView.css";
 
 const ASK_LANGUAGES = [
@@ -59,7 +60,7 @@ export default function AskBotView({
   // History questions list
   const [historyItems, setHistoryItems] = useState<string[]>(() => {
     try {
-      const raw = localStorage.getItem(historyStorageKey);
+      const raw = cloudStorage.getItem(historyStorageKey);
       if (raw) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -74,7 +75,7 @@ export default function AskBotView({
     { role: "user" | "bot"; text: string; loading?: boolean }[]
   >(() => {
     try {
-      const raw = localStorage.getItem(chatStorageKey);
+      const raw = cloudStorage.getItem(chatStorageKey);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       return Array.isArray(parsed)
@@ -128,12 +129,12 @@ export default function AskBotView({
   // Persist chat
   useEffect(() => {
     const cleaned = messages.filter((m) => !m.loading).slice(-30);
-    localStorage.setItem(chatStorageKey, JSON.stringify(cleaned));
+    cloudStorage.setItem(chatStorageKey, JSON.stringify(cleaned));
   }, [messages, chatStorageKey]);
 
   // Persist history
   useEffect(() => {
-    localStorage.setItem(historyStorageKey, JSON.stringify(historyItems));
+    cloudStorage.setItem(historyStorageKey, JSON.stringify(historyItems));
   }, [historyItems, historyStorageKey]);
 
   // Auto-scroll: show the loading dots / user question at the bottom, but once a
@@ -482,7 +483,7 @@ export default function AskBotView({
 
   const handleNewChat = () => {
     setMessages([]);
-    localStorage.removeItem(chatStorageKey);
+    cloudStorage.removeItem(chatStorageKey);
     setInput("");
   };
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import branding from '../config/branding.json';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -9,8 +10,8 @@ export default function Onboarding() {
   const handleSubmit = () => {
     if (!username.trim()) return;
     
-    // Save to global localStorage
-    localStorage.setItem('username', username.trim());
+    // Save to cloudStorage
+    cloudStorage.setItem('username', username.trim());
     
     // After boarding, redirect to questionnaire
     navigate('/questionnaire', { replace: true });

@@ -52,13 +52,6 @@ export default function ResourceTabs() {
   useEffect(() => {
     if (!subjectId || !chapterNumber) return;
 
-    // MVP: no payment gating needed (same as StudyTable.tsx)
-    // const hasPaid = localStorage.getItem(`registered_${subjectId}`) === 'true';
-    // if (!hasPaid) {
-    //   navigate(`/course/${subjectId}`);
-    //   return;
-    // }
-
     getManifest().then((m) => {
       const resourceTabs = getResourceTabs(m);
       setTabs(resourceTabs);

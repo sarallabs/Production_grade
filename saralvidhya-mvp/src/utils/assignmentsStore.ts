@@ -1,7 +1,8 @@
 /**
  * assignmentsStore.ts
- * Manages expert-assigned assignments for students, stored in localStorage.
+ * Manages expert-assigned assignments for students, stored in cloudStorage.
  */
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export interface Assignment {
   id: string;
@@ -20,14 +21,14 @@ const KEY = 'saral_assignments';
 
 export function loadAssignments(): Assignment[] {
   try {
-    const raw = localStorage.getItem(KEY);
+    const raw = cloudStorage.getItem(KEY);
     if (raw) return JSON.parse(raw) as Assignment[];
   } catch { /* ignore */ }
   return [];
 }
 
 function saveAssignments(assignments: Assignment[]) {
-  try { localStorage.setItem(KEY, JSON.stringify(assignments)); } catch { /* ignore */ }
+  try { cloudStorage.setItem(KEY, JSON.stringify(assignments)); } catch { /* ignore */ }
 }
 
 export function addAssignment(a: Omit<Assignment, 'id' | 'createdAt' | 'status'>): Assignment {

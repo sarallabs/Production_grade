@@ -1,9 +1,9 @@
 import { Firestore } from '@google-cloud/firestore';
-import { promoteStagingFiles, readJsonFile } from './storage.js';
+import { promoteStagingFiles, readJsonFile, resolveStorageAssetUrl } from './storage.js';
 import { detectTools } from './toolDiscovery.js';
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID || 'saralvidhya-production';
-const firestore = new Firestore({ projectId: PROJECT_ID });
+export const firestore = new Firestore({ projectId: PROJECT_ID });
 
 // ── In-Memory Cache (TTL: 60 seconds) ──────────────────────────────────
 interface CacheEntry<T> {
@@ -36,25 +36,60 @@ export function invalidateCache(prefix: string): void {
   }
 }
 
+function normalizeAssetPath(scopePrefix: string, relPath?: string | null): string | undefined {
+  if (!relPath || typeof relPath !== 'string') return undefined;
+  const trimmed = relPath.trim();
+  if (!trimmed) return undefined;
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed;
+  }
+  const cleanRel = trimmed.replace(/^\/+/, '');
+  const cleanScope = scopePrefix.replace(/^\/+|\/+$/g, '');
+  if (!cleanScope || cleanRel.startsWith(`${cleanScope}/`)) {
+    return cleanRel;
+  }
+  return `${cleanScope}/${cleanRel}`;
+}
+
 // ── Types ─────────────────────────────────────────────────────────────
 export interface TenantPublic {
   id: string;
   name: string;
   shortName: string;
+  academicTerm?: string;
   status: 'active' | 'suspended' | 'pending';
   domains: string[];
   branding: {
     appName: string;
     logoBlob?: string;
+    logoUrl?: string;
     faviconBlob?: string;
+    faviconUrl?: string;
+    loginBannerBlob?: string;
+    loginBannerUrl?: string;
     primaryColor: string;
+    accentColor?: string;
     programLabel?: string;
+    watermarkIcon?: string;
+  };
+  assets?: {
+    logo?: string;
+    logoUrl?: string;
+    favicon?: string;
+    faviconUrl?: string;
+    loginBanner?: string;
+    loginBannerUrl?: string;
   };
   features: {
     examinerConsole?: boolean;
     expertPanel?: boolean;
     pyq?: boolean;
     ask?: boolean;
+    guidedFlow?: boolean;
     toolOrder?: string[];
   };
   hierarchy: string[];
@@ -70,25 +105,108 @@ export interface TenantAuth {
   updatedAt: string;
 }
 
+export interface VideoManifestItem {
+  id: string;
+  title: string;
+  provider?: 'youtube' | 'gcs' | 'external';
+  videoId?: string;
+  gcsPath?: string | null;
+  url?: string;
+  videoUrl?: string;
+  thumbnail?: string;
+  thumbnailUrl?: string;
+  duration?: string;
+  durationSeconds?: number;
+  topics?: string[];
+  order?: number;
+}
+
+export interface CatalogChapterSummary {
+  id: string;
+  number: number;
+  title: string;
+  shortTitle?: string;
+  description?: string;
+  estimatedMinutes?: number;
+  status?: string;
+  heroImageBlob?: string;
+  heroImageUrl?: string;
+  thumbnailUrl?: string;
+  topics?: any[];
+  topicCount: number;
+  videoCount: number;
+  tools?: Record<string, any>;
+}
+
 export interface SubjectItem {
   id: string;
   name: string;
   code?: string;
+  subtitle?: string;
+  programLabel?: string;
+  description?: string;
+  credits?: number;
   parentNodeId?: string | null;
   iconBlob?: string;
+  iconUrl?: string;
+  bannerUrl?: string;
+  assets?: {
+    icon?: string;
+    iconUrl?: string;
+    banner?: string;
+    bannerUrl?: string;
+    thumbnail?: string;
+    thumbnailUrl?: string;
+  };
+  cardStyle?: {
+    accentColor?: string;
+    gradient?: string;
+    badgeText?: string;
+    iconBgColor?: string;
+  };
+  faculty?: {
+    name?: string;
+    title?: string;
+    avatarBlob?: string;
+    avatarUrl?: string;
+  };
+  units?: string[];
   order: number;
   status: 'active' | 'archived';
   chaptersCount?: number;
-  chapters?: Array<{ id: string; number: number; title: string; status?: string; topics?: any[] }>;
+  chapters?: CatalogChapterSummary[];
 }
 
 export interface ChapterItem {
   id: string;
   number: number;
   title: string;
+  shortTitle?: string;
+  description?: string;
+  estimatedMinutes?: number;
+  heroImageBlob?: string;
+  heroImageUrl?: string;
+  assets?: {
+    heroImage?: string;
+    heroImageUrl?: string;
+    thumbnail?: string;
+    thumbnailUrl?: string;
+    mindmapImage?: string;
+    mindmapImageUrl?: string;
+    watermarkSvg?: string;
+  };
   status: 'draft' | 'published' | 'archived';
   currentVersion: number;
-  topics?: Array<{ id: string; label: string; order: number; topicNum?: number }>;
+  topics?: Array<{
+    id: string;
+    label: string;
+    title?: string;
+    order?: number;
+    topicNum?: number;
+    estimatedMinutes?: number;
+    subtopics?: string[];
+  }>;
+  videos?: VideoManifestItem[];
   tools?: Record<string, any>;
   files?: Record<string, { path: string; size?: number; contentType?: string }>;
 }
@@ -99,7 +217,7 @@ export interface PublishRequest {
   scope: string;
   status: 'uploading' | 'pending' | 'approved' | 'rejected' | 'failed';
   diffSummary?: any;
-  files: Array<{ path: string; stagingPath: string; size?: number; contentType?: string }>;
+  files: Array<{ path: string; stagingPath: string; size?: number; contentType?: string; sha256?: string }>;
   submittedBy: string;
   submittedAt: string;
   decidedBy?: string;
@@ -110,7 +228,7 @@ export interface PublishRequest {
 // ── Registry Operations ───────────────────────────────────────────────
 
 /**
- * Gets tenant public details (branding, features, storage config).
+ * Gets tenant public details (branding, signed asset URLs, features, storage config).
  * Omits private authentication fields.
  */
 export async function getTenant(tenantId: string): Promise<TenantPublic | null> {
@@ -122,19 +240,46 @@ export async function getTenant(tenantId: string): Promise<TenantPublic | null> 
   if (!doc.exists) return null;
 
   const data = doc.data()!;
+  const storageCfg = data.storage || {
+    bucket: 'saralvidhya-artifacts',
+    prefix: `${tenantId}`,
+  };
+  const livePrefix = storageCfg.prefix || tenantId;
+  const rawBranding = data.branding || { primaryColor: '#2563eb', appName: data.name || tenantId };
+  const rawAssets = data.assets || {};
+
+  const logoRef = rawAssets.logo || rawBranding.logoBlob;
+  const faviconRef = rawAssets.favicon || rawBranding.faviconBlob;
+  const loginBannerRef = rawAssets.loginBanner || rawBranding.loginBannerBlob;
+
+  const [logoUrl, faviconUrl, loginBannerUrl] = await Promise.all([
+    resolveStorageAssetUrl(livePrefix, logoRef, 60),
+    resolveStorageAssetUrl(livePrefix, faviconRef, 60),
+    resolveStorageAssetUrl(livePrefix, loginBannerRef, 60),
+  ]);
+
   const tenant: TenantPublic = {
     id: tenantId,
     name: data.name || tenantId,
     shortName: data.shortName || tenantId,
+    academicTerm: data.academicTerm,
     status: data.status || 'active',
     domains: data.domains || [],
-    branding: data.branding || { primaryColor: '#2563eb', appName: data.name },
+    branding: {
+      ...rawBranding,
+      logoUrl,
+      faviconUrl,
+      loginBannerUrl,
+    },
+    assets: {
+      ...rawAssets,
+      logoUrl,
+      faviconUrl,
+      loginBannerUrl,
+    },
     features: data.features || {},
     hierarchy: data.hierarchy || ['program', 'subject'],
-    storage: data.storage || {
-      bucket: 'saralvidhya-artifacts',
-      prefix: `${tenantId}`,
-    },
+    storage: storageCfg,
   };
 
   setInCache(cacheKey, tenant, 60);
@@ -182,7 +327,7 @@ export async function setTenantPassword(
 }
 
 /**
- * Gets catalog for a tenant (nodes + published subjects).
+ * Gets catalog for a tenant (nodes + published subjects + chapter summaries with signed asset URLs).
  */
 export async function getCatalog(tenantId: string): Promise<{
   nodes: any[];
@@ -191,6 +336,9 @@ export async function getCatalog(tenantId: string): Promise<{
   const cacheKey = `catalog:${tenantId}`;
   const cached = getFromCache<{ nodes: any[]; subjects: SubjectItem[] }>(cacheKey);
   if (cached) return cached;
+
+  const tenant = await getTenant(tenantId);
+  const livePrefix = tenant?.storage?.prefix || tenantId;
 
   const nodesSnap = await firestore
     .collection('tenants')
@@ -210,23 +358,86 @@ export async function getCatalog(tenantId: string): Promise<{
 
   const subjects = await Promise.all(
     subjectsSnap.docs.map(async (d) => {
+      const sdata = d.data();
+      const sid = d.id;
       const chSnap = await d.ref.collection('chapters').get();
-      const chapters = chSnap.docs
-        .map((c) => {
-          const cd = c.data();
+
+      const rawChapters = chSnap.docs
+        .map((c) => ({ id: c.id, ...c.data() } as Record<string, any>))
+        .filter((c) => (c.status || 'published') === 'published')
+        .sort((a, b) => (a.number || 0) - (b.number || 0));
+
+      const chapters: CatalogChapterSummary[] = await Promise.all(
+        rawChapters.map(async (cd) => {
+          const cid = cd.id;
+          const chScope = `${sid}/${cid}`;
+          const heroRef = normalizeAssetPath(
+            chScope,
+            cd.assets?.heroImage || cd.heroImageBlob
+          );
+          const thumbRef = normalizeAssetPath(chScope, cd.assets?.thumbnail);
+          const [heroImageUrl, thumbnailUrl] = await Promise.all([
+            resolveStorageAssetUrl(livePrefix, heroRef, 60),
+            resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+          ]);
+          const topics = Array.isArray(cd.topics) ? cd.topics : [];
+          const videos = Array.isArray(cd.videos) ? cd.videos : [];
+          const estimatedMinutes =
+            typeof cd.estimatedMinutes === 'number'
+              ? cd.estimatedMinutes
+              : Math.max(15, topics.length * 10 || 30);
+
           return {
-            id: c.id,
+            id: cid,
             number: cd.number || 0,
-            title: cd.title || c.id,
+            title: cd.title || cid,
+            shortTitle: cd.shortTitle || cd.title || cid,
+            description: cd.description,
+            estimatedMinutes,
             status: cd.status || 'published',
-            topics: cd.topics || [],
+            heroImageBlob: heroRef,
+            heroImageUrl,
+            thumbnailUrl: thumbnailUrl || heroImageUrl,
+            topics,
+            topicCount: topics.length,
+            videoCount: videos.length,
+            tools: cd.tools || {},
           };
         })
-        .filter((c) => c.status === 'published')
-        .sort((a, b) => a.number - b.number);
+      );
+
+      const iconRef = normalizeAssetPath(sid, sdata.assets?.icon || sdata.iconBlob);
+      const bannerRef = normalizeAssetPath(sid, sdata.assets?.banner);
+      const thumbRef = normalizeAssetPath(sid, sdata.assets?.thumbnail);
+      const facultyAvatarRef = normalizeAssetPath(sid, sdata.faculty?.avatarBlob);
+
+      const [iconUrl, bannerUrl, thumbnailUrl, avatarUrl] = await Promise.all([
+        resolveStorageAssetUrl(livePrefix, iconRef, 60),
+        resolveStorageAssetUrl(livePrefix, bannerRef, 60),
+        resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+        resolveStorageAssetUrl(livePrefix, facultyAvatarRef, 60),
+      ]);
+
       return {
-        id: d.id,
-        ...(d.data() as Omit<SubjectItem, 'id'>),
+        id: sid,
+        ...(sdata as Omit<SubjectItem, 'id'>),
+        subtitle: sdata.subtitle || sdata.programLabel || tenant?.branding?.programLabel,
+        programLabel: sdata.programLabel || sdata.subtitle || tenant?.branding?.programLabel,
+        iconBlob: iconRef,
+        iconUrl,
+        bannerUrl,
+        assets: {
+          ...(sdata.assets || {}),
+          iconUrl,
+          bannerUrl,
+          thumbnailUrl,
+        },
+        faculty: sdata.faculty
+          ? {
+              ...sdata.faculty,
+              avatarUrl,
+            }
+          : undefined,
         chapters,
         chaptersCount: chapters.length,
       } as SubjectItem;
@@ -235,14 +446,13 @@ export async function getCatalog(tenantId: string): Promise<{
 
   subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-
   const result = { nodes, subjects };
   setInCache(cacheKey, result, 60);
   return result;
 }
 
 /**
- * Gets chapter details, metadata, and resolved files for the active (or requested) version.
+ * Gets chapter details, metadata, signed asset URLs, videos, and resolved files for the active (or requested) version.
  */
 export async function getChapter(
   tenantId: string,
@@ -253,6 +463,9 @@ export async function getChapter(
   const cacheKey = `chapter:${tenantId}:${subjectId}:${chapterId}:${version || 'current'}`;
   const cached = getFromCache<ChapterItem>(cacheKey);
   if (cached) return cached;
+
+  const tenant = await getTenant(tenantId);
+  const livePrefix = tenant?.storage?.prefix || tenantId;
 
   const chapterRef = firestore
     .collection('tenants')
@@ -271,13 +484,66 @@ export async function getChapter(
   const versionDoc = await chapterRef.collection('versions').doc(String(targetVersion)).get();
   const versionData = versionDoc.exists ? versionDoc.data() : null;
 
+  const chScope = `${subjectId}/${chapterId}`;
+  const rawAssets = chapterData.assets || {};
+  const heroRef = normalizeAssetPath(chScope, rawAssets.heroImage || chapterData.heroImageBlob);
+  const thumbRef = normalizeAssetPath(chScope, rawAssets.thumbnail);
+  const mindmapImgRef = normalizeAssetPath(chScope, rawAssets.mindmapImage);
+
+  const [heroImageUrl, thumbnailUrl, mindmapImageUrl] = await Promise.all([
+    resolveStorageAssetUrl(livePrefix, heroRef, 60),
+    resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+    resolveStorageAssetUrl(livePrefix, mindmapImgRef, 60),
+  ]);
+
+  const rawVideos: VideoManifestItem[] = Array.isArray(chapterData.videos)
+    ? chapterData.videos
+    : [];
+  const videos: VideoManifestItem[] = await Promise.all(
+    rawVideos.map(async (v) => {
+      const vThumbRef = normalizeAssetPath(chScope, v.thumbnail);
+      const vGcsRef = normalizeAssetPath(chScope, v.gcsPath);
+      const [vThumbUrl, vSignedVideoUrl] = await Promise.all([
+        resolveStorageAssetUrl(livePrefix, vThumbRef, 60),
+        resolveStorageAssetUrl(livePrefix, vGcsRef, 60),
+      ]);
+      const fallbackYtThumb =
+        v.videoId && !vThumbUrl
+          ? `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`
+          : undefined;
+      return {
+        ...v,
+        thumbnailUrl: vThumbUrl || fallbackYtThumb,
+        videoUrl: vSignedVideoUrl || v.url,
+      };
+    })
+  );
+
+  const topics = Array.isArray(chapterData.topics) ? chapterData.topics : [];
+  const estimatedMinutes =
+    typeof chapterData.estimatedMinutes === 'number'
+      ? chapterData.estimatedMinutes
+      : Math.max(15, topics.length * 10 || 30);
+
   const result: ChapterItem = {
     id: chapterId,
     number: chapterData.number,
     title: chapterData.title,
+    shortTitle: chapterData.shortTitle || chapterData.title,
+    description: chapterData.description,
+    estimatedMinutes,
+    heroImageBlob: heroRef,
+    heroImageUrl,
+    assets: {
+      ...rawAssets,
+      heroImageUrl,
+      thumbnailUrl: thumbnailUrl || heroImageUrl,
+      mindmapImageUrl,
+    },
     status: chapterData.status || 'published',
     currentVersion: targetVersion,
-    topics: chapterData.topics || [],
+    topics,
+    videos,
     tools: chapterData.tools || {},
     files: versionData?.files || {},
   };
@@ -336,7 +602,7 @@ export async function listPendingPublishRequests(): Promise<PublishRequest[]> {
 
 /**
  * Approves a publish request, promotes staging files to live in GCS,
- * and updates chapter version & registry in a transaction.
+ * and updates tenant, subject, and chapter registry metadata in Firestore.
  */
 export async function approvePublishRequest(
   requestId: string,
@@ -362,17 +628,19 @@ export async function approvePublishRequest(
   await promoteStagingFiles(stagingPrefix, livePrefix, fileRelPaths);
 
   // 2. Group files by subject and chapter, and read optional metadata files
-  // Path format: {subjectId}/chapter_{NN}/{relativePath}
-  const chapterGroups = new Map<string, { subjectId: string; chapterId: string; files: Record<string, any> }>();
+  const chapterGroups = new Map<
+    string,
+    { subjectId: string; chapterId: string; files: Record<string, any> }
+  >();
   const subjectIds = new Set<string>();
   const filePaths = new Set(req.files.map((f) => f.path));
 
   for (const f of req.files) {
     const parts = f.path.split('/');
-    if (parts.length >= 2) {
+    if (parts.length >= 2 && parts[0] !== 'assets' && parts[0] !== 'media') {
       const subjectId = parts[0];
       subjectIds.add(subjectId);
-      if (parts.length >= 3) {
+      if (parts.length >= 3 && parts[1] !== 'assets') {
         const chapterId = parts[1];
         const groupKey = `${subjectId}:${chapterId}`;
         if (!chapterGroups.has(groupKey)) {
@@ -382,9 +650,16 @@ export async function approvePublishRequest(
           path: f.path,
           size: f.size,
           contentType: f.contentType,
+          sha256: f.sha256,
         };
       }
     }
+  }
+
+  // Read tenant.json if included
+  let tenantMeta: Record<string, any> | null = null;
+  if (filePaths.has('tenant.json')) {
+    tenantMeta = await readJsonFile(`${livePrefix}/tenant.json`);
   }
 
   const subjectMeta = new Map<string, any>();
@@ -392,11 +667,20 @@ export async function approvePublishRequest(
     const p = `${sid}/subject.json`;
     if (filePaths.has(p)) subjectMeta.set(sid, await readJsonFile(`${livePrefix}/${p}`));
   }
+
   const chapterMeta = new Map<string, any>();
+  const chapterVideosMeta = new Map<string, any[]>();
   for (const g of chapterGroups.values()) {
+    const key = `${g.subjectId}:${g.chapterId}`;
     const p = `${g.subjectId}/${g.chapterId}/chapter.json`;
     if (filePaths.has(p)) {
-      chapterMeta.set(`${g.subjectId}:${g.chapterId}`, await readJsonFile(`${livePrefix}/${p}`));
+      chapterMeta.set(key, await readJsonFile(`${livePrefix}/${p}`));
+    }
+    const vp = `${g.subjectId}/${g.chapterId}/learn/videos.json`;
+    if (filePaths.has(vp)) {
+      const vdata = await readJsonFile(`${livePrefix}/${vp}`);
+      const vlist = Array.isArray(vdata) ? vdata : Array.isArray(vdata?.videos) ? vdata.videos : [];
+      chapterVideosMeta.set(key, vlist);
     }
   }
 
@@ -419,8 +703,21 @@ export async function approvePublishRequest(
       decidedAt: now,
     });
 
-    // Ensure tenant is set to active if it was pending
-    tx.set(tenantRef, { status: 'active', updatedAt: now }, { merge: true });
+    // Update tenant document with any new metadata from tenant.json
+    const tenantUpdate: Record<string, any> = { status: 'active', updatedAt: now };
+    if (tenantMeta) {
+      for (const k of ['name', 'shortName', 'academicTerm', 'branding', 'assets', 'features', 'hierarchy']) {
+        if (tenantMeta[k] !== undefined) tenantUpdate[k] = tenantMeta[k];
+      }
+      if (Array.isArray(tenantMeta.nodes)) {
+        for (const node of tenantMeta.nodes) {
+          if (node && node.id) {
+            tx.set(tenantRef.collection('nodes').doc(node.id), node, { merge: true });
+          }
+        }
+      }
+    }
+    tx.set(tenantRef, tenantUpdate, { merge: true });
 
     // Upsert subject docs (new subjects default to active so they show in the catalog)
     [...subjectIds].forEach((sid, i) => {
@@ -429,8 +726,32 @@ export async function approvePublishRequest(
       const doc: Record<string, any> = { updatedAt: now };
       if (meta.name) doc.name = meta.name;
       else if (!exists) doc.name = sid;
-      for (const k of ['code', 'parentNodeId', 'order', 'status', 'faculty', 'units']) {
+      for (const k of [
+        'code',
+        'subtitle',
+        'programLabel',
+        'description',
+        'credits',
+        'parentNodeId',
+        'order',
+        'status',
+        'cardStyle',
+        'faculty',
+        'units',
+      ]) {
         if (meta[k] !== undefined) doc[k] = meta[k];
+      }
+      if (meta.iconBlob || meta.assets?.icon) {
+        doc.iconBlob = normalizeAssetPath(sid, meta.iconBlob || meta.assets?.icon);
+      }
+      if (meta.assets) {
+        const normAssets: Record<string, any> = {};
+        for (const [ak, av] of Object.entries(meta.assets)) {
+          if (typeof av === 'string') {
+            normAssets[ak] = normalizeAssetPath(sid, av);
+          }
+        }
+        doc.assets = normAssets;
       }
       if (!exists) {
         doc.status = doc.status || 'active';
@@ -443,8 +764,10 @@ export async function approvePublishRequest(
       const chRef = refs[i];
       const chSnap = snaps[i];
       const nextVer = chSnap.exists ? ((chSnap.data()?.currentVersion || 0) + 1) : 1;
-      const meta = chapterMeta.get(`${group.subjectId}:${group.chapterId}`) || {};
+      const groupKey = `${group.subjectId}:${group.chapterId}`;
+      const meta = chapterMeta.get(groupKey) || {};
       const numMatch = group.chapterId.match(/(\d+)/);
+      const chScope = `${group.subjectId}/${group.chapterId}`;
 
       const chDoc: Record<string, any> = {
         currentVersion: nextVer,
@@ -453,15 +776,59 @@ export async function approvePublishRequest(
       };
       if (meta.title) chDoc.title = meta.title;
       else if (!chSnap.exists) chDoc.title = group.chapterId;
+      if (meta.shortTitle !== undefined) chDoc.shortTitle = meta.shortTitle;
+      if (meta.description !== undefined) chDoc.description = meta.description;
+      if (meta.estimatedMinutes !== undefined) chDoc.estimatedMinutes = meta.estimatedMinutes;
       if (meta.number !== undefined) chDoc.number = meta.number;
       else if (!chSnap.exists) chDoc.number = numMatch ? parseInt(numMatch[1], 10) : 0;
       if (meta.topics) chDoc.topics = meta.topics;
+
+      if (meta.heroImageBlob || meta.assets?.heroImage) {
+        chDoc.heroImageBlob = normalizeAssetPath(
+          chScope,
+          meta.heroImageBlob || meta.assets?.heroImage
+        );
+      }
+      if (meta.assets) {
+        const normChAssets: Record<string, any> = {};
+        for (const [ak, av] of Object.entries(meta.assets)) {
+          normChAssets[ak] =
+            ak === 'watermarkSvg'
+              ? av
+              : typeof av === 'string'
+                ? normalizeAssetPath(chScope, av)
+                : av;
+        }
+        chDoc.assets = normChAssets;
+      }
+
+      const rawVideos =
+        Array.isArray(meta.videos) && meta.videos.length > 0
+          ? meta.videos
+          : chapterVideosMeta.get(groupKey);
+      if (Array.isArray(rawVideos)) {
+        chDoc.videos = rawVideos.map((v: any) => ({
+          ...v,
+          thumbnail: v.thumbnail ? normalizeAssetPath(chScope, v.thumbnail) : undefined,
+          gcsPath: v.gcsPath ? normalizeAssetPath(chScope, v.gcsPath) : null,
+        }));
+      }
+
       // Auto-detect tools from uploaded files using contract tools.json
       const chapterPrefix = `${group.subjectId}/${group.chapterId}/`;
       const chRelFiles = Object.keys(group.files).map((p) =>
         p.startsWith(chapterPrefix) ? p.substring(chapterPrefix.length) : p
       );
       const inferredTools = detectTools(chRelFiles);
+      // If chapter.json defines videos[], also register learn.videos tool
+      if (Array.isArray(chDoc.videos) && chDoc.videos.length > 0 && !inferredTools['learn.videos']) {
+        inferredTools['learn.videos'] = {
+          id: 'learn.videos',
+          section: 'learn',
+          label: 'Videos',
+          order: 23,
+        };
+      }
       chDoc.tools = meta.tools ? { ...inferredTools, ...meta.tools } : inferredTools;
 
       tx.set(chRef, chDoc, { merge: true });
@@ -493,6 +860,7 @@ export async function approvePublishRequest(
 
   return { generatedPassword };
 }
+
 
 /**
  * Rejects a publish request with an optional note.

@@ -1,5 +1,9 @@
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Try standard relative paths from src/services/ or dist/services/
 const CONTRACT_PATHS = [
@@ -8,6 +12,7 @@ const CONTRACT_PATHS = [
   path.resolve(process.cwd(), 'contract/v1/tools.json'),
   path.resolve(process.cwd(), '../contract/v1/tools.json'),
 ];
+
 
 export interface ToolDef {
   id: string;

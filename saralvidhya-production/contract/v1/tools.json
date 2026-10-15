@@ -1,5 +1,5 @@
 {
-  "contractVersion": "1.0.0",
+  "contractVersion": "1.1.0",
   "description": "Single source of truth for which files make which tool appear in a chapter. Backend, CLI and frontend all read this file. Never hardcode a tool or path anywhere else. Patterns are relative to a chapter folder; {name} placeholders are captured as parameters.",
   "params": {
     "persona": ["beginner", "intermediate", "advanced"],
@@ -8,27 +8,33 @@
   },
   "tools": [
     { "id": "read.quick", "section": "read", "label": "Quick Read", "order": 10,
-      "patterns": ["read/quick/{persona}.md"] },
+      "patterns": ["read/quick/{persona}.md", "read/quick/{persona}.json", "read/quick_check/quick/{persona}.json", "read/quick_check/quick/{persona}.md"] },
     { "id": "read.detailed", "section": "read", "label": "Detailed Read", "order": 11,
-      "patterns": ["read/detailed/{persona}.md"] },
+      "patterns": ["read/detailed/{persona}.md", "read/detailed/{persona}.json", "read/quick_check/detailed/{persona}.json", "read/quick_check/detailed/{persona}.md"] },
     { "id": "read.key_takeaways", "section": "read", "label": "Key Takeaways", "order": 12,
       "patterns": ["read/key_takeaways.md"] },
+    { "id": "read.glossary", "section": "read", "label": "Glossary", "order": 13,
+      "patterns": ["read/glossary.md"] },
 
     { "id": "learn.mindmap", "section": "learn", "label": "Mindmap", "order": 20,
-      "patterns": ["learn/mindmap.json", "learn/mindmap.md"] },
+      "patterns": ["learn/mindmap.json", "learn/mindmap.md", "learn/mindmap.png", "learn/mindmap.webp", "learn/mindmap.jpg", "learn/mindmap.jpeg", "learn/mindmap.svg"] },
     { "id": "learn.study_plan", "section": "learn", "label": "Study Plan", "order": 21,
       "patterns": ["learn/study_plan.md", "learn/study_plan.json"] },
     { "id": "learn.topics", "section": "learn", "label": "Topics", "order": 22,
-      "patterns": ["learn/topics/{topicId}/{level}.md", "learn/topics/{topicId}/quick.md", "learn/topics/{topicId}/detailed.md", "learn/topics/{topicId}/podcast.m4a"] },
+      "patterns": ["learn/topics/{topicId}/{level}.md", "learn/topics/{topicId}/quick.md", "learn/topics/{topicId}/detailed.md", "learn/topics/{topicId}/podcast.{ext}"] },
+    { "id": "learn.videos", "section": "learn", "label": "Videos", "order": 23,
+      "patterns": ["learn/videos.json", "media/videos/{videoId}.mp4", "media/videos/{videoId}.webm"] },
 
     { "id": "practice.flashcards", "section": "practice", "label": "Flashcards", "order": 30,
-      "patterns": ["practice/flashcards/{persona}.json", "practice/flashcards/revise.json"] },
+      "patterns": ["practice/flashcards/{persona}.json", "practice/flashcards/revise.json", "practice/flashcards/flashcards.json"] },
     { "id": "practice.mcq", "section": "practice", "label": "MCQ", "order": 31,
       "patterns": ["practice/mcq/{difficulty}.json"] },
     { "id": "practice.msq", "section": "practice", "label": "MSQ", "order": 32,
       "patterns": ["practice/msq/{difficulty}.json"] },
     { "id": "practice.question_bank", "section": "practice", "label": "Question Bank", "order": 33,
       "patterns": ["practice/question_bank.json"] },
+    { "id": "practice.mock_test", "section": "practice", "label": "Mock Test", "order": 34,
+      "patterns": ["practice/mock_test.json"] },
 
     { "id": "prepare.previous_year", "section": "prepare", "label": "Previous Year", "order": 40,
       "patterns": ["prepare/previous_year.json"] },
@@ -38,7 +44,9 @@
       "patterns": ["prepare/certification_exam.json", "prepare/certification_exam.md"] },
     { "id": "prepare.final_exam", "section": "prepare", "label": "Final Exam", "order": 43,
       "patterns": ["prepare/final_exam.json", "prepare/final_exam.md"] },
-    { "id": "prepare.exam_keys", "section": "prepare", "label": "Exam Keys", "order": 44, "hidden": true,
+    { "id": "prepare.mock_test", "section": "prepare", "label": "Mock Exam", "order": 44,
+      "patterns": ["prepare/mock_test.json", "prepare/mock_test.md"] },
+    { "id": "prepare.exam_keys", "section": "prepare", "label": "Exam Keys", "order": 45, "hidden": true,
       "patterns": ["prepare/exam_rubric_and_keys.json", "prepare/examination_manifest.json"] },
 
     { "id": "podcasts", "section": "listen", "label": "Podcasts", "order": 50,
@@ -50,8 +58,12 @@
   ],
   "assets": {
     "chapterMedia": "media/**",
+    "chapterSupportPrefixes": ["media/", "practice/flashcards/images/"],
+    "subjectAssets": "assets/**",
     "tenantAssets": "assets/**",
-    "allowedAudio": ["m4a", "mp3"]
+    "allowedAudio": ["m4a", "mp3", "wav", "aac"],
+    "allowedImages": ["png", "jpg", "jpeg", "webp", "svg", "gif", "ico"],
+    "allowedVideo": ["mp4", "webm"]
   },
   "chapterMetaFiles": ["chapter.json"],
   "subjectMetaFiles": ["subject.json"],

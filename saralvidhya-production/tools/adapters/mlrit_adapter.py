@@ -17,10 +17,104 @@ from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parent.parent
 
-SUBJECT = {"id": "dbms", "name": "Database Management Systems", "code": "DBMS", "order": 1, "parentNodeId": "sem_3"}
+REPO_ROOT = TOOLS.parent.parent
+MVP_PUBLIC = REPO_ROOT / "saralvidhya-mvp" / "public"
+
+SUBJECT = {
+    "id": "dbms",
+    "name": "Database Management Systems",
+    "code": "CS302PC",
+    "subtitle": "B.Tech CSE",
+    "programLabel": "B.Tech Computer Science & Engineering",
+    "description": "Database system concepts, ER & EER modeling, relational foundations, integrity constraints, and SQL design.",
+    "credits": 4,
+    "order": 1,
+    "status": "active",
+    "parentNodeId": "sem_3",
+    "iconBlob": "assets/icon.png",
+    "assets": {
+        "icon": "assets/icon.png",
+    },
+    "cardStyle": {
+        "accentColor": "#365345",
+        "badgeText": "Core CSE",
+    },
+}
+
+VIDEOS = [
+    {
+        "id": "vid_dbms_01",
+        "title": "Part 1: Database System Concepts & Architecture",
+        "provider": "youtube",
+        "videoId": "3C5rpBM1bXU",
+        "thumbnail": "media/hero.png",
+        "duration": "15:30min",
+        "durationSeconds": 930,
+        "topics": [
+            "Database Fundamentals & 3-Schema Engine Architecture",
+            "Data Independence (Logical vs Physical) & DBMS Engine Components",
+            "Database Users, DBA Roles & System Environment",
+        ],
+        "order": 1,
+    },
+    {
+        "id": "vid_dbms_02",
+        "title": "Part 2: Entity-Relationship (ER) & Extended ER Modeling",
+        "provider": "youtube",
+        "videoId": "_UATsTUW7ck",
+        "thumbnail": "media/hero.png",
+        "duration": "15:30min",
+        "durationSeconds": 930,
+        "topics": [
+            "Entity Types, Attributes, Keys & Relationship Cardinalities",
+            "Weak Entities, Identifying Relationships & Participation Constraints",
+            "Advanced ER & Extended ER (EER) Specialization/Generalization",
+        ],
+        "order": 2,
+    },
+    {
+        "id": "vid_dbms_03",
+        "title": "Part 3: Relational Model & Integrity Constraints",
+        "provider": "youtube",
+        "videoId": "lEVbyiGNaIk",
+        "thumbnail": "media/hero.png",
+        "duration": "15:30min",
+        "durationSeconds": 930,
+        "topics": [
+            "Relational Model Foundations, Domains & Relation Schemas",
+            "Superkeys, Candidate Keys, Primary Keys & Foreign Key Rules",
+            "Domain, Entity Integrity & Referential Integrity Constraints",
+        ],
+        "order": 3,
+    },
+    {
+        "id": "vid_dbms_04",
+        "title": "Part 4: Logical Database Design, SQL Views & Schema Evolution",
+        "provider": "youtube",
+        "videoId": "UJutdBotS_I",
+        "thumbnail": "media/hero.png",
+        "duration": "15:30min",
+        "durationSeconds": 930,
+        "topics": [
+            "Logical Database Design: 7-Step ER-to-Relational Schema Translation",
+            "Mapping Weak Entities, M:N Relationships & EER Hierarchies",
+            "Relational Querying Foundations, SQL Views & Schema Evolution",
+        ],
+        "order": 4,
+    },
+]
+
 CHAPTER = {
     "number": 1,
     "title": "Database System Concepts, ER Model & Relational Design",
+    "shortTitle": "Database Concepts",
+    "description": "Foundations of database management systems, 3-schema architecture, ER/EER conceptual modeling, and relational schema translation.",
+    "estimatedMinutes": 60,
+    "heroImageBlob": "media/hero.png",
+    "assets": {
+        "heroImage": "media/hero.png",
+        "mindmapImage": "media/mindmap.png",
+    },
     "topics": [
         {"id": "topic_1", "label": "Database Fundamentals & Engine Architecture", "order": 1, "topicNum": 1},
         {"id": "topic_2", "label": "Conceptual Database Design & ER Modeling", "order": 2, "topicNum": 2},
@@ -29,6 +123,7 @@ CHAPTER = {
         {"id": "topic_5", "label": "Logical Database Design (ER-to-Relational Translation)", "order": 5, "topicNum": 5},
         {"id": "topic_6", "label": "Relational Querying, Views & Schema Evolution", "order": 6, "topicNum": 6},
     ],
+    "videos": VIDEOS,
 }
 LEVELS = ("beginner", "intermediate", "advanced")
 DIFFICULTIES = ("easy", "medium", "hard")
@@ -54,13 +149,21 @@ def main():
         shutil.rmtree(out)
     ch = out / "dbms" / "chapter_01"
 
-    # tenant + subject + chapter metadata
+    # tenant + subject + chapter metadata + visual assets
     out.mkdir(parents=True)
     shutil.copy2(TOOLS / "samples" / "mlrit" / "tenant.json", out / "tenant.json")
+    cp(MVP_PUBLIC / "brand-tree-cropped.png", out / "assets" / "logo.png", log)
+    cp(MVP_PUBLIC / "brand-tree-cropped.png", out / "assets" / "favicon.png", log)
+
     (out / "dbms").mkdir(parents=True, exist_ok=True)
     (out / "dbms" / "subject.json").write_text(json.dumps(SUBJECT, indent=2), encoding="utf-8")
+    cp(MVP_PUBLIC / "subject-dbms-icon.png", out / "dbms" / "assets" / "icon.png", log)
+
     ch.mkdir(parents=True, exist_ok=True)
     (ch / "chapter.json").write_text(json.dumps(CHAPTER, indent=2), encoding="utf-8")
+    cp(MVP_PUBLIC / "chapter-dbms-hero.png", ch / "media" / "hero.png", log)
+    (ch / "learn").mkdir(parents=True, exist_ok=True)
+    (ch / "learn" / "videos.json").write_text(json.dumps({"videos": VIDEOS}, indent=2), encoding="utf-8")
 
     # read
     for lvl in LEVELS:
@@ -92,6 +195,11 @@ def main():
     for persona in LEVELS + ("revise",):
         cp(src / f"Practice/Revise/DBMS_UNIT_I_Flashcards_{persona}.json",
            ch / f"practice/flashcards/{persona}.json", log)
+    fc_images_dir = MVP_PUBLIC / "generated_resources" / "mlrit" / "dbms" / "chapter_01" / "practice" / "flashcards" / "images"
+    if fc_images_dir.exists():
+        for img_file in sorted(fc_images_dir.glob("*.*")):
+            cp(img_file, ch / "practice" / "flashcards" / "images" / img_file.name, log)
+
 
     # prepare
     cp(src / "Prepare/PYQ/dbms_pyq.json", ch / "prepare/previous_year.json", log)
