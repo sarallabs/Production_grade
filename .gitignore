@@ -30,6 +30,12 @@ backend_db_envs.zip
 CREDENTIALS_PRIVATE*.zip
 *.zip
 
+# Test harnesses & secret eradication files
+**/api-test.html
+**/test_keys*
+replace_secrets.txt
+SECRET_ERADICATION_PLAN.md
+
 # Built/compiled bundles (contain embedded API keys)
 saralvidhya-mvp/dist-deploy/
 saralvidhya-medha/dist-deploy/

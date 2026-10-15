@@ -87,8 +87,8 @@ function Login() {
     setTimeout(() => {
       const creds = loadCredentials();
 
-      const defaultPass = import.meta.env.VITE_DEFAULT_PASSWORD || '[REDACTED_PASSWORD]';
-      const isDefaultMatch = studentPassword === defaultPass || studentPassword === '[REDACTED_PASSWORD]';
+      const defaultPass = import.meta.env.VITE_DEFAULT_PASSWORD || '';
+      const isDefaultMatch = Boolean(defaultPass && studentPassword === defaultPass);
 
       const match = creds.find(
         c => c.role === "student" && (c.password === studentPassword || isDefaultMatch)
