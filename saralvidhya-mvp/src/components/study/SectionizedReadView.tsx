@@ -41,11 +41,13 @@ export default function SectionizedReadView({
   const [data, setData] = useState<SectionizedChapterData | null>(initialCache);
   const [loading, setLoading] = useState(!initialCache);
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
+  const [activeQcIndex, setActiveQcIndex] = useState<number | null>(null);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
-  const [qcAnswers, setQcAnswers] = useState<Record<number, string>>({});
+  const [qcAnswers, setQcAnswers] = useState<Record<string, string>>({});
 
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const quickCheckRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isAutoScrollingRef = useRef(false);
   const onLoadedContentRef = useRef(onLoadedContent);
 
@@ -198,6 +200,18 @@ export default function SectionizedReadView({
       });
 
       setActiveVisibleIndex(bestIdx);
+
+      const qcEl = quickCheckRefs.current[bestIdx];
+      if (qcEl) {
+        const qcRect = qcEl.getBoundingClientRect();
+        if (qcRect.top <= 340 && qcRect.bottom >= 100) {
+          setActiveQcIndex(bestIdx);
+        } else {
+          setActiveQcIndex(null);
+        }
+      } else {
+        setActiveQcIndex(null);
+      }
     };
 
     const scrollParent = document.querySelector('.st-mainview') || window;
@@ -219,21 +233,32 @@ export default function SectionizedReadView({
     };
   }, [sections]);
 
-  const markQuickCheckCompleted = (idx: number, selectedKey?: string) => {
-    setCompletedQuickChecks((prev) => {
-      const updated = new Set(prev);
-      updated.add(idx);
-      try {
-        cloudStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
-      } catch (err) {
-        console.warn('Failed to save quick check progress', err);
-      }
-      return updated;
-    });
+  const markQuickCheckCompleted = (
+    idx: number,
+    selectedKey?: string,
+    questionIndex: number = 0,
+    markSectionComplete: boolean = true
+  ) => {
+    if (markSectionComplete) {
+      setCompletedQuickChecks((prev) => {
+        const updated = new Set(prev);
+        updated.add(idx);
+        try {
+          cloudStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
+        } catch (err) {
+          console.warn('Failed to save quick check progress', err);
+        }
+        return updated;
+      });
+    }
 
     if (selectedKey) {
       setQcAnswers((prev) => {
-        const updated = { ...prev, [idx]: selectedKey };
+        const updated = {
+          ...prev,
+          [`${idx}_${questionIndex}`]: selectedKey,
+          ...(questionIndex === 0 ? { [String(idx)]: selectedKey } : {}),
+        };
         try {
           cloudStorage.setItem(qcAnswersStorageKey, JSON.stringify(updated));
         } catch (err) {
@@ -248,6 +273,20 @@ export default function SectionizedReadView({
     const el = sectionRefs.current[idx];
     if (el) {
       setActiveVisibleIndex(idx);
+      setActiveQcIndex(null);
+      isAutoScrollingRef.current = true;
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => {
+        isAutoScrollingRef.current = false;
+      }, 700);
+    }
+  };
+
+  const handleScrollToQuickCheck = (idx: number) => {
+    const el = quickCheckRefs.current[idx] || sectionRefs.current[idx];
+    if (el) {
+      setActiveVisibleIndex(idx);
+      setActiveQcIndex(idx);
       isAutoScrollingRef.current = true;
       el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       setTimeout(() => {
@@ -369,95 +408,152 @@ export default function SectionizedReadView({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
             {sections.map((sec, idx) => {
               const isSelected = idx === activeVisibleIndex;
-              const isDone = sec.quickCheck ? completedQuickChecks.has(idx) : completedSections.has(idx);
+              const isQcActive = activeQcIndex === idx;
+              const hasQc = Boolean((sec.quickChecks && sec.quickChecks.length > 0) || sec.quickCheck);
+              const isQcDone = completedQuickChecks.has(idx);
+              const isDone = hasQc ? isQcDone : completedSections.has(idx);
 
               return (
-                <button
-                  key={sec.id}
-                  type="button"
-                  onClick={() => handleScrollToSection(idx)}
-                  title={sec.title}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '10px',
-                    padding: '8px 12px',
-                    borderRadius: '10px',
-                    border: '1.5px solid transparent',
-                    background: isSelected ? '#dbe6df' : 'transparent',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
-                  {isDone ? (
-                    <span
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        background: '#0f172a',
-                        color: '#ffffff',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                      }}
-                    >
-                      ✓
-                    </span>
-                  ) : isSelected ? (
-                    <span
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        background: 'transparent',
-                        border: '1.5px solid #0f172a',
-                        color: '#0f172a',
-                        fontSize: '11px',
-                        fontWeight: 800,
-                      }}
-                    >
-                      ✓
-                    </span>
-                  ) : (
-                    <span
-                      style={{
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        background: 'transparent',
-                        border: '1.5px solid #cbd5e1',
-                      }}
-                    />
-                  )}
-
-                  {/* Section Title */}
-                  <span
+                <div key={sec.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleScrollToSection(idx)}
+                    title={sec.title}
                     style={{
-                      fontSize: '13px',
-                      fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                      color: isSelected ? '#0f172a' : '#475569',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '8px 12px',
+                      borderRadius: '10px',
+                      border: '1.5px solid transparent',
+                      background: isSelected && !isQcActive ? '#dbe6df' : 'transparent',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    {sec.shortTitle}
-                  </span>
-                </button>
+                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
+                    {isDone ? (
+                      <span
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: '#0f172a',
+                          color: '#ffffff',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
+                      </span>
+                    ) : isSelected ? (
+                      <span
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: 'transparent',
+                          border: '1.5px solid #0f172a',
+                          color: '#0f172a',
+                          fontSize: '11px',
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          width: '18px',
+                          height: '18px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          background: 'transparent',
+                          border: '1.5px solid #cbd5e1',
+                        }}
+                      />
+                    )}
+
+                    {/* Section Title */}
+                    <span
+                      style={{
+                        fontSize: '13px',
+                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
+                        color: isSelected ? '#0f172a' : '#475569',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
+                      {sec.shortTitle}
+                    </span>
+                  </button>
+
+                  {/* Mini sub-bullet point under the section bullet to skip directly to Quick Check */}
+                  {hasQc && (
+                    <button
+                      type="button"
+                      onClick={() => handleScrollToQuickCheck(idx)}
+                      title={`Skip to Section ${idx + 1} Quick Check`}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        marginLeft: '26px',
+                        padding: '4px 10px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        background: isQcActive ? '#dbe6df' : 'transparent',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '8px',
+                          height: '8px',
+                          borderRadius: '50%',
+                          flexShrink: 0,
+                          background: isQcDone
+                            ? '#15803d'
+                            : isQcActive
+                            ? '#0f172a'
+                            : 'transparent',
+                          border: isQcDone
+                            ? '1.5px solid #15803d'
+                            : isQcActive
+                            ? '1.5px solid #0f172a'
+                            : '1.5px solid #94a3b8',
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          fontWeight: isQcActive ? 700 : isQcDone ? 600 : 500,
+                          color: isQcActive ? '#0f172a' : isQcDone ? '#15803d' : '#64748b',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        Quick Check
+                      </span>
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -555,6 +651,19 @@ export default function SectionizedReadView({
         {/* Vertical stream of all sections */}
         {sections.map((sec, idx) => {
           const isQcDone = completedQuickChecks.has(idx);
+          const qcList =
+            sec.quickChecks && sec.quickChecks.length > 0
+              ? sec.quickChecks
+              : sec.quickCheck
+              ? [sec.quickCheck]
+              : [];
+          const qcCount = qcList.length;
+          const secSelectedKeys: Record<number, string> = {};
+          for (let qIdx = 0; qIdx < qcCount; qIdx++) {
+            const val = qcAnswers[`${idx}_${qIdx}`] || (qIdx === 0 ? qcAnswers[String(idx)] : undefined);
+            if (val) secSelectedKeys[qIdx] = val;
+          }
+          const answeredInSec = Object.keys(secSelectedKeys).length;
 
           return (
             <div
@@ -635,8 +744,11 @@ export default function SectionizedReadView({
                       ⏱ {sec.readTimeMinutes} min read
                     </span>
 
-                    {sec.quickCheck && (
-                      <span
+                    {qcCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleScrollToQuickCheck(idx)}
+                        title="Skip to Quick Check"
                         style={{
                           background: isQcDone ? '#dcfce7' : '#f0fdf4',
                           color: '#15803d',
@@ -645,10 +757,15 @@ export default function SectionizedReadView({
                           padding: '3px 9px',
                           fontSize: '12px',
                           fontWeight: 700,
+                          cursor: 'pointer',
                         }}
                       >
-                        {isQcDone ? '✓ Quick check answered' : '✔ 1 quick check'}
-                      </span>
+                        {isQcDone
+                          ? `✓ ${qcCount} quick check${qcCount > 1 ? 's' : ''} answered`
+                          : answeredInSec > 0
+                          ? `✔ ${answeredInSec}/${qcCount} quick checks`
+                          : `✔ ${qcCount} quick check${qcCount > 1 ? 's' : ''}`}
+                      </button>
                     )}
                   </div>
                 </div>
@@ -672,30 +789,39 @@ export default function SectionizedReadView({
                 </div>
 
                 {/* Inline Quick Check Card at the end of the section/module */}
-                {sec.quickCheck && (
-                  <QuickCheckModal
-                    key={`inline-qc-${sec.id}`}
-                    isOpen={true}
-                    question={sec.quickCheck}
-                    currentSectionNumber={idx + 1}
-                    totalSections={totalSections}
-                    sectionTitle={sec.shortTitle}
-                    nextSectionTitle={sections[idx + 1]?.shortTitle}
-                    isPurpleTheme={false}
-                    initialSelectedKey={qcAnswers[idx] || null}
-                    isCompleted={isQcDone}
-                    onNextSection={
-                      idx + 1 < totalSections
-                        ? () => {
-                            markQuickCheckCompleted(idx);
-                            handleNextSectionInline(idx);
-                          }
-                        : undefined
-                    }
-                    onAnswerSubmitted={(_isCorrect, selectedKey) => {
-                      markQuickCheckCompleted(idx, selectedKey);
+                {qcCount > 0 && (
+                  <div
+                    ref={(el) => {
+                      quickCheckRefs.current[idx] = el;
                     }}
-                  />
+                    style={{ scrollMarginTop: '20px' }}
+                  >
+                    <QuickCheckModal
+                      key={`inline-qc-${sec.id}`}
+                      isOpen={true}
+                      question={qcList[0]}
+                      questions={qcList}
+                      currentSectionNumber={idx + 1}
+                      totalSections={totalSections}
+                      sectionTitle={sec.shortTitle}
+                      nextSectionTitle={sections[idx + 1]?.shortTitle}
+                      isPurpleTheme={false}
+                      initialSelectedKey={secSelectedKeys[0] || null}
+                      initialSelectedKeys={secSelectedKeys}
+                      isCompleted={isQcDone}
+                      onNextSection={
+                        idx + 1 < totalSections
+                          ? () => {
+                              markQuickCheckCompleted(idx);
+                              handleNextSectionInline(idx);
+                            }
+                          : undefined
+                      }
+                      onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                        markQuickCheckCompleted(idx, selectedKey, questionIndex, allAnswered || qcCount === 1);
+                      }}
+                    />
+                  </div>
                 )}
               </div>
             </div>

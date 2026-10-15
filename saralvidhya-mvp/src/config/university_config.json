@@ -14,8 +14,8 @@
     "dbms": "mlrit/dbms"
   },
   "localSubjectRoutes": {
-    "ento_131": "angrau",
-    "entomology": "angrau",
+    "ento_131": "angrau/entomology",
+    "entomology": "angrau/entomology",
     "dbms": "mlrit/dbms"
   }
 }

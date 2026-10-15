@@ -484,79 +484,20 @@ const CATEGORY_META: Record<
   general: { label: "Study Session", actionLabel: "Open Tool" },
 };
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-function toDateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function addDays(base: Date, daysOffset: number): Date {
-  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate());
-  d.setDate(d.getDate() + daysOffset);
-  return d;
-}
-
-function parseDateKey(key: string): Date {
-  const parts = key.split("-").map(Number);
-  if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
-    return new Date(parts[0], parts[1] - 1, parts[2]);
-  }
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate());
-}
-
-function formatShortDate(d: Date): string {
-  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-}
-
-function formatLongDate(d: Date): string {
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   content,
   subjectId,
+  subjectName,
   chapterNumber,
   chapterName,
   onSwitchTool,
 }) => {
   const storageKeyCompleted = `sv_sp_done_${subjectId}_ch${chapterNumber}`;
-  const storageKeyStartDate = `sv_sp_start_${subjectId}_ch${chapterNumber}`;
 
   const parsed = useMemo(
     () => parseStudyPlanContent(content, chapterName),
     [content, chapterName]
   );
-
-  const [startDateStr, setStartDateStr] = useState<string>(() => {
-    try {
-      const saved = cloudStorage.getItem(storageKeyStartDate);
-      if (saved) return saved;
-    } catch {}
-    return toDateKey(new Date());
-  });
 
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>(() => {
     try {
@@ -569,24 +510,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
 
   const [selectedDayNum, setSelectedDayNum] = useState<number>(1);
 
-  const startDate = useMemo(() => parseDateKey(startDateStr), [startDateStr]);
-  const [calendarMonth, setCalendarMonth] = useState<Date>(
-    () => new Date(startDate.getFullYear(), startDate.getMonth(), 1)
-  );
-
   useEffect(() => {
     try {
       const savedDone = cloudStorage.getItem(storageKeyCompleted);
       setCompletedTasks(savedDone ? JSON.parse(savedDone) : {});
-      const savedStart = cloudStorage.getItem(storageKeyStartDate);
-      if (savedStart) {
-        setStartDateStr(savedStart);
-        const dt = parseDateKey(savedStart);
-        setCalendarMonth(new Date(dt.getFullYear(), dt.getMonth(), 1));
-      }
     } catch {}
     setSelectedDayNum(1);
-  }, [storageKeyCompleted, storageKeyStartDate]);
+  }, [storageKeyCompleted]);
 
   const activeBlueprint = useMemo(
     () =>
@@ -595,16 +525,6 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       null,
     [parsed.blueprints]
   );
-
-  const handleStartDateChange = (newDateStr: string) => {
-    if (!newDateStr) return;
-    setStartDateStr(newDateStr);
-    const dt = parseDateKey(newDateStr);
-    setCalendarMonth(new Date(dt.getFullYear(), dt.getMonth(), 1));
-    try {
-      cloudStorage.setItem(storageKeyStartDate, newDateStr);
-    } catch {}
-  };
 
   const saveCompleted = (next: Record<string, boolean>) => {
     setCompletedTasks(next);
@@ -625,16 +545,6 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     });
     saveCompleted(next);
   };
-
-  const dateToDayPlanMap = useMemo(() => {
-    const map: Record<string, StudyDayPlan> = {};
-    if (!activeBlueprint) return map;
-    activeBlueprint.days.forEach((d) => {
-      const dateObj = addDays(startDate, d.dayNumber - 1);
-      map[toDateKey(dateObj)] = d;
-    });
-    return map;
-  }, [activeBlueprint, startDate]);
 
   const blueprintStats = useMemo(() => {
     if (!activeBlueprint) return { totalTasks: 0, doneTasks: 0, pct: 0, completedDays: 0 };
@@ -657,56 +567,47 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     );
   }, [activeBlueprint, selectedDayNum]);
 
-  const calendarGridDays = useMemo(() => {
-    const year = calendarMonth.getFullYear();
-    const month = calendarMonth.getMonth();
-    const firstDayOfWeek = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const prevMonthDays = new Date(year, month, 0).getDate();
-
-    const cells: {
-      date: Date;
-      dateKey: string;
-      inCurrentMonth: boolean;
-      dayOfMonth: number;
-    }[] = [];
-
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
-      const d = new Date(year, month - 1, prevMonthDays - i);
-      cells.push({
-        date: d,
-        dateKey: toDateKey(d),
-        inCurrentMonth: false,
-        dayOfMonth: d.getDate(),
-      });
+  // Split title into main header and subtitle if formatted like "DBMS UNIT - I — Database System Concepts..."
+  const { headerTitle, headerSubtitle } = useMemo(() => {
+    const raw = parsed.title || "";
+    const dashParts = raw.split(/\s+[—–]\s+|\s+-\s+(?=[A-Z])/);
+    if (dashParts.length >= 2 && dashParts[0].trim().length <= 32) {
+      return {
+        headerTitle: dashParts[0].trim(),
+        headerSubtitle: dashParts.slice(1).join(" — ").trim(),
+      };
     }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const d = new Date(year, month, day);
-      cells.push({
-        date: d,
-        dateKey: toDateKey(d),
-        inCurrentMonth: true,
-        dayOfMonth: day,
-      });
+    if (subjectName && chapterName) {
+      return {
+        headerTitle: `${subjectName.toUpperCase()} - CH ${chapterNumber}`,
+        headerSubtitle: chapterName,
+      };
     }
+    return {
+      headerTitle: raw,
+      headerSubtitle: chapterName || parsed.subtitle || "Structured daily study plan",
+    };
+  }, [parsed.title, parsed.subtitle, subjectName, chapterNumber, chapterName]);
 
-    const totalNeeded = cells.length > 35 ? 42 : 35;
-    let nextDay = 1;
-    while (cells.length < totalNeeded) {
-      const d = new Date(year, month + 1, nextDay++);
-      cells.push({
-        date: d,
-        dateKey: toDateKey(d),
-        inCurrentMonth: false,
-        dayOfMonth: d.getDate(),
-      });
+  // Focus areas for the "Study plan overview" card
+  const focusAreas = useMemo(() => {
+    if (!activeBlueprint) return [];
+    const lowerTitle = `${parsed.title} ${headerSubtitle}`.toLowerCase();
+    if (lowerTitle.includes("dbms") || lowerTitle.includes("database")) {
+      return [
+        "Compare file systems and DBMS.",
+        "Understand 3-level schema architecture.",
+        "Apply conceptual design and relational modeling.",
+        "Practice SQL queries and normalization.",
+      ];
     }
-
-    return cells;
-  }, [calendarMonth]);
-
-  const todayKey = toDateKey(new Date());
+    return activeBlueprint.days.slice(0, 4).map((d) => {
+      const cleanTopic = d.title
+        .replace(/^(Module|Day|Unit|Part)\s*\d+\s*[—–:-]\s*/i, "")
+        .trim();
+      return `Master ${cleanTopic.charAt(0).toLowerCase() + cleanTopic.slice(1)}.`;
+    });
+  }, [activeBlueprint, parsed.title, headerSubtitle]);
 
   if (!activeBlueprint) {
     return (
@@ -716,43 +617,49 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     );
   }
 
-  const selectedDayDate = addDays(startDate, (selectedDayPlan?.dayNumber || 1) - 1);
+  const numDays = activeBlueprint.days.length || 5;
+  const avgDailyMins = Math.round(activeBlueprint.totalMinutes / numDays);
+
+  const dayDoneCount = selectedDayPlan
+    ? selectedDayPlan.tasks.filter((t) => completedTasks[t.id]).length
+    : 0;
+  const dayTotalCount = selectedDayPlan ? selectedDayPlan.tasks.length : 0;
+  const dayPct = dayTotalCount > 0 ? Math.round((dayDoneCount / dayTotalCount) * 100) : 0;
 
   return (
     <div
       style={{
-        maxWidth: "1280px",
+        maxWidth: "1320px",
         margin: "0 auto",
-        padding: "0 4px 32px",
+        padding: "4px 6px 36px",
         fontFamily: "inherit",
         color: G.dark,
       }}
     >
-      {/* ── Slim, Single-Row Top Header Bar ── */}
+      {/* ── Top Summary Bar ── */}
       <div
         style={{
           background: G.white,
-          border: `1px solid ${G.paleBorder}`,
-          borderRadius: "12px",
-          padding: "8px 14px",
-          marginBottom: "14px",
+          border: `1px solid ${G.cardBorder}`,
+          borderRadius: "16px",
+          padding: "14px 20px",
+          marginBottom: "18px",
           display: "flex",
           flexWrap: "wrap",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: "12px",
-          boxShadow: "0 1px 3px rgba(45, 62, 54, 0.04)",
+          gap: "16px",
+          boxShadow: "0 1px 3px rgba(45, 62, 54, 0.03)",
         }}
       >
-        {/* Left: Title & Compact Summary */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: "220px", flex: "1 1 auto" }}>
+        {/* Left: Grid Icon + Two-line Title/Subtitle */}
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: "240px", flex: "1 1 auto" }}>
           <div
             style={{
-              width: "30px",
-              height: "30px",
-              borderRadius: "8px",
-              background: G.pale,
-              border: `1px solid ${G.paleBorder}`,
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: "#E8F1EC",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -760,379 +667,430 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
               flexShrink: 0,
             }}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-              <line x1="16" y1="2" x2="16" y2="6" />
-              <line x1="8" y1="2" x2="8" y2="6" />
-              <line x1="3" y1="10" x2="21" y2="10" />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="3" y1="15" x2="21" y2="15" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+              <line x1="15" y1="3" x2="15" y2="21" />
             </svg>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span
+          <div style={{ minWidth: 0 }}>
+            <div
               style={{
-                fontSize: "0.95rem",
-                fontWeight: 700,
-                color: G.dark,
+                fontSize: "1.02rem",
+                fontWeight: 800,
+                color: "#1E2D26",
                 letterSpacing: "-0.01em",
+                lineHeight: 1.25,
               }}
             >
-              {parsed.title}
-            </span>
-            <span
+              {headerTitle}
+            </div>
+            <div
               style={{
-                fontSize: "0.74rem",
-                fontWeight: 600,
+                fontSize: "0.78rem",
+                fontWeight: 500,
                 color: G.mutedText,
-                background: G.subtleBg,
-                border: `1px solid ${G.cardBorder}`,
-                padding: "2px 8px",
-                borderRadius: "999px",
+                marginTop: "2px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              {activeBlueprint.totalMinutes} mins total
-            </span>
+              {headerSubtitle}
+            </div>
           </div>
         </div>
 
-        {/* Right: Start Date & Progress Pill */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: G.subtleBg,
-              border: `1px solid ${G.paleBorder}`,
-              borderRadius: "8px",
-              padding: "4px 9px",
-              fontSize: "0.75rem",
-              color: G.mutedText,
-              fontWeight: 600,
-            }}
-          >
-            <span>Start:</span>
-            <input
-              type="date"
-              value={startDateStr}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              style={{
-                border: "none",
-                background: "transparent",
-                color: G.dark,
-                fontSize: "0.75rem",
-                fontWeight: 600,
-                fontFamily: "inherit",
-                outline: "none",
-                cursor: "pointer",
-              }}
-            />
-          </div>
+        {/* Center: Total Minutes Pill */}
+        <div
+          style={{
+            background: "#E8F1EC",
+            color: "#263B31",
+            fontWeight: 700,
+            fontSize: "0.8rem",
+            padding: "7px 16px",
+            borderRadius: "999px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {activeBlueprint.totalMinutes} mins total
+        </div>
 
+        {/* Right: Tasks Complete Progress Box */}
+        <div
+          style={{
+            background: "#EEF5F1",
+            border: `1px solid ${G.paleBorder}`,
+            borderRadius: "12px",
+            padding: "8px 14px",
+            minWidth: "200px",
+          }}
+        >
           <div
             style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              background: G.pale,
-              border: `1px solid ${G.paleBorder}`,
-              borderRadius: "8px",
-              padding: "4px 10px",
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              color: G.primary,
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              color: "#1E2D26",
+              marginBottom: "6px",
             }}
           >
-            <span>
-              {blueprintStats.doneTasks}/{blueprintStats.totalTasks} Done
+            {blueprintStats.doneTasks} / {blueprintStats.totalTasks} tasks complete
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                flex: 1,
+                height: "6px",
+                borderRadius: "999px",
+                background: "#D7E4DC",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  width: `${blueprintStats.pct}%`,
+                  height: "100%",
+                  borderRadius: "999px",
+                  background: G.primary,
+                  transition: "width 0.25s ease",
+                }}
+              />
+            </div>
+            <span
+              style={{
+                fontSize: "0.7rem",
+                fontWeight: 600,
+                color: G.mutedText,
+                minWidth: "26px",
+                textAlign: "right",
+              }}
+            >
+              {blueprintStats.pct}%
             </span>
-            <span style={{ opacity: 0.5 }}>·</span>
-            <span>{blueprintStats.pct}%</span>
           </div>
         </div>
       </div>
 
-      {/* ── 2-Column Split View: Calendar (Left) + Daily Schedule (Right) ── */}
+      {/* ── Main 2-Column Template Layout ── */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(310px, 370px) minmax(0, 1fr)",
-          gap: "16px",
+          gridTemplateColumns: "330px minmax(0, 1fr)",
+          gap: "18px",
           alignItems: "start",
         }}
-        className="sp-calendar-split-grid"
+        className="sp-days-split-grid"
       >
-          {/* ── LEFT COLUMN: Calendar Grid + Day List ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+        {/* ── LEFT COLUMN: Study Plan Overview + Study Days ── */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          {/* Card 1: Study plan overview */}
+          <div
+            style={{
+              background: G.white,
+              borderRadius: "18px",
+              border: `1px solid ${G.cardBorder}`,
+              padding: "20px",
+              boxShadow: "0 1px 3px rgba(45, 62, 54, 0.03)",
+            }}
+          >
             <div
               style={{
-                background: G.white,
-                borderRadius: "12px",
-                border: `1px solid ${G.cardBorder}`,
-                padding: "14px 16px",
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                color: "#1E2D26",
+                marginBottom: "4px",
               }}
             >
-              {/* Month Navigation Header */}
+              Study plan overview
+            </div>
+            <div
+              style={{
+                fontSize: "0.76rem",
+                color: G.mutedText,
+                marginBottom: "16px",
+                lineHeight: 1.4,
+              }}
+            >
+              Quick context and focus areas for this {numDays}-day plan.
+            </div>
+
+            {/* 3 Stat Mini-Cards */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.15fr 1fr 0.9fr",
+                gap: "8px",
+                marginBottom: "18px",
+              }}
+            >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "10px",
+                  background: "#EAF2ED",
+                  borderRadius: "12px",
+                  padding: "10px 10px",
                 }}
               >
-                <div style={{ fontSize: "0.92rem", fontWeight: 700, color: G.dark }}>
-                  {MONTH_NAMES[calendarMonth.getMonth()]} {calendarMonth.getFullYear()}
+                <div
+                  style={{
+                    fontSize: "0.62rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: G.primary,
+                    marginBottom: "4px",
+                  }}
+                >
+                  TOTAL TIME
                 </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalendarMonth(
-                        new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1)
-                      )
-                    }
-                    style={{
-                      width: "26px",
-                      height: "26px",
-                      borderRadius: "6px",
-                      border: `1px solid ${G.cardBorder}`,
-                      background: G.subtleBg,
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      color: G.dark,
-                    }}
-                  >
-                    ‹
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCalendarMonth(
-                        new Date(startDate.getFullYear(), startDate.getMonth(), 1)
-                      );
-                      setSelectedDayNum(1);
-                    }}
-                    style={{
-                      padding: "2px 8px",
-                      height: "26px",
-                      borderRadius: "6px",
-                      border: `1px solid ${G.cardBorder}`,
-                      background: G.subtleBg,
-                      cursor: "pointer",
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      color: G.dark,
-                    }}
-                  >
-                    Day 1
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setCalendarMonth(
-                        new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1)
-                      )
-                    }
-                    style={{
-                      width: "26px",
-                      height: "26px",
-                      borderRadius: "6px",
-                      border: `1px solid ${G.cardBorder}`,
-                      background: G.subtleBg,
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      color: G.dark,
-                    }}
-                  >
-                    ›
-                  </button>
+                <div
+                  style={{
+                    fontSize: "1.05rem",
+                    fontWeight: 800,
+                    color: "#1E2D26",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {activeBlueprint.totalMinutes} min
+                </div>
+                <div style={{ fontSize: "0.68rem", color: G.mutedText, marginTop: "3px" }}>
+                  {avgDailyMins} min/day
                 </div>
               </div>
 
-              {/* Weekday Headers */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, 1fr)",
-                  gap: "4px",
-                  marginBottom: "4px",
+                  background: "#EAF2ED",
+                  borderRadius: "12px",
+                  padding: "10px 10px",
                 }}
               >
-                {WEEKDAYS.map((wd) => (
-                  <div
-                    key={wd}
-                    style={{
-                      textAlign: "center",
-                      fontSize: "0.68rem",
-                      fontWeight: 600,
-                      color: G.mutedText,
-                      padding: "2px 0",
-                    }}
-                  >
-                    {wd}
-                  </div>
-                ))}
+                <div
+                  style={{
+                    fontSize: "0.62rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: G.primary,
+                    marginBottom: "4px",
+                  }}
+                >
+                  TOTAL TASKS
+                </div>
+                <div
+                  style={{
+                    fontSize: "1.05rem",
+                    fontWeight: 800,
+                    color: "#1E2D26",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {blueprintStats.totalTasks}
+                </div>
+                <div style={{ fontSize: "0.68rem", color: G.mutedText, marginTop: "3px" }}>
+                  Across {numDays} days
+                </div>
               </div>
 
-              {/* 7-Col Calendar Days Grid */}
               <div
                 style={{
-                  display: "grid",
-                  gridTemplateColumns: "repeat(7, 1fr)",
-                  gap: "4px",
+                  background: "#EAF2ED",
+                  borderRadius: "12px",
+                  padding: "10px 10px",
                 }}
               >
-                {calendarGridDays.map((cell) => {
-                  const studyDay = dateToDayPlanMap[cell.dateKey];
-                  const isSelected =
-                    studyDay && selectedDayPlan?.dayNumber === studyDay.dayNumber;
-                  const isToday = cell.dateKey === todayKey;
-                  const doneCount = studyDay
-                    ? studyDay.tasks.filter((t) => completedTasks[t.id]).length
-                    : 0;
-                  const isDayComplete =
-                    studyDay && studyDay.tasks.length > 0 && doneCount === studyDay.tasks.length;
-
-                  return (
-                    <button
-                      key={cell.dateKey}
-                      type="button"
-                      disabled={!studyDay}
-                      onClick={() => {
-                        if (studyDay) {
-                          setSelectedDayNum(studyDay.dayNumber);
-                        }
-                      }}
-                      title={
-                        studyDay
-                          ? `Day ${studyDay.dayNumber}: ${studyDay.title} (${studyDay.totalMinutes} mins)`
-                          : cell.dateKey
-                      }
-                      style={{
-                        minHeight: "46px",
-                        borderRadius: "8px",
-                        padding: "4px 2px",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        cursor: studyDay ? "pointer" : "default",
-                        fontFamily: "inherit",
-                        border: isSelected
-                          ? `1.5px solid ${G.primary}`
-                          : studyDay
-                          ? `1px solid ${G.paleBorder}`
-                          : isToday
-                          ? `1px dashed ${G.light}`
-                          : "1px solid transparent",
-                        background: isSelected
-                          ? G.primary
-                          : isDayComplete
-                          ? "#e6f4ea"
-                          : studyDay
-                          ? G.pale
-                          : cell.inCurrentMonth
-                          ? G.subtleBg
-                          : G.white,
-                        opacity: cell.inCurrentMonth || studyDay ? 1 : 0.35,
-                        transition: "all 0.14s ease",
-                      }}
-                    >
-                      <span
-                        style={{
-                          fontSize: "0.74rem",
-                          fontWeight: studyDay || isToday ? 700 : 500,
-                          color: isSelected ? G.white : G.dark,
-                        }}
-                      >
-                        {cell.dayOfMonth}
-                      </span>
-
-                      {studyDay ? (
-                        <span
-                          style={{
-                            fontSize: "0.6rem",
-                            fontWeight: 700,
-                            padding: "1px 5px",
-                            borderRadius: "4px",
-                            background: isSelected
-                              ? "rgba(255,255,255,0.2)"
-                              : isDayComplete
-                              ? G.mid
-                              : G.white,
-                            color: isSelected || isDayComplete ? G.white : G.primary,
-                          }}
-                        >
-                          {isDayComplete ? `D${studyDay.dayNumber} ✓` : `D${studyDay.dayNumber}`}
-                        </span>
-                      ) : (
-                        <span style={{ height: "14px" }} />
-                      )}
-                    </button>
-                  );
-                })}
+                <div
+                  style={{
+                    fontSize: "0.62rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.04em",
+                    textTransform: "uppercase",
+                    color: G.primary,
+                    marginBottom: "4px",
+                  }}
+                >
+                  MODULES
+                </div>
+                <div
+                  style={{
+                    fontSize: "1.05rem",
+                    fontWeight: 800,
+                    color: "#1E2D26",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {numDays}
+                </div>
+                <div style={{ fontSize: "0.68rem", color: G.mutedText, marginTop: "3px" }}>
+                  Core topics
+                </div>
               </div>
             </div>
 
-            {/* Study Days Quick List */}
+            {/* FOCUS AREAS */}
+            <div style={{ marginBottom: "16px" }}>
+              <div
+                style={{
+                  fontSize: "0.66rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  color: G.primary,
+                  marginBottom: "10px",
+                }}
+              >
+                FOCUS AREAS
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {focusAreas.map((area, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "9px",
+                      fontSize: "0.78rem",
+                      color: "#2C3E35",
+                      lineHeight: 1.35,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: G.primary,
+                        marginTop: "5px",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>{area}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* STUDY TIP Box */}
             <div
               style={{
-                background: G.white,
+                background: "#E8F1EC",
                 borderRadius: "12px",
-                border: `1px solid ${G.cardBorder}`,
-                padding: "12px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                maxHeight: "320px",
-                overflowY: "auto",
+                padding: "12px 14px",
               }}
             >
+              <div
+                style={{
+                  fontSize: "0.66rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.05em",
+                  textTransform: "uppercase",
+                  color: G.primary,
+                  marginBottom: "4px",
+                }}
+              >
+                STUDY TIP
+              </div>
+              <div
+                style={{
+                  fontSize: "0.76rem",
+                  color: "#2C3E35",
+                  lineHeight: 1.4,
+                }}
+              >
+                Start each day with the mindmap, then move to takeaways, video, and assessment.
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Study days */}
+          <div
+            style={{
+              background: G.white,
+              borderRadius: "18px",
+              border: `1px solid ${G.cardBorder}`,
+              padding: "20px",
+              boxShadow: "0 1px 3px rgba(45, 62, 54, 0.03)",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "1.05rem",
+                fontWeight: 700,
+                color: "#1E2D26",
+                marginBottom: "2px",
+              }}
+            >
+              Study days
+            </div>
+            <div
+              style={{
+                fontSize: "0.76rem",
+                color: G.mutedText,
+                marginBottom: "14px",
+              }}
+            >
+              {numDays}-day plan · {avgDailyMins} min/day
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {activeBlueprint.days.map((d) => {
                 const isSelected = selectedDayPlan?.dayNumber === d.dayNumber;
-                const dDate = addDays(startDate, d.dayNumber - 1);
                 const doneCount = d.tasks.filter((t) => completedTasks[t.id]).length;
                 const isDone = d.tasks.length > 0 && doneCount === d.tasks.length;
+                const shortTitle =
+                  d.title.length > 34 && d.title.includes(" & ")
+                    ? d.title.split(" & ")[0]
+                    : d.title;
 
                 return (
                   <button
                     key={d.dayNumber}
                     type="button"
-                    onClick={() => {
-                      setSelectedDayNum(d.dayNumber);
-                      setCalendarMonth(new Date(dDate.getFullYear(), dDate.getMonth(), 1));
-                    }}
+                    onClick={() => setSelectedDayNum(d.dayNumber)}
                     style={{
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                       gap: "10px",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
+                      padding: "11px 12px",
+                      borderRadius: "12px",
                       border: isSelected
-                        ? `1px solid ${G.primary}`
+                        ? `1.5px solid ${G.primary}`
                         : `1px solid ${G.cardBorder}`,
-                      background: isSelected ? G.pale : G.white,
+                      background: isSelected ? "#EEF5F1" : G.white,
                       cursor: "pointer",
                       textAlign: "left",
                       fontFamily: "inherit",
-                      transition: "all 0.14s ease",
+                      transition: "all 0.15s ease",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "9px", minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "11px", minWidth: 0 }}>
                       <div
                         style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "6px",
-                          background: isDone ? G.mid : isSelected ? G.primary : G.subtleBg,
-                          color: isDone || isSelected ? G.white : G.dark,
+                          width: "34px",
+                          height: "34px",
+                          borderRadius: "8px",
+                          background: isDone
+                            ? G.mid
+                            : isSelected
+                            ? "#2B4438"
+                            : "#E6EFE9",
+                          color: isDone || isSelected ? G.white : "#2B4438",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontWeight: 700,
-                          fontSize: "0.72rem",
+                          fontSize: "0.78rem",
                           flexShrink: 0,
                         }}
                       >
@@ -1141,25 +1099,25 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       <div style={{ minWidth: 0 }}>
                         <div
                           style={{
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                            color: G.dark,
+                            fontSize: "0.82rem",
+                            fontWeight: 700,
+                            color: "#1E2D26",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
                           }}
                         >
-                          {d.title}
+                          {shortTitle}
                         </div>
-                        <div style={{ fontSize: "0.7rem", color: G.mutedText }}>
-                          {formatShortDate(dDate)} · {doneCount}/{d.tasks.length} done
+                        <div style={{ fontSize: "0.72rem", color: G.mutedText, marginTop: "2px" }}>
+                          {doneCount}/{d.tasks.length} tasks
                         </div>
                       </div>
                     </div>
 
                     <span
                       style={{
-                        fontSize: "0.7rem",
+                        fontSize: "0.74rem",
                         fontWeight: 600,
                         color: G.mutedText,
                         flexShrink: 0,
@@ -1172,254 +1130,373 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
               })}
             </div>
           </div>
+        </div>
 
-          {/* ── RIGHT COLUMN: Selected Day Agenda ── */}
-          {selectedDayPlan && (
+        {/* ── RIGHT COLUMN: Selected Day Agenda Card ── */}
+        {selectedDayPlan && (
+          <div
+            style={{
+              background: G.white,
+              borderRadius: "18px",
+              border: `1px solid ${G.cardBorder}`,
+              padding: "24px 28px",
+              boxShadow: "0 1px 3px rgba(45, 62, 54, 0.03)",
+            }}
+          >
+            {/* Top Header Row of Right Card */}
             <div
               style={{
-                background: G.white,
-                borderRadius: "12px",
-                border: `1px solid ${G.cardBorder}`,
-                overflow: "hidden",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "16px",
+                marginBottom: "18px",
               }}
             >
-              {/* Slim Day Header */}
-              <div
-                style={{
-                  padding: "14px 20px",
-                  background: G.subtleBg,
-                  borderBottom: `1px solid ${G.cardBorder}`,
-                  display: "flex",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "12px",
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-                    <span
-                      style={{
-                        background: G.pale,
-                        color: G.primary,
-                        border: `1px solid ${G.paleBorder}`,
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        padding: "2px 8px",
-                        borderRadius: "6px",
-                      }}
-                    >
-                      Day {selectedDayPlan.dayNumber} of {activeBlueprint.days.length}
-                    </span>
-                    <span style={{ fontSize: "0.78rem", fontWeight: 500, color: G.mutedText }}>
-                      {formatLongDate(selectedDayDate)} · {selectedDayPlan.totalMinutes} mins
-                    </span>
-                  </div>
-
-                  <h2
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                  <span
                     style={{
-                      margin: 0,
-                      fontSize: "1.05rem",
-                      fontWeight: 700,
-                      color: G.dark,
+                      background: "#E8F1EC",
+                      color: G.primary,
+                      fontSize: "0.7rem",
+                      fontWeight: 800,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
                     }}
                   >
-                    {selectedDayPlan.title}
-                  </h2>
+                    DAY {selectedDayPlan.dayNumber} OF {numDays}
+                  </span>
+                  <span style={{ fontSize: "0.8rem", fontWeight: 500, color: G.mutedText }}>
+                    {selectedDayPlan.totalMinutes} minutes
+                  </span>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <button
-                    type="button"
-                    disabled={selectedDayPlan.dayNumber <= 1}
-                    onClick={() => setSelectedDayNum((n) => Math.max(1, n - 1))}
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "7px",
-                      border: `1px solid ${G.cardBorder}`,
-                      background: G.white,
-                      color: selectedDayPlan.dayNumber <= 1 ? "#cbd5e1" : G.dark,
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      cursor: selectedDayPlan.dayNumber <= 1 ? "not-allowed" : "pointer",
-                    }}
-                  >
-                    ‹ Prev
-                  </button>
-                  <button
-                    type="button"
-                    disabled={selectedDayPlan.dayNumber >= activeBlueprint.days.length}
-                    onClick={() =>
-                      setSelectedDayNum((n) => Math.min(activeBlueprint.days.length, n + 1))
-                    }
-                    style={{
-                      padding: "5px 10px",
-                      borderRadius: "7px",
-                      border: `1px solid ${G.cardBorder}`,
-                      background: G.white,
-                      color:
-                        selectedDayPlan.dayNumber >= activeBlueprint.days.length
-                          ? "#cbd5e1"
-                          : G.dark,
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      cursor:
-                        selectedDayPlan.dayNumber >= activeBlueprint.days.length
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                  >
-                    Next ›
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => toggleEntireDay(selectedDayPlan)}
-                    style={{
-                      padding: "5px 12px",
-                      borderRadius: "7px",
-                      border: `1px solid ${G.primary}`,
-                      background: selectedDayPlan.tasks.every((t) => completedTasks[t.id])
-                        ? G.pale
-                        : G.primary,
-                      color: selectedDayPlan.tasks.every((t) => completedTasks[t.id])
-                        ? G.primary
-                        : G.white,
-                      fontWeight: 600,
-                      fontSize: "0.75rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {selectedDayPlan.tasks.every((t) => completedTasks[t.id])
-                      ? "Completed ✓"
-                      : "Mark Day Done"}
-                  </button>
-                </div>
+                <h2
+                  style={{
+                    margin: 0,
+                    fontSize: "1.3rem",
+                    fontWeight: 800,
+                    color: "#1E2D26",
+                    letterSpacing: "-0.015em",
+                  }}
+                >
+                  {selectedDayPlan.title}
+                </h2>
               </div>
 
-              {/* Session Rows */}
-              <div style={{ padding: "14px 20px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                {(() => {
-                  let runningMins = 0;
-                  return selectedDayPlan.tasks.map((task) => {
-                    const startMin = runningMins;
-                    runningMins += task.durationMins;
-
-                    const isDone = Boolean(completedTasks[task.id]);
-                    const meta = CATEGORY_META[task.category] || CATEGORY_META.general;
-
-                    return (
-                      <div
-                        key={task.id}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "14px",
-                          padding: "12px 14px",
-                          borderRadius: "10px",
-                          border: `1px solid ${isDone ? G.paleBorder : G.cardBorder}`,
-                          background: isDone ? G.subtleBg : G.white,
-                          flexWrap: "wrap",
-                          transition: "background 0.15s ease",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", flex: "1 1 280px" }}>
-                          <button
-                            type="button"
-                            onClick={() => toggleTask(task.id)}
-                            style={{
-                              marginTop: "2px",
-                              width: "20px",
-                              height: "20px",
-                              borderRadius: "5px",
-                              border: isDone ? "none" : `1.5px solid ${G.light}`,
-                              background: isDone ? G.mid : G.white,
-                              color: G.white,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              cursor: "pointer",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {isDone ? "✓" : ""}
-                          </button>
-
-                          <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px", flexWrap: "wrap" }}>
-                              <span
-                                style={{
-                                  fontSize: "0.88rem",
-                                  fontWeight: 600,
-                                  color: isDone ? G.mutedText : G.dark,
-                                  textDecoration: isDone ? "line-through" : "none",
-                                }}
-                              >
-                                {task.title}
-                              </span>
-                              <span
-                                style={{
-                                  fontSize: "0.68rem",
-                                  fontWeight: 600,
-                                  padding: "1px 7px",
-                                  borderRadius: "4px",
-                                  background: G.pale,
-                                  color: G.primary,
-                                }}
-                              >
-                                {meta.label}
-                              </span>
-                              <span
-                                style={{
-                                  fontSize: "0.7rem",
-                                  color: G.mutedText,
-                                  fontWeight: 500,
-                                }}
-                              >
-                                {String(Math.floor(startMin / 60)).padStart(2, "0")}:
-                                {String(startMin % 60).padStart(2, "0")} ({task.durationMins}m)
-                              </span>
-                            </div>
-
-                            <div style={{ fontSize: "0.78rem", color: G.mutedText, lineHeight: 1.4 }}>
-                              {task.description}
-                            </div>
-                          </div>
-                        </div>
-
-                        {onSwitchTool && task.toolTarget && (
-                          <button
-                            type="button"
-                            onClick={() => onSwitchTool(task.toolTarget!)}
-                            style={{
-                              padding: "5px 11px",
-                              borderRadius: "7px",
-                              border: `1px solid ${G.paleBorder}`,
-                              background: G.pale,
-                              color: G.primary,
-                              fontSize: "0.74rem",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {meta.actionLabel} →
-                          </button>
-                        )}
-                      </div>
-                    );
-                  });
-                })()}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  disabled={selectedDayPlan.dayNumber <= 1}
+                  onClick={() => setSelectedDayNum((n) => Math.max(1, n - 1))}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: "999px",
+                    border: `1px solid ${G.cardBorder}`,
+                    background: G.white,
+                    color: selectedDayPlan.dayNumber <= 1 ? "#B8C7BE" : "#1E2D26",
+                    fontWeight: 600,
+                    fontSize: "0.78rem",
+                    cursor: selectedDayPlan.dayNumber <= 1 ? "not-allowed" : "pointer",
+                  }}
+                >
+                  ‹ Prev
+                </button>
+                <button
+                  type="button"
+                  disabled={selectedDayPlan.dayNumber >= numDays}
+                  onClick={() => setSelectedDayNum((n) => Math.min(numDays, n + 1))}
+                  style={{
+                    padding: "7px 14px",
+                    borderRadius: "999px",
+                    border: `1px solid ${G.cardBorder}`,
+                    background: G.white,
+                    color: selectedDayPlan.dayNumber >= numDays ? "#B8C7BE" : "#1E2D26",
+                    fontWeight: 600,
+                    fontSize: "0.78rem",
+                    cursor: selectedDayPlan.dayNumber >= numDays ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Next ›
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggleEntireDay(selectedDayPlan)}
+                  style={{
+                    padding: "7px 16px",
+                    borderRadius: "999px",
+                    border: "1px solid #2B4438",
+                    background: selectedDayPlan.tasks.every((t) => completedTasks[t.id])
+                      ? "#E8F1EC"
+                      : "#2B4438",
+                    color: selectedDayPlan.tasks.every((t) => completedTasks[t.id])
+                      ? "#2B4438"
+                      : G.white,
+                    fontWeight: 700,
+                    fontSize: "0.78rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  {selectedDayPlan.tasks.every((t) => completedTasks[t.id])
+                    ? "Completed ✓"
+                    : "Mark day done"}
+                </button>
               </div>
             </div>
-          )}
+
+            {/* TODAY'S PROGRESS Banner */}
+            <div
+              style={{
+                background: "#EAF2ED",
+                borderRadius: "12px",
+                padding: "14px 18px",
+                marginBottom: "18px",
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <div
+                  style={{
+                    fontSize: "0.66rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: G.primary,
+                    marginBottom: "3px",
+                  }}
+                >
+                  TODAY&apos;S PROGRESS
+                </div>
+                <div
+                  style={{
+                    fontSize: "0.88rem",
+                    fontWeight: 700,
+                    color: "#1E2D26",
+                  }}
+                >
+                  {dayDoneCount} of {dayTotalCount} tasks completed
+                </div>
+              </div>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: "200px" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    width: "160px",
+                    height: "6px",
+                    borderRadius: "999px",
+                    background: "#D5E2D9",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${dayPct}%`,
+                      height: "100%",
+                      borderRadius: "999px",
+                      background: "#2B4438",
+                      transition: "width 0.25s ease",
+                    }}
+                  />
+                </div>
+                <span
+                  style={{
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    color: G.mutedText,
+                    minWidth: "28px",
+                    textAlign: "right",
+                  }}
+                >
+                  {dayPct}%
+                </span>
+              </div>
+            </div>
+
+            {/* Task Cards */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {(() => {
+                let runningMins = 0;
+                return selectedDayPlan.tasks.map((task) => {
+                  const startMin = runningMins;
+                  runningMins += task.durationMins;
+
+                  const isDone = Boolean(completedTasks[task.id]);
+                  const meta = CATEGORY_META[task.category] || CATEGORY_META.general;
+
+                  return (
+                    <div
+                      key={task.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "16px",
+                        padding: "16px 20px",
+                        borderRadius: "14px",
+                        border: `1px solid ${isDone ? G.paleBorder : G.cardBorder}`,
+                        background: isDone ? G.subtleBg : G.white,
+                        flexWrap: "wrap",
+                        transition: "background 0.15s ease",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", flex: "1 1 280px" }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleTask(task.id)}
+                          style={{
+                            marginTop: "3px",
+                            width: "20px",
+                            height: "20px",
+                            borderRadius: "6px",
+                            border: isDone ? "none" : `1.5px solid ${G.paleBorder}`,
+                            background: isDone ? G.mid : G.white,
+                            color: G.white,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            cursor: "pointer",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {isDone ? "✓" : ""}
+                        </button>
+
+                        <div>
+                          <div
+                            style={{
+                              fontSize: "0.95rem",
+                              fontWeight: 700,
+                              color: isDone ? G.mutedText : "#1E2D26",
+                              textDecoration: isDone ? "line-through" : "none",
+                              marginBottom: "6px",
+                            }}
+                          >
+                            {task.title}
+                          </div>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              marginBottom: "6px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                padding: "2px 9px",
+                                borderRadius: "999px",
+                                background: "#E8F1EC",
+                                color: G.primary,
+                              }}
+                            >
+                              {meta.label}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "0.74rem",
+                                color: G.mutedText,
+                                fontWeight: 500,
+                              }}
+                            >
+                              {String(Math.floor(startMin / 60)).padStart(2, "0")}:
+                              {String(startMin % 60).padStart(2, "0")} ({task.durationMins}m)
+                            </span>
+                          </div>
+
+                          <div style={{ fontSize: "0.8rem", color: G.mutedText, lineHeight: 1.45 }}>
+                            {task.description}
+                          </div>
+                        </div>
+                      </div>
+
+                      {onSwitchTool && task.toolTarget && (
+                        <button
+                          type="button"
+                          onClick={() => onSwitchTool(task.toolTarget!)}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "10px",
+                            border: `1px solid ${G.paleBorder}`,
+                            background: "#E8F1EC",
+                            color: "#263B31",
+                            fontSize: "0.78rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          {meta.actionLabel} →
+                        </button>
+                      )}
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            {/* Bottom Study Tip Banner */}
+            <div
+              style={{
+                background: "#EAF2ED",
+                borderRadius: "12px",
+                padding: "14px 18px",
+                marginTop: "18px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  color: G.primary,
+                  marginBottom: "4px",
+                }}
+              >
+                Study tip
+              </div>
+              <div
+                style={{
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  color: "#1E2D26",
+                  lineHeight: 1.4,
+                }}
+              >
+                Start with the mindmap, review the key takeaways, then test your understanding with the quiz.
+              </div>
+            </div>
+
+            {/* Footer Caption */}
+            <div
+              style={{
+                fontSize: "0.74rem",
+                color: G.mutedText,
+                marginTop: "14px",
+              }}
+            >
+              Daily plan · {selectedDayPlan.totalMinutes} minutes
+            </div>
+          </div>
+        )}
       </div>
 
       <style>{`
         @media (max-width: 920px) {
-          .sp-calendar-split-grid {
+          .sp-days-split-grid {
             grid-template-columns: 1fr !important;
           }
         }
@@ -1429,3 +1506,4 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
 };
 
 export default StudyPlanView;
+

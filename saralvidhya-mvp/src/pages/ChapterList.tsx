@@ -8,68 +8,6 @@ import './ChapterCard.css';
 
 const PUBADM_UR_ENABLED_COUNT = 1;
 
-function SubjectHeaderIcon({ subjectId, iconUrl, subjectName }: { subjectId: string; iconUrl?: string; subjectName?: string }) {
-  if (iconUrl) {
-    const resolvedIcon =
-      iconUrl.startsWith('http://') || iconUrl.startsWith('https://') || iconUrl.startsWith('data:')
-        ? iconUrl
-        : `${import.meta.env.BASE_URL}${iconUrl.replace(/^\//, '')}`;
-    return (
-      <img
-        src={resolvedIcon}
-        alt={subjectName || subjectId}
-        className="subject-header-illustration"
-      />
-    );
-  }
-  const id = (subjectId || '').toLowerCase();
-  const common = { width: 36, height: 36, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
-  switch (id) {
-    case 'english':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      );
-    case 'telugu':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
-        </svg>
-      );
-    case 'hindi':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-        </svg>
-      );
-    case 'science':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-        </svg>
-      );
-    case 'math':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-        </svg>
-      );
-    case 'social':
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2a2.5 2.5 0 002.5-2.5V14a2 2 0 012-2h.027M13.757 5.107A4.477 4.477 0 0012 5.05c-.179.01-.354.03-.523.062M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      );
-    default:
-      return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" {...common}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-        </svg>
-      );
-  }
-}
-
 export function toTitleCase(str: string): string {
   if (!str) return str;
   const smallWords = new Set(['of', 'and', 'the', 'in', 'on', 'at', 'to', 'for', 'a', 'an', 'with', 'is', 'by']);
@@ -85,14 +23,11 @@ export default function ChapterList() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { subjectId } = useParams<{ subjectId: string }>();
-  const { config, tenantPath } = useTenant();
-  const treeLogoSrc =
-    config?.branding?.logoUrl ||
-    (subjectId?.startsWith('neb_')
-      ? `${import.meta.env.BASE_URL}neb-logo.png`
-      : `${import.meta.env.BASE_URL}brand-logo.png`);
+  const { tenantPath } = useTenant();
+  const treeLogoSrc = subjectId?.startsWith('neb_')
+    ? `${import.meta.env.BASE_URL}neb-logo.png`
+    : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const [chapters, setChapters] = useState<Chapter[]>([]);
-  const [subjectIconUrl, setSubjectIconUrl] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [bookOpen, setBookOpen] = useState(false);
   const [clickedChapter, setClickedChapter] = useState<number | null>(null);
@@ -113,7 +48,6 @@ export default function ChapterList() {
       const subject = getSubject(m, sId);
       const chList = getChapters(m, sId);
       setChapters(chList);
-      setSubjectIconUrl(subject?.iconUrl);
       setResolvedSubjectName(searchParams.get('subjectName') || subject?.name || sId);
       setLoading(false);
 
@@ -250,15 +184,6 @@ export default function ChapterList() {
               {/* Page header */}
               <div className={`book-header ${bookOpen ? 'book-header--visible' : ''}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', width: '100%' }}>
                 <div className="book-header-left" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                  {subjectIconUrl ? (
-                    <div className="subject-header-img-wrap">
-                      <SubjectHeaderIcon subjectId={sId} iconUrl={subjectIconUrl} subjectName={resolvedSubjectName} />
-                    </div>
-                  ) : (
-                    <div className="book-icon-deco book-icon-deco--subject">
-                      <SubjectHeaderIcon subjectId={sId} subjectName={resolvedSubjectName} />
-                    </div>
-                  )}
                   <div>
                     <h1 className="book-title">{resolvedSubjectName}</h1>
                   </div>
@@ -300,7 +225,54 @@ export default function ChapterList() {
                 const chapterPct = isFullyDone ? 100 : snapToQuarter((completedSessions / totalSessions) * 100);
 
                 const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
-                const rawHero = flipCh.heroImageUrl || 'chapter-entomology-hero.png';
+                const lowerName = (flipCh.name || '').toLowerCase();
+                const lowerSubName = (resolvedSubjectName || '').toLowerCase();
+                const isDbms =
+                  sId.toLowerCase().includes('dbms') ||
+                  lowerSubName.includes('database') ||
+                  lowerName.includes('database');
+                const isDigestive =
+                  !isDbms && (
+                    lowerName.includes('digestive') ||
+                    flipCh.number === 1 ||
+                    flipIndex === 0
+                  );
+                const isMetamorphosis =
+                  !isDbms && (
+                    lowerName.includes('metamorphosis') ||
+                    lowerName.includes('morphology') ||
+                    flipCh.number === 2 ||
+                    flipCh.number === 11 ||
+                    flipIndex === 1
+                  );
+                const isWeathering =
+                  !isDbms && (
+                    lowerName.includes('weathering') ||
+                    lowerName.includes('soil') ||
+                    flipCh.number === 3 ||
+                    flipIndex === 2
+                  );
+                const isPollination =
+                  !isDbms && (
+                    lowerName.includes('pollination') ||
+                    lowerName.includes('floral') ||
+                    flipCh.number === 4 ||
+                    flipIndex === 3
+                  );
+
+                const fallbackHero = isDbms
+                  ? 'chapter-dbms-hero.png'
+                  : isDigestive
+                  ? 'chapter-digestive-hero.png'
+                  : isMetamorphosis
+                  ? 'chapter-metamorphosis-hero.png'
+                  : isWeathering
+                  ? 'chapter-weathering-hero.png'
+                  : isPollination
+                  ? 'chapter-pollination-hero.png'
+                  : 'chapter-entomology-hero.png';
+
+                const rawHero = flipCh.heroImageUrl || fallbackHero;
                 const heroImgSrc =
                   rawHero.startsWith('http://') || rawHero.startsWith('https://') || rawHero.startsWith('data:')
                     ? rawHero

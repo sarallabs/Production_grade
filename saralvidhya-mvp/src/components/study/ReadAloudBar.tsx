@@ -349,59 +349,90 @@ export default function ReadAloudBar({
       }}
       aria-label="Read aloud controls"
     >
-      <button
-        onClick={handlePlayPause}
-        type="button"
-        className="sv-read-aloud-pill-btn"
-        aria-label={playbackState === "playing" ? "Pause reading" : "Read aloud"}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "6px 16px",
-          borderRadius: "999px",
-          border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
-          background: playbackState === "playing"
-            ? (isPurple ? "#7c3aed" : "#16a34a")
-            : (isPurple ? "rgba(139, 92, 246, 0.04)" : "rgba(22, 163, 74, 0.04)"),
-          color: playbackState === "playing"
-            ? "#ffffff"
-            : (isPurple ? "#7c3aed" : "#16a34a"),
-          fontSize: "13px",
-          fontWeight: 700,
-          cursor: "pointer",
-          transition: "all 0.18s ease",
-          whiteSpace: "nowrap",
-          lineHeight: 1,
-          boxShadow: playbackState === "playing"
-            ? (isPurple ? "0 2px 10px rgba(124, 58, 237, 0.35)" : "0 2px 10px rgba(22, 163, 74, 0.35)")
-            : "none",
-        }}
-      >
-        {/* Headphone icon */}
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ flexShrink: 0 }}
+      <style>{`
+        .sv-read-aloud-icon-wrap {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+        }
+        .sv-read-aloud-tooltip {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 50%;
+          transform: translateX(-50%) translateY(-2px);
+          background: #1e293b;
+          color: #ffffff;
+          font-size: 11.5px;
+          font-weight: 600;
+          padding: 4px 9px;
+          border-radius: 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+           transition: opacity 0.15s ease, transform 0.15s ease;
+          z-index: 50;
+          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+        }
+        .sv-read-aloud-icon-wrap:hover .sv-read-aloud-tooltip {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      `}</style>
+      <div className="sv-read-aloud-icon-wrap">
+        <button
+          onClick={handlePlayPause}
+          type="button"
+          className="sv-read-aloud-pill-btn"
+          title="Read Aloud"
+          aria-label={playbackState === "playing" ? "Pause reading" : "Read Aloud"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "32px",
+            height: "32px",
+            padding: 0,
+            borderRadius: "50%",
+            border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
+            background: playbackState === "playing"
+              ? (isPurple ? "#7c3aed" : "#16a34a")
+              : (isPurple ? "rgba(139, 92, 246, 0.06)" : "rgba(22, 163, 74, 0.06)"),
+            color: playbackState === "playing"
+              ? "#ffffff"
+              : (isPurple ? "#7c3aed" : "#16a34a"),
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+            lineHeight: 1,
+            boxShadow: playbackState === "playing"
+              ? (isPurple ? "0 2px 10px rgba(124, 58, 237, 0.35)" : "0 2px 10px rgba(22, 163, 74, 0.35)")
+              : "none",
+          }}
         >
-          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-        </svg>
-
-        <span>
+          {/* Speaker / Read Aloud symbol */}
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        </button>
+        <span className="sv-read-aloud-tooltip">
           {playbackState === "playing"
-            ? `Pause · ${durationString}`
+            ? "Pause Read Aloud"
             : playbackState === "paused"
-            ? `Resume · ${durationString}`
-            : `Read Aloud · ${durationString}`}
+            ? "Resume Read Aloud"
+            : "Read Aloud"}
         </span>
-      </button>
+      </div>
 
       {playbackState !== "idle" && (
         <button

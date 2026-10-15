@@ -111,7 +111,7 @@ function getChapterProgressStats(subjectId: string, chapterNumber: number) {
 
 export default function ClassSubjectSelection() {
   const navigate = useNavigate();
-  const { tenantId, tenantPath, config, logout: tenantLogout } = useTenant();
+  const { tenantId, tenantPath, logout: tenantLogout } = useTenant();
   const activeTenantId = tenantId || getRegistryTenantId();
 
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
@@ -161,12 +161,9 @@ export default function ClassSubjectSelection() {
     [catalog.boards, selectedBoardId],
   );
 
-  const treeLogoSrc =
-    selectedBoard?.logoUrl ||
-    config?.branding?.logoUrl ||
-    (selectedBoardId?.startsWith('neb')
-      ? `${import.meta.env.BASE_URL}neb-logo.png`
-      : `${import.meta.env.BASE_URL}brand-logo.png`);
+  const treeLogoSrc = selectedBoardId?.startsWith('neb')
+    ? `${import.meta.env.BASE_URL}neb-logo.png`
+    : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
 
   const selectedClass = useMemo(
     () => {

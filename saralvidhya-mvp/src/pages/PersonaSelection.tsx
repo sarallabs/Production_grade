@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { setStudentPersona } from '@/utils/credentialsStore';
 import { cloudStorage } from '@/context/CloudStateContext';
-import { useTenant } from '@/tenant/TenantProvider';
 
 const PERSONAS = [
   {
@@ -34,9 +33,8 @@ const PERSONAS = [
 export default function PersonaSelection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { branding } = useTenant();
   const sId = searchParams.get('sId') || '';
-  const treeLogoSrc = branding?.logoPrimaryUrl || `${import.meta.env.BASE_URL}brand-logo.png`;
+  const treeLogoSrc = `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const className = searchParams.get('className') || '';
   const semesterName = searchParams.get('semesterName') || '';
   const subjectName = searchParams.get('subjectName') || '';

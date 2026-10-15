@@ -51,6 +51,7 @@ export interface ReadSection {
   readTimeMinutes: number;
   content: string;
   quickCheck?: QuickCheckQuestion;
+  quickChecks?: QuickCheckQuestion[];
 }
 
 export interface SectionizedChapterData {
@@ -107,7 +108,7 @@ async function fetchFirstValid(
     if (!c) continue;
     try {
       const cleanUrl = c.startsWith('http') ? c : c.replace(/([^:])\/\//g, '$1/');
-      const res = await fetch(cleanUrl);
+      const res = await fetch(cleanUrl, { cache: 'no-store' });
       if (!res.ok) continue;
       const ct = (res.headers.get('content-type') || '').toLowerCase();
       if (ct.includes('text/html')) continue;
@@ -147,7 +148,7 @@ export function getCachedSectionizedReadDataSync(
       : pStr === 'advanced' || pStr === 'hard'
       ? 'advanced'
       : 'intermediate';
-  const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
+  const cacheKey = `v3:${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
   return sectionizedReadCache.get(cacheKey) || null;
 }
 
@@ -169,7 +170,7 @@ export async function getSectionizedReadData(
       ? 'advanced'
       : 'intermediate';
 
-  const cacheKey = `${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
+  const cacheKey = `v3:${subjectId || ''}:${chapterNumber}:${track}:${normPersona}`;
   if (sectionizedReadCache.has(cacheKey)) {
     const cached = sectionizedReadCache.get(cacheKey)!;
     sectionizedReadCache.delete(cacheKey);
@@ -193,6 +194,18 @@ export async function getSectionizedReadData(
   const registryChapterTitle =
     regCh?.chapter?.title || manifestChapter?.title || manifestChapter?.name;
 
+  const subjectBase = getSubjectBaseUrl(subjectId);
+  const localBase = getLocalSubjectBaseUrl(subjectId);
+  const chDir = getChapterDir(subjectId, chapterNumber);
+  const canonicalChDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+  const lowerSub = (subjectId || '').toLowerCase();
+  const explicitLocalBase =
+    lowerSub.includes('dbms')
+      ? '/generated_resources/mlrit/dbms'
+      : lowerSub.includes('ento') || lowerSub.includes('hort') || lowerSub.includes('ssac')
+      ? '/generated_resources/angrau/entomology'
+      : localBase;
+
   const mdKeys = [
     `read/${trackFolderAlt}/${normPersona}.md`,
     `learn/read/${trackFolder}/${normPersona}.md`,
@@ -201,6 +214,17 @@ export async function getSectionizedReadData(
   for (const k of mdKeys) {
     if (files[k]) mdCandidates.push(files[k]);
   }
+
+  // Prioritize local enriched Quick Check JSONs (containing 4 3-option MCQ questions per section)
+  qcCandidates.push(
+    `${explicitLocalBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`
+  );
 
   const qcKeys = [
     `read/quick_check/${trackFolderAlt}/${normPersona}.json`,
@@ -221,9 +245,6 @@ export async function getSectionizedReadData(
   }
 
   // 2. Fallback relative to dynamic Cloud Run subjectBase and static localBase
-  const subjectBase = getSubjectBaseUrl(subjectId);
-  const localBase = getLocalSubjectBaseUrl(subjectId);
-  const chDir = getChapterDir(subjectId, chapterNumber);
   mdCandidates.push(
     `${subjectBase}/${chDir}/read/${trackFolderAlt}?persona=${normPersona}`,
     `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
@@ -234,10 +255,7 @@ export async function getSectionizedReadData(
   );
   qcCandidates.push(
     `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json`,
-    `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json`
+    `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`
   );
   studyJsonCandidates.push(
     `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
@@ -310,9 +328,16 @@ export async function getSectionizedReadData(
       }
     }
 
-    let rawParts = markdown.split(
-      /(?=^#{1,2}\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.|\bModule\s*\d+|\bUnit\s*\d+))/imu
+    // Prefer single-# numbered headings when a document uses # 1. ... for top-level modules
+    const h1Parts = markdown.split(
+      /(?=^#\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.(?!\d)|\bModule\s*\d+|\bUnit\s*\d+))/imu
     );
+    let rawParts =
+      h1Parts.length >= 4
+        ? h1Parts
+        : markdown.split(
+            /(?=^#{1,2}\s+(?:[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\s]*\d+\.(?!\d)|\bModule\s*\d+|\bUnit\s*\d+))/imu
+          );
     if (rawParts.length <= 1) {
       rawParts = markdown.split(/(?=^##\s+)/m);
     }
@@ -323,19 +348,11 @@ export async function getSectionizedReadData(
     const fallbackChapterTitle = registryChapterTitle || `Chapter ${chapterNumber}`;
     const chapterTitle = mainTitleMatch ? mainTitleMatch[1].trim() : fallbackChapterTitle;
 
-    const part0Body = part0.replace(/^#\s+[^\n]+(\r?\n)*/, '').trim();
-    if (part0Body.length > 50) {
-      sections.push({
-        id: 'sec-overview',
-        sectionNumber: 0,
-        title: 'Architectural Blueprint & Regional Partitioning',
-        shortTitle: 'Overview',
-        subtitle: 'Foundational concepts and curriculum overview',
-        readTimeMinutes: estimateReadingTime(part0Body),
-        content: part0,
-        quickCheck: undefined,
-      });
-    }
+    // Clean any top-level chapter title from part0Body so it can be prepended to Section 1 without repeating
+    const part0Body = part0
+      .replace(/^#\s+[^\n\r]+(\r?\n)*/, '')
+      .replace(/^#{1,2}\s+/gm, '### ')
+      .trim();
 
     const startIndex = 1;
     for (let i = startIndex; i < rawParts.length; i++) {
@@ -347,7 +364,7 @@ export async function getSectionizedReadData(
       const cleanTitle = cleanHeadingText(rawHeading);
       const shortTitle = getShortTitle(rawHeading);
 
-      let matchedQuestion: QuickCheckQuestion | undefined;
+      let matchedQuestions: QuickCheckQuestion[] = [];
       const cleanHead = cleanHeadingText(rawHeading);
       const modMatch =
         cleanHead.match(/Module\s*(\d+)/i) ||
@@ -357,14 +374,28 @@ export async function getSectionizedReadData(
       if (modMatch) {
         const modNum = parseInt(modMatch[1], 10);
         secNumber = modNum;
-        matchedQuestion =
-          questions.find((q) => q.module_id === `M${modNum}`) || questions[modNum - 1];
-      } else if (questions[i - 1]) {
-        matchedQuestion = questions[i - 1];
+        matchedQuestions = questions.filter((q) => q.module_id === `M${modNum}`);
+        if (matchedQuestions.length === 0 && questions[modNum - 1]) {
+          matchedQuestions = [questions[modNum - 1]];
+        }
+      } else {
+        matchedQuestions = questions.filter((q) => q.module_id === `M${i}`);
+        if (matchedQuestions.length === 0 && questions[i - 1]) {
+          matchedQuestions = [questions[i - 1]];
+        }
       }
 
       const subtitleMatch = part.match(/^(?:#{1,2}[^\n]+\n+)([A-Z][^\n.]+—[^\n]+)/m);
       const subtitle = subtitleMatch ? subtitleMatch[1].trim() : undefined;
+
+      // Strip the leading section heading (and optional extracted subtitle) from content so it never repeats
+      let sectionBody = part.replace(/^#{1,2}\s+[^\n\r]+(\r?\n)*/, '').trim();
+      if (subtitle && sectionBody.startsWith(subtitle)) {
+        sectionBody = sectionBody.slice(subtitle.length).trim();
+      }
+      if (i === startIndex && part0Body.length > 50) {
+        sectionBody = `${part0Body}\n\n---\n\n${sectionBody}`;
+      }
 
       sections.push({
         id: `sec-${i}`,
@@ -372,9 +403,10 @@ export async function getSectionizedReadData(
         title: cleanTitle,
         shortTitle,
         subtitle,
-        readTimeMinutes: estimateReadingTime(part),
-        content: part,
-        quickCheck: matchedQuestion,
+        readTimeMinutes: estimateReadingTime(sectionBody),
+        content: sectionBody,
+        quickCheck: matchedQuestions[0],
+        quickChecks: matchedQuestions,
       });
     }
 

@@ -440,24 +440,29 @@ export default function FlashcardsView({
                     type="button"
                     onClick={(e) => { e.stopPropagation(); flipCard(true); }}
                     style={{
-                      background: 'rgba(255,255,255,0.4)',
-                      border: `1.5px solid ${isPurpleTheme ? 'rgba(203,48,224,0.4)' : 'rgba(111,154,127,0.6)'}`,
+                      background: 'transparent',
+                      border: 'none',
                       borderRadius: '999px',
-                      padding: '8px 24px',
-                      fontSize: '14px',
-                      fontWeight: 600,
-                      color: isPurpleTheme ? '#7e22ce' : '#2D3E36',
+                      padding: '4px 12px',
+                      fontSize: '12.5px',
+                      fontWeight: 500,
+                      color: isPurpleTheme ? 'rgba(126, 34, 206, 0.65)' : 'rgba(45, 62, 54, 0.58)',
                       cursor: 'pointer',
-                      display: 'flex',
+                      display: 'inline-flex',
                       alignItems: 'center',
-                      gap: '8px',
-                      backdropFilter: 'blur(4px)',
-                      transition: 'all 0.18s ease',
+                      gap: '4px',
+                      transition: 'opacity 0.18s ease, color 0.18s ease',
                       flexShrink: 0,
                     }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = isPurpleTheme ? 'rgba(126, 34, 206, 0.92)' : 'rgba(45, 62, 54, 0.9)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = isPurpleTheme ? 'rgba(126, 34, 206, 0.65)' : 'rgba(45, 62, 54, 0.58)';
+                    }}
                   >
-                    Click to reveal Answer
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <span>Click here</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="9 18 15 12 9 6" />
                     </svg>
                   </button>
