@@ -215,17 +215,6 @@ export async function getSectionizedReadData(
     if (files[k]) mdCandidates.push(files[k]);
   }
 
-  // Prioritize local enriched Quick Check JSONs (containing 4 3-option MCQ questions per section)
-  qcCandidates.push(
-    `${explicitLocalBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`
-  );
-
   const qcKeys = [
     `read/quick_check/${trackFolderAlt}/${normPersona}.json`,
     `learn/read/quick_check/${trackFolder}/${normPersona}.json`,
@@ -254,8 +243,17 @@ export async function getSectionizedReadData(
     `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.md`
   );
   qcCandidates.push(
-    `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json`,
-    `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json`
+    `${subjectBase}/${canonicalChDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
+    `${subjectBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
+    `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${explicitLocalBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`
   );
   studyJsonCandidates.push(
     `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
