@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import 'dotenv/config';
 
 import contentRoutes from './routes/content.js';
@@ -47,12 +48,20 @@ app.use('/api/v2/t', v2AiRoutes);
 app.use('/v2/publish', v2PublishRoutes);
 app.use('/api/v2/publish', v2PublishRoutes);
 
+// ── Rate-limited Server-side AI Ask & Cloud TTS Proxies (Zero browser secrets) ──
+const geminiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many AI requests. Please try again in a minute.' },
+});
+app.use('/api/gemini', geminiLimiter, geminiRoutes);
 
 // ── All legacy routes below require a valid Firebase ID token ───
 app.use('/api', verifyToken);
 
 // ── Authenticated legacy routes ─────────────────────────────────
-app.use('/api/gemini',     geminiRoutes);      // Gemini proxy
 app.use('/api/users',      userRoutes);        // profile, progress
 app.use('/api/assessment', assessmentRoutes);  // quiz results, scoring
 

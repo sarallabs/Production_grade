@@ -48,4 +48,72 @@ Answer clearly and concisely.
   }
 });
 
+/**
+ * POST /api/gemini/tts
+ * Body: { ssml?: string, text?: string, languageCode?: string, voiceName?: string, ssmlGender?: string, speakingRate?: number, enableTimePointing?: boolean }
+ *
+ * Proxies Google Cloud TTS calls server-side — API key never exposed to browser.
+ */
+router.post('/tts', async (req: Request, res: Response) => {
+  const {
+    ssml,
+    text,
+    languageCode = 'en-IN',
+    voiceName = 'en-IN-Wavenet-D',
+    ssmlGender = 'FEMALE',
+    speakingRate = 1.0,
+    enableTimePointing = true,
+  } = req.body || {};
+
+  if (!ssml && !text) {
+    return res.status(400).json({ error: 'Either ssml or text is required' });
+  }
+
+  const apiKey = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || '').trim();
+  if (!apiKey) {
+    return res.status(503).json({ error: 'Cloud TTS API key is not configured on the server' });
+  }
+
+  const ttsBody: Record<string, any> = {
+    input: ssml ? { ssml } : { text },
+    voice: {
+      languageCode,
+      name: voiceName,
+      ssmlGender,
+    },
+    audioConfig: {
+      audioEncoding: 'MP3',
+      speakingRate,
+      pitch: 0,
+    },
+  };
+  if (enableTimePointing && ssml) {
+    ttsBody.enableTimePointing = ['SSML_MARK'];
+  }
+
+  const endpoint = `https://texttospeech.googleapis.com/v1beta1/text:synthesize?key=${apiKey}`;
+
+  try {
+    const upstream = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(ttsBody),
+    });
+
+    if (!upstream.ok) {
+      const errText = await upstream.text();
+      return res.status(upstream.status).json({ error: `Cloud TTS upstream error: ${errText}` });
+    }
+
+    const data = await upstream.json();
+    res.json({
+      audioContent: data.audioContent,
+      timepoints: data.timepoints || [],
+    });
+  } catch (err: any) {
+    console.error('[Gemini TTS] Error:', err.message);
+    res.status(500).json({ error: 'Failed to synthesize speech' });
+  }
+});
+
 export default router;
