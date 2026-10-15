@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { requireApprover } from '../../middleware/requireApprover.js';
@@ -19,12 +20,33 @@ const router = Router();
 const PROJECT_ID = process.env.GCP_PROJECT_ID || 'saralvidhya-production';
 const firestore = new Firestore({ projectId: PROJECT_ID });
 
+function safeCompare(a: string, b: string): boolean {
+  if (!a || !b) return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
 function publisherAllowed(req: AuthenticatedRequest): boolean {
+  const isProd = process.env.NODE_ENV === 'production';
   const publishKey = process.env.PUBLISH_API_KEY;
   const adminKey = process.env.ADMIN_API_KEY;
-  if (!publishKey) return true; // not enforced until configured
+  if (!publishKey && !adminKey) {
+    if (isProd) {
+      console.error('[Publish] PUBLISH_API_KEY and ADMIN_API_KEY are missing in production. Refusing publish.');
+      return false;
+    }
+    return true; // dev fallback only
+  }
   const provided = req.header('X-Publish-Key') || req.header('X-Admin-Key') || '';
-  return provided === publishKey || (!!adminKey && provided === adminKey);
+  if (!provided) return false;
+  const matchPublish = publishKey ? safeCompare(provided, publishKey) : false;
+  const matchAdmin = adminKey ? safeCompare(provided, adminKey) : false;
+  return matchPublish || matchAdmin;
 }
 
 function guessContentType(path: string): string {

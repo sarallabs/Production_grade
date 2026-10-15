@@ -512,7 +512,9 @@ export function googleTtsSpeak(
     ssmlGender: preferMale ? 'MALE' : 'FEMALE',
   };
 
-  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy');
+  const isGcpKey =
+    GOOGLE_API_KEY.trim().startsWith('AIzaSy') ||
+    GOOGLE_API_KEY.trim().startsWith('AQ.');
   if (!isGcpKey) {
     isStopped = false;
     isPlaying = true;

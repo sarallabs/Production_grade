@@ -227,13 +227,33 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
+  const activeTenantId = cloudStorage.getItem('current_tenant_id');
+  const targetEndpoint = activeTenantId
+    ? `${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`
+    : TTS_ENDPOINT;
+
+  const requestHeaders: Record<string, string> = activeTenantId
+    ? getCloudAuthHeaders(activeTenantId)
+    : { 'Content-Type': 'application/json' };
+
+  const requestPayload = activeTenantId
+    ? {
+        ssml: ssmlParts,
+        languageCode: voice.languageCode,
+        voiceName: selectedVoiceName,
+        ssmlGender: gender,
+        speakingRate: 1.0,
+        enableTimePointing: true,
+      }
+    : body;
+
   const controller = new AbortController();
   inflightControllers.add(controller);
   const timeout = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch(TTS_ENDPOINT, {
+  const res = await fetch(targetEndpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: requestHeaders,
+    body: JSON.stringify(requestPayload),
     signal: controller.signal,
   }).finally(() => {
     clearTimeout(timeout);
@@ -706,7 +726,7 @@ export function googleTtsSpeak(
     ssmlGender: preferMale ? 'MALE' : 'FEMALE',
   };
 
-  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy');
+  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy') || GOOGLE_API_KEY.trim().startsWith('AQ.');
   const hasCloudTenant = Boolean(cloudStorage.getItem('current_tenant_id'));
   if ((!isGcpKey && !hasCloudTenant) || opts?.raw) {
     isStopped = false;
