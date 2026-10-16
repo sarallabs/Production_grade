@@ -14,7 +14,7 @@ import {
  * so the index always lands on the word being spoken. Several instances (one per
  * section) can coexist; only the instance that contains the target word draws.
  */
-export default function ReadingHighlightView({
+function ReadingHighlightViewInner({
   content,
   active,
   startWord,
@@ -170,3 +170,6 @@ export default function ReadingHighlightView({
     </div>
   );
 }
+
+const ReadingHighlightView = React.memo(ReadingHighlightViewInner);
+export default ReadingHighlightView;

@@ -8,6 +8,7 @@ import {
 import type { ToolId } from "@/components/ToolsMenu";
 import { getSpeakableDomText } from "@/utils/readAloudDom";
 import { cloudStorage } from "@/context/CloudStateContext";
+import { stripInlineImageTokens } from "@/utils/inlineImageStore";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -20,12 +21,12 @@ const SUBJECT_LANG: Record<string, string> = {
  */
 export function preprocessSummaryText(md: string): string {
   if (!md) return "";
-  let processed = md;
+  let processed = stripInlineImageTokens(md);
   // Remove " — Chapter Name" from "Quick Summary — Chapter Name"
   processed = processed.replace(/^(#*\s*(?:Quick|Detailed)\s+Summary)\s*—[^\n]*/im, "$1");
   // Remove Persona line and the following horizontal rule
   processed = processed.replace(/^[#*\s]*Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/gim, "");
-  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*\n]+\*+/gi, "");
   return processed;
 }
 
@@ -34,32 +35,30 @@ export function preprocessSummaryText(md: string): string {
  */
 export function stripMarkdown(md: string): string {
   if (!md) return "";
-  let t = md;
+  let t = stripInlineImageTokens(md);
 
   // 1. Remove YAML frontmatter at document start
   t = t.replace(/^---[\s\S]*?---\n*/m, "");
 
   // 2. Remove Persona / D_target / Word count metadata lines
   t = t.replace(/^[#*\s]*(?:Persona|D_target|Word count|Bloom|Alteration)[^\n]*$/gmi, "");
-  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*\n]+\*+/gi, "");
   t = t.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*/gi, "");
 
   // 3. Remove Mermaid diagrams and code blocks
   t = t.replace(/```mermaid[\s\S]*?```/gi, "");
   t = t.replace(/```[\s\S]*?```/g, "");
 
-  // 4. Remove HTML figure tags, img tags, and all HTML tags (including huge base64 data URIs)
+  // 4. Remove HTML figure tags, img tags, and all HTML tags
   t = t.replace(/<figure\b[\s\S]*?<\/figure>/gi, "");
   t = t.replace(/<img\b[^>]*>/gi, "");
-  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
   t = t.replace(/<[^>]+>/g, " ");
 
   // 5. Remove markdown images: ![alt](url)
-  t = t.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, "");
+  t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
 
-  // 6. Remove Markdown table separator lines (e.g. | :--- | :---: | ---: | or |---|---|)
-  // This is vital: DOM tables do not contain these separator tokens!
-  t = t.replace(/^[ \t]*\|?\s*:?-{2,}:?\s*(\|?\s*:?-{2,}:?\s*)+\|?[ \t]*$/gm, "");
+  // 6. Remove Markdown table separator lines (linear-time per-line check, avoiding nested quantifier ReDoS)
+  t = t.replace(/^[ \t]*\|?[ \t:|-]*---+[ \t:|-]*\|?[ \t]*$/gm, "");
 
   // 7. Clean Markdown table rows: strip outer pipes and turn internal pipes into spaces
   t = t.replace(/^[ \t]*\|/gm, "");
@@ -96,7 +95,7 @@ export function stripMarkdown(md: string): string {
 /**
  * ReadAloudBar component for text-to-speech functionality.
  */
-export default function ReadAloudBar({
+function ReadAloudBarInner({
   text,
   subjectId,
   persona,
@@ -139,10 +138,10 @@ export default function ReadAloudBar({
   const progressStorageKey = useMemo(() => {
     if (!text)
       return `read_progress_${subjectId}_${persona ?? ""}_${activeTool ?? "summary"}_empty`;
-    const clean = stripMarkdown(text);
-    let hash = 0;
-    for (let i = 0; i < clean.length; i++) {
-      hash = ((hash << 5) - hash + clean.charCodeAt(i)) | 0;
+    let hash = text.length;
+    const step = Math.max(1, Math.floor(text.length / 64));
+    for (let i = 0; i < text.length; i += step) {
+      hash = ((hash << 5) - hash + text.charCodeAt(i)) | 0;
     }
     return `read_progress_${subjectId}_${persona ?? ""}_${activeTool ?? "summary"}_${Math.abs(hash)}`;
   }, [text, subjectId, activeTool, persona]);
@@ -315,18 +314,6 @@ export default function ReadAloudBar({
     };
   }, [progressStorageKey]);
 
-  const durationString = useMemo(() => {
-    if (!text) return "3:42";
-    const clean = stripMarkdown(text);
-    const words = clean.split(/\s+/).filter(Boolean).length;
-    if (words === 0) return "3:42";
-    // Average speech rate: ~140 words per minute
-    const totalSeconds = Math.max(30, Math.round((words / 140) * 60));
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }, [text]);
-
   if (!text) return null;
 
   return (
@@ -463,3 +450,6 @@ export default function ReadAloudBar({
     </div>
   );
 }
+
+const ReadAloudBar = React.memo(ReadAloudBarInner);
+export default ReadAloudBar;

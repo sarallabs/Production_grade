@@ -7,6 +7,10 @@ import {
   getLocalSubjectBaseUrl,
   getChapterDir,
 } from './manifestService';
+import {
+  extractInlineDataImages,
+  stripInlineImageTokens,
+} from '@/utils/inlineImageStore';
 
 export interface QuickCheckOption {
   key: string;
@@ -65,9 +69,8 @@ export interface SectionizedChapterData {
 }
 
 function estimateReadingTime(text: string): number {
-  const words = text
+  const words = stripInlineImageTokens(text)
     .replace(/<[^>]+>/g, ' ')
-    .replace(/data:image\/[^\s)]+/g, '')
     .trim()
     .split(/\s+/).length;
   const minutes = Math.ceil(words / 180);
@@ -132,7 +135,7 @@ async function fetchFirstValid(
   return null;
 }
 
-const READ_CACHE_MAX_ENTRIES = 6;
+const READ_CACHE_MAX_ENTRIES = 12;
 const sectionizedReadCache = new Map<string, SectionizedChapterData>();
 
 export function getCachedSectionizedReadDataSync(
@@ -287,7 +290,7 @@ export async function getSectionizedReadData(
       return null;
     }
 
-    let markdown = await mdRes.text();
+    let markdown = extractInlineDataImages(await mdRes.text());
     // Rewrite relative image paths (../../extracted_images/X or ../Mindmaps/X) to Cloud Run subjectBase
     markdown = markdown.replace(
       /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,

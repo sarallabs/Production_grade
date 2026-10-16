@@ -380,16 +380,22 @@ export default function StudyTable() {
   const [persona, setPersonaState] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
+  const [uiPersona, setUiPersona] = useState<DifficultyLevel>(
+    PERSONA_TO_LEVEL[personaRaw] || "intermediate",
+  );
 
   // Clean query strings logic removed to fix refresh state persistence
 
-  const setPersona = (level: DifficultyLevel) => {
+  const setPersona = useCallback((level: DifficultyLevel) => {
     // Stop any active TTS/audio before switching persona
     googleTtsStop();
+    setUiPersona(level);
     trackPersonaChange(persona, level);
-    setPersonaState(level);
-    setSearchParams(prev => { prev.set("persona", level); return prev; }, { replace: true });
-  };
+    React.startTransition(() => {
+      setPersonaState(level);
+      setSearchParams(prev => { prev.set("persona", level); return prev; }, { replace: true });
+    });
+  }, [persona, setSearchParams]);
 
   const PERSONAS: { key: DifficultyLevel; label: string; imgSrc: string }[] = [
     { key: "beginner", label: "Beginner", imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png` },
@@ -729,8 +735,10 @@ export default function StudyTable() {
       setPodcastTargetMcIndex(null);
       setPodcastTargetTrack(null);
     }
-    setActiveToolState(tool);
-    setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+    React.startTransition(() => {
+      setActiveToolState(tool);
+      setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+    });
     trackToolUsage({
       tool,
       subjectId,
@@ -983,8 +991,24 @@ export default function StudyTable() {
   // Stop TTS when persona changes — new content will load
   useEffect(() => {
     googleTtsStop();
-    setReadingHighlight({ active: false, startWord: -1, endWord: -1 });
+    setReadingHighlight((prev) =>
+      !prev.active && prev.startWord === -1 && prev.endWord === -1
+        ? prev
+        : { active: false, startWord: -1, endWord: -1 }
+    );
   }, [persona]);
+
+  const handleHighlightChange = useCallback(
+    (payload: { active: boolean; startWord: number; endWord: number }) => {
+      setReadingHighlight(payload);
+    },
+    []
+  );
+
+  const readAloudProcessedText = useMemo(
+    () => preprocessSummaryText(typeof content === "string" ? content : ""),
+    [content]
+  );
 
   // Reset masterminds concept panel + inline topic view when switching chapters, subjects, or tools
   useEffect(() => {
@@ -1135,6 +1159,19 @@ export default function StudyTable() {
   }, [subjectId, chapterNumber]);
 
   useEffect(() => {
+    // Pass the real subjectId for all tools — each tool handles subject routing itself
+    const internalSubId = subjectId;
+    const isCloudSubject =
+      GCS_BACKEND_SUBJECTS.has(internalSubId) ||
+      GCS_BACKEND_SUBJECTS.has(resolveSubjectId(internalSubId));
+
+    // SectionizedReadView manages its own fetch + cache for cloud summary/detailed
+    // without needing videosLoaded or StudyTable's loading spinner
+    if (isCloudSubject && (activeTool === "summary" || activeTool === "detailed")) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setContent(null);
 
@@ -1154,20 +1191,10 @@ export default function StudyTable() {
       setLoading(false);
     };
 
-    // Pass the real subjectId for all tools — each tool handles subject routing itself
-    const internalSubId = subjectId;
-    const isCloudSubject =
-      GCS_BACKEND_SUBJECTS.has(internalSubId) ||
-      GCS_BACKEND_SUBJECTS.has(resolveSubjectId(internalSubId));
-
     if (activeTool === "summary") {
-      if (isCloudSubject) {
-        apply("");
-      } else {
-        getResourceContent(internalSubId, chapterNumber, "summary.md", persona, activeVideoDir)
-          .then(apply)
-          .catch(() => apply("Summary content unavailable for this persona."));
-      }
+      getResourceContent(internalSubId, chapterNumber, "summary.md", persona, activeVideoDir)
+        .then(apply)
+        .catch(() => apply("Summary content unavailable for this persona."));
     } else if (activeTool === "key_takeaways") {
       getResourceContent(internalSubId, chapterNumber, "key_takeaways.md", persona, activeVideoDir)
         .then(apply)
@@ -1177,19 +1204,15 @@ export default function StudyTable() {
         .then(apply)
         .catch(() => apply("Study Plan not available for this chapter."));
     } else if (activeTool === "detailed") {
-      if (isCloudSubject) {
-        apply("");
-      } else {
-        getResourceContent(
-          internalSubId,
-          chapterNumber,
-          "detailed_view.md",
-          persona,
-          activeVideoDir,
-        )
-          .then(apply)
-          .catch(() => apply("Detailed notes unavailable."));
-      }
+      getResourceContent(
+        internalSubId,
+        chapterNumber,
+        "detailed_view.md",
+        persona,
+        activeVideoDir,
+      )
+        .then(apply)
+        .catch(() => apply("Detailed notes unavailable."));
     } else if (activeTool === "deep_dive") {
       const url = getDeepDiveToolUrl(internalSubId, chapterNumber);
       if (url) {
@@ -1311,13 +1334,13 @@ export default function StudyTable() {
         if (isCloudSubject) {
           return (
             <SectionizedReadView
-              key={`sectionized-read-${subjectId}-${chapterNumber}-${persona}-${activeTool}`}
+              key={`sectionized-read-${subjectId}-${chapterNumber}`}
               subjectId={subjectId}
               chapterNumber={chapterNumber}
               persona={persona}
               track={activeTool === "detailed" ? "detailed" : "quick"}
               targetSectionIndex={readTargetSection}
-              onPersonaChange={(lvl) => setPersona(lvl)}
+              onPersonaChange={setPersona}
               isPurpleTheme={false}
               readingHighlight={readingHighlight}
               onLoadedContent={handleLoadedReadContent}
@@ -3770,19 +3793,19 @@ export default function StudyTable() {
                       {/* MIDDLE: persona levels */}
                       <div className="sv-hdr-levels">
                         <button id="studybar-level-beginner" type="button"
-                          className={`sv-hdr-level-btn lvl-beginner${persona === "beginner" ? " active-lvl" : ""}`}
+                          className={`sv-hdr-level-btn lvl-beginner${uiPersona === "beginner" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("beginner")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
                         </button>
                         <button id="studybar-level-intermediate" type="button"
-                          className={`sv-hdr-level-btn lvl-intermediate${persona === "intermediate" ? " active-lvl" : ""}`}
+                          className={`sv-hdr-level-btn lvl-intermediate${uiPersona === "intermediate" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("intermediate")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
                         </button>
                         <button id="studybar-level-advanced" type="button"
-                          className={`sv-hdr-level-btn lvl-advanced${persona === "advanced" ? " active-lvl" : ""}`}
+                          className={`sv-hdr-level-btn lvl-advanced${uiPersona === "advanced" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("advanced")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
@@ -3829,7 +3852,7 @@ export default function StudyTable() {
                             <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
                             <ReadAloudBar
                               key={`${persona}-${activeTool}`}
-                              text={preprocessSummaryText(typeof content === "string" ? content : "")}
+                              text={readAloudProcessedText}
                               subjectId={subjectId}
                               persona={persona}
                               onPlay={() => {
@@ -3837,7 +3860,7 @@ export default function StudyTable() {
                                   setIsSidebarOpen(false);
                                 }
                               }}
-                              onHighlightChange={(payload) => setReadingHighlight(payload)}
+                              onHighlightChange={handleHighlightChange}
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
                               isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}

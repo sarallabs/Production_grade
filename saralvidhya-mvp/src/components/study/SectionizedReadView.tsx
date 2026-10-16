@@ -1,12 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import MarkdownView from '@/components/MarkdownView';
+import React, { useState, useEffect, useMemo, useRef, startTransition } from 'react';
 import ReadingHighlightView from './ReadingHighlightView';
 import QuickCheckModal from './QuickCheckModal';
 import {
   getSectionizedReadData,
   getCachedSectionizedReadDataSync,
   type SectionizedChapterData,
-  type ReadSection,
 } from '@/data/sectionizedReadService';
 import type { DifficultyLevel } from '@/data/manifestService';
 import { cloudStorage } from '@/context/CloudStateContext';
@@ -27,7 +25,7 @@ interface SectionizedReadViewProps {
   };
 }
 
-export default function SectionizedReadView({
+function SectionizedReadViewInner({
   subjectId,
   chapterNumber,
   persona,
@@ -40,6 +38,7 @@ export default function SectionizedReadView({
   const initialCache = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
   const [data, setData] = useState<SectionizedChapterData | null>(initialCache);
   const [loading, setLoading] = useState(!initialCache);
+  const [renderedCount, setRenderedCount] = useState<number>(1);
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
   const [activeQcIndex, setActiveQcIndex] = useState<number | null>(null);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
@@ -68,13 +67,13 @@ export default function SectionizedReadView({
         if (Array.isArray(parsed) && parsed.length > 0) {
           setCompletedSections(new Set<number>(parsed));
         } else {
-          setCompletedSections(new Set());
+          setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
         }
       } else {
-        setCompletedSections(new Set());
+        setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
       }
     } catch {
-      setCompletedSections(new Set());
+      setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
     }
 
     try {
@@ -84,13 +83,13 @@ export default function SectionizedReadView({
         if (Array.isArray(parsedQc) && parsedQc.length > 0) {
           setCompletedQuickChecks(new Set<number>(parsedQc));
         } else {
-          setCompletedQuickChecks(new Set());
+          setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
         }
       } else {
-        setCompletedQuickChecks(new Set());
+        setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
       }
     } catch {
-      setCompletedQuickChecks(new Set());
+      setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
     }
 
     try {
@@ -100,13 +99,13 @@ export default function SectionizedReadView({
         if (parsedAnswers && typeof parsedAnswers === 'object') {
           setQcAnswers(parsedAnswers);
         } else {
-          setQcAnswers({});
+          setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
         }
       } else {
-        setQcAnswers({});
+        setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
       }
     } catch {
-      setQcAnswers({});
+      setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
     }
   }, [storageKey, qcStorageKey, qcAnswersStorageKey]);
 
@@ -114,6 +113,7 @@ export default function SectionizedReadView({
     let isMounted = true;
     const cached = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
     if (cached) {
+      setRenderedCount(1);
       setData(cached);
       setLoading(false);
       if (cached.sections && onLoadedContentRef.current) {
@@ -128,6 +128,7 @@ export default function SectionizedReadView({
     getSectionizedReadData(subjectId, chapterNumber, track, persona)
       .then((res) => {
         if (!isMounted) return;
+        setRenderedCount(1);
         setData(res);
         setLoading(false);
 
@@ -151,6 +152,43 @@ export default function SectionizedReadView({
   const sections = useMemo(() => data?.sections || [], [data]);
   const totalSections = sections.length;
 
+  // Progressively mount below-the-fold sections 1 at a time across idle/animation frames
+  // so initial paint and persona switches stay under 30ms (eliminating Long Tasks / TBT / INP)
+  useEffect(() => {
+    if (loading || totalSections === 0) return;
+    if (readingHighlight?.active && renderedCount < totalSections) {
+      setRenderedCount(totalSections);
+      return;
+    }
+    if (renderedCount >= totalSections) return;
+
+    const timer = setTimeout(() => {
+      startTransition(() => {
+        setRenderedCount((prev) => Math.min(totalSections, prev + 1));
+      });
+    }, 32);
+
+    return () => clearTimeout(timer);
+  }, [loading, totalSections, renderedCount, readingHighlight?.active]);
+
+  // Once all sections of the active persona have mounted, pre-warm the other personas in idle time
+  useEffect(() => {
+    if (loading || totalSections === 0 || renderedCount < totalSections) return;
+    const otherPersonas: DifficultyLevel[] = (['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).filter(
+      (p) => p !== persona
+    );
+    const timer = setTimeout(() => {
+      otherPersonas.forEach((p, idx) => {
+        setTimeout(() => {
+          if (!getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, p)) {
+            getSectionizedReadData(subjectId, chapterNumber, track, p).catch(() => {});
+          }
+        }, idx * 450);
+      });
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [loading, totalSections, renderedCount, subjectId, chapterNumber, track, persona]);
+
   // Auto-scroll directly to target section from podcasts or external tool navigation
   useEffect(() => {
     if (loading || !sections.length) return;
@@ -163,6 +201,9 @@ export default function SectionizedReadView({
     if (target !== null && target >= 0) {
       const idx = sections.findIndex(s => s.sectionNumber === target);
       const scrollIdx = idx >= 0 ? idx : target;
+      if (scrollIdx >= renderedCount) {
+        setRenderedCount(Math.min(sections.length, scrollIdx + 1));
+      }
       const timer = setTimeout(() => {
         handleScrollToSection(scrollIdx);
         const el = sectionRefs.current[scrollIdx];
@@ -270,34 +311,44 @@ export default function SectionizedReadView({
   };
 
   const handleScrollToSection = (idx: number) => {
-    const el = sectionRefs.current[idx];
-    if (el) {
-      setActiveVisibleIndex(idx);
-      setActiveQcIndex(null);
-      isAutoScrollingRef.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 700);
+    if (idx >= renderedCount) {
+      setRenderedCount(Math.min(totalSections, idx + 1));
     }
+    requestAnimationFrame(() => {
+      const el = sectionRefs.current[idx];
+      if (el) {
+        setActiveVisibleIndex(idx);
+        setActiveQcIndex(null);
+        isAutoScrollingRef.current = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 700);
+      }
+    });
   };
 
   const handleScrollToQuickCheck = (idx: number) => {
-    const el = quickCheckRefs.current[idx] || sectionRefs.current[idx];
-    if (el) {
-      setActiveVisibleIndex(idx);
-      setActiveQcIndex(idx);
-      isAutoScrollingRef.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 700);
+    if (idx >= renderedCount) {
+      setRenderedCount(Math.min(totalSections, idx + 1));
     }
+    requestAnimationFrame(() => {
+      const el = quickCheckRefs.current[idx] || sectionRefs.current[idx];
+      if (el) {
+        setActiveVisibleIndex(idx);
+        setActiveQcIndex(idx);
+        isAutoScrollingRef.current = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 700);
+      }
+    });
   };
 
   const handleNextSectionInline = (idx: number) => {
     const nextIdx = idx + 1;
-    if (nextIdx < totalSections && sectionRefs.current[nextIdx]) {
+    if (nextIdx < totalSections) {
       handleScrollToSection(nextIdx);
     }
   };
@@ -770,58 +821,70 @@ export default function SectionizedReadView({
                   </div>
                 </div>
 
-                {/* Section Markdown Body */}
-                <div
-                  className="sectionized-markdown-content"
-                  style={{
-                    lineHeight: '1.7',
-                    color: '#1e293b',
-                    fontSize: '15.5px',
-                  }}
-                >
-                  <ReadingHighlightView
-                    content={sec.content}
-                    active={Boolean(readingHighlight?.active)}
-                    startWord={readingHighlight?.startWord ?? -1}
-                    endWord={readingHighlight?.endWord ?? -1}
-                    isPurpleTheme={isPurpleTheme}
-                  />
-                </div>
-
-                {/* Inline Quick Check Card at the end of the section/module */}
-                {qcCount > 0 && (
-                  <div
-                    ref={(el) => {
-                      quickCheckRefs.current[idx] = el;
-                    }}
-                    style={{ scrollMarginTop: '20px' }}
-                  >
-                    <QuickCheckModal
-                      key={`inline-qc-${sec.id}`}
-                      isOpen={true}
-                      question={qcList[0]}
-                      questions={qcList}
-                      currentSectionNumber={idx + 1}
-                      totalSections={totalSections}
-                      sectionTitle={sec.shortTitle}
-                      nextSectionTitle={sections[idx + 1]?.shortTitle}
-                      isPurpleTheme={false}
-                      initialSelectedKey={secSelectedKeys[0] || null}
-                      initialSelectedKeys={secSelectedKeys}
-                      isCompleted={isQcDone}
-                      onNextSection={
-                        idx + 1 < totalSections
-                          ? () => {
-                              markQuickCheckCompleted(idx);
-                              handleNextSectionInline(idx);
-                            }
-                          : undefined
-                      }
-                      onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
-                        markQuickCheckCompleted(idx, selectedKey, questionIndex, allAnswered || qcCount === 1);
+                {/* Section Markdown Body (progressively mounted to keep frame time < 30ms) */}
+                {idx < renderedCount ? (
+                  <>
+                    <div
+                      className="sectionized-markdown-content"
+                      style={{
+                        lineHeight: '1.7',
+                        color: '#1e293b',
+                        fontSize: '15.5px',
                       }}
-                    />
-                  </div>
+                    >
+                      <ReadingHighlightView
+                        content={sec.content}
+                        active={Boolean(readingHighlight?.active)}
+                        startWord={readingHighlight?.startWord ?? -1}
+                        endWord={readingHighlight?.endWord ?? -1}
+                        isPurpleTheme={isPurpleTheme}
+                      />
+                    </div>
+
+                    {/* Inline Quick Check Card at the end of the section/module */}
+                    {qcCount > 0 && (
+                      <div
+                        ref={(el) => {
+                          quickCheckRefs.current[idx] = el;
+                        }}
+                        style={{ scrollMarginTop: '20px' }}
+                      >
+                        <QuickCheckModal
+                          key={`inline-qc-${sec.id}-${persona}-${track}`}
+                          isOpen={true}
+                          question={qcList[0]}
+                          questions={qcList}
+                          currentSectionNumber={idx + 1}
+                          totalSections={totalSections}
+                          sectionTitle={sec.shortTitle}
+                          nextSectionTitle={sections[idx + 1]?.shortTitle}
+                          isPurpleTheme={false}
+                          initialSelectedKey={secSelectedKeys[0] || null}
+                          initialSelectedKeys={secSelectedKeys}
+                          isCompleted={isQcDone}
+                          onNextSection={
+                            idx + 1 < totalSections
+                              ? () => {
+                                  markQuickCheckCompleted(idx);
+                                  handleNextSectionInline(idx);
+                                }
+                              : undefined
+                          }
+                          onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                            markQuickCheckCompleted(idx, selectedKey, questionIndex, allAnswered || qcCount === 1);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      minHeight: '280px',
+                      borderRadius: '12px',
+                      background: 'rgba(241, 245, 249, 0.5)',
+                    }}
+                  />
                 )}
               </div>
             </div>
@@ -831,3 +894,6 @@ export default function SectionizedReadView({
     </div>
   );
 }
+
+const SectionizedReadView = React.memo(SectionizedReadViewInner);
+export default SectionizedReadView;

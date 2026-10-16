@@ -324,13 +324,38 @@ function MindMapSVG({ root, onTopicClick, nodeIcons }: {
   );
 }
 
-// ─── Zoom / wrapper ───────────────────────────────────────────────────────────
+// ─── Zoom / wrapper & SVG Cache + Sequential Queue ────────────────────────────
 const MIN_Z = 0.3, MAX_Z = 3, STEP = 0.15;
+const MERMAID_CACHE_MAX = 150;
+const mermaidSvgCache = new Map<string, string>();
+let mermaidRenderChain: Promise<void> = Promise.resolve();
 
-export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: Props) {
+function enqueueMermaidRender(task: () => Promise<void>): void {
+  mermaidRenderChain = mermaidRenderChain
+    .then(
+      () =>
+        new Promise<void>((resolve) => {
+          if (typeof window !== 'undefined' && 'requestAnimationFrame' in window) {
+            window.requestAnimationFrame(() => {
+              task().finally(resolve);
+            });
+          } else {
+            task().finally(resolve);
+          }
+        })
+    )
+    .catch(() => {});
+}
+
+function MermaidViewInner({ content, onTopicClick, nodeIcons = {} }: Props) {
   const _ref = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(0.85);
-  const [svgHtml, setSvgHtml] = useState<string | null>(null);
+  const [svgHtml, setSvgHtml] = useState<string | null>(() =>
+    content ? mermaidSvgCache.get(content) ?? null : null
+  );
+  const [isVisible, setIsVisible] = useState<boolean>(() =>
+    Boolean(content && mermaidSvgCache.has(content))
+  );
 
   const zoomIn = useCallback(() => setZoom(z => Math.min(MAX_Z, +(z + STEP).toFixed(2))), []);
   const zoomOut = useCallback(() => setZoom(z => Math.max(MIN_Z, +(z - STEP).toFixed(2))), []);
@@ -345,28 +370,79 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
 
   useEffect(() => {
     if (!isRealMermaid || !content) return;
-    getMermaid().then(m => {
-      if (!m) return;
-      const id = 'mm-' + Math.random().toString(36).slice(2, 9);
-      m.render(id, content.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'))
-        .then((r: any) => {
-          let svg = r.svg as string;
-          // Fix: graph TD diagrams get width="100%" from Mermaid.
-          // With a tall viewBox (e.g. 0 0 500 1200) that makes the SVG
-          // scale to container-width × aspect-ratio → enormous height.
-          // Solution: use the viewBox natural pixel dimensions explicitly,
-          // then CSS max-width:100%;height:auto handles responsiveness.
-          const vbMatch = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
-          if (vbMatch) {
-            const natW = Math.round(parseFloat(vbMatch[1]));
-            const natH = Math.round(parseFloat(vbMatch[2]));
-            svg = svg.replace(/\bwidth="[^"]*"/, `width="${natW}"`);
-            svg = svg.replace(/\bheight="[^"]*"/, `height="${natH}"`);
-          }
-          setSvgHtml(svg);
-        }).catch(console.error);
-    });
+    const cached = mermaidSvgCache.get(content);
+    if (cached) {
+      setSvgHtml(cached);
+      setIsVisible(true);
+      return;
+    }
+
+    const el = _ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') {
+      setIsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setIsVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, [content, isRealMermaid]);
+
+  useEffect(() => {
+    if (!isRealMermaid || !content || !isVisible) return;
+    const cached = mermaidSvgCache.get(content);
+    if (cached) {
+      setSvgHtml(cached);
+      return;
+    }
+
+    let cancelled = false;
+    enqueueMermaidRender(async () => {
+      if (cancelled) return;
+      const again = mermaidSvgCache.get(content);
+      if (again) {
+        if (!cancelled) setSvgHtml(again);
+        return;
+      }
+      const m = await getMermaid();
+      if (!m || cancelled) return;
+      const id = 'mm-' + Math.random().toString(36).slice(2, 9);
+      try {
+        const r = await m.render(
+          id,
+          content.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+        );
+        let svg = r.svg as string;
+        const vbMatch = svg.match(/viewBox="0 0 ([\d.]+) ([\d.]+)"/);
+        if (vbMatch) {
+          const natW = Math.round(parseFloat(vbMatch[1]));
+          const natH = Math.round(parseFloat(vbMatch[2]));
+          svg = svg.replace(/\bwidth="[^"]*"/, `width="${natW}"`);
+          svg = svg.replace(/\bheight="[^"]*"/, `height="${natH}"`);
+        }
+        if (mermaidSvgCache.size >= MERMAID_CACHE_MAX) {
+          const oldest = mermaidSvgCache.keys().next().value;
+          if (oldest) mermaidSvgCache.delete(oldest);
+        }
+        mermaidSvgCache.set(content, svg);
+        if (!cancelled) setSvgHtml(svg);
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [content, isRealMermaid, isVisible]);
 
   if (!content) return null;
 
@@ -441,3 +517,7 @@ export default function MermaidView({ content, onTopicClick, nodeIcons = {} }: P
     </div>
   );
 }
+
+import React from 'react';
+const MermaidView = React.memo(MermaidViewInner);
+export default MermaidView;
