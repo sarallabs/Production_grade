@@ -13,6 +13,7 @@ import {
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
   resolveSubjectId,
+  getRegistryChapterData,
 } from './manifestService';
 
 /**
@@ -372,6 +373,53 @@ export async function getResourceContent(
   const normSubject = resolveSubjectId(subject) || subject;
   const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
 
+  const rewriteGcsRelativeImages = (mdText: string): string => {
+    const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+    if (!subjectPath) return mdText;
+    const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+    return mdText
+      .replace(/!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`)
+      .replace(/!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`);
+  };
+
+  // ── V2 Registry signed URLs: prefer direct signed GCS URLs when available ──
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+  if (regCh?.files) {
+    const regKeyCandidates: Record<string, string[]> = {
+      'summary.md':         [`read/quick/${level}.md`],
+      'detailed_view.md':   [`read/detailed/${level}.md`],
+      'key_takeaways.md':   ['read/key_takeaways.md'],
+      'glossary.md':        ['read/glossary.md'],
+      'mindmap.md':         ['learn/mindmap.md', 'learn/mindmap.json'],
+      'mindmap.json':       ['learn/mindmap.json', 'learn/mindmap.md'],
+      'study_plan.md':      ['learn/study_plan.md', 'learn/study_plan.json', 'read/study_plan.md'],
+      'study_plan.json':    ['learn/study_plan.json', 'learn/study_plan.md'],
+      'study_plan':         ['learn/study_plan.md', 'learn/study_plan.json'],
+      'question_bank.md':   ['practice/question_bank.json', 'practice/question_bank.md'],
+      'question_bank.json': ['practice/question_bank.json', 'practice/question_bank.md'],
+      'mock_test.md':       ['practice/mock_test.json', 'prepare/mock_test.json', 'prepare/pre_final_exam.json'],
+      'mock_test.json':     ['practice/mock_test.json', 'prepare/mock_test.json', 'prepare/pre_final_exam.json'],
+    };
+    const keysToTry = regKeyCandidates[resourceName] || [resourceName];
+    for (const k of keysToTry) {
+      const signedUrl = regCh.files[k]?.url;
+      if (signedUrl) {
+        try {
+          const res = await fetch(signedUrl);
+          if (res.ok) {
+            const rawText = await res.text();
+            if (resourceName === 'mindmap.json' || k.endsWith('.json')) {
+              return cacheAndReturn(rawText);
+            }
+            return cacheAndReturn(rewriteGcsRelativeImages(cleanAiPreamble(rawText)));
+          }
+        } catch (e) {
+          console.warn('[Registry] Failed fetching signed URL for', k, e);
+        }
+      }
+    }
+  }
+
   // ── GCS Cloud Run subjects: use canonical API routes (with 35s timeout for large markdown files) ──
   if (isGcs) {
     const apiUrl = getGcsApiUrl(normSubject, chDir, resourceName, level);
@@ -396,21 +444,7 @@ export async function getResourceContent(
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {
-            let md = cleanAiPreamble(await res.text());
-            // Rewrite relative image paths to absolute API URLs
-            // ../../extracted_images/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/extracted_images/X
-            // ../Mindmaps/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/Mindmaps/X
-            const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
-            const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
-            // Replace ../../ first (two levels up), then ../ (one level up)
-            md = md.replace(
-              /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,
-              (_, alt, path) => `![${alt}](${apiBase}/${path})`
-            );
-            md = md.replace(
-              /!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g,
-              (_, alt, path) => `![${alt}](${apiBase}/${path})`
-            );
+            const md = rewriteGcsRelativeImages(cleanAiPreamble(await res.text()));
             return cacheAndReturn(md);
           }
         }
