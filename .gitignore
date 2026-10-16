@@ -35,6 +35,12 @@ CREDENTIALS_PRIVATE*.zip
 **/test_keys*
 replace_secrets.txt
 SECRET_ERADICATION_PLAN.md
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/id_rsa*
+**/id_ed25519*
 
 # Built/compiled bundles (contain embedded API keys)
 saralvidhya-mvp/dist-deploy/
@@ -47,11 +53,11 @@ build/
 out/
 
 # Environment files
-.env
-.env.local
-.env.*.local
-.env.*
-!.env.example
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.*
+!**/.env.example
 
 # Logs
 *.log

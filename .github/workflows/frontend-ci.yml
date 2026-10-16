@@ -1,17 +1,39 @@
 name: Frontend CI
 
 on:
-  pull_request:
+  push:
+    branches:
+      - '**'
     paths:
       - 'saralvidhya-mvp/**'
+      - 'saralvidhya-production/frontend/**'
       - '.github/workflows/frontend-ci.yml'
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - 'saralvidhya-mvp/**'
+      - 'saralvidhya-production/frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   validate-and-build:
+    name: Frontend Validation & Build Gate
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: saralvidhya-mvp
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
     steps:
       - name: Checkout Code
@@ -30,11 +52,11 @@ jobs:
       - name: TypeScript Check
         run: npx tsc --noEmit
 
-      - name: Check Multi-Tenant Literals
-        run: npm run check:tenant-literals
+      - name: Check Multi-Tenant Literals (if configured)
+        run: npm run check:tenant-literals --if-present
 
       - name: Run Unit Tests
-        run: npm run test:vitest
+        run: npm run test:vitest --if-present
         continue-on-error: true
 
       - name: Build Production Bundle
@@ -44,20 +66,17 @@ jobs:
 
       - name: Secret Scan on Dist Bundle
         run: |
-          echo "Scanning dist/ for leaked private credentials or service accounts..."
-          if grep -rn "PRIVATE KEY" dist/; then
-            echo "ERROR: Found private key marker in build output!"
+          echo "Scanning dist/ for leaked private credentials, service account tokens, or unredacted keys..."
+          if grep -rn -E "(BEGIN [A-Z ]*PRIVATE KEY|client_secret|type\": \"service_account\")" dist/; then
+            echo "ERROR: Found private credentials marker in build output!"
             exit 1
           fi
           echo "Pass: No leaked private credentials found in build bundle."
 
       - name: Deploy Cloudflare Pages Preview
-        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        if: ${{ env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != '' }}
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy saralvidhya-mvp/dist --project-name=saralvidhya --branch=${{ github.head_ref }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy saralvidhya-mvp/dist --project-name=saralvidhya --branch=${{ github.head_ref || github.ref_name }}

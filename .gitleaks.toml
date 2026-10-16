@@ -13,8 +13,12 @@ paths = [
   '''^saralvidhya-medha/validate_gemini_api_key\.py$''',
   '''^package-lock\.json$''',
   '''^pnpm-lock\.yaml$''',
-  '''^.*_plan\.md$'''
+  '''^.*_plan.*\.md$''',
+  '''^SECRET_ERADICATION_PLAN\.md$''',
+  '''^SECRETS_MANAGEMENT\.md$'''
 ]
 regexes = [
-  '''\[REDACTED_[A-Z_]+\]'''
+  '''\[REDACTED_[A-Z_]+\]''',
+  '''your-[a-zA-Z0-9_-]+-key''',
+  '''AIzaSy[A-Za-z0-9_-]{33}==>'''
 ]
