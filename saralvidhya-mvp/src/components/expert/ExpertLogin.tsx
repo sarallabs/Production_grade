@@ -20,7 +20,6 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
     const expertPass = (import.meta as any).env?.VITE_EXPERT_PASSWORD || '';
     if (expertPass && password === expertPass) {
       cloudStorage.setItem('expert_access', 'true');
-      sessionStorage.setItem('expert_access', 'true');
       onLogin();
     } else {
       setError(true);

@@ -227,7 +227,6 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
-  const activeTenantId = cloudStorage.getItem('current_tenant_id');
   const targetEndpoint = activeTenantId
     ? `${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`
     : TTS_ENDPOINT;
