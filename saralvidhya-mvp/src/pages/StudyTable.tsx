@@ -1738,12 +1738,12 @@ export default function StudyTable() {
           'neurone': {
             ytId: 'ajlWgPjEa5Y'
           },
-          'database fundamentals & engine architecture': { ytId: '3C5rpBM1bXU' },
-          'conceptual database design & er modeling': { ytId: '_UATsTUW7ck' },
-          'advanced er & extended er (eer) mechanisms': { ytId: '_UATsTUW7ck' },
-          'relational model foundations & integrity constraints': { ytId: 'lEVbyiGNaIk' },
-          'logical database design (er-to-relational translation)': { ytId: 'UJutdBotS_I' },
-          'relational querying, views & schema evolution': { ytId: 'UJutdBotS_I' },
+          'database fundamentals & engine architecture': { ytId: 'lBf1H_J6tj4' },
+          'conceptual database design & er modeling': { ytId: 'mYWnYfsHQoQ' },
+          'advanced er & extended er (eer) mechanisms': { ytId: 'mYWnYfsHQoQ' },
+          'relational model foundations & integrity constraints': { ytId: 'JA0_3WDjasY' },
+          'logical database design (er-to-relational translation)': { ytId: 'Cmc0E1CMa3A' },
+          'relational querying, views & schema evolution': { ytId: 'Cmc0E1CMa3A' },
         };
 
         // ── Dynamic mindmap config (Multi-Tenant & Schema Compliant) ────────
@@ -1810,7 +1810,7 @@ export default function StudyTable() {
             if (action === 'video') {
               setMindmapInlineType('video');
               const mappedMedia = MEDIA_MAPPING[lowerLabel];
-              const ytId = mappedMedia?.ytId || '3C5rpBM1bXU';
+              const ytId = mappedMedia?.ytId || 'EQl-5nKXme0';
               setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
               setMindmapTopicOpen(true);
               return;

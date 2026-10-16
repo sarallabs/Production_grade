@@ -1095,13 +1095,13 @@ export default function VideosView({
       onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
-        width: isFullscreen ? "100%" : "auto",
+        width: isFullscreen ? "100%" : "76%",
+        maxWidth: isFullscreen ? "100%" : "860px",
         height: "100%",
-        maxWidth: "100%",
         maxHeight: "100%",
         aspectRatio: "16 / 9",
         flexShrink: 0,
-        background: `#000 url(${currentVideo.thumbnailUrl || `https://img.youtube.com/vi/${currentVideo.ytId}/hqdefault.jpg`}) center/cover no-repeat`,
+        background: "#000",
         borderRadius: isFullscreen ? "0px" : "12px",
         overflow: "hidden",
         boxShadow: isFullscreen ? "none" : "0 6px 20px rgba(0,0,0,0.14)",
@@ -1133,23 +1133,6 @@ export default function VideosView({
           }}
         />
       </div>
-
-      {/* Clean Thumbnail Cover: before playback starts, only show the thumbnail & giant middle play button (hiding YouTube branding & controls) */}
-      {!isPlaying && !isFullscreen && (
-        <img
-          src={currentVideo.thumbnailUrl || `https://img.youtube.com/vi/${currentVideo.ytId}/hqdefault.jpg`}
-          alt={currentVideo.title}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            zIndex: 1,
-            pointerEvents: "none",
-          }}
-        />
-      )}
 
       {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
       <div
