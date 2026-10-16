@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
 import { useTenant } from "@/tenant/TenantProvider";
 import { cloudStorage } from "@/context/CloudStateContext";
-import logoClean from "../logo-clean.png";
+const logoClean = `${import.meta.env.BASE_URL}logo-clean.png`;
 import "./Login.css";
 
 function Login() {

@@ -242,9 +242,9 @@ export default function ReadAloudBar({
           );
           latestGlobalCharRef.current = globalCharIndex;
 
-          // Throttle cloudStorage writes to avoid main-thread jank
+          // Throttle cloudStorage writes to avoid network PATCH amplification during speech
           const now = Date.now();
-          if (now - lastSavedTsRef.current > 1200) {
+          if (now - lastSavedTsRef.current > 15000) {
             lastSavedTsRef.current = now;
             try {
               cloudStorage.setItem(progressStorageKey, String(globalCharIndex));

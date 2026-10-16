@@ -117,15 +117,13 @@ export default function ChapterList() {
   const handleChapterClick = (ch: Chapter) => {
     if (isDisabled(ch)) return;
     setClickedChapter(ch.number);
-    setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
-      if (sId) params.set('sId', sId);
-      if (resolvedSubjectName && !params.get('subjectName')) params.set('subjectName', resolvedSubjectName);
-      params.set('chapter', ch.number.toString());
-      params.set('chapterName', toTitleCase(ch.name));
-      params.delete('tool');
-      navigate(tenantPath(`/study-table?${params.toString()}`));
-    }, 200);
+    const params = new URLSearchParams(searchParams);
+    if (sId) params.set('sId', sId);
+    if (resolvedSubjectName && !params.get('subjectName')) params.set('subjectName', resolvedSubjectName);
+    params.set('chapter', ch.number.toString());
+    params.set('chapterName', toTitleCase(ch.name));
+    params.delete('tool');
+    navigate(tenantPath(`/study-table?${params.toString()}`));
   };
 
   return (

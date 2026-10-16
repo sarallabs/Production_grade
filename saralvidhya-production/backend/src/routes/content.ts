@@ -52,13 +52,29 @@ const VALID_DIFFS     = ['easy', 'medium', 'hard'];
  *   GET /api/content/:uni/:subject/:chapter/podcasts/:file
  */
 
+const RESERVED_PREFIXES = new Set(['staging', 'tts-cache', '.git', 'node_modules']);
+
+router.use('/:uni', (req, res, next) => {
+  const uni = (req.params.uni || '').toLowerCase();
+  if (RESERVED_PREFIXES.has(uni) || req.path.includes('..') || req.path.includes('\0')) {
+    return res.status(403).json({ error: 'Access to reserved storage prefix is forbidden' });
+  }
+  next();
+});
+
 // ── Helper: stream audio with byte-range ─────────────────────────────────────
 async function streamAudio(req: Request, res: Response, gcsPath: string) {
   const gcsFile = storage.bucket(BUCKET).file(gcsPath);
-  const [exists] = await gcsFile.exists();
-  if (!exists) return res.status(404).json({ error: 'Audio not found', path: gcsPath });
+  let meta: any;
+  try {
+    [meta] = await gcsFile.getMetadata();
+  } catch (err: any) {
+    if (err?.code === 404) {
+      return res.status(404).json({ error: 'Audio not found', path: gcsPath });
+    }
+    throw err;
+  }
 
-  const [meta]   = await gcsFile.getMetadata();
   const fileSize = parseInt(meta.size as string, 10);
   const mime     = gcsPath.endsWith('.mp3') ? 'audio/mpeg' : 'audio/mp4';
   const range    = req.headers.range;
@@ -138,10 +154,15 @@ async function streamAudio(req: Request, res: Response, gcsPath: string) {
 // ── Helper: serve text/json file from GCS ────────────────────────────────────
 async function serveFile(res: Response, gcsPath: string) {
   const gcsFile = storage.bucket(BUCKET).file(gcsPath);
-  const [exists] = await gcsFile.exists();
-  if (!exists) return res.status(404).json({ error: 'Content not found', path: gcsPath });
-
-  const [content] = await gcsFile.download();
+  let content: Buffer;
+  try {
+    [content] = await gcsFile.download();
+  } catch (err: any) {
+    if (err?.code === 404) {
+      return res.status(404).json({ error: 'Content not found', path: gcsPath });
+    }
+    throw err;
+  }
 
   // Determine MIME type from extension
   const ext = gcsPath.split('.').pop()?.toLowerCase() || '';

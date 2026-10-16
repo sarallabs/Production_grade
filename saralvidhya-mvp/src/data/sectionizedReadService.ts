@@ -108,7 +108,7 @@ async function fetchFirstValid(
     if (!c) continue;
     try {
       const cleanUrl = c.startsWith('http') ? c : c.replace(/([^:])\/\//g, '$1/');
-      const res = await fetch(cleanUrl, { cache: 'no-store' });
+      const res = await fetch(cleanUrl);
       if (!res.ok) continue;
       const ct = (res.headers.get('content-type') || '').toLowerCase();
       if (ct.includes('text/html')) continue;
@@ -178,7 +178,10 @@ export async function getSectionizedReadData(
     return cached;
   }
 
-  const manifest = await getManifest();
+  const [manifest, regCh] = await Promise.all([
+    getManifest(),
+    getRegistryChapterData(subjectId, chapterNumber),
+  ]);
   const manifestChapter = getChapters(manifest, subjectId).find((c) => c.number === chapterNumber);
 
   const trackFolder = track === 'detailed' ? 'detailed_study' : 'quick_study';
@@ -189,8 +192,8 @@ export async function getSectionizedReadData(
   const studyJsonCandidates: string[] = [];
 
   // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
-  const regCh = await getRegistryChapterData(subjectId, chapterNumber);
   const files = regCh?.files || {};
+  const hasCloudFileMap = Object.keys(files).length > 0;
   const registryChapterTitle =
     regCh?.chapter?.title || manifestChapter?.title || manifestChapter?.name;
 
@@ -239,6 +242,7 @@ export async function getSectionizedReadData(
     `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
     `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
     `${subjectBase}/${chDir}/read/${trackFolder}/${normPersona}.md`,
+    `${localBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
     `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
     `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.md`
   );
@@ -247,20 +251,23 @@ export async function getSectionizedReadData(
     `${subjectBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${explicitLocalBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${localBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`
   );
-  studyJsonCandidates.push(
-    `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
-    `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.json`
-  );
+  if (!hasCloudFileMap) {
+    studyJsonCandidates.push(
+      `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
+      `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+      `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+      `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.json`
+    );
+  }
 
   try {
     const [mdRes, qcRes, studyJsonRes] = await Promise.all([

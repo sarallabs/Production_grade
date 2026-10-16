@@ -1,15 +1,8 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback, Suspense } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import MarkdownView from "@/components/MarkdownView";
-import JsMindView from "@/components/JsMindView";
-import MindMapView from "@/components/MindMapView";
-import FlashcardsView from "@/components/FlashcardsView";
-import QuestionBankView from "@/components/QuestionBankView";
 import SectionizedReadView from "@/components/study/SectionizedReadView";
-import KeyTakeawaysView from "@/components/study/KeyTakeawaysView";
-import StudyPlanView from "@/components/study/StudyPlanView";
 import type { ToolId } from "@/components/ToolsMenu";
-import appLogo from "@/logo.png";
 import {
   getResourceContent,
   getFlashcards,
@@ -46,7 +39,6 @@ import {
   hasWebSpeechSupport,
   type SpeechSession,
 } from "@/services/speechService";
-import MasterFlashcardsView from "@/components/MasterFlashcardsView";
 
 import { parseQuestionBank, type QuizQuestion } from "@/utils/quizParser";
 import { type AssessmentQuestion } from "@/utils/assessmentTypes";
@@ -87,17 +79,25 @@ import {
 import { useFocusMode } from "@/context/FocusModeContext";
 import ReadAloudBar, { preprocessSummaryText } from "@/components/study/ReadAloudBar";
 import ReadingHighlightView from "@/components/study/ReadingHighlightView";
-import AskBotView from "@/components/study/AskBotView";
-import PodcastsView from "@/components/study/PodcastsView";
-import PYQView from "@/components/study/PYQView";
-import MockTestView from "@/components/study/MockTestView";
-import VideosView from "@/components/study/VideosView";
-import { AssessmentView } from "@/components/study/AssessmentView";
-import SwotView from "@/components/study/SwotView";
-import LeaderboardView from "@/components/study/LeaderboardView";
 import { getRegistryTenantId } from "@/data/manifestService";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
 import { cloudStorage } from "@/context/CloudStateContext";
+
+const MindMapView = React.lazy(() => import("@/components/MindMapView"));
+const FlashcardsView = React.lazy(() => import("@/components/FlashcardsView"));
+const QuestionBankView = React.lazy(() => import("@/components/QuestionBankView"));
+const KeyTakeawaysView = React.lazy(() => import("@/components/study/KeyTakeawaysView"));
+const StudyPlanView = React.lazy(() => import("@/components/study/StudyPlanView"));
+const AskBotView = React.lazy(() => import("@/components/study/AskBotView"));
+const PodcastsView = React.lazy(() => import("@/components/study/PodcastsView"));
+const PYQView = React.lazy(() => import("@/components/study/PYQView"));
+const MockTestView = React.lazy(() => import("@/components/study/MockTestView"));
+const VideosView = React.lazy(() => import("@/components/study/VideosView"));
+const AssessmentView = React.lazy(() =>
+  import("@/components/study/AssessmentView").then((m) => ({ default: m.AssessmentView }))
+);
+const SwotView = React.lazy(() => import("@/components/study/SwotView"));
+const LeaderboardView = React.lazy(() => import("@/components/study/LeaderboardView"));
 
 
 export function StudyToolLoadingWaitScreen() {
@@ -454,8 +454,9 @@ export default function StudyTable() {
     });
   }, [subjectId]);
 
-  // Prefetch mindmap topic notes in background so node clicks are instant (0ms)
+  // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
   useEffect(() => {
+    if (activeTool !== "mindmap" && activeTool !== "foundation") return;
     const curCh = subjectChapters.find((c) => c.number === chapterNumber);
     const cfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
     if (!cfg || !cfg.topics) return;
@@ -498,7 +499,7 @@ export default function StudyTable() {
         topicNotesCache.set(cacheKey, { quick, detailed });
       }
     });
-  }, [subjectId, chapterNumber, persona, subjectChapters]);
+  }, [activeTool, subjectId, chapterNumber, persona, subjectChapters]);
 
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
@@ -714,10 +715,7 @@ export default function StudyTable() {
 
   const triggerToolTransition = (target: ToolId) => {
     setTransitionTargetTool(target);
-    setIsToolTransitioning(true);
-    setTimeout(() => {
-      setIsToolTransitioning(false);
-    }, 1100);
+    setIsToolTransitioning(false);
   };
 
   // `completedOverride` lets a caller that just marked a step done unlock the
@@ -1159,11 +1157,18 @@ export default function StudyTable() {
 
     // Pass the real subjectId for all tools — each tool handles subject routing itself
     const internalSubId = subjectId;
+    const isCloudSubject =
+      GCS_BACKEND_SUBJECTS.has(internalSubId) ||
+      GCS_BACKEND_SUBJECTS.has(resolveSubjectId(internalSubId));
 
     if (activeTool === "summary") {
-      getResourceContent(internalSubId, chapterNumber, "summary.md", persona, activeVideoDir)
-        .then(apply)
-        .catch(() => apply("Summary content unavailable for this persona."));
+      if (isCloudSubject) {
+        apply("");
+      } else {
+        getResourceContent(internalSubId, chapterNumber, "summary.md", persona, activeVideoDir)
+          .then(apply)
+          .catch(() => apply("Summary content unavailable for this persona."));
+      }
     } else if (activeTool === "key_takeaways") {
       getResourceContent(internalSubId, chapterNumber, "key_takeaways.md", persona, activeVideoDir)
         .then(apply)
@@ -1173,15 +1178,19 @@ export default function StudyTable() {
         .then(apply)
         .catch(() => apply("Study Plan not available for this chapter."));
     } else if (activeTool === "detailed") {
-      getResourceContent(
-        internalSubId,
-        chapterNumber,
-        "detailed_view.md",
-        persona,
-        activeVideoDir,
-      )
-        .then(apply)
-        .catch(() => apply("Detailed notes unavailable."));
+      if (isCloudSubject) {
+        apply("");
+      } else {
+        getResourceContent(
+          internalSubId,
+          chapterNumber,
+          "detailed_view.md",
+          persona,
+          activeVideoDir,
+        )
+          .then(apply)
+          .catch(() => apply("Detailed notes unavailable."));
+      }
     } else if (activeTool === "deep_dive") {
       const url = getDeepDiveToolUrl(internalSubId, chapterNumber);
       if (url) {
@@ -1214,17 +1223,21 @@ export default function StudyTable() {
         .then(apply)
         .catch(() => apply(""));
     } else if (activeTool === "qbank" || activeTool === "assessment") {
-      getResourceContent(
-        internalSubId,
-        chapterNumber,
-        activeTool === "assessment" ? "quiz.md" : "question_bank.md",
-        persona,
-        // The Certification Exam covers the whole chapter, so it stays
-        // chapter-scoped even when the assessments beside it are per-video.
-        activeTool === "assessment" ? activeVideoDir : undefined,
-      )
-        .then(apply)
-        .catch(() => apply("Question bank unavailable."));
+      if (activeTool === "assessment" && isCloudSubject) {
+        apply("");
+      } else {
+        getResourceContent(
+          internalSubId,
+          chapterNumber,
+          activeTool === "assessment" ? "quiz.md" : "question_bank.md",
+          persona,
+          // The Certification Exam covers the whole chapter, so it stays
+          // chapter-scoped even when the assessments beside it are per-video.
+          activeTool === "assessment" ? activeVideoDir : undefined,
+        )
+          .then(apply)
+          .catch(() => apply("Question bank unavailable."));
+      }
     } else if (activeTool === "videos") {
       handleVideoWatched(videoIndex);
       getResourceContent(
@@ -2604,7 +2617,11 @@ export default function StudyTable() {
         </div>
       );
     }
-    return renderMainContent();
+    return (
+      <Suspense fallback={<StudyToolLoadingWaitScreen />}>
+        {renderMainContent()}
+      </Suspense>
+    );
   };
 
   const getToolTheme = (toolId: ToolId) => {
@@ -4000,14 +4017,16 @@ export default function StudyTable() {
             </button>
           </div>
           <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-            <AskBotView
-              chapterName={chapterName}
-              subjectId={subjectId}
-              chapterNumber={chapterNumber}
-              difficulty={persona}
-              className={className}
-              subjectName={subjectName}
-            />
+            <Suspense fallback={<StudyToolLoadingWaitScreen />}>
+              <AskBotView
+                chapterName={chapterName}
+                subjectId={subjectId}
+                chapterNumber={chapterNumber}
+                difficulty={persona}
+                className={className}
+                subjectName={subjectName}
+              />
+            </Suspense>
           </div>
         </aside>
       )}

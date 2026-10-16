@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './requireSession.js';
+import { verifySessionToken } from '../services/session.js';
 
 const ADMIN_API_KEY = process.env.ADMIN_API_KEY || '';
 
@@ -36,6 +37,16 @@ export async function requireApprover(
 
   if (req.session && req.session.role === 'approver') {
     return next();
+  }
+
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.slice(7).trim();
+    const payload = verifySessionToken(token);
+    if (payload && payload.role === 'approver') {
+      req.session = payload;
+      return next();
+    }
   }
 
   res.status(403).json({ error: 'Approver privileges required' });

@@ -40,7 +40,6 @@ async function getMermaid() {
     return mermaidLib;
   } catch { return null; }
 }
-void getMermaid();
 
 // ─── Text helpers ─────────────────────────────────────────────────────────────
 function stripFences(raw: string) {

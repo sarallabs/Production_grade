@@ -1,6 +1,11 @@
 [
   {
     "origin": [
+      "https://saralvidhya-production.web.app",
+      "https://saralvidhya-mlrit.web.app",
+      "https://saralvidhya-angrau.web.app",
+      "https://*.web.app",
+      "https://*.firebaseapp.com",
       "https://saralvidhya.pages.dev",
       "https://*.saralvidhya.pages.dev",
       "https://*.pages.dev",

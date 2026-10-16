@@ -84,7 +84,21 @@ router.post('/submit', async (req: AuthenticatedRequest, res: Response) => {
 
     let tenant = await getTenant(tenantId);
     if (!tenant) {
-      // Auto-create tenant in 'pending' status so publishers don't need manual pre-registration
+      const adminKey = process.env.ADMIN_API_KEY || '';
+      const providedAdmin = req.header('X-Admin-Key') || '';
+      const isAdminCaller = adminKey && providedAdmin && safeCompare(providedAdmin, adminKey);
+      const allowAutoCreate =
+        isAdminCaller ||
+        process.env.ALLOW_AUTO_CREATE_TENANT === 'true' ||
+        process.env.NODE_ENV !== 'production';
+
+      if (!allowAutoCreate) {
+        return res.status(404).json({
+          error: `Tenant '${tenantId}' does not exist. Provide X-Admin-Key to provision a new tenant.`,
+        });
+      }
+
+      // Auto-create tenant in 'pending' status
       const rawTenantConfig = req.body?.tenantConfig || {};
       const tenantRef = firestore.collection('tenants').doc(tenantId);
       const newTenantData: Record<string, any> = {

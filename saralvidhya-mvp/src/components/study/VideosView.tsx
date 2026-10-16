@@ -453,10 +453,15 @@ export default function VideosView({
     onVideoWatchedRef.current = onVideoWatched;
   });
 
+  const notifiedWatchedSetRef = useRef<Set<string>>(new Set());
+
   const markWatched = useCallback((videoIndex: number, advance = false) => {
     markVideoDone(videoIndex - 1);
+    const notifyKey = `${subjectId}_${chapterNumber}_${videoIndex}_${advance ? "adv" : " threshold"}`;
+    if (notifiedWatchedSetRef.current.has(notifyKey)) return;
+    notifiedWatchedSetRef.current.add(notifyKey);
     onVideoWatchedRef.current?.(videoIndex, advance);
-  }, [markVideoDone]);
+  }, [markVideoDone, subjectId, chapterNumber]);
 
   // Format time utility
   const formatTime = (sec: number) => {
