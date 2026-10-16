@@ -5,6 +5,24 @@ export interface Flashcard {
   category?: string;
   hint?: string;
   infographicUrl?: string;
+  personaLevel?: 'beginner' | 'intermediate' | 'advanced';
+}
+
+export function getFlashcardsForPersona(
+  cards: Flashcard[],
+  persona: 'beginner' | 'intermediate' | 'advanced' = 'intermediate'
+): Flashcard[] {
+  if (!cards || cards.length === 0) return [];
+  if (persona === 'beginner') {
+    // Beginner: core 5 foundation flashcards including hindgut sub-divisions (card 4)
+    return cards.slice(0, 5);
+  }
+  if (persona === 'intermediate') {
+    // Intermediate: standard syllabus (all cards)
+    return cards;
+  }
+  // Advanced: all cards with high-rigor exam depth
+  return cards;
 }
 
 export const SAMPLE_FLASHCARDS: Record<number, Flashcard[]> = {

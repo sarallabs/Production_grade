@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
@@ -22,7 +23,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 const { width, height } = Dimensions.get('window');
 
 // 1. Beginner Tier Icon: Single green book with bookmark ribbon
-function BeginnerBookIcon({ size = 28 }: { size?: number }) {
+function BeginnerBookIcon({ size = 26 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
       <Rect x="5" y="8" width="22" height="18" rx="2.5" fill="#3D6852" />
@@ -35,7 +36,7 @@ function BeginnerBookIcon({ size = 28 }: { size?: number }) {
 }
 
 // 2. Intermediate Tier Icon: Stack of 2 green books with sparkles
-function IntermediateBookIcon({ size = 28 }: { size?: number }) {
+function IntermediateBookIcon({ size = 26 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
       <Rect x="4" y="17" width="22" height="9" rx="2" fill="#2A4B3A" />
@@ -46,7 +47,6 @@ function IntermediateBookIcon({ size = 28 }: { size?: number }) {
       <Rect x="8" y="11" width="17" height="5" rx="1" fill="#FAF6EE" />
       <Rect x="6" y="9" width="3.5" height="9" rx="1" fill="#254333" />
 
-      {/* Sparkles */}
       <Path d="M26 4L26.8 6.2L29 7L26.8 7.8L26 10L25.2 7.8L23 7L25.2 6.2L26 4Z" fill="#22C55E" />
       <Path d="M3 8L3.5 9.5L5 10L3.5 10.5L3 12L2.5 10.5L1 10L2.5 9.5L3 8Z" fill="#86EFAC" />
     </Svg>
@@ -54,7 +54,7 @@ function IntermediateBookIcon({ size = 28 }: { size?: number }) {
 }
 
 // 3. Advanced Tier Icon: Stacked books with gold crown
-function AdvancedBookIcon({ size = 28 }: { size?: number }) {
+function AdvancedBookIcon({ size = 26 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
       <Rect x="4" y="20" width="24" height="8" rx="2" fill="#20382B" />
@@ -63,7 +63,6 @@ function AdvancedBookIcon({ size = 28 }: { size?: number }) {
       <Rect x="7" y="16" width="18" height="3.5" rx="1" fill="#F7F3EB" />
       <Rect x="6" y="8" width="20" height="6.5" rx="2" fill="#3D6852" />
 
-      {/* Golden Crown */}
       <Path
         d="M10 9L11.5 3.5L14 6.5L16 2L18 6.5L20.5 3.5L22 9H10Z"
         fill="#FBBF24"
@@ -77,24 +76,9 @@ function AdvancedBookIcon({ size = 28 }: { size?: number }) {
   );
 }
 
-// 4. PDF Acrobat Floating Button Icon
-function PdfAcrobatIcon({ size = 24 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Path
-        d="M7.5 17.5C5.8 17.5 4.5 16.2 4.5 14.5C4.5 12.2 6.8 10.4 10.5 9.8C10.5 9.8 11.2 7.2 11.8 5.2C12.1 4.2 12.8 3.5 13.8 3.5C14.7 3.5 15.3 4.2 15.1 5.2C14.7 7.2 13.8 10.5 13.4 12.2C15.2 13.5 17.5 14.5 19.2 14.5C20.5 14.5 21.2 15.2 21.2 16.1C21.2 17.1 20.3 17.8 19 17.8C16.8 17.8 14.2 16.4 12.2 14.8C9.5 16.5 7.8 17.5 7.5 17.5Z"
-        fill="#E11D48"
-      />
-      <Path
-        d="M13.2 4.8C13 5.5 12.5 7.5 12 9.5C12.7 8.2 13.3 6.5 13.5 5.2C13.5 4.9 13.4 4.8 13.2 4.8ZM6.2 14.8C6.2 15.4 6.8 15.8 7.5 15.8C8.2 15.8 9.5 15 10.8 13.8C8.2 14.2 6.2 14.5 6.2 14.8ZM18.5 16.2C19.2 16.2 19.6 15.8 19.6 15.5C19.6 15.2 18.8 14.8 17.5 14.5C17.8 15.4 18.2 16.2 18.5 16.2Z"
-        fill="#FFFFFF"
-      />
-    </Svg>
-  );
-}
 
 interface StudyGuideReaderProps {
-  chapterNumber: number;
+  chapterNumber?: number;
   chapterTitle?: string;
   subjectName?: string;
   onBackPress?: () => void;
@@ -144,10 +128,15 @@ const GLOSSARY_TERMS: Record<string, { term: string; definition: string; examTip
     definition: 'The outermost embryonic germ layer that invaginates at the stomodaeum and proctodaeum to produce the cuticular lining.',
     examTip: 'Explains why the foregut and hindgut must shed their cuticular lining during each molt.',
   },
+  'mesenteron': {
+    term: 'Mesenteron (Midgut)',
+    definition: 'The midsection of the digestive tract derived from endoderm, dedicated to enzymatic hydrolysis and cellular absorption.',
+    examTip: 'Key landmark: marked anteriorly by gastric caeca and posteriorly by Malpighian tubules.',
+  },
 };
 
 const INFOGRAPHIC_URL =
-  'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/1.%20Foregut%20%28Stomodaem%29/Anatomy_of_the_Insect_Foregut.png';
+  'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/Insect_Digestive_System_Blueprint.png';
 
 export default function StudyGuideReader({
   chapterNumber = 1,
@@ -162,7 +151,7 @@ export default function StudyGuideReader({
   const { persona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
 
-  // Mode: 'essentials' (Screen 1) vs 'in_depth' (Screen 2)
+  // Mode: 'essentials' vs 'in_depth'
   const [studyMode, setStudyMode] = useState<'essentials' | 'in_depth'>('essentials');
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isDiagramZoomed, setIsDiagramZoomed] = useState(false);
@@ -207,232 +196,253 @@ export default function StudyGuideReader({
     setActiveGlossaryKey(termKey);
   };
 
-  const handlePdfDownload = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(
-      'Export PDF Study Guide',
-      `Official ANGRAU Chapter ${chapterNumber}: ${chapterTitle} summary guide is ready for download.`,
-      [{ text: 'Cancel', style: 'cancel' }, { text: 'Download PDF', onPress: () => {} }]
-    );
-  };
 
-  // Color tokens matching user reference images:
-  // Light Mode: Screen background #F2F7F4, cards #FFFFFF
-  // Dark Mode: Screen background #23322B, cards #1E2B24
-  const bg = isDark ? '#23322B' : '#F2F7F4';
-  const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
-  const cardBorder = isDark ? '#3D5449' : '#DDE8E0';
-  const textColor = isDark ? '#FFFFFF' : '#0F1D16';
-  const subtextColor = isDark ? '#A6C5B3' : '#688875';
-  const audioBarBg = isDark ? 'rgba(74, 222, 128, 0.12)' : '#E2EFE7';
-  const audioBorder = isDark ? '#2A4638' : '#CFE2D6';
-  const toggleBg = isDark ? 'rgba(255, 255, 255, 0.08)' : '#E6EFEA';
-  const activeToggleBg = isDark ? '#2E4438' : '#203328';
+  const insets = useSafeAreaInsets();
+
+  // Color tokens from DevMode CSS (.readEssentials & .readInDepth)
+  // Background: #f0f7f3 / #f0f7f4
+  // Text: #2d3e36 / #172136
+  // Pill Bg: #e3efe8, Active: #2d3e36
+  const bg = isDark ? '#121E17' : '#F0F7F4';
+  const cardBg = isDark ? '#1C2B23' : '#FEFEFE';
+  const cardBorder = isDark ? '#2D4538' : '#CFDFD5';
+  const textColor = isDark ? '#FFFFFF' : '#2D3E36';
+  const inDepthTextColor = isDark ? '#E2E8F0' : '#172136';
+  const subtextColor = isDark ? '#A6C5B3' : '#617269';
+  const emeraldPrimary = '#147A43';
+  const activeToggleBg = isDark ? '#147A43' : '#2D3E36';
+  const toggleBg = isDark ? '#1E2B24' : '#E3EFE8';
+  const audioBarBg = isDark ? 'rgba(20, 122, 67, 0.15)' : '#E3EFE8';
+  const audioBorder = isDark ? '#2D4538' : '#CFDFD5';
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      {/* 1. TOP HEADER (Screen 1 vs Screen 2 Header) */}
-      {studyMode === 'essentials' ? (
-        <View style={styles.topHeader}>
-          <TouchableOpacity
-            style={[styles.headerIconBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-            onPress={onBackPress}
-            activeOpacity={0.8}
-            accessibilityLabel="Go back"
-          >
-            <Ionicons name="arrow-back" size={20} color={textColor} />
-          </TouchableOpacity>
+      {/* 1. APP BAR (.appBar: height 56px, padding 0 24px) */}
+      <View style={[styles.appBar, { backgroundColor: bg }]}>
+        <TouchableOpacity
+          style={[styles.backToChapter, { backgroundColor: cardBg, borderColor: cardBorder }]}
+          onPress={onBackPress}
+          activeOpacity={0.8}
+          accessibilityLabel="Go back"
+        >
+          <Ionicons name="arrow-back" size={20} color={textColor} />
+        </TouchableOpacity>
 
-          <Text style={[styles.headerSubjectTitle, { color: textColor }]}>
+        <TouchableOpacity onPress={onChapterPress} activeOpacity={0.7}>
+          <Text style={[styles.subject, { color: textColor }]}>
             {subjectName}
           </Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.headerIconBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-            onPress={handleToggleBookmark}
-            activeOpacity={0.8}
-            accessibilityLabel="Bookmark this chapter"
-          >
-            <Ionicons
-              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={20}
-              color={isBookmarked ? '#16a34a' : textColor}
-            />
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /* Screen 2 In-depth Header */
-        <View style={styles.inDepthTopHeader}>
-          <Text style={[styles.inDepthHeaderTitle, { color: textColor }]}>
-            {subjectName} - Chapter {chapterNumber}: {chapterTitle}
-          </Text>
+        <TouchableOpacity
+          style={[styles.backToChapter, { backgroundColor: cardBg, borderColor: cardBorder }]}
+          onPress={handleToggleBookmark}
+          activeOpacity={0.8}
+          accessibilityLabel="Bookmark this chapter"
+        >
+          <Ionicons
+            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={20}
+            color={isBookmarked ? emeraldPrimary : textColor}
+          />
+        </TouchableOpacity>
+      </View>
 
-          {/* 3 Persona / Tier Level Badges (Beginner, Intermediate, Advanced) */}
-          <View style={styles.tierIconsRow}>
-            {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
-              const isActive = persona === lvl;
-              return (
-                <TouchableOpacity
-                  key={lvl}
-                  style={[
-                    styles.tierIconBadge,
-                    { backgroundColor: cardBg, borderColor: isActive ? '#22c55e' : cardBorder },
-                    isActive && styles.tierIconBadgeActive,
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    updatePersona(lvl);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  {lvl === 'beginner' ? (
-                    <BeginnerBookIcon size={30} />
-                  ) : lvl === 'intermediate' ? (
-                    <IntermediateBookIcon size={30} />
-                  ) : (
-                    <AdvancedBookIcon size={30} />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Screen 2 Audio Pill */}
-          <TouchableOpacity
-            style={[styles.inDepthAudioPill, { backgroundColor: audioBarBg, borderColor: '#22c55e' }]}
-            onPress={handleToggleAudio}
-            activeOpacity={0.8}
-          >
-            <Ionicons name={isPlayingAudio ? 'volume-high' : 'headset-outline'} size={16} color="#16a34a" />
-            <Text style={[styles.inDepthAudioText, { color: '#16a34a' }]}>
-              {isPlayingAudio ? 'Speaking...' : 'Read Aloud - 31:22'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Main Scrollable Content */}
       <ScrollView
         style={styles.scrollArea}
-        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isTablet && styles.tabletContent,
+          { paddingBottom: insets.bottom + 80 },
+        ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Subtitle & Category for Essentials mode */}
-        {studyMode === 'essentials' && (
-          <View style={styles.metaSection}>
+        {/* 2. MODE SPECIFIC HEADER */}
+        {studyMode === 'essentials' ? (
+          /* Essentials Header (.guideIntroduction) */
+          <View style={styles.guideIntroduction}>
             <TouchableOpacity
               onPress={onChapterPress}
               disabled={!onChapterPress}
               activeOpacity={0.7}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
             >
-              <Text style={[styles.chapterSubtitle, { color: subtextColor }]}>
+              <Text style={[styles.chapter, { color: subtextColor }]}>
                 Chapter {chapterNumber}: {chapterTitle}
               </Text>
-              {onChapterPress && <Ionicons name="chevron-down" size={14} color="#22c55e" />}
+              {onChapterPress && <Ionicons name="chevron-down" size={13} color={emeraldPrimary} />}
             </TouchableOpacity>
-            <Text style={styles.categoryGreenLabel}>QUICK STUDY GUIDE</Text>
-            <Text style={[styles.mainHeadline, { color: textColor }]}>
+
+            <Text style={[styles.guideType, { color: emeraldPrimary }]}>
+              QUICK STUDY GUIDE
+            </Text>
+
+            <Text style={[styles.guideTitle, { color: textColor }]}>
               Insect Digestive System
             </Text>
           </View>
+        ) : (
+          /* In-depth Header (.chapterBreadcrumbParent & .frameParent & .readAloud) */
+          <View style={[styles.inDepthHeader, { borderBottomColor: isDark ? '#2D4538' : '#C6EBDC' }]}>
+            <TouchableOpacity
+              onPress={onChapterPress}
+              disabled={!onChapterPress}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.chapterBreadcrumb, { color: textColor }]}>
+                {subjectName} - Chapter {chapterNumber}: {chapterTitle}
+              </Text>
+            </TouchableOpacity>
+
+            {/* 3 Persona / Tier Level Badges (.frameParent: 41x41px each, 4px radius, subtle shadow) */}
+            <View style={styles.frameParent}>
+              {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
+                const isActive = persona === lvl;
+                return (
+                  <TouchableOpacity
+                    key={lvl}
+                    style={[
+                      styles.groupBadge,
+                      { backgroundColor: cardBg, borderColor: isActive ? emeraldPrimary : cardBorder },
+                      isActive && styles.groupBadgeActive,
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      updatePersona(lvl);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    {lvl === 'beginner' ? (
+                      <BeginnerBookIcon size={26} />
+                    ) : lvl === 'intermediate' ? (
+                      <IntermediateBookIcon size={26} />
+                    ) : (
+                      <AdvancedBookIcon size={26} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Read Aloud Pill (.readAloud: height 26px, #ecf6f1 bg, #55bf7a border, #12833e text) */}
+            <TouchableOpacity
+              style={[
+                styles.readAloudInDepth,
+                {
+                  backgroundColor: isDark ? 'rgba(20, 122, 67, 0.15)' : '#ECF6F1',
+                  borderColor: isDark ? '#147A43' : '#55BF7A',
+                },
+              ]}
+              onPress={handleToggleAudio}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="headset-outline" size={11} color={isDark ? '#4ADE80' : '#12833E'} />
+              <Text style={[styles.labelAndDuration, { color: isDark ? '#4ADE80' : '#12833E' }]}>
+                {isPlayingAudio ? 'Speaking...' : 'Read Aloud · 31:22'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
-        {/* 2. TOGGLE PILLS: [ ⚡ Essentials ]  vs  [ ⊙ In-depth ] */}
-        <View style={[styles.toggleContainer, { backgroundColor: toggleBg }]}>
-          <TouchableOpacity
-            style={[
-              styles.togglePill,
-              studyMode === 'essentials' && [styles.activeTogglePill, { backgroundColor: activeToggleBg }],
-            ]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setStudyMode('essentials');
-            }}
-            activeOpacity={0.85}
-          >
-            <Ionicons
-              name="flash"
-              size={14}
-              color={studyMode === 'essentials' ? '#FFFFFF' : subtextColor}
-            />
-            <Text
+        {/* 3. READING DEPTH SELECTOR (.readingDepth & .depthSelector) */}
+        <View style={styles.readingDepth}>
+          <View style={[styles.depthSelector, { backgroundColor: toggleBg }]}>
+            {/* Essentials Pill */}
+            <TouchableOpacity
               style={[
-                styles.togglePillText,
-                { color: studyMode === 'essentials' ? '#FFFFFF' : subtextColor },
-                studyMode === 'essentials' && styles.activeToggleText,
+                styles.depthPill,
+                studyMode === 'essentials' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
               ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setStudyMode('essentials');
+              }}
+              activeOpacity={0.85}
             >
-              Essentials
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="flash"
+                size={15}
+                color={studyMode === 'essentials' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
+              />
+              <Text
+                style={[
+                  styles.depthPillText,
+                  { color: studyMode === 'essentials' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
+                  studyMode === 'essentials' && styles.depthPillTextActive,
+                ]}
+              >
+                Essentials
+              </Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.togglePill,
-              studyMode === 'in_depth' && [styles.activeTogglePill, { backgroundColor: activeToggleBg }],
-            ]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setStudyMode('in_depth');
-            }}
-            activeOpacity={0.85}
-          >
-            <Ionicons
-              name="radio-button-on"
-              size={13}
-              color={studyMode === 'in_depth' ? '#FFFFFF' : subtextColor}
-            />
-            <Text
+            {/* In-depth Pill */}
+            <TouchableOpacity
               style={[
-                styles.togglePillText,
-                { color: studyMode === 'in_depth' ? '#FFFFFF' : subtextColor },
-                studyMode === 'in_depth' && styles.activeToggleText,
+                styles.depthPill,
+                studyMode === 'in_depth' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
               ]}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setStudyMode('in_depth');
+              }}
+              activeOpacity={0.85}
             >
-              In-depth
-            </Text>
-          </TouchableOpacity>
+              <Ionicons
+                name="add-circle-outline"
+                size={15}
+                color={studyMode === 'in_depth' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
+              />
+              <Text
+                style={[
+                  styles.depthPillText,
+                  { color: studyMode === 'in_depth' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
+                  studyMode === 'in_depth' && styles.depthPillTextActive,
+                ]}
+              >
+                In-depth
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* 3. MODE CONTENT: ESSENTIALS (Screen 1) */}
+        {/* 4. ESSENTIALS MODE (.studyContent) */}
         {studyMode === 'essentials' && (
-          <View style={styles.essentialsContainer}>
-            {/* Section Heading Row */}
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.numBadge}>
-                <Text style={styles.numBadgeText}>1</Text>
+          <View style={styles.studyContent}>
+            {/* Section Heading (.sectionHeading) */}
+            <View style={styles.sectionHeading}>
+              <View style={[styles.sectionMarker, { backgroundColor: toggleBg }]}>
+                <Text style={[styles.sectionMarkerNumber, { color: emeraldPrimary }]}>1</Text>
               </View>
-              <Text style={[styles.sectionHeading, { color: textColor }]}>
+              <Text style={[styles.sectionTitle, { color: textColor }]}>
                 Architectural Blueprint & Regional Partitioning
               </Text>
             </View>
 
-            {/* Paragraph Text with Bolded Anatomy terms */}
-            <Text style={[styles.bodyParagraph, { color: isDark ? '#D8E5DC' : '#2D3E36' }]}>
+            {/* Explanation (.explanation) */}
+            <Text style={[styles.explanation, { color: isDark ? '#D8E5DC' : '#1D2C26' }]}>
               The insect alimentary canal is a specialized muscular tube extending from the mouth to the
               anus. It is divided into three distinct anatomical chambers: the{' '}
-              <Text style={styles.boldTerm}>Foregut (Stomodaeum)</Text>, the{' '}
-              <Text style={styles.boldTerm}>Midgut (Mesenteron)</Text>, and the{' '}
-              <Text style={styles.boldTerm}>Hindgut (Proctodaeum)</Text>. This division reflects
+              <Text style={styles.foregutStomodaeum}>Foregut (Stomodaeum)</Text>, the{' '}
+              <Text style={styles.foregutStomodaeum}>Midgut (Mesenteron)</Text>, and the{' '}
+              <Text style={styles.foregutStomodaeum}>Hindgut (Proctodaeum)</Text>. This division reflects
               fundamental embryonic origins that govern how food is processed and eliminated.
             </Text>
 
-            {/* Infographic Diagram Card with Expand button */}
-            <View style={[styles.infographicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              {/* Card Header: ALIMENTARY CANAL & Expand */}
-              <View style={styles.diagramCardHeader}>
-                <Text style={styles.diagramLabel}>ALIMENTARY CANAL</Text>
+            {/* Scientific Diagram Card (.scientificDiagram) */}
+            <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              {/* Figure Tools (.figureTools) */}
+              <View style={styles.figureTools}>
+                <Text style={[styles.figureLabel, { color: subtextColor }]}>ALIMENTARY CANAL</Text>
                 <TouchableOpacity
-                  style={styles.expandBtn}
+                  style={styles.expandDiagram}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     setIsDiagramZoomed(true);
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text style={[styles.expandText, { color: isDark ? '#4ade80' : '#16a34a' }]}>Expand</Text>
-                  <Ionicons name="expand-outline" size={14} color={isDark ? '#4ade80' : '#16a34a'} />
+                  <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
+                  <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
                 </TouchableOpacity>
               </View>
 
@@ -443,176 +453,197 @@ export default function StudyGuideReader({
                   setIsDiagramZoomed(true);
                 }}
                 activeOpacity={0.9}
-                style={styles.diagramImageTouch}
+                style={styles.diagramTouch}
               >
                 <Image
                   source={{ uri: INFOGRAPHIC_URL }}
-                  style={styles.diagramImage}
+                  style={styles.originalDiagramDetail}
                   resizeMode="contain"
                 />
               </TouchableOpacity>
 
-              {/* 3-Column Legend: Foregut, Midgut, Hindgut */}
-              <View style={styles.diagramLegendRow}>
-                <View style={styles.legendCol}>
-                  <Text style={[styles.legendColTitle, { color: textColor }]}>Foregut</Text>
-                  <Text style={[styles.legendColSub, { color: subtextColor }]}>Stomodaeum</Text>
+              {/* Divider (.divider) */}
+              <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+
+              {/* Regional Key (.regionalKey) */}
+              <View style={styles.regionalKey}>
+                <View style={styles.anatomicalRegion}>
+                  <Text style={[styles.regionName, { color: textColor }]}>Foregut</Text>
+                  <Text style={[styles.scientificName, { color: subtextColor }]}>Stomodaeum</Text>
                 </View>
-                <View style={styles.legendCol}>
-                  <Text style={[styles.legendColTitle, { color: textColor }]}>Midgut</Text>
-                  <Text style={[styles.legendColSub, { color: subtextColor }]}>Mesenteron</Text>
+                <View style={styles.anatomicalRegion}>
+                  <Text style={[styles.regionName, { color: textColor }]}>Midgut</Text>
+                  <Text style={[styles.scientificName, { color: subtextColor }]}>Mesenteron</Text>
                 </View>
-                <View style={styles.legendCol}>
-                  <Text style={[styles.legendColTitle, { color: textColor }]}>Hindgut</Text>
-                  <Text style={[styles.legendColSub, { color: subtextColor }]}>Proctodaeum</Text>
+                <View style={styles.anatomicalRegion}>
+                  <Text style={[styles.regionName, { color: textColor }]}>Hindgut</Text>
+                  <Text style={[styles.scientificName, { color: subtextColor }]}>Proctodaeum</Text>
                 </View>
               </View>
             </View>
 
-            {/* Screen 1 Audio Player Bar: [ 🎧 Read Aloud       6:28  ▷ ] */}
+            {/* Read Aloud Audio Action Card (.readAloud) */}
             <TouchableOpacity
-              style={[styles.essentialsAudioBar, { backgroundColor: audioBarBg, borderColor: audioBorder }]}
+              style={[styles.readAloud, { backgroundColor: audioBarBg, borderColor: audioBorder }]}
               onPress={handleToggleAudio}
               activeOpacity={0.8}
             >
-              <View style={styles.audioLeft}>
-                <Ionicons name="headset-outline" size={20} color={isDark ? '#4ade80' : '#1C2E24'} />
-                <Text style={[styles.audioLabelText, { color: isDark ? '#4ade80' : '#1C2E24' }]}>
-                  {isPlayingAudio ? 'Playing...' : 'Read Aloud'}
-                </Text>
-              </View>
-
-              <View style={styles.audioRight}>
-                <Text style={[styles.durationText, { color: subtextColor }]}>6:28</Text>
-                <Ionicons
-                  name={isPlayingAudio ? 'pause' : 'play-outline'}
-                  size={20}
-                  color={isDark ? '#4ade80' : '#16a34a'}
-                />
-              </View>
+              <Ionicons name="headset-outline" size={20} color={emeraldPrimary} />
+              <Text style={[styles.actionLabel, { color: emeraldPrimary }]}>
+                {isPlayingAudio ? 'Speaking...' : 'Read Aloud'}
+              </Text>
+              <Text style={[styles.duration, { color: subtextColor }]}>6:28</Text>
+              <Ionicons
+                name={isPlayingAudio ? 'pause' : 'play-outline'}
+                size={16}
+                color={emeraldPrimary}
+              />
             </TouchableOpacity>
           </View>
         )}
 
-        {/* 4. MODE CONTENT: IN-DEPTH (Screen 2) */}
+        {/* 5. IN-DEPTH MODE (.guidePanel & .readingPassages) */}
         {studyMode === 'in_depth' && (
-          <View style={styles.inDepthContainer}>
-            <Text style={[styles.inDepthMainTitle, { color: textColor }]}>
+          <View style={styles.guidePanel}>
+            <Text style={[styles.inDepthGuideTitle, { color: inDepthTextColor }]}>
               Detailed Study Guide: Insect Digestive System
             </Text>
 
-            <Text style={[styles.inDepthSectionTitle, { color: textColor }]}>
-              1. Architectural Blueprint and Division of Labor in the Insect Gut
-            </Text>
+            <View style={styles.architecturalBlueprint}>
+              <Text style={[styles.inDepthSectionHeading, { color: inDepthTextColor }]}>
+                1. Architectural Blueprint and Division of Labor in the Insect Gut
+              </Text>
 
-            <Text style={[styles.inDepthParagraph, { color: isDark ? '#D8E5DC' : '#2D3E36' }]}>
-              The insect{' '}
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('alimentary canal')}
-              >
-                alimentary canal
-              </Text>{' '}
-              is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than
-              functioning as a uniform, undifferentiated tube, the digestive tract of an insect operates
-              as a highly coordinated biological assembly line. This internal processing system is strictly
-              compartmentalized into three primary morphological regions: the{' '}
-              <Text
-                style={styles.clickableGlossaryBold}
-                onPress={() => handleTermPress('foregut')}
-              >
-                foregut
-              </Text>{' '}
-              (stomodaeum), the{' '}
-              <Text
-                style={styles.clickableGlossaryBold}
-                onPress={() => handleTermPress('midgut')}
-              >
-                midgut
-              </Text>{' '}
-              (mesenteron), and the{' '}
-              <Text
-                style={styles.clickableGlossaryBold}
-                onPress={() => handleTermPress('hindgut')}
-              >
-                hindgut
-              </Text>{' '}
-              (
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('proctodaeum')}
-              >
-                proctodaeum
-              </Text>
-              ). Each region performs a non-overlapping physiological assignment, transforming raw, often
-              abrasive environmental food sources into molecular energy while conserving vital bodily
-              fluids.
-            </Text>
+              <View style={styles.readingPassages}>
+                {/* Passage 1 */}
+                <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
+                  The insect{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('alimentary canal')}
+                  >
+                    alimentary canal
+                  </Text>{' '}
+                  is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than
+                  functioning as a uniform, undifferentiated tube, the digestive tract of an insect operates
+                  as a highly coordinated biological assembly line. This internal processing system is strictly
+                  compartmentalized into three primary morphological regions: the{' '}
+                  <Text
+                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('foregut')}
+                  >
+                    foregut
+                  </Text>{' '}
+                  (stomodaeum), the{' '}
+                  <Text
+                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('midgut')}
+                  >
+                    midgut
+                  </Text>{' '}
+                  (
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('mesenteron')}
+                  >
+                    mesenteron
+                  </Text>
+                  ), and the{' '}
+                  <Text
+                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('hindgut')}
+                  >
+                    hindgut
+                  </Text>{' '}
+                  (
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('proctodaeum')}
+                  >
+                    proctodaeum
+                  </Text>
+                  ). Each region performs a non-overlapping physiological assignment, transforming raw,
+                  often abrasive environmental food sources into molecular energy while conserving vital bodily
+                  fluids.
+                </Text>
 
-            <Text style={[styles.inDepthParagraph, { color: isDark ? '#D8E5DC' : '#2D3E36' }]}>
-              Understanding the insect digestive tract requires understanding where these organs come from
-              during the development of the embryo. The insect body is built around an embryonic framework
-              where different tissue layers give rise to different organ systems. The{' '}
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('foregut')}
-              >
-                foregut
-              </Text>{' '}
-              and the{' '}
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('hindgut')}
-              >
-                hindgut
-              </Text>{' '}
-              arise directly from the{' '}
-              <Text
-                style={styles.clickableGlossaryBold}
-                onPress={() => handleTermPress('ectoderm')}
-              >
-                ectoderm
-              </Text>
-              , which is the exact same embryonic cell layer that forms the insect's outer body wall and
-              exoskeleton. Because they develop as inward folds (invaginations) of the outer body surface,
-              both the foregut and the hindgut inherit the protective armor of the exterior cuticle.
-              Their innermost lining is covered by a specialized chitinous sheet known as the{' '}
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('cuticular intima')}
-              >
-                cuticular intima
-              </Text>
-              . In contrast, the central chamber—the midgut—develops from embryonic{' '}
-              <Text
-                style={styles.clickableGlossaryTerm}
-                onPress={() => handleTermPress('endoderm')}
-              >
-                endoderm
-              </Text>
-              . The midgut never develops a cuticular lining, leaving its cellular surface naked and
-              accessible to facilitate the rapid secretion of digestive juices and the active absorption of
-              dissolved nutrients.
-            </Text>
+                {/* Passage 2 */}
+                <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
+                  Understanding the insect digestive tract requires understanding where these organs come from
+                  during the development of the embryo. The insect body is built around an embryonic framework
+                  where different tissue layers give rise to different organ systems. The{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('foregut')}
+                  >
+                    foregut
+                  </Text>{' '}
+                  and the{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('hindgut')}
+                  >
+                    hindgut
+                  </Text>{' '}
+                  arise directly from the{' '}
+                  <Text
+                    style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('ectoderm')}
+                  >
+                    ectoderm
+                  </Text>
+                  , which is the exact same embryonic cell layer that forms the insect's outer body wall and
+                  exoskeleton. Because they develop as inward folds (invaginations) of the outer body surface,
+                  both the{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('foregut')}
+                  >
+                    foregut
+                  </Text>{' '}
+                  and the{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('hindgut')}
+                  >
+                    hindgut
+                  </Text>{' '}
+                  inherit the protective armor of the exterior cuticle. Their innermost lining is covered by a
+                  specialized chitinous sheet known as the{' '}
+                  <Text
+                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('cuticular intima')}
+                  >
+                    cuticular intima
+                  </Text>
+                  . In contrast, the central chamber—the{' '}
+                  <Text
+                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('midgut')}
+                  >
+                    midgut
+                  </Text>
+                  —develops from embryonic{' '}
+                  <Text
+                    style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
+                    onPress={() => handleTermPress('endoderm')}
+                  >
+                    endoderm
+                  </Text>
+                  . The midgut never develops a cuticular lining, leaving its cellular surface naked and
+                  accessible to facilitate the rapid secretion of digestive juices and the active absorption of
+                  dissolved nutrients.
+                </Text>
+              </View>
+            </View>
 
             <View style={{ height: 60 }} />
           </View>
         )}
       </ScrollView>
 
-      {/* Floating Red PDF Action Button (Screen 2) */}
-      {studyMode === 'in_depth' && (
-        <TouchableOpacity
-          style={styles.floatingPdfBtn}
-          onPress={handlePdfDownload}
-          activeOpacity={0.85}
-          accessibilityLabel="Export study guide as PDF"
-        >
-          <PdfAcrobatIcon size={24} />
-        </TouchableOpacity>
-      )}
 
-      {/* 5. FULL-SCREEN INTERACTIVE DIAGRAM MODAL (Gets big on tap, shrinks on tap) */}
+      {/* 6. FULL-SCREEN INTERACTIVE DIAGRAM MODAL */}
       <Modal
         visible={isDiagramZoomed}
         transparent
@@ -655,7 +686,7 @@ export default function StudyGuideReader({
         </TouchableOpacity>
       </Modal>
 
-      {/* 6. CLICKABLE GLOSSARY DEFINITION MODAL */}
+      {/* 7. CLICKABLE GLOSSARY DEFINITION MODAL */}
       <Modal
         visible={activeGlossaryKey !== null}
         transparent
@@ -708,18 +739,18 @@ export default function StudyGuideReader({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%',
   },
-  topHeader: {
+  appBar: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 10,
+    paddingHorizontal: 24,
   },
-  headerIconBtn: {
-    width: 38,
-    height: 38,
+  backToChapter: {
+    width: 40,
+    height: 40,
     borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
@@ -727,70 +758,17 @@ const styles = StyleSheet.create({
     elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.06,
     shadowRadius: 2,
   },
-  headerSubjectTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-  },
-  inDepthTopHeader: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 12 : 8,
-    paddingBottom: 8,
-    gap: 8,
-  },
-  inDepthHeaderTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  tierIconsRow: {
-    flexDirection: 'row',
-    gap: 14,
-    marginVertical: 4,
-  },
-  tierIconBadge: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  tierIconBadgeActive: {
-    transform: [{ scale: 1.08 }],
-    backgroundColor: '#FFFFFF',
-  },
-  tierEmoji: {
-    fontSize: 22,
-  },
-  inDepthAudioPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 7,
-    paddingHorizontal: 24,
-    borderRadius: 20,
-    borderWidth: 1,
-    marginTop: 4,
-  },
-  inDepthAudioText: {
-    fontSize: 12.5,
-    fontWeight: '700',
+  subject: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   scrollArea: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
     paddingBottom: 40,
   },
   tabletContent: {
@@ -798,227 +776,265 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '100%',
   },
-  metaSection: {
-    marginTop: 6,
-    marginBottom: 16,
+  guideIntroduction: {
+    paddingHorizontal: 24,
+    paddingTop: 18,
+    paddingBottom: 18,
+    gap: 8,
   },
-  chapterSubtitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  categoryGreenLabel: {
+  chapter: {
     fontSize: 12,
-    fontWeight: '800',
-    color: '#16a34a',
-    letterSpacing: 0.6,
-    marginBottom: 6,
+    lineHeight: 18,
   },
-  mainHeadline: {
-    fontSize: 27,
-    fontWeight: '800',
-    letterSpacing: -0.4,
-    lineHeight: 33,
+  guideType: {
+    fontSize: 11,
+    letterSpacing: 1.0,
+    textTransform: 'uppercase',
+    fontWeight: '700',
   },
-  toggleContainer: {
+  guideTitle: {
+    fontSize: 30,
+    letterSpacing: -0.6,
+    lineHeight: 34,
+    fontWeight: '700',
+  },
+  /* In-depth Header (.chapterBreadcrumbParent, .frameParent, .readAloud) */
+  inDepthHeader: {
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: 16,
+    borderBottomWidth: 0.7,
+    alignItems: 'center',
+    gap: 12,
+  },
+  chapterBreadcrumb: {
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  frameParent: {
     flexDirection: 'row',
-    borderRadius: 24,
-    padding: 3,
-    marginBottom: 20,
+    gap: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  togglePill: {
-    flex: 1,
+  groupBadge: {
+    width: 41,
+    height: 41,
+    borderRadius: 4,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#2D3E36',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  groupBadgeActive: {
+    transform: [{ scale: 1.05 }],
+    borderColor: '#147A43',
+    borderWidth: 1.5,
+  },
+  readAloudInDepth: {
+    height: 26,
+    borderRadius: 20,
+    borderWidth: 0.6,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 9,
-    borderRadius: 22,
-    gap: 6,
+    gap: 5,
   },
-  activeTogglePill: {
+  labelAndDuration: {
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  readingDepth: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 20,
+  },
+  depthSelector: {
+    flexDirection: 'row',
+    borderRadius: 100,
+    padding: 4,
+    gap: 4,
+  },
+  depthPill: {
+    flex: 1,
+    height: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 100,
+    gap: 7,
+  },
+  depthPillActive: {
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.15,
     shadowRadius: 3,
   },
-  togglePillText: {
-    fontSize: 13.5,
+  depthPillText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  depthPillTextActive: {
     fontWeight: '600',
   },
-  activeToggleText: {
-    fontWeight: '700',
+  /* Essentials (.studyContent) */
+  studyContent: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 20,
   },
-  essentialsContainer: {
-    gap: 16,
-  },
-  sectionHeaderRow: {
+  sectionHeading: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginTop: 4,
   },
-  numBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#DCECE3',
+  sectionMarker: {
+    width: 30,
+    height: 30,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numBadgeText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#1C2E24',
+  sectionMarkerNumber: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  sectionHeading: {
+  sectionTitle: {
     flex: 1,
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 19,
     letterSpacing: -0.2,
-  },
-  bodyParagraph: {
-    fontSize: 15,
-    lineHeight: 24,
-  },
-  boldTerm: {
+    lineHeight: 25,
     fontWeight: '700',
-    color: '#1C2E24',
   },
-  infographicCard: {
+  explanation: {
+    fontSize: 15,
+    lineHeight: 25,
+  },
+  foregutStomodaeum: {
+    textDecorationLine: 'underline',
+    fontWeight: '600',
+  },
+  scientificDiagram: {
     borderRadius: 16,
     borderWidth: 1,
-    padding: 14,
-    marginVertical: 4,
+    padding: 12,
+    gap: 12,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
   },
-  diagramCardHeader: {
+  figureTools: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
-  diagramLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#688875',
-    letterSpacing: 0.6,
+  figureLabel: {
+    fontSize: 10,
+    letterSpacing: 0.7,
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
-  expandBtn: {
+  expandDiagram: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  expandText: {
-    fontSize: 12,
-    fontWeight: '700',
+  expandLabel: {
+    fontSize: 11,
+    fontWeight: '600',
   },
-  diagramImageTouch: {
+  diagramTouch: {
     width: '100%',
-    height: 140,
-    marginVertical: 4,
+    height: 110,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  diagramImage: {
+  originalDiagramDetail: {
     width: '100%',
     height: '100%',
   },
-  diagramLegendRow: {
+  divider: {
+    height: 1,
+    width: '100%',
+  },
+  regionalKey: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingTop: 10,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
-    marginTop: 6,
-  },
-  legendCol: {
-    alignItems: 'flex-start',
-  },
-  legendColTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  legendColSub: {
-    fontSize: 11,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  essentialsAudioBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginTop: 6,
-  },
-  audioLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 8,
   },
-  audioLabelText: {
-    fontSize: 14,
-    fontWeight: '700',
+  anatomicalRegion: {
+    flex: 1,
+    gap: 2,
   },
-  audioRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  durationText: {
-    fontSize: 13,
+  regionName: {
+    fontSize: 12,
     fontWeight: '600',
   },
-  /* In-depth Styles */
-  inDepthContainer: {
+  scientificName: {
+    fontSize: 10,
+  },
+  readAloud: {
+    height: 50,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  actionLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  duration: {
+    fontSize: 12,
+  },
+  /* In-depth Panel (.guidePanel, .readingPassages) */
+  guidePanel: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+    gap: 18,
+  },
+  inDepthGuideTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  architecturalBlueprint: {
+    gap: 10,
+  },
+  inDepthSectionHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  readingPassages: {
     gap: 14,
   },
-  inDepthMainTitle: {
-    fontSize: 21,
-    fontWeight: '800',
-    letterSpacing: -0.3,
+  passageText: {
+    fontSize: 12.5,
+    lineHeight: 21,
   },
-  inDepthSectionTitle: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    marginTop: 4,
-  },
-  inDepthParagraph: {
-    fontSize: 14.5,
-    lineHeight: 23,
-  },
-  clickableGlossaryTerm: {
+  underlinedTerm: {
     textDecorationLine: 'underline',
-    fontWeight: '600',
-    color: '#16a34a',
   },
-  clickableGlossaryBold: {
+  underlinedBoldTerm: {
     fontWeight: '700',
     textDecorationLine: 'underline',
-    color: '#1C2E24',
   },
-  floatingPdfBtn: {
-    position: 'absolute',
-    right: 20,
-    bottom: 24,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+  boldOnlyTerm: {
+    fontWeight: '700',
   },
   /* Zoom Modal */
   zoomModalBackdrop: {

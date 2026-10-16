@@ -7,45 +7,64 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Modal,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
-import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
 import AssessmentView from '@/components/study/AssessmentView';
 import PYQView from '@/components/study/PYQView';
 import { fetchFlashcards } from '@/services/contentService';
-import { SAMPLE_FLASHCARDS, Flashcard } from '@/data/sampleFlashcards';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { SAMPLE_FLASHCARDS, Flashcard, getFlashcardsForPersona } from '@/data/sampleFlashcards';
 
-const PRACTICE_SEGMENTS: NavSegment[] = [
-  { id: 'learn', label: 'Learn', vectorIcon: 'book-outline' },
-  { id: 'practice', label: 'Practice', vectorIcon: 'headset-outline' },
-  { id: 'watch', label: 'Watch', vectorIcon: 'play-circle-outline' },
+interface TopPartSegment {
+  id: 'revise' | 'assessments' | 'question_bank';
+  label: string;
+  vectorIcon: keyof typeof Ionicons.glyphMap;
+}
+
+const PRACTICE_PARTS: TopPartSegment[] = [
+  { id: 'revise', label: 'Revise', vectorIcon: 'flash-outline' },
+  { id: 'assessments', label: 'Assessments', vectorIcon: 'checkmark-circle-outline' },
+  { id: 'question_bank', label: 'Question Bank', vectorIcon: 'file-tray-full-outline' },
 ];
 
 export default function PracticeScreen() {
   const router = useRouter();
-  const { isDark } = useAppTheme();
-  const { persona } = useAuth();
+  const insets = useSafeAreaInsets();
+  const { isDark, setThemeMode } = useAppTheme();
+  const { persona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
-  const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
+  const params = useLocalSearchParams<{ chapter?: string; part?: string }>();
   const activeSubject = ANGRAU_SUBJECTS[0];
 
-  const [activeSegment, setActiveSegment] = useState<string>('practice');
+  const toggleTheme = () => {
+    Haptics.selectionAsync();
+    setThemeMode(isDark ? 'light' : 'dark');
+  };
+
+  // 3 Practice parts: Revise, Assessments, Question Bank. Default to Assessments per user request.
+  const [activePart, setActivePart] = useState<'revise' | 'assessments' | 'question_bank'>(
+    params.part === 'revise'
+      ? 'revise'
+      : params.part === 'question_bank'
+      ? 'question_bank'
+      : 'assessments'
+  );
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
   );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
   const [flashcardsList, setFlashcardsList] = useState<Flashcard[]>([]);
-  const [isLoadingCards, setIsLoadingCards] = useState<boolean>(true);
+  const [isLoadingCards, setIsLoadingCards] = useState<boolean>(false);
 
   useEffect(() => {
     if (params.chapter) {
@@ -57,6 +76,8 @@ export default function PracticeScreen() {
   }, [params.chapter, selectedChapterNum]);
 
   useEffect(() => {
+    if (activePart !== 'revise') return;
+
     let isMounted = true;
     const controller = new AbortController();
     setIsLoadingCards(true);
@@ -79,56 +100,137 @@ export default function PracticeScreen() {
       isMounted = false;
       controller.abort();
     };
-  }, [selectedChapterNum, persona]);
+  }, [activePart, selectedChapterNum, persona]);
 
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
 
-  const screenBg = isDark ? '#23322B' : '#FFF6F1';
-  const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
-  const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
-  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
-  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
+  // Theme tokens
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
+  const toggleBg = isDark ? '#1E2B24' : '#E8F2EB';
+  const activePillBg = isDark ? '#147A43' : '#2D3E36';
+  const textColor = isDark ? '#FFFFFF' : '#1F2B29';
+  const subtextColor = isDark ? '#A6C5B3' : '#596B66';
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with [Learn] [Practice] [Watch] + Profile Avatar (Matches User Screenshots) */}
-      <TopNavBar
-        segments={PRACTICE_SEGMENTS}
-        activeSegment={activeSegment}
-        onSegmentChange={(id) => {
-          if (id === 'learn') {
-            router.push('/(tabs)/learn');
-          } else if (id === 'watch') {
-            router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch' } });
-          } else {
-            setActiveSegment(id);
-          }
-        }}
-        showProfile={true}
-      />
+      {/* 0. Top Bar: Chapter selector & Circular Profile / Theme toggle */}
+      <View style={[styles.topBarRow, { paddingTop: insets.top + (Platform.OS === 'android' ? 6 : 2) }]}>
+        <TouchableOpacity
+          style={[
+            styles.chapterPill,
+            { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(45,62,54,0.08)' },
+          ]}
+          onPress={() => setShowChapterModal(true)}
+          activeOpacity={0.75}
+        >
+          <Text style={[styles.chapterPillText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
+            {activeSubject.code} · Ch {selectedChapterNum}
+          </Text>
+          <Ionicons name="chevron-down" size={13} color={isDark ? '#A6C5B3' : '#596B66'} />
+        </TouchableOpacity>
 
-      {/* Centered Flashcard Area (Matches Screenshots) */}
-      <View style={styles.flashcardCenterArea}>
-        {isLoadingCards ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#22c55e" />
-            <Text style={[styles.loadingText, { color: subtextColor }]}>
-              Loading active recall deck...
-            </Text>
-          </View>
-        ) : (
-          <FlashcardDeck
-            cards={
-              flashcardsList.length > 0
-                ? flashcardsList
-                : SAMPLE_FLASHCARDS[currentChapter.number] || SAMPLE_FLASHCARDS[1]
-            }
-            chapterNumber={currentChapter.number}
-          />
-        )}
+        <TouchableOpacity
+          style={[
+            styles.profileCircle,
+            { borderColor: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(45,62,54,0.25)' },
+          ]}
+          onPress={toggleTheme}
+          activeOpacity={0.8}
+          accessibilityLabel="Toggle Theme"
+        >
+          <Ionicons name="person-outline" size={18} color={isDark ? '#FFFFFF' : '#1C2E24'} />
+        </TouchableOpacity>
       </View>
+
+      {/* 1. TOP 3-PART SEGMENT TOGGLE: [ Revise | Assessments | Question Bank ] */}
+      <View style={styles.topSegmentWrap}>
+        <View style={[styles.topSegmentContainer, { backgroundColor: toggleBg }]}>
+          {PRACTICE_PARTS.map((seg) => {
+            const isActive = activePart === seg.id;
+            return (
+              <TouchableOpacity
+                key={seg.id}
+                style={[
+                  styles.segmentPill,
+                  isActive && [styles.segmentPillActive, { backgroundColor: activePillBg }],
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setActivePart(seg.id);
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={seg.vectorIcon}
+                  size={14}
+                  color={isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
+                />
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
+                    isActive && styles.segmentTextActive,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {seg.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* 2. MAIN ACTIVE PART */}
+      {activePart === 'assessments' ? (
+        /* Assessments View: MCQ Single Choice */
+        <AssessmentView
+          chapterNumber={selectedChapterNum}
+          subjectName={activeSubject.name}
+          onFinish={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          }}
+          onBackPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/(tabs)');
+            }
+          }}
+        />
+      ) : activePart === 'revise' ? (
+        /* Revise View: Active Recall Flashcards */
+        <View style={styles.flashcardCenterArea}>
+          {isLoadingCards ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#22c55e" />
+              <Text style={[styles.loadingText, { color: subtextColor }]}>
+                Loading active recall deck...
+              </Text>
+            </View>
+          ) : (
+            <FlashcardDeck
+              cards={getFlashcardsForPersona(
+                flashcardsList.length > 0
+                  ? flashcardsList
+                  : SAMPLE_FLASHCARDS[currentChapter.number] || SAMPLE_FLASHCARDS[1],
+                persona
+              )}
+              chapterNumber={currentChapter.number}
+              persona={persona}
+              onPersonaChange={updatePersona}
+            />
+          )}
+        </View>
+      ) : (
+        /* Question Bank View: PYQs */
+          <PYQView
+            chapterNumber={selectedChapterNum}
+            chapterName={currentChapter.name}
+          />
+      )}
 
       {/* Chapter Selector Modal */}
       <Modal
@@ -142,7 +244,7 @@ export default function PracticeScreen() {
           activeOpacity={1}
           onPress={() => setShowChapterModal(false)}
         >
-          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#23322B' : '#FFF6F1' }]}>
+          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: textColor }]}>
                 Select Chapter ({activeSubject.code})
@@ -170,7 +272,13 @@ export default function PracticeScreen() {
                         {ch.number}
                       </Text>
                     </View>
-                    <Text style={[styles.modalChapterText, isCur && styles.modalChapterTextActive, { color: textColor }]}>
+                    <Text
+                      style={[
+                        styles.modalChapterText,
+                        isCur && styles.modalChapterTextActive,
+                        { color: textColor },
+                      ]}
+                    >
                       {ch.name}
                     </Text>
                   </TouchableOpacity>
@@ -188,66 +296,77 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  /* Top Bar */
+  topBarRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingBottom: 8,
+  },
+  chapterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  chapterPillText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  profileCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /* Top Segment Toggle */
+  topSegmentWrap: {
+    paddingHorizontal: 16,
+    paddingBottom: 6,
+    zIndex: 10,
+  },
+  topSegmentContainer: {
+    flexDirection: 'row',
+    height: 38,
+    borderRadius: 19,
+    padding: 3,
+    alignItems: 'center',
+  },
+  segmentPill: {
+    flex: 1,
+    height: 32,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 6,
+  },
+  segmentPillActive: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  segmentText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  segmentTextActive: {
+    fontWeight: '700',
+  },
+  /* Revise / Flashcards area */
   flashcardCenterArea: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
-  },
-  subBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    gap: 10,
-  },
-  chapterPickerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: 8,
-    flex: 1,
-  },
-  chNumBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#22c55e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chNumText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  chapterPickerName: {
-    fontSize: 13,
-    fontWeight: '700',
-    flex: 1,
-  },
-  statIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  statIndicatorText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  workspace: {
-    flex: 1,
-  },
-  workspaceContent: {
-    padding: Spacing.four,
-  },
-  toolCardWrap: {
-    width: '100%',
   },
   loadingContainer: {
     alignItems: 'center',
@@ -259,53 +378,56 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
+  /* Modal */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    padding: Spacing.four,
-    paddingBottom: 40,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '75%',
   },
   modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.three,
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
   },
   modalChapterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.15)',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#A8C7B2',
     gap: 12,
   },
   modalChapterRowActive: {
-    backgroundColor: 'rgba(34,197,94,0.08)',
+    backgroundColor: 'rgba(20, 122, 67, 0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
   },
   modalNumBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(128,128,128,0.2)',
+    backgroundColor: '#E8F2EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalNumBadgeActive: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#147A43',
   },
   modalNumText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#888888',
+    color: '#2D3E36',
   },
   modalNumTextActive: {
     color: '#FFFFFF',
@@ -316,7 +438,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalChapterTextActive: {
-    color: '#22c55e',
+    color: '#147A43',
     fontWeight: '700',
   },
 });

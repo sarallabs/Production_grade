@@ -16,13 +16,13 @@ export default function TabsLayout() {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  // Inverted color scheme exactly matching the user's screenshots:
-  // Light Mode (Screen: #FFF6F1) -> Bottom Bar: Dark Forest Green (#203328), Active: #FFFFFF, Inactive: #9DB4A6
-  // Dark Mode (Screen: #23322B)  -> Bottom Bar: Light Cream (#FFF6F1), Active: #1C2E24, Inactive: #7D8D84
-  const tabBg = isDark ? '#FFF6F1' : '#203328';
-  const tabBorder = isDark ? '#E8DDD5' : '#18271F';
-  const activeTint = isDark ? '#1C2E24' : '#FFFFFF';
-  const inactiveTint = isDark ? '#7D8D84' : '#9DB4A6';
+  // Color scheme matching Figma DevMode CSS (.bottomNavigation):
+  // Light Mode: Background #FFF6F1, Border #D1E3D9, Active #147A43, Inactive #617269
+  // Dark Mode: Background #16231B, Border #2D4538, Active #4ADE80, Inactive #8A9E92
+  const tabBg = isDark ? '#16231B' : '#FFF6F1';
+  const tabBorder = isDark ? '#2D4538' : '#D1E3D9';
+  const activeTint = isDark ? '#4ADE80' : '#147A43';
+  const inactiveTint = isDark ? '#8A9E92' : '#617269';
 
   return (
     <Tabs

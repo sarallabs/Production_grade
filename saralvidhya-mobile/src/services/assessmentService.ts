@@ -7,6 +7,7 @@ export interface AssessmentQuestion {
   id: string;
   question: string;
   isMultipleSelect: boolean;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
   options: string[];
   correctAnswers: number[]; // indices of correct options
   explanation: string;
@@ -16,8 +17,23 @@ export const SAMPLE_ASSESSMENT_QUESTIONS: Record<number, AssessmentQuestion[]> =
   1: [
     {
       id: 'q_1_1',
+      question: 'Which of the following is the anatomical name for the insect foregut?',
+      isMultipleSelect: false,
+      difficulty: 'Easy',
+      options: [
+        'Mesenteron',
+        'Stomodaeum',
+        'Proctodaeum',
+        'Ventriculus',
+      ],
+      correctAnswers: [1],
+      explanation: 'The foregut is embryonically derived from ectodermal invagination and is termed the Stomodaeum.',
+    },
+    {
+      id: 'q_1_2',
       question: 'Which of the following gut regions is endodermal in origin and lacks a chitinous intima?',
       isMultipleSelect: false,
+      difficulty: 'Easy',
       options: [
         'Stomodaeum (Foregut)',
         'Mesenteron (Midgut)',

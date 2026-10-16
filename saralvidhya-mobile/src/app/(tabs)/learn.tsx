@@ -5,49 +5,45 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   Modal,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
-import { useAuth, PersonaType } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
-import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import StudyGuideReader from '@/components/study/StudyGuideReader';
 import ListenScreen, { ListenMode } from '@/components/study/ListenScreen';
-import MarkdownReader from '@/components/study/MarkdownReader';
-import MindmapView from '@/components/study/MindmapView';
-import PodcastsView from '@/components/study/PodcastsView';
 import VideosView from '@/components/study/VideosView';
-import {
-  fetchQuickStudyGuide,
-  fetchDetailedNotes,
-  fetchMindmap,
-  MindmapData,
-} from '@/services/contentService';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
-const LEARN_SEGMENTS: NavSegment[] = [
-  { id: 'learn', label: 'Learn', vectorIcon: 'book-outline' },
-  { id: 'practice', label: 'Practice', vectorIcon: 'headset-outline' },
+interface TopNavSegment {
+  id: 'read' | 'listen' | 'watch';
+  label: string;
+  vectorIcon: keyof typeof Ionicons.glyphMap;
+}
+
+const LEARN_SEGMENTS: TopNavSegment[] = [
+  { id: 'read', label: 'Read', vectorIcon: 'book-outline' },
+  { id: 'listen', label: 'Listen', vectorIcon: 'headset-outline' },
   { id: 'watch', label: 'Watch', vectorIcon: 'play-circle-outline' },
 ];
 
 export default function LearnScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
-  const { persona, updatePersona } = useAuth();
-  const { isTablet, isLandscape } = useDeviceLayout();
+  const { isTablet } = useDeviceLayout();
   const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const activeSubject = ANGRAU_SUBJECTS[0];
 
-  const [activeSegment, setActiveSegment] = useState<string>(
-    params.segment === 'watch' ? 'watch' : params.segment === 'listen' ? 'listen' : 'learn'
+  const [activeSegment, setActiveSegment] = useState<'read' | 'listen' | 'watch'>(
+    params.segment === 'watch' ? 'watch' : params.segment === 'listen' ? 'listen' : 'read'
   );
   const [listenInitialMode, setListenInitialMode] = useState<ListenMode>('detailed');
 
@@ -55,12 +51,6 @@ export default function LearnScreen() {
     params.chapter ? parseInt(params.chapter, 10) : 1
   );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
-  const [readSubMode, setReadSubMode] = useState<'quick' | 'detailed'>('quick');
-
-  const [quickStudyText, setQuickStudyText] = useState<string>('');
-  const [detailedNotesText, setDetailedNotesText] = useState<string>('');
-  const [mindmapData, setMindmapData] = useState<MindmapData | null>(null);
-  const [isLoadingContent, setIsLoadingContent] = useState<boolean>(true);
 
   useEffect(() => {
     if (params.chapter) {
@@ -71,68 +61,76 @@ export default function LearnScreen() {
     }
   }, [params.chapter, selectedChapterNum]);
 
-  useEffect(() => {
-    let isMounted = true;
-    const controller = new AbortController();
-    setIsLoadingContent(true);
-
-    Promise.all([
-      fetchQuickStudyGuide(activeSubject.id, selectedChapterNum, persona, controller.signal),
-      fetchDetailedNotes(activeSubject.id, selectedChapterNum, persona, controller.signal),
-      fetchMindmap(activeSubject.id, selectedChapterNum, controller.signal),
-    ])
-      .then(([quick, detailed, mMap]) => {
-        if (isMounted) {
-          setQuickStudyText(quick);
-          setDetailedNotesText(detailed);
-          setMindmapData(mMap);
-          setIsLoadingContent(false);
-        }
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          console.warn('Learn content loading error:', err);
-        }
-        if (isMounted) setIsLoadingContent(false);
-      });
-
-    return () => {
-      isMounted = false;
-      controller.abort();
-    };
-  }, [selectedChapterNum, persona]);
-
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
 
-  const screenBg = isDark ? '#23322B' : '#FFF6F1';
-  const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
-  const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
-  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
-  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
-  const pillBg = isDark ? '#1C2822' : '#F7EBE3';
+  // DevMode CSS background: #f0f7f3
+  const screenBg = isDark ? '#121E17' : '#F0F7F3';
+  const textColor = isDark ? '#FFFFFF' : '#2D3E36';
+  const subtextColor = isDark ? '#A6C5B3' : '#617269';
+  const toggleBg = isDark ? '#1E2B24' : '#E3EFE8';
+  const activePillBg = isDark ? '#147A43' : '#2D3E36';
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
+      {/* 1. TOP 3-COMPONENT SEGMENT TOGGLE: [ Read | Listen | Watch ] */}
+      <View
+        style={[
+          styles.topSegmentWrap,
+          {
+            backgroundColor: screenBg,
+            paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4),
+          },
+        ]}
+      >
+        <View style={[styles.topSegmentContainer, { backgroundColor: toggleBg }]}>
+          {LEARN_SEGMENTS.map((seg) => {
+            const isActive = activeSegment === seg.id;
+            return (
+              <TouchableOpacity
+                key={seg.id}
+                style={[
+                  styles.segmentPill,
+                  isActive && [styles.segmentPillActive, { backgroundColor: activePillBg }],
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setActiveSegment(seg.id);
+                }}
+                activeOpacity={0.8}
+              >
+                <Ionicons
+                  name={seg.vectorIcon}
+                  size={15}
+                  color={isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
+                />
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
+                    isActive && styles.segmentTextActive,
+                  ]}
+                >
+                  {seg.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* 2. MAIN ACTIVE VIEW */}
       {activeSegment === 'watch' ? (
         <View style={{ flex: 1 }}>
-          <TopNavBar
-            segments={LEARN_SEGMENTS}
-            activeSegment={activeSegment}
-            onSegmentChange={(id) => {
-              if (id === 'practice') {
-                router.push('/(tabs)/practice');
-              } else {
-                setActiveSegment(id);
-              }
-            }}
-            showProfile={true}
-          />
           <VideosView
             subjectId={activeSubject.id}
+            subjectName={activeSubject.name}
             chapterNumber={currentChapter.number}
             chapterName={currentChapter.name}
+            onContinueLearning={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }}
           />
         </View>
       ) : activeSegment === 'listen' ? (
@@ -140,8 +138,8 @@ export default function LearnScreen() {
           chapterNumber={selectedChapterNum}
           chapterTitle={currentChapter.name}
           initialMode={listenInitialMode}
-          onNavigateToRead={() => setActiveSegment('learn')}
-          onBackPress={() => setActiveSegment('learn')}
+          onNavigateToRead={() => setActiveSegment('read')}
+          onBackPress={() => setActiveSegment('read')}
         />
       ) : (
         <StudyGuideReader
@@ -178,7 +176,7 @@ export default function LearnScreen() {
           activeOpacity={1}
           onPress={() => setShowChapterModal(false)}
         >
-          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#23322B' : '#FFF6F1' }]}>
+          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#1C2B23' : '#FEFEFE' }]}>
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: textColor }]}>
                 Select Chapter ({activeSubject.code})
@@ -224,111 +222,45 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  subBar: {
-    flexDirection: 'row',
+  topSegmentWrap: {
+    paddingHorizontal: 24,
+    paddingBottom: 8,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.four,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    gap: 10,
   },
-  chapterPickerBtn: {
+  topSegmentContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: BorderRadius.full,
-    borderWidth: 1,
-    gap: 8,
-    flex: 1,
-  },
-  chNumBadge: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#22c55e',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chNumText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  chapterPickerName: {
-    fontSize: 13,
-    fontWeight: '700',
-    flex: 1,
-  },
-  depthPills: {
-    flexDirection: 'row',
-    borderRadius: BorderRadius.full,
-    padding: 2,
-    gap: 2,
-  },
-  depthPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: BorderRadius.full,
-  },
-  depthPillActive: {
-    backgroundColor: '#22c55e',
-  },
-  depthPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  depthPillTextActive: {
-    color: '#FFFFFF',
-  },
-  workspace: {
-    flex: 1,
-  },
-  workspaceContent: {
-    padding: Spacing.four,
-  },
-  toolCardWrap: {
-    width: '100%',
-  },
-  readToggleWrap: {
-    flexDirection: 'row',
-    borderRadius: BorderRadius.lg,
+    borderRadius: 100,
     padding: 3,
-    marginBottom: 14,
     gap: 4,
+    width: '100%',
+    maxWidth: 400,
   },
-  readSubBtn: {
+  segmentPill: {
     flex: 1,
-    paddingVertical: 8,
+    height: 36,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: BorderRadius.md,
+    borderRadius: 100,
+    gap: 6,
   },
-  readSubBtnActive: {
-    backgroundColor: '#22c55e',
+  segmentPillActive: {
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
-  readSubText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#8A9E92',
-  },
-  readSubTextActive: {
-    color: '#FFFFFF',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 60,
-  },
-  loadingText: {
-    marginTop: 14,
+  segmentText: {
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '500',
+  },
+  segmentTextActive: {
+    fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalSheet: {
@@ -352,22 +284,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(128,128,128,0.15)',
+    borderBottomColor: 'rgba(128,128,128,0.12)',
     gap: 12,
   },
   modalChapterRowActive: {
-    backgroundColor: 'rgba(34,197,94,0.08)',
+    backgroundColor: 'rgba(20, 122, 67, 0.08)',
   },
   modalNumBadge: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: 'rgba(128,128,128,0.2)',
+    backgroundColor: 'rgba(128,128,128,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalNumBadgeActive: {
-    backgroundColor: '#22c55e',
+    backgroundColor: '#147A43',
   },
   modalNumText: {
     fontSize: 12,
@@ -383,7 +315,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   modalChapterTextActive: {
-    color: '#22c55e',
+    color: '#147A43',
     fontWeight: '700',
   },
 });

@@ -1,544 +1,1033 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
+  ScrollView,
+  Image,
   LayoutChangeEvent,
   Platform,
 } from 'react-native';
-import YoutubePlayer, { YoutubeIframeRef } from 'react-native-youtube-iframe';
-import * as Linking from 'expo-linking';
+import YoutubePlayer from 'react-native-youtube-iframe';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/context/ThemeContext';
-import { BorderRadius, Spacing } from '@/constants/theme';
-import {
-  ChapterVideo,
-  fetchChapterVideos,
-  getWatchedVideos,
-  markVideoWatched,
-} from '@/services/contentService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
-const WATCHED_THRESHOLD_PCT = 90;
+// Thumbnail Assets
+const THUMB_01 = require('@/assets/images/video_thumb_01.png');
+const THUMB_02 = require('@/assets/images/video_thumb_02.png');
+const THUMB_03 = require('@/assets/images/video_thumb_03.png');
+const THUMB_04 = require('@/assets/images/video_thumb_04.png');
+const THUMB_HERO = require('@/assets/images/video_lecture_thumbnail.png');
 
-interface VideosViewProps {
-  subjectId: string;
-  chapterNumber: number;
-  chapterName: string;
+interface VideoTopicItem {
+  number: string;
+  title: string;
+  subtitle: string;
 }
 
-export default function VideosView({ subjectId, chapterNumber, chapterName }: VideosViewProps) {
+interface VideoLessonItem {
+  id: string;
+  lessonNumber: string;
+  title: string;
+  topic: string;
+  duration: string;
+  status: string;
+  progressPct: number;
+  filterStatus: 'in_progress' | 'completed' | 'not_started';
+  thumbSource: any;
+  ytId: string;
+  topicsWhatYouLearn: VideoTopicItem[];
+}
+
+const VIDEO_LESSONS_DATA: VideoLessonItem[] = [
+  {
+    id: 'lesson_01',
+    lessonNumber: 'LESSON 01',
+    title: 'Insects Digestive System',
+    topic: 'Foregut, midgut & hindgut',
+    duration: '10:55',
+    status: '60% · Resume',
+    progressPct: 60,
+    filterStatus: 'in_progress',
+    thumbSource: THUMB_01,
+    ytId: 'Ioa25iYy53g',
+    topicsWhatYouLearn: [
+      {
+        number: '01',
+        title: 'Anatomy of the Insect Alimentary Canal',
+        subtitle: 'Foregut, midgut & hindgut',
+      },
+      {
+        number: '02',
+        title: 'Stomodaeal Specializations',
+        subtitle: 'Pharynx, crop & proventriculus',
+      },
+      {
+        number: '03',
+        title: 'Mesenteron Physiology',
+        subtitle: 'Secretory epithelium & peritrophic membrane',
+      },
+    ],
+  },
+  {
+    id: 'lesson_02',
+    lessonNumber: 'LESSON 02',
+    title: 'External Morphology',
+    topic: 'Head, thorax & abdomen',
+    duration: '12:40',
+    status: 'Completed · Watch again',
+    progressPct: 100,
+    filterStatus: 'completed',
+    thumbSource: THUMB_02,
+    ytId: 'UMJFfCFFF4M',
+    topicsWhatYouLearn: [
+      {
+        number: '01',
+        title: 'Tagmosis & Body Segmentation',
+        subtitle: 'Head, thorax & abdomen sclerites',
+      },
+      {
+        number: '02',
+        title: 'Sensory Structures & Appendages',
+        subtitle: 'Antennae, compound eyes & ocelli',
+      },
+      {
+        number: '03',
+        title: 'Locomotory Systems',
+        subtitle: 'Leg modifications & wing venation',
+      },
+    ],
+  },
+  {
+    id: 'lesson_03',
+    lessonNumber: 'LESSON 03',
+    title: 'Insect Metamorphosis',
+    topic: 'From egg to adult',
+    duration: '08:25',
+    status: 'Not started',
+    progressPct: 0,
+    filterStatus: 'not_started',
+    thumbSource: THUMB_03,
+    ytId: 'elWWuKv5b9Q',
+    topicsWhatYouLearn: [
+      {
+        number: '01',
+        title: 'Ametabolous & Hemimetabolous Development',
+        subtitle: 'Simple versus incomplete metamorphosis',
+      },
+      {
+        number: '02',
+        title: 'Holometabolous Life Cycles',
+        subtitle: 'Larval, pupal & imaginal stages',
+      },
+      {
+        number: '03',
+        title: 'Hormonal Control of Ecdysis',
+        subtitle: 'Ecdysone & Juvenile Hormone pathways',
+      },
+    ],
+  },
+  {
+    id: 'lesson_04',
+    lessonNumber: 'LESSON 04',
+    title: 'Insect Mouthparts',
+    topic: 'Biting, chewing & sucking',
+    duration: '09:30',
+    status: 'Not started',
+    progressPct: 0,
+    filterStatus: 'not_started',
+    thumbSource: THUMB_04,
+    ytId: 'Ioa25iYy53g',
+    topicsWhatYouLearn: [
+      {
+        number: '01',
+        title: 'Mandibulate (Chewing) Apparatus',
+        subtitle: 'Labrum, mandibles, maxillae & labium',
+      },
+      {
+        number: '02',
+        title: 'Haustellate (Piercing-Sucking) Types',
+        subtitle: 'Stylet fascicle & salivary pumps in Hemiptera',
+      },
+      {
+        number: '03',
+        title: 'Siphoning & Sponging Adaptations',
+        subtitle: 'Proboscis galeae & labellar pseudotracheae',
+      },
+    ],
+  },
+];
+
+type FilterType = 'all' | 'in_progress' | 'completed';
+
+interface VideosViewProps {
+  subjectId?: string;
+  subjectName?: string;
+  chapterNumber?: number;
+  chapterName?: string;
+  onContinueLearning?: () => void;
+}
+
+export default function VideosView({
+  subjectName = 'ENTOMOLOGY',
+  chapterNumber = 1,
+  onContinueLearning,
+}: VideosViewProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const playerRef = useRef<YoutubeIframeRef>(null);
-  const progressTimer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const [videos, setVideos] = useState<ChapterVideo[]>([]);
-  const [isLoadingList, setIsLoadingList] = useState(true);
-  const [activeIdx, setActiveIdx] = useState(0);
-  const [playing, setPlaying] = useState(false);
-  const [playerReady, setPlayerReady] = useState(false);
-  const [playerError, setPlayerError] = useState<string | null>(null);
-  const [progressPct, setProgressPct] = useState(0);
-  const [watched, setWatched] = useState<string[]>([]);
+  // Mode: null = Multi-Video Library List; string = Single Lesson Player/Details
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const currentVideo = videos[activeIdx] ?? videos[0];
-  const playerHeight = Math.round((containerWidth * 9) / 16);
+  // Selected Lesson Item (defaults to Lesson 01)
+  const currentLesson =
+    VIDEO_LESSONS_DATA.find((l) => l.id === selectedLessonId) || VIDEO_LESSONS_DATA[0];
 
-  // Colors
-  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
-  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
-  const itemBg = isDark ? '#1E2B24' : '#F7F1EC';
-  const itemBorder = isDark ? '#3D5449' : '#E5DDD8';
-
-  // Load video list + watched state when chapter changes
-  useEffect(() => {
-    let mounted = true;
-    const controller = new AbortController();
-    setIsLoadingList(true);
-    setActiveIdx(0);
-    setPlaying(false);
-    setPlayerReady(false);
-    setPlayerError(null);
-    setProgressPct(0);
-
-    Promise.all([
-      fetchChapterVideos(subjectId, chapterNumber, controller.signal),
-      getWatchedVideos(subjectId, chapterNumber),
-    ])
-      .then(([list, w]) => {
-        if (!mounted) return;
-        setVideos(list);
-        setWatched(w);
-      })
-      .catch((err) => {
-        if (!controller.signal.aborted) {
-          console.warn('Videos loading error:', err);
-        }
-      })
-      .finally(() => mounted && setIsLoadingList(false));
-
-    return () => {
-      mounted = false;
-      controller.abort();
-    };
-  }, [subjectId, chapterNumber]);
-
-  const stopProgressTimer = useCallback(() => {
-    if (progressTimer.current) {
-      clearInterval(progressTimer.current);
-      progressTimer.current = null;
-    }
-  }, []);
-
-  // Stop timers on unmount (player itself unmounts and stops audio)
-  useEffect(() => stopProgressTimer, [stopProgressTimer]);
-
-  const handleWatched = useCallback(
-    async (ytId: string) => {
-      const next = await markVideoWatched(subjectId, chapterNumber, ytId);
-      setWatched(next);
-    },
-    [subjectId, chapterNumber]
-  );
-
-  const startProgressTimer = useCallback(() => {
-    stopProgressTimer();
-    progressTimer.current = setInterval(async () => {
-      try {
-        const [cur, dur] = await Promise.all([
-          playerRef.current?.getCurrentTime(),
-          playerRef.current?.getDuration(),
-        ]);
-        if (cur != null && dur && dur > 0) {
-          const pct = (cur / dur) * 100;
-          setProgressPct(pct);
-          if (pct >= WATCHED_THRESHOLD_PCT && currentVideo) {
-            handleWatched(currentVideo.ytId);
-          }
-        }
-      } catch {
-        // player not ready yet
-      }
-    }, 1000);
-  }, [currentVideo, handleWatched, stopProgressTimer]);
-
-  const onChangeState = useCallback(
-    (state: string) => {
-      if (state === 'playing') {
-        setPlaying(true);
-        startProgressTimer();
-      } else if (state === 'paused') {
-        setPlaying(false);
-        stopProgressTimer();
-      } else if (state === 'ended') {
-        setPlaying(false);
-        stopProgressTimer();
-        setProgressPct(100);
-        if (currentVideo) handleWatched(currentVideo.ytId);
-      }
-    },
-    [currentVideo, handleWatched, startProgressTimer, stopProgressTimer]
-  );
-
-  const selectVideo = (idx: number) => {
-    if (idx === activeIdx) return;
-    Haptics.selectionAsync();
-    stopProgressTimer();
-    setActiveIdx(idx);
-    setPlaying(false);
-    setPlayerReady(false);
-    setPlayerError(null);
-    setProgressPct(0);
-  };
-
-  const openInYouTube = () => {
-    if (currentVideo) Linking.openURL(`https://www.youtube.com/watch?v=${currentVideo.ytId}`);
-  };
+  // Filtering for library list
+  const filteredLessons = VIDEO_LESSONS_DATA.filter((lesson) => {
+    if (filter === 'all') return true;
+    return lesson.filterStatus === filter;
+  });
 
   const onLayout = (e: LayoutChangeEvent) => {
     const w = Math.floor(e.nativeEvent.layout.width);
-    if (w > 0 && w !== containerWidth) setContainerWidth(w);
+    if (w > 0 && w !== containerWidth) {
+      setContainerWidth(w);
+    }
   };
 
-  if (isLoadingList) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#22c55e" />
-        <Text style={[styles.loadingText, { color: subtextColor }]}>Loading video lectures...</Text>
-      </View>
-    );
-  }
+  const handleSelectLesson = (lessonId: string) => {
+    Haptics.selectionAsync();
+    setSelectedLessonId(lessonId);
+    setIsPlayingVideo(false);
+  };
 
-  if (!currentVideo) {
-    return (
-      <View style={styles.centered}>
-        <Ionicons name="videocam-off-outline" size={40} color={subtextColor} />
-        <Text style={[styles.loadingText, { color: subtextColor }]}>
-          No videos available for this chapter yet.
-        </Text>
-      </View>
-    );
-  }
+  const handleBackToLibrary = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setSelectedLessonId(null);
+    setIsPlayingVideo(false);
+  };
+
+  // Color Tokens from Figma DevMode
+  // Background: #f1f6f2
+  // Brand color: #265945
+  // Card bg: #fefefe / #ffffff
+  // Active card border: #8dae9b, Inactive card border: #e0e3d9
+  // Text dark: #1a2924, Text muted: #596b66
+  // Progress fill: #4f7b64, Progress track: #dce7de
+  const bg = isDark ? '#121E17' : '#F1F6F2';
+  const cardBg = isDark ? '#1C2B23' : '#FEFEFE';
+  const cardBorder = isDark ? '#2D4538' : '#E0E3D9';
+  const activeCardBorder = isDark ? '#4ADE80' : '#8DAE9B';
+  const brandGreen = isDark ? '#4ADE80' : '#265945';
+  const textDark = isDark ? '#FFFFFF' : '#1A2924';
+  const textMuted = isDark ? '#A6C5B3' : '#596B66';
+  const progressBg = isDark ? '#263B30' : '#DCE7DE';
+  const progressFill = isDark ? '#4ADE80' : '#4F7B64';
+  const iconTileBg = isDark ? 'rgba(38, 89, 69, 0.25)' : '#E8F0E8';
+
+  const playerHeight = Math.round((containerWidth * 9) / 16) || 206;
 
   return (
-    <View onLayout={onLayout} style={[styles.container, isTablet && { width: '100%', maxWidth: 820, alignSelf: 'center' }]}>
-      {/* Player */}
-      <View
-        style={[
-          styles.playerWrap,
-          Platform.OS === 'web' ? { aspectRatio: 16 / 9 } : { height: playerHeight || 200 },
-        ]}
+    <View style={[styles.container, { backgroundColor: bg }]}>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
+        showsVerticalScrollIndicator={false}
       >
-        {!playerError && Platform.OS === 'web' && (
-          React.createElement('iframe', {
-            key: currentVideo.ytId,
-            src: `https://www.youtube.com/embed/${currentVideo.ytId}?rel=0&modestbranding=1`,
-            width: '100%',
-            height: '100%',
-            style: { border: 0, display: 'block' },
-            allow: 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
-            allowFullScreen: true,
-            title: currentVideo.title,
-            onLoad: () => setPlayerReady(true),
-          })
-        )}
-        {containerWidth > 0 && !playerError && Platform.OS !== 'web' && (
-          <YoutubePlayer
-            key={currentVideo.ytId}
-            ref={playerRef}
-            height={playerHeight}
-            width={containerWidth}
-            videoId={currentVideo.ytId}
-            play={playing}
-            onReady={() => setPlayerReady(true)}
-            onChangeState={onChangeState}
-            onError={(e: string) => {
-              console.warn('[VideosView] player error:', e);
-              setPlayerError(e);
-            }}
-            initialPlayerParams={{ rel: false, modestbranding: true, preventFullScreen: false }}
-            webViewProps={{
-              allowsInlineMediaPlayback: true,
-              mediaPlaybackRequiresUserAction: false,
-            }}
-          />
-        )}
-
-        {!playerReady && !playerError && (
-          <View style={styles.playerOverlay} pointerEvents="none">
-            <ActivityIndicator size="large" color="#22c55e" />
-          </View>
-        )}
-
-        {playerError && (
-          <View style={styles.playerOverlay}>
-            <Ionicons name="alert-circle-outline" size={36} color="#fca5a5" />
-            <Text style={styles.errorText}>
-              This video couldn't load in the app{playerError ? ` (${playerError})` : ''}.
-            </Text>
-            <TouchableOpacity style={styles.ytButton} onPress={openInYouTube} activeOpacity={0.85}>
-              <Ionicons name="logo-youtube" size={18} color="#ffffff" />
-              <Text style={styles.ytButtonText}>Open in YouTube</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
-
-      {/* Progress bar */}
-      <View style={[styles.progressTrack, { backgroundColor: itemBorder }]}>
-        <View style={[styles.progressFill, { width: `${Math.min(100, progressPct)}%` }]} />
-      </View>
-
-      {/* Title + actions */}
-      <View style={styles.titleRow}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.videoTitle, { color: textColor }]}>{currentVideo.title}</Text>
-          <Text style={[styles.videoMeta, { color: subtextColor }]}>
-            {chapterName}
-            {currentVideo.duration ? ` • ${currentVideo.duration}` : ''}
-          </Text>
-        </View>
-        {watched.includes(currentVideo.ytId) && (
-          <View style={styles.watchedBadge}>
-            <Ionicons name="checkmark-circle" size={14} color="#ffffff" />
-            <Text style={styles.watchedBadgeText}>Watched</Text>
-          </View>
-        )}
-      </View>
-
-      <View style={styles.actionRow}>
-        {Platform.OS !== 'web' && (
-        <TouchableOpacity
-          style={styles.playButton}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setPlaying((p) => !p);
-          }}
-          activeOpacity={0.85}
-          disabled={!playerReady}
-        >
-          <Ionicons name={playing ? 'pause' : 'play'} size={18} color="#ffffff" />
-          <Text style={styles.playButtonText}>{playing ? 'Pause' : 'Play'}</Text>
-        </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={[styles.secondaryButton, { borderColor: itemBorder }]}
-          onPress={openInYouTube}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="logo-youtube" size={18} color="#ef4444" />
-          <Text style={[styles.secondaryButtonText, { color: textColor }]}>YouTube</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Topics */}
-      {currentVideo.topics && currentVideo.topics.length > 0 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: textColor }]}>Topics covered</Text>
-          {currentVideo.topics.map((t, i) => (
-            <View key={i} style={styles.topicRow}>
-              <View style={styles.topicDot} />
-              <Text style={[styles.topicText, { color: subtextColor }]}>{t}</Text>
+        {/* ========================================================================= */}
+        {/* VIEW 1: MULTI-VIDEO LESSONS LIBRARY (EntomologyVideoLessonsMobile)        */}
+        {/* ========================================================================= */}
+        {selectedLessonId === null ? (
+          <>
+            {/* 1. BRAND HEADER (.brandHeader) */}
+            <View style={styles.brandHeader}>
+              <View style={[styles.brandMark, { backgroundColor: '#265945' }]}>
+                <Text style={styles.brandMarkLetter}>S</Text>
+              </View>
+              <View style={styles.brandIdentity}>
+                <Text style={[styles.brandName, { color: brandGreen }]}>Saral Vidhya</Text>
+                <Text style={[styles.section, { color: textMuted }]}>
+                  {`${subjectName.toUpperCase()}  /  VIDEO LESSONS`}
+                </Text>
+              </View>
             </View>
-          ))}
-        </View>
-      )}
 
-      {/* Playlist */}
-      {videos.length > 1 && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: textColor }]}>
-            Chapter videos ({videos.length})
-          </Text>
-          {videos.map((v, i) => {
-            const isActive = i === activeIdx;
-            const isWatched = watched.includes(v.ytId);
-            return (
+            {/* 2. INTRODUCTION / PAGE TITLE (.introduction, .pageTitle) */}
+            <View style={styles.introduction}>
+              <Text style={[styles.pageTitle, { color: textDark }]}>
+                {`${subjectName.charAt(0) + subjectName.slice(1).toLowerCase()} video lessons`}
+              </Text>
+            </View>
+
+            {/* 3. LEARNING PROGRESS CARD (.learningProgress) */}
+            <View style={[styles.learningProgress, { backgroundColor: isDark ? '#1C2B23' : '#E8F0E8' }]}>
+              <View style={styles.progressSummary}>
+                <Text style={[styles.completionCount, { color: brandGreen }]}>
+                  1 of 4 lessons completed
+                </Text>
+                <Text style={[styles.progressPctText, { color: brandGreen }]}>40%</Text>
+              </View>
+              <View style={[styles.courseProgressTrack, { backgroundColor: progressBg }]}>
+                <View style={[styles.courseProgressFill, { backgroundColor: progressFill, width: '40%' }]} />
+              </View>
+            </View>
+
+            {/* 4. LESSON FILTERS (.lessonFilters) */}
+            <View style={styles.lessonFilters}>
+              {/* All videos */}
               <TouchableOpacity
-                key={v.ytId}
-                onPress={() => selectVideo(i)}
-                activeOpacity={0.8}
                 style={[
-                  styles.playlistItem,
-                  {
-                    backgroundColor: itemBg,
-                    borderColor: isActive ? '#22c55e' : itemBorder,
-                  },
+                  styles.filterPill,
+                  filter === 'all'
+                    ? { backgroundColor: '#265945', borderColor: '#265945' }
+                    : { backgroundColor: cardBg, borderColor: cardBorder },
                 ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setFilter('all');
+                }}
+                activeOpacity={0.8}
               >
-                <View style={[styles.playlistNum, isActive && styles.playlistNumActive]}>
-                  {isWatched ? (
-                    <Ionicons name="checkmark" size={14} color="#ffffff" />
-                  ) : (
-                    <Text style={styles.playlistNumText}>{i + 1}</Text>
-                  )}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text
-                    style={[styles.playlistTitle, { color: isActive ? '#22c55e' : textColor }]}
-                    numberOfLines={2}
-                  >
-                    {v.title}
-                  </Text>
-                  {v.duration && (
-                    <Text style={[styles.playlistMeta, { color: subtextColor }]}>{v.duration}</Text>
-                  )}
-                </View>
-                <Ionicons
-                  name={isActive && playing ? 'volume-high' : 'play-circle-outline'}
-                  size={22}
-                  color={isActive ? '#22c55e' : subtextColor}
-                />
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    { color: filter === 'all' ? '#FFFFFF' : textMuted, fontWeight: filter === 'all' ? '600' : '500' },
+                  ]}
+                >
+                  All videos (4)
+                </Text>
               </TouchableOpacity>
-            );
-          })}
-        </View>
-      )}
+
+              {/* In progress */}
+              <TouchableOpacity
+                style={[
+                  styles.filterPill,
+                  filter === 'in_progress'
+                    ? { backgroundColor: '#265945', borderColor: '#265945' }
+                    : { backgroundColor: cardBg, borderColor: cardBorder },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setFilter('in_progress');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    {
+                      color: filter === 'in_progress' ? '#FFFFFF' : textMuted,
+                      fontWeight: filter === 'in_progress' ? '600' : '500',
+                    },
+                  ]}
+                >
+                  In progress (1)
+                </Text>
+              </TouchableOpacity>
+
+              {/* Completed */}
+              <TouchableOpacity
+                style={[
+                  styles.filterPill,
+                  filter === 'completed'
+                    ? { backgroundColor: '#265945', borderColor: '#265945' }
+                    : { backgroundColor: cardBg, borderColor: cardBorder },
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setFilter('completed');
+                }}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.filterPillText,
+                    {
+                      color: filter === 'completed' ? '#FFFFFF' : textMuted,
+                      fontWeight: filter === 'completed' ? '600' : '500',
+                    },
+                  ]}
+                >
+                  Completed (1)
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 5. LESSON LIST HEADING (.lessonListHeading) */}
+            <View style={styles.lessonListHeading}>
+              <Text style={[styles.listHeadingText, { color: brandGreen }]}>YOUR VIDEO LESSONS</Text>
+              <Text style={[styles.totalDuration, { color: textMuted }]}>4 videos · 41 min</Text>
+            </View>
+
+            {/* 6. VIDEO LESSONS LIST (.videoLessons) */}
+            <View style={styles.videoLessonsList}>
+              {filteredLessons.map((item) => {
+                const isInProgress = item.filterStatus === 'in_progress';
+                return (
+                  <TouchableOpacity
+                    key={item.id}
+                    style={[
+                      styles.videoLessonCard,
+                      {
+                        backgroundColor: cardBg,
+                        borderColor: isInProgress ? activeCardBorder : cardBorder,
+                      },
+                    ]}
+                    onPress={() => handleSelectLesson(item.id)}
+                    activeOpacity={0.88}
+                  >
+                    {/* Thumbnail (.videoThumbnail) */}
+                    <View style={styles.videoThumbnail}>
+                      <Image source={item.thumbSource} style={styles.lessonImageIcon} resizeMode="cover" />
+                      <View style={styles.playLessonBtn}>
+                        <Ionicons name="play" size={11} color="#265945" style={{ marginLeft: 2 }} />
+                      </View>
+                      <View style={styles.durationBadge}>
+                        <Text style={styles.durationBadgeText}>{item.duration}</Text>
+                      </View>
+                    </View>
+
+                    {/* Lesson Details (.lessonDetails) */}
+                    <View style={styles.lessonDetails}>
+                      <Text style={[styles.lessonNumber, { color: textMuted }]}>
+                        {item.lessonNumber}
+                      </Text>
+                      <Text style={[styles.lessonTitleText, { color: textDark }]} numberOfLines={1}>
+                        {item.title}
+                      </Text>
+                      <Text style={[styles.lessonTopicText, { color: textMuted }]} numberOfLines={1}>
+                        {item.topic}
+                      </Text>
+
+                      {/* Watch Progress (.watchProgress) */}
+                      <View style={styles.watchProgress}>
+                        <Text
+                          style={[
+                            styles.progressStatusText,
+                            {
+                              color: item.filterStatus === 'not_started' ? textMuted : brandGreen,
+                              fontWeight: item.filterStatus === 'not_started' ? '400' : '600',
+                            },
+                          ]}
+                        >
+                          {item.status}
+                        </Text>
+                        <View style={[styles.progressTrack, { backgroundColor: progressBg }]}>
+                          <View
+                            style={[
+                              styles.progressFill,
+                              {
+                                backgroundColor: progressFill,
+                                width: `${item.progressPct}%`,
+                              },
+                            ]}
+                          />
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* 7. SAVED PROGRESS NOTE (.savedProgressNote) */}
+            <View style={styles.savedProgressNote}>
+              <Ionicons name="checkmark-circle-outline" size={14} color={textMuted} />
+              <Text style={[styles.savedProgressText, { color: textMuted }]}>
+                Your lesson progress is saved automatically.
+              </Text>
+            </View>
+          </>
+        ) : (
+          /* ========================================================================= */
+          /* VIEW 2: DEDICATED SINGLE LESSON PLAYER (EntomologyVideoLessonMobile412918) */
+          /* ========================================================================= */
+          <>
+            {/* 1. BRAND HEADER WITH BACK BUTTON */}
+            <View style={styles.brandHeader}>
+              <TouchableOpacity
+                style={[styles.backToLibraryBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                onPress={handleBackToLibrary}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-back" size={18} color={textDark} />
+              </TouchableOpacity>
+              <View style={[styles.brandMark, { backgroundColor: '#265945' }]}>
+                <Text style={styles.brandMarkLetter}>S</Text>
+              </View>
+              <View style={styles.brandIdentity}>
+                <Text style={[styles.brandName, { color: brandGreen }]}>Saral Vidhya</Text>
+                <Text style={[styles.section, { color: textMuted }]}>
+                  {`${subjectName.toUpperCase()}  /  VIDEO LESSON`}
+                </Text>
+              </View>
+            </View>
+
+            {/* 2. VIDEO THUMBNAIL / PLAYER CARD (.image103Parent) */}
+            <View onLayout={onLayout} style={[styles.heroVideoCard, { borderColor: cardBorder }]}>
+              {isPlayingVideo ? (
+                /* Live YouTube Player */
+                <View style={[styles.playerWrap, { height: playerHeight }]}>
+                  {Platform.OS === 'web' ? (
+                    React.createElement('iframe', {
+                      key: currentLesson.ytId,
+                      src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&rel=0&modestbranding=1`,
+                      width: '100%',
+                      height: '100%',
+                      style: { border: 0, display: 'block' },
+                      allow:
+                        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
+                      allowFullScreen: true,
+                      title: currentLesson.title,
+                    })
+                  ) : (
+                    <YoutubePlayer
+                      height={playerHeight}
+                      width={containerWidth || 366}
+                      videoId={currentLesson.ytId}
+                      play={true}
+                      initialPlayerParams={{ rel: false, modestbranding: true }}
+                    />
+                  )}
+                </View>
+              ) : (
+                /* Interactive Lecture Video Poster */
+                <TouchableOpacity
+                  style={styles.heroPosterTouch}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setIsPlayingVideo(true);
+                  }}
+                  activeOpacity={0.92}
+                >
+                  <Image source={THUMB_HERO} style={styles.heroPosterImage} resizeMode="cover" />
+                  <View style={styles.heroPosterOverlay} />
+                  <View style={styles.heroPlayCircle}>
+                    <Ionicons name="play" size={20} color="#265945" style={{ marginLeft: 3 }} />
+                  </View>
+                  <View style={styles.heroMinBadge}>
+                    <Text style={styles.heroMinText}>{`${currentLesson.duration} min`}</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* 3. LESSON TITLE & SUBTITLE */}
+            <View style={styles.lessonTitleSection}>
+              <Text style={[styles.heroLessonTitle, { color: textDark }]}>{currentLesson.title}</Text>
+              <Text style={[styles.heroLessonSubtitle, { color: textMuted }]}>
+                Video lecture · Chapter {chapterNumber}
+              </Text>
+
+              {/* Meta Pills */}
+              <View style={styles.metaPillsRow}>
+                <View style={[styles.metaPill, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                  <Ionicons name="time-outline" size={13} color={textMuted} />
+                  <Text style={[styles.metaPillText, { color: textDark }]}>
+                    {`${currentLesson.duration} min`}
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.metaPill,
+                    { backgroundColor: cardBg, borderColor: isSaved ? '#265945' : cardBorder },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setIsSaved((s) => !s);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={isSaved ? 'star' : 'star-outline'}
+                    size={13}
+                    color={isSaved ? '#EAB308' : textMuted}
+                  />
+                  <Text style={[styles.metaPillText, { color: isSaved ? '#265945' : textDark }]}>
+                    {isSaved ? 'Saved' : 'Save'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* 4. WHAT YOU'LL LEARN HEADING */}
+            <View style={styles.topicsHeadingParent}>
+              <Text style={[styles.topicsHeading, { color: brandGreen }]}>WHAT YOU’LL LEARN</Text>
+              <Text style={[styles.topicsCount, { color: textMuted }]}>
+                {`${currentLesson.topicsWhatYouLearn.length} TOPICS`}
+              </Text>
+            </View>
+
+            {/* 5. TOPIC CARDS (01, 02, 03) */}
+            <View style={styles.topicCardsList}>
+              {currentLesson.topicsWhatYouLearn.map((topic) => (
+                <View
+                  key={topic.number}
+                  style={[styles.topicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                >
+                  <View style={[styles.topicIconTile, { backgroundColor: iconTileBg }]}>
+                    <Ionicons name="pencil" size={16} color={brandGreen} />
+                  </View>
+                  <View style={styles.topicInfoWrap}>
+                    <Text style={[styles.topicTitle, { color: textDark }]} numberOfLines={2}>
+                      {topic.title}
+                    </Text>
+                    <Text style={[styles.topicSubtitle, { color: textMuted }]} numberOfLines={2}>
+                      {topic.subtitle}
+                    </Text>
+                  </View>
+                  <Text style={[styles.topicNumber, { color: brandGreen }]}>{topic.number}</Text>
+                </View>
+              ))}
+            </View>
+
+            {/* 6. CONTINUE LEARNING BUTTON */}
+            <TouchableOpacity
+              style={[styles.continueButton, { backgroundColor: '#265945' }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                setIsPlayingVideo(true);
+                onContinueLearning?.();
+              }}
+              activeOpacity={0.88}
+            >
+              <Text style={styles.continueButtonText}>Continue learning  →</Text>
+            </TouchableOpacity>
+
+            <Text style={[styles.lessonNote, { color: textMuted }]}>
+              Your lesson progress is saved automatically.
+            </Text>
+          </>
+        )}
+
+        <View style={{ height: 60 }} />
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 40,
+  },
+  tabletContent: {
+    maxWidth: 680,
+    alignSelf: 'center',
     width: '100%',
   },
-  centered: {
-    paddingVertical: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  loadingText: {
-    fontSize: 13,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  playerWrap: {
-    width: '100%',
-    borderRadius: BorderRadius.md,
-    overflow: 'hidden',
-    backgroundColor: '#000000',
-  },
-  playerOverlay: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000cc',
-    padding: Spacing.three,
-    gap: 10,
-  },
-  errorText: {
-    color: '#f1f5f9',
-    fontSize: 13,
-    textAlign: 'center',
-  },
-  ytButton: {
+  /* 1. Brand Header (.brandHeader) */
+  brandHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: BorderRadius.full,
+    marginBottom: 14,
+    paddingHorizontal: 2,
+    gap: 10,
   },
-  ytButtonText: {
-    color: '#ffffff',
+  backToLibraryBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandMark: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandMarkLetter: {
+    color: '#FFFFFF',
+    fontSize: 19,
     fontWeight: '700',
+  },
+  brandIdentity: {
+    flex: 1,
+    gap: 2,
+  },
+  brandName: {
+    fontSize: 18,
+    fontWeight: '700',
+    lineHeight: 22,
+  },
+  section: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  /* 2. Introduction / Page Title (.introduction, .pageTitle) */
+  introduction: {
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  pageTitle: {
+    fontSize: 23,
+    fontWeight: '700',
+    letterSpacing: -0.4,
+    lineHeight: 28,
+  },
+  /* 3. Learning Progress Card (.learningProgress) */
+  learningProgress: {
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 9,
+    marginBottom: 14,
+  },
+  progressSummary: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  completionCount: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  progressPctText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  courseProgressTrack: {
+    height: 5,
+    borderRadius: 4,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  courseProgressFill: {
+    height: 5,
+    borderRadius: 4,
+  },
+  /* 4. Lesson Filters (.lessonFilters) */
+  lessonFilters: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  filterPill: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  filterPillText: {
+    fontSize: 11,
+  },
+  /* 5. Lesson List Heading (.lessonListHeading) */
+  lessonListHeading: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  listHeadingText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  totalDuration: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  /* 6. Video Lessons List (.videoLessons) */
+  videoLessonsList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  videoLessonCard: {
+    minHeight: 112,
+    borderRadius: 13,
+    borderWidth: 1,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+  },
+  videoThumbnail: {
+    width: 124,
+    height: 86,
+    borderRadius: 8,
+    overflow: 'hidden',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000000',
+  },
+  lessonImageIcon: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
+  playLessonBtn: {
+    width: 25,
+    height: 25,
+    borderRadius: 12.5,
+    backgroundColor: 'rgba(255, 255, 255, 0.93)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  durationBadge: {
+    position: 'absolute',
+    bottom: 5,
+    right: 5,
+    borderRadius: 4,
+    backgroundColor: 'rgba(23, 42, 35, 0.85)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    zIndex: 2,
+  },
+  durationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  lessonDetails: {
+    flex: 1,
+    gap: 3,
+  },
+  lessonNumber: {
+    fontSize: 9,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  lessonTitleText: {
     fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 17,
+  },
+  lessonTopicText: {
+    fontSize: 11,
+    lineHeight: 14,
+  },
+  watchProgress: {
+    marginTop: 4,
+    gap: 4,
+  },
+  progressStatusText: {
+    fontSize: 9.5,
   },
   progressTrack: {
-    height: 4,
-    borderRadius: 2,
-    marginTop: 8,
+    height: 3,
+    borderRadius: 3,
+    width: '100%',
     overflow: 'hidden',
   },
   progressFill: {
-    height: '100%',
-    backgroundColor: '#22c55e',
+    height: 3,
+    borderRadius: 3,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: Spacing.three,
-    gap: 8,
-  },
-  videoTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  videoMeta: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  watchedBadge: {
+  /* 7. Saved Progress Note (.savedProgressNote) */
+  savedProgressNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#16a34a',
-    borderRadius: BorderRadius.full,
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  savedProgressText: {
+    fontSize: 11,
+  },
+
+  /* ========================================================================= */
+  /* DETAIL / PLAYER VIEW STYLES                                               */
+  /* ========================================================================= */
+  heroVideoCard: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    backgroundColor: '#000000',
+    marginBottom: 16,
+  },
+  playerWrap: {
+    width: '100%',
+    overflow: 'hidden',
+  },
+  heroPosterTouch: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroPosterImage: {
+    width: '100%',
+    height: '100%',
+  },
+  heroPosterOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  },
+  heroPlayCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  heroMinBadge: {
+    position: 'absolute',
+    bottom: 10,
+    right: 10,
+    borderRadius: 6,
+    backgroundColor: 'rgba(7, 7, 7, 0.6)',
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  watchedBadgeText: {
-    color: '#ffffff',
+  heroMinText: {
+    color: '#FFFFFF',
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  lessonTitleSection: {
+    marginBottom: 16,
+    paddingHorizontal: 2,
+  },
+  heroLessonTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    lineHeight: 26,
+  },
+  heroLessonSubtitle: {
     fontSize: 11,
-    fontWeight: '700',
+    marginTop: 3,
   },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: Spacing.three,
-  },
-  playButton: {
-    flex: 1,
+  metaPillsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#16a34a',
-    paddingVertical: 10,
-    borderRadius: BorderRadius.full,
-  },
-  playButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  secondaryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: BorderRadius.full,
-  },
-  secondaryButtonText: {
-    fontWeight: '700',
-    fontSize: 14,
-  },
-  section: {
-    marginTop: Spacing.four,
     gap: 8,
+    marginTop: 10,
   },
-  sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  topicRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-  },
-  topicDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#22c55e',
-    marginTop: 7,
-  },
-  topicText: {
-    flex: 1,
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  playlistItem: {
+  metaPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    padding: 10,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4.5,
+    borderRadius: 16,
     borderWidth: 1,
-    borderRadius: BorderRadius.md,
   },
-  playlistNum: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#557A65',
+  metaPillText: {
+    fontSize: 10.5,
+    fontWeight: '500',
+  },
+  topicsHeadingParent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 2,
   },
-  playlistNumActive: {
-    backgroundColor: '#22c55e',
-  },
-  playlistNumText: {
-    color: '#ffffff',
+  topicsHeading: {
     fontSize: 12,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  playlistTitle: {
-    fontSize: 13,
+  topicsCount: {
+    fontSize: 10,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+  },
+  topicCardsList: {
+    gap: 10,
+    marginBottom: 20,
+  },
+  topicCard: {
+    minHeight: 88,
+    borderRadius: 13,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+  },
+  topicIconTile: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topicInfoWrap: {
+    flex: 1,
+    gap: 3,
+  },
+  topicTitle: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  topicSubtitle: {
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  topicNumber: {
+    fontSize: 11,
+    fontWeight: '700',
+    alignSelf: 'flex-end',
+    marginBottom: 2,
+  },
+  continueButton: {
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '700',
   },
-  playlistMeta: {
+  lessonNote: {
     fontSize: 11,
-    marginTop: 2,
+    textAlign: 'center',
+    marginTop: 10,
+    paddingHorizontal: 10,
   },
 });

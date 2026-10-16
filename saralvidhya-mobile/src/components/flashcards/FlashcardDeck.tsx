@@ -19,26 +19,74 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useAuth, PersonaType } from '@/context/AuthContext';
 import { Flashcard } from '@/data/sampleFlashcards';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
-const { width, height } = Dimensions.get('window');
+const EXCRETORY_INFOGRAPHIC = require('@/assets/images/excretory_loop_infographic.png');
+
+// Persona Book Icons uploaded by user:
+// 1 Book: Beginner (Foundations)
+// 2 Books: Intermediate (Standard Syllabus)
+// 3 Books with Star: Advanced (Exam Mastery)
+const PERSONA_ICONS: Record<PersonaType, any> = {
+  beginner: require('@/assets/images/personas/persona_beginner.png'),
+  intermediate: require('@/assets/images/personas/persona_intermediate.png'),
+  advanced: require('@/assets/images/personas/persona_advanced.png'),
+};
+
+const PERSONA_CONFIG: Array<{
+  id: PersonaType;
+  label: string;
+  badge: string;
+  description: string;
+}> = [
+  { id: 'beginner', label: 'Beginner', badge: '1 Book', description: 'Core Foundations' },
+  { id: 'intermediate', label: 'Intermediate', badge: '2 Books', description: 'Standard Syllabus' },
+  { id: 'advanced', label: 'Advanced', badge: '3 Books ⭐', description: 'Exam Mastery' },
+];
+
+// Exact 6-stop linear gradient from Figma DevMode CSS:
+// linear-gradient(131.64deg, #fff4ee, #e4e6dd 27.4%, #c9d8cd 49.52%, #94bcac 75%, #83ae9d 89.91%, #7aa694)
+const CARD_GRADIENT_COLORS = [
+  '#fff4ee',
+  '#e4e6dd',
+  '#c9d8cd',
+  '#94bcac',
+  '#83ae9d',
+  '#7aa694',
+] as const;
+const CARD_GRADIENT_LOCATIONS = [0, 0.274, 0.4952, 0.75, 0.8991, 1] as const;
+
+const { width } = Dimensions.get('window');
 
 interface FlashcardDeckProps {
   cards: Flashcard[];
   chapterNumber: number;
+  persona?: PersonaType;
+  onPersonaChange?: (newPersona: PersonaType) => void;
 }
 
-export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckProps) {
+export default function FlashcardDeck({
+  cards,
+  chapterNumber,
+  persona: propPersona,
+  onPersonaChange,
+}: FlashcardDeckProps) {
   const { isDark } = useAppTheme();
+  const { persona: authPersona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
+
+  const currentPersona: PersonaType = propPersona || authPersona || 'intermediate';
+
   const [deck, setDeck] = useState<Flashcard[]>(cards);
-  // Default to card 4 (index 3) so it immediately displays the question matching screenshot
-  const [currentIndex, setCurrentIndex] = useState(cards && cards.length >= 4 ? 3 : 0);
+  // Default to card 4 (index 3) so it immediately displays the question matching user screenshot
+  const [currentIndex, setCurrentIndex] = useState(
+    cards && cards.length >= 4 ? 3 : 0
+  );
   const [isFlipped, setIsFlipped] = useState(false);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const [masteredCount, setMasteredCount] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
+  const [showAnswerText, setShowAnswerText] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
 
   const flipAnimation = useSharedValue(0);
@@ -49,17 +97,41 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       setCurrentIndex(cards.length >= 4 ? 3 : 0);
       setIsFlipped(false);
       setIsImageZoomed(false);
-      setMasteredCount(0);
-      setReviewCount(0);
+      setShowAnswerText(false);
       setIsFinished(false);
       flipAnimation.value = 0;
     }
   }, [cards]);
 
   const currentCard = deck[currentIndex];
+  const cardImageSource =
+    currentCard?.id === 'fc_1_4'
+      ? EXCRETORY_INFOGRAPHIC
+      : currentCard?.infographicUrl
+      ? { uri: currentCard.infographicUrl }
+      : EXCRETORY_INFOGRAPHIC;
+
+  const handlePersonaSelect = (p: PersonaType) => {
+    Haptics.selectionAsync();
+    if (onPersonaChange) {
+      onPersonaChange(p);
+    } else {
+      updatePersona(p);
+    }
+  };
+
+  const handleCyclePersona = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const next: PersonaType =
+      currentPersona === 'beginner'
+        ? 'intermediate'
+        : currentPersona === 'intermediate'
+        ? 'advanced'
+        : 'beginner';
+    handlePersonaSelect(next);
+  };
 
   const handleFlip = () => {
-    // Prevent flipping the card if user is tapping the zoomed image
     if (isImageZoomed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     if (isFlipped) {
@@ -77,6 +149,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       flipAnimation.value = withTiming(0, { duration: 150 });
       setIsFlipped(false);
       setIsImageZoomed(false);
+      setShowAnswerText(false);
       setCurrentIndex((prev) => prev + 1);
     } else {
       setIsFinished(true);
@@ -89,6 +162,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
       flipAnimation.value = withTiming(0, { duration: 150 });
       setIsFlipped(false);
       setIsImageZoomed(false);
+      setShowAnswerText(false);
       setCurrentIndex((prev) => prev - 1);
     }
   };
@@ -96,12 +170,11 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
   const handleRestart = () => {
     Haptics.selectionAsync();
     setCurrentIndex(0);
-    setMasteredCount(0);
-    setReviewCount(0);
     setIsFinished(false);
     flipAnimation.value = 0;
     setIsFlipped(false);
     setIsImageZoomed(false);
+    setShowAnswerText(false);
   };
 
   const handleShuffle = () => {
@@ -150,7 +223,8 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           Deck Completed!
         </Text>
         <Text style={[styles.finishedSubtitle, { color: isDark ? '#A6C5B3' : '#688875' }]}>
-          You have reviewed all {total} flashcards in Chapter {chapterNumber}.
+          You have reviewed all {total} flashcards in Chapter {chapterNumber} (
+          {currentPersona.toUpperCase()} level).
         </Text>
 
         <View style={styles.finishedActionRow}>
@@ -161,66 +235,146 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
 
           <TouchableOpacity style={styles.shuffleBtn} onPress={handleShuffle} activeOpacity={0.8}>
             <Ionicons name="shuffle" size={18} color="#ffffff" />
-            <Text style={styles.shuffleBtnText}>Shuffle & Retry</Text>
+            <Text style={styles.shuffleBtnText}>Shuffle</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  const maxCardWidth = isTablet ? 540 : Math.min(width - 40, 380);
+  // Exact card dimensions from Figma DevMode: width 380px, height 359px
+  const cardWidth = isTablet ? 460 : Math.min(width - 32, 380);
+  const cardHeight = isTablet ? 380 : 359;
 
   return (
     <View style={styles.screenWrapper}>
-      {/* Outer Card Container with floating left/right navigation arrows */}
-      <View style={[styles.cardOuterContainer, { width: maxCardWidth }]}>
+      {/* 3-Part Persona Switcher Bar: [ Beginner 📗 | Intermediate 📚 | Advanced 🌟 ] */}
+      <View
+        style={[
+          styles.personaBar,
+          {
+            width: cardWidth,
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.65)',
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(45, 62, 54, 0.12)',
+          },
+        ]}
+      >
+        {PERSONA_CONFIG.map((item) => {
+          const isActive = currentPersona === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                styles.personaPill,
+                isActive && [
+                  styles.personaPillActive,
+                  {
+                    backgroundColor: isDark ? '#147A43' : '#FFFFFF',
+                    borderColor: isDark ? '#3D8E5F' : '#2D3E36',
+                  },
+                ],
+              ]}
+              onPress={() => handlePersonaSelect(item.id)}
+              activeOpacity={0.8}
+            >
+              <Image
+                source={PERSONA_ICONS[item.id]}
+                style={styles.personaBookImg}
+                resizeMode="contain"
+              />
+              <Text
+                style={[
+                  styles.personaPillText,
+                  {
+                    color: isActive
+                      ? isDark
+                        ? '#FFFFFF'
+                        : '#1C2E24'
+                      : isDark
+                      ? '#A6C5B3'
+                      : '#596B66',
+                  },
+                  isActive && styles.personaPillTextActive,
+                ]}
+                numberOfLines={1}
+              >
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Outer Card Container with floating side navigation arrows */}
+      <View style={[styles.cardOuterContainer, { width: cardWidth, height: cardHeight }]}>
         {/* The 3D Flip Card */}
         <TouchableOpacity
           activeOpacity={0.96}
           onPress={handleFlip}
-          style={styles.cardTouchArea}
+          style={[styles.cardTouchArea, { width: cardWidth, height: cardHeight }]}
         >
-          {/* FRONT FACE (Question) */}
+          {/* FRONT FACE (Question + Tap here button) */}
           <Animated.View
             pointerEvents={isFlipped ? 'none' : 'auto'}
-            style={[styles.cardFace, frontAnimatedStyle]}
+            style={[styles.cardFace, frontAnimatedStyle, { width: cardWidth, height: cardHeight }]}
           >
             <LinearGradient
-              colors={['#F0F6F2', '#B9D5C8', '#7EA898']}
-              start={{ x: 0.08, y: 0.08 }}
-              end={{ x: 0.94, y: 0.94 }}
+              colors={CARD_GRADIENT_COLORS}
+              locations={CARD_GRADIENT_LOCATIONS}
+              start={{ x: 0.15, y: 0 }}
+              end={{ x: 0.85, y: 1 }}
               style={styles.cardGradient}
             >
-              {/* Top-Left Counter Badge: e.g. 4/10 */}
+              {/* Top-Left Counter Badge: e.g. 4/10 (.wrapper / .div) */}
               <View style={styles.counterBadge}>
                 <Text style={styles.counterText}>
                   {currentIndex + 1}/{deck.length}
                 </Text>
               </View>
 
+              {/* Top-Right Persona Badge (.flashCard8Child) */}
+              <TouchableOpacity
+                style={styles.cardPersonaBadge}
+                activeOpacity={0.75}
+                onPress={handleCyclePersona}
+                accessibilityRole="button"
+                accessibilityLabel={`Active persona: ${currentPersona}. Tap to switch`}
+              >
+                <Image
+                  source={PERSONA_ICONS[currentPersona]}
+                  style={styles.cardPersonaImg}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+
               {/* Center Content: Question + Tap here button */}
-              <View style={styles.centerBody}>
+              <View style={styles.frontCenterBody}>
                 <Text style={styles.questionText}>
                   {currentCard?.front}
                 </Text>
 
-                <View style={styles.tapPill}>
+                <TouchableOpacity
+                  style={styles.tapPill}
+                  activeOpacity={0.8}
+                  onPress={handleFlip}
+                >
                   <Text style={styles.tapPillText}>Tap here</Text>
-                  <Ionicons name="hand-left-outline" size={16} color="#1C2E24" style={styles.handIcon} />
-                </View>
+                  <Ionicons name="hand-left-outline" size={16} color="#1A2921" style={styles.handIcon} />
+                </TouchableOpacity>
               </View>
             </LinearGradient>
           </Animated.View>
 
-          {/* BACK FACE (Answer + Infographics) */}
+          {/* BACK FACE (Question + Infographic answer) */}
           <Animated.View
             pointerEvents={isFlipped ? 'auto' : 'none'}
-            style={[styles.cardFace, styles.cardBack, backAnimatedStyle]}
+            style={[styles.cardFace, styles.cardBack, backAnimatedStyle, { width: cardWidth, height: cardHeight }]}
           >
             <LinearGradient
-              colors={['#F0F6F2', '#B9D5C8', '#7EA898']}
-              start={{ x: 0.08, y: 0.08 }}
-              end={{ x: 0.94, y: 0.94 }}
+              colors={CARD_GRADIENT_COLORS}
+              locations={CARD_GRADIENT_LOCATIONS}
+              start={{ x: 0.15, y: 0 }}
+              end={{ x: 0.85, y: 1 }}
               style={styles.cardGradient}
             >
               {/* Top-Left Counter Badge */}
@@ -230,54 +384,84 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
                 </Text>
               </View>
 
-              {/* Center Content: Answer & Infographic */}
-              <View style={styles.centerBackBody}>
-                {/* Category / Answer Tag */}
-                <View style={styles.answerTag}>
-                  <Text style={styles.answerTagText}>
-                    {currentCard?.category?.toUpperCase() || 'ANSWER'}
-                  </Text>
-                </View>
+              {/* Top-Right Persona Badge (.flashCard8Child) */}
+              <TouchableOpacity
+                style={styles.cardPersonaBadge}
+                activeOpacity={0.75}
+                onPress={handleCyclePersona}
+                accessibilityRole="button"
+                accessibilityLabel={`Active persona: ${currentPersona}. Tap to switch`}
+              >
+                <Image
+                  source={PERSONA_ICONS[currentPersona]}
+                  style={styles.cardPersonaImg}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
 
-                {/* Answer explanation text */}
-                <Text style={styles.answerText} numberOfLines={4}>
-                  {currentCard?.back}
+              {/* Back Content: Question at top + Infographic below */}
+              <View style={styles.backCenterBody}>
+                <Text style={styles.backQuestionText} numberOfLines={3}>
+                  {currentCard?.front}
                 </Text>
 
-                {/* Infographic Thumbnail View */}
-                {currentCard?.infographicUrl ? (
+                {/* Infographic Image or Formatted Answer Text */}
+                {cardImageSource && !showAnswerText ? (
                   <TouchableOpacity
                     style={styles.infographicThumbWrap}
-                    onPress={() => {
+                    onPress={(e) => {
+                      e.stopPropagation();
                       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                       setIsImageZoomed(true);
                     }}
-                    activeOpacity={0.85}
+                    activeOpacity={0.88}
                   >
                     <Image
-                      source={{ uri: currentCard.infographicUrl }}
+                      source={cardImageSource}
                       style={styles.infographicThumb}
                       resizeMode="cover"
                     />
                     {/* Zoom indicator chip */}
                     <View style={styles.zoomChip}>
-                      <Ionicons name="expand-outline" size={13} color="#FFFFFF" />
+                      <Ionicons name="scan-outline" size={12} color="#FFFFFF" />
                       <Text style={styles.zoomChipText}>Tap to zoom</Text>
                     </View>
                   </TouchableOpacity>
-                ) : null}
+                ) : (
+                  <View style={styles.answerTextBox}>
+                    <Text style={styles.answerTextBody}>
+                      {currentCard?.back}
+                    </Text>
+                  </View>
+                )}
 
-                {/* Tap to flip back button */}
-                <View style={styles.tapPillBack}>
-                  <Text style={styles.tapPillText}>Tap to flip back</Text>
-                  <Ionicons name="refresh-outline" size={15} color="#1C2E24" />
-                </View>
+                {/* Bottom row: Optional text toggle if card has both text and image */}
+                {currentCard?.back && cardImageSource ? (
+                  <TouchableOpacity
+                    style={styles.switchModePill}
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Haptics.selectionAsync();
+                      setShowAnswerText((prev) => !prev);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons
+                      name={showAnswerText ? 'image-outline' : 'document-text-outline'}
+                      size={13}
+                      color="#1A2921"
+                    />
+                    <Text style={styles.switchModeText}>
+                      {showAnswerText ? 'Show Infographic' : 'Show Text Answer'}
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </LinearGradient>
           </Animated.View>
         </TouchableOpacity>
 
-        {/* Floating Left Navigation Button */}
+        {/* Floating Left Navigation Button (.frameChild) */}
         <TouchableOpacity
           style={[
             styles.arrowButton,
@@ -292,12 +476,12 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
         >
           <Ionicons
             name="arrow-back"
-            size={18}
+            size={16}
             color={currentIndex === 0 ? '#A6C5B3' : '#1C2E24'}
           />
         </TouchableOpacity>
 
-        {/* Floating Right Navigation Button */}
+        {/* Floating Right Navigation Button (.frameItem) */}
         <TouchableOpacity
           style={[
             styles.arrowButton,
@@ -312,7 +496,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
         >
           <Ionicons
             name="arrow-forward"
-            size={18}
+            size={16}
             color={currentIndex === deck.length - 1 ? '#A6C5B3' : '#1C2E24'}
           />
         </TouchableOpacity>
@@ -336,7 +520,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           {/* Zoom Modal Header */}
           <View style={styles.zoomModalHeader}>
             <View style={styles.zoomTitleBox}>
-              <Text style={styles.zoomTitleText}>
+              <Text style={styles.zoomTitleText} numberOfLines={1}>
                 {currentCard?.category || 'Infographic Diagram'}
               </Text>
               <Text style={styles.zoomSubText}>
@@ -358,9 +542,9 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
 
           {/* Large Interactive Infographic Image */}
           <View style={styles.zoomImageContainer}>
-            {currentCard?.infographicUrl && (
+            {cardImageSource && (
               <Image
-                source={{ uri: currentCard.infographicUrl }}
+                source={cardImageSource}
                 style={styles.zoomImage}
                 resizeMode="contain"
               />
@@ -370,7 +554,7 @@ export default function FlashcardDeck({ cards, chapterNumber }: FlashcardDeckPro
           {/* Bottom Pill Indicator */}
           <View style={styles.shrinkHintPill}>
             <Ionicons name="contract-outline" size={15} color="#FFFFFF" />
-            <Text style={styles.shrinkHintText}>Tap to shrink</Text>
+            <Text style={styles.shrinkHintText}>Tap anywhere to shrink</Text>
           </View>
         </TouchableOpacity>
       </Modal>
@@ -383,123 +567,191 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
+  /* 3-Part Persona Bar */
+  personaBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 40,
+    borderRadius: 20,
+    padding: 3,
+    borderWidth: 1,
+    marginBottom: 14,
+  },
+  personaPill: {
+    flex: 1,
+    height: 34,
+    borderRadius: 17,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 6,
+  },
+  personaPillActive: {
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.14,
+    shadowRadius: 2.5,
+  },
+  personaBookImg: {
+    width: 20,
+    height: 20,
+  },
+  personaPillText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  personaPillTextActive: {
+    fontWeight: '800',
+  },
+  /* Card Outer Container */
   cardOuterContainer: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardTouchArea: {
-    width: '100%',
-    height: 460,
-    borderRadius: 28,
+    borderRadius: 20,
   },
   cardFace: {
     position: 'absolute',
     top: 0,
     left: 0,
-    width: '100%',
-    height: '100%',
-    borderRadius: 28,
+    borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
   },
   cardBack: {
     // Rotated by 180deg
   },
   cardGradient: {
     flex: 1,
-    borderRadius: 28,
+    borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   counterBadge: {
     position: 'absolute',
-    top: 0,
-    left: 0,
+    top: -1,
+    left: -1,
+    width: 46,
+    height: 30,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 28,
-    borderBottomRightRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderTopLeftRadius: 20,
+    borderBottomRightRadius: 10,
     borderRightWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.08)',
+    borderColor: 'rgba(7, 7, 7, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
     zIndex: 10,
   },
   counterText: {
-    fontSize: 13.5,
+    fontSize: 10.5,
     fontWeight: '700',
-    color: '#1C2E24',
-    letterSpacing: 0.2,
+    color: '#000000',
+    lineHeight: 25,
   },
-  centerBody: {
-    width: '100%',
-    paddingHorizontal: 28,
+  cardPersonaBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 12,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(7, 7, 7, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  centerBackBody: {
-    width: '100%',
-    paddingHorizontal: 24,
-    paddingTop: 36,
-    paddingBottom: 16,
+  cardPersonaImg: {
+    width: 20,
+    height: 20,
+  },
+  frontCenterBody: {
+    flex: 1,
     alignItems: 'center',
-    justifyContent: 'space-between',
-    height: '100%',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
   },
   questionText: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 29,
-    color: '#0F1D16',
+    lineHeight: 25,
+    color: '#000000',
     textAlign: 'center',
-    marginBottom: 24,
-    letterSpacing: -0.2,
+    width: 301,
   },
-  answerTag: {
-    backgroundColor: 'rgba(28, 46, 36, 0.12)',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 10,
-    marginTop: 4,
+  tapPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    height: 38,
+    width: 220,
+    borderRadius: 19,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.28)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    marginTop: 24,
   },
-  answerTagText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#1C2E24',
-    letterSpacing: 0.6,
-  },
-  answerText: {
-    fontSize: 15,
+  tapPillText: {
+    fontSize: 13.5,
     fontWeight: '600',
-    lineHeight: 22,
-    color: '#0F1D16',
+    color: '#1A2921',
+  },
+  handIcon: {
+    transform: [{ rotate: '45deg' }],
+  },
+  backCenterBody: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 14,
+    justifyContent: 'space-between',
+  },
+  backQuestionText: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    lineHeight: 21,
+    color: '#000000',
     textAlign: 'center',
-    marginVertical: 8,
+    width: 305,
+    marginBottom: 8,
   },
   infographicThumbWrap: {
-    width: '100%',
-    height: 155,
-    borderRadius: 16,
+    width: 285,
+    height: 159,
+    borderRadius: 4,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: 'rgba(28, 46, 36, 0.25)',
-    marginVertical: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     position: 'relative',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 3,
   },
   infographicThumb: {
     width: '100%',
@@ -507,72 +759,74 @@ const styles = StyleSheet.create({
   },
   zoomChip: {
     position: 'absolute',
-    bottom: 8,
-    right: 8,
+    bottom: 6,
+    right: 6,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(28, 46, 36, 0.85)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    gap: 3,
+    backgroundColor: 'rgba(28, 46, 36, 0.88)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   zoomChipText: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
   },
-  tapPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  answerTextBox: {
+    width: 285,
+    minHeight: 140,
+    maxHeight: 170,
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.65)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    paddingHorizontal: 38,
-    borderRadius: 24,
-    borderWidth: 1.2,
-    borderColor: 'rgba(28, 46, 36, 0.35)',
-    backgroundColor: 'rgba(28, 46, 36, 0.08)',
   },
-  tapPillBack: {
+  answerTextBody: {
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 19,
+    color: '#0F1D16',
+    textAlign: 'left',
+  },
+  switchModePill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 28,
-    borderRadius: 20,
-    borderWidth: 1.2,
-    borderColor: 'rgba(28, 46, 36, 0.35)',
-    backgroundColor: 'rgba(28, 46, 36, 0.08)',
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.35)',
+    borderWidth: 0.8,
+    borderColor: 'rgba(0, 0, 0, 0.15)',
     marginTop: 4,
   },
-  tapPillText: {
-    fontSize: 13.5,
+  switchModeText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#1C2E24',
-  },
-  handIcon: {
-    transform: [{ rotate: '45deg' }],
+    color: '#1A2921',
   },
   arrowButton: {
     position: 'absolute',
     top: '50%',
-    marginTop: -19,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    marginTop: -14,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 20,
-    elevation: 5,
+    zIndex: 30,
+    elevation: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
     borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.06)',
+    borderColor: 'rgba(0, 0, 0, 0.12)',
   },
   leftArrow: {
     left: -14,
@@ -642,28 +896,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#ffffff',
   },
-  /* Zoom Modal Styles */
   zoomModalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(10, 18, 14, 0.94)',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: Platform.OS === 'android' ? 36 : 48,
+    paddingTop: Platform.OS === 'ios' ? 54 : 32,
+    paddingBottom: Platform.OS === 'ios' ? 44 : 28,
     paddingHorizontal: 16,
   },
   zoomModalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
     width: '100%',
     paddingHorizontal: 8,
   },
   zoomTitleBox: {
     flex: 1,
+    marginRight: 16,
   },
   zoomTitleText: {
     color: '#FFFFFF',
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '700',
   },
   zoomSubText: {
@@ -672,41 +926,37 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   zoomCloseBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 12,
   },
   zoomImageContainer: {
     flex: 1,
-    width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    marginVertical: 16,
   },
   zoomImage: {
-    width: width * 0.94,
-    height: height * 0.72,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    width: '100%',
+    height: '100%',
   },
   shrinkHintPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
+    alignSelf: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.18)',
-    paddingHorizontal: 18,
+    paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   shrinkHintText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
   },
 });
