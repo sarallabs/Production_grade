@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import MarkdownView from "@/components/MarkdownView";
 import { getResourceContent, type Chapter, type ChapterVideo, type DifficultyLevel } from "@/data/contentRepository";
+import { getRegistryChapterData } from "@/data/manifestService";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 const WATCHED_THRESHOLD_PCT = 90;
 
@@ -24,56 +26,10 @@ export interface VideosViewProps {
   onSelectVideoIndex?: (videoIndex: number) => void;
 }
 
-const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; duration?: string }> = {
-  "Ioa25iYy53g": {
-    title: "Insects Digestive System",
-    duration: "10:15min",
-    topics: [
-      "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-      "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
-      "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-      "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
-      "Enzymatic Digestion & Nutritional Adaptations in Insects"
-    ]
-  },
-  "UMJFfCFFF4M": {
-    title: "Weathering of Rocks and Minerals",
-    duration: "11:45min",
-    topics: [
-      "Foundations of Weathering & Regolith-Saprolite Boundary Dynamics",
-      "Physical Weathering: Hydraulic Forces, Frost Wedging (9% Expansion) & Exfoliation",
-      "Chemical Weathering: Hydrolysis, Hydration, Carbonation, Oxidation & Reduction",
-      "Biological Agents: Pioneer Lichens, Microbial Geochemistry & Tree Root Wedging",
-      "Goldich Mineral Weathering Stability Series vs Bowen's Reaction Series"
-    ]
-  },
-  "elWWuKv5b9Q": {
-    title: "Pollination, Pollinizers & Parthenocarpy in Fruit Crops",
-    duration: "14:20min",
-    topics: [
-      "Floral Biology Architecture & Angiosperm Double Fertilization",
-      "Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy",
-      "Cross-Pollination (Allogamy) & Self-Incompatibility (GSI vs SSI Systems)",
-      "Pollinizer Cultivar Proportion & Commercial Orchard Planting Geometry",
-      "Parthenocarpy: Vegetative, Stimulative & Stenospermocarpy Mechanisms"
-    ]
-  },
-  "A4RwGJPb9I4": {
-    title: "Database System Concepts, ER Model & Relational Design",
-    duration: "15:30min",
-    topics: [
-      "Database Fundamentals & 3-Schema Engine Architecture",
-      "Conceptual Database Design & ER Modeling Rules",
-      "Advanced ER & Extended ER (EER) Specialization/Generalization",
-      "Relational Model Foundations & Key Integrity Constraints",
-      "Logical Database Design: ER-to-Relational Schema Translation",
-      "Relational Querying Foundations, SQL Views & Schema Evolution"
-    ]
-  }
-};
+const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; duration?: string }> = {};
 
 /** Faint green insect outline watermark matching Figma */
-const InsectWatermark = () => (
+const InsectWatermark = ({ width = "165px", height = "165px", opacity = 0.22 }: { width?: string; height?: string; opacity?: number }) => (
   <svg
     viewBox="0 0 200 200"
     fill="none"
@@ -85,9 +41,9 @@ const InsectWatermark = () => (
       position: "absolute",
       right: "12px",
       bottom: "6px",
-      width: "165px",
-      height: "165px",
-      opacity: 0.22,
+      width,
+      height,
+      opacity,
       pointerEvents: "none",
       zIndex: 0,
     }}
@@ -126,13 +82,12 @@ const InsectWatermark = () => (
 );
 
 /** Dedicated Figma topic icon per row (0 to 4) */
-const renderTopicIcon = (index: number) => {
+const renderTopicIcon = (index: number, size = 18) => {
   const iconIdx = index % 5;
   switch (iconIdx) {
     case 0:
-      // Document sheet with folded corner and lines
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
           <polyline points="14 2 14 8 20 8" />
           <line x1="9" y1="13" x2="15" y2="13" />
@@ -140,17 +95,15 @@ const renderTopicIcon = (index: number) => {
         </svg>
       );
     case 1:
-      // Leaf with central vein
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z" />
           <line x1="16" y1="8" x2="2" y2="22" />
         </svg>
       );
     case 2:
-      // Organism / insect head / microbe
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="13" r="7" />
           <line x1="12" y1="6" x2="12" y2="2" />
           <path d="M8 3.5l2 2.5" />
@@ -160,18 +113,16 @@ const renderTopicIcon = (index: number) => {
         </svg>
       );
     case 3:
-      // Gear / settings cog
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="3" />
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
         </svg>
       );
     case 4:
     default:
-      // Chemistry laboratory flask
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#4B5563" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M10 2v5.5L4.5 18a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 7.5V2" />
           <line x1="8" y1="2" x2="16" y2="2" />
           <line x1="7" y1="15" x2="17" y2="15" />
@@ -203,6 +154,30 @@ export default function VideosView({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
+  const [registryVideos, setRegistryVideos] = useState<ChapterVideo[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
+      const regList = reg?.chapter?.videos || (reg as any)?.videos;
+      if (cancelled || !Array.isArray(regList) || regList.length === 0) return;
+      setRegistryVideos(
+        regList.map((v: any, idx: number) => ({
+          index: v.order ?? idx + 1,
+          id: v.id || `vid_${idx + 1}`,
+          title: v.title,
+          ytId: v.videoId || v.ytId || "",
+          duration: v.duration,
+          thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
+          dir: "",
+          topics: v.topics,
+        })),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectId, chapterNumber]);
 
   // Custom Player State
   const [isPlaying, setIsPlaying] = useState(false);
@@ -213,35 +188,78 @@ export default function VideosView({
   const [showSpeedSelector, setShowSpeedSelector] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
-  const [seekFeedback, setSeekFeedback] = useState<"-10s" | "+10s" | null>(null);
+  const [seekFeedback, setSeekFeedback] = useState<"-10s" | "+10s" | "skip" | null>(null);
+
+  // Track how many times each video (ytId) has been opened in the current login session via cloudStorage.
+  const [videoOpenCounts, setVideoOpenCounts] = useState<Record<string, number>>(() => {
+    try {
+      const raw = cloudStorage.getItem("sv_video_open_counts");
+      return raw ? (JSON.parse(raw) as Record<string, number>) : {};
+    } catch {
+      return {};
+    }
+  });
+  const activePlaybackSessionYtIdRef = useRef<string | null>(null);
+
+  const recordVideoOpen = useCallback((ytId?: string) => {
+    if (!ytId) return;
+    if (activePlaybackSessionYtIdRef.current === ytId) return;
+    activePlaybackSessionYtIdRef.current = ytId;
+    setVideoOpenCounts((prev) => {
+      const next = { ...prev, [ytId]: (prev[ytId] || 0) + 1 };
+      try {
+        cloudStorage.setItem("sv_video_open_counts", JSON.stringify(next));
+      } catch {
+        /* ignore storage errors */
+      }
+      return next;
+    });
+  }, []);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
+  const rowPlayerContainerRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const autoPlayOnReadyRef = useRef<boolean>(false);
   const hideControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
   const isSeekingRef = useRef<boolean>(false);
   const seekFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showSeekBadge = (type: "-10s" | "+10s") => {
+  const showSeekBadge = (type: "-10s" | "+10s" | "skip") => {
     setSeekFeedback(type);
     if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
     seekFeedbackTimerRef.current = setTimeout(() => {
       setSeekFeedback(null);
-    }, 650);
+    }, type === "skip" ? 1100 : 650);
   };
 
-  // 1. Build video list
+  // 1. Build video list from registry / chapterVideos / manifest subjectChapters prop first
   const videos = useMemo(() => {
-    if (chapterVideos && chapterVideos.length > 0) {
-      return chapterVideos.map((v) => ({
+    const manifestVids = subjectChapters?.find((c) => c.number === chapterNumber)?.videos || [];
+    const mappedManifestVids = manifestVids.map((v) => ({
+      title: v.title,
+      ytId: v.videoId || "",
+      topics: v.topics,
+      duration: v.duration,
+      thumbnailUrl: v.thumbnailUrl || v.thumbnail,
+    }));
+    const sourceVideos =
+      chapterVideos && chapterVideos.length > 0
+        ? chapterVideos
+        : registryVideos.length > 0
+          ? registryVideos
+          : mappedManifestVids;
+    if (sourceVideos.length > 0) {
+      return sourceVideos.map((v) => ({
         title: v.title,
         ytId: v.ytId,
         topics: v.topics,
         duration: v.duration,
+        thumbnailUrl: v.thumbnailUrl,
       }));
     }
-    let list: { title: string; ytId: string; topics?: string[]; duration?: string }[] = [];
+    let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string }[] = [];
     if (subjectId === "anu_physics") {
       list = [
         {
@@ -296,67 +314,6 @@ export default function VideosView({
           ]
         }
       ];
-    } else if (subjectId === "dbms" || subjectId.includes("dbms")) {
-      list = [
-        {
-          title: "Database System Concepts, ER Model & Relational Design",
-          ytId: "A4RwGJPb9I4",
-          duration: "15:30min",
-          topics: [
-            "Database Fundamentals & 3-Schema Engine Architecture",
-            "Conceptual Database Design & ER Modeling Rules",
-            "Advanced ER & Extended ER (EER) Specialization/Generalization",
-            "Relational Model Foundations & Key Integrity Constraints",
-            "Logical Database Design: ER-to-Relational Schema Translation",
-            "Relational Querying Foundations, SQL Views & Schema Evolution"
-          ]
-        }
-      ];
-    } else if ((subjectId === "ento_131" || subjectId.includes("ento") || subjectId.includes("digestive")) && chapterNumber === 1) {
-      list = [
-        {
-          title: "Insects Digestive System",
-          ytId: "Ioa25iYy53g",
-          duration: "10:15min",
-          topics: [
-            "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-            "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
-            "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-            "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
-            "Enzymatic Digestion & Nutritional Adaptations in Insects"
-          ]
-        }
-      ];
-    } else if ((subjectId === "ento_131" || subjectId.includes("weathering") || subjectId.includes("soil")) && chapterNumber === 3) {
-      list = [
-        {
-          title: "Weathering of Rocks and Minerals",
-          ytId: "UMJFfCFFF4M",
-          duration: "11:45min",
-          topics: [
-            "Foundations of Weathering & Regolith-Saprolite Boundary Dynamics",
-            "Physical Weathering: Hydraulic Forces, Frost Wedging (9% Expansion) & Exfoliation",
-            "Chemical Weathering: Hydrolysis, Hydration, Carbonation, Oxidation & Reduction",
-            "Biological Agents: Pioneer Lichens, Microbial Geochemistry & Tree Root Wedging",
-            "Goldich Mineral Weathering Stability Series vs Bowen's Reaction Series"
-          ]
-        }
-      ];
-    } else if ((subjectId === "ento_131" || subjectId.includes("pollination") || subjectId.includes("fruit")) && chapterNumber === 4) {
-      list = [
-        {
-          title: "Pollination, Pollinizers & Parthenocarpy in Fruit Crops",
-          ytId: "elWWuKv5b9Q",
-          duration: "14:20min",
-          topics: [
-            "Floral Biology Architecture & Angiosperm Double Fertilization",
-            "Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy",
-            "Cross-Pollination (Allogamy) & Self-Incompatibility (GSI vs SSI Systems)",
-            "Pollinizer Cultivar Proportion & Commercial Orchard Planting Geometry",
-            "Parthenocarpy: Vegetative, Stimulative & Stenospermocarpy Mechanisms"
-          ]
-        }
-      ];
     } else if (subjectId === "management") {
       list = [
         {
@@ -405,16 +362,13 @@ export default function VideosView({
       while ((match = ytRegex.exec(youtubeLinksContent)) !== null) {
         const id = match[1];
         if (!list.some((v) => v.ytId === id)) {
-          const curated = KNOWN_VIDEOS_METADATA[id];
           list.push({
-            title: curated?.title || `Video Lecture Part ${idx++}`,
+            title: `Video Lecture Part ${idx++}`,
             ytId: id,
-            duration: curated?.duration || "10:15min",
-            topics: curated?.topics || [
+            duration: "10:15min",
+            topics: [
               "Key conceptual overview & core principles",
               "Structural anatomy and physiological pathways",
-              "Specialized adaptations and functional dynamics",
-              "Critical cellular mechanisms and transport systems",
               "Synthesis of key takeaways and summary points"
             ]
           });
@@ -422,26 +376,19 @@ export default function VideosView({
       }
     }
 
-    // Default fallback if list is empty
     if (list.length === 0) {
       list = [
         {
-          title: chapterName || "Insects Digestive System",
-          ytId: "Ioa25iYy53g",
+          title: chapterName || "Chapter Video Lecture",
+          ytId: "",
           duration: "10:15min",
-          topics: [
-            "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-            "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
-            "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-            "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
-            "Enzymatic Digestion & Nutritional Adaptations in Insects"
-          ]
+          topics: []
         }
       ];
     }
 
     return list;
-  }, [subjectId, chapterNumber, youtubeLinksContent, chapterName, chapterVideos]);
+  }, [subjectId, chapterNumber, youtubeLinksContent, chapterName, chapterVideos, registryVideos, subjectChapters]);
 
   const robustActive = activeVideo >= videos.length ? 0 : activeVideo;
   const currentVideo = videos[robustActive] || videos[0];
@@ -454,14 +401,62 @@ export default function VideosView({
     }
   }, [activeVideoIndex, videos.length]);
 
+  const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
+  const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
+    try {
+      const raw = cloudStorage.getItem(completedStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) return new Set(parsed);
+      }
+    } catch {
+      // ignore
+    }
+    return new Set();
+  });
+
+  useEffect(() => {
+    try {
+      const raw = cloudStorage.getItem(completedStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          setCompletedVideos(new Set(parsed));
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setCompletedVideos(new Set());
+  }, [completedStorageKey]);
+
+  const markVideoDone = useCallback(
+    (idx: number) => {
+      setCompletedVideos((prev) => {
+        if (prev.has(idx)) return prev;
+        const next = new Set(prev);
+        next.add(idx);
+        try {
+          cloudStorage.setItem(completedStorageKey, JSON.stringify(Array.from(next)));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
+    },
+    [completedStorageKey],
+  );
+
   const onVideoWatchedRef = useRef(onVideoWatched);
   useEffect(() => {
     onVideoWatchedRef.current = onVideoWatched;
   });
 
   const markWatched = useCallback((videoIndex: number, advance = false) => {
+    markVideoDone(videoIndex - 1);
     onVideoWatchedRef.current?.(videoIndex, advance);
-  }, []);
+  }, [markVideoDone]);
 
   // Format time utility
   const formatTime = (sec: number) => {
@@ -517,6 +512,10 @@ export default function VideosView({
                   if (typeof event.target.setOption === "function") {
                     event.target.setOption("captions", "track", {});
                   }
+                  if (autoPlayOnReadyRef.current && typeof event.target.playVideo === "function") {
+                    autoPlayOnReadyRef.current = false;
+                    event.target.playVideo();
+                  }
                 }
               } catch (err) {}
             },
@@ -525,6 +524,7 @@ export default function VideosView({
               const YT = (window as any).YT;
               if (state === YT?.PlayerState?.PLAYING || state === 1) {
                 isSeekingRef.current = false;
+                recordVideoOpen(currentVideo.ytId);
                 if (!isCcEnabledRef.current && playerRef.current) {
                   try {
                     playerRef.current.unloadModule?.("captions");
@@ -559,6 +559,7 @@ export default function VideosView({
                 }
               } else if (state === YT?.PlayerState?.ENDED || state === 0) {
                 isSeekingRef.current = false;
+                activePlaybackSessionYtIdRef.current = null;
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
                   clearInterval(progressIntervalRef.current);
@@ -680,6 +681,45 @@ export default function VideosView({
     }
   };
 
+  // Netflix-style Skip Intro (only inside player at start: first 2 minutes / 120s, and only when NOT the first time opening this video)
+  const currentVideoOpenCount = currentVideo?.ytId ? (videoOpenCounts[currentVideo.ytId] || 0) : 0;
+  const isNotFirstWatch = currentVideoOpenCount >= 2;
+  const canSkipIntro =
+    isNotFirstWatch &&
+    (isPlaying || isFullscreen) &&
+    currentTime < 120 &&
+    (duration === 0 || duration > 125);
+  const canSkipIntroRef = useRef(canSkipIntro);
+  useEffect(() => {
+    canSkipIntroRef.current = canSkipIntro;
+  }, [canSkipIntro]);
+
+  const handleSkipIntro = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    const target = 120; // 2 minutes (120 seconds)
+    const dur = typeof playerRef.current?.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const safeTarget = dur > 0 ? Math.min(target, Math.max(0, dur - 5)) : target;
+    isSeekingRef.current = true;
+    showSeekBadge("skip");
+    if (playerRef.current) {
+      playerRef.current.seekTo?.(safeTarget, true);
+    }
+    setCurrentTime(safeTarget);
+    if (dur > 0) setProgress((safeTarget / dur) * 100);
+    setIsPlaying(true);
+    try {
+      playerRef.current?.playVideo?.();
+    } catch (err) {}
+    setTimeout(() => {
+      try {
+        playerRef.current?.playVideo?.();
+      } catch (err) {}
+    }, 80);
+  };
+
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = parseInt(e.target.value, 10);
     setVolume(val);
@@ -730,9 +770,10 @@ export default function VideosView({
     } catch (err) {}
   };
 
-  const enterFullscreen = () => {
+  const enterFullscreen = (targetYtId?: string) => {
     const container = playerContainerRef.current;
     if (!container) return;
+    recordVideoOpen(targetYtId || currentVideo?.ytId);
     try {
       if (container.requestFullscreen) {
         container.requestFullscreen().catch(() => {});
@@ -749,6 +790,10 @@ export default function VideosView({
   };
 
   const exitFullscreen = () => {
+    activePlaybackSessionYtIdRef.current = null;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch (e) {}
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
@@ -790,6 +835,12 @@ export default function VideosView({
         (document as any).mozFullScreenElement ||
         (document as any).msFullscreenElement
       );
+      if (!fs) {
+        activePlaybackSessionYtIdRef.current = null;
+        try {
+          playerRef.current?.pauseVideo?.();
+        } catch (e) {}
+      }
       setIsFullscreen(fs);
       isFullscreenRef.current = fs;
     };
@@ -817,7 +868,7 @@ export default function VideosView({
   // - Center click: Toggle Play / Pause
   const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCurrentlyFullscreen()) {
-      enterFullscreen();
+      enterFullscreen(currentVideo?.ytId);
       if (!isPlayingRef.current && playerRef.current) {
         playerRef.current.playVideo?.();
       }
@@ -877,6 +928,11 @@ export default function VideosView({
       } else if (e.key === "m" || e.key === "M") {
         e.preventDefault();
         toggleMute();
+      } else if (e.key === "s" || e.key === "S") {
+        if (canSkipIntroRef.current) {
+          e.preventDefault();
+          handleSkipIntro();
+        }
       }
     };
 
@@ -953,59 +1009,112 @@ export default function VideosView({
   }, [currentVideo.duration, duration]);
 
   const topicsList = useMemo(() => {
+    let rawTopics: string[] = [];
     if (currentVideo.topics && currentVideo.topics.length > 0) {
-      return currentVideo.topics;
+      rawTopics = currentVideo.topics;
+    } else {
+      const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
+      if (curated?.topics) {
+        rawTopics = curated.topics;
+      } else {
+        rawTopics = [
+          "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
+          "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
+          "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+        ];
+      }
     }
-    const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
-    if (curated?.topics) return curated.topics;
-    return [
-      "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-      "Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)",
-      "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-      "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
-      "Enzymatic Digestion & Nutritional Adaptations in Insects"
-    ];
+    return rawTopics.slice(0, 3);
   }, [currentVideo]);
 
   // Video switching handler for multi-video
   const handleSelectVideo = (index: number) => {
+    if (index === robustActive) return;
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+    activePlaybackSessionYtIdRef.current = null;
+    setCurrentTime(0);
+    setDuration(0);
+    setProgress(0);
+    setIsPlaying(false);
     setActiveVideo(index);
     if (onSelectVideoIndex) {
       onSelectVideoIndex(index + 1);
     }
-    if (playerRef.current?.loadVideoById && videos[index]) {
-      playerRef.current.loadVideoById(videos[index].ytId);
-      setCurrentTime(0);
-      setProgress(0);
-      setIsPlaying(true);
+  };
+
+  // Handler when clicking a stacked row video in MLRIT 4-video view
+  const handleActivateStackedVideo = (index: number, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const rowContainer = rowPlayerContainerRefs.current[index];
+    if (rowContainer) {
+      (playerContainerRef as any).current = rowContainer;
     }
+    const targetYtId = videos[index]?.ytId;
+
+    if (index === robustActive) {
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(targetYtId);
+        if (playerRef.current) {
+          playerRef.current.playVideo?.();
+        }
+      } else {
+        handlePlayPause();
+      }
+      return;
+    }
+
+    try {
+      playerRef.current?.pauseVideo?.();
+    } catch {}
+
+    activePlaybackSessionYtIdRef.current = null;
+    setCurrentTime(0);
+    setDuration(0);
+    setProgress(0);
+    setIsPlaying(false);
+    autoPlayOnReadyRef.current = true;
+    setActiveVideo(index);
+    if (onSelectVideoIndex) {
+      onSelectVideoIndex(index + 1);
+    }
+    enterFullscreen(targetYtId);
   };
 
   // Video Player Component
-  const renderVideoPlayer = (isFullWidth = false) => (
+  const renderVideoPlayer = (_isFullWidth = false, isStackedRow = false, rowIndex = robustActive) => (
     <div
-      ref={playerContainerRef}
+      ref={(el) => {
+        rowPlayerContainerRefs.current[rowIndex] = el;
+        if (rowIndex === robustActive) {
+          (playerContainerRef as any).current = el;
+        }
+      }}
       onMouseMove={handlePlayerMouseMove}
       onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
-        width: "100%",
-        maxWidth: "min(960px, calc(58vh * 16 / 9))",
+        width: isFullscreen ? "100%" : "76%",
+        maxWidth: isFullscreen ? "100%" : "860px",
+        height: "100%",
+        maxHeight: "100%",
         aspectRatio: "16 / 9",
-        maxHeight: "58vh",
-        background: "#000000",
-        borderRadius: "16px",
+        flexShrink: 0,
+        background: "#000",
+        borderRadius: isFullscreen ? "0px" : "12px",
         overflow: "hidden",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.12)",
+        boxShadow: isFullscreen ? "none" : "0 6px 20px rgba(0,0,0,0.14)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
         cursor: isPlaying && !showControls ? "none" : "default",
+        margin: "0 auto",
       }}
     >
-      {/* YouTube Iframe */}
+      {/* YouTube Iframe wrapped in keyed container so React cleanly unmounts on video switch */}
       <div
-        id={`yt-player-${currentVideo.ytId}`}
+        key={`yt-wrap-${currentVideo.ytId}`}
         style={{
           position: "absolute",
           inset: 0,
@@ -1014,7 +1123,16 @@ export default function VideosView({
           border: 0,
           pointerEvents: "none",
         }}
-      />
+      >
+        <div
+          id={`yt-player-${currentVideo.ytId}`}
+          style={{
+            width: "100%",
+            height: "100%",
+            border: 0,
+          }}
+        />
+      </div>
 
       {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
       <div
@@ -1027,23 +1145,24 @@ export default function VideosView({
         }}
       />
 
-      {/* Sleek Seek Feedback Badge (-10s / +10s) */}
+      {/* Sleek Seek Feedback Badge (-10s / +10s / Skip) */}
       {seekFeedback && (
         <div
           style={{
             position: "absolute",
             top: "50%",
-            left: seekFeedback === "-10s" ? "18%" : "82%",
+            left: seekFeedback === "-10s" ? "18%" : seekFeedback === "+10s" ? "82%" : "50%",
             transform: "translate(-50%, -50%)",
-            background: "rgba(0, 0, 0, 0.78)",
+            background: "rgba(0, 0, 0, 0.82)",
             backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
             color: "#FFFFFF",
             padding: "16px 24px",
             borderRadius: "50px",
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontSize: "20px",
+            fontSize: seekFeedback === "skip" ? "16px" : "20px",
             fontWeight: 800,
             letterSpacing: "0.5px",
             zIndex: 15,
@@ -1057,10 +1176,15 @@ export default function VideosView({
               <span style={{ fontSize: "24px" }}>«</span>
               <span>10s</span>
             </>
-          ) : (
+          ) : seekFeedback === "+10s" ? (
             <>
               <span>10s</span>
               <span style={{ fontSize: "24px" }}>»</span>
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: "20px" }}>⏭</span>
+              <span>Skipped to 2:00</span>
             </>
           )}
         </div>
@@ -1086,12 +1210,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "80px",
-            height: "80px",
+            width: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
+            height: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
             borderRadius: "50%",
             border: "none",
             background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 10px 32px rgba(0,0,0,0.4)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -1100,7 +1224,7 @@ export default function VideosView({
             transition: "transform 0.2s ease, background 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.1)";
+            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
           }}
           onMouseLeave={(e) => {
             (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
@@ -1110,10 +1234,10 @@ export default function VideosView({
             style={{
               width: 0,
               height: 0,
-              borderTop: "15px solid transparent",
-              borderBottom: "15px solid transparent",
-              borderLeft: "26px solid #1E293B",
-              marginLeft: "6px",
+              borderTop: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
+              borderBottom: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
+              borderLeft: isFullscreen ? "26px solid #1E293B" : isStackedRow ? "14px solid #1E293B" : "22px solid #1E293B",
+              marginLeft: isFullscreen ? "6px" : isStackedRow ? "3px" : "5px",
             }}
           />
         </button>
@@ -1635,233 +1759,499 @@ export default function VideosView({
         </div>
       </div>
       )}
-    </div>
-  );
 
-  // Topics Detail Section
-  const renderTopicsSection = () => (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        width: "100%",
-        position: "relative",
-        zIndex: 1,
-      }}
-    >
-      {/* Main Chapter / Video Title (Center aligned) */}
-      <h2
-        style={{
-          fontSize: "22px",
-          fontWeight: 800,
-          color: "#111827",
-          margin: "4px 0 16px 0",
-          letterSpacing: "-0.3px",
-          lineHeight: 1.25,
-          textAlign: "center",
-        }}
-      >
-        {displayTitle}
-      </h2>
-
-      {/* Topic Rows with Dedicated Icons */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "10px", zIndex: 1 }}>
-        {topicsList.map((topic, idx) => (
-          <div
-            key={idx}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              padding: "10px 16px",
-              background: "#FAF8F6",
-              borderRadius: "14px",
-              border: "1px solid #ECE7E1",
-              transition: "transform 0.15s ease, background 0.15s ease",
-            }}
+      {/* Netflix-style "Skip" Intro Button (Skips to 2:00 / 120s) */}
+      {canSkipIntro && (
+        <button
+          type="button"
+          onClick={handleSkipIntro}
+          title="Skip intro (skips to 2:00)"
+          aria-label="Skip intro"
+          style={{
+            position: "absolute",
+            bottom: isFullscreen ? (showControls ? "86px" : "28px") : "18px",
+            right: isFullscreen ? "32px" : "18px",
+            zIndex: 12,
+            display: "flex",
+            alignItems: "center",
+            gap: "7px",
+            background: "rgba(20, 20, 20, 0.75)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            color: "#FFFFFF",
+            border: "1.5px solid rgba(255, 255, 255, 0.65)",
+            borderRadius: "6px",
+            padding: isFullscreen ? "8px 18px" : "6px 14px",
+            fontSize: isFullscreen ? "14px" : "12.5px",
+            fontWeight: 700,
+            letterSpacing: "0.4px",
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.45)",
+            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+            userSelect: "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+            e.currentTarget.style.borderColor = "#FFFFFF";
+            e.currentTarget.style.transform = "scale(1.05)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = "rgba(20, 20, 20, 0.75)";
+            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.65)";
+            e.currentTarget.style.transform = "scale(1)";
+          }}
+        >
+          <span>Skip</span>
+          <svg
+            width={isFullscreen ? "13" : "11"}
+            height={isFullscreen ? "13" : "11"}
+            viewBox="0 0 24 24"
+            fill="currentColor"
           >
-            {/* Circular Icon Container */}
-            <div
-              style={{
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                background: "#EDEAE5",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              {renderTopicIcon(idx)}
-            </div>
-
-            {/* Topic Text */}
-            <span
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "#1F2937",
-                lineHeight: 1.35,
-              }}
-            >
-              {topic}
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* Watermark in Bottom-Right Corner */}
-      <InsectWatermark />
+            <polygon points="5 4 15 12 5 20 5 4" />
+            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
     </div>
   );
+
+  const isVideoDone = (idx: number) =>
+    completedVideos.has(idx) || Boolean(isVideoWatchedAt?.(idx + 1)) || (videos.length === 1 && isCompleted);
+
+  const totalVideos = Math.max(1, videos.length);
+  const completedCount = videos.reduce((acc, _, idx) => acc + (isVideoDone(idx) ? 1 : 0), 0);
+  const activePartialFraction = isVideoDone(robustActive)
+    ? 0
+    : Math.min(1, Math.max(0, progress / 100));
+  const watchProgressPercent = Math.min(
+    100,
+    Math.round(((completedCount + activePartialFraction) / totalVideos) * 100),
+  );
+  const accentColor = "#15803d";
+  const formattedWatchDuration = displayDuration.replace(/(\d+)\s*min$/i, "$1 min");
 
   return (
     <div
       className="videos-figma-container"
       style={{
         width: "100%",
-        minHeight: "100%",
-        background: "radial-gradient(ellipse at 15% 15%, #FAF5ED 0%, #EFF5F0 45%, #E1ECE4 100%)",
-        padding: "20px 20px 36px 20px",
+        height: "100%",
+        maxHeight: "100%",
+        overflow: "hidden",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "flex-start",
       }}
     >
-      <style>{`
-        .custom-details-scroll::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-details-scroll::-webkit-scrollbar-track {
-          background: rgba(0, 0, 0, 0.03);
-          border-radius: 8px;
-        }
-        .custom-details-scroll::-webkit-scrollbar-thumb {
-          background: rgba(45, 62, 54, 0.25);
-          border-radius: 8px;
-        }
-        .custom-details-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(45, 62, 54, 0.45);
-        }
-      `}</style>
-
-      {/* ── CASE 1: SINGLE VIDEO IN CHAPTER (70% Video, 30% Down Details with Unified Page Scroll) ── */}
-      {isSingleVideo ? (
+      {/* ── Section-Wise 2-Column Layout (Matching Read & Listen UI, Single-Screen Fit) ── */}
+      <div
+        style={{
+          display: "flex",
+          gap: "24px",
+          width: "100%",
+          flex: 1,
+          minHeight: 0,
+          margin: 0,
+          padding: "0 0 6px 0",
+          boxSizing: "border-box",
+          alignItems: "stretch",
+        }}
+      >
+        {/* ── LEFT NAVIGATION SIDEBAR (Matching Read & Listen 'IN THIS CHAPTER' sidebar) ── */}
         <div
           style={{
-            width: "100%",
-            maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))",
-            background: "#FFFFFF",
-            borderRadius: "24px",
-            padding: "20px 24px 28px 24px",
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
+            width: "260px",
+            flexShrink: 0,
+            alignSelf: "flex-start",
+            maxHeight: "100%",
+            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
-            position: "relative",
-            boxSizing: "border-box",
+            gap: "12px",
+            zIndex: 10,
           }}
         >
-          {/* Top: Video Player Preview (70% screen ratio) */}
-          <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
-            {renderVideoPlayer(true)}
-          </div>
-
-          {/* Bottom Down Details (No nested scroll; total page scrolls) */}
+          {/* Resumed / Watching Guide Pill */}
           <div
             style={{
-              marginTop: "20px",
-              width: "100%",
-              position: "relative",
+              background: "#e0f2fe",
+              color: "#0369a1",
+              borderRadius: "999px",
+              padding: "6px 14px",
+              fontSize: "12.5px",
+              fontWeight: 700,
+              textAlign: "center",
+              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
             }}
           >
-            {renderTopicsSection()}
+            {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Watching Guide"}
           </div>
-        </div>
-      ) : (
-        /* ── CASE 2: MULTIPLE VIDEOS IN CHAPTER (70% Video, 30% Down Details with Playlist Tabs) ── */
-        <div style={{ width: "100%", maxWidth: "min(960px, calc(58vh * 16 / 9 + 48px))", display: "flex", flexDirection: "column", alignItems: "center" }}>
-          {/* Video Selector Tabs for Chapter Playlist */}
-          {videos.length > 1 && (
+
+          {/* Video Checklist Card */}
+          <div
+            style={{
+              background: "#ffffff",
+              borderRadius: "16px",
+              border: "1px solid #e2e8f0",
+              padding: "16px 12px",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                marginBottom: "14px",
-                overflowX: "auto",
-                paddingBottom: "4px",
-                width: "100%",
+                fontSize: "11px",
+                fontWeight: 800,
+                letterSpacing: "0.07em",
+                textTransform: "uppercase",
+                color: "#64748b",
+                padding: "0 8px 6px",
+                borderBottom: "1px solid #f1f5f9",
               }}
             >
-              <span style={{ fontSize: "12px", fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-                Chapter Videos:
-              </span>
+              IN THIS CHAPTER
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
               {videos.map((vid, idx) => {
-                const isActive = idx === robustActive;
+                const isSelected = idx === robustActive;
+                const isDone = isVideoDone(idx);
+                const cleanVideoTitle = (vid.title || `Video ${idx + 1}`).replace(/^\d+\.\s*/, "");
+
                 return (
                   <button
                     key={vid.ytId || idx}
+                    type="button"
                     onClick={() => handleSelectVideo(idx)}
+                    title={vid.title}
                     style={{
-                      padding: "6px 14px",
-                      borderRadius: "16px",
-                      border: isActive ? "1.5px solid #2D3E36" : "1px solid #D1D5DB",
-                      background: isActive ? "#2D3E36" : "#FFFFFF",
-                      color: isActive ? "#FFFFFF" : "#374151",
-                      fontSize: "12.5px",
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
-                      gap: "6px",
-                      whiteSpace: "nowrap",
-                      boxShadow: isActive ? "0 2px 6px rgba(45,62,54,0.2)" : "none",
+                      gap: "10px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      border: "1.5px solid transparent",
+                      background: isSelected ? "#dbe6df" : "transparent",
+                      cursor: "pointer",
+                      textAlign: "left",
                       transition: "all 0.15s ease",
                     }}
                   >
-                    <span>{isActive ? "▶" : "•"}</span>
-                    <span>Video {idx + 1}: {vid.title.length > 24 ? vid.title.slice(0, 24) + "..." : vid.title}</span>
+                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
+                    {isDone ? (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "#0f172a",
+                          color: "#ffffff",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
+                      </span>
+                    ) : isSelected ? (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "transparent",
+                          border: "1.5px solid #0f172a",
+                          color: "#0f172a",
+                          fontSize: "11px",
+                          fontWeight: 800,
+                        }}
+                      >
+                        ✓
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          borderRadius: "50%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          background: "transparent",
+                          border: "1.5px solid #cbd5e1",
+                        }}
+                      />
+                    )}
+
+                    {/* Video Title */}
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
+                        color: isSelected ? "#0f172a" : "#475569",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {cleanVideoTitle}
+                    </span>
                   </button>
                 );
               })}
             </div>
-          )}
 
-          {/* Unified Card for Video and Down Details */}
-          <div
-            style={{
-              width: "100%",
-              background: "#FFFFFF",
-              borderRadius: "24px",
-              padding: "20px 24px 28px 24px",
-              boxShadow: "0 10px 40px rgba(0, 0, 0, 0.05)",
-              display: "flex",
-              flexDirection: "column",
-              position: "relative",
-              boxSizing: "border-box",
-            }}
-          >
-            {/* Top: Video Player Preview (70% screen ratio) */}
-            <div style={{ width: "100%", display: "flex", justifyContent: "center", flexShrink: 0 }}>
-              {renderVideoPlayer(true)}
-            </div>
-
-            {/* Bottom Down Details (No nested scroll; total page scrolls) */}
+            {/* Progress Bar Footer */}
             <div
               style={{
-                marginTop: "20px",
-                width: "100%",
-                position: "relative",
+                marginTop: "10px",
+                paddingTop: "10px",
+                borderTop: "1px solid #f1f5f9",
+                paddingLeft: "6px",
+                paddingRight: "6px",
               }}
             >
-              {renderTopicsSection()}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "#64748b",
+                  marginBottom: "6px",
+                }}
+              >
+                <span>Chapter progress</span>
+                <span style={{ color: "#0f172a", fontWeight: 700 }}>{watchProgressPercent}%</span>
+              </div>
+              <div
+                style={{
+                  height: "6px",
+                  width: "100%",
+                  background: "#f1f5f9",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    height: "100%",
+                    width: `${watchProgressPercent}%`,
+                    background: accentColor,
+                    borderRadius: "999px",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
-      )}
+
+        {/* ── RIGHT MAIN CONTENT AREA (Single-Screen Fit: Meta + Header + Player & Topics Card) ── */}
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+            height: "100%",
+            minHeight: 0,
+            background: "transparent",
+            border: "none",
+            boxShadow: "none",
+            padding: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            overflow: "hidden",
+          }}
+        >
+          {/* Chapter Overview Meta Line (Matching Read & Listen) */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "8px",
+              paddingBottom: "6px",
+              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  background: "rgba(21, 128, 61, 0.08)",
+                  color: accentColor,
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                }}
+              >
+                ⏱ {formattedWatchDuration} watch
+              </span>
+              <span
+                style={{
+                  background: "#f1f5f9",
+                  color: "#475569",
+                  borderRadius: "6px",
+                  padding: "4px 10px",
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                }}
+              >
+                {totalVideos} {totalVideos === 1 ? "Video" : "Videos"}
+              </span>
+            </div>
+          </div>
+
+          {/* Active Video Section Header (Matching Read's SECTION X OF Y & Listen's PODCAST X OF Y) */}
+          <div style={{ flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
+              <span
+                style={{
+                  fontSize: "11.5px",
+                  fontWeight: 800,
+                  letterSpacing: "0.06em",
+                  color: accentColor,
+                  textTransform: "uppercase",
+                }}
+              >
+                VIDEO {robustActive + 1} OF {totalVideos}
+              </span>
+            </div>
+
+            <h2
+              style={{
+                fontSize: "20px",
+                fontWeight: 800,
+                color: "#0f172a",
+                lineHeight: "1.25",
+                margin: "0",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+              }}
+              title={displayTitle.replace(/^\d+\.\s*/, "")}
+            >
+              {displayTitle.replace(/^\d+\.\s*/, "")}
+            </h2>
+          </div>
+
+          {/* Combined Video Player + Key Topics Card (Fits Remaining Viewport Height) */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              width: "100%",
+              background: "#ffffff",
+              borderRadius: "16px",
+              padding: "12px 16px",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              border: "1px solid #e2e8f0",
+              boxSizing: "border-box",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              gap: "10px",
+              position: "relative",
+              overflow: "hidden",
+            }}
+          >
+            {/* Top: 16:9 Video Player automatically scaled to fit remaining height */}
+            <div
+              style={{
+                flex: "1 1 0",
+                minHeight: 0,
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                zIndex: 1,
+              }}
+            >
+              {renderVideoPlayer(true)}
+            </div>
+
+            {/* Bottom: Compact Key Topics Covered Strip */}
+            {topicsList.length > 0 && (
+              <div
+                style={{
+                  flexShrink: 0,
+                  width: "100%",
+                  display: "grid",
+                  gridTemplateColumns:
+                    topicsList.length <= 2
+                      ? `repeat(${topicsList.length}, 1fr)`
+                      : "repeat(3, minmax(0, 1fr))",
+                  gap: "8px",
+                  zIndex: 1,
+                }}
+              >
+                {topicsList.map((topic, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      padding: "7px 11px",
+                      background: "#f8fafc",
+                      borderRadius: "10px",
+                      border: "1px solid #e2e8f0",
+                      minWidth: 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "24px",
+                        height: "24px",
+                        borderRadius: "50%",
+                        background: "rgba(21, 128, 61, 0.08)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {renderTopicIcon(idx, 14)}
+                    </div>
+                    <span
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: 500,
+                        color: "#1e293b",
+                        lineHeight: 1.25,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                      title={topic}
+                    >
+                      {topic}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <InsectWatermark width="76px" height="76px" opacity={0.09} />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

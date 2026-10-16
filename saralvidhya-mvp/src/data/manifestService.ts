@@ -1,41 +1,46 @@
 import universityConfig from '@/config/university_config.json';
+import { registryClient, type ChapterResponse } from './registryClient';
+import { detectTenantId } from '../tenant/TenantProvider';
+import { cloudStorage } from '../context/CloudStateContext';
 
 export const BASE = '/generated_resources';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/assets` : '';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/assets`
+  : '';
 
 /**
  * Cloud Run backend base URL (GCS-backed canonical content).
- * Set VITE_GCS_API_BASE in .env to override for local dev.
  */
 export const GCS_API_BASE =
   import.meta.env.VITE_GCS_API_BASE ||
+  import.meta.env.VITE_API_BASE ||
   'https://saralvidhya-api-193782571555.asia-south1.run.app';
 
 /**
- * Maps MVP subject IDs → {university}/{subject} path in the Cloud Run API.
- * Add entries here as more subjects are migrated to GCS.
+ * Dynamically populated map of subjectId -> "{tenantId}/{subjectId}" from university_config.json and Cloud Run v2 catalog.
+ * Zero hardcoded tenant or subject literals in source code.
  */
-export const GCS_SUBJECT_MAP: Record<string, string> = {
-  ento_131: 'angrau/entomology',
+const initialCloudRoutes = ((universityConfig as any).cloudSubjectRoutes || {}) as Record<
+  string,
+  string
+>;
+export const GCS_SUBJECT_MAP: Record<string, string> = { ...initialCloudRoutes };
+
+export const LOCAL_SUBJECT_MAP: Record<string, string> = {
+  ...(((universityConfig as any).localSubjectRoutes || {}) as Record<string, string>),
 };
 
 /**
  * Subject IDs whose content is served by the GCS Cloud Run backend.
- * These bypass /generated_resources and hit the canonical API instead.
  */
-export const GCS_BACKEND_SUBJECTS = new Set(Object.keys(GCS_SUBJECT_MAP));
+export const GCS_BACKEND_SUBJECTS = new Set<string>(Object.keys(GCS_SUBJECT_MAP));
 
-/**
- * Subjects whose live study content is served by the FastAPI backend
- * (Supabase-backed).
- */
 export const BACKEND_SUBJECTS = new Set<string>();
 
 export type DifficultyLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export const DIFFICULTY_LEVELS: DifficultyLevel[] = ['beginner', 'intermediate', 'advanced'];
 
-/** Maps the app's difficulty levels to the backend persona query values. */
 export const LEVEL_TO_PERSONA: Record<DifficultyLevel, 'Beginner' | 'Intermediate' | 'Advanced'> = {
   beginner: 'Beginner',
   intermediate: 'Intermediate',
@@ -44,8 +49,18 @@ export const LEVEL_TO_PERSONA: Record<DifficultyLevel, 'Beginner' | 'Intermediat
 
 const SESSION_KEY = 'sv_visible_boards';
 
+export function getRegistryTenantId(): string | null {
+  return detectTenantId();
+}
+
 export function getVisibleBoardIds(): string[] {
-  const raw = sessionStorage.getItem(SESSION_KEY);
+  const aliases = ((universityConfig as any).boardTenantAliases || {}) as Record<string, string>;
+  const regTenant = getRegistryTenantId();
+  if (regTenant) {
+    const mapped = aliases[regTenant];
+    return mapped && mapped !== regTenant ? [regTenant, mapped] : [regTenant];
+  }
+  const raw = cloudStorage.getItem(SESSION_KEY);
   if (raw) {
     try {
       return JSON.parse(raw) as string[];
@@ -53,20 +68,15 @@ export function getVisibleBoardIds(): string[] {
       // ignore
     }
   }
-  // Build-time override via env var (comma-separated board IDs)
   const envBoards = import.meta.env.VITE_VISIBLE_BOARDS;
   if (envBoards) {
-    return envBoards.split(',').map((s: string) => s.trim()).filter(Boolean);
+    return envBoards
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter(Boolean);
   }
   return universityConfig.defaultVisibleBoards || [];
 }
-
-const DEFAULT_SUBJECT_PATHS: Record<string, string> = {
-  neb_xii_biology: 'neb_nepal/class_12/biology',
-  ento_131: 'angrau',
-  entomology: 'angrau',
-  dbms: 'mlrit/dbms',
-};
 
 /** Files that are NOT level-specific — same content for all difficulty levels. */
 export const SHARED_RESOURCE_FILES = new Set([
@@ -74,9 +84,9 @@ export const SHARED_RESOURCE_FILES = new Set([
   'podcast_script.md',
   'youtube_links.md',
   'course_offerings.md',
-  'mindmap.md',       // lives at chapter root only
-  'detailed_view.md', // lives at chapter root only
-  'study_plan.md',    // lives at chapter root or Foundation
+  'mindmap.md',
+  'detailed_view.md',
+  'study_plan.md',
   'key_takeaways.md',
 ]);
 
@@ -85,21 +95,65 @@ export const LEVELED_RESOURCE_FILES = new Set([
   'summary.md',
   'study_guide.md',
   'question_bank.md',
-  'flashcards',  // special key — loaded from flashcards.json in the level subfolder
+  'flashcards',
 ]);
 
 export interface Chapter {
   number: number;
   name: string;
   title?: string;
+  shortTitle?: string;
+  description?: string;
+  estimatedMinutes?: number;
+  heroImageUrl?: string;
+  thumbnailUrl?: string;
+  mindmapImageUrl?: string;
   dir?: string;
   completed?: string[];
   resourceCount?: number;
+  topics?: Array<{
+    id: string;
+    label: string;
+    order: number;
+    topicNum?: number;
+    subtopics?: string[];
+    estimatedMinutes?: number;
+  }>;
+  videos?: Array<{
+    id: string;
+    title: string;
+    provider?: 'youtube' | 'gcs' | 'external';
+    videoId?: string;
+    gcsPath?: string;
+    url?: string;
+    videoUrl?: string;
+    thumbnail?: string;
+    thumbnailUrl?: string;
+    duration?: string;
+    durationSeconds?: number;
+    topics?: string[];
+    order?: number;
+  }>;
+  tools?: Record<string, any>;
 }
 
 export interface Subject {
   id: string;
   name: string;
+  code?: string;
+  subtitle?: string;
+  programLabel?: string;
+  description?: string;
+  credits?: number;
+  iconUrl?: string;
+  bannerUrl?: string;
+  thumbnailUrl?: string;
+  cardStyle?: {
+    accentColor?: string;
+    gradientFrom?: string;
+    gradientTo?: string;
+    badgeText?: string;
+  };
   path?: string;
   boardId?: string;
   boardName?: string;
@@ -116,6 +170,20 @@ export interface Manifest {
 export interface CatalogSubject {
   id: string;
   name: string;
+  code?: string;
+  subtitle?: string;
+  programLabel?: string;
+  description?: string;
+  credits?: number;
+  iconUrl?: string;
+  bannerUrl?: string;
+  thumbnailUrl?: string;
+  cardStyle?: {
+    accentColor?: string;
+    gradientFrom?: string;
+    gradientTo?: string;
+    badgeText?: string;
+  };
   path: string;
   chapterNumbers?: number[];
 }
@@ -130,7 +198,9 @@ export interface CatalogBoard {
   id: string;
   name: string;
   shortName?: string;
+  academicTerm?: string;
   logo?: string;
+  logoUrl?: string;
   classes: CatalogClass[];
 }
 
@@ -139,7 +209,6 @@ export interface Catalog {
   boards: CatalogBoard[];
 }
 
-/** Display tabs — leveled tabs first, then shared. */
 export const DEFAULT_RESOURCE_TABS: [string, string][] = [
   ['summary.md', 'Quick Study'],
   ['study_guide.md', 'Study Guide'],
@@ -157,130 +226,402 @@ export const DEFAULT_RESOURCE_TABS: [string, string][] = [
 let cachedManifest: Manifest | null = null;
 let cachedCatalog: Catalog | null = null;
 
-export async function getCatalog(): Promise<Catalog> {
-  if (cachedCatalog) return cachedCatalog;
+// ── Registry overlay (multi-tenant, published via sv-publish) ───────────
+interface RegistryOverlay {
+  board: CatalogBoard;
+  subjects: Subject[];
+}
+const registryOverlays: Record<string, RegistryOverlay> = {};
+const overlayPromises: Record<string, Promise<RegistryOverlay | null>> = {};
+const chapterDataCache: Record<string, Promise<ChapterResponse | null>> = {};
+
+function buildOverlay(
+  tenantId: string,
+  data: Awaited<ReturnType<typeof registryClient.getCatalog>>
+): RegistryOverlay {
+  let tenantName = tenantId;
+  let shortName = tenantId;
+  let academicTerm: string | undefined;
+  let logoUrl: string | undefined;
+  let defaultProgramLabel: string | undefined;
   try {
-    const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
-    const ct = res.headers.get('content-type') || '';
-    if (!res.ok || ct.includes('text/html')) {
-      return { version: 1, boards: [] };
-    }
-    const data = (await res.json()) as Catalog;
-    cachedCatalog = data;
-    return data;
+    const cfg = JSON.parse(cloudStorage.getItem(`tenant_cfg_${tenantId}`) || '{}');
+    tenantName = cfg.name || tenantId;
+    shortName = cfg.shortName || tenantName;
+    academicTerm = cfg.academicTerm;
+    logoUrl = cfg.logoUrl || cfg.branding?.logoUrl || cfg.assets?.logoUrl;
+    defaultProgramLabel = cfg.branding?.programLabel;
   } catch {
-    return { version: 1, boards: [] };
+    // ignore
   }
+
+  const nodeName = new Map<string, string>(
+    data.nodes.map((n: any) => [n.id, n.name || n.label || n.id])
+  );
+  const classes = new Map<string, CatalogClass>();
+  const subjects: Subject[] = [];
+
+  for (const s of data.subjects as any[]) {
+    const path = `${tenantId}/${s.id}`;
+    GCS_SUBJECT_MAP[s.id] = path;
+    GCS_BACKEND_SUBJECTS.add(s.id);
+    if (s.code) {
+      const codeSlug = String(s.code).toLowerCase().replace(/[^a-z0-9]+/g, '_');
+      GCS_SUBJECT_MAP[codeSlug] = path;
+      GCS_BACKEND_SUBJECTS.add(codeSlug);
+    }
+
+    const classId = s.parentNodeId || 'courses';
+    const className =
+      (s.parentNodeId && nodeName.get(s.parentNodeId)) ||
+      s.programLabel ||
+      s.subtitle ||
+      defaultProgramLabel ||
+      'Courses';
+    if (!classes.has(classId)) {
+      classes.set(classId, { id: classId, name: className, subjects: [] });
+    }
+
+    const chapters: Chapter[] = ((s.chapters || []) as any[]).map((c) => ({
+      number: c.number,
+      name: c.title,
+      title: c.title,
+      shortTitle: c.shortTitle,
+      description: c.description,
+      estimatedMinutes: c.estimatedMinutes,
+      heroImageUrl: c.heroImageUrl || c.assets?.heroImageUrl,
+      thumbnailUrl: c.thumbnailUrl || c.assets?.thumbnailUrl,
+      mindmapImageUrl: c.mindmapImageUrl || c.assets?.mindmapImageUrl,
+      dir: c.id,
+      completed: c.tools ? Object.keys(c.tools) : [],
+      resourceCount: c.tools ? Object.keys(c.tools).length : 7,
+      topics: c.topics,
+      videos: c.videos,
+      tools: c.tools,
+    }));
+
+    classes.get(classId)!.subjects.push({
+      id: s.id,
+      name: s.name,
+      code: s.code,
+      subtitle: s.subtitle || s.programLabel || className,
+      programLabel: s.programLabel || s.subtitle || className,
+      description: s.description,
+      credits: s.credits,
+      iconUrl: s.iconUrl || s.assets?.iconUrl,
+      bannerUrl: s.bannerUrl || s.assets?.bannerUrl,
+      thumbnailUrl: s.thumbnailUrl || s.assets?.thumbnailUrl,
+      cardStyle: s.cardStyle,
+      path,
+      chapterNumbers: chapters.map((c) => c.number),
+    });
+
+    subjects.push({
+      id: s.id,
+      name: s.name,
+      code: s.code,
+      subtitle: s.subtitle || s.programLabel || className,
+      programLabel: s.programLabel || s.subtitle || className,
+      description: s.description,
+      credits: s.credits,
+      iconUrl: s.iconUrl || s.assets?.iconUrl,
+      bannerUrl: s.bannerUrl || s.assets?.bannerUrl,
+      thumbnailUrl: s.thumbnailUrl || s.assets?.thumbnailUrl,
+      cardStyle: s.cardStyle,
+      path,
+      boardId: tenantId,
+      boardName: tenantName,
+      classId,
+      className,
+      chapters,
+    });
+  }
+
+  return {
+    board: {
+      id: tenantId,
+      name: tenantName,
+      shortName,
+      academicTerm,
+      logo: logoUrl,
+      logoUrl,
+      classes: [...classes.values()],
+    },
+    subjects,
+  };
+}
+
+async function loadRegistryOverlay(): Promise<RegistryOverlay | null> {
+  const tenantId = getRegistryTenantId();
+  if (!tenantId) return null;
+  if (registryOverlays[tenantId]) return registryOverlays[tenantId];
+  if (!overlayPromises[tenantId]) {
+    overlayPromises[tenantId] = registryClient
+      .getCatalog(tenantId)
+      .then((data) => {
+        const overlay = buildOverlay(tenantId, data);
+        registryOverlays[tenantId] = overlay;
+        return overlay;
+      })
+      .catch((err) => {
+        console.warn('[manifestService] Registry catalog unavailable:', err?.message);
+        return null;
+      })
+      .finally(() => {
+        delete overlayPromises[tenantId];
+      });
+  }
+  return overlayPromises[tenantId];
+}
+
+const resolvedChapterDataCache: Record<string, ChapterResponse | null> = {};
+
+/**
+ * Fetches and caches the v2 ChapterResponse (with signed GCS file URLs) for a chapter.
+ */
+export async function getRegistryChapterData(
+  subjectId: string,
+  chapterNumber: number
+): Promise<ChapterResponse | null> {
+  const tenantId = getRegistryTenantId();
+  if (!tenantId || !subjectId) return null;
+  await loadRegistryOverlay();
+  const normSub = resolveSubjectId(subjectId);
+  const chDir = getChapterDir(normSub, chapterNumber);
+  const key = `${tenantId}:${normSub}:${chDir}`;
+  if (!(key in chapterDataCache)) {
+    chapterDataCache[key] = registryClient
+      .getChapter(tenantId, normSub, chDir)
+      .then((res) => {
+        resolvedChapterDataCache[key] = res;
+        return res;
+      })
+      .catch(() => {
+        resolvedChapterDataCache[key] = null;
+        return null;
+      });
+  }
+  return chapterDataCache[key];
+}
+
+/**
+ * Synchronously resolves a relative asset path from the cached chapter response if loaded,
+ * or triggers background chapter resolution and returns null so callers can fall back cleanly.
+ */
+export function resolveAssetUrl(
+  subjectId: string,
+  chapterNumber: number,
+  relativePath: string
+): string | null {
+  const tenantId = getRegistryTenantId();
+  if (!tenantId || !subjectId || !relativePath) return null;
+  const normSub = resolveSubjectId(subjectId);
+  const chDir = getChapterDir(normSub, chapterNumber);
+  const key = `${tenantId}:${normSub}:${chDir}`;
+  const cached = resolvedChapterDataCache[key];
+  if (!cached) {
+    void getRegistryChapterData(subjectId, chapterNumber);
+    return null;
+  }
+  const cleanRel = relativePath.replace(/^\/+/, '');
+  return cached.files?.[cleanRel] || null;
+}
+
+export async function getCatalog(): Promise<Catalog> {
+  let base: Catalog = { version: 1, boards: [] };
+  if (cachedCatalog) {
+    base = cachedCatalog;
+  } else {
+    try {
+      const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && !ct.includes('text/html')) {
+        base = (await res.json()) as Catalog;
+        cachedCatalog = base;
+      }
+    } catch {
+      // fall through
+    }
+  }
+  const overlay = await loadRegistryOverlay();
+  const regTenant = getRegistryTenantId();
+
+  // Helper to enrich an overlay board with missing subject/board metadata from base catalog.json
+  const enrichOverlayBoard = (ovBoard: CatalogBoard): CatalogBoard => {
+    const baseBoard = base.boards.find(
+      (b) => b.id === ovBoard.id || b.id.startsWith(`${ovBoard.id}_`)
+    );
+    if (!baseBoard) return ovBoard;
+    const baseSubjectsById = new Map<string, CatalogSubject>();
+    for (const cls of baseBoard.classes) {
+      for (const sub of cls.subjects) {
+        baseSubjectsById.set(sub.id.toLowerCase(), sub);
+        if (sub.code) {
+          baseSubjectsById.set(sub.code.toLowerCase().replace(/[^a-z0-9]+/g, '_'), sub);
+        }
+      }
+    }
+    return {
+      ...ovBoard,
+      logo: ovBoard.logo || baseBoard.logo,
+      logoUrl: ovBoard.logoUrl || baseBoard.logoUrl,
+      academicTerm: ovBoard.academicTerm || baseBoard.academicTerm,
+      classes: ovBoard.classes.map((cls) => ({
+        ...cls,
+        subjects: cls.subjects.map((sub) => {
+          const codeKey = sub.code ? sub.code.toLowerCase().replace(/[^a-z0-9]+/g, '_') : '';
+          const match =
+            baseSubjectsById.get(sub.id.toLowerCase()) ||
+            (codeKey ? baseSubjectsById.get(codeKey) : undefined);
+          if (!match) return sub;
+          return {
+            ...match,
+            ...sub,
+            iconUrl: sub.iconUrl || match.iconUrl,
+            bannerUrl: sub.bannerUrl || match.bannerUrl,
+            thumbnailUrl: sub.thumbnailUrl || match.thumbnailUrl,
+            subtitle: match.subtitle || sub.subtitle,
+            programLabel: match.programLabel || sub.programLabel,
+            description: sub.description || match.description,
+            cardStyle: sub.cardStyle || match.cardStyle,
+          };
+        }),
+      })),
+    };
+  };
+
+  if (regTenant) {
+    if (overlay?.board) {
+      return { version: 1, boards: [enrichOverlayBoard(overlay.board)] };
+    }
+    const matched = base.boards.filter(
+      (b) => b.id === regTenant || b.id.startsWith(`${regTenant}_`)
+    );
+    if (matched.length > 0) {
+      return { version: 1, boards: matched };
+    }
+  }
+
+  if (!overlay) return base;
+  const enrichedBoard = enrichOverlayBoard(overlay.board);
+  return {
+    ...base,
+    boards: [
+      ...base.boards.filter(
+        (b) => b.id !== enrichedBoard.id && !b.id.startsWith(`${enrichedBoard.id}_`)
+      ),
+      enrichedBoard,
+    ],
+  };
 }
 
 export async function getManifest(): Promise<Manifest> {
-  if (cachedManifest) return cachedManifest;
-  try {
-    const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
-    const ct = res.headers.get('content-type') || '';
-    if (!res.ok || ct.includes('text/html')) {
-      return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+  let base: Manifest = { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+  if (cachedManifest) {
+    base = cachedManifest;
+  } else {
+    try {
+      const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+      const ct = res.headers.get('content-type') || '';
+      if (res.ok && !ct.includes('text/html')) {
+        base = (await res.json()) as Manifest;
+        cachedManifest = base;
+      }
+    } catch {
+      // fall through
     }
-    const data = (await res.json()) as Manifest;
-    cachedManifest = data;
-    return data;
-  } catch {
-    return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
   }
+  const overlay = await loadRegistryOverlay();
+  const regTenant = getRegistryTenantId();
+
+  // Enrich overlay subjects & chapters with fallback metadata from base manifest.json
+  const enrichOverlaySubjects = (ovSubjects: Subject[]): Subject[] => {
+    return ovSubjects.map((ovSub) => {
+      const ovCode = ovSub.code ? ovSub.code.toLowerCase().replace(/[^a-z0-9]+/g, '_') : '';
+      const baseSub = base.subjects.find(
+        (bs) =>
+          bs.id.toLowerCase() === ovSub.id.toLowerCase() ||
+          (ovCode && bs.id.toLowerCase() === ovCode) ||
+          (bs.code && bs.code.toLowerCase().replace(/[^a-z0-9]+/g, '_') === ovSub.id.toLowerCase())
+      );
+      if (!baseSub) return ovSub;
+
+      const enrichedChapters: Chapter[] = ovSub.chapters.map((ovCh) => {
+        const baseCh = baseSub.chapters.find((bc) => bc.number === ovCh.number);
+        if (!baseCh) return ovCh;
+        return {
+          ...baseCh,
+          ...ovCh,
+          shortTitle: baseCh.shortTitle || ovCh.shortTitle,
+          description: ovCh.description || baseCh.description,
+          heroImageUrl: ovCh.heroImageUrl || baseCh.heroImageUrl,
+          thumbnailUrl: ovCh.thumbnailUrl || baseCh.thumbnailUrl,
+          mindmapImageUrl: ovCh.mindmapImageUrl || baseCh.mindmapImageUrl,
+          topics: ovCh.topics && ovCh.topics.length > 0 ? ovCh.topics : baseCh.topics,
+          videos: ovCh.videos && ovCh.videos.length > 0 ? ovCh.videos : baseCh.videos,
+        };
+      });
+
+      return {
+        ...baseSub,
+        ...ovSub,
+        iconUrl: ovSub.iconUrl || baseSub.iconUrl,
+        bannerUrl: ovSub.bannerUrl || baseSub.bannerUrl,
+        thumbnailUrl: ovSub.thumbnailUrl || baseSub.thumbnailUrl,
+        subtitle: baseSub.subtitle || ovSub.subtitle,
+        programLabel: baseSub.programLabel || ovSub.programLabel,
+        description: ovSub.description || baseSub.description,
+        cardStyle: ovSub.cardStyle || baseSub.cardStyle,
+        chapters: enrichedChapters,
+      };
+    });
+  };
+
+  if (regTenant && overlay?.subjects && overlay.subjects.length > 0) {
+    return { ...base, subjects: enrichOverlaySubjects(overlay.subjects) };
+  }
+  if (!overlay) return base;
+  const enrichedOverlaySubjects = enrichOverlaySubjects(overlay.subjects);
+  const ids = new Set(enrichedOverlaySubjects.map((s) => s.id));
+  const merged: Manifest = {
+    ...base,
+    subjects: [...base.subjects.filter((s) => !ids.has(s.id)), ...enrichedOverlaySubjects],
+  };
+  cachedManifest = merged;
+  return merged;
 }
 
 export function resolveSubjectId(id: string): string {
   if (!id) return '';
   const lower = id.toLowerCase();
-  const aliases: Record<string, string> = {
-    physics: 'anu_physics',
-    characterization: 'anu_characterization',
-    mba: 'management',
-    msc: 'anu_physics',
-    entomology: 'ento_131',
-    dbms: 'dbms',
-  };
-  return aliases[lower] || id;
+  const regTenant = getRegistryTenantId();
+  if (regTenant && registryOverlays[regTenant]) {
+    const subjects = registryOverlays[regTenant].subjects;
+    const exact = subjects.find((s) => s.id.toLowerCase() === lower);
+    if (exact) return exact.id;
+    const byCode = subjects.find(
+      (s) =>
+        s.code &&
+        s.code.toLowerCase().replace(/[^a-z0-9]+/g, '_') === lower.replace(/[^a-z0-9]+/g, '_')
+    );
+    if (byCode) return byCode.id;
+    const byPrefix = subjects.find(
+      (s) => s.id.toLowerCase().startsWith(lower.slice(0, 4)) || lower.startsWith(s.id.toLowerCase().slice(0, 4))
+    );
+    if (byPrefix) return byPrefix.id;
+  }
+  return id;
 }
 
 export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
   const targetId = resolveSubjectId(subjectId);
   const subject = manifest.subjects.find((s) => s.id === targetId || s.id === subjectId);
-
-  if (targetId === 'dbms' || targetId.includes('dbms')) {
-    return [
-      {
-        number: 1,
-        name: 'Database System Concepts, ER Model & Relational Design',
-        dir: 'chapter_01',
-        completed: [
-          'summary',
-          'detailed_view',
-          'flashcards',
-          'quiz',
-          'podcasts',
-          'mindmap',
-          'qbank',
-          'pyq',
-          'prep_exam',
-          'pre_final_test',
-          'key_takeaways',
-          'study_plan',
-        ],
-        resourceCount: 12,
-      },
-    ];
-  }
-
-  if (targetId === 'ento_131' || targetId.includes('ento')) {
-    const entoChapters: Chapter[] = [
-      {
-        number: 1,
-        name: 'Insect Digestive System & Anatomy',
-        dir: 'chapter_01',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
-        resourceCount: 7,
-      },
-      {
-        number: 2,
-        name: 'Insect Morphology & Structural Taxonomy',
-        dir: 'chapter_02',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'mindmap'],
-        resourceCount: 6,
-      },
-      {
-        number: 3,
-        name: 'Weathering',
-        dir: 'chapter_03',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
-        resourceCount: 7,
-      },
-      {
-        number: 4,
-        name: 'Pollination',
-        dir: 'chapter_04',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz', 'podcasts', 'videos', 'mindmap'],
-        resourceCount: 7,
-      },
-    ];
-
-    const map = new Map<number, Chapter>();
-    for (const ch of entoChapters) {
-      map.set(ch.number, ch);
-    }
-    for (const ch of subject?.chapters || []) {
-      if (ch.number === 11) continue;
-      map.set(ch.number, ch);
-    }
-    return Array.from(map.values()).sort((a, b) => a.number - b.number);
-  }
-
   if (!subject?.chapters) return [];
-  // Deduplicate by chapter number, prioritizing entries with resources
+
   const map = new Map<number, Chapter>();
   for (const ch of subject.chapters) {
     const existing = map.get(ch.number);
-    if (!existing || ((ch.resourceCount ?? 0) > (existing.resourceCount ?? 0))) {
+    if (!existing || (ch.resourceCount ?? 0) > (existing.resourceCount ?? 0)) {
       map.set(ch.number, ch);
     }
   }
@@ -299,13 +640,17 @@ export function getSubject(manifest: Manifest, subjectId: string): Subject | und
 
 export function getSubjectResourcePath(subjectId: string): string {
   const targetId = resolveSubjectId(subjectId);
-  if (targetId === 'dbms' || targetId.includes('dbms')) {
-    return 'mlrit/dbms';
+  if (GCS_SUBJECT_MAP[targetId]) return GCS_SUBJECT_MAP[targetId];
+  if (GCS_SUBJECT_MAP[subjectId]) return GCS_SUBJECT_MAP[subjectId];
+
+  const regTenant = getRegistryTenantId();
+  if (regTenant) {
+    return `${regTenant}/${targetId}`;
   }
-  if (targetId === 'ento_131' || targetId.includes('ento')) {
-    return 'angrau';
-  }
-  const manifestPath = cachedManifest?.subjects.find((s) => s.id === targetId || s.id === subjectId)?.path;
+
+  const manifestPath = cachedManifest?.subjects.find(
+    (s) => s.id === targetId || s.id === subjectId
+  )?.path;
   if (manifestPath) return manifestPath;
 
   for (const board of cachedCatalog?.boards ?? []) {
@@ -315,19 +660,29 @@ export function getSubjectResourcePath(subjectId: string): string {
     }
   }
 
-  return DEFAULT_SUBJECT_PATHS[targetId] ?? DEFAULT_SUBJECT_PATHS[subjectId] ?? targetId;
+  return targetId;
 }
 
 export function getLocalSubjectBaseUrl(subjectId: string): string {
+  const targetId = resolveSubjectId(subjectId);
+  if (LOCAL_SUBJECT_MAP[targetId]) return `${BASE}/${LOCAL_SUBJECT_MAP[targetId]}`;
+  if (LOCAL_SUBJECT_MAP[subjectId]) return `${BASE}/${LOCAL_SUBJECT_MAP[subjectId]}`;
+  const manifestPath = cachedManifest?.subjects.find(
+    (s) => s.id === targetId || s.id === subjectId
+  )?.path;
+  if (manifestPath) return `${BASE}/${manifestPath}`;
   return `${BASE}/${getSubjectResourcePath(subjectId)}`;
 }
 
 export function getSubjectBaseUrl(subjectId: string): string {
-  // GCS subjects are served by the Cloud Run API — return its base path.
-  // PodcastsView appends `/${chapterDir}/podcasts/filename.m4a` which maps
-  // directly to the canonical API route: /api/content/{uni}/{subj}/{ch}/podcasts/...
-  if (GCS_BACKEND_SUBJECTS.has(subjectId)) {
-    return `${GCS_API_BASE}/api/content/${GCS_SUBJECT_MAP[subjectId]}`;
+  const targetId = resolveSubjectId(subjectId);
+  if (GCS_BACKEND_SUBJECTS.has(targetId) || GCS_BACKEND_SUBJECTS.has(subjectId)) {
+    const mapped = GCS_SUBJECT_MAP[targetId] || GCS_SUBJECT_MAP[subjectId];
+    return `${GCS_API_BASE}/api/content/${mapped}`;
+  }
+  const regTenant = getRegistryTenantId();
+  if (regTenant) {
+    return `${GCS_API_BASE}/api/content/${regTenant}/${targetId}`;
   }
   return `${BASE}/${getSubjectResourcePath(subjectId)}`;
 }
@@ -337,7 +692,8 @@ export interface ChapterVideo {
   id: string;
   title: string;
   ytId: string;
-  /** Directory name under the chapter dir holding this video's assets. */
+  videoUrl?: string;
+  thumbnailUrl?: string;
   dir: string;
   topics?: string[];
   duration?: string;
@@ -347,10 +703,16 @@ const chapterVideosCache: Record<string, ChapterVideo[]> = {};
 
 export async function getChapterVideos(
   subjectId: string,
-  chapterNumber: number,
+  chapterNumber: number
 ): Promise<ChapterVideo[]> {
-  const key = `${subjectId}_${chapterNumber}`;
+  const normSubject = resolveSubjectId(subjectId) || subjectId;
+  const key = `${normSubject}_${chapterNumber}`;
   if (key in chapterVideosCache) return chapterVideosCache[key];
+
+  if (GCS_BACKEND_SUBJECTS.has(subjectId) || GCS_BACKEND_SUBJECTS.has(normSubject)) {
+    chapterVideosCache[key] = [];
+    return [];
+  }
 
   if (!cachedManifest) await getManifest();
   const url = `${getSubjectBaseUrl(subjectId)}/${getChapterDir(subjectId, chapterNumber)}/videos.json`;
@@ -368,7 +730,7 @@ export async function getChapterVideos(
       }
     }
   } catch {
-    // No registry, malformed JSON, or offline — treat the chapter as unsegmented.
+    // treat as unsegmented
   }
 
   chapterVideosCache[key] = videos;
@@ -376,13 +738,21 @@ export async function getChapterVideos(
 }
 
 export function getChapterDir(subjectId: string, chapterNumber: number): string {
+  const regTenant = getRegistryTenantId();
+  if (regTenant && registryOverlays[regTenant]) {
+    const sub = registryOverlays[regTenant].subjects.find(
+      (s) => s.id === subjectId || s.id === resolveSubjectId(subjectId)
+    );
+    const ch = sub?.chapters.find((c) => c.number === chapterNumber);
+    if (ch?.dir) return ch.dir;
+  }
   const subjectChapters = cachedManifest ? getChapters(cachedManifest, subjectId) : [];
   const chapter = subjectChapters.find((c) => c.number === chapterNumber);
   return chapter?.dir ?? `chapter_${String(chapterNumber).padStart(2, '0')}`;
 }
 
 export function getResourceTabs(manifest: Manifest): [string, string][] {
-  const isMooc = sessionStorage.getItem('sv_moocs_mode') === 'true';
+  const isMooc = cloudStorage.getItem('sv_moocs_mode') === 'true';
   if (isMooc) {
     return [
       ['youtube_links.md', 'YouTube Links'],
@@ -465,22 +835,24 @@ export async function getCourses(): Promise<Course[]> {
     for (const klass of board.classes) {
       for (const subject of klass.subjects) {
         const manifestSubject = manifest.subjects.find((s) => s.id === subject.id);
-        const chapterCount = manifestSubject?.chapters.length ?? subject.chapterNumbers?.length ?? 0;
+        const chapterCount =
+          manifestSubject?.chapters.length ?? subject.chapterNumbers?.length ?? 0;
         const meta = metas[subject.id];
 
         const defaultMeta: CourseMeta = {
-          subtitle: `Learn about ${subject.name}`,
-          description: `A comprehensive course on ${subject.name}.`,
-          discipline: 'General',
+          subtitle: subject.subtitle || `Learn about ${subject.name}`,
+          description: subject.description || `A comprehensive course on ${subject.name}.`,
+          discipline: subject.programLabel || 'General',
           level: 'intermediate',
           instructor: {
             name: 'Faculty Member',
             title: 'Instructor',
           },
           durationHours: chapterCount > 0 ? chapterCount * 4 : 30,
-          credits: 3,
+          credits: subject.credits || 3,
           language: 'English',
-          accent: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          thumbnail: subject.iconUrl || subject.thumbnailUrl,
+          accent: subject.cardStyle?.accentColor || 'linear-gradient(135deg, #7c3aed, #ec4899)',
           tags: [],
           enrolled: 0,
           featured: false,
@@ -508,19 +880,6 @@ export async function getCourses(): Promise<Course[]> {
 
 export async function getCourseById(id: string): Promise<Course | null> {
   const courses = await getCourses();
-  const found = courses.find((c) => c.id === id);
-  if (found) return found;
-
-  const aliases: Record<string, string> = {
-    physics: 'anu_physics',
-    characterization: 'anu_characterization',
-    mba: 'management',
-    msc: 'anu_physics',
-    entomology: 'ento_131',
-  };
-  const targetId = aliases[id?.toLowerCase()];
-  if (targetId) {
-    return courses.find((c) => c.id === targetId) || null;
-  }
-  return null;
+  const targetId = resolveSubjectId(id);
+  return courses.find((c) => c.id === id || c.id === targetId) || null;
 }

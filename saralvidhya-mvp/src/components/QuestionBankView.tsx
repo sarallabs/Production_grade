@@ -84,6 +84,13 @@ export default function QuestionBankView({
     [appliedChapters],
   );
 
+  const currentSelectedCount = useMemo(
+    () => Object.values(selectedChapters).reduce((sum, list) => sum + list.length, 0),
+    [selectedChapters],
+  );
+
+  const isSingleChapterMode = Boolean(currentSubjectId && currentChapterNumber) || (selectedCount === 1 && currentSelectedCount === 1);
+
   const focusedMode = Boolean(currentSubjectId);
   const focusedSubject = useMemo(() => {
     if (!focusedMode) return null;
@@ -222,9 +229,17 @@ export default function QuestionBankView({
 
   return (
     <div className="qbank-root" ref={qbankContainerRef}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', flexWrap: 'wrap', gap: '20px', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flex: '1 1 300px' }}>
-          {/* Icon badge */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        marginBottom: '28px', 
+        flexWrap: 'wrap', 
+        gap: '20px', 
+        justifyContent: 'space-between',
+        position: 'relative'
+      }}>
+        {/* Left: Icon badge & Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: '280px' }}>
           <div style={{
             background: `linear-gradient(135deg, ${G.mid} 0%, ${G.dark} 100%)`,
             borderRadius: '16px',
@@ -235,7 +250,8 @@ export default function QuestionBankView({
             justifyContent: 'center',
             boxShadow: `0 8px 16px rgba(47,79,64,0.28)`,
             position: 'relative',
-            border: `3px solid ${G.paleBorder}`
+            border: `3px solid ${G.paleBorder}`,
+            flexShrink: 0
           }}>
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
@@ -253,155 +269,81 @@ export default function QuestionBankView({
           </div>
         </div>
 
-        {/* Action controls row: Chapters, Global Mark Toggles, Expand/Collapse */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
-          {focusedSubject && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div className="qbank-simple-chapter-row" style={{ gap: '8px', display: 'flex' }}>
-                {focusedSubject.chapters.map((chapter) => {
-                  const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
-                  return (
-                    <button
-                      key={`${focusedSubject.id}-${chapter.number}`}
-                      onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
-                      className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
-                      title={chapter.name}
-                      style={{
-                        width: '34px',
-                        height: '34px',
-                        minWidth: '34px',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
-                        background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
-                        color: selected ? 'white' : G.dark,
-                        boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
-                        transition: 'all 0.18s ease',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {chapter.number}
-                    </button>
-                  );
-                })}
-              </div>
-              <button 
-                type="button" 
-                onClick={handleGo} 
-                disabled={loading || (selectedChapters[focusedSubject.id] ?? []).length === 0}
-                style={{
-                  background: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0
-                    ? G.pale
-                    : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
-                  color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 18px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
-                  opacity: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 0.7 : 1,
-                  boxShadow: `0 2px 8px rgba(47,79,64,0.2)`,
-                  transition: 'all 0.18s ease',
-                }}
-              >
-                {loading ? '...' : 'Go'}
-              </button>
-            </div>
-          )}
-
-          {/* Global 2M / 5M / 10M Mark Toggle */}
-          {questions.length > 0 && (
-            <div
-              style={{
-                display: 'flex',
-                background: G.pale,
-                border: `1.5px solid ${G.paleBorder}`,
-                borderRadius: '999px',
-                padding: '3px',
-                gap: '2px',
-                boxShadow: '0 2px 6px rgba(47,79,64,0.08)',
-              }}
-            >
-              {[
-                { key: 'all' as const, label: 'All Marks' },
-                { key: 'short' as const, label: '2M' },
-                { key: 'long' as const, label: '5M' },
-                { key: 'ten' as const, label: '10M' },
-              ].map((tier) => {
-                const isSelected = globalMark === tier.key;
+        {/* Center: Chapter Selection Buttons (hidden when only 1 chapter is selected) */}
+        {focusedSubject && !isSingleChapterMode && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '10px',
+            margin: '0 auto',
+            flex: '0 1 auto'
+          }}>
+            <div className="qbank-simple-chapter-row" style={{ gap: '8px', display: 'flex' }}>
+              {focusedSubject.chapters.map((chapter) => {
+                const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
                 return (
                   <button
-                    key={tier.key}
-                    type="button"
-                    onClick={() => handleGlobalMarkChange(tier.key)}
-                    title={tier.key === 'all' ? 'Show all question marks' : `Switch all cards to ${tier.label}`}
+                    key={`${focusedSubject.id}-${chapter.number}`}
+                    onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
+                    className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
+                    title={chapter.name}
                     style={{
-                      border: 'none',
-                      cursor: 'pointer',
-                      borderRadius: '999px',
-                      padding: '5px 14px',
-                      fontSize: '0.82rem',
-                      fontWeight: isSelected ? 700 : 600,
-                      background: isSelected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : 'transparent',
-                      color: isSelected ? 'white' : G.dark,
-                      boxShadow: isSelected ? '0 2px 6px rgba(47,79,64,0.22)' : 'none',
+                      width: '34px',
+                      height: '34px',
+                      minWidth: '34px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
+                      background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
+                      color: selected ? 'white' : G.dark,
+                      boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
                       transition: 'all 0.18s ease',
+                      cursor: 'pointer',
                     }}
                   >
-                    {tier.label}
+                    {chapter.number}
                   </button>
                 );
               })}
             </div>
-          )}
-
-          {/* Expand All / Collapse All Toggle Button */}
-          {questions.length > 0 && (
-            <button
-              type="button"
-              onClick={toggleAllAnswers}
+            <button 
+              type="button" 
+              onClick={handleGo} 
+              disabled={loading || (selectedChapters[focusedSubject.id] ?? []).length === 0}
               style={{
-                border: `1px solid ${G.paleBorder}`,
+                background: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0
+                  ? G.pale
+                  : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
+                color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
+                border: 'none',
                 borderRadius: '8px',
-                padding: '6px 14px',
-                fontSize: '0.82rem',
+                padding: '6px 18px',
+                fontSize: '0.9rem',
                 fontWeight: 600,
-                background: 'white',
-                color: G.dark,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 1px 4px rgba(47,79,64,0.06)',
+                cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
+                opacity: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 0.7 : 1,
+                boxShadow: `0 2px 8px rgba(47,79,64,0.2)`,
                 transition: 'all 0.18s ease',
               }}
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {allExpanded ? (
-                  <>
-                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
-                    <line x1="1" y1="1" x2="23" y2="23" />
-                  </>
-                ) : (
-                  <>
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </>
-                )}
-              </svg>
-              {allExpanded ? 'Collapse All' : 'Expand All'}
+              {loading ? '...' : 'Go'}
             </button>
-          )}
-        </div>
+          </div>
+        )}
+
+        {/* Right Balance Spacer: Balances the left title for true centering */}
+        {!isSingleChapterMode && (
+          <div style={{ minWidth: '280px', visibility: 'hidden', pointerEvents: 'none' }} className="qbank-header-balance" aria-hidden="true" />
+        )}
       </div>
 
-      {!focusedSubject && selectedSubjects.length > 0 ? (
+      {!focusedSubject && !isSingleChapterMode && selectedSubjects.length > 0 ? (
         <div className="qbank-section" style={{ marginBottom: '40px' }}>
           <div className="qbank-section-label" style={{ marginBottom: '16px', fontWeight: 600, color: G.dark }}>Chapter selection for chosen subjects</div>
           <div className="qbank-card-grid">
@@ -469,9 +411,9 @@ export default function QuestionBankView({
             </button>
           </div>
         </div>
-      ) : (
+      ) : (!focusedSubject && !isSingleChapterMode) ? (
         <div style={{ marginBottom: '24px', color: '#6B7280' }}>Select subjects to see chapters and load question bank content.</div>
-      )}
+      ) : null}
 
       {loading ? (
         <div className="loading-state">Loading selected question bank content…</div>

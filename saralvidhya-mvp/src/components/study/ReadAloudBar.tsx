@@ -6,6 +6,8 @@ import {
   googleTtsResume,
 } from "@/services/googleTtsService";
 import type { ToolId } from "@/components/ToolsMenu";
+import { getSpeakableDomText } from "@/utils/readAloudDom";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -22,44 +24,73 @@ export function preprocessSummaryText(md: string): string {
   // Remove " — Chapter Name" from "Quick Summary — Chapter Name"
   processed = processed.replace(/^(#*\s*(?:Quick|Detailed)\s+Summary)\s*—[^\n]*/im, "$1");
   // Remove Persona line and the following horizontal rule
-  processed = processed.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/ig, "");
+  processed = processed.replace(/^[#*\s]*Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/gim, "");
+  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
   return processed;
 }
 
 /**
- * Strips markdown from text for reading aloud.
+ * Strips markdown and metadata from text for accurate text-to-speech reading and highlighting synchronization.
  */
 export function stripMarkdown(md: string): string {
   if (!md) return "";
   let t = md;
 
-  // 1. Remove HTML img tags and all HTML tags (including huge base64 data URIs) BEFORE stripping '>'
+  // 1. Remove YAML frontmatter at document start
+  t = t.replace(/^---[\s\S]*?---\n*/m, "");
+
+  // 2. Remove Persona / D_target / Word count metadata lines
+  t = t.replace(/^[#*\s]*(?:Persona|D_target|Word count|Bloom|Alteration)[^\n]*$/gmi, "");
+  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  t = t.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*/gi, "");
+
+  // 3. Remove Mermaid diagrams and code blocks
+  t = t.replace(/```mermaid[\s\S]*?```/gi, "");
+  t = t.replace(/```[\s\S]*?```/g, "");
+
+  // 4. Remove HTML figure tags, img tags, and all HTML tags (including huge base64 data URIs)
+  t = t.replace(/<figure\b[\s\S]*?<\/figure>/gi, "");
   t = t.replace(/<img\b[^>]*>/gi, "");
+  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
   t = t.replace(/<[^>]+>/g, " ");
 
-  // 2. Remove markdown images: ![alt](url)
+  // 5. Remove markdown images: ![alt](url)
   t = t.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, "");
 
-  // 3. Remove standalone base64 data URIs if any leaked
-  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
+  // 6. Remove Markdown table separator lines (e.g. | :--- | :---: | ---: | or |---|---|)
+  // This is vital: DOM tables do not contain these separator tokens!
+  t = t.replace(/^[ \t]*\|?\s*:?-{2,}:?\s*(\|?\s*:?-{2,}:?\s*)+\|?[ \t]*$/gm, "");
 
-  // 4. Drop list bullets / ordered-list numbers — the rendered page doesn't show
-  //    them as text, so keeping them would shift the word highlight.
+  // 7. Clean Markdown table rows: strip outer pipes and turn internal pipes into spaces
+  t = t.replace(/^[ \t]*\|/gm, "");
+  t = t.replace(/\|[ \t]*$/gm, "");
+  t = t.replace(/\|/g, " ");
+
+  // 8. Clean LaTeX math formulas
+  t = t.replace(/\$\$[\s\S]*?\$\$/g, " ");
+  t = t.replace(/\$[^$\n]+\$/g, " ");
+  t = t.replace(/\\[a-zA-Z]+/g, " ");
+  t = t.replace(/[{}]/g, "");
+
+  // 9. Drop list bullets / ordered-list numbers — the rendered page doesn't show
+  // them as text, so keeping them would shift the word highlight.
   t = t.replace(/^[ \t]*[-*+][ \t]+/gm, "").replace(/^[ \t]*\d+[.)][ \t]+/gm, "");
 
-  // 5. Standard markdown stripping
-  return t
-    .replace(/```[\s\S]*?```/g, "")
+  // 10. Standard markdown syntax stripping
+  t = t
     .replace(/#{1,6}\s*/g, "")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\*([^*]+)\*/g, "$1")
     .replace(/_([^_]+)_/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    .replace(/[>*_~`#|]/g, "")
+    .replace(/[>*_~`#]/g, "")
     .replace(/---+/g, "")
+    .replace(/[ \t]+/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
+
+  return t;
 }
 
 /**
@@ -73,6 +104,7 @@ export default function ReadAloudBar({
   onHighlightChange,
   activeTool,
   onSwitchTool,
+  isPurpleTheme,
 }: {
   text: string;
   subjectId: string;
@@ -85,10 +117,12 @@ export default function ReadAloudBar({
   }) => void;
   activeTool?: string;
   onSwitchTool?: (tool: ToolId) => void;
+  isPurpleTheme?: boolean;
 }) {
   const [playbackState, setPlaybackState] = useState<
     "idle" | "playing" | "paused"
   >("idle");
+  const isPurple = isPurpleTheme ?? (subjectId === "dbms" || subjectId.includes("dbms"));
   const lang = SUBJECT_LANG[subjectId] ?? "en-IN";
   const playbackRef = useRef<"idle" | "playing" | "paused">("idle");
   const cooldownRef = useRef(false);
@@ -139,19 +173,14 @@ export default function ReadAloudBar({
         endWord: Math.max(0, lastHighlightRef.current.startWord),
       });
     } else {
-      const clean = stripMarkdown(text);
+      const clean = getSpeakableDomText() ?? stripMarkdown(text);
       if (!clean) {
         cooldownRef.current = false;
         return;
       }
       cleanTextRef.current = clean;
-      const savedProgress = Number(
-        localStorage.getItem(progressStorageKey) || "0",
-      );
-      const startChar = Number.isFinite(savedProgress)
-        ? Math.max(0, Math.min(clean.length - 1, savedProgress))
-        : 0;
-      resumeCharRef.current = startChar;
+      const startChar = 0;
+      resumeCharRef.current = 0;
       const ranges: { start: number; end: number }[] = [];
       const re = /\S+/g;
       let m: RegExpExecArray | null;
@@ -198,7 +227,7 @@ export default function ReadAloudBar({
           // Only clear saved progress if audio ended naturally (not stopped by persona switch)
           if (!stoppedExternallyRef.current) {
             setPlayback("idle");
-            localStorage.removeItem(progressStorageKey);
+            cloudStorage.removeItem(progressStorageKey);
             resumeCharRef.current = 0;
             onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
           }
@@ -213,12 +242,12 @@ export default function ReadAloudBar({
           );
           latestGlobalCharRef.current = globalCharIndex;
 
-          // Throttle synchronous localStorage writes to avoid main-thread jank
+          // Throttle cloudStorage writes to avoid main-thread jank
           const now = Date.now();
           if (now - lastSavedTsRef.current > 1200) {
             lastSavedTsRef.current = now;
             try {
-              localStorage.setItem(progressStorageKey, String(globalCharIndex));
+              cloudStorage.setItem(progressStorageKey, String(globalCharIndex));
             } catch {}
           }
 
@@ -239,9 +268,12 @@ export default function ReadAloudBar({
             }
           }
 
-          // Single active word — only notify parent when the active word actually changes
+          // Single active word. Ignore tiny backward jitter (<=2 words) but always
+          // resync on larger corrections so the highlight can never get stuck ahead.
           const windowStart = Math.max(0, idx);
-          if (lastHighlightRef.current.startWord !== windowStart) {
+          const prevWord = lastHighlightRef.current.startWord;
+          const isTinyBackJitter = windowStart < prevWord && prevWord - windowStart <= 2;
+          if (!isTinyBackJitter && prevWord !== windowStart) {
             lastHighlightRef.current = {
               startWord: windowStart,
               endWord: windowStart,
@@ -264,7 +296,7 @@ export default function ReadAloudBar({
     stoppedExternallyRef.current = false;
     googleTtsStop();
     setPlayback("idle");
-    localStorage.removeItem(progressStorageKey);
+    cloudStorage.removeItem(progressStorageKey);
     resumeCharRef.current = 0;
     onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
   };
@@ -274,7 +306,7 @@ export default function ReadAloudBar({
       // Flush any pending progress before unmount
       if (latestGlobalCharRef.current > 0) {
         try {
-          localStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
+          cloudStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
         } catch {}
       }
       // Mark as externally stopped so onEnd doesn't clear saved progress
@@ -283,82 +315,151 @@ export default function ReadAloudBar({
     };
   }, [progressStorageKey]);
 
+  const durationString = useMemo(() => {
+    if (!text) return "3:42";
+    const clean = stripMarkdown(text);
+    const words = clean.split(/\s+/).filter(Boolean).length;
+    if (words === 0) return "3:42";
+    // Average speech rate: ~140 words per minute
+    const totalSeconds = Math.max(30, Math.round((words / 140) * 60));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }, [text]);
+
   if (!text) return null;
 
   return (
-    <div className="read-aloud-toolbar-row">
-      <div
-        className="read-aloud-toolbar-split"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === " " || e.key === "Enter") {
-            e.preventDefault();
-            handlePlayPause();
-          }
-          if (e.key.toLowerCase() === "s") {
-            e.preventDefault();
-            handleStop();
-          }
-        }}
-        aria-label="Read aloud controls"
-      >
-
-        <div className="read-aloud-tool-pill read-aloud-tool-pill--transport">
-          <div className="read-aloud-play-cluster">
-            <button
-              onClick={handlePlayPause}
-              className="read-aloud-play-btn"
-              type="button"
-              aria-label={
-                playbackState === "playing" ? "Pause reading" : "Play reading"
-              }
-              data-label={playbackState === "playing" ? "Pause" : "Read aloud"}
-            >
-              {playbackState === "playing" ? (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-                </svg>
-              ) : (
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  style={{
-                    marginLeft: playbackState === "paused" ? "0" : "2px",
-                  }}
-                >
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              )}
-            </button>
-
-            {playbackState !== "idle" && (
-              <button
-                onClick={handleStop}
-                className="read-aloud-action-btn"
-                type="button"
-                aria-label="Stop reading"
-                data-label="Stop"
-              >
-                <svg
-                  width="18"
-                  height="18"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
-                  <path d="M6 6h12v12H6z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "6px",
+      }}
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          handlePlayPause();
+        }
+        if (e.key.toLowerCase() === "s") {
+          e.preventDefault();
+          handleStop();
+        }
+      }}
+      aria-label="Read aloud controls"
+    >
+      <style>{`
+        .sv-read-aloud-icon-wrap {
+          position: relative;
+          display: inline-flex;
+          align-items: center;
+        }
+        .sv-read-aloud-tooltip {
+          position: absolute;
+          top: calc(100% + 6px);
+          left: 50%;
+          transform: translateX(-50%) translateY(-2px);
+          background: #1e293b;
+          color: #ffffff;
+          font-size: 11.5px;
+          font-weight: 600;
+          padding: 4px 9px;
+          border-radius: 6px;
+          white-space: nowrap;
+          pointer-events: none;
+          opacity: 0;
+           transition: opacity 0.15s ease, transform 0.15s ease;
+          z-index: 50;
+          box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+        }
+        .sv-read-aloud-icon-wrap:hover .sv-read-aloud-tooltip {
+          opacity: 1;
+          transform: translateX(-50%) translateY(0);
+        }
+      `}</style>
+      <div className="sv-read-aloud-icon-wrap">
+        <button
+          onClick={handlePlayPause}
+          type="button"
+          className="sv-read-aloud-pill-btn"
+          title="Read Aloud"
+          aria-label={playbackState === "playing" ? "Pause reading" : "Read Aloud"}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "32px",
+            height: "32px",
+            padding: 0,
+            borderRadius: "50%",
+            border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
+            background: playbackState === "playing"
+              ? (isPurple ? "#7c3aed" : "#16a34a")
+              : (isPurple ? "rgba(139, 92, 246, 0.06)" : "rgba(22, 163, 74, 0.06)"),
+            color: playbackState === "playing"
+              ? "#ffffff"
+              : (isPurple ? "#7c3aed" : "#16a34a"),
+            cursor: "pointer",
+            transition: "all 0.18s ease",
+            lineHeight: 1,
+            boxShadow: playbackState === "playing"
+              ? (isPurple ? "0 2px 10px rgba(124, 58, 237, 0.35)" : "0 2px 10px rgba(22, 163, 74, 0.35)")
+              : "none",
+          }}
+        >
+          {/* Speaker / Read Aloud symbol */}
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ flexShrink: 0 }}
+          >
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+          </svg>
+        </button>
+        <span className="sv-read-aloud-tooltip">
+          {playbackState === "playing"
+            ? "Pause Read Aloud"
+            : playbackState === "paused"
+            ? "Resume Read Aloud"
+            : "Read Aloud"}
+        </span>
       </div>
+
+      {playbackState !== "idle" && (
+        <button
+          onClick={handleStop}
+          type="button"
+          title="Stop reading"
+          aria-label="Stop reading"
+          style={{
+            width: "28px",
+            height: "28px",
+            borderRadius: "50%",
+            border: `1px solid ${isPurple ? "#ddd6fe" : "#bbf7d0"}`,
+            background: "#ffffff",
+            color: isPurple ? "#7c3aed" : "#16a34a",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+            transition: "all 0.15s ease",
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M6 6h12v12H6z" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

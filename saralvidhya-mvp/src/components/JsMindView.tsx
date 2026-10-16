@@ -95,9 +95,10 @@ function parseMermaidToJmNode(raw: string): JmNode | null {
 function convertToJson(data: any): JmNode {
   let topicCounter = 1;
   let conceptCounter = 1;
+  const rootData = data?.mindmap ? data.mindmap : data;
 
   function traverse(node: any, depth = 0): JmNode {
-    const topic = node.name || node.label || node.topic || 'Topic';
+    const topic = node.title || node.name || node.label || node.topic || 'Topic';
     let id = node.id;
     
     if (!id) {
@@ -118,13 +119,13 @@ function convertToJson(data: any): JmNode {
     const result: JmNode = { id, topic: decorateTopic(topic, depth) };
 
     if (node.children && Array.isArray(node.children)) {
-      result.children = node.children.map(c => traverse(c, depth + 1));
+      result.children = node.children.map((c: any) => traverse(c, depth + 1));
     }
 
     return result;
   }
 
-  return traverse(data, 0);
+  return traverse(rootData, 0);
 }
 
 export default function JsMindView({ content, onTopicClick, onActionClick, toolbarHint }: Props) {
@@ -208,24 +209,6 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
 
   return (
     <div style={{ userSelect: 'none', height: '600px', width: '100%', border: '1px solid #EFE4DC', borderRadius: '12px', overflow: 'hidden' }}>
-      {/* Toolbar */}
-      <div style={{
-        display:'flex', alignItems:'center', justifyContent:'space-between',
-        padding:'8px 16px',
-        borderBottom:'1px solid #EFE4DC',
-        background:'#FAF1EB',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-          <div style={{
-            width: 7, height: 7, borderRadius: 2,
-            background: '#4F7B64', flexShrink: 0,
-          }} />
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4F7B64', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {toolbarHint ?? 'Mindmap · Click a topic for Quick Study'}
-          </span>
-        </div>
-      </div>
-
       {/* Canvas */}
       <style>{`
         jmnode {
@@ -307,9 +290,9 @@ export default function JsMindView({ content, onTopicClick, onActionClick, toolb
         onClick={handleContainerClick}
         style={{
           width: '100%',
-          height: 'calc(100% - 40px)',
+          height: '100%',
           background: '#FFF6F1',
-          borderRadius: '0 0 12px 12px',
+          borderRadius: '12px',
         }}
       />
     </div>

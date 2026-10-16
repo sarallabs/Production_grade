@@ -1369,10 +1369,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 40px;
-  background: rgba(245, 243, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+  background: #2D3E36;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.18);
   flex-shrink: 0;
 }
 
@@ -1401,8 +1400,8 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
-  box-shadow: 0 0 9px rgba(124, 58, 237, 0.55);
+  background: linear-gradient(135deg, #4F7B64, #6F9A7F);
+  box-shadow: 0 0 9px rgba(79, 123, 100, 0.55);
   animation: svLogoPulse 2.2s ease-in-out infinite;
 }
 
@@ -1411,7 +1410,7 @@
   font-size: 21px;
   font-weight: 900;
   letter-spacing: -0.6px;
-  color: #1e1b4b;
+  color: #ffffff;
   font-family: "Inter", sans-serif;
 }
 
@@ -1424,26 +1423,31 @@
 
 
 .sv-bc-sep {
-  color: #cbd5e1;
+  color: rgba(255, 255, 255, 0.42);
   font-size: 14px;
   font-weight: 300;
 }
 
 
 .sv-bc-link {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #7c3aed;
+  color: #E2B18E;
   cursor: pointer;
   text-decoration: underline;
   text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.sv-bc-link:hover {
+  color: #FFFFFF;
 }
 
 
 .sv-bc-current {
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 600;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.9);
 }
 
 
@@ -1459,30 +1463,33 @@
   gap: 9px;
   padding: 10px 20px;
   border-radius: 12px;
-  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  background: linear-gradient(135deg, #4F7B64, #2D3E36);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   border: none;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.32);
+  box-shadow: 0 4px 16px rgba(45, 62, 54, 0.32);
   letter-spacing: 0.01em;
 }
 
 
 .sv-dash-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.42);
+  box-shadow: 0 8px 24px rgba(45, 62, 54, 0.42);
 }
 
 
 .sv-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 9px 18px;
   border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
-  background: transparent;
-  color: #64748b;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1504,9 +1511,9 @@
   margin-left: 12px;
   padding: 9px 18px;
   border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
-  background: transparent;
-  color: #64748b;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.92);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1515,9 +1522,9 @@
 
 
 .sv-profile-btn:hover {
-  border-color: #6366f1;
-  color: #2563eb;
-  background: #eff6ff;
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.14);
 }
 
 
@@ -1711,13 +1718,7 @@
 /* ── Class selection landing: rich motion ── */
 .sv-class-landing {
   position: relative;
-  background: linear-gradient(125deg,
-      #ffffff 0%,
-      #faf5ff 42%,
-      #fff5f8 78%,
-      #ffffff 100%);
-  background-size: 240% 240%;
-  animation: svLandingBgDrift 18s ease-in-out infinite;
+  background: rgba(111, 154, 127, 0.08);
 }
 
 

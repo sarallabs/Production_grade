@@ -592,82 +592,6 @@ function DescriptiveQuestionCard({
         />
         </div>
       </div>
-
-      {/* Model Answer Toggle */}
-      {question.modelAnswer && (
-        <div
-          style={{
-            borderRadius: "10px",
-            border: "1.2px solid #D5DFD9",
-            overflow: "hidden",
-            background: "#FFFFFF",
-          }}
-        >
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleRubric();
-            }}
-            style={{
-              width: "100%",
-              padding: "10px 16px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              background: expandedRubric ? "#EDF5F1" : "#FAFAF9",
-              border: "none",
-              borderBottom: expandedRubric ? "1.2px solid #D5DFD9" : "none",
-              color: "#2D3E36",
-              fontWeight: 700,
-              fontSize: "0.85rem",
-              cursor: "pointer",
-              transition: "background 0.15s ease",
-            }}
-          >
-            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>📖</span>
-              <span>Model Solution Details</span>
-            </span>
-            <span
-              style={{
-                transform: expandedRubric ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 0.2s ease",
-                fontSize: "0.8rem",
-                color: "#64748B",
-              }}
-            >
-              ▼
-            </span>
-          </button>
-
-          {expandedRubric && (
-            <div style={{ padding: "16px 18px", display: "flex", flexDirection: "column", gap: "14px" }}>
-              {/* Model Answer Preview */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E2923" }}>
-                  Official Model Answer Key:
-                </div>
-                <div
-                  style={{
-                    background: "#F4F8F6",
-                    border: "1px solid #D5DFD9",
-                    borderRadius: "8px",
-                    padding: "14px 16px",
-                    fontSize: "0.9rem",
-                    lineHeight: "1.6",
-                    color: "#1E2923",
-                    maxHeight: "360px",
-                    overflowY: "auto",
-                  }}
-                >
-                  <MarkdownView content={question.modelAnswer} />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
@@ -2256,14 +2180,16 @@ export default function MockTestView({
                         {(q.options || []).map((opt, optIdx) => {
                           const isSelected = userSelected.includes(optIdx);
                           const isOptCorrect = correct.includes(optIdx);
+                          const isEven = optIdx % 2 === 0;
 
-                          let optBg = "#ffffff";
-                          let optBorder = "1.5px solid #f1f5f9";
-                          let optColor = "#334155";
-                          let radioBorder = isSelected ? "#467360" : "#cbd5e1";
+                          // Alternating lighter (#ffffff) and darker (#f1f6f3) shades:
+                          let optBg = isEven ? "#ffffff" : "#f1f6f3";
+                          let optBorder = isEven ? "1.5px solid #e2e8f0" : "1.5px solid #cad9cf";
+                          let optColor = "#1e293b";
+                          let radioBorder = isSelected ? "#467360" : (isEven ? "#cbd5e1" : "#94a3b8");
                           let radioBg = isSelected ? "#467360" : "#ffffff";
-                          let badgeBg = "#f1f5f9";
-                          let badgeColor = "#475569";
+                          let badgeBg = isEven ? "#f1f5f9" : "#dbe8df";
+                          let badgeColor = "#334155";
 
                           if (isSubmitted) {
                             if (isOptCorrect) {
@@ -2586,7 +2512,6 @@ export default function MockTestView({
             {isSubmitted ? (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: 700, fontSize: "0.95rem" }}>
                 <span>✓ Exam Completed</span>
-                <span style={{ color: "#64748B", fontWeight: 500, fontSize: "0.85rem" }}>• Model solutions unlocked for review</span>
               </div>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#2D3E36", fontWeight: 600, fontSize: "0.9rem" }}>
@@ -2822,10 +2747,12 @@ export default function MockTestView({
                     {(q.options || []).map((opt, optIdx) => {
                       const isSelected = userSelected.includes(optIdx);
                       const isOptCorrect = correct.includes(optIdx);
+                      const isEven = optIdx % 2 === 0;
 
-                      let optBg = "#ffffff";
-                      let optBorder = "1.5px solid #f1f5f9";
-                      let optColor = "#334155";
+                      // Alternating lighter (#ffffff) and darker (#f1f6f3) shades:
+                      let optBg = isEven ? "#ffffff" : "#f1f6f3";
+                      let optBorder = isEven ? "1.5px solid #e2e8f0" : "1.5px solid #cad9cf";
+                      let optColor = "#1e293b";
 
                       if (isSubmitted) {
                         if (isOptCorrect) {

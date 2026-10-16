@@ -52,13 +52,6 @@ export default function ResourceTabs() {
   useEffect(() => {
     if (!subjectId || !chapterNumber) return;
 
-    // MVP: no payment gating needed (same as StudyTable.tsx)
-    // const hasPaid = localStorage.getItem(`registered_${subjectId}`) === 'true';
-    // if (!hasPaid) {
-    //   navigate(`/course/${subjectId}`);
-    //   return;
-    // }
-
     getManifest().then((m) => {
       const resourceTabs = getResourceTabs(m);
       setTabs(resourceTabs);
@@ -254,7 +247,7 @@ export default function ResourceTabs() {
             }
           `}</style>
           {activeFile === 'flashcards' && flashcards !== null && (
-            <FlashcardsView cards={flashcards} />
+            <FlashcardsView cards={flashcards} subjectId={subject} chapterNumber={chNum} />
           )}
           {isQuizOrAssessment && content !== null && (
             <AssessmentView
@@ -381,7 +374,7 @@ export default function ResourceTabs() {
       <div className="tab-content">
         {error && <p className="error">{error}</p>}
         {activeFile === 'flashcards' && flashcards !== null && (
-          <FlashcardsView cards={flashcards} />
+          <FlashcardsView cards={flashcards} subjectId={subject} chapterNumber={chNum} />
         )}
         {isQuizOrAssessment && content !== null && (
           <AssessmentView

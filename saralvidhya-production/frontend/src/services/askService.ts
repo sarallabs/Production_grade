@@ -200,13 +200,6 @@ export async function askGemini(
   languageCode = 'en-IN',
   className = 'NCERT Class 10',
 ): Promise<AskResult> {
-  if (!hasApiKey) {
-    return {
-      answer: 'AI is not configured yet. Please add your Gemini API key to `VITE_GOOGLE_API_KEY` in a `.env.local` file and restart the app.',
-      model: 'config',
-    };
-  }
-
   // 1. Content censoring
   if (isCensored(question)) {
     return {
@@ -218,6 +211,38 @@ export async function askGemini(
   // 2. Load chapter context
   const chapterContext = await getChapterContext(subject, chapterNumber, level);
   const subjectLabel = subject.charAt(0).toUpperCase() + subject.slice(1);
+
+  // 3. Try Server-Side AI Proxy First (Zero browser secrets)
+  try {
+    const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+    const proxyRes = await fetch(`${API_BASE}/api/gemini/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question,
+        context: chapterContext,
+        level,
+      }),
+    });
+    if (proxyRes.ok) {
+      const proxyData = await proxyRes.json();
+      if (proxyData?.answer) {
+        return {
+          answer: proxyData.answer,
+          model: proxyData.model || 'cloud-gemini',
+        };
+      }
+    }
+  } catch (backendErr) {
+    console.warn('[AskService] Backend proxy call failed, checking fallback:', backendErr);
+  }
+
+  if (!hasApiKey) {
+    return {
+      answer: 'AI service is temporarily unavailable. Please verify the backend service connection.',
+      model: 'config',
+    };
+  }
 
   // 3. Build system prompt with strict guardrails
   const systemPrompt = `\

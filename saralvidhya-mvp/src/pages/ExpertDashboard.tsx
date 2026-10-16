@@ -12,6 +12,7 @@ import {
 } from '@/utils/assignmentsStore';
 import { getManifest, type Subject } from '@/data/contentRepository';
 import UserMenu from '@/components/UserMenu';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmt(iso: string) {
@@ -113,7 +114,7 @@ export default function ExpertDashboard() {
   const [aSuccess, setASuccess] = useState('');
   const [assignFor, setAssignFor] = useState<string | null>(null); // username of student to quick-assign
 
-  const studentName = localStorage.getItem('username') || '—';
+  const studentName = cloudStorage.getItem('username') || '—';
 
   useEffect(() => {
     setData(getAnalytics());
@@ -131,7 +132,7 @@ export default function ExpertDashboard() {
   };
 
   const handlePersonaOverride = (newPersona: string) => {
-    localStorage.setItem('persona', newPersona);
+    cloudStorage.setItem('persona', newPersona);
     alert(`✅ Student persona updated to "${capitalize(newPersona)}". The student will see this change on their next session.`);
   };
 

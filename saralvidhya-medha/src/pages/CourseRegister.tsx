@@ -109,7 +109,8 @@ export default function CourseRegister() {
       const creds = loadCredentials();
       const existing = creds.find(c => c.username.toLowerCase() === fullName.trim().toLowerCase());
       if (!existing) {
-        addCredential(fullName.trim(), "[REDACTED_PASSWORD]", "student");
+        const defaultStudentPass = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || '';
+        addCredential(fullName.trim(), defaultStudentPass, "student");
       }
     } catch (err) {
       console.error(err);

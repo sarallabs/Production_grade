@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadCredentials, type Credential } from '@/utils/credentialsStore';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export default function UserMenu() {
   const navigate = useNavigate();
@@ -8,8 +9,8 @@ export default function UserMenu() {
   const [creds, setCreds] = useState<Credential[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const username = localStorage.getItem('username') || 'User';
-  const role     = localStorage.getItem('app_role') || 'student';
+  const username = cloudStorage.getItem('username') || 'User';
+  const role     = cloudStorage.getItem('app_role') || 'student';
 
   useEffect(() => {
     setCreds(loadCredentials());
@@ -26,18 +27,20 @@ export default function UserMenu() {
   }, [open]);
 
   const logout = () => {
-    localStorage.removeItem('app_authenticated');
-    localStorage.removeItem('app_role');
-    localStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('app_authenticated');
+    cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('sv_video_open_counts');
     navigate('/login', { replace: true });
   };
 
   const switchTo = (cred: Credential) => {
     // Log out current user then redirect to login pre-filled isn't possible,
     // so just log out and let them sign in fresh.
-    localStorage.removeItem('app_authenticated');
-    localStorage.removeItem('app_role');
-    localStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('app_authenticated');
+    cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('sv_video_open_counts');
     navigate('/login', { replace: true, state: { prefill: cred.username } });
   };
 

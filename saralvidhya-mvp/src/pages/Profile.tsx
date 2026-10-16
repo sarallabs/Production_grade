@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { getAnalytics } from '@/utils/analytics';
 import { googleTtsSpeak } from '@/services/googleTtsService';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 // ─── Interfaces ────────────────────────────────────────────────────────────────
 
@@ -103,7 +104,7 @@ export default function Profile() {
   const treeLogoSrc = `${import.meta.env.BASE_URL}brand-logo.png`;
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const savedRaw = localStorage.getItem('saral_student_profile');
+  const savedRaw = cloudStorage.getItem('saral_student_profile');
   const isProfileSaved = !!savedRaw;
 
   const location = useLocation();
@@ -140,7 +141,7 @@ export default function Profile() {
   const [username, setUsername] = useState('');
   const [persona, setPersona] = useState('');
   const [activeVoice, setActiveVoice] = useState(() => {
-    const saved = localStorage.getItem('user_voice');
+    const saved = cloudStorage.getItem('user_voice');
     return saved === 'male' ? 'male' : 'female';
   });
   const [stats, setStats] = useState({ summaries: 0, detailed: 0, quizzes: 0 });
@@ -161,8 +162,8 @@ export default function Profile() {
 
     setTimeout(() => setAnimate(true), 100);
 
-    setUsername(localStorage.getItem('username') || 'Student');
-    const pId = localStorage.getItem('persona') || localStorage.getItem('global_persona') || 'intermediate';
+    setUsername(cloudStorage.getItem('username') || 'Student');
+    const pId = cloudStorage.getItem('persona') || cloudStorage.getItem('global_persona') || 'intermediate';
     setPersona(PERSONA_NAMES[pId] || 'Intermediate');
 
     const data = getAnalytics();
@@ -200,10 +201,10 @@ export default function Profile() {
       { points: 8500 }, { points: 9200 }, { points: 6400 }, { points: 7100 }, { points: 5300 },
     ];
     let myTotalPoints = 0;
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
+    for (let i = 0; i < cloudStorage.length; i++) {
+      const key = cloudStorage.key(i);
       if (key && key.startsWith('ekam_quiz_score_')) {
-        myTotalPoints += parseInt(localStorage.getItem(key) || '0', 10);
+        myTotalPoints += parseInt(cloudStorage.getItem(key) || '0', 10);
       }
     }
     myTotalPoints = myTotalPoints * 5;
@@ -216,7 +217,7 @@ export default function Profile() {
   // ── Voice ─────────────────────────────────────────────────────────────────
   const changeVoice = (voiceId: string) => {
     setActiveVoice(voiceId);
-    localStorage.setItem('user_voice', voiceId);
+    cloudStorage.setItem('user_voice', voiceId);
     const sampleText = voiceId === 'male' ? 'This is the male voice.' : 'This is the female voice.';
     googleTtsSpeak(sampleText, 'en-IN');
   };
@@ -262,15 +263,15 @@ export default function Profile() {
   };
 
   const handleCompleteWizard = () => {
-    localStorage.setItem('saral_student_profile', JSON.stringify(profileData));
+    cloudStorage.setItem('saral_student_profile', JSON.stringify(profileData));
     const fullName = `${profileData.firstName} ${profileData.lastName}`;
-    localStorage.setItem('username', fullName);
+    cloudStorage.setItem('username', fullName);
     
     const isSetupFlow = requestedMode === 'setup' || !isProfileSaved;
 
     if (isSetupFlow) {
-      localStorage.setItem('app_authenticated', 'true');
-      localStorage.setItem('app_role', 'student');
+      cloudStorage.setItem('app_authenticated', 'true');
+      cloudStorage.setItem('app_role', 'student');
       // For demo flow: Always route from Student Details -> Questionnaire
       navigate('/questionnaire', { replace: true });
     } else {

@@ -1,0 +1,158 @@
+{
+  "course_id": "MLRIT_DBMS_U1",
+  "course_name": "Database Management Systems",
+  "unit": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "study_track": "Detailed_Study",
+  "persona": "beginner",
+  "total_questions": 6,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Fundamentals and Engine Architecture",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Why does an enterprise use a Database Management System (DBMS) instead of storing transactional records in standard operating system files?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Operating System Files \u2014 they allow multiple users to edit the same file concurrently without data corruption",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Database Management System (DBMS) \u2014 it coordinates multi-user concurrent access safely and prevents update anomalies",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Spreadsheet Formulas \u2014 they automatically translate conversational English into machine instructions without an engine",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "A DBMS coordinates multi-user access through transaction isolation (ACID properties) and schema integrity constraints. Standard operating system files lack concurrency control; simultaneous writes result in race conditions, lost updates, and inconsistent data. (Key Takeaway: A DBMS provides robust concurrency control and prevents update anomalies in multi-user environments.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Conceptual Database Design & ER Modeling",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "In an Entity-Relationship (ER) diagram, how should an attribute that can have multiple values for a single entity (such as multiple phone numbers for a student) be represented?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Single-Valued Attribute \u2014 drawn with a single regular ellipse",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Multivalued Attribute \u2014 drawn with a double ellipse",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Derived Attribute \u2014 drawn with a dashed ellipse",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "In standard Peter Chen ER notation, multivalued attributes (which can store multiple distinct values for an entity instance) are drawn using double ellipses. Single ellipses represent single-valued attributes, and dashed ellipses represent derived attributes. (Key Takeaway: Multivalued attributes are denoted by double ellipses in ER diagrams.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Advanced ER and Extended ER (EER) Concepts",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In an Entity-Relationship diagram, a Weak Entity Set possesses its own independent primary key and can exist in the database without any identifying parent entity.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "B (False)",
+      "rationale": "False \u2014 reversed_relationship. A weak entity set does NOT possess sufficient attributes to form a primary key of its own; it depends existentially on an identifying owner entity set and forms its primary key by combining the owner's primary key with its own partial key (discriminator). (Key Takeaway: Weak entities lack existential autonomy and depend on an identifying owner's primary key.)",
+      "alteration_type": "reversed_relationship",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Relational Model Foundations & Integrity Constraints",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "The Entity Integrity Constraint states that no primary key attribute in a base relation can have a NULL value.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. Entity Integrity is a fundamental constraint in the relational model requiring that primary key values must be non-null. If nulls were permitted, individual tuples could not be uniquely identified or referenced by foreign keys. (Key Takeaway: Entity Integrity guarantees that primary keys are unique and non-null.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Logical Database Design (ER-to-Relational Translation)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "When mapping a Binary Many-to-Many (M:N) Relationship Set from an ER diagram into SQL tables, which relational mapping rule must be applied?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Embed foreign keys into both participating entity tables without creating new relations",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Create a separate relationship table whose primary key is the composite union of foreign keys referencing both participating entities",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Merge both participating entities into a single flat table containing repeating null columns",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "Under relational mapping Rule 5, a binary M:N relationship set must map into a separate cross-reference (junction) relation. Its primary key consists of the combination of the foreign keys referencing the primary keys of the participating entity sets. (Key Takeaway: Binary M:N relationships always map into a separate junction table.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Relational Querying, Views & Schema Evolution",
+      "type": "yes_no",
+      "prompt_type": "Question",
+      "stem": "Can an SQL table's schema structure be modified to add a new column using the ALTER TABLE command without deleting existing rows in the table?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "No",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (Yes)",
+      "rationale": "Yes. The ALTER TABLE ... ADD column statement is a DDL command specifically designed to evolve the schema dynamically by appending new attributes without deleting or invalidating existing rows. (Key Takeaway: ALTER TABLE evolves schemas safely preserving existing data.)",
+      "bloom_level": "L2"
+    }
+  ]
+}
