@@ -1,0 +1,21 @@
+[
+  {
+    "origin": [
+      "https://saralvidhya.pages.dev",
+      "https://*.saralvidhya.pages.dev",
+      "https://*.pages.dev",
+      "http://localhost:5173",
+      "http://localhost:3000"
+    ],
+    "method": ["GET", "HEAD", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "Content-Range",
+      "Range",
+      "Accept-Ranges",
+      "ETag"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

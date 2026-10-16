@@ -1,0 +1,16 @@
+================================================================================
+ ACADEMIC MACRO MINDMAP (L-0, L-1): DBMS UNIT - I
+ Course: MLRIT | Subject: Database Management Systems
+ Chapter: DBMS UNIT - I (Database System Concepts, ER Model & Relational Design)
+ Sources: DBMS-UNIT-I.pdf, DBMS-UNIT-I.docx, DBMS-UNIT-I.md (Pages 1-41)
+ Level Scope: Macro Syllabus Architecture (L-0 Root + L-1 Primary Modules)
+ Target Usecase: Saral Vidhya (University Descriptive Track)
+================================================================================
+
+DBMS UNIT - I: Database System Concepts, ER Model & Relational Design
+├── 1. Database Fundamentals & Engine Architecture
+├── 2. Conceptual Database Design & ER Modeling
+├── 3. Advanced ER & Extended ER (EER) Mechanisms
+├── 4. Relational Model Foundations & Integrity Constraints
+├── 5. Logical Database Design (ER-to-Relational Translation)
+└── 6. Relational Querying, Views & Schema Evolution

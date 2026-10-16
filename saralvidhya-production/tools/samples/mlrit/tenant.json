@@ -1,0 +1,53 @@
+{
+  "id": "mlrit",
+  "name": "Mallareddy Institute of Technology",
+  "shortName": "MLRIT",
+  "academicTerm": "Sem III · 2026",
+  "branding": {
+    "appName": "Saral Vidhya",
+    "primaryColor": "#365345",
+    "accentColor": "#059669",
+    "logoBlob": "assets/logo.png",
+    "faviconBlob": "assets/favicon.png",
+    "programLabel": "Autonomous Engineering"
+  },
+  "assets": {
+    "logo": "assets/logo.png",
+    "favicon": "assets/favicon.png"
+  },
+  "features": {
+    "examinerConsole": true,
+    "expertPanel": true,
+    "pyq": true,
+    "ask": true,
+    "guidedFlow": true,
+    "toolOrder": [
+      "read.quick",
+      "read.detailed",
+      "learn.mindmap",
+      "learn.videos",
+      "practice.flashcards",
+      "practice.mcq",
+      "practice.msq",
+      "podcasts",
+      "prepare.pre_final_exam"
+    ]
+  },
+  "hierarchy": ["department", "semester", "subject"],
+  "nodes": [
+    {
+      "id": "cse",
+      "type": "department",
+      "name": "Computer Science & Engineering",
+      "order": 1
+    },
+    {
+      "id": "sem_3",
+      "type": "semester",
+      "name": "Semester III",
+      "parentId": "cse",
+      "order": 1
+    }
+  ]
+}
+

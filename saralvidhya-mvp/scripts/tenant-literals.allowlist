@@ -1,0 +1,1 @@
+# Zero-allowlist enforced: all tenant/subject/chapter metadata and user state are 100% cloud-native via GCP (Cloud Run + Firestore + GCS).

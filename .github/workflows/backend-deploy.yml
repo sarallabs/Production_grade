@@ -1,0 +1,62 @@
+name: Backend Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'saralvidhya-production/backend/**'
+      - '.github/workflows/backend-deploy.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-cloud-run:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: saralvidhya-production/backend
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER || 'projects/193782571555/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider' }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SA || 'sv-deployer@saralvidhya-production.iam.gserviceaccount.com' }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker asia-south1-docker.pkg.dev --quiet
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_TAG="asia-south1-docker.pkg.dev/saralvidhya-production/saralvidhya-backend/api:${{ github.sha }}"
+          LATEST_TAG="asia-south1-docker.pkg.dev/saralvidhya-production/saralvidhya-backend/api:latest"
+          docker build -t "$IMAGE_TAG" -t "$LATEST_TAG" .
+          docker push "$IMAGE_TAG"
+          docker push "$LATEST_TAG"
+
+      - name: Deploy to Cloud Run (saralvidhya-api)
+        run: |
+          gcloud run deploy saralvidhya-api \
+            --image="asia-south1-docker.pkg.dev/saralvidhya-production/saralvidhya-backend/api:${{ github.sha }}" \
+            --region=asia-south1 \
+            --service-account=sv-api@saralvidhya-production.iam.gserviceaccount.com \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars=GCS_BUCKET_NAME=saralvidhya-artifacts,GCP_PROJECT_ID=saralvidhya-production \
+            --set-secrets=SESSION_SECRET=sv-session-secret:latest \
+            --quiet
+
+      - name: Smoke Test Health Endpoint
+        run: |
+          SERVICE_URL=$(gcloud run services describe saralvidhya-api --region=asia-south1 --format="value(status.url)")
+          echo "Testing $SERVICE_URL/health ..."
+          curl -f --retry 3 --retry-delay 5 "$SERVICE_URL/health" || curl -f "$SERVICE_URL"

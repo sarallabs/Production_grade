@@ -1,0 +1,20 @@
+title = "SaralVidhya Gitleaks Secret Scanning Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allowlist for templates, test harnesses, documentation, and redaction markers"
+paths = [
+  '''^\.env\.example$''',
+  '''^.*\.env\.example$''',
+  '''^replace_secrets\.txt$''',
+  '''^.*validate_gemini_api_key\.py$''',
+  '''^saralvidhya-medha/validate_gemini_api_key\.py$''',
+  '''^package-lock\.json$''',
+  '''^pnpm-lock\.yaml$''',
+  '''^.*_plan\.md$'''
+]
+regexes = [
+  '''\[REDACTED_[A-Z_]+\]'''
+]
