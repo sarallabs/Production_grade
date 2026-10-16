@@ -22,6 +22,8 @@ saralvidhya-production/content/
 saralvidhya-medha/firebase-service-account.json
 **/firebase-service-account.json
 **/service-account*.json
+**/*credentials*.json
+**/client_secret*.json
 CREDENTIALS_PRIVATE/
 CREDENTIALS_PRIVATE 2/
 CREDENTIALS_PRIVATE*/
@@ -29,6 +31,19 @@ CREDENTIALS_PRIVATE.zip
 backend_db_envs.zip
 CREDENTIALS_PRIVATE*.zip
 *.zip
+replace_secrets.txt
+**/*.key
+**/*.pem
+**/*.p12
+**/*.pfx
+**/id_rsa*
+**/id_ed25519*
+
+# Test harnesses & secret eradication files
+**/api-test.html
+**/test_keys*
+replace_secrets.txt
+SECRET_ERADICATION_PLAN.md
 
 # Built/compiled bundles (contain embedded API keys)
 saralvidhya-mvp/dist-deploy/
@@ -40,12 +55,12 @@ dist/
 build/
 out/
 
-# Environment files
-.env
-.env.local
-.env.*.local
-.env.*
-!.env.example
+# Environment files - NEVER commit local envs with secrets
+**/.env
+**/.env.local
+**/.env.*.local
+**/.env.*
+!**/.env.example
 
 # Logs
 *.log
@@ -72,3 +87,6 @@ Thumbs.db
 *.projectbrain*
 project_brain.py
 test_projectbrain.json
+
+# Scratch directories
+**/scratch_*
