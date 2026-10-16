@@ -454,53 +454,6 @@ export default function StudyTable() {
     });
   }, [subjectId]);
 
-  // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
-  useEffect(() => {
-    if (activeTool !== "mindmap" && activeTool !== "foundation") return;
-    const curCh = subjectChapters.find((c) => c.number === chapterNumber);
-    const cfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
-    if (!cfg || !cfg.topics) return;
-
-    const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
-    const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
-    const subBase = getSubjectBaseUrl(subjectId);
-
-    const fetchSafeMd = async (url: string) => {
-      try {
-        const res = await fetch(url);
-        const ct = res.headers.get('content-type') || '';
-        if (!res.ok || ct.includes('text/html')) return '';
-        const txt = await res.text();
-        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
-        return txt;
-      } catch { return ''; }
-    };
-
-    cfg.topics.forEach(async (t: any, idx: number) => {
-      const topicNum = t.topicNum ?? (idx + 1);
-      const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
-      if (topicNotesCache.has(cacheKey)) return;
-
-      const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
-        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
-      const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
-        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
-
-      let quick = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
-      if (!quick) {
-        quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
-      }
-      let detailed = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
-      if (!detailed) {
-        detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
-      }
-
-      if (quick || detailed) {
-        topicNotesCache.set(cacheKey, { quick, detailed });
-      }
-    });
-  }, [activeTool, subjectId, chapterNumber, persona, subjectChapters]);
-
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
   const [videoIndexState, setVideoIndexState] = useState<number>(() => {
@@ -573,7 +526,6 @@ export default function StudyTable() {
     // Sync active tool state for the new chapter/unit
     const fromUrl = searchParams.get("tool") as ToolId | null;
     if (!videosLoaded) return;
-    if (!videosLoaded) return;
     setActiveToolState(fromUrl || "summary");
   }, [
     subjectId,
@@ -601,6 +553,53 @@ export default function StudyTable() {
     if (fromUrl === "foundation") return "mindmap";
     return fromUrl || "summary";
   });
+
+  // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
+  useEffect(() => {
+    if (activeTool !== "mindmap" && activeTool !== "foundation") return;
+    const curCh = subjectChapters.find((c) => c.number === chapterNumber);
+    const cfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
+    if (!cfg || !cfg.topics) return;
+
+    const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
+    const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+    const subBase = getSubjectBaseUrl(subjectId);
+
+    const fetchSafeMd = async (url: string) => {
+      try {
+        const res = await fetch(url);
+        const ct = res.headers.get('content-type') || '';
+        if (!res.ok || ct.includes('text/html')) return '';
+        const txt = await res.text();
+        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
+        return txt;
+      } catch { return ''; }
+    };
+
+    cfg.topics.forEach(async (t: any, idx: number) => {
+      const topicNum = t.topicNum ?? (idx + 1);
+      const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+      if (topicNotesCache.has(cacheKey)) return;
+
+      const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
+        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
+      const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
+        || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
+
+      let quick = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+      if (!quick) {
+        quick = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+      }
+      let detailed = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+      if (!detailed) {
+        detailed = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+      }
+
+      if (quick || detailed) {
+        topicNotesCache.set(cacheKey, { quick, detailed });
+      }
+    });
+  }, [activeTool, subjectId, chapterNumber, persona, subjectChapters]);
   const [isAskOpen, setIsAskOpen] = useState(false);
   const [autoResumeTrack, setAutoResumeTrack] = useState<
     "long" | "short" | null
