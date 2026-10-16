@@ -3,20 +3,23 @@ name: Frontend CI
 on:
   push:
     branches:
-      - main
-      - master
-      - Bhanu
-      - Aditya-UI
+      - '**'
     paths:
       - 'saralvidhya-mvp/**'
       - 'saralvidhya-production/frontend/**'
       - '.github/workflows/frontend-ci.yml'
   pull_request:
+    branches:
+      - '**'
     paths:
       - 'saralvidhya-mvp/**'
       - 'saralvidhya-production/frontend/**'
       - '.github/workflows/frontend-ci.yml'
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -77,6 +80,3 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy saralvidhya-mvp/dist --project-name=saralvidhya --branch=${{ github.head_ref || github.ref_name }}
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

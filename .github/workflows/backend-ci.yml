@@ -7,13 +7,14 @@ on:
       - master
       - Bhanu
       - Aditya-UI
+      - feature/read
     paths:
-      - 'saralvidhya-production/backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "saralvidhya-production/backend/**"
+      - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
-      - 'saralvidhya-production/backend/**'
-      - '.github/workflows/backend-ci.yml'
+      - "saralvidhya-production/backend/**"
+      - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 
 permissions:
@@ -35,7 +36,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: "npm"
           cache-dependency-path: saralvidhya-production/backend/package-lock.json
 
       - name: Install Dependencies
