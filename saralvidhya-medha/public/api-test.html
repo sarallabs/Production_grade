@@ -206,7 +206,7 @@
     </div>
 
     <script>
-        const API_KEY = 'AIzaSyDFgFGvM3mGWyz8K7MX7ct11w2LOKqcHIA';
+        const API_KEY = window.GEMINI_API_KEY || '[REDACTED_GEMINI_API_KEY]';
         let results = {};
 
         function log(testNum, message, type = 'info') {
