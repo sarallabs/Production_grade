@@ -1,0 +1,60 @@
+{
+  "subject": "MLRIT",
+  "chapter_folder": "DBMS",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "scope": "macro_architecture_L0_L1",
+  "D_target": 1,
+  "D_max": 4,
+  "pruning_policy": "macro_level_filtering",
+  "total_nodes": 7,
+  "hierarchy": {
+    "node_id": "node_001",
+    "level": 0,
+    "label": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+    "source_reference": "DBMS-UNIT-I.pdf (Pages 1-41)",
+    "children": [
+      {
+        "node_id": "node_002",
+        "level": 1,
+        "label": "1. Database Fundamentals & Engine Architecture",
+        "source_reference": "Pages 2-11 / Sections 1.1-1.10",
+        "description": "Explores file system limitations, three-schema architecture, data abstraction, physical and logical data independence, data models, DDL/DML, and the internal engine architecture comprising query processing, transaction management, and storage engine."
+      },
+      {
+        "node_id": "node_055",
+        "level": 1,
+        "label": "2. Conceptual Database Design & ER Modeling",
+        "source_reference": "Pages 12-20 / Sections 2.1-2.9",
+        "description": "Covers high-level conceptual modeling, entity sets, attributes (simple, composite, multivalued, derived), relationship sets, mapping cardinalities (1:1, 1:N, M:N), participation constraints (total vs. partial), and keys (super, candidate, primary)."
+      },
+      {
+        "node_id": "node_099",
+        "level": 1,
+        "label": "3. Advanced ER & Extended ER (EER) Mechanisms",
+        "source_reference": "Pages 21-25 / Sections 3.1-3.6",
+        "description": "Details weak entity sets, discriminating attributes, identifying relationships, specialization/generalization hierarchies, top-down vs. bottom-up design, disjoint/overlapping constraints, and total/partial completeness rules."
+      },
+      {
+        "node_id": "node_133",
+        "level": 1,
+        "label": "4. Relational Model Foundations & Integrity Constraints",
+        "source_reference": "Pages 26-30 / Sections 4.1-4.7",
+        "description": "Examines formal relational structure, relations, tuples, attributes, domains, atomic values, degree, cardinality, domain constraints, entity integrity (non-null primary keys), and referential integrity (foreign keys and cascade actions)."
+      },
+      {
+        "node_id": "node_167",
+        "level": 1,
+        "label": "5. Logical Database Design (ER-to-Relational Translation)",
+        "source_reference": "Pages 31-35 / Sections 5.1-5.6",
+        "description": "Presents systematic reduction algorithms for converting ER/EER diagrams to relational schemas, including strong entity tables, weak entity foreign keys, 1:1 and 1:N foreign key embedding, M:N composite associative tables, multivalued attribute normalization, and specialization representation."
+      },
+      {
+        "node_id": "node_199",
+        "level": 1,
+        "label": "6. Relational Querying, Views & Schema Evolution",
+        "source_reference": "Pages 36-41 / Sections 6.1-6.7",
+        "description": "Covers formal relational query languages including procedural Relational Algebra (Selection, Projection, Cartesian Product, Set Union/Difference, Join), SQL DDL/DML, and database view definitions, updatability constraints, and physical storage mechanisms."
+      }
+    ]
+  }
+}

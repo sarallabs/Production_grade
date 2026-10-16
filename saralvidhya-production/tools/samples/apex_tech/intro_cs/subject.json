@@ -1,0 +1,9 @@
+{
+  "$schema": "../../../contract/v1/subject.schema.json",
+  "id": "intro_cs",
+  "name": "Introduction to Computer Science",
+  "code": "CS-101",
+  "parentNodeId": "school_of_computing",
+  "order": 1,
+  "status": "active"
+}

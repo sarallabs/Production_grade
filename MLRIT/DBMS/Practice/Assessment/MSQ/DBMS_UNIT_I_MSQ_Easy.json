@@ -1,0 +1,198 @@
+{
+  "assessment_type": "MSQ",
+  "difficulty": "Easy",
+  "chapter_code": "DBMS_UNIT_I",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "total_questions": 10,
+  "zero_image_discipline": true,
+  "questions": [
+    {
+      "id": "MSQ_E01",
+      "stem": "Which of the following are major structural drawbacks of traditional operating system file processing systems (Select all that apply)?",
+      "options": {
+        "A": "Data redundancy and inconsistency across decentralized departmental files",
+        "B": "Difficulty in accessing ad-hoc data without writing custom programs",
+        "C": "Automatic conversion of queries into optimal relational algebra trees",
+        "D": "Data isolation caused by disparate, incompatible file formats",
+        "E": "Lack of fine-grained access control and atomicity guarantees during power crashes"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "D",
+        "E"
+      ],
+      "rationale": "File processing systems suffer from redundancy (A), difficulty accessing data (B), isolation across formats (D), and atomicity/security deficits (E). Converting queries to relational algebra (C) is a feature of modern DBMS query optimizers, not a drawback of file systems.",
+      "mindmap_node_id": "node_007"
+    },
+    {
+      "id": "MSQ_E02",
+      "stem": "Which of the following levels are formal tiers within the ANSI-SPARC Three-Schema Architecture (Select all that apply)?",
+      "options": {
+        "A": "Physical (Internal) Level",
+        "B": "Conceptual (Logical) Level",
+        "C": "External (View) Level",
+        "D": "Network Protocol Level",
+        "E": "Application Operating Level"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C"
+      ],
+      "rationale": "The Three-Schema Architecture defines exactly three abstraction levels: Physical (A), Conceptual/Logical (B), and External/View (C). Network Protocol (D) and Application Operating (E) are not schema abstraction levels.",
+      "mindmap_node_id": "node_022"
+    },
+    {
+      "id": "MSQ_E03",
+      "stem": "Which of the following attributes are correctly classified as Composite Attributes (Select all that apply)?",
+      "options": {
+        "A": "Aadhar_Number (Indivisible 12-digit national identifier)",
+        "B": "Customer_Name (Decomposed into First_Name, Middle_Name, Last_Name)",
+        "C": "Mailing_Address (Decomposed into Street, City, State, Pincode)",
+        "D": "Employee_Age (Dynamically computed from Current_Date - DOB)",
+        "E": "GPS_Coordinates (Decomposed into Latitude and Longitude)"
+      },
+      "correct_keys": [
+        "B",
+        "C",
+        "E"
+      ],
+      "rationale": "Composite attributes can be divided into smaller sub-parts with independent meanings, such as Name (B), Address (C), and GPS Coordinates (E). Aadhar Number (A) is an atomic/simple attribute, and Age (D) is a derived attribute.",
+      "mindmap_node_id": "node_062"
+    },
+    {
+      "id": "MSQ_E04",
+      "stem": "Which geometric symbols represent components of an Entity-Relationship (ER) diagram in standard Chen notation (Select all that apply)?",
+      "options": {
+        "A": "Rectangle representing an Entity Set",
+        "B": "Diamond representing a Relationship Set",
+        "C": "Oval representing an Attribute",
+        "D": "Hexagon representing a Primary Key",
+        "E": "Double Oval representing a Multivalued Attribute"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "E"
+      ],
+      "rationale": "In Chen notation: Entity sets are rectangles (A), relationships are diamonds (B), attributes are ovals (C), and multivalued attributes are double ovals (E). Primary keys are indicated by underlined attribute text inside ovals, never hexagons (D).",
+      "mindmap_node_id": "node_058"
+    },
+    {
+      "id": "MSQ_E05",
+      "stem": "Which of the following properties are guaranteed for transactions by the ACID model in a DBMS (Select all that apply)?",
+      "options": {
+        "A": "Atomicity (all operations complete successfully or none are applied)",
+        "B": "Consistency (preserves database schema invariants)",
+        "C": "Isolation (concurrent execution yields states equivalent to serial execution)",
+        "D": "Durability (committed data persists across system crashes)",
+        "E": "Elasticity (automatic cloud instance replication)"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "rationale": "ACID stands for Atomicity (A), Consistency (B), Isolation (C), and Durability (D). Elasticity (E) is a cloud computing infrastructure metric, not a core ACID transaction invariant.",
+      "mindmap_node_id": "node_048"
+    },
+    {
+      "id": "MSQ_E06",
+      "stem": "Which of the following statements regarding the Relational Model are formally true (Select all that apply)?",
+      "options": {
+        "A": "A relation is mathematically defined as a subset of the Cartesian product of attribute domains",
+        "B": "A tuple represents an individual row in a relation table",
+        "C": "The order of tuples in a relation instance is strictly guaranteed by disk track sector order",
+        "D": "Degree refers to the total number of attributes (columns) in a relation",
+        "E": "All attribute values in First Normal Form (1NF) must be atomic"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "D",
+        "E"
+      ],
+      "rationale": "Relations are mathematical sets of tuples (A), rows are tuples (B), degree is column count (D), and 1NF requires atomic values (E). Under formal set theory, tuple order is unordered (C is false).",
+      "mindmap_node_id": "node_135"
+    },
+    {
+      "id": "MSQ_E07",
+      "stem": "Which of the following are recognized mapping cardinality ratios for binary relationships (Select all that apply)?",
+      "options": {
+        "A": "One-to-One (1:1)",
+        "B": "One-to-Many (1:N)",
+        "C": "Many-to-One (N:1)",
+        "D": "Many-to-Many (M:N)",
+        "E": "Zero-to-Zero (0:0)"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "rationale": "The four standard binary mapping cardinality ratios are 1:1 (A), 1:N (B), N:1 (C), and M:N (D). Zero-to-zero (E) is not a defined cardinality ratio in database modeling.",
+      "mindmap_node_id": "node_075"
+    },
+    {
+      "id": "MSQ_E08",
+      "stem": "Which of the following are fundamental (primitive) operators in formal Relational Algebra (Select all that apply)?",
+      "options": {
+        "A": "Selection ($\\sigma$)",
+        "B": "Projection ($\\pi$)",
+        "C": "Cartesian Product ($\\times$)",
+        "D": "Set Union ($\\cup$)",
+        "E": "Natural Join ($\\bowtie$)"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "D"
+      ],
+      "rationale": "Selection (A), Projection (B), Cartesian Product (C), and Set Union (D) are fundamental operators (along with Set Difference and Rename). Natural Join (E) is a derived operator synthesized from Cartesian product, selection, and projection.",
+      "mindmap_node_id": "node_204"
+    },
+    {
+      "id": "MSQ_E09",
+      "stem": "Which components are direct functional modules of the DBMS Storage Manager (Select all that apply)?",
+      "options": {
+        "A": "Buffer Manager",
+        "B": "File Manager",
+        "C": "Authorization and Integrity Manager",
+        "D": "DML Compiler and Optimizer",
+        "E": "Index Manager"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "E"
+      ],
+      "rationale": "The Storage Manager comprises the Buffer Manager (A), File Manager (B), Authorization/Integrity Manager (C), and Index Manager (E). The DML Compiler (D) belongs to the Query Processor.",
+      "mindmap_node_id": "node_054"
+    },
+    {
+      "id": "MSQ_E10",
+      "stem": "Which conditions are mandatory characteristics of a Weak Entity Set (Select all that apply)?",
+      "options": {
+        "A": "It lacks a primary key of its own",
+        "B": "It must have total participation in its identifying relationship",
+        "C": "It is visually depicted using a double rectangle in ER diagrams",
+        "D": "It can exist in the database without an identifying owner entity",
+        "E": "Its discriminator attribute is denoted with a dashed underline"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "E"
+      ],
+      "rationale": "A weak entity set lacks a primary key (A), has total participation in its identifying relationship (B), uses a double rectangle (C), and has a discriminator with a dashed underline (E). It is existence-dependent and cannot exist without an owner (D is false).",
+      "mindmap_node_id": "node_101"
+    }
+  ]
+}

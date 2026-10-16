@@ -1,0 +1,12 @@
+README.md
+pyproject.toml
+src/sv_tools/__init__.py
+src/sv_tools/admin.py
+src/sv_tools/publish.py
+src/sv_tools/validator.py
+src/sv_tools.egg-info/PKG-INFO
+src/sv_tools.egg-info/SOURCES.txt
+src/sv_tools.egg-info/dependency_links.txt
+src/sv_tools.egg-info/entry_points.txt
+src/sv_tools.egg-info/requires.txt
+src/sv_tools.egg-info/top_level.txt

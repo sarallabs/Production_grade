@@ -10,6 +10,12 @@
  * Falls back to window.speechSynthesis if the API call fails.
  */
 
+import {
+  cloudStorage,
+  CLOUD_API_BASE,
+  getCloudAuthHeaders,
+} from '@/context/CloudStateContext';
+
 const GOOGLE_API_KEY: string =
   (import.meta as any).env?.VITE_GOOGLE_API_KEY ??
   (import.meta as any).env?.VITE_GEMINI_API_KEY ??
@@ -108,7 +114,6 @@ function splitIntoChunks(text: string, maxLen: number): string[] {
   if (text.length <= maxLen) return [text];
 
   const chunks: string[] = [];
-  // Split on sentence boundaries first
   const sentences = text.split(/(?<=[.!?।؟])\s+/);
   let current = '';
   for (const s of sentences) {
@@ -116,7 +121,6 @@ function splitIntoChunks(text: string, maxLen: number): string[] {
       current = (current + ' ' + s).trim();
     } else {
       if (current) chunks.push(current);
-      // If a single sentence exceeds limit, split by words
       if (s.length > maxLen) {
         const words = s.split(' ');
         let w = '';
@@ -152,6 +156,44 @@ async function synthesizeChunk(
   const gender = voice.ssmlGender ?? 'FEMALE';
   const selectedVoiceName = voice.name ?? getVoiceNameForGender(voice, gender === 'MALE');
 
+  // 1. Try Cloud Run /v2/t/:tenant/ai/tts endpoint (with GCS caching)
+  const activeTenantId = cloudStorage.getItem('current_tenant_id');
+  if (activeTenantId) {
+    try {
+      const controller = new AbortController();
+      inflightControllers.add(controller);
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`, {
+        method: 'POST',
+        headers: getCloudAuthHeaders(activeTenantId),
+        body: JSON.stringify({
+          text,
+          languageCode: voice.languageCode,
+          voiceGender: gender === 'MALE' ? 'male' : 'female',
+        }),
+        signal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timeout);
+        inflightControllers.delete(controller);
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.audioContent) {
+          const binary = atob(data.audioContent);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          const blob = new Blob([bytes], { type: 'audio/mp3' });
+          return { blobUrl: URL.createObjectURL(blob), wordTimings: [] };
+        }
+        if (data.audioUrl) {
+          return { blobUrl: data.audioUrl, wordTimings: [] };
+        }
+      }
+    } catch {
+      // fall through to direct TTS or browser speechSynthesis
+    }
+  }
+
   // Build SSML with <mark> tags before each word for timepoint tracking
   const words = text.split(/(\s+)/);
   let charCursor = 0;
@@ -185,13 +227,32 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
+  const targetEndpoint = activeTenantId
+    ? `${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`
+    : TTS_ENDPOINT;
+
+  const requestHeaders: Record<string, string> = activeTenantId
+    ? getCloudAuthHeaders(activeTenantId)
+    : { 'Content-Type': 'application/json' };
+
+  const requestPayload = activeTenantId
+    ? {
+        ssml: ssmlParts,
+        languageCode: voice.languageCode,
+        voiceName: selectedVoiceName,
+        ssmlGender: gender,
+        speakingRate: 1.0,
+        enableTimePointing: true,
+      }
+    : body;
+
   const controller = new AbortController();
   inflightControllers.add(controller);
   const timeout = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch(TTS_ENDPOINT, {
+  const res = await fetch(targetEndpoint, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: requestHeaders,
+    body: JSON.stringify(requestPayload),
     signal: controller.signal,
   }).finally(() => {
     clearTimeout(timeout);
@@ -207,7 +268,6 @@ async function synthesizeChunk(
   const base64Audio: string = data.audioContent;
   if (!base64Audio) throw new Error('No audioContent in response');
 
-  // Parse timepoints into word timings
   const wordTimings: WordTiming[] = [];
   if (Array.isArray(data.timepoints)) {
     for (const tp of data.timepoints) {
@@ -218,7 +278,6 @@ async function synthesizeChunk(
     }
   }
 
-  // Decode base64 → Blob → Object URL
   const binary = atob(base64Audio);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -331,7 +390,7 @@ async function fallbackSpeak(
 ) {
   if (!window.speechSynthesis) { onDone?.(); return; }
   window.speechSynthesis.cancel();
-  const preferredGender = localStorage.getItem('user_voice') === 'male' ? 'male' : 'female';
+  const preferredGender = cloudStorage.getItem('user_voice') === 'male' ? 'male' : 'female';
   const desiredLang = bcp47.toLowerCase().split('-')[0];
   const immediateVoices = window.speechSynthesis.getVoices();
   let availableVoices = immediateVoices.length ? immediateVoices : await waitForSpeechSynthesisVoices(120);
@@ -658,7 +717,7 @@ export function googleTtsSpeak(
 
   // Auto-detect language from script if content gives a clearer signal
   const detectedBcp47 = detectLangCode(clean, bcp47Lang);
-  const preferMale = localStorage.getItem('user_voice') === 'male';
+  const preferMale = cloudStorage.getItem('user_voice') === 'male';
   const selectedVoice = VOICE_MAP[detectedBcp47] ?? DEFAULT_VOICE;
   currentVoice = {
     ...selectedVoice,
@@ -666,10 +725,9 @@ export function googleTtsSpeak(
     ssmlGender: preferMale ? 'MALE' : 'FEMALE',
   };
 
-  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy');
-  // Raw mode needs exact char offsets; the Cloud path re-chunks/trims text
-  // (and currently 401s with this API key), so use the browser engine.
-  if (!isGcpKey || opts?.raw) {
+  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy') || GOOGLE_API_KEY.trim().startsWith('AQ.');
+  const hasCloudTenant = Boolean(cloudStorage.getItem('current_tenant_id'));
+  if ((!isGcpKey && !hasCloudTenant) || opts?.raw) {
     isStopped = false;
     isPlaying = true;
     onDoneCallback = null;

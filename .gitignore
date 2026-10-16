@@ -39,6 +39,12 @@ replace_secrets.txt
 **/id_rsa*
 **/id_ed25519*
 
+# Test harnesses & secret eradication files
+**/api-test.html
+**/test_keys*
+replace_secrets.txt
+SECRET_ERADICATION_PLAN.md
+
 # Built/compiled bundles (contain embedded API keys)
 saralvidhya-mvp/dist-deploy/
 saralvidhya-medha/dist-deploy/
@@ -81,3 +87,6 @@ Thumbs.db
 *.projectbrain*
 project_brain.py
 test_projectbrain.json
+
+# Scratch directories
+**/scratch_*

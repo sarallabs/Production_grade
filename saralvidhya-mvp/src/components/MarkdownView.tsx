@@ -1,16 +1,21 @@
+import React, { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import MermaidView from './MermaidView';
+import DottedTerm from './study/DottedTerm';
+import { getTermDefinition, GLOSSARY_DEFINITIONS } from '@/data/glossaryTerms';
+import { GCS_API_BASE } from '@/data/manifestService';
 import 'katex/dist/katex.min.css';
 
 interface Props {
   content: string;
+  isPurpleTheme?: boolean;
 }
 
-export default function MarkdownView({ content }: Props) {
+export default function MarkdownView({ content, isPurpleTheme = true }: Props) {
   const preprocessMathContent = (text: string): string => {
     if (!text) return text;
     // 1. Fix invalid base64 image URIs that contain a space after the comma
@@ -56,6 +61,45 @@ export default function MarkdownView({ content }: Props) {
     return processed;
   };
 
+  const processedContent = useMemo(() => {
+    return preprocessMathContent(content);
+  }, [content]);
+
+  const PHRASE_REGEX = useMemo(() => {
+    const keys = Object.keys(GLOSSARY_DEFINITIONS)
+      .filter((k) => k.length >= 4)
+      .sort((a, b) => b.length - a.length);
+    const escaped = keys.map((k) => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+    return new RegExp(`\\b(${escaped.join('|')})\\b`, 'gi');
+  }, []);
+
+  const extractRawText = (node: any): string => {
+    if (typeof node === 'string') return node;
+    if (typeof node === 'number') return String(node);
+    if (!node) return '';
+    if (Array.isArray(node)) return node.map(extractRawText).join('');
+    if (node.props) return extractRawText(node.props.children);
+    return '';
+  };
+
+  const renderTextWithTerms = (text: string, keyPrefix: string): React.ReactNode => {
+    if (!text || typeof text !== 'string') return text;
+    const parts = text.split(PHRASE_REGEX);
+    if (parts.length <= 1) return text;
+
+    return parts.map((part, i) => {
+      const def = getTermDefinition(part);
+      if (def) {
+        return (
+          <DottedTerm key={`${keyPrefix}-${i}`} definition={def} isPurpleTheme={isPurpleTheme}>
+            {part}
+          </DottedTerm>
+        );
+      }
+      return part;
+    });
+  };
+
   return (
     <div className="markdown-body markdown-view" style={{ width: '100%' }}>
       <ReactMarkdown
@@ -63,18 +107,73 @@ export default function MarkdownView({ content }: Props) {
         rehypePlugins={[rehypeRaw, [rehypeKatex, { strict: false, throwOnError: false }]]}
         urlTransform={(value: string) => value}
         components={{
+          strong({ children, ...props }) {
+            const raw = extractRawText(children).trim();
+            const def = getTermDefinition(raw);
+            if (def) {
+              return (
+                <strong {...props}>
+                  <DottedTerm definition={def} isPurpleTheme={isPurpleTheme}>
+                    {children}
+                  </DottedTerm>
+                </strong>
+              );
+            }
+            return <strong {...props}>{children}</strong>;
+          },
+          em({ children, ...props }) {
+            const raw = extractRawText(children).trim();
+            const def = getTermDefinition(raw);
+            if (def) {
+              return (
+                <em {...props}>
+                  <DottedTerm definition={def} isPurpleTheme={isPurpleTheme}>
+                    {children}
+                  </DottedTerm>
+                </em>
+              );
+            }
+            return <em {...props}>{children}</em>;
+          },
+          p({ children, ...props }) {
+            if (Array.isArray(children)) {
+              return (
+                <p {...props}>
+                  {children.map((child, idx) => {
+                    if (typeof child === 'string') {
+                      return <React.Fragment key={idx}>{renderTextWithTerms(child, `p-${idx}`)}</React.Fragment>;
+                    }
+                    return child;
+                  })}
+                </p>
+              );
+            } else if (typeof children === 'string') {
+              return <p {...props}>{renderTextWithTerms(children, 'p-single')}</p>;
+            }
+            return <p {...props}>{children}</p>;
+          },
+          li({ children, ...props }) {
+            if (Array.isArray(children)) {
+              return (
+                <li {...props}>
+                  {children.map((child, idx) => {
+                    if (typeof child === 'string') {
+                      return <React.Fragment key={idx}>{renderTextWithTerms(child, `li-${idx}`)}</React.Fragment>;
+                    }
+                    return child;
+                  })}
+                </li>
+              );
+            } else if (typeof children === 'string') {
+              return <li {...props}>{renderTextWithTerms(children, 'li-single')}</li>;
+            }
+            return <li {...props}>{children}</li>;
+          },
           img(props) {
             let cleanSrc = props.src ? props.src.replace(/base64,\s+/g, 'base64,') : props.src;
             if (cleanSrc && !cleanSrc.startsWith('http://') && !cleanSrc.startsWith('https://') && !cleanSrc.startsWith('data:')) {
-              const imgBase = import.meta.env.VITE_GCS_API_BASE
-                ? `${import.meta.env.VITE_GCS_API_BASE}/api/content/angrau/entomology`
-                : '/generated_resources/angrau';
-              if (cleanSrc.startsWith('../Mindmaps/')) {
-                cleanSrc = `${imgBase}/chapter_01/${cleanSrc.replace('../Mindmaps/', 'Mindmaps/')}`;
-              } else if (cleanSrc.startsWith('../../extracted_images/')) {
-                cleanSrc = `${imgBase}/chapter_02/${cleanSrc.replace('../../', '')}`;
-              } else if (cleanSrc.startsWith('/api/') && import.meta.env.VITE_GCS_API_BASE) {
-                cleanSrc = `${import.meta.env.VITE_GCS_API_BASE}${cleanSrc}`;
+              if (cleanSrc.startsWith('/api/')) {
+                cleanSrc = `${GCS_API_BASE}${cleanSrc}`;
               }
             }
             return (
@@ -130,7 +229,7 @@ export default function MarkdownView({ content }: Props) {
           }
         }}
       >
-        {preprocessMathContent(content)}
+        {processedContent}
       </ReactMarkdown>
     </div>
   );

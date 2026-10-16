@@ -1,33 +1,32 @@
 import {
   type AssessmentQuestion,
-  type MCQQuestion,
-  type MSQQuestion,
 } from '../utils/assessmentTypes';
-import { MOCK_ASSESSMENT_QUESTIONS } from '../utils/assessmentMock';
-import { 
-  BASE,
-  API_BASE_URL, 
+import {
+  API_BASE_URL,
   BACKEND_SUBJECTS,
   DifficultyLevel,
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
-  getSubjectResourcePath,
   getChapterVideos,
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
+  resolveSubjectId,
+  getRegistryChapterData,
 } from './manifestService';
 
 function mapBackendQuestions(data: any[]): AssessmentQuestion[] {
   return data.map((q: any, index: number) => {
     const optsObj = q.Options || {};
-    const keys = ['A', 'B', 'C', 'D', 'E', 'F'].filter(k => optsObj[k]);
-    const optionsList = keys.map(k => optsObj[k]);
+    const keys = ['A', 'B', 'C', 'D', 'E', 'F'].filter((k) => optsObj[k]);
+    const optionsList = keys.map((k) => optsObj[k]);
 
     let answer: any;
     if (q.QuestionType === 'MSQ') {
-      answer = (q.RightAnswers || []).map((ra: string) => keys.indexOf(ra)).filter((idx: number) => idx >= 0);
+      answer = (q.RightAnswers || [])
+        .map((ra: string) => keys.indexOf(ra))
+        .filter((idx: number) => idx >= 0);
     } else {
       answer = keys.indexOf((q.RightAnswers || [])[0]);
       if (answer < 0) answer = 0;
@@ -39,7 +38,7 @@ function mapBackendQuestions(data: any[]): AssessmentQuestion[] {
       q: q.Question,
       options: optionsList,
       answer: answer,
-      explanation: q.source_reference || ''
+      explanation: q.source_reference || '',
     } as AssessmentQuestion;
   });
 }
@@ -52,125 +51,170 @@ const DIFFICULTY_MAP: Record<string, string> = {
 
 export async function fetchAndParseFirst(
   urls: string[],
-  prefix: string,
+  prefix: string
 ): Promise<AssessmentQuestion[]> {
   for (const url of urls) {
+    if (!url) continue;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(url, { cache: 'no-cache', signal: controller.signal });
       clearTimeout(timeoutId);
       if (!res.ok) continue;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('text/html')) continue;
-      
+
       const text = await res.text();
-      
+
       try {
         const parsed = JSON.parse(text);
-        let rawQuestions = Array.isArray(parsed) ? parsed : (parsed.questions || parsed.items || []);
+        let rawQuestions = Array.isArray(parsed)
+          ? parsed
+          : parsed.questions ||
+            parsed.items ||
+            (Array.isArray(parsed.sections)
+              ? parsed.sections.flatMap((s: any) => s.questions || [])
+              : []);
         if (rawQuestions.length > 0) {
-          const mapped = rawQuestions.map((q: any, i: number) => {
-            const isDescriptive = !!(
-              q.model_answer !== undefined ||
-              q.rubric !== undefined ||
-              q.keywords !== undefined ||
-              q.section_name !== undefined ||
-              (!q.options && (q.question || q.stem || q.q))
-            );
+          const mapped = rawQuestions
+            .map((q: any, i: number) => {
+              const isDescriptive = !!(
+                q.model_answer !== undefined ||
+                q.rubric !== undefined ||
+                q.keywords !== undefined ||
+                q.section_name !== undefined ||
+                (!q.options && (q.question || q.stem || q.q))
+              );
 
-            if (isDescriptive) {
-              const stem = q.question || q.stem || q.q || '';
-              const section = q.section || '';
-              const type = section === 'part_a' ? 'short_answer' : section === 'part_b' ? 'long_answer' : 'descriptive';
+              if (isDescriptive) {
+                const stem = q.question || q.stem || q.q || '';
+                const section = q.section || '';
+                const type =
+                  section === 'part_a'
+                    ? 'short_answer'
+                    : section === 'part_b'
+                    ? 'long_answer'
+                    : 'descriptive';
+                return {
+                  id: q.question_id || q.id || `${prefix}${i + 1}`,
+                  type: type,
+                  q: stem.replace(/^\[.*?\]\s*/, ''),
+                  explanation: q.explanation || q.rationale || q.source_reference || '',
+                  options: [],
+                  answer: 0,
+                  section: q.section,
+                  sectionName: q.section_name,
+                  marks:
+                    q.marks !== undefined
+                      ? q.marks
+                      : section === 'part_a'
+                      ? 2
+                      : section === 'part_b'
+                      ? 5
+                      : 9,
+                  bloomLevel: q.bloom_level,
+                  mindmapPath: q.mindmap_path,
+                  modelAnswer: q.model_answer,
+                  rubric: q.rubric,
+                  keywords: q.keywords,
+                  hasAsciiDiagram: q.has_ascii_diagram,
+                  videoTime: 0,
+                } as AssessmentQuestion;
+              }
+
+              let rawOptions: string[] = [];
+              let optionKeyMap: string[] = [];
+              if (Array.isArray(q.options)) {
+                rawOptions = q.options;
+                optionKeyMap = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].slice(0, rawOptions.length);
+              } else if (q.options && typeof q.options === 'object') {
+                const keys = Object.keys(q.options).sort();
+                optionKeyMap = keys;
+                rawOptions = keys.map((k) => q.options[k]);
+              }
+              const cleanedOptions = rawOptions.map((opt: any) =>
+                String(opt).replace(/^[A-G]\)\s*/, '')
+              );
+
+              const resolveIndex = (ans: string): number => {
+                const trimmed = String(ans).trim();
+                const stripped = trimmed.replace(/^[A-G]\)\s*/, '').toLowerCase();
+                const letterMatch = trimmed.match(/^([A-G])\b/i);
+                if (letterMatch) {
+                  const letter = letterMatch[1].toUpperCase();
+                  const keyIdx = optionKeyMap.indexOf(letter);
+                  if (keyIdx >= 0 && keyIdx < cleanedOptions.length) return keyIdx;
+                  const charIdx = letter.charCodeAt(0) - 65;
+                  if (charIdx >= 0 && charIdx < cleanedOptions.length) return charIdx;
+                }
+                const textIdx = cleanedOptions.findIndex(
+                  (opt: string) => opt.trim().toLowerCase() === stripped
+                );
+                return textIdx;
+              };
+
+              const rawAnswer =
+                q.correct_keys ??
+                q.correct_key ??
+                q.answer ??
+                q.correct_answer ??
+                q.correct_answers ??
+                q.correct_options ??
+                q.RightAnswers;
+              const isMSQ =
+                Array.isArray(rawAnswer) ||
+                (typeof rawAnswer === 'string' &&
+                  rawAnswer.includes(',') &&
+                  !rawAnswer.startsWith('A)')) ||
+                prefix.startsWith('msq') ||
+                q.assessment_type === 'MSQ';
+
+              let answerIndices: number | number[];
+              if (Array.isArray(rawAnswer)) {
+                const indices = rawAnswer
+                  .map((a: any) => resolveIndex(String(a)))
+                  .filter((idx: number) => idx !== -1);
+                answerIndices = isMSQ ? indices : indices[0] ?? 0;
+              } else {
+                const idx = resolveIndex(String(rawAnswer ?? ''));
+                answerIndices = isMSQ ? (idx === -1 ? [] : [idx]) : idx === -1 ? 0 : idx;
+              }
+
+              const stemText = (q.stem || q.question || q.question_stem || q.q || '').replace(
+                /^\[.*?\]\s*/,
+                ''
+              );
+              const explanationText = q.explanation || q.rationale || q.source_reference || '';
+
               return {
                 id: q.question_id || q.id || `${prefix}${i + 1}`,
-                type: type,
-                q: stem.replace(/^\[.*?\]\s*/, ''),
-                explanation: q.explanation || q.rationale || q.source_reference || '',
-                options: [],
-                answer: 0,
-                section: q.section,
-                sectionName: q.section_name,
-                marks: q.marks !== undefined ? q.marks : (section === 'part_a' ? 2 : section === 'part_b' ? 5 : 9),
-                bloomLevel: q.bloom_level,
-                mindmapPath: q.mindmap_path,
-                modelAnswer: q.model_answer,
-                rubric: q.rubric,
-                keywords: q.keywords,
-                hasAsciiDiagram: q.has_ascii_diagram,
+                type: isMSQ ? 'msq' : 'mcq',
+                q: stemText,
+                options: cleanedOptions,
+                answer: answerIndices,
+                explanation: explanationText,
                 videoTime: 0,
-              } as AssessmentQuestion;
-            }
-
-            let rawOptions: string[] = [];
-            let optionKeyMap: string[] = [];
-            if (Array.isArray(q.options)) {
-              rawOptions = q.options;
-              optionKeyMap = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].slice(0, rawOptions.length);
-            } else if (q.options && typeof q.options === 'object') {
-              const keys = Object.keys(q.options).sort();
-              optionKeyMap = keys;
-              rawOptions = keys.map(k => q.options[k]);
-            }
-            const cleanedOptions = rawOptions.map((opt: any) => String(opt).replace(/^[A-G]\)\s*/, ''));
-
-            const resolveIndex = (ans: string): number => {
-              const trimmed = String(ans).trim();
-              const stripped = trimmed.replace(/^[A-G]\)\s*/, '').toLowerCase();
-              const letterMatch = trimmed.match(/^([A-G])\b/i);
-              if (letterMatch) {
-                const letter = letterMatch[1].toUpperCase();
-                const keyIdx = optionKeyMap.indexOf(letter);
-                if (keyIdx >= 0 && keyIdx < cleanedOptions.length) return keyIdx;
-                const charIdx = letter.charCodeAt(0) - 65;
-                if (charIdx >= 0 && charIdx < cleanedOptions.length) return charIdx;
-              }
-              const textIdx = cleanedOptions.findIndex(
-                (opt: string) => opt.trim().toLowerCase() === stripped,
-              );
-              return textIdx;
-            };
-
-            const rawAnswer = q.answer ?? q.correct_answer ?? q.correct_answers ?? q.RightAnswers;
-            const isMSQ = Array.isArray(rawAnswer) || (typeof rawAnswer === 'string' && rawAnswer.includes(',') && !rawAnswer.startsWith('A)')) || prefix.startsWith('msq');
-
-            let answerIndices: number | number[];
-            if (Array.isArray(rawAnswer)) {
-              const indices = rawAnswer.map((a: any) => resolveIndex(String(a))).filter((idx: number) => idx !== -1);
-              answerIndices = isMSQ ? indices : (indices[0] ?? 0);
-            } else {
-              const idx = resolveIndex(String(rawAnswer ?? ''));
-              answerIndices = isMSQ ? (idx === -1 ? [] : [idx]) : (idx === -1 ? 0 : idx);
-            }
-
-            const stemText = (q.stem || q.question || q.question_stem || q.q || '').replace(/^\[.*?\]\s*/, '');
-            const explanationText = q.explanation || q.rationale || q.source_reference || '';
-
-            return {
-              id: q.question_id || q.id || `${prefix}${i + 1}`,
-              type: isMSQ ? 'msq' : 'mcq',
-              q: stemText,
-              options: cleanedOptions,
-              answer: answerIndices,
-              explanation: explanationText,
-              videoTime: 0,
-            };
-          }).filter((q: AssessmentQuestion) => q.q && (
-            q.type === 'short_answer' ||
-            q.type === 'long_answer' ||
-            q.type === 'descriptive' ||
-            ((q as any).options && (q as any).options.length > 0)
-          ));
+              };
+            })
+            .filter(
+              (q: AssessmentQuestion) =>
+                q.q &&
+                (q.type === 'short_answer' ||
+                  q.type === 'long_answer' ||
+                  q.type === 'descriptive' ||
+                  ((q as any).options && (q as any).options.length > 0))
+            );
 
           if (mapped.length > 0) return mapped;
         }
-      } catch (e) {
+      } catch {
+        // fall through to markdown parser
       }
-      
+
       const parsedMd = parseAssessmentMarkdown(text, prefix);
       if (parsedMd.length > 0) return parsedMd;
     } catch {
+      // try next URL
     }
   }
   return [];
@@ -180,47 +224,39 @@ export async function getAssessments(
   subject: string,
   chapterNumber: number,
   level: DifficultyLevel = 'intermediate',
-  videoDir?: string,
+  videoDir?: string
 ): Promise<AssessmentQuestion[]> {
+  await getManifest();
+  const normSubject = resolveSubjectId(subject) || subject;
+  const difficulty = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
 
-  // ── GCS Cloud Run subjects ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const subjectPath = GCS_SUBJECT_MAP[subject];
-    const chDir = getChapterDir(subject, chapterNumber);
-    const difficulty = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
+  // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+  const files = regCh?.files || {};
+  const signedMcqUrl = files[`practice/mcq/${difficulty}.json`];
+  const signedMsqUrl = files[`practice/msq/${difficulty}.json`];
+
+  if (signedMcqUrl || signedMsqUrl) {
+    const [mcqRes, msqRes] = await Promise.all([
+      signedMcqUrl ? fetchAndParseFirst([signedMcqUrl], 'mcq_') : Promise.resolve([]),
+      signedMsqUrl ? fetchAndParseFirst([signedMsqUrl], 'msq_') : Promise.resolve([]),
+    ]);
+    if (mcqRes.length > 0 || msqRes.length > 0) {
+      return [...mcqRes, ...msqRes];
+    }
+  }
+
+  // 2. Cloud Run /api/content fallback
+  if (GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject)) {
+    const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(normSubject, chapterNumber);
     const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
 
-    const mcqRes = await fetchAndParseFirst(
-      [`${base}/practice/mcq?difficulty=${difficulty}`], 'mcq_');
-    const msqRes = await fetchAndParseFirst(
-      [`${base}/practice/msq?difficulty=${difficulty}`], 'msq_');
-    const combined = [...mcqRes, ...msqRes];
-    if (combined.length > 0) return combined;
-
-    const GCS_LOCAL_PATH: Record<string, string> = {
-      'angrau/entomology': 'angrau',
-    };
-    const localSubjectPath = GCS_LOCAL_PATH[subjectPath] ?? subjectPath;
-    const chDirs = Array.from(new Set([chDir, `chapter_${String(chapterNumber).padStart(2, '0')}`, `chapter_${chapterNumber}`]));
-    const mcqCandidates: string[] = [];
-    const msqCandidates: string[] = [];
-    for (const c of chDirs) {
-      const b = `${BASE}/${localSubjectPath}/${c}`;
-      mcqCandidates.push(
-        `${b}/${level}/mcq.md`,
-        `${b}/${level}/assessment.md`,
-        `${b}/${level}/quiz.md`,
-        `${b}/assessment.md`,
-        `${b}/quiz.md`,
-      );
-      msqCandidates.push(
-        `${b}/${level}/msq.md`,
-        `${b}/msq.md`,
-      );
-    }
-    const localMcq = await fetchAndParseFirst(mcqCandidates, 'mcq_');
-    const localMsq = await fetchAndParseFirst(msqCandidates, 'msq_');
-    return [...localMcq, ...localMsq];
+    const [mcqRes, msqRes] = await Promise.all([
+      fetchAndParseFirst([`${base}/practice/mcq?difficulty=${difficulty}`], 'mcq_'),
+      fetchAndParseFirst([`${base}/practice/msq?difficulty=${difficulty}`], 'msq_'),
+    ]);
+    return [...mcqRes, ...msqRes];
   }
 
   if (BACKEND_SUBJECTS.has(subject)) {
@@ -236,67 +272,43 @@ export async function getAssessments(
         }
       }
     } catch (e) {
-      console.warn("Failed to fetch assessments from API", e);
+      console.warn('Failed to fetch assessments from API', e);
     }
   }
 
-  await getManifest();
   const chDir = getChapterDir(subject, chapterNumber);
   const subjectBase = getSubjectBaseUrl(subject);
-
-  const assessmentLevel = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
-
-  let allQuestions: AssessmentQuestion[] = [];
+  const assessmentLevel = difficulty;
 
   const mcqPaths = [
-    ...(videoDir ? [
-      `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-      `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.md`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-    ] : []),
-    `${subjectBase}/${chDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.json`,
-    `${subjectBase}/${chDir}/Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.md`,
+    ...(videoDir
+      ? [
+          `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
+          `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
+        ]
+      : []),
+    `${subjectBase}/${chDir}/practice/mcq/${assessmentLevel}.json`,
     `${subjectBase}/${chDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Practice/Assessments/MCQ/mcq_${assessmentLevel}.md`,
     `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/${level}/mcq.md`,
-    `${subjectBase}/${chDir}/${level}/assessment.md`,
-    `${subjectBase}/${chDir}/assessment.md`,
-    `${subjectBase}/${chDir}/${level}/quiz.md`,
-    `${subjectBase}/${chDir}/quiz.md`
   ];
-  allQuestions = allQuestions.concat(await fetchAndParseFirst(mcqPaths, 'mcq_'));
-
   const msqPaths = [
-    ...(videoDir ? [
-      `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
-      `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.md`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.json`,
-      `${subjectBase}/${chDir}/${videoDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.md`,
-    ] : []),
-    `${subjectBase}/${chDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.json`,
-    `${subjectBase}/${chDir}/Practice/Assessments/MSQ/${assessmentLevel}_msq_10.md`,
+    ...(videoDir
+      ? [
+          `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
+          `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
+        ]
+      : []),
+    `${subjectBase}/${chDir}/practice/msq/${assessmentLevel}.json`,
     `${subjectBase}/${chDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Practice/Assessments/MSQ/msq_${assessmentLevel}.md`,
     `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/${level}/msq.md`
   ];
-  allQuestions = allQuestions.concat(await fetchAndParseFirst(msqPaths, 'msq_'));
 
-  return allQuestions;
+  const [mcqRes, msqRes] = await Promise.all([
+    fetchAndParseFirst(mcqPaths, 'mcq_'),
+    fetchAndParseFirst(msqPaths, 'msq_'),
+  ]);
+
+  return [...mcqRes, ...msqRes];
 }
 
 export const CHAPTER_EXAM_FILES = {
@@ -330,46 +342,63 @@ function seededShuffle<T>(items: T[], seed: string): T[] {
 export async function getChapterExamQuestions(
   subject: string,
   chapterNumber: number,
-  kind: ChapterExamKind,
+  kind: ChapterExamKind
 ): Promise<AssessmentQuestion[]> {
+  await getManifest();
+  const normSubject = resolveSubjectId(subject) || subject;
 
-  // ── GCS Cloud Run subjects ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const subjectPath = GCS_SUBJECT_MAP[subject];
-    const chDir = getChapterDir(subject, chapterNumber);
-    const kindPath = kind === 'mock' ? 'practice/mock_test'
-      : kind === 'pre_final' ? 'prepare/pre_final_exam'
-      : 'prepare/certification_exam';
-    const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${kindPath}`;
-    try {
-      const questions = await fetchAndParseFirst([url], `${kind}_`);
-      if (questions.length > 0) {
-        // For pre_final / certification: only accept if the remote API actually
-        // returned descriptive questions. If GCS has stale MCQ data for what
-        // should be a structured descriptive exam, fall through to local files.
-        const isDescriptiveExam = kind === 'pre_final' || kind === 'certification';
-        const hasDescriptive = questions.some(
-          (q) => (q as any).modelAnswer || q.type === 'short_answer' || q.type === 'long_answer' || q.type === 'descriptive'
-        );
-        if (!isDescriptiveExam || hasDescriptive) {
-          return questions;
-        }
-        // else: GCS returned MCQs for a descriptive exam → fall through to local files
-      }
-    } catch {
-      // Fall through to local resources if GCS returns error or empty
+  // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+  const files = regCh?.files || {};
+  const signedCandidates: string[] = [];
+  if (kind === 'mock') {
+    if (files['practice/mock_test.json']) signedCandidates.push(files['practice/mock_test.json']);
+    if (files['prepare/mock_test.json']) signedCandidates.push(files['prepare/mock_test.json']);
+  } else if (kind === 'pre_final') {
+    if (files['prepare/pre_final_exam.json'])
+      signedCandidates.push(files['prepare/pre_final_exam.json']);
+    if (files['prepare/pre_final_exam.md'])
+      signedCandidates.push(files['prepare/pre_final_exam.md']);
+  } else {
+    if (files['prepare/certification_exam.json'])
+      signedCandidates.push(files['prepare/certification_exam.json']);
+    if (files['prepare/certification_exam.md'])
+      signedCandidates.push(files['prepare/certification_exam.md']);
+    if (files['prepare/final_exam.json']) signedCandidates.push(files['prepare/final_exam.json']);
+  }
+
+  if (signedCandidates.length > 0) {
+    const questions = await fetchAndParseFirst(signedCandidates, `${kind}_`);
+    if (questions.length > 0) {
+      return questions;
     }
+  }
+
+  // 2. Cloud Run /api/content fallback
+  if (GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject)) {
+    const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+    const chDir = getChapterDir(normSubject, chapterNumber);
+    const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+    const urls =
+      kind === 'mock'
+        ? [`${base}/practice/mock_test`, `${base}/prepare/pre_final_exam`]
+        : kind === 'pre_final'
+        ? [`${base}/prepare/pre_final_exam`]
+        : [`${base}/prepare/certification_exam`];
+    try {
+      const questions = await fetchAndParseFirst(urls, `${kind}_`);
+      if (questions.length > 0) {
+        return questions;
+      }
+    } catch (e) {
+      console.warn(`[GCS] Failed fetching exam (${kind})`, e);
+    }
+    return [];
   }
 
   const videos = await getChapterVideos(subject, chapterNumber);
   const chDir = getChapterDir(subject, chapterNumber);
-  // For GCS subjects the cloud API is canonical but for dev we fall back to
-  // /generated_resources so files placed under public/ are found before they
-  // are uploaded to Cloud Run.  getSubjectResourcePath returns the manifest
-  // path (e.g. "angrau"), so the base becomes /generated_resources/angrau.
-  const subjectBase = GCS_BACKEND_SUBJECTS.has(subject)
-    ? `${BASE}/${getSubjectResourcePath(subject)}`
-    : getSubjectBaseUrl(subject);
+  const subjectBase = getSubjectBaseUrl(subject);
   const fileName = CHAPTER_EXAM_FILES[kind];
 
   let rawQuestions: AssessmentQuestion[] = [];
@@ -377,8 +406,11 @@ export async function getChapterExamQuestions(
   if (videos.length > 0) {
     const perVideo = await Promise.all(
       videos.map((video) =>
-        fetchAndParseFirst([`${subjectBase}/${chDir}/${video.dir}/${fileName}`], `${kind}_v${video.index}_`),
-      ),
+        fetchAndParseFirst(
+          [`${subjectBase}/${chDir}/${video.dir}/${fileName}`],
+          `${kind}_v${video.index}_`
+        )
+      )
     );
     rawQuestions = perVideo.flat();
   }
@@ -389,26 +421,8 @@ export async function getChapterExamQuestions(
     const candidates = [
       `${subjectBase}/${chDir}/${baseWithoutExt}.json`,
       `${subjectBase}/${chDir}/${fileName}`,
-      `${subjectBase}/${chDir}/Examination/${baseWithoutExt}.json`,
-      `${subjectBase}/${chDir}/Examination/${baseName}`,
       `${subjectBase}/${chDir}/Prepare/${baseWithoutExt}.json`,
       `${subjectBase}/${chDir}/Prepare/${baseName}`,
-      `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
-      `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
-      `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.json`,
-      `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.md`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${baseWithoutExt}.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${baseName}`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_exam_80.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_exam_80.md`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_50.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_50.md`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_exam_40.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/${kind}_exam_40.md`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/mock_test_50.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/certification_exam_80.json`,
-      `${subjectBase}/${chDir}/Preparation/Prep. Exam/pre_final_exam_40.json`,
-      `${subjectBase}/${chDir}/${baseName}`,
     ];
     rawQuestions = await fetchAndParseFirst(candidates, `${kind}_ch_`);
   }
@@ -422,8 +436,7 @@ export async function getChapterExamQuestions(
     merged.push(question);
   }
 
-  // Preserve ordered syllabus structure for descriptive exams (Part A -> Part B -> Part C)
-  const isStructuredExam = merged.some(q => (q as any).section || (q as any).modelAnswer);
+  const isStructuredExam = merged.some((q) => (q as any).section || (q as any).modelAnswer);
   if (isStructuredExam) {
     return merged;
   }
@@ -431,10 +444,13 @@ export async function getChapterExamQuestions(
   return seededShuffle(merged, `${subject}_${chapterNumber}_${kind}`);
 }
 
-const OPTION_LINE = /^[ \t]*[-*]?[ \t]*(?:\[[ xX]\][ \t]*)?(?:\*\*\[[ \t]*|\[\*\*[ \t]*|\[[ \t]*|\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\][ \t]*\*\*|\*\*[ \t]*\]|\][ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/gm;
+const OPTION_LINE =
+  /^[ \t]*[-*]?[ \t]*(?:\[[ xX]\][ \t]*)?(?:\*\*\[[ \t]*|\[\*\*[ \t]*|\[[ \t]*|\*\*\([ \t]*|\(\*\*[ \t]*|\([ \t]*|\*\*[ \t]*)?([A-G])(?:\)[ \t]*\*\*|\*\*[ \t]*\)|\)[ \t]*|\][ \t]*\*\*|\*\*[ \t]*\]|\][ \t]*|\.[ \t]*\*\*|\.[ \t]*|\*\*[ \t]*)[ \t]+(.+)$/gm;
 
 function splitQuestionBlocks(md: string): string[] {
-  const byHeading = md.split(/(?=^#{1,6}[ \t]+Question[ \t]+\d+)/gim).filter(b => b.trim());
+  const byHeading = md
+    .split(/(?=^#{1,6}[ \t]+Question[ \t]+\d+)/gim)
+    .filter((b) => b.trim());
   if (byHeading.length > 0) return byHeading;
   return md.split(/(?=\*\*Question:|\*\*Q:)/i).filter((b) => /\*\*(?:Question|Q):\*\*/i.test(b));
 }
@@ -448,7 +464,9 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
       .map((m) => ({ letter: m[1].toUpperCase(), text: m[2].replace(/^\*\*/, '').trim() }))
       .filter((o) => o.text.length > 0 && !o.text.startsWith('Correct Answer'));
     if (opts.length === 0) {
-      const modelAnswerMatch = block.match(/<summary>[\s\S]*?Model Answer[\s\S]*?<\/summary>\s*([\s\S]*?)<\/details>/i);
+      const modelAnswerMatch = block.match(
+        /<summary>[\s\S]*?Model Answer[\s\S]*?<\/summary>\s*([\s\S]*?)<\/details>/i
+      );
       if (modelAnswerMatch) {
         const questionText = block
           .replace(/^#{1,6}[ \t]+Question[ \t]+\d+.*?\n/i, '')
@@ -472,7 +490,7 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
 
     let qText = '';
     const qMatch = block.match(
-      /\*{0,2}(?:Question|Q):\*{0,2}\s*([\s\S]*?)(?=\n[ \t]*[-*]|\n<details>|\n\*\*Options|\n\*\*Correct)/i,
+      /\*{0,2}(?:Question|Q):\*{0,2}\s*([\s\S]*?)(?=\n[ \t]*[-*]|\n<details>|\n\*\*Options|\n\*\*Correct)/i
     );
     if (qMatch) {
       qText = qMatch[1].trim();
@@ -487,13 +505,21 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
     const options = opts.map((o) => o.text);
     const letterToIndex = new Map(opts.map((o, idx) => [o.letter, idx]));
 
-    const correctLineMatch = block.match(/\*{0,2}Correct (?:Answers?|Options?):\*{0,2}[ \t]*([^\n<]+)/i);
+    const correctLineMatch = block.match(
+      /\*{0,2}Correct (?:Answers?|Options?):\*{0,2}[ \t]*([^\n<]+)/i
+    );
     let answers: number[] = [];
     if (correctLineMatch) {
-      const letters = [...correctLineMatch[1].matchAll(/\b([A-G])\b/gi)].map(m => m[1].toUpperCase());
-      answers = letters.map(l => letterToIndex.get(l)).filter((idx): idx is number => idx !== undefined);
+      const letters = [...correctLineMatch[1].matchAll(/\b([A-G])\b/gi)].map((m) =>
+        m[1].toUpperCase()
+      );
+      answers = letters
+        .map((l) => letterToIndex.get(l))
+        .filter((idx): idx is number => idx !== undefined);
     } else {
-      const fallbackMatch = block.match(/\*{0,2}Correct (?:Answers?|Options?):\*{0,2}\s*[\s\S]*?\b([A-G](?:,\s*[A-G])*)\b/i);
+      const fallbackMatch = block.match(
+        /\*{0,2}Correct (?:Answers?|Options?):\*{0,2}\s*[\s\S]*?\b([A-G](?:,\s*[A-G])*)\b/i
+      );
       if (fallbackMatch) {
         const rawAnswers = fallbackMatch[1].replace(/[*()]/g, '');
         answers = rawAnswers
@@ -505,9 +531,11 @@ export function parseAssessmentMarkdown(mdRaw: string, prefix: string): Assessme
     if (answers.length === 0) continue;
 
     const isMSQ =
-      prefix.startsWith('msq') ||
-      answers.length > 1 ||
-      /select all that apply/i.test(block);
+      prefix.startsWith('msq') || answers.length > 1 || /select all that apply/i.test(block);
+
+    const rationaleMatch = block.match(
+      /\*{0,2}(?:Rationale|Explanation):\*{0,2}\s*([\s\S]*?)(?=\n\s*\n\s*---|\n\s*#{1,6}\s|\n\s*\*{0,2}Question|\n\s*\*{0,2}Q\d|\n\s*DOK:|$)/i
+    );
 
     questions.push({
       id: `${prefix}${i + 1}`,
@@ -532,7 +560,7 @@ export async function getMockTest(subject: string): Promise<AssessmentQuestion[]
       }
     }
   } catch (e) {
-    console.warn("Failed to fetch mock test from API", e);
+    console.warn('Failed to fetch mock test from API', e);
   }
   return [];
 }

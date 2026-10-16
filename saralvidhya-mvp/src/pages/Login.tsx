@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
+import { useTenant } from "@/tenant/TenantProvider";
+import { cloudStorage } from "@/context/CloudStateContext";
 import logoClean from "../logo-clean.png";
 import "./Login.css";
 
 function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { tenantId, tenant, login: tenantLogin } = useTenant();
 
-  const from = (location.state as { from?: string })?.from || "/";
+  const from = (location.state as { from?: string })?.from || (tenantId ? `/${tenantId}` : "/");
 
   const [studentPassword, setStudentPassword] = useState("");
   const [studentError, setStudentError] = useState("");
@@ -18,17 +21,17 @@ function Login() {
   useEffect(() => {
     // If onboarding (profile + questionnaire) is incomplete, clear bypass flags 
     // on visiting the login page so refreshing the browser returns to the login screen.
-    const profileCompleted = !!localStorage.getItem("saral_student_profile");
-    const questionnaireCompleted = localStorage.getItem("questionnaire_completed") === "true";
+    const profileCompleted = !!cloudStorage.getItem("saral_student_profile");
+    const questionnaireCompleted = cloudStorage.getItem("questionnaire_completed") === "true";
     if (!profileCompleted || !questionnaireCompleted) {
-      localStorage.removeItem("app_authenticated");
-      localStorage.removeItem("app_role");
-      localStorage.removeItem("username");
+      cloudStorage.removeItem("app_authenticated");
+      cloudStorage.removeItem("app_role");
+      cloudStorage.removeItem("username");
     }
   }, []);
 
   // LOGIN FUNCTION
-  const handleStudentLogin = (e: React.FormEvent) => {
+  const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setStudentError("");
 
@@ -39,20 +42,67 @@ function Login() {
 
     setLoading(true);
 
+    // If a tenant is active, authenticate against v2 registry backend
+    if (tenantId) {
+      try {
+        const ok = await tenantLogin(studentPassword);
+        if (ok) {
+          cloudStorage.removeItem("sv_video_open_counts");
+          cloudStorage.setItem("app_authenticated", "true");
+          cloudStorage.setItem("app_role", "student");
+          const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
+          cloudStorage.setItem("username", displayName);
+          cloudStorage.setItem(
+            "saral_student_profile",
+            JSON.stringify({
+              firstName: displayName,
+              lastName: "",
+              bypassed: true,
+            })
+          );
+          cloudStorage.setItem("questionnaire_completed", "true");
+
+          const isSubdomain = window.location.hostname.includes(tenantId);
+          const targetUrl =
+            from === "/login" || from === `/${tenantId}/login`
+              ? (isSubdomain ? "/" : `/${tenantId}`)
+              : from;
+
+          navigate(targetUrl, {
+            replace: true,
+          });
+          return;
+        } else {
+          setStudentError("Incorrect password");
+          setLoading(false);
+          return;
+        }
+      } catch (err: any) {
+        setStudentError(err.message || "Incorrect password");
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Fallback: Legacy credentials check (only for central/root portal)
     setTimeout(() => {
       const creds = loadCredentials();
 
+      const defaultPass = import.meta.env.VITE_DEFAULT_PASSWORD || '';
+      const isDefaultMatch = Boolean(defaultPass && studentPassword === defaultPass);
+
       const match = creds.find(
-        c => c.role === "student" && c.password === studentPassword
+        c => c.role === "student" && (c.password === studentPassword || isDefaultMatch)
       );
 
       if (match) {
-        localStorage.setItem("app_authenticated", "true");
-        localStorage.setItem("app_role", match.role);
-        localStorage.setItem("username", match.username);
+        cloudStorage.removeItem("sv_video_open_counts");
+        cloudStorage.setItem("app_authenticated", "true");
+        cloudStorage.setItem("app_role", match.role);
+        cloudStorage.setItem("username", match.username);
 
         // Bypass onboarding flow for password logins
-        localStorage.setItem(
+        cloudStorage.setItem(
           "saral_student_profile",
           JSON.stringify({
             firstName: match.username,
@@ -60,7 +110,7 @@ function Login() {
             bypassed: true,
           })
         );
-        localStorage.setItem("questionnaire_completed", "true");
+        cloudStorage.setItem("questionnaire_completed", "true");
 
         navigate("/", { replace: true });
       } else {

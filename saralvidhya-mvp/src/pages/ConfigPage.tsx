@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCatalog, type CatalogBoard } from '@/data/contentRepository';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 const defaultLogo = `${import.meta.env.BASE_URL}brand-logo.png`;
 
@@ -11,7 +12,7 @@ const MODEL_KEY = 'sv_gemini_model';
 const MOOCS_KEY = 'sv_moocs_mode';
 
 export function getVisibleBoardIds(): string[] | null {
-  const raw = sessionStorage.getItem(SESSION_KEY);
+  const raw = cloudStorage.getItem(SESSION_KEY);
   if (raw) {
     try { return JSON.parse(raw) as string[]; } catch { /* ignore */ }
   }
@@ -32,7 +33,7 @@ export default function ConfigPage() {
   const [logo, setLogo] = useState<string>(defaultLogo);
   const [brandName, setBrandName] = useState<string>('Saral Vidhya');
   const [isDragging, setIsDragging] = useState(false);
-  const [geminiModel, setGeminiModel] = useState<string>('gemini-3.6-flash');
+  const [geminiModel, setGeminiModel] = useState<string>('gemini-3.8-flash');
   const [moocsMode, setMoocsMode] = useState<boolean>(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,16 +52,16 @@ export default function ConfigPage() {
       setChecked(initial);
     });
     
-    const storedBrand = sessionStorage.getItem(BRAND_KEY);
+    const storedBrand = cloudStorage.getItem(BRAND_KEY);
     if (storedBrand) setBrandName(storedBrand);
     
-    const storedLogo = sessionStorage.getItem(LOGO_KEY);
+    const storedLogo = cloudStorage.getItem(LOGO_KEY);
     if (storedLogo) setLogo(storedLogo);
     
-    const storedModel = sessionStorage.getItem(MODEL_KEY);
+    const storedModel = cloudStorage.getItem(MODEL_KEY);
     if (storedModel) setGeminiModel(storedModel);
 
-    const storedMoocs = sessionStorage.getItem(MOOCS_KEY);
+    const storedMoocs = cloudStorage.getItem(MOOCS_KEY);
     if (storedMoocs) setMoocsMode(storedMoocs === 'true');
   }, []);
 
@@ -74,11 +75,11 @@ export default function ConfigPage() {
     }
     
     const visible = boards.map((b) => b.id).filter((id) => checked[id]);
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(visible));
-    sessionStorage.setItem(BRAND_KEY, brandName);
-    sessionStorage.setItem(LOGO_KEY, logo);
-    sessionStorage.setItem(MODEL_KEY, geminiModel);
-    sessionStorage.setItem(MOOCS_KEY, moocsMode ? 'true' : 'false');
+    cloudStorage.setItem(SESSION_KEY, JSON.stringify(visible));
+    cloudStorage.setItem(BRAND_KEY, brandName);
+    cloudStorage.setItem(LOGO_KEY, logo);
+    cloudStorage.setItem(MODEL_KEY, geminiModel);
+    cloudStorage.setItem(MOOCS_KEY, moocsMode ? 'true' : 'false');
     
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
@@ -637,7 +638,8 @@ export default function ConfigPage() {
                 value={geminiModel}
                 onChange={(e) => setGeminiModel(e.target.value)}
               >
-                <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recommended)</option>
+                <option value="gemini-3.8-flash">Gemini 3.8 Flash (Recommended)</option>
+                <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
                 <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                 <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
                 <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>

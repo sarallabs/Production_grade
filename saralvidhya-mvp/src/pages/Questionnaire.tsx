@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { QUESTIONS, calculatePersona } from '../data/questionnaireData';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 type Theme = 'dark' | 'light' | 'gemini';
 
@@ -42,13 +43,13 @@ export default function Questionnaire({ theme = 'dark' }: QuestionnaireProps) {
 
   const handleFinish = () => {
     const { persona } = calculatePersona(selections);
-    localStorage.setItem('questionnaire_completed', 'true');
-    localStorage.setItem('user_persona', persona);
+    cloudStorage.setItem('questionnaire_completed', 'true');
+    cloudStorage.setItem('user_persona', persona);
     navigate('/assessment-complete', { replace: true });
   };
 
   const logout = () => {
-    localStorage.clear();
+    cloudStorage.clear();
     navigate('/login', { replace: true });
   };
 
