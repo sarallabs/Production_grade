@@ -370,7 +370,6 @@ function ReadAloudBarInner({
           onClick={handlePlayPause}
           type="button"
           className="sv-read-aloud-pill-btn"
-          title="Read Aloud"
           aria-label={playbackState === "playing" ? "Pause reading" : "Read Aloud"}
           style={{
             display: "inline-flex",
