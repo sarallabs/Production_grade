@@ -8,7 +8,10 @@ import {
 import { detectTools } from './toolDiscovery.js';
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID || 'saralvidhya-production';
-export const firestore = new Firestore({ projectId: PROJECT_ID });
+export const firestore = new Firestore({
+  projectId: PROJECT_ID,
+  ignoreUndefinedProperties: true,
+});
 
 // ── In-Memory Cache (TTL: 60 seconds) + In-Flight Deduplication ────────
 interface CacheEntry<T> {
