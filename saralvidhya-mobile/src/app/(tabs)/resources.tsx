@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,232 +7,175 @@ import {
   TouchableOpacity,
   Linking,
   Alert,
+  Modal,
 } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
-import AskBotView from '@/components/study/AskBotView';
+import AskMeWelcomeView from '@/components/study/AskMeWelcomeView';
+import MindMapRadialDiagramView from '@/components/study/MindMapRadialDiagramView';
+import KeyTakeawaysView from '@/components/study/KeyTakeawaysView';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const RESOURCE_SEGMENTS: NavSegment[] = [
-  { id: 'ask_ai', label: 'Ask AI', vectorIcon: 'sparkles-outline' },
-  { id: 'syllabus', label: 'Syllabus', vectorIcon: 'document-text-outline' },
-  { id: 'downloads', label: 'Downloads', vectorIcon: 'cloud-download-outline' },
-];
-
-const DOWNLOADABLE_RESOURCES = [
-  {
-    id: 'res_1',
-    title: 'ANGRAU Entomology Practical Manual (2024)',
-    type: 'PDF Guide',
-    size: '14.2 MB',
-    icon: 'document-text',
-    desc: 'Official laboratory manual covering dissection of insect digestive and nervous systems.',
-  },
-  {
-    id: 'res_2',
-    title: 'Insect Mouthparts & Digestive System Color Atlas',
-    type: 'Diagram Atlas',
-    size: '8.7 MB',
-    icon: 'images',
-    desc: 'High-resolution histological sections and anatomical diagrams for lab exam viva.',
-  },
-  {
-    id: 'res_3',
-    title: 'ENTO 131 Complete High-Yield Formula & Taxa Sheet',
-    type: 'Summary Cheatsheet',
-    size: '2.1 MB',
-    icon: 'bookmarks',
-    desc: 'Printable revision sheet containing scientific names, orders, and economic significance.',
-  },
-  {
-    id: 'res_4',
-    title: 'ANGRAU Semester III Model Question Bank & Keys',
-    type: 'Official Key',
-    size: '5.4 MB',
-    icon: 'folder-open',
-    desc: 'Faculty curated answer keys for 2-mark definitions and 5-mark short questions.',
-  },
+  { id: 'ask_me', label: 'Ask Me', vectorIcon: 'chatbubbles-outline' },
+  { id: 'mindmaps', label: 'Mindmaps', vectorIcon: 'git-network-outline' },
+  { id: 'key_takeaways', label: 'Key Takeaways', vectorIcon: 'bookmarks-outline' },
 ];
 
 export default function ResourcesScreen() {
+  const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const activeSubject = ANGRAU_SUBJECTS[0];
+  const { selectedSubject, selectedCourse } = useCourseContext();
+  const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
-  const [activeSegment, setActiveSegment] = useState<string>('ask_ai');
-  const [downloadedIds, setDownloadedIds] = useState<string[]>(['res_3']);
+  const [activeSegment, setActiveSegment] = useState<string>(
+    params.segment && ['ask_me', 'mindmaps', 'key_takeaways'].includes(params.segment)
+      ? params.segment
+      : 'ask_me'
+  );
+  const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
+    params.chapter ? parseInt(params.chapter, 10) : 1
+  );
+  const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
 
-  const handleDownload = (id: string, title: string) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (downloadedIds.includes(id)) {
-      Alert.alert('Resource Ready', `${title} is already available offline in local storage.`);
-    } else {
-      setDownloadedIds((prev) => [...prev, id]);
-      Alert.alert('Download Complete', `${title} cached successfully for offline access.`);
+  useEffect(() => {
+    if (params.chapter) {
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
+        setSelectedChapterNum(parsed);
+      }
     }
-  };
+    if (params.segment && ['ask_me', 'mindmaps', 'key_takeaways'].includes(params.segment)) {
+      setActiveSegment(params.segment);
+    }
+  }, [params.chapter, params.segment]);
 
-  const screenBg = isDark ? '#23322B' : '#FFF6F1';
+  const currentChapter =
+    activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
+    activeSubject.chapters[0];
+
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
   const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
   const textColor = isDark ? '#FFFFFF' : '#1C2E24';
   const subtextColor = isDark ? '#A6C5B3' : '#557A65';
-  const tagBg = isDark ? '#1C2822' : '#F7EBE3';
+  const tagBg = isDark ? '#26382F' : '#E8F1EB';
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Toggle Pills & Profile Avatar */}
+      {/* Top Navigation Bar with Toggle Pills & Chapter Selector */}
       <TopNavBar
         segments={RESOURCE_SEGMENTS}
         activeSegment={activeSegment}
         onSegmentChange={setActiveSegment}
-        title="Resources"
+        chapterTitle={`${activeSubject.code} · Ch ${currentChapter.number}`}
+        onChapterPress={() => setShowChapterModal(true)}
       />
 
       {/* Main Content Area */}
       <View style={styles.contentContainer}>
-        {activeSegment === 'ask_ai' ? (
-          <ScrollView
-            style={styles.scrollArea}
-            contentContainerStyle={[styles.scrollContent, isTablet && { alignItems: 'center' }]}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.toolCardWrap, isTablet && { width: '100%', maxWidth: 860, alignSelf: 'center' }]}>
-              <AskBotView
-                chapterNumber={1}
-                chapterName="Insect Anatomy & ANGRAU Syllabus"
-              />
-            </View>
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        ) : activeSegment === 'syllabus' ? (
-          <ScrollView
-            style={styles.scrollArea}
-            contentContainerStyle={[styles.scrollContent, isTablet && { alignItems: 'center' }]}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.toolCardWrap, isTablet && { width: '100%', maxWidth: 860, alignSelf: 'center' }]}>
-              {/* Course Overview Card */}
-              <View style={[styles.overviewCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                <View style={styles.courseHeader}>
-                  <View style={styles.codeBadge}>
-                    <Text style={styles.codeBadgeText}>{activeSubject.code}</Text>
-                  </View>
-                  <Text style={styles.creditsText}>{activeSubject.credits} Credits (Theory + Practical)</Text>
-                </View>
-                <Text style={[styles.courseTitle, { color: textColor }]}>
-                  {activeSubject.name} - Official Syllabus
-                </Text>
-                <Text style={[styles.courseUni, { color: subtextColor }]}>
-                  {activeSubject.university} • {activeSubject.semester}
-                </Text>
-              </View>
-
-              {/* Chapters Syllabus Breakdown */}
-              <Text style={[styles.sectionHeading, { color: textColor }]}>Course Units & Theory Schedule</Text>
-              {activeSubject.chapters.map((ch) => (
-                <View
-                  key={ch.number}
-                  style={[styles.chapterCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                >
-                  <View style={styles.chHeaderRow}>
-                    <View style={styles.chNum}>
-                      <Text style={styles.chNumText}>UNIT {ch.number}</Text>
-                    </View>
-                    <Text style={[styles.chName, { color: textColor }]}>{ch.name}</Text>
-                  </View>
-                  <Text style={[styles.chDesc, { color: subtextColor }]}>{ch.description}</Text>
-                  <View style={styles.chMetaRow}>
-                    <View style={[styles.chMetaTag, { backgroundColor: tagBg }]}>
-                      <Ionicons name="document-text-outline" size={13} color="#22c55e" />
-                      <Text style={[styles.chMetaText, { color: subtextColor }]}>Lecture Notes</Text>
-                    </View>
-                    <View style={[styles.chMetaTag, { backgroundColor: tagBg }]}>
-                      <Ionicons name="videocam-outline" size={13} color="#3b82f6" />
-                      <Text style={[styles.chMetaText, { color: subtextColor }]}>Video Demonstrations</Text>
-                    </View>
-                    <View style={[styles.chMetaTag, { backgroundColor: tagBg }]}>
-                      <Ionicons name="school-outline" size={13} color="#f59e0b" />
-                      <Text style={[styles.chMetaText, { color: subtextColor }]}>University PYQs</Text>
-                    </View>
-                  </View>
-                </View>
-              ))}
-            </View>
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        ) : activeSegment === 'downloads' ? (
-          <ScrollView
-            style={styles.scrollArea}
-            contentContainerStyle={[styles.scrollContent, isTablet && { alignItems: 'center' }]}
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={[styles.toolCardWrap, isTablet && { width: '100%', maxWidth: 860, alignSelf: 'center' }]}>
-              <View style={[styles.downloadsHeader, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                <Ionicons name="cloud-download" size={28} color="#22c55e" />
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.downloadsTitle, { color: textColor }]}>Offline Study Materials</Text>
-                  <Text style={[styles.downloadsSub, { color: subtextColor }]}>
-                    Download manuals and revision sheets for offline study during agricultural field postings.
-                  </Text>
-                </View>
-              </View>
-
-              {DOWNLOADABLE_RESOURCES.map((item) => {
-                const isDownloaded = downloadedIds.includes(item.id);
-                return (
-                  <View
-                    key={item.id}
-                    style={[styles.downloadItemCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                  >
-                    <View style={[styles.docIconWrap, { backgroundColor: isDownloaded ? '#22c55e22' : tagBg }]}>
-                      <Ionicons
-                        name={item.icon as any}
-                        size={22}
-                        color={isDownloaded ? '#22c55e' : '#8A9E92'}
-                      />
-                    </View>
-
-                    <View style={{ flex: 1, marginHorizontal: 12 }}>
-                      <Text style={[styles.docTitle, { color: textColor }]}>{item.title}</Text>
-                      <Text style={[styles.docDesc, { color: subtextColor }]}>{item.desc}</Text>
-                      <View style={styles.docMeta}>
-                        <Text style={[styles.docType, { color: '#22c55e' }]}>{item.type}</Text>
-                        <Text style={[styles.docDot, { color: subtextColor }]}>•</Text>
-                        <Text style={[styles.docSize, { color: subtextColor }]}>{item.size}</Text>
-                      </View>
-                    </View>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.downloadBtn,
-                        isDownloaded && styles.downloadBtnSaved,
-                      ]}
-                      onPress={() => handleDownload(item.id, item.title)}
-                      activeOpacity={0.8}
-                    >
-                      <Ionicons
-                        name={isDownloaded ? 'checkmark-circle' : 'arrow-down-circle'}
-                        size={18}
-                        color={isDownloaded ? '#22c55e' : '#FFFFFF'}
-                      />
-                      <Text style={[styles.downloadBtnText, isDownloaded && styles.downloadBtnTextSaved]}>
-                        {isDownloaded ? 'Saved' : 'Get'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </View>
-            <View style={{ height: 40 }} />
-          </ScrollView>
+        {activeSegment === 'ask_me' ? (
+          <AskMeWelcomeView
+            chapterNumber={currentChapter.number}
+            chapterName={currentChapter.name}
+          />
+        ) : activeSegment === 'mindmaps' ? (
+          <MindMapRadialDiagramView
+            chapterTitle={currentChapter.name}
+            subjectName={activeSubject.name}
+            onNavigateBack={() => setActiveSegment('ask_me')}
+          />
+        ) : activeSegment === 'key_takeaways' ? (
+          <KeyTakeawaysView
+            chapterNumber={currentChapter.number}
+            chapterName={currentChapter.name}
+            subjectName={activeSubject.name}
+          />
         ) : null}
       </View>
+
+      {/* Chapter Selection Modal */}
+      <Modal
+        visible={showChapterModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowChapterModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowChapterModal(false)}
+        >
+          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#1C2B23' : '#FEFEFE' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: isDark ? '#FEFEFE' : '#1C2E24' }]}>
+                Select Chapter · {activeSubject.name}
+              </Text>
+              <TouchableOpacity onPress={() => setShowChapterModal(false)}>
+                <Ionicons name="close" size={22} color={isDark ? '#A6C5B3' : '#596B66'} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {activeSubject.chapters.map((ch) => {
+                const isSelected = ch.number === selectedChapterNum;
+                return (
+                  <TouchableOpacity
+                    key={ch.number}
+                    style={[
+                      styles.modalChapterRow,
+                      isSelected && styles.modalChapterRowActive,
+                    ]}
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setSelectedChapterNum(ch.number);
+                      setShowChapterModal(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View
+                      style={[
+                        styles.modalNumBadge,
+                        isSelected && styles.modalNumBadgeActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.modalNumText,
+                          isSelected && styles.modalNumTextActive,
+                        ]}
+                      >
+                        {ch.number}
+                      </Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.modalChapterText,
+                        { color: isDark ? '#FEFEFE' : '#1C2E24' },
+                        isSelected && styles.modalChapterTextActive,
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {ch.name}
+                    </Text>
+                    {isSelected && (
+                      <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -423,5 +366,86 @@ const styles = StyleSheet.create({
   },
   downloadBtnTextSaved: {
     color: '#22c55e',
+  },
+  placeholderCard: {
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 20,
+  },
+  placeholderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  placeholderSub: {
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    maxHeight: '75%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  modalChapterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#A8C7B2',
+    gap: 12,
+  },
+  modalChapterRowActive: {
+    backgroundColor: 'rgba(20, 122, 67, 0.08)',
+    borderRadius: 10,
+    paddingHorizontal: 8,
+  },
+  modalNumBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E8F2EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalNumBadgeActive: {
+    backgroundColor: '#147A43',
+  },
+  modalNumText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#2D3E36',
+  },
+  modalNumTextActive: {
+    color: '#FFFFFF',
+  },
+  modalChapterText: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
+  },
+  modalChapterTextActive: {
+    color: '#147A43',
+    fontWeight: '700',
   },
 });

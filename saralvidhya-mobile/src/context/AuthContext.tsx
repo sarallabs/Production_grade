@@ -19,7 +19,7 @@ interface AuthContextType {
   onboardingCompleted: boolean;
   questionnaireCompleted: boolean;
   isLoading: boolean;
-  login: (username: string, rollNumber?: string) => Promise<void>;
+  login: (password: string, username?: string, rollNumber?: string) => Promise<void>;
   loginAsDemoStudent: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (profile: Partial<StudentProfile>) => Promise<void>;
@@ -72,9 +72,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         storage.getItem<boolean>(StorageKeys.QUESTIONNAIRE_DONE),
       ]);
 
-      if (token && savedProfile) {
+      if (savedProfile) {
         setUser(savedProfile);
-        setIsAuthenticated(true);
         setOnboardingCompleted(Boolean(savedProfile.university));
       }
       if (savedPersona) {
@@ -83,6 +82,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (questionnaireDone) {
         setQuestionnaireCompleted(true);
       }
+      // Require password authentication on app start (Step 1 of app flow)
+      setIsAuthenticated(false);
     } catch (e) {
       console.error('Error loading session from storage', e);
     } finally {
@@ -90,7 +91,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (username: string, rollNumber: string = 'AG-2024-001') => {
+  const login = async (password: string, username: string = 'ANGRAU Student', rollNumber: string = 'AG-2024-001') => {
+    // Basic verification - non-empty password
+    if (!password) {
+      throw new Error('Password is required');
+    }
     const profile: StudentProfile = {
       id: `std_${Date.now()}`,
       name: username || 'ANGRAU Student',

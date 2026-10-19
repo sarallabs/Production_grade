@@ -23,14 +23,14 @@ export default function LoginScreen() {
   const { login, loginAsDemoStudent } = useAuth();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const [name, setName] = useState('');
-  const [rollNumber, setRollNumber] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleLogin = async () => {
-    if (!name.trim()) {
-      setError('Please enter your name or student ID');
+    if (!password.trim()) {
+      setError('Please enter your access password');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -39,10 +39,10 @@ export default function LoginScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     try {
-      await login(name.trim(), rollNumber.trim() || 'AG-2024-001');
+      await login(password.trim());
       router.replace('/landing');
     } catch {
-      setError('Failed to login. Please try again.');
+      setError('Failed to login. Please check your password.');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,9 +85,9 @@ export default function LoginScreen() {
 
         {/* Card */}
         <View style={[styles.card, { backgroundColor: isDark ? '#23322B' : '#ffffff', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
-          <Text style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Student Sign In</Text>
+          <Text style={[styles.cardTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>Student Access</Text>
           <Text style={[styles.cardDescription, { color: isDark ? '#A6C5B3' : '#688875' }]}>
-            Enter your student details to access your courses, study table, and exam prep.
+            Enter your university passcode to access your courses, subjects, and study tools.
           </Text>
 
           {error ? (
@@ -98,32 +98,30 @@ export default function LoginScreen() {
           ) : null}
 
           <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: isDark ? '#A6C5B3' : '#557A65' }]}>Full Name / Student Name</Text>
+            <Text style={[styles.label, { color: isDark ? '#A6C5B3' : '#557A65' }]}>Access Password</Text>
             <View style={[styles.inputWrapper, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
-              <Ionicons name="person-outline" size={20} color={isDark ? '#A6C5B3' : '#688875'} style={styles.inputIcon} />
+              <Ionicons name="lock-closed-outline" size={20} color={isDark ? '#A6C5B3' : '#688875'} style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
-                placeholder="e.g. Aditya Ballari"
+                placeholder="Enter passcode..."
                 placeholderTextColor={isDark ? '#7E998B' : '#8A7A70'}
-                value={name}
-                onChangeText={(t) => { setName(t); setError(''); }}
-                autoCapitalize="words"
+                value={password}
+                onChangeText={(t) => { setPassword(t); setError(''); }}
+                secureTextEntry={!showPassword}
+                onSubmitEditing={handleLogin}
+                returnKeyType="go"
               />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: isDark ? '#A6C5B3' : '#557A65' }]}>Roll Number / Student ID (Optional)</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: isDark ? '#1C2822' : '#F7EBE3', borderColor: isDark ? '#3D5449' : '#E5DDD8' }]}>
-              <Ionicons name="card-outline" size={20} color={isDark ? '#A6C5B3' : '#688875'} style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
-                placeholder="e.g. AG-2023-131"
-                placeholderTextColor={isDark ? '#7E998B' : '#8A7A70'}
-                value={rollNumber}
-                onChangeText={setRollNumber}
-                autoCapitalize="characters"
-              />
+              <TouchableOpacity
+                onPress={() => setShowPassword((prev) => !prev)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                style={{ padding: 4 }}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={20}
+                  color={isDark ? '#A6C5B3' : '#688875'}
+                />
+              </TouchableOpacity>
             </View>
           </View>
 
@@ -137,7 +135,7 @@ export default function LoginScreen() {
               <ActivityIndicator color="#ffffff" />
             ) : (
               <>
-                <Text style={styles.primaryButtonText}>Continue to Study</Text>
+                <Text style={styles.primaryButtonText}>Unlock & Enter</Text>
                 <Ionicons name="arrow-forward" size={18} color="#ffffff" />
               </>
             )}
@@ -156,7 +154,7 @@ export default function LoginScreen() {
             activeOpacity={0.8}
           >
             <Ionicons name="flash" size={18} color="#22c55e" />
-            <Text style={styles.demoButtonText}>Continue as ANGRAU Demo Student</Text>
+            <Text style={styles.demoButtonText}>Continue as ANGRAU Student</Text>
           </TouchableOpacity>
         </View>
 

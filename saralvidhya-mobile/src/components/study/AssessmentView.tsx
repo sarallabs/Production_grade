@@ -32,7 +32,7 @@ export default function AssessmentView({
   onFinish,
   onBackPress,
 }: AssessmentViewProps) {
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
   const questions: AssessmentQuestion[] =
@@ -113,7 +113,7 @@ export default function AssessmentView({
   // - Card bg: #21362b
   // - Next button: #b2e0c2, text #1a2921
   // - Footer: #bad1bf
-  const bg = isDark ? '#1A2921' : '#F0F7F2';
+  const bg = isDark ? '#2D3E36' : '#FFF6F1';
   const badgeBg = isDark ? '#FFFFFF' : '#273A31';
   const headerTextColor = isDark ? '#F0F7F0' : '#1F2E29';
   const headerRuleColor = isDark ? '#4D6E57' : '#C7DBCF';
@@ -217,18 +217,6 @@ export default function AssessmentView({
           <Text style={[styles.subjectBreadcrumb, { color: headerTextColor }]}>
             {`${subjectName}  ·  Chapter ${chapterNumber}`}
           </Text>
-
-          {/* Quick Theme Switcher */}
-          <TouchableOpacity
-            style={[styles.themeToggleBtn, { borderColor: cardBorder }]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setThemeMode(isDark ? 'light' : 'dark');
-            }}
-            activeOpacity={0.75}
-          >
-            <Ionicons name={isDark ? 'sunny' : 'moon'} size={15} color={headerTextColor} />
-          </TouchableOpacity>
         </View>
 
         {/* 1px Horizontal Rule (.headerRule) */}

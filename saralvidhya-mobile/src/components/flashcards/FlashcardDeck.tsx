@@ -65,6 +65,7 @@ interface FlashcardDeckProps {
   chapterNumber: number;
   persona?: PersonaType;
   onPersonaChange?: (newPersona: PersonaType) => void;
+  onFinish?: () => void;
 }
 
 export default function FlashcardDeck({
@@ -72,6 +73,7 @@ export default function FlashcardDeck({
   chapterNumber,
   persona: propPersona,
   onPersonaChange,
+  onFinish,
 }: FlashcardDeckProps) {
   const { isDark } = useAppTheme();
   const { persona: authPersona, updatePersona } = useAuth();
@@ -153,6 +155,7 @@ export default function FlashcardDeck({
       setCurrentIndex((prev) => prev + 1);
     } else {
       setIsFinished(true);
+      onFinish?.();
     }
   };
 

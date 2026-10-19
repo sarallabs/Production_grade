@@ -195,7 +195,7 @@ export default function PYQView({
   chapterNumber = 1,
   chapterName = 'Insect Digestive System',
 }: PYQViewProps) {
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
   // State: selectedQuestionId (null = full list mode, number = model answer revealed mode)
@@ -302,16 +302,6 @@ export default function PYQView({
             <Image source={PLANT_BADGE} style={styles.badgeImage} resizeMode="contain" />
           </View>
           <Text style={[styles.screenTitle, { color: titleColor }]}>Question Bank</Text>
-          <TouchableOpacity
-            style={[styles.themeToggleBtn, { borderColor: cardBorder }]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setThemeMode(isDark ? 'light' : 'dark');
-            }}
-            activeOpacity={0.75}
-          >
-            <Ionicons name={isDark ? 'sunny' : 'moon'} size={15} color={titleColor} />
-          </TouchableOpacity>
         </View>
 
         {/* 2. SUBTITLE (.questionCount) */}

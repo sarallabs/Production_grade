@@ -10,20 +10,23 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { manifestService, Subject, Chapter } from '@/api/manifestService';
 import { ChapterCard } from '@/components/study/ChapterCard';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function SubjectUnitsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ subjectId?: string; courseId?: string; courseName?: string }>();
   const { user } = useAuth();
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { isTablet, columns } = useDeviceLayout();
+  const { selectedSubject, selectSubject } = useCourseContext();
 
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -31,24 +34,40 @@ export default function SubjectUnitsScreen() {
   const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
-    loadSubjectAndUnits();
-  }, []);
+    if (selectedSubject && (!params.subjectId || params.subjectId === selectedSubject.id)) {
+      setActiveSubject(selectedSubject);
+      setChapters(selectedSubject.chapters || []);
+      setLoading(false);
+    } else {
+      loadSubjectAndUnits();
+    }
+  }, [params.subjectId, selectedSubject]);
 
   const loadSubjectAndUnits = async () => {
     setLoading(true);
-    const subjects = await manifestService.getSubjects();
-    const ento = subjects.find((s) => s.id === 'ento_131') || subjects[0];
-    setActiveSubject(ento);
-    setChapters(ento?.chapters || []);
-    setLoading(false);
+    try {
+      const allSubjects = await manifestService.getSubjects();
+      const targetId = params.subjectId || selectedSubject?.id || 'ento_131';
+      const found = allSubjects.find((s) => s.id === targetId || s.code.toLowerCase().replace(/\s+/g, '_') === targetId) || allSubjects[0];
+      setActiveSubject(found);
+      setChapters(found?.chapters || []);
+      if (found && found.id !== selectedSubject?.id) {
+        selectSubject(found);
+      }
+    } catch (e) {
+      console.warn('Failed to load subject units from DB', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const onRefresh = async () => {
     setRefreshing(true);
     const subjects = await manifestService.getSubjects();
-    const ento = subjects.find((s) => s.id === 'ento_131') || subjects[0];
-    setActiveSubject(ento);
-    setChapters(ento?.chapters || []);
+    const targetId = params.subjectId || selectedSubject?.id || 'ento_131';
+    const found = subjects.find((s) => s.id === targetId || s.code.toLowerCase().replace(/\s+/g, '_') === targetId) || subjects[0];
+    setActiveSubject(found);
+    setChapters(found?.chapters || []);
     setRefreshing(false);
   };
 
@@ -60,22 +79,50 @@ export default function SubjectUnitsScreen() {
   const subtextColor = isDark ? '#A6C5B3' : '#688875';
   const iconBtnBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(45, 62, 54, 0.08)';
 
-  const toggleTheme = () => {
-    Haptics.selectionAsync();
-    setThemeMode(isDark ? 'light' : 'dark');
-  };
-
-  // Navigate to study materials page
+  // Navigate to corresponding tab in 4-tab study workspace
   const handleOpenStudyMaterials = (chapter: Chapter, toolId?: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push({
-      pathname: '/(tabs)/study',
-      params: {
-        subjectId: activeSubject?.id || 'ento_131',
-        chapter: chapter.number.toString(),
-        ...(toolId ? { tool: toolId } : {}),
-      },
-    });
+    if (toolId === 'flashcards') {
+      router.push({
+        pathname: '/(tabs)/practice',
+        params: {
+          part: 'revise',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'quiz') {
+      router.push({
+        pathname: '/(tabs)/practice',
+        params: {
+          part: 'assessments',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'audio' || toolId === 'podcasts' || toolId === 'listen') {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'listen',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'videos' || toolId === 'watch') {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'watch',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'read',
+          chapter: chapter.number.toString(),
+        },
+      });
+    }
   };
 
   return (
@@ -89,7 +136,7 @@ export default function SubjectUnitsScreen() {
       <View style={styles.navBar}>
         <TouchableOpacity
           style={[styles.navButton, { backgroundColor: iconBtnBg }]}
-          onPress={() => router.back()}
+          onPress={() => router.replace('/courses')}
           activeOpacity={0.8}
         >
           <Ionicons name="arrow-back" size={20} color={headerTextColor} />
@@ -100,22 +147,12 @@ export default function SubjectUnitsScreen() {
             {activeSubject?.name || 'Entomology'}
           </Text>
           <Text style={[styles.navSubtitle, { color: subtextColor }]}>
-            {user?.program || 'B.Sc Agriculture'} • {chapters.length} Units
+            {params.courseName || user?.program || 'B.Sc Agriculture'} • {chapters.length} Units
           </Text>
         </View>
 
-        {/* Theme Toggle Button */}
-        <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: iconBtnBg }]}
-          onPress={toggleTheme}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={isDark ? 'sunny-outline' : 'moon-outline'}
-            size={19}
-            color={headerTextColor}
-          />
-        </TouchableOpacity>
+        {/* Right Spacer for balance */}
+        <View style={{ width: 40, height: 40 }} />
       </View>
 
       {/* Scrollable Unit Cards List (Digestive System, Metamorphosis, Weathering, Pollination...) */}
@@ -165,7 +202,7 @@ export default function SubjectUnitsScreen() {
               <ChapterCard
                 chapter={chapter}
                 subjectName={activeSubject?.name || 'Entomology'}
-                courseName={user?.program || 'B.Sc Agriculture'}
+                courseName={params.courseName || user?.program || 'B.Sc Agriculture'}
                 isDark={isDark}
                 onPress={() => handleOpenStudyMaterials(chapter)}
                 onToolPress={(toolId) => handleOpenStudyMaterials(chapter, toolId)}

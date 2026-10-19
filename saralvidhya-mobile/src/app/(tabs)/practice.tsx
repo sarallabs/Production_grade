@@ -16,21 +16,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
+import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import AssessmentView from '@/components/study/AssessmentView';
 import PYQView from '@/components/study/PYQView';
 import { fetchFlashcards } from '@/services/contentService';
 import { SAMPLE_FLASHCARDS, Flashcard, getFlashcardsForPersona } from '@/data/sampleFlashcards';
 
-interface TopPartSegment {
-  id: 'revise' | 'assessments' | 'question_bank';
-  label: string;
-  vectorIcon: keyof typeof Ionicons.glyphMap;
-}
-
-const PRACTICE_PARTS: TopPartSegment[] = [
+const PRACTICE_PARTS: NavSegment[] = [
   { id: 'revise', label: 'Revise', vectorIcon: 'flash-outline' },
   { id: 'assessments', label: 'Assessments', vectorIcon: 'checkmark-circle-outline' },
   { id: 'question_bank', label: 'Question Bank', vectorIcon: 'file-tray-full-outline' },
@@ -39,16 +35,12 @@ const PRACTICE_PARTS: TopPartSegment[] = [
 export default function PracticeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { persona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
+  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
   const params = useLocalSearchParams<{ chapter?: string; part?: string }>();
-  const activeSubject = ANGRAU_SUBJECTS[0];
-
-  const toggleTheme = () => {
-    Haptics.selectionAsync();
-    setThemeMode(isDark ? 'light' : 'dark');
-  };
+  const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   // 3 Practice parts: Revise, Assessments, Question Bank. Default to Assessments per user request.
   const [activePart, setActivePart] = useState<'revise' | 'assessments' | 'question_bank'>(
@@ -115,73 +107,15 @@ export default function PracticeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* 0. Top Bar: Chapter selector & Circular Profile / Theme toggle */}
-      <View style={[styles.topBarRow, { paddingTop: insets.top + (Platform.OS === 'android' ? 6 : 2) }]}>
-        <TouchableOpacity
-          style={[
-            styles.chapterPill,
-            { backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(45,62,54,0.08)' },
-          ]}
-          onPress={() => setShowChapterModal(true)}
-          activeOpacity={0.75}
-        >
-          <Text style={[styles.chapterPillText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
-            {activeSubject.code} · Ch {selectedChapterNum}
-          </Text>
-          <Ionicons name="chevron-down" size={13} color={isDark ? '#A6C5B3' : '#596B66'} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.profileCircle,
-            { borderColor: isDark ? 'rgba(255,255,255,0.28)' : 'rgba(45,62,54,0.25)' },
-          ]}
-          onPress={toggleTheme}
-          activeOpacity={0.8}
-          accessibilityLabel="Toggle Theme"
-        >
-          <Ionicons name="person-outline" size={18} color={isDark ? '#FFFFFF' : '#1C2E24'} />
-        </TouchableOpacity>
-      </View>
-
-      {/* 1. TOP 3-PART SEGMENT TOGGLE: [ Revise | Assessments | Question Bank ] */}
-      <View style={styles.topSegmentWrap}>
-        <View style={[styles.topSegmentContainer, { backgroundColor: toggleBg }]}>
-          {PRACTICE_PARTS.map((seg) => {
-            const isActive = activePart === seg.id;
-            return (
-              <TouchableOpacity
-                key={seg.id}
-                style={[
-                  styles.segmentPill,
-                  isActive && [styles.segmentPillActive, { backgroundColor: activePillBg }],
-                ]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setActivePart(seg.id);
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={seg.vectorIcon}
-                  size={14}
-                  color={isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
-                />
-                <Text
-                  style={[
-                    styles.segmentText,
-                    { color: isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
-                    isActive && styles.segmentTextActive,
-                  ]}
-                  numberOfLines={1}
-                >
-                  {seg.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
+      {/* Top Mobile Toolbar with Toggle Pills + Profile Avatar + Chapter Selector */}
+      <TopNavBar
+        segments={PRACTICE_PARTS}
+        activeSegment={activePart}
+        onSegmentChange={(segId) => setActivePart(segId as any)}
+        chapterTitle={`${activeSubject.code} · Ch ${selectedChapterNum}`}
+        onChapterPress={() => setShowChapterModal(true)}
+        showProfile={true}
+      />
 
       {/* 2. MAIN ACTIVE PART */}
       {activePart === 'assessments' ? (
@@ -191,6 +125,7 @@ export default function PracticeScreen() {
           subjectName={activeSubject.name}
           onFinish={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            markResourceCompleted(activeSubject.id, selectedChapterNum, 'quiz');
           }}
           onBackPress={() => {
             if (router.canGoBack()) {
@@ -221,6 +156,10 @@ export default function PracticeScreen() {
               chapterNumber={currentChapter.number}
               persona={persona}
               onPersonaChange={updatePersona}
+              onFinish={() => {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                markResourceCompleted(activeSubject.id, selectedChapterNum, 'flashcards');
+              }}
             />
           )}
         </View>

@@ -15,20 +15,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import StudyGuideReader from '@/components/study/StudyGuideReader';
 import ListenScreen, { ListenMode } from '@/components/study/ListenScreen';
 import VideosView from '@/components/study/VideosView';
+import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
-interface TopNavSegment {
-  id: 'read' | 'listen' | 'watch';
-  label: string;
-  vectorIcon: keyof typeof Ionicons.glyphMap;
-}
-
-const LEARN_SEGMENTS: TopNavSegment[] = [
+const LEARN_SEGMENTS: NavSegment[] = [
   { id: 'read', label: 'Read', vectorIcon: 'book-outline' },
   { id: 'listen', label: 'Listen', vectorIcon: 'headset-outline' },
   { id: 'watch', label: 'Watch', vectorIcon: 'play-circle-outline' },
@@ -39,8 +35,9 @@ export default function LearnScreen() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
+  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
   const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
-  const activeSubject = ANGRAU_SUBJECTS[0];
+  const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<'read' | 'listen' | 'watch'>(
     params.segment === 'watch' ? 'watch' : params.segment === 'listen' ? 'listen' : 'read'
@@ -69,56 +66,18 @@ export default function LearnScreen() {
   const screenBg = isDark ? '#121E17' : '#F0F7F3';
   const textColor = isDark ? '#FFFFFF' : '#2D3E36';
   const subtextColor = isDark ? '#A6C5B3' : '#617269';
-  const toggleBg = isDark ? '#1E2B24' : '#E3EFE8';
-  const activePillBg = isDark ? '#147A43' : '#2D3E36';
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       {/* 1. TOP 3-COMPONENT SEGMENT TOGGLE: [ Read | Listen | Watch ] */}
-      <View
-        style={[
-          styles.topSegmentWrap,
-          {
-            backgroundColor: screenBg,
-            paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4),
-          },
-        ]}
-      >
-        <View style={[styles.topSegmentContainer, { backgroundColor: toggleBg }]}>
-          {LEARN_SEGMENTS.map((seg) => {
-            const isActive = activeSegment === seg.id;
-            return (
-              <TouchableOpacity
-                key={seg.id}
-                style={[
-                  styles.segmentPill,
-                  isActive && [styles.segmentPillActive, { backgroundColor: activePillBg }],
-                ]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setActiveSegment(seg.id);
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={seg.vectorIcon}
-                  size={15}
-                  color={isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
-                />
-                <Text
-                  style={[
-                    styles.segmentText,
-                    { color: isActive ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
-                    isActive && styles.segmentTextActive,
-                  ]}
-                >
-                  {seg.label}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
+      <TopNavBar
+        segments={LEARN_SEGMENTS}
+        activeSegment={activeSegment}
+        onSegmentChange={(segId) => setActiveSegment(segId as any)}
+        chapterTitle={`${activeSubject.code} · Ch ${selectedChapterNum}`}
+        onChapterPress={() => setShowChapterModal(true)}
+        showProfile={true}
+      />
 
       {/* 2. MAIN ACTIVE VIEW */}
       {activeSegment === 'watch' ? (
@@ -130,6 +89,7 @@ export default function LearnScreen() {
             chapterName={currentChapter.name}
             onContinueLearning={() => {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              markResourceCompleted(activeSubject.id, currentChapter.number, 'videos');
             }}
           />
         </View>
@@ -138,7 +98,10 @@ export default function LearnScreen() {
           chapterNumber={selectedChapterNum}
           chapterTitle={currentChapter.name}
           initialMode={listenInitialMode}
-          onNavigateToRead={() => setActiveSegment('read')}
+          onNavigateToRead={() => {
+            markResourceCompleted(activeSubject.id, currentChapter.number, 'audio');
+            setActiveSegment('read');
+          }}
           onBackPress={() => setActiveSegment('read')}
         />
       ) : (
@@ -156,6 +119,11 @@ export default function LearnScreen() {
           onChapterPress={() => setShowChapterModal(true)}
           onBookmarkPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            markResourceCompleted(activeSubject.id, currentChapter.number, 'summary');
+          }}
+          onCompleteReading={(mode) => {
+            const resourceKey = mode === 'in_depth' ? 'detailed_view' : 'summary';
+            markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
           }}
           onOpenListen={(targetMode) => {
             setListenInitialMode(targetMode);

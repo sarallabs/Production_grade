@@ -26,7 +26,7 @@ const DARK_BG = '#2D3E36';
 export default function LandingScreen() {
   const router = useRouter();
   const { user, onboardingCompleted } = useAuth();
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { isTablet, width: layoutWidth, height: layoutHeight } = useDeviceLayout();
   const tabletLogoSize = Math.min(layoutWidth * 0.45, layoutHeight * 0.5, 480);
 
@@ -75,10 +75,10 @@ export default function LandingScreen() {
       ]).start();
     });
 
-    // 2. Auto-transition progress bar (exactly 2.0 seconds)
+    // 2. Auto-transition progress bar (2.5 seconds)
     const progressAnimation = RNAnimated.timing(progressAnim, {
       toValue: 1,
-      duration: 2000,
+      duration: 2500,
       useNativeDriver: false,
     });
 
@@ -99,12 +99,7 @@ export default function LandingScreen() {
     if (hasNavigatedRef.current) return;
     hasNavigatedRef.current = true;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    router.replace('/(tabs)');
-  };
-
-  const toggleTheme = () => {
-    Haptics.selectionAsync();
-    setThemeMode(isDark ? 'light' : 'dark');
+    router.replace('/courses');
   };
 
   const currentBg = isDark ? DARK_BG : LIGHT_BG;
@@ -125,23 +120,11 @@ export default function LandingScreen() {
         backgroundColor={currentBg}
       />
 
-      {/* Top Bar with Theme Toggle */}
+      {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.badgeContainer}>
           <Text style={[styles.badgeText, { color: subtextColor }]}>ANGRAU OFFICIAL</Text>
         </View>
-
-        <TouchableOpacity
-          style={[styles.themeToggle, { backgroundColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.06)' }]}
-          onPress={toggleTheme}
-          activeOpacity={0.8}
-        >
-          <Ionicons
-            name={isDark ? 'sunny-outline' : 'moon-outline'}
-            size={20}
-            color={textColor}
-          />
-        </TouchableOpacity>
       </View>
 
       {/* Center Logo Showcase (matching reference PNGs) */}
@@ -183,7 +166,7 @@ export default function LandingScreen() {
           activeOpacity={0.85}
         >
           <Text style={[styles.continueText, { color: buttonTextColor }]}>
-            Continue to Dashboard
+            Select Courses & Subjects
           </Text>
           <Ionicons name="arrow-forward" size={18} color={buttonTextColor} />
         </TouchableOpacity>
@@ -201,7 +184,7 @@ export default function LandingScreen() {
           />
         </View>
         <Text style={[styles.hintText, { color: subtextColor }]}>
-          Loading your personalized study material...
+          Loading courses & personalized curriculum...
         </Text>
       </RNAnimated.View>
     </View>

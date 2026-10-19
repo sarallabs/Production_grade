@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,206 +7,159 @@ import {
   TouchableOpacity,
   Modal,
 } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
-import AssessmentView from '@/components/study/AssessmentView';
-import PYQView from '@/components/study/PYQView';
+import StudyPlanView from '@/components/study/StudyPlanView';
+import PYQSelectionView from '@/components/study/PYQSelectionView';
+import PreparationExamView from '@/components/study/PreparationExamView';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const PREPARE_SEGMENTS: NavSegment[] = [
-  { id: 'high_yield', label: 'High-Yield', vectorIcon: 'star-outline' },
-  { id: 'past_papers', label: 'Past Papers', vectorIcon: 'newspaper-outline' },
-  { id: 'mock_exam', label: 'Mock Exam', vectorIcon: 'stopwatch-outline' },
+  { id: 'study_plan', label: 'Study Plan', vectorIcon: 'calendar-outline' },
+  { id: 'pyq', label: 'PYQ', vectorIcon: 'document-text-outline' },
+  { id: 'prep_exam', label: 'Preparation Exam', vectorIcon: 'timer-outline' },
 ];
 
-interface HighYieldTip {
-  title: string;
-  marks: string;
-  focus: string;
-  examTip: string;
-  keyKeywords: string[];
-}
-
-const HIGH_YIELD_DATA: Record<number, HighYieldTip[]> = {
-  1: [
-    {
-      title: 'Stomodaeal Valve & Proventriculus Structure',
-      marks: '5 Marks',
-      focus: 'Foregut-Midgut junction and cuticular masticatory teeth',
-      examTip: 'Always draw the cross-section showing 6 cuticular teeth and circular muscle sphincter.',
-      keyKeywords: ['Ectodermal origin', 'Cuticular teeth', 'Intima shedding', 'Sphincter action'],
-    },
-    {
-      title: 'Peritrophic Membrane Synthesis & Function',
-      marks: '2 Marks',
-      focus: 'Endodermal microvillar protection and enzyme permeability',
-      examTip: 'State Type-I (delamination along midgut) vs Type-II (specialized proventricular cardial ring).',
-      keyKeywords: ['Chitin-protein mesh', 'Abrasive food barrier', 'Microvilli shielding', 'Ultrafilter'],
-    },
-    {
-      title: 'Malpighian Tubules & Rectal Water Reabsorption',
-      marks: '10 Marks (Essay)',
-      focus: 'Insect osmoregulatory dynamics and terrestrial water economy',
-      examTip: 'Label the Malpighian tubule insertion ring, ileum, colon, and the 6 rectal pads with epithelial cuticular valves.',
-      keyKeywords: ['Cryptonephridial system', 'Uric acid excretion', 'Rectal papillae', 'Hypertonic faeces'],
-    },
-  ],
-  2: [
-    {
-      title: 'Ametabolous vs Hemimetabolous vs Holometabolous Metamorphosis',
-      marks: '5 Marks',
-      focus: 'Classification of post-embryonic insect development',
-      examTip: 'Tabulate nymph vs naiad vs larva-pupa-adult stages with ANGRAU crop pest examples.',
-      keyKeywords: ['Ecdysis', 'Exuviae', 'Instar', 'Imaginal discs'],
-    },
-    {
-      title: 'Hormonal Control of Ecdysis and Apolysis',
-      marks: '10 Marks (Essay)',
-      focus: 'Interplay of PTTH, Ecdysone and Juvenile Hormone (JH)',
-      examTip: 'Draw the endocrine pathway: Brain neurosecretory cells -> Prothoracic gland -> Ecdysone -> Apolysis.',
-      keyKeywords: ['Corpora allata', 'Corpora cardiaca', '20-hydroxyecdysone', 'Juvenile hormone titer'],
-    },
-  ],
-};
-
 export default function PrepareScreen() {
+  const router = useRouter();
+  const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const activeSubject = ANGRAU_SUBJECTS[0];
+  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
+  const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
-  const [activeSegment, setActiveSegment] = useState<string>('high_yield');
-  const [selectedChapterNum, setSelectedChapterNum] = useState<number>(1);
+  const [activeSegment, setActiveSegment] = useState<string>(
+    params.segment && ['study_plan', 'pyq', 'prep_exam'].includes(params.segment)
+      ? params.segment
+      : 'study_plan'
+  );
+  const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
+    params.chapter ? parseInt(params.chapter, 10) : 1
+  );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (params.chapter) {
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
+        setSelectedChapterNum(parsed);
+      }
+    }
+    if (params.segment && ['study_plan', 'pyq', 'prep_exam'].includes(params.segment)) {
+      setActiveSegment(params.segment);
+    }
+  }, [params.chapter, params.segment]);
+
+  // PYQ 2-step flow state (selection -> exam)
+  const [pyqStep, setPyqStep] = useState<'selection' | 'exam'>('selection');
+  const [examConfig, setExamConfig] = useState<{ selectedUnits: number[]; questionCount: number }>({
+    selectedUnits: [1],
+    questionCount: 10,
+  });
 
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
 
-  const tips = HIGH_YIELD_DATA[selectedChapterNum] || HIGH_YIELD_DATA[1];
+  const subjectUnits = activeSubject.chapters.map((ch) => ({
+    id: ch.number,
+    title: `Unit ${ch.number}`,
+    description: ch.description || ch.name,
+  }));
 
-  const screenBg = isDark ? '#23322B' : '#FFF6F1';
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
   const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
-  const textColor = isDark ? '#FFFFFF' : '#1C2E24';
-  const subtextColor = isDark ? '#A6C5B3' : '#557A65';
-  const tagBg = isDark ? '#1C2822' : '#F7EBE3';
+  const textColor = isDark ? '#FEFEFE' : '#172A24';
+  const subtextColor = isDark ? '#ACC0B5' : '#5C7066';
+
+  const handleStartExam = (config: { selectedUnits: number[]; questionCount: number }) => {
+    setExamConfig(config);
+    setPyqStep('exam');
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Toggle Pills & Profile Avatar */}
+      {/* Top Navigation Bar with Sub-Parts: Study Plan | PYQ | Preparation Exam */}
       <TopNavBar
         segments={PREPARE_SEGMENTS}
         activeSegment={activeSegment}
-        onSegmentChange={setActiveSegment}
-        chapterTitle={`Ch ${currentChapter.number}`}
+        onSegmentChange={(segId) => {
+          setActiveSegment(segId);
+          if (segId === 'pyq') {
+            setPyqStep('selection');
+          }
+        }}
+        chapterTitle={`${activeSubject.code} · Ch ${currentChapter.number}`}
         onChapterPress={() => setShowChapterModal(true)}
       />
 
-      {/* Sub Header */}
-      <View style={[styles.subBar, { backgroundColor: screenBg, borderBottomColor: cardBorder }]}>
-        <TouchableOpacity
-          style={[styles.chapterPickerBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-          onPress={() => setShowChapterModal(true)}
-          activeOpacity={0.8}
-        >
-          <View style={styles.chNumBadge}>
-            <Text style={styles.chNumText}>{currentChapter.number}</Text>
-          </View>
-          <Text style={[styles.chapterPickerName, { color: textColor }]} numberOfLines={1}>
-            {currentChapter.name}
-          </Text>
-          <Ionicons name="chevron-down" size={16} color="#22c55e" />
-        </TouchableOpacity>
-
-        <View style={styles.examTag}>
-          <Text style={styles.examTagText}>ANGRAU Sem Exam Focus</Text>
-        </View>
-      </View>
-
-      {/* Main Prepare Content */}
-      <ScrollView
-        style={styles.workspace}
-        contentContainerStyle={[styles.workspaceContent, isTablet && { alignItems: 'center' }]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={[styles.contentWrap, isTablet && { width: '100%', maxWidth: 860, alignSelf: 'center' }]}>
-          {activeSegment === 'high_yield' ? (
-            <View>
-              {/* Revision Intro Card */}
-              <View style={[styles.introCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                <View style={styles.introHeaderRow}>
-                  <Ionicons name="flash" size={20} color="#f59e0b" />
-                  <Text style={styles.introBadge}>MUST-KNOW EXAM CONCEPTS</Text>
-                </View>
-                <Text style={[styles.introTitle, { color: textColor }]}>
-                  High-Yield Blueprint: {currentChapter.name}
-                </Text>
-                <Text style={[styles.introSubtitle, { color: subtextColor }]}>
-                  Curated specifically from previous 5 years ANGRAU semester examination marking keys.
-                </Text>
-              </View>
-
-              {/* High Yield Tips */}
-              {tips.map((item, idx) => (
-                <View
-                  key={idx}
-                  style={[
-                    styles.tipCard,
-                    { backgroundColor: cardBg, borderColor: cardBorder },
-                  ]}
-                >
-                  <View style={styles.tipHeader}>
-                    <View style={[styles.marksBadge, { backgroundColor: item.marks.includes('10') ? '#ef444422' : '#22c55e22' }]}>
-                      <Text style={[styles.marksText, { color: item.marks.includes('10') ? '#ef4444' : '#22c55e' }]}>
-                        {item.marks}
-                      </Text>
-                    </View>
-                    <Text style={[styles.tipTitle, { color: textColor }]}>
-                      {item.title}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.focusText, { color: subtextColor }]}>
-                    <Text style={{ fontWeight: '700', color: textColor }}>Examiner Focus: </Text>
-                    {item.focus}
-                  </Text>
-
-                  <View style={[styles.examTipBox, { backgroundColor: tagBg }]}>
-                    <Ionicons name="bulb-outline" size={16} color="#f59e0b" />
-                    <Text style={[styles.examTipText, { color: isDark ? '#f8fafc' : '#1e293b' }]}>
-                      {item.examTip}
-                    </Text>
-                  </View>
-
-                  <View style={styles.keywordWrap}>
-                    {item.keyKeywords.map((kw, kwIdx) => (
-                      <View key={kwIdx} style={[styles.keywordPill, { backgroundColor: tagBg }]}>
-                        <Text style={[styles.keywordText, { color: subtextColor }]}>
-                          ✓ {kw}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              ))}
-            </View>
-          ) : activeSegment === 'past_papers' ? (
-            <PYQView
-              chapterNumber={currentChapter.number}
-              chapterName={currentChapter.name}
-            />
-          ) : activeSegment === 'mock_exam' ? (
-            <AssessmentView chapterNumber={currentChapter.number} />
-          ) : null}
-        </View>
-
-        <View style={{ height: 40 }} />
-      </ScrollView>
+      {/* Main Content Area based on Active Segment */}
+      {activeSegment === 'study_plan' ? (
+        <StudyPlanView
+          unitCode={`${activeSubject.code} · UNIT ${currentChapter.number}`}
+          unitName={currentChapter.name}
+          subjectName={activeSubject.name}
+          onOpenTask={(task) => {
+            if (task.type === 'video') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'review') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'quiz') {
+              router.push({ pathname: '/(tabs)/practice', params: { part: 'assessments', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'mindmap') {
+              router.push({ pathname: '/(tabs)/resources', params: { segment: 'mindmaps', chapter: currentChapter.number.toString() } });
+            }
+          }}
+        />
+      ) : activeSegment === 'pyq' ? (
+        pyqStep === 'selection' ? (
+          <PYQSelectionView
+            units={subjectUnits}
+            pageTitle="PYQ Preparation"
+            backLabel="Back to Study Plan"
+            onBack={() => {
+              setActiveSegment('study_plan');
+            }}
+            onStart={handleStartExam}
+          />
+        ) : (
+          <PreparationExamView
+            subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
+            onBack={() => setPyqStep('selection')}
+            onSubmit={() => {
+              markResourceCompleted(activeSubject.id, currentChapter.number, 'pyq');
+              setPyqStep('selection');
+            }}
+          />
+        )
+      ) : activeSegment === 'prep_exam' ? (
+        <PreparationExamView
+          subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
+          onBack={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/(tabs)');
+            }
+          }}
+          onSubmit={() => {
+            markResourceCompleted(activeSubject.id, currentChapter.number, 'prep_exam');
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/(tabs)');
+            }
+          }}
+        />
+      ) : null}
 
       {/* Chapter Selection Modal */}
       <Modal
@@ -470,4 +423,40 @@ const styles = StyleSheet.create({
     color: '#22c55e',
     fontWeight: '700',
   },
+  examReadyCard: {
+    padding: Spacing.four,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    gap: 16,
+  },
+  backToSetupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  backToSetupText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  examReadyHeader: {
+    gap: 4,
+  },
+  examReadyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  examReadySub: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  configPillsRow: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: BorderRadius.md,
+  },
+  configPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
 });
+

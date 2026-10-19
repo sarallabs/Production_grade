@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useAuth } from '@/context/AuthContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
@@ -37,6 +38,7 @@ const LEADERBOARD_STUDENTS = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, persona, logout } = useAuth();
+  const { selectedCourse, selectedSubject } = useCourseContext();
   const { themeMode, setThemeMode, isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
@@ -63,7 +65,7 @@ export default function ProfileScreen() {
     Alert.alert('Cache Cleared', 'Offline study materials and local manifest cache cleared successfully.');
   };
 
-  const screenBg = isDark ? '#23322B' : '#FFF6F1';
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
   const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
   const textColor = isDark ? '#FFFFFF' : '#1C2E24';
@@ -166,6 +168,45 @@ export default function ProfileScreen() {
                     ? 'Standard syllabus speed with balanced study guides and quizzes.'
                     : 'Deep-dive mode with 10-mark past question papers and advanced taxonomy.'}
                 </Text>
+              </View>
+
+              {/* Active Curriculum Selection Card */}
+              <View
+                style={[
+                  styles.sectionCard,
+                  { backgroundColor: cardBg, borderColor: cardBorder },
+                ]}
+              >
+                <View style={styles.sectionHeaderRow}>
+                  <View>
+                    <Text style={[styles.sectionLabel, { color: subtextColor }]}>ENROLLED DEGREE PROGRAM</Text>
+                    <Text style={[styles.personaTitle, { color: textColor }]}>
+                      {selectedCourse?.name || 'B.Sc. (Hons) Agriculture'}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.changePersonaBtn}
+                    onPress={() => router.push('/courses')}
+                  >
+                    <Text style={styles.changePersonaText}>Switch Course</Text>
+                    <Ionicons name="chevron-forward" size={14} color="#22c55e" />
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDark ? '#2D3E36' : '#F1EBE5' }}>
+                  <View>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: subtextColor }}>ACTIVE STUDY SUBJECT</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: textColor, marginTop: 2 }}>
+                      {selectedSubject?.name || 'Entomology'} ({selectedSubject?.code || 'ENTO 131'})
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.changePersonaBtn}
+                    onPress={() => router.push('/subjects')}
+                  >
+                    <Text style={styles.changePersonaText}>Switch Subject</Text>
+                    <Ionicons name="chevron-forward" size={14} color="#22c55e" />
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           ) : activeSegment === 'rankings' ? (

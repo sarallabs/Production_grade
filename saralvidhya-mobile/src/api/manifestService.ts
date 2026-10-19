@@ -413,7 +413,7 @@ export const manifestService = {
           chapter.completed.push(resourceType);
         }
         subject.progressPercent = this.calculateSubjectProgress(subject);
-        await storage.setItem('saral_cached_subjects', subjects);
+        await storage.setItem('saral_cached_subjects_v4', subjects);
       }
     }
     return subjects;

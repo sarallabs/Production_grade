@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth, PersonaType } from '@/context/AuthContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { ANGRAU_SUBJECTS, Chapter, manifestService } from '@/api/manifestService';
 import { BorderRadius, Spacing } from '@/constants/theme';
@@ -84,8 +85,11 @@ export default function StudyTableScreen() {
   const { isDark } = useAppTheme();
   const router = useRouter();
   const { isTablet, isLandscape } = useDeviceLayout();
+  const { selectedSubject, subjects } = useCourseContext();
 
-  const activeSubject = ANGRAU_SUBJECTS[0]; // ENTO 131
+  const activeSubject =
+    (params.subjectId ? subjects.find((s) => s.id === params.subjectId) : selectedSubject) ||
+    ANGRAU_SUBJECTS[0];
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
   );

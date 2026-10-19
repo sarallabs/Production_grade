@@ -85,6 +85,7 @@ interface StudyGuideReaderProps {
   onBookmarkPress?: () => void;
   onChapterPress?: () => void;
   onOpenListen?: (mode: 'quick' | 'detailed') => void;
+  onCompleteReading?: (mode: 'essentials' | 'in_depth') => void;
 }
 
 const GLOSSARY_TERMS: Record<string, { term: string; definition: string; examTip: string }> = {
@@ -146,6 +147,7 @@ export default function StudyGuideReader({
   onBookmarkPress,
   onChapterPress,
   onOpenListen,
+  onCompleteReading,
 }: StudyGuideReaderProps) {
   const { isDark } = useAppTheme();
   const { persona, updatePersona } = useAuth();
@@ -637,9 +639,40 @@ export default function StudyGuideReader({
               </View>
             </View>
 
-            <View style={{ height: 60 }} />
+            <View style={{ height: 20 }} />
           </View>
         )}
+
+        {/* Dynamic Completion Button */}
+        <TouchableOpacity
+          style={{
+            backgroundColor: '#147A43',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingVertical: 14,
+            paddingHorizontal: 20,
+            borderRadius: 14,
+            marginTop: 20,
+            marginBottom: 40,
+            gap: 8,
+            shadowColor: '#147A43',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.25,
+            shadowRadius: 5,
+            elevation: 3,
+          }}
+          onPress={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            onCompleteReading?.(studyMode);
+          }}
+          activeOpacity={0.85}
+        >
+          <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>
+            Mark Chapter Notes as Completed
+          </Text>
+        </TouchableOpacity>
       </ScrollView>
 
 

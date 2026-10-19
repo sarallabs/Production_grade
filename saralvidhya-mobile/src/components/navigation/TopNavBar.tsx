@@ -58,8 +58,8 @@ export default function TopNavBar({
 
   // Color tokens matching user reference screenshot:
   // Light mode: cream background #FFF6F1, subtle border, clean dark-green text
-  // Dark mode: dark green background #23322B, dark translucent pills with subtle light border
-  const bg = isDark ? '#23322B' : '#FFF6F1';
+  // Dark mode: dark green background #2D3E36, dark translucent pills with subtle light border
+  const bg = isDark ? '#2D3E36' : '#FFF6F1';
   const pillBorder = isDark ? 'rgba(255, 255, 255, 0.22)' : '#DCD3CC';
   const pillInactiveBg = isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(255, 255, 255, 0.85)';
   const pillActiveBg = isDark ? '#2E4438' : '#FFFFFF';

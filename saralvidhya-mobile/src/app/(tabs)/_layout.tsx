@@ -52,14 +52,11 @@ export default function TabsLayout() {
         },
       }}
     >
-      {/* 1. Home */}
+      {/* Hidden index route (Auto-redirects to learn) */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color, focused }) => (
-            <HomeIcon color={color} size={22} focused={focused} />
-          ),
+          href: null,
         }}
       />
 

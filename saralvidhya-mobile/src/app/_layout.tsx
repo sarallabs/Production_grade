@@ -6,6 +6,7 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 
 import { ThemeProvider as SaralThemeProvider, useAppTheme } from '@/context/ThemeContext';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { CourseProvider } from '@/context/CourseContext';
 import OfflineBanner from '@/components/common/OfflineBanner';
 
 LogBox.ignoreLogs([
@@ -44,7 +45,6 @@ function RootNavigation() {
   const { isDark } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
-  const hasShownLandingRef = React.useRef(false);
 
   useEffect(() => {
     if (isLoading) return;
@@ -52,17 +52,9 @@ function RootNavigation() {
     SplashScreen.hideAsync().catch(() => {});
 
     const inAuthGroup = segments[0] === '(auth)';
-    const isLanding = segments[0] === 'landing';
 
-    if (!isAuthenticated && !inAuthGroup && !isLanding) {
+    if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && !hasShownLandingRef.current && !isLanding) {
-      // First time opening app: show landing page for 2 seconds!
-      hasShownLandingRef.current = true;
-      router.replace('/landing');
-    } else if (isAuthenticated && inAuthGroup) {
-      hasShownLandingRef.current = true;
-      router.replace('/landing');
     }
   }, [isAuthenticated, isLoading, segments]);
 
@@ -76,11 +68,13 @@ function RootNavigation() {
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="landing" />
+      <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
+      <Stack.Screen name="landing" />
+      <Stack.Screen name="courses/index" />
       <Stack.Screen name="subjects/index" />
       <Stack.Screen name="subjects/[subjectId]" />
+      <Stack.Screen name="(tabs)" />
     </Stack>
   );
 }
@@ -123,9 +117,11 @@ function ThemedApp() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <SaralThemeProvider>
-        <ThemedApp />
-      </SaralThemeProvider>
+      <CourseProvider>
+        <SaralThemeProvider>
+          <ThemedApp />
+        </SaralThemeProvider>
+      </CourseProvider>
     </AuthProvider>
   );
 }
