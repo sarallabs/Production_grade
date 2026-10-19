@@ -15,6 +15,7 @@ import * as Speech from 'expo-speech';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 
 const { width } = Dimensions.get('window');
 
@@ -149,11 +150,18 @@ export default function ListenScreen({
       setIsPlaying(false);
     } else {
       setIsPlaying(true);
-      const textToSpeak = isQuick
+      let textToSpeak = isQuick
         ? 'Imagine pouring solid wood chips or liquid blood directly into the gas tank of a Ferrari. The engine would struggle to process it. In the insect world, that rule of engineering is turned upside down. We are looking at a biological landscape where a microscopic tube has adapted to process incredibly diverse fuels. The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each plays a different role in extracting energy and keeping the insect alive.'
         : isDetailed
         ? 'Yuteng once said, happiness for me is largely a matter of digestion. I mean, he is not wrong. If you are listening to this, you might think about digestion after a heavy meal. But for insects, digestion is not just processing lunch. It is a high-stakes evolutionary battleground. Today, we are unpacking the insect elementary canal and the specialized systems that help insects survive.'
         : 'This is the brief on insect digestive anatomy, drawing from Dr. Chirukari Srinivasa Rao’s lectures. To understand how agricultural pests process their food, we must examine the highly specialized three-part tube of their digestive tract. Function dictates form. Foregut and hindgut have an ectodermal origin; the midgut has an endodermal origin.';
+
+      if (chapterNumber !== 1 && SAMPLE_STUDY_CONTENT[chapterNumber]) {
+        const raw = isDetailed
+          ? SAMPLE_STUDY_CONTENT[chapterNumber].detailed
+          : SAMPLE_STUDY_CONTENT[chapterNumber].summary;
+        textToSpeak = raw.replace(/[#*`_>\[\]$|\\]/g, ' ').replace(/\s+/g, ' ').slice(0, 500);
+      }
 
       Speech.stop();
       Speech.speak(textToSpeak, {
@@ -218,51 +226,19 @@ export default function ListenScreen({
       >
         {/* 1. BRANDING HEADER OR MICROCASTS HEADER */}
         {isMicro ? (
-          /* Microcasts Header (.header, .brandMark, .pageTitle, .pageSubtitle, .profileAvatar) */
-          <View style={styles.microHeaderContainer}>
-            <View style={styles.microcastsHeader}>
-              <View style={styles.microHeaderLeft}>
-                {onBackPress && (
-                  <TouchableOpacity
-                    style={[styles.backBtnSmall, { backgroundColor: cardBg, borderColor: '#DBE5E0' }]}
-                    onPress={onBackPress}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="arrow-back" size={16} color="#1A282D" />
-                  </TouchableOpacity>
-                )}
-                <View style={[styles.brandMark, { backgroundColor: '#00996E' }]}>
-                  <Text style={styles.brandMarkLetter}>S</Text>
-                </View>
-                <View>
-                  <Text style={[styles.pageTitle, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>Microcasts</Text>
-                  <Text style={[styles.pageSubtitle, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                    Short audio lessons for focused learning
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.profileAvatar, { backgroundColor: isDark ? '#1C2B23' : '#E8F7ED', borderColor: '#DBE5E0' }]}>
-                <Text style={[styles.profileInitials, { color: '#175945' }]}>A</Text>
-              </View>
-            </View>
-            <View style={[styles.headerDivider, { backgroundColor: isDark ? '#2D4538' : '#DBE5E0' }]} />
+          /* Microcasts Header */
+          <View style={styles.listenChapterHeader}>
+            <Text style={[styles.listenChapterTitle, { color: textDark }]}>Microcasts</Text>
+            <Text style={[styles.pageSubtitle, { color: isDark ? '#A6C5B3' : '#637375', marginTop: 2 }]}>
+              Short audio lessons for focused learning
+            </Text>
           </View>
         ) : (
-          /* Brand Header: Saral Vidhya / Learning Simplified (.brand & .subtitle) */
-          <View style={styles.brandHeader}>
-            {onBackPress && (
-              <TouchableOpacity
-                style={[styles.backBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                onPress={onBackPress}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="arrow-back" size={20} color={textDark} />
-              </TouchableOpacity>
-            )}
-            <View>
-              <Text style={[styles.brand, { color: brandColor }]}>Saral Vidhya</Text>
-              <Text style={[styles.tagline, { color: textMuted }]}>Learning Simplified</Text>
-            </View>
+          /* Chapter Title Header */
+          <View style={styles.listenChapterHeader}>
+            <Text style={[styles.listenChapterTitle, { color: textDark }]}>
+              {chapterTitle || `Chapter ${chapterNumber}`}
+            </Text>
           </View>
         )}
 
@@ -1499,5 +1475,15 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  listenChapterHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  listenChapterTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    letterSpacing: -0.3,
   },
 });

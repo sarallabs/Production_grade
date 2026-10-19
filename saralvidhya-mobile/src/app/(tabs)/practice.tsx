@@ -22,7 +22,7 @@ import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import AssessmentView from '@/components/study/AssessmentView';
-import PYQView from '@/components/study/PYQView';
+import TeacherQuestionBankView from '@/components/study/TeacherQuestionBankView';
 import { fetchFlashcards } from '@/services/contentService';
 import { SAMPLE_FLASHCARDS, Flashcard, getFlashcardsForPersona } from '@/data/sampleFlashcards';
 
@@ -107,13 +107,18 @@ export default function PracticeScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Mobile Toolbar with Toggle Pills + Profile Avatar + Chapter Selector */}
+      {/* Top Mobile Toolbar with Back Button + Toggle Pills + Profile Avatar */}
       <TopNavBar
         segments={PRACTICE_PARTS}
         activeSegment={activePart}
         onSegmentChange={(segId) => setActivePart(segId as any)}
-        chapterTitle={`${activeSubject.code} · Ch ${selectedChapterNum}`}
-        onChapterPress={() => setShowChapterModal(true)}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/(tabs)');
+          }
+        }}
         showProfile={true}
       />
 
@@ -164,11 +169,11 @@ export default function PracticeScreen() {
           )}
         </View>
       ) : (
-        /* Question Bank View: PYQs */
-          <PYQView
-            chapterNumber={selectedChapterNum}
-            chapterName={currentChapter.name}
-          />
+        /* Question Bank View: Questions assigned by teachers */
+        <TeacherQuestionBankView
+          chapterNumber={selectedChapterNum}
+          chapterName={currentChapter.name}
+        />
       )}
 
       {/* Chapter Selector Modal */}

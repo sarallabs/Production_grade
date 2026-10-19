@@ -25,7 +25,7 @@ export default function CourseSelectionScreen() {
   const { user, persona, logout } = useAuth();
   const { isDark, themeMode, setThemeMode } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const { selectedCourse, selectCourse, selectSubjectById } = useCourseContext();
+  const { selectedCourse, selectCourse, selectSubjectById, subjects } = useCourseContext();
 
   const [courseData, setCourseData] = useState<CourseOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function CourseSelectionScreen() {
 
   useEffect(() => {
     loadCourseOverviewFromDb();
-  }, [user, selectedCourse]);
+  }, [user, selectedCourse, subjects]);
 
   const loadCourseOverviewFromDb = async () => {
     setLoading(true);
@@ -85,7 +85,7 @@ export default function CourseSelectionScreen() {
       pathname: '/subjects',
       params: {
         courseId: courseData?.courseId || 'bsc_agri',
-        courseName: courseData?.courseName || 'B.Sc Agriculture',
+        courseName: courseData?.courseName || 'B.Sc. (Hons) Agriculture',
       },
     });
   };
@@ -98,7 +98,7 @@ export default function CourseSelectionScreen() {
       params: {
         subjectId: subj.id,
         courseId: courseData?.courseId || 'bsc_agri',
-        courseName: courseData?.courseName || 'B.Sc Agriculture',
+        courseName: courseData?.courseName || 'B.Sc. (Hons) Agriculture',
       },
     });
   };
@@ -194,47 +194,6 @@ export default function CourseSelectionScreen() {
                 onPress={handleCardPress}
                 onSubjectPress={handleSubjectPress}
               />
-            </View>
-          )}
-
-          {/* Quick Guidance Banner */}
-          <View style={[styles.infoCallout, { backgroundColor: badgeBg }]}>
-            <Ionicons name="information-circle-outline" size={18} color={isDark ? '#4ade80' : '#22c55e'} />
-            <Text style={[styles.infoCalloutText, { color: subtextColor }]}>
-              Tap the card or any numbered subject circle to open its units, flashcards, audio, and PYQs.
-            </Text>
-          </View>
-
-          {/* Subject Breakdown List from DB */}
-          {courseData && courseData.subjects.length > 0 && (
-            <View style={styles.subjectListWrap}>
-              <Text style={[styles.subjectListTitle, { color: headerTextColor }]}>
-                Core Subjects ({courseData.subjects.length})
-              </Text>
-              {courseData.subjects.map((subj) => (
-                <TouchableOpacity
-                  key={subj.id}
-                  style={[styles.subjectRow, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                  onPress={() => handleSubjectPress(subj)}
-                  activeOpacity={0.85}
-                >
-                  <View style={[styles.miniIndexCircle, { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.16)' : 'rgba(34, 197, 94, 0.12)' }]}>
-                    <Text style={[styles.miniIndexText, { color: isDark ? '#4ade80' : '#22c55e' }]}>
-                      {subj.index}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.subjCode, { color: subtextColor }]}>{subj.code}</Text>
-                    <Text style={[styles.subjName, { color: headerTextColor }]}>{subj.name}</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={[styles.subjPercent, { color: isDark ? '#4ade80' : '#22c55e' }]}>
-                      {subj.progressPercent}%
-                    </Text>
-                    <Ionicons name="chevron-forward" size={16} color={subtextColor} />
-                  </View>
-                </TouchableOpacity>
-              ))}
             </View>
           )}
 

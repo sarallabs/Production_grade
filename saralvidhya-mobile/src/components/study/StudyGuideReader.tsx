@@ -19,6 +19,9 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import MarkdownReader from './MarkdownReader';
+import { fetchQuickStudyGuide, fetchDetailedNotes } from '@/services/contentService';
+import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 
 const { width, height } = Dimensions.get('window');
 
@@ -81,6 +84,7 @@ interface StudyGuideReaderProps {
   chapterNumber?: number;
   chapterTitle?: string;
   subjectName?: string;
+  subjectId?: string;
   onBackPress?: () => void;
   onBookmarkPress?: () => void;
   onChapterPress?: () => void;
@@ -143,6 +147,7 @@ export default function StudyGuideReader({
   chapterNumber = 1,
   chapterTitle = 'Insect Digestive System & Anatomy',
   subjectName = 'Entomology',
+  subjectId = 'ento_131',
   onBackPress,
   onBookmarkPress,
   onChapterPress,
@@ -159,6 +164,43 @@ export default function StudyGuideReader({
   const [isDiagramZoomed, setIsDiagramZoomed] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [activeGlossaryKey, setActiveGlossaryKey] = useState<string | null>(null);
+
+  // Dynamic Content for the selected chapter
+  const [quickContent, setQuickContent] = useState<string>(
+    SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
+  );
+  const [detailedContent, setDetailedContent] = useState<string>(
+    SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    // 1. Immediately update from local sample/fallback so UI updates synchronously
+    const fallbackQuick = SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
+    const fallbackDetailed = SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
+    setQuickContent(fallbackQuick);
+    setDetailedContent(fallbackDetailed);
+
+    // 2. Fetch fresh canonical markdown from Cloud Run API in background
+    Promise.all([
+      fetchQuickStudyGuide(subjectId, chapterNumber, persona, controller.signal),
+      fetchDetailedNotes(subjectId, chapterNumber, persona, controller.signal),
+    ])
+      .then(([quick, detailed]) => {
+        if (isMounted) {
+          if (quick && quick.trim().length > 50) setQuickContent(quick);
+          if (detailed && detailed.trim().length > 50) setDetailedContent(detailed);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [chapterNumber, subjectId, persona]);
 
   useEffect(() => {
     const unsub = speechService.subscribe((speaking) => {
@@ -185,11 +227,11 @@ export default function StudyGuideReader({
     if (isPlayingAudio) {
       await speechService.stop();
     } else {
-      const textToSpeak =
-        studyMode === 'essentials'
-          ? 'The insect alimentary canal is a specialized muscular tube extending from the mouth to the anus. It is divided into three distinct anatomical chambers: the Foregut, Midgut, and Hindgut. This division reflects fundamental embryonic origins that govern how food is processed and eliminated.'
-          : 'Detailed Study Guide: Insect Digestive System. Architectural Blueprint and Division of Labor in the Insect Gut. The insect alimentary canal is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than functioning as a uniform, undifferentiated tube, the digestive tract operates as a highly coordinated biological assembly line.';
-      await speechService.speak(textToSpeak, 1.0);
+      const rawText = studyMode === 'essentials' ? quickContent : detailedContent;
+      const cleanText = rawText
+        ? rawText.replace(/[#*`_>\[\]]/g, '').slice(0, 300)
+        : `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
+      await speechService.speak(cleanText, 1.0);
     }
   };
 
@@ -219,37 +261,6 @@ export default function StudyGuideReader({
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
-      {/* 1. APP BAR (.appBar: height 56px, padding 0 24px) */}
-      <View style={[styles.appBar, { backgroundColor: bg }]}>
-        <TouchableOpacity
-          style={[styles.backToChapter, { backgroundColor: cardBg, borderColor: cardBorder }]}
-          onPress={onBackPress}
-          activeOpacity={0.8}
-          accessibilityLabel="Go back"
-        >
-          <Ionicons name="arrow-back" size={20} color={textColor} />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={onChapterPress} activeOpacity={0.7}>
-          <Text style={[styles.subject, { color: textColor }]}>
-            {subjectName}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.backToChapter, { backgroundColor: cardBg, borderColor: cardBorder }]}
-          onPress={handleToggleBookmark}
-          activeOpacity={0.8}
-          accessibilityLabel="Bookmark this chapter"
-        >
-          <Ionicons
-            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={20}
-            color={isBookmarked ? emeraldPrimary : textColor}
-          />
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
         style={styles.scrollArea}
         contentContainerStyle={[
@@ -259,42 +270,60 @@ export default function StudyGuideReader({
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 2. MODE SPECIFIC HEADER */}
+        {/* 1. CHAPTER HEADING ROW WITH SAVE BUTTON */}
         {studyMode === 'essentials' ? (
           /* Essentials Header (.guideIntroduction) */
           <View style={styles.guideIntroduction}>
-            <TouchableOpacity
-              onPress={onChapterPress}
-              disabled={!onChapterPress}
-              activeOpacity={0.7}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-            >
-              <Text style={[styles.chapter, { color: subtextColor }]}>
-                Chapter {chapterNumber}: {chapterTitle}
-              </Text>
-              {onChapterPress && <Ionicons name="chevron-down" size={13} color={emeraldPrimary} />}
-            </TouchableOpacity>
-
-            <Text style={[styles.guideType, { color: emeraldPrimary }]}>
-              QUICK STUDY GUIDE
-            </Text>
-
-            <Text style={[styles.guideTitle, { color: textColor }]}>
-              Insect Digestive System
-            </Text>
+            <View style={styles.guideTitleRow}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={onChapterPress}
+                activeOpacity={onChapterPress ? 0.7 : 1}
+              >
+                <Text style={[styles.guideTitle, { color: textColor }]}>
+                  {chapterTitle}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                onPress={handleToggleBookmark}
+                activeOpacity={0.8}
+                accessibilityLabel="Save chapter"
+              >
+                <Ionicons
+                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                  size={19}
+                  color={isBookmarked ? emeraldPrimary : textColor}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         ) : (
-          /* In-depth Header (.chapterBreadcrumbParent & .frameParent & .readAloud) */
+          /* In-depth Header (.frameParent & .readAloud) */
           <View style={[styles.inDepthHeader, { borderBottomColor: isDark ? '#2D4538' : '#C6EBDC' }]}>
-            <TouchableOpacity
-              onPress={onChapterPress}
-              disabled={!onChapterPress}
-              activeOpacity={0.7}
-            >
-              <Text style={[styles.chapterBreadcrumb, { color: textColor }]}>
-                {subjectName} - Chapter {chapterNumber}: {chapterTitle}
-              </Text>
-            </TouchableOpacity>
+            <View style={styles.guideTitleRow}>
+              <TouchableOpacity
+                style={{ flex: 1 }}
+                onPress={onChapterPress}
+                activeOpacity={onChapterPress ? 0.7 : 1}
+              >
+                <Text style={[styles.guideTitle, { color: textColor }]}>
+                  {chapterTitle}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                onPress={handleToggleBookmark}
+                activeOpacity={0.8}
+                accessibilityLabel="Save chapter"
+              >
+                <Ionicons
+                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                  size={19}
+                  color={isBookmarked ? emeraldPrimary : textColor}
+                />
+              </TouchableOpacity>
+            </View>
 
             {/* 3 Persona / Tier Level Badges (.frameParent: 41x41px each, 4px radius, subtle shadow) */}
             <View style={styles.frameParent}>
@@ -346,7 +375,7 @@ export default function StudyGuideReader({
           </View>
         )}
 
-        {/* 3. READING DEPTH SELECTOR (.readingDepth & .depthSelector) */}
+        {/* 2. COMPACT READING DEPTH SELECTOR */}
         <View style={styles.readingDepth}>
           <View style={[styles.depthSelector, { backgroundColor: toggleBg }]}>
             {/* Essentials Pill */}
@@ -363,7 +392,7 @@ export default function StudyGuideReader({
             >
               <Ionicons
                 name="flash"
-                size={15}
+                size={13}
                 color={studyMode === 'essentials' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
               />
               <Text
@@ -391,7 +420,7 @@ export default function StudyGuideReader({
             >
               <Ionicons
                 name="add-circle-outline"
-                size={15}
+                size={13}
                 color={studyMode === 'in_depth' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
               />
               <Text
@@ -409,238 +438,256 @@ export default function StudyGuideReader({
 
         {/* 4. ESSENTIALS MODE (.studyContent) */}
         {studyMode === 'essentials' && (
-          <View style={styles.studyContent}>
-            {/* Section Heading (.sectionHeading) */}
-            <View style={styles.sectionHeading}>
-              <View style={[styles.sectionMarker, { backgroundColor: toggleBg }]}>
-                <Text style={[styles.sectionMarkerNumber, { color: emeraldPrimary }]}>1</Text>
+          chapterNumber === 1 ? (
+            <View style={styles.studyContent}>
+              {/* Section Heading (.sectionHeading) */}
+              <View style={styles.sectionHeading}>
+                <View style={[styles.sectionMarker, { backgroundColor: toggleBg }]}>
+                  <Text style={[styles.sectionMarkerNumber, { color: emeraldPrimary }]}>1</Text>
+                </View>
+                <Text style={[styles.sectionTitle, { color: textColor }]}>
+                  Architectural Blueprint & Regional Partitioning
+                </Text>
               </View>
-              <Text style={[styles.sectionTitle, { color: textColor }]}>
-                Architectural Blueprint & Regional Partitioning
+
+              {/* Explanation (.explanation) */}
+              <Text style={[styles.explanation, { color: isDark ? '#D8E5DC' : '#1D2C26' }]}>
+                The insect alimentary canal is a specialized muscular tube extending from the mouth to the
+                anus. It is divided into three distinct anatomical chambers: the{' '}
+                <Text style={styles.foregutStomodaeum}>Foregut (Stomodaeum)</Text>, the{' '}
+                <Text style={styles.foregutStomodaeum}>Midgut (Mesenteron)</Text>, and the{' '}
+                <Text style={styles.foregutStomodaeum}>Hindgut (Proctodaeum)</Text>. This division reflects
+                fundamental embryonic origins that govern how food is processed and eliminated.
               </Text>
-            </View>
 
-            {/* Explanation (.explanation) */}
-            <Text style={[styles.explanation, { color: isDark ? '#D8E5DC' : '#1D2C26' }]}>
-              The insect alimentary canal is a specialized muscular tube extending from the mouth to the
-              anus. It is divided into three distinct anatomical chambers: the{' '}
-              <Text style={styles.foregutStomodaeum}>Foregut (Stomodaeum)</Text>, the{' '}
-              <Text style={styles.foregutStomodaeum}>Midgut (Mesenteron)</Text>, and the{' '}
-              <Text style={styles.foregutStomodaeum}>Hindgut (Proctodaeum)</Text>. This division reflects
-              fundamental embryonic origins that govern how food is processed and eliminated.
-            </Text>
+              {/* Scientific Diagram Card (.scientificDiagram) */}
+              <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                {/* Figure Tools (.figureTools) */}
+                <View style={styles.figureTools}>
+                  <Text style={[styles.figureLabel, { color: subtextColor }]}>ALIMENTARY CANAL</Text>
+                  <TouchableOpacity
+                    style={styles.expandDiagram}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                      setIsDiagramZoomed(true);
+                    }}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
+                    <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
+                  </TouchableOpacity>
+                </View>
 
-            {/* Scientific Diagram Card (.scientificDiagram) */}
-            <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              {/* Figure Tools (.figureTools) */}
-              <View style={styles.figureTools}>
-                <Text style={[styles.figureLabel, { color: subtextColor }]}>ALIMENTARY CANAL</Text>
+                {/* Diagram Graphic Preview */}
                 <TouchableOpacity
-                  style={styles.expandDiagram}
                   onPress={() => {
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
                     setIsDiagramZoomed(true);
                   }}
-                  activeOpacity={0.8}
+                  activeOpacity={0.9}
+                  style={styles.diagramTouch}
                 >
-                  <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
-                  <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
+                  <Image
+                    source={{ uri: INFOGRAPHIC_URL }}
+                    style={styles.originalDiagramDetail}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
+
+                {/* Divider (.divider) */}
+                <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+
+                {/* Regional Key (.regionalKey) */}
+                <View style={styles.regionalKey}>
+                  <View style={styles.anatomicalRegion}>
+                    <Text style={[styles.regionName, { color: textColor }]}>Foregut</Text>
+                    <Text style={[styles.scientificName, { color: subtextColor }]}>Stomodaeum</Text>
+                  </View>
+                  <View style={styles.anatomicalRegion}>
+                    <Text style={[styles.regionName, { color: textColor }]}>Midgut</Text>
+                    <Text style={[styles.scientificName, { color: subtextColor }]}>Mesenteron</Text>
+                  </View>
+                  <View style={styles.anatomicalRegion}>
+                    <Text style={[styles.regionName, { color: textColor }]}>Hindgut</Text>
+                    <Text style={[styles.scientificName, { color: subtextColor }]}>Proctodaeum</Text>
+                  </View>
+                </View>
               </View>
 
-              {/* Diagram Graphic Preview */}
+              {/* Read Aloud Audio Action Card (.readAloud) */}
               <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setIsDiagramZoomed(true);
-                }}
-                activeOpacity={0.9}
-                style={styles.diagramTouch}
+                style={[styles.readAloud, { backgroundColor: audioBarBg, borderColor: audioBorder }]}
+                onPress={handleToggleAudio}
+                activeOpacity={0.8}
               >
-                <Image
-                  source={{ uri: INFOGRAPHIC_URL }}
-                  style={styles.originalDiagramDetail}
-                  resizeMode="contain"
+                <Ionicons name="headset-outline" size={20} color={emeraldPrimary} />
+                <Text style={[styles.actionLabel, { color: emeraldPrimary }]}>
+                  {isPlayingAudio ? 'Speaking...' : 'Read Aloud'}
+                </Text>
+                <Text style={[styles.duration, { color: subtextColor }]}>6:28</Text>
+                <Ionicons
+                  name={isPlayingAudio ? 'pause' : 'play-outline'}
+                  size={16}
+                  color={emeraldPrimary}
                 />
               </TouchableOpacity>
-
-              {/* Divider (.divider) */}
-              <View style={[styles.divider, { backgroundColor: cardBorder }]} />
-
-              {/* Regional Key (.regionalKey) */}
-              <View style={styles.regionalKey}>
-                <View style={styles.anatomicalRegion}>
-                  <Text style={[styles.regionName, { color: textColor }]}>Foregut</Text>
-                  <Text style={[styles.scientificName, { color: subtextColor }]}>Stomodaeum</Text>
-                </View>
-                <View style={styles.anatomicalRegion}>
-                  <Text style={[styles.regionName, { color: textColor }]}>Midgut</Text>
-                  <Text style={[styles.scientificName, { color: subtextColor }]}>Mesenteron</Text>
-                </View>
-                <View style={styles.anatomicalRegion}>
-                  <Text style={[styles.regionName, { color: textColor }]}>Hindgut</Text>
-                  <Text style={[styles.scientificName, { color: subtextColor }]}>Proctodaeum</Text>
-                </View>
-              </View>
             </View>
-
-            {/* Read Aloud Audio Action Card (.readAloud) */}
-            <TouchableOpacity
-              style={[styles.readAloud, { backgroundColor: audioBarBg, borderColor: audioBorder }]}
-              onPress={handleToggleAudio}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="headset-outline" size={20} color={emeraldPrimary} />
-              <Text style={[styles.actionLabel, { color: emeraldPrimary }]}>
-                {isPlayingAudio ? 'Speaking...' : 'Read Aloud'}
-              </Text>
-              <Text style={[styles.duration, { color: subtextColor }]}>6:28</Text>
-              <Ionicons
-                name={isPlayingAudio ? 'pause' : 'play-outline'}
-                size={16}
-                color={emeraldPrimary}
+          ) : (
+            <View style={styles.studyContent}>
+              <MarkdownReader
+                title={chapterTitle}
+                content={quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''}
               />
-            </TouchableOpacity>
-          </View>
+            </View>
+          )
         )}
 
         {/* 5. IN-DEPTH MODE (.guidePanel & .readingPassages) */}
         {studyMode === 'in_depth' && (
-          <View style={styles.guidePanel}>
-            <Text style={[styles.inDepthGuideTitle, { color: inDepthTextColor }]}>
-              Detailed Study Guide: Insect Digestive System
-            </Text>
-
-            <View style={styles.architecturalBlueprint}>
-              <Text style={[styles.inDepthSectionHeading, { color: inDepthTextColor }]}>
-                1. Architectural Blueprint and Division of Labor in the Insect Gut
+          chapterNumber === 1 ? (
+            <View style={styles.guidePanel}>
+              <Text style={[styles.inDepthGuideTitle, { color: inDepthTextColor }]}>
+                Detailed Study Guide: {chapterTitle}
               </Text>
 
-              <View style={styles.readingPassages}>
-                {/* Passage 1 */}
-                <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
-                  The insect{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('alimentary canal')}
-                  >
-                    alimentary canal
-                  </Text>{' '}
-                  is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than
-                  functioning as a uniform, undifferentiated tube, the digestive tract of an insect operates
-                  as a highly coordinated biological assembly line. This internal processing system is strictly
-                  compartmentalized into three primary morphological regions: the{' '}
-                  <Text
-                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('foregut')}
-                  >
-                    foregut
-                  </Text>{' '}
-                  (stomodaeum), the{' '}
-                  <Text
-                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('midgut')}
-                  >
-                    midgut
-                  </Text>{' '}
-                  (
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('mesenteron')}
-                  >
-                    mesenteron
-                  </Text>
-                  ), and the{' '}
-                  <Text
-                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('hindgut')}
-                  >
-                    hindgut
-                  </Text>{' '}
-                  (
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('proctodaeum')}
-                  >
-                    proctodaeum
-                  </Text>
-                  ). Each region performs a non-overlapping physiological assignment, transforming raw,
-                  often abrasive environmental food sources into molecular energy while conserving vital bodily
-                  fluids.
+              <View style={styles.architecturalBlueprint}>
+                <Text style={[styles.inDepthSectionHeading, { color: inDepthTextColor }]}>
+                  1. Architectural Blueprint and Division of Labor in the Insect Gut
                 </Text>
 
-                {/* Passage 2 */}
-                <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
-                  Understanding the insect digestive tract requires understanding where these organs come from
-                  during the development of the embryo. The insect body is built around an embryonic framework
-                  where different tissue layers give rise to different organ systems. The{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('foregut')}
-                  >
-                    foregut
-                  </Text>{' '}
-                  and the{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('hindgut')}
-                  >
-                    hindgut
-                  </Text>{' '}
-                  arise directly from the{' '}
-                  <Text
-                    style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('ectoderm')}
-                  >
-                    ectoderm
+                <View style={styles.readingPassages}>
+                  {/* Passage 1 */}
+                  <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
+                    The insect{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('alimentary canal')}
+                    >
+                      alimentary canal
+                    </Text>{' '}
+                    is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than
+                    functioning as a uniform, undifferentiated tube, the digestive tract of an insect operates
+                    as a highly coordinated biological assembly line. This internal processing system is strictly
+                    compartmentalized into three primary morphological regions: the{' '}
+                    <Text
+                      style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('foregut')}
+                    >
+                      foregut
+                    </Text>{' '}
+                    (stomodaeum), the{' '}
+                    <Text
+                      style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('midgut')}
+                    >
+                      midgut
+                    </Text>{' '}
+                    (
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('mesenteron')}
+                    >
+                      mesenteron
+                    </Text>
+                    ), and the{' '}
+                    <Text
+                      style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('hindgut')}
+                    >
+                      hindgut
+                    </Text>{' '}
+                    (
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('proctodaeum')}
+                    >
+                      proctodaeum
+                    </Text>
+                    ). Each region performs a non-overlapping physiological assignment, transforming raw,
+                    often abrasive environmental food sources into molecular energy while conserving vital bodily
+                    fluids.
                   </Text>
-                  , which is the exact same embryonic cell layer that forms the insect's outer body wall and
-                  exoskeleton. Because they develop as inward folds (invaginations) of the outer body surface,
-                  both the{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('foregut')}
-                  >
-                    foregut
-                  </Text>{' '}
-                  and the{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('hindgut')}
-                  >
-                    hindgut
-                  </Text>{' '}
-                  inherit the protective armor of the exterior cuticle. Their innermost lining is covered by a
-                  specialized chitinous sheet known as the{' '}
-                  <Text
-                    style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('cuticular intima')}
-                  >
-                    cuticular intima
+
+                  {/* Passage 2 */}
+                  <Text style={[styles.passageText, { color: isDark ? '#D8E5DC' : '#344155' }]}>
+                    Understanding the insect digestive tract requires understanding where these organs come from
+                    during the development of the embryo. The insect body is built around an embryonic framework
+                    where different tissue layers give rise to different organ systems. The{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('foregut')}
+                    >
+                      foregut
+                    </Text>{' '}
+                    and the{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('hindgut')}
+                    >
+                      hindgut
+                    </Text>{' '}
+                    arise directly from the{' '}
+                    <Text
+                      style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('ectoderm')}
+                    >
+                      ectoderm
+                    </Text>
+                    , which is the exact same embryonic cell layer that forms the insect's outer body wall and
+                    exoskeleton. Because they develop as inward folds (invaginations) of the outer body surface,
+                    both the{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('foregut')}
+                    >
+                      foregut
+                    </Text>{' '}
+                    and the{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('hindgut')}
+                    >
+                      hindgut
+                    </Text>{' '}
+                    inherit the protective armor of the exterior cuticle. Their innermost lining is covered by a
+                    specialized chitinous sheet known as the{' '}
+                    <Text
+                      style={[styles.underlinedBoldTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('cuticular intima')}
+                    >
+                      cuticular intima
+                    </Text>
+                    . In contrast, the central chamber—the{' '}
+                    <Text
+                      style={[styles.underlinedTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('midgut')}
+                    >
+                      midgut
+                    </Text>
+                    —develops from embryonic{' '}
+                    <Text
+                      style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
+                      onPress={() => handleTermPress('endoderm')}
+                    >
+                      endoderm
+                    </Text>
+                    . The midgut never develops a cuticular lining, leaving its cellular surface naked and
+                    accessible to facilitate the rapid secretion of digestive juices and the active absorption of
+                    dissolved nutrients.
                   </Text>
-                  . In contrast, the central chamber—the{' '}
-                  <Text
-                    style={[styles.underlinedTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('midgut')}
-                  >
-                    midgut
-                  </Text>
-                  —develops from embryonic{' '}
-                  <Text
-                    style={[styles.boldOnlyTerm, { color: inDepthTextColor }]}
-                    onPress={() => handleTermPress('endoderm')}
-                  >
-                    endoderm
-                  </Text>
-                  . The midgut never develops a cuticular lining, leaving its cellular surface naked and
-                  accessible to facilitate the rapid secretion of digestive juices and the active absorption of
-                  dissolved nutrients.
-                </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={{ height: 20 }} />
-          </View>
+              <View style={{ height: 20 }} />
+            </View>
+          ) : (
+            <View style={styles.studyContent}>
+              <MarkdownReader
+                title={chapterTitle}
+                content={detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''}
+              />
+            </View>
+          )
         )}
 
         {/* Dynamic Completion Button */}
@@ -811,9 +858,8 @@ const styles = StyleSheet.create({
   },
   guideIntroduction: {
     paddingHorizontal: 24,
-    paddingTop: 18,
-    paddingBottom: 18,
-    gap: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
   },
   chapter: {
     fontSize: 12,
@@ -826,16 +872,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   guideTitle: {
-    fontSize: 30,
-    letterSpacing: -0.6,
-    lineHeight: 34,
+    fontSize: 24,
+    letterSpacing: -0.4,
+    lineHeight: 30,
     fontWeight: '700',
+  },
+  guideTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    width: '100%',
+  },
+  saveBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   /* In-depth Header (.chapterBreadcrumbParent, .frameParent, .readAloud) */
   inDepthHeader: {
     paddingHorizontal: 24,
-    paddingTop: 14,
-    paddingBottom: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
     borderBottomWidth: 0.7,
     alignItems: 'center',
     gap: 12,
@@ -886,23 +947,23 @@ const styles = StyleSheet.create({
   },
   readingDepth: {
     paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingTop: 4,
+    paddingBottom: 10,
   },
   depthSelector: {
     flexDirection: 'row',
     borderRadius: 100,
-    padding: 4,
+    padding: 3,
     gap: 4,
   },
   depthPill: {
     flex: 1,
-    height: 38,
+    height: 32,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 100,
-    gap: 7,
+    gap: 5,
   },
   depthPillActive: {
     elevation: 2,
@@ -912,7 +973,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   depthPillText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
   },
   depthPillTextActive: {

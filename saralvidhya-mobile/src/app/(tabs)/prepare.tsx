@@ -16,15 +16,15 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
+import PYQView from '@/components/study/PYQView';
 import StudyPlanView from '@/components/study/StudyPlanView';
-import PYQSelectionView from '@/components/study/PYQSelectionView';
 import PreparationExamView from '@/components/study/PreparationExamView';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const PREPARE_SEGMENTS: NavSegment[] = [
-  { id: 'study_plan', label: 'Study Plan', vectorIcon: 'calendar-outline' },
-  { id: 'pyq', label: 'PYQ', vectorIcon: 'document-text-outline' },
+  { id: 'pyq', label: "PYQ's", vectorIcon: 'document-text-outline' },
   { id: 'prep_exam', label: 'Preparation Exam', vectorIcon: 'timer-outline' },
+  { id: 'study_plan', label: 'Study Plan', vectorIcon: 'calendar-outline' },
 ];
 
 export default function PrepareScreen() {
@@ -36,9 +36,9 @@ export default function PrepareScreen() {
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<string>(
-    params.segment && ['study_plan', 'pyq', 'prep_exam'].includes(params.segment)
+    params.segment && ['pyq', 'prep_exam', 'study_plan'].includes(params.segment)
       ? params.segment
-      : 'study_plan'
+      : 'pyq'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
@@ -87,7 +87,7 @@ export default function PrepareScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Sub-Parts: Study Plan | PYQ | Preparation Exam */}
+      {/* Top Navigation Bar with Back Button + Sub-Parts + Profile Avatar */}
       <TopNavBar
         segments={PREPARE_SEGMENTS}
         activeSegment={activeSegment}
@@ -97,49 +97,22 @@ export default function PrepareScreen() {
             setPyqStep('selection');
           }
         }}
-        chapterTitle={`${activeSubject.code} · Ch ${currentChapter.number}`}
-        onChapterPress={() => setShowChapterModal(true)}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/(tabs)');
+          }
+        }}
+        showProfile={true}
       />
 
       {/* Main Content Area based on Active Segment */}
-      {activeSegment === 'study_plan' ? (
-        <StudyPlanView
-          unitCode={`${activeSubject.code} · UNIT ${currentChapter.number}`}
-          unitName={currentChapter.name}
-          subjectName={activeSubject.name}
-          onOpenTask={(task) => {
-            if (task.type === 'video') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'review') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'quiz') {
-              router.push({ pathname: '/(tabs)/practice', params: { part: 'assessments', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'mindmap') {
-              router.push({ pathname: '/(tabs)/resources', params: { segment: 'mindmaps', chapter: currentChapter.number.toString() } });
-            }
-          }}
+      {activeSegment === 'pyq' ? (
+        <PYQView
+          chapterNumber={currentChapter.number}
+          chapterName={currentChapter.name}
         />
-      ) : activeSegment === 'pyq' ? (
-        pyqStep === 'selection' ? (
-          <PYQSelectionView
-            units={subjectUnits}
-            pageTitle="PYQ Preparation"
-            backLabel="Back to Study Plan"
-            onBack={() => {
-              setActiveSegment('study_plan');
-            }}
-            onStart={handleStartExam}
-          />
-        ) : (
-          <PreparationExamView
-            subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
-            onBack={() => setPyqStep('selection')}
-            onSubmit={() => {
-              markResourceCompleted(activeSubject.id, currentChapter.number, 'pyq');
-              setPyqStep('selection');
-            }}
-          />
-        )
       ) : activeSegment === 'prep_exam' ? (
         <PreparationExamView
           subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
@@ -156,6 +129,23 @@ export default function PrepareScreen() {
               router.back();
             } else {
               router.push('/(tabs)');
+            }
+          }}
+        />
+      ) : activeSegment === 'study_plan' ? (
+        <StudyPlanView
+          unitCode={`${activeSubject.code} · UNIT ${currentChapter.number}`}
+          unitName={currentChapter.name}
+          subjectName={activeSubject.name}
+          onOpenTask={(task) => {
+            if (task.type === 'video') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'review') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'quiz') {
+              router.push({ pathname: '/(tabs)/practice', params: { part: 'assessments', chapter: currentChapter.number.toString() } });
+            } else if (task.type === 'mindmap') {
+              router.push({ pathname: '/(tabs)/resources', params: { segment: 'mindmaps', chapter: currentChapter.number.toString() } });
             }
           }}
         />

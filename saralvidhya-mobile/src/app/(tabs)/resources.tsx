@@ -9,7 +9,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
@@ -24,12 +24,13 @@ import KeyTakeawaysView from '@/components/study/KeyTakeawaysView';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const RESOURCE_SEGMENTS: NavSegment[] = [
-  { id: 'ask_me', label: 'Ask Me', vectorIcon: 'chatbubbles-outline' },
-  { id: 'mindmaps', label: 'Mindmaps', vectorIcon: 'git-network-outline' },
+  { id: 'mindmaps', label: 'Mind Maps', vectorIcon: 'git-network-outline' },
   { id: 'key_takeaways', label: 'Key Takeaways', vectorIcon: 'bookmarks-outline' },
+  { id: 'ask_me', label: 'Ask Me', vectorIcon: 'chatbubbles-outline' },
 ];
 
 export default function ResourcesScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
@@ -37,9 +38,9 @@ export default function ResourcesScreen() {
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<string>(
-    params.segment && ['ask_me', 'mindmaps', 'key_takeaways'].includes(params.segment)
+    params.segment && ['mindmaps', 'key_takeaways', 'ask_me'].includes(params.segment)
       ? params.segment
-      : 'ask_me'
+      : 'mindmaps'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
@@ -71,33 +72,39 @@ export default function ResourcesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Toggle Pills & Chapter Selector */}
+      {/* Top Navigation Bar with Back Button + Toggle Pills + Profile Avatar */}
       <TopNavBar
         segments={RESOURCE_SEGMENTS}
         activeSegment={activeSegment}
         onSegmentChange={setActiveSegment}
-        chapterTitle={`${activeSubject.code} · Ch ${currentChapter.number}`}
-        onChapterPress={() => setShowChapterModal(true)}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/(tabs)');
+          }
+        }}
+        showProfile={true}
       />
 
       {/* Main Content Area */}
       <View style={styles.contentContainer}>
-        {activeSegment === 'ask_me' ? (
-          <AskMeWelcomeView
-            chapterNumber={currentChapter.number}
-            chapterName={currentChapter.name}
-          />
-        ) : activeSegment === 'mindmaps' ? (
+        {activeSegment === 'mindmaps' ? (
           <MindMapRadialDiagramView
             chapterTitle={currentChapter.name}
             subjectName={activeSubject.name}
-            onNavigateBack={() => setActiveSegment('ask_me')}
+            onNavigateBack={() => setActiveSegment('mindmaps')}
           />
         ) : activeSegment === 'key_takeaways' ? (
           <KeyTakeawaysView
             chapterNumber={currentChapter.number}
             chapterName={currentChapter.name}
             subjectName={activeSubject.name}
+          />
+        ) : activeSegment === 'ask_me' ? (
+          <AskMeWelcomeView
+            chapterNumber={currentChapter.number}
+            chapterName={currentChapter.name}
           />
         ) : null}
       </View>

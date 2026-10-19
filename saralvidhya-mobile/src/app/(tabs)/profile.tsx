@@ -74,13 +74,20 @@ export default function ProfileScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Toggle Pills */}
+      {/* Top Navigation Bar with Back Button + Toggle Pills */}
       <TopNavBar
         segments={PROFILE_SEGMENTS}
         activeSegment={activeSegment}
         onSegmentChange={setActiveSegment}
         showProfile={false}
-        title="Student Portal"
+        showBack={true}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/(tabs)');
+          }
+        }}
       />
 
       <ScrollView

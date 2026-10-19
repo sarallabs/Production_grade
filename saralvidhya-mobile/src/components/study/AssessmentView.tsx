@@ -196,33 +196,7 @@ export default function AssessmentView({
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. APP HEADER (.rectangleParent & .subjectBreadcrumb & .headerRule) */}
-        <View style={styles.headerRow}>
-          {onBackPress ? (
-            <TouchableOpacity
-              style={[styles.backBtn, { borderColor: cardBorder }]}
-              onPress={onBackPress}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="arrow-back" size={18} color={headerTextColor} />
-            </TouchableOpacity>
-          ) : null}
-
-          {/* Plant Emblem Square (.rectangleParent) */}
-          <View style={[styles.badgeSquare, { backgroundColor: badgeBg }]}>
-            <Image source={PLANT_BADGE} style={styles.badgeImage} resizeMode="contain" />
-          </View>
-
-          {/* Subject Breadcrumb (.subjectBreadcrumb) */}
-          <Text style={[styles.subjectBreadcrumb, { color: headerTextColor }]}>
-            {`${subjectName}  ·  Chapter ${chapterNumber}`}
-          </Text>
-        </View>
-
-        {/* 1px Horizontal Rule (.headerRule) */}
-        <View style={[styles.headerRule, { backgroundColor: headerRuleColor }]} />
-
-        {/* 2. PILLS ROW: Progress | Question Type | Difficulty */}
+        {/* PILLS ROW: Progress | Question Type | Difficulty */}
         <View style={styles.pillsRow}>
           {/* Progress Pill (.progressChip) */}
           <View

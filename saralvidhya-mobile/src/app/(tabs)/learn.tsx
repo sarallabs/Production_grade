@@ -27,7 +27,7 @@ import { BorderRadius, Spacing } from '@/constants/theme';
 const LEARN_SEGMENTS: NavSegment[] = [
   { id: 'read', label: 'Read', vectorIcon: 'book-outline' },
   { id: 'listen', label: 'Listen', vectorIcon: 'headset-outline' },
-  { id: 'watch', label: 'Watch', vectorIcon: 'play-circle-outline' },
+  { id: 'watch', label: 'Videos', vectorIcon: 'play-circle-outline' },
 ];
 
 export default function LearnScreen() {
@@ -67,15 +67,22 @@ export default function LearnScreen() {
   const textColor = isDark ? '#FFFFFF' : '#2D3E36';
   const subtextColor = isDark ? '#A6C5B3' : '#617269';
 
+  const shortCode = activeSubject.code ? activeSubject.code.split(' ')[0] : 'ENTO';
+
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* 1. TOP 3-COMPONENT SEGMENT TOGGLE: [ Read | Listen | Watch ] */}
+      {/* 1. TOP TOOLBAR: [ Back Arrow ] [ Read | Listen | Video ] [ Profile ] */}
       <TopNavBar
         segments={LEARN_SEGMENTS}
         activeSegment={activeSegment}
         onSegmentChange={(segId) => setActiveSegment(segId as any)}
-        chapterTitle={`${activeSubject.code} · Ch ${selectedChapterNum}`}
-        onChapterPress={() => setShowChapterModal(true)}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/(tabs)');
+          }
+        }}
         showProfile={true}
       />
 
@@ -109,6 +116,7 @@ export default function LearnScreen() {
           chapterNumber={selectedChapterNum}
           chapterTitle={currentChapter.name}
           subjectName={activeSubject.name}
+          subjectId={activeSubject.id}
           onBackPress={() => {
             if (router.canGoBack()) {
               router.back();

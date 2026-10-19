@@ -147,7 +147,7 @@ export default function SubjectUnitsScreen() {
             {activeSubject?.name || 'Entomology'}
           </Text>
           <Text style={[styles.navSubtitle, { color: subtextColor }]}>
-            {params.courseName || user?.program || 'B.Sc Agriculture'} • {chapters.length} Units
+            {params.courseName || user?.program || 'B.Sc. (Hons) Agriculture'} • {chapters.length} Units
           </Text>
         </View>
 
@@ -202,7 +202,7 @@ export default function SubjectUnitsScreen() {
               <ChapterCard
                 chapter={chapter}
                 subjectName={activeSubject?.name || 'Entomology'}
-                courseName={params.courseName || user?.program || 'B.Sc Agriculture'}
+                courseName={params.courseName || user?.program || 'B.Sc. (Hons) Agriculture'}
                 isDark={isDark}
                 onPress={() => handleOpenStudyMaterials(chapter)}
                 onToolPress={(toolId) => handleOpenStudyMaterials(chapter, toolId)}

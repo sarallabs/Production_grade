@@ -144,30 +144,6 @@ export default function KeyTakeawaysView({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.screenBg }]}>
-      {/* Top Header Surface */}
-      <View
-        style={[
-          styles.headerSurface,
-          {
-            backgroundColor: colors.headerSurface,
-            borderBottomColor: colors.headerDivider,
-            paddingTop: insets.top > 0 ? insets.top : 8,
-          },
-        ]}
-      >
-        <View style={styles.headerLeft}>
-          <View style={[styles.logoBox, { backgroundColor: colors.logoBoxBg }]}>
-            <Image source={PLANT_BADGE} style={styles.logoImage} resizeMode="contain" />
-          </View>
-          <View style={styles.brandTitleWrap}>
-            <Text style={[styles.brandName, { color: colors.brandName }]}>Saral Vidhya</Text>
-            <Text style={[styles.breadcrumb, { color: colors.breadcrumb }]}>
-              LEARN / {subjectName.toUpperCase()}
-            </Text>
-          </View>
-        </View>
-      </View>
-
       {/* Main Scrollable Content */}
       <ScrollView
         style={styles.scrollView}

@@ -247,23 +247,10 @@ export default function VideosView({
         {/* ========================================================================= */}
         {selectedLessonId === null ? (
           <>
-            {/* 1. BRAND HEADER (.brandHeader) */}
-            <View style={styles.brandHeader}>
-              <View style={[styles.brandMark, { backgroundColor: '#265945' }]}>
-                <Text style={styles.brandMarkLetter}>S</Text>
-              </View>
-              <View style={styles.brandIdentity}>
-                <Text style={[styles.brandName, { color: brandGreen }]}>Saral Vidhya</Text>
-                <Text style={[styles.section, { color: textMuted }]}>
-                  {`${subjectName.toUpperCase()}  /  VIDEO LESSONS`}
-                </Text>
-              </View>
-            </View>
-
-            {/* 2. INTRODUCTION / PAGE TITLE (.introduction, .pageTitle) */}
+            {/* 1. PAGE TITLE */}
             <View style={styles.introduction}>
               <Text style={[styles.pageTitle, { color: textDark }]}>
-                {`${subjectName.charAt(0) + subjectName.slice(1).toLowerCase()} video lessons`}
+                Video Lessons
               </Text>
             </View>
 
@@ -451,8 +438,8 @@ export default function VideosView({
           /* VIEW 2: DEDICATED SINGLE LESSON PLAYER (EntomologyVideoLessonMobile412918) */
           /* ========================================================================= */
           <>
-            {/* 1. BRAND HEADER WITH BACK BUTTON */}
-            <View style={styles.brandHeader}>
+            {/* 1. SINGLE LESSON HEADER WITH BACK BUTTON */}
+            <View style={styles.singleLessonHeaderRow}>
               <TouchableOpacity
                 style={[styles.backToLibraryBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
                 onPress={handleBackToLibrary}
@@ -460,15 +447,9 @@ export default function VideosView({
               >
                 <Ionicons name="arrow-back" size={18} color={textDark} />
               </TouchableOpacity>
-              <View style={[styles.brandMark, { backgroundColor: '#265945' }]}>
-                <Text style={styles.brandMarkLetter}>S</Text>
-              </View>
-              <View style={styles.brandIdentity}>
-                <Text style={[styles.brandName, { color: brandGreen }]}>Saral Vidhya</Text>
-                <Text style={[styles.section, { color: textMuted }]}>
-                  {`${subjectName.toUpperCase()}  /  VIDEO LESSON`}
-                </Text>
-              </View>
+              <Text style={[styles.singleLessonHeaderTitle, { color: textDark }]} numberOfLines={1}>
+                {currentLesson.title}
+              </Text>
             </View>
 
             {/* 2. VIDEO THUMBNAIL / PLAYER CARD (.image103Parent) */}
@@ -647,6 +628,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  singleLessonHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+    paddingHorizontal: 2,
+  },
+  singleLessonHeaderTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    flex: 1,
   },
   brandMark: {
     width: 36,

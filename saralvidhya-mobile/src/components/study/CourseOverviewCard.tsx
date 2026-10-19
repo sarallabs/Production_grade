@@ -88,10 +88,10 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
           {/* Center Course / Degree Title - NO University Name */}
           <View style={styles.infoColumn}>
             <Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
-              {data.courseName || 'Entomology'}
+              {data.courseName || 'B.Sc. (Hons) Agriculture'}
             </Text>
             <Text style={[styles.subtitleText, { color: subtitleColor }]} numberOfLines={1}>
-              {data.degree || 'B.Sc Agriculture'}
+              {data.degree || 'Undergraduate • 4 Years'}
             </Text>
           </View>
 

@@ -1,190 +1,486 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
+  Alert,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
-const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
-
 export type MarkType = '2M' | '5M' | '10M';
+export type AnswerMode = 'short' | 'long';
 
-export interface QuestionBankItem {
+export interface PYQItem {
   id: number;
-  numberFormatted: string;
-  question: string;
-  chapter: string;
-  answers: Record<MarkType, string>;
-  rememberTip: string;
+  questionNumber: number;
+  questionPrompt: string;
+  chapterText: string;
+  year: number;
+  marks: MarkType;
+  shortAnswerLines: string[];
+  longAnswerLines: string[];
+  sosTip: string;
 }
 
-const QUESTION_BANK_DATA: QuestionBankItem[] = [
+const PYQ_DATA: PYQItem[] = [
   {
     id: 1,
-    numberFormatted: '01',
-    question:
-      'Describe the tripartite division and embryological origin of the insect alimentary canal?',
-    chapter: 'Chapter 1  ·  Insect Digestive System',
-    answers: {
-      '2M':
-        'The insect alimentary canal is divided into three regions: the foregut (stomodaeum), midgut (mesenteron), and hindgut (proctodaeum). The foregut and hindgut develop from ectoderm and have a cuticular lining that is shed during moulting. The midgut is endodermal and lacks cuticular intima, allowing digestion and nutrient absorption.',
-      '5M':
-        'The insect alimentary canal comprises three morphologically and embryologically distinct regions:\n\n' +
-        '1. Foregut (Stomodaeum):\n' +
-        '• Formed by anterior ectodermal invagination.\n' +
-        '• Subdivided into preoral cavity, pharynx, oesophagus, crop (food storage), and proventriculus (grinding gizzard).\n' +
-        '• Lined by cuticular intima shed at each moult.\n\n' +
-        '2. Midgut (Mesenteron / Ventriculus):\n' +
-        '• Arises from embryonic endoderm.\n' +
-        '• Devoid of cuticular lining; actively secretes digestive enzymes and absorbs nutrients.\n' +
-        '• Features anterior gastric caeca and secretes the protective semi-permeable peritrophic membrane.\n\n' +
-        '3. Hindgut (Proctodaeum):\n' +
-        '• Formed by posterior ectodermal invagination.\n' +
-        '• Subdivided into ileum, colon, and muscular rectum.\n' +
-        '• Houses rectal papillae for active water, ion, and organic acid reabsorption.',
-      '10M':
-        'I. Comprehensive Alimentary Canal Tripartite Division & Embryological Origins:\n\n' +
-        '1. Stomodaeum (Foregut - Ectodermal Origin):\n' +
-        '• Ingestion, salivary blending, and mechanical processing zone.\n' +
-        '• Comprises preoral cibarium/salivarium, muscular pharynx suction pump, slender tubular oesophagus, dilated storage crop (ingluvies), and sclerotized proventricular gizzard.\n' +
-        '• Employs an internal chitinous intima continuous with the exoskeleton, preventing abrasive food injury.\n\n' +
-        '2. Mesenteron (Midgut - Endodermal Origin):\n' +
-        '• Primary biochemical digestion and nutrient absorption site.\n' +
-        '• Ventricular tube with 2–8 blind-ending gastric (hepatic) caeca providing surface area and housing microflora.\n' +
-        '• Devoid of cuticle; midgut epithelial columnar cells secrete the peritrophic matrix separating food bolus from vulnerable enterocytes (endo-ectoperitrophic flow).\n\n' +
-        '3. Proctodaeum (Hindgut - Ectodermal Origin):\n' +
-        '• Excretion junction, osmoregulation, and final fecal compaction.\n' +
-        '• Receives Malpighian tubules at pyloric sphincter; subdivided into ileum, coiled colon, and bulbous rectum.\n' +
-        '• Features specialized rectal pads/papillae with Na+/K+ pumps extracting 90–95% water to generate dry uric acid pellets.',
-    },
-    rememberTip: 'Foregut + hindgut = ectoderm; midgut = endoderm.',
+    questionNumber: 1,
+    questionPrompt:
+      'Q1)  Name the three regions of the insect alimentary canal and state the embryonic germ layer from which each originates.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2023,
+    marks: '2M',
+    shortAnswerLines: [
+      'The insect alimentary canal is a tube running from mouth to anus and has three regions:',
+      '1. Foregut (stomodaeum) — ectoderm; lined with cuticular intima.',
+      '2. Midgut (mesenteron) — endoderm; no cuticular intima.',
+      '3. Hindgut (proctodaeum) — ectoderm; cuticular intima is shed at each moult.',
+    ],
+    longAnswerLines: [
+      'The insect alimentary canal is differentiated into three principal morpho-functional regions:',
+      '• Foregut (Stomodaeum): Develops from anterior embryonic ectodermal invagination. It is lined internally with cuticular intima continuous with the body wall exoskeleton, which is shed at each ecdysis.',
+      '• Midgut (Mesenteron / Ventriculus): Arises exclusively from embryonic endoderm. It completely lacks a cuticular intima, exposing specialized microvillar enterocytes for digestive enzyme secretion and active nutrient absorption.',
+      '• Hindgut (Proctodaeum): Originates from posterior ectodermal invagination. It is also lined with cuticular intima that is moulted with each larval/nymphal instar, terminating at the anus.',
+    ],
+    sosTip: 'Foregut & Hindgut = Ectoderm (sheds cuticular intima at moult). Midgut = Endoderm (no cuticle).',
   },
   {
     id: 2,
-    numberFormatted: '02',
-    question:
-      'Explain the histological wall layers of the insect alimentary canal from the lumen outward?',
-    chapter: 'Chapter 1  ·  Insect Digestive System',
-    answers: {
-      '2M':
-        'From the lumen outward, the gut wall comprises: (1) Cuticular intima (in foregut & hindgut only), (2) Single-layered columnar epithelium on a basement membrane, (3) Circular muscle layer, (4) Longitudinal muscle layer, and (5) Outer peritoneal membrane.',
-      '5M':
-        'Histological Wall Architecture of the Alimentary Canal (Lumen Outward):\n\n' +
-        '1. Cuticular Intima: Secreted by epithelial cells; present in stomodaeum and proctodaeum, absent in mesenteron.\n' +
-        '2. Epithelial Layer: Single sheet of columnar or cuboidal cells resting upon an amorphous basal lamina (basement membrane).\n' +
-        '3. Longitudinal Muscles: Disposed either internal or external to circular muscles depending on the gut zone.\n' +
-        '4. Circular Muscles: Strong contractile bands responsible for peristaltic propulsion.\n' +
-        '5. Peritoneal Membrane: Thin connective tissue sheath housing tracheae and nerves supplying the visceral musculature.',
-      '10M':
-        'I. Detailed Histological Organization:\n\n' +
-        '1. Intima & Peritrophic Matrix: In the foregut and hindgut, the lumen is protected by a tough chitinous cuticular intima. In the midgut, this is replaced by the peritrophic membrane.\n' +
-        '2. Epithelial Cell Types: Columnar digestive cells with microvillar apical brush borders, goblet cells for potassium transport, and regenerative nidi / crypts.\n' +
-        '3. Muscularis Layering Discrepancies:\n' +
-        '• Foregut: Inner longitudinal and outer circular muscle fibres.\n' +
-        '• Midgut: Outer longitudinal and inner circular muscles.\n' +
-        '• Hindgut: Heavily reinforced circular sphincters at pylorus and rectal valves.\n' +
-        '4. Peritoneal Connective Sheath: Richly arborized with tracheoles supplying oxygen for active transport and autonomic nerve plexuses.',
-    },
-    rememberTip:
-      'Foregut muscles: inner longitudinal, outer circular. Midgut muscles: inner circular, outer longitudinal.',
+    questionNumber: 2,
+    questionPrompt: 'Q2)  What is the peritrophic membrane? Mention its functions.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2022,
+    marks: '2M',
+    shortAnswerLines: [
+      'A semi-permeable, non-cellular sheath made of chitin and proteins surrounds the food bolus in the midgut.',
+      'Functions:',
+      '• Protects midgut cells from abrasion by coarse food particles.',
+      '• Acts as a barrier against pathogens, toxins and parasites.',
+      '• Allows enzymes and nutrients to pass while retaining large particles.',
+      '• Helps compartmentalise digestion and recycle enzymes.',
+    ],
+    longAnswerLines: [
+      'The peritrophic membrane (PM) is a non-cellular tubular sleeve composed of a chitin-protein lattice secreted into the midgut lumen to encase the ingested food bolus.',
+      'Types of Formation:',
+      '• Type I: Delaminated continuously along the entire length of the ventricular epithelium (found in Orthoptera, Coleoptera, Lepidopteran larvae).',
+      '• Type II: Formed by an annular ring of specialized cells at the anterior cardiac valve (Diptera, Dermaptera).',
+      'Key Physiological Functions:',
+      '1. Mechanical Protection: Prevents abrasive plant fibers (e.g. silica phytoliths) from shearing fragile enterocyte microvilli.',
+      '2. Pathogen Defense: Blocks viral virions, microsporidian spores, and bacterial toxins from direct epithelial contact.',
+      '3. Enzyme Conservation: Establishes countercurrent endo- and ecto-peritrophic circulation, allowing digestive enzymes to be recycled.',
+    ],
+    sosTip: 'Type I = delaminated throughout midgut; Type II = cardiac ring. Protects, filters & compartmentalizes.',
   },
   {
     id: 3,
-    numberFormatted: '03',
-    question:
-      'Describe the structure and grinding function of the insect proventricular gizzard.',
-    chapter: 'Chapter 1  ·  Insect Digestive System',
-    answers: {
-      '2M':
-        'The proventriculus is the posterior region of the foregut. It possesses a heavy circular muscle coat and internal cuticular teeth that mechanically pulverize coarse food before passing it through the stomodaeal cardiac valve.',
-      '5M':
-        'Structure & Function of the Proventricular Gizzard:\n\n' +
-        '1. Structure:\n' +
-        '• Strongly muscularized organ with thick circular muscle bands.\n' +
-        '• Internal cuticular intima produced into 6 longitudinal primary dental folds bearing sharp sclerotized teeth.\n' +
-        '• Interdental cushions with backwardly-directed hair-like setae.\n\n' +
-        '2. Function:\n' +
-        '• Mechanical mastication of coarse plant matter (vital in Orthoptera and Blattodea).\n' +
-        '• Straining mechanism preventing unground solids from damaging the delicate midgut.\n' +
-        '• Contains cardiac valve controlling directional food flow into the midgut.',
-      '10M':
-        'I. Morpho-Functional Anatomy of the Insect Gizzard:\n\n' +
-        '1. Adaptations in Chewing vs Sucking Insects:\n' +
-        '• Fully expressed in solid feeders (e.g. Locusts, Cockroaches) with heavily sclerotized grinding armatures.\n' +
-        '• Rudimentary or modified into a simple valve in liquid feeders (e.g. Hemiptera, Lepidoptera).\n' +
-        '2. Tripartite Microstructure:\n' +
-        '• Dental Zone: 6 radially symmetrical cuticular plates.\n' +
-        '• Pulvillar Zone: Micro-trichia forming a sieve plate.\n' +
-        '• Stomodaeal Valvular Funnel: Infolding projecting into the ventriculus to block regurgitation.\n' +
-        '3. Biomechanical Mechanics:\n' +
-        '• Rhythmic circular contractions exert opposing grinding pressure between opposing dental folds, reducing particles below 100 μm.',
-    },
-    rememberTip: 'Gizzard teeth = 6 longitudinal cuticular folds with sclerotized denticles.',
+    questionNumber: 3,
+    questionPrompt:
+      'Q3)  Describe the structure and functions of the proventriculus (gizzard) in insects.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2024,
+    marks: '5M',
+    shortAnswerLines: [
+      'The proventriculus is a muscular, cuticle-lined region of the foregut.',
+      'Its teeth and plates grind food, regulate passage into the midgut, and filter coarse particles.',
+    ],
+    longAnswerLines: [
+      'The proventriculus (gizzard) is the terminal, specialized chamber of the foregut immediately preceding the midgut.',
+      'Histological Structure:',
+      '• Wall Architecture: Encased by extraordinarily thick layers of circular muscle fibers.',
+      '• Dental Armature: Internal cuticular intima is raised into 6 longitudinal primary dental folds bearing sharp, heavily sclerotized denticles or teeth.',
+      '• Pulvillar Cushions: Sieve cushions between teeth covered with dense, backward-pointing micro-trichia.',
+      'Core Functions:',
+      '1. Mechanical Trituration: Pulverizes coarse ingested plant tissues into micro-particles (<100 μm).',
+      '2. Straining Sieve: Prevents unground, abrasive food fragments from penetrating the midgut.',
+      '3. Valvular Regurgitation Prevention: Contains the stomodaeal cardiac valve projecting into the ventriculus to block retrograde food flow.',
+    ],
+    sosTip: '6 longitudinal folds with chitinous teeth + circular muscles = grinding and cardiac valve = regulation.',
   },
   {
     id: 4,
-    numberFormatted: '04',
-    question:
-      'Explain the role of the peritrophic membrane in digestion and pathogen defense.',
-    chapter: 'Chapter 1  ·  Insect Digestive System',
-    answers: {
-      '2M':
-        'The peritrophic membrane is a non-cellular chitin-protein sleeve secreted by midgut cells. It envelops the food bolus, protecting microvilli from abrasive friction and preventing gut microbial pathogens from invading the hemolymph.',
-      '5M':
-        'Peritrophic Membrane (PM) Formation and Physiological Functions:\n\n' +
-        '1. Formation Modes:\n' +
-        '• Type I PM: Delaminated continuously along the entire ventricular epithelium (most common).\n' +
-        '• Type II PM: Produced by a specialized annular ring of cells at the cardiac valve (Diptera, Dermaptera).\n\n' +
-        '2. Primary Functions:\n' +
-        '• Mechanical protection against abrasive silica/phytoliths in ingested foliage.\n' +
-        '• Compartmentalization: Divides midgut into endoperitrophic (digestion) and ectoperitrophic (absorption) spaces.\n' +
-        '• Immunological shield against viruses, bacteria, and spore penetration.',
-      '10M':
-        'I. Detailed Physiological Significance of the Peritrophic Matrix:\n\n' +
-        '1. Biochemical Composition: Hexagonal crystalline meshwork composed of Chitin fibrils cross-linked with peritrophins and glycoproteins.\n' +
-        '2. Enzymatic Recirculation Mechanism:\n' +
-        '• Primary digestive enzymes (amylases, proteases) enter the endoperitrophic space.\n' +
-        '• Intermediate oligomers filter outward through 2–10 nm pores into the ectoperitrophic fluid for terminal digestion and microvillar uptake.\n' +
-        '3. Defense Dynamics: Blocks baculovirus virions and Bacillus thuringiensis (Bt) delta-endotoxins until breached by entomopathogenic chitinases.',
-    },
-    rememberTip: 'Type I = delaminated throughout midgut. Type II = produced by anterior cardiac ring.',
+    questionNumber: 4,
+    questionPrompt:
+      'Q4)  What are Malpighian tubules? State their primary osmoregulatory function.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2023,
+    marks: '2M',
+    shortAnswerLines: [
+      'Malpighian tubules are slender, blind-ending excretory tubes located at the junction of the midgut and hindgut.',
+      'Functions:',
+      '• Extract metabolic waste (uric acid) and excess ions from abdominal hemolymph.',
+      '• Precipitate insoluble uric acid to conserve water.',
+    ],
+    longAnswerLines: [
+      'Malpighian tubules are the primary excretory and osmoregulatory organs of insects, arising as blind tubular diverticula at the pyloric junction between midgut and hindgut.',
+      'Mechanism of Action:',
+      '• Active Transport: Distal tubule cells pump K+ and Na+ into the lumen, drawing water and urate salts isotonically from hemolymph.',
+      '• Acidification: In the proximal tubule, pH drops, causing soluble potassium urate to precipitate as insoluble uric acid crystals, releasing free water.',
+      '• Rectal Recycling: The rectal complex reabsorbs up to 95% of water, producing dry uric acid fecal pellets essential for terrestrial survival.',
+    ],
+    sosTip: 'Located at midgut-hindgut junction. Converts nitrogenous waste into dry uric acid to save water.',
   },
   {
     id: 5,
-    numberFormatted: '05',
-    question:
-      'Discuss water conservation mechanisms involving Malpighian tubules and rectal papillae.',
-    chapter: 'Chapter 1  ·  Insect Digestive System',
-    answers: {
-      '2M':
-        'Malpighian tubules precipitate toxic nitrogen as insoluble, non-toxic uric acid with minimal water loss, while rectal papillae actively reabsorb up to 95% of water and electrolytes, producing dry fecal pellets.',
-      '5M':
-        'Coordination Between Malpighian Tubules and Rectal Papillae:\n\n' +
-        '1. Malpighian Tubules:\n' +
-        '• Actively pump K+ and H+ into the lumen, drawing water and urate salts isotonically.\n' +
-        '• Acidification in lower tubule precipitates uric acid crystals, releasing free water.\n\n' +
-        '2. Rectal Papillae / Pads:\n' +
-        '• Specialized columnar epithelial cells with extensive intercellular canal systems.\n' +
-        '• Sub-cuticular Na+/K+ ATPases drive hyperosmotic fluid recycling, recovering 95% water before egestion.',
-      '10M':
-        'I. Comprehensive Excretory & Osmoregulatory Physiology:\n\n' +
-        '1. The Uric Acid Precipitation Cycle:\n' +
-        '• Uricotelic adaptation converts ammonium to uric acid (needs only 1 mL water per gram nitrogen vs 500 mL for ammonia).\n' +
-        '2. Rectal Epithelial Countercurrent System (Wall & Oschman Model):\n' +
-        '• Lateral intercellular spaces maintain steep osmotic gradients, pulling water from fecal slurry even against 2000 mOsm/kg hyperosmotic rectal contents.\n' +
-        '3. Endocrine Control:\n' +
-        '• Diuretic hormones accelerate tubule filtration during feeding; antidiuretic hormones (e.g. neuroparsins) promote rectal water conservation during desiccation.',
-    },
-    rememberTip: 'Rectal papillae recover up to 95% of water via local hyperosmotic recycling.',
+    questionNumber: 5,
+    questionPrompt:
+      'Q5)  Explain the histological wall layers of the insect gut from lumen outward.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2021,
+    marks: '5M',
+    shortAnswerLines: [
+      'From lumen outward, the alimentary wall consists of:',
+      '1. Cuticular intima (foregut and hindgut only).',
+      '2. Single-layered epithelial cells on a basement membrane.',
+      '3. Circular muscle layer (peristaltic contraction).',
+      '4. Longitudinal muscle layer (lengthwise movement).',
+      '5. Outer peritoneal membrane with tracheoles and nerves.',
+    ],
+    longAnswerLines: [
+      'The insect gut wall demonstrates five concentric histological coats (from inner lumen outward):',
+      '1. Cuticular Intima: Chitinous layer present in stomodaeum and proctodaeum; replaced by the peritrophic membrane in the mesenteron.',
+      '2. Epithelium: Single-layered columnar or cuboidal enterocytes with apical microvilli resting on an amorphous basement membrane.',
+      '3. Circular Muscle: Concentric muscle rings that produce peristaltic constriction.',
+      '4. Longitudinal Muscle: Longitudinally arranged fibers responsible for shortening the tube.',
+      '• Muscle discrepancy: Foregut has inner longitudinal and outer circular; Midgut has inner circular and outer longitudinal muscles.',
+      '5. Peritoneal Membrane: Connective tissue coating richly supplied with tracheoles providing oxygen to gut tissues.',
+    ],
+    sosTip: 'Lumen outward: Cuticle (fore/hind) → Epithelium → Circular Muscle → Longitudinal Muscle → Peritoneal.',
+  },
+  {
+    id: 6,
+    questionNumber: 6,
+    questionPrompt:
+      'Q6)  Give a detailed account of the insect digestive system with special reference to the midgut.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2024,
+    marks: '10M',
+    shortAnswerLines: [
+      'The midgut (mesenteron) is the primary site of biochemical digestion and nutrient absorption.',
+      '• Contains 2–8 blind gastric caeca to increase surface area.',
+      '• Epithelium consists of columnar digestive cells, regenerative cells (nidi), and goblet cells.',
+      '• Secretes amylases, proteases, lipases, and the peritrophic membrane.',
+    ],
+    longAnswerLines: [
+      'The insect midgut (mesenteron/ventriculus) is the metabolic core of the alimentary canal derived from embryonic endoderm:',
+      '1. Gross Anatomy & Caeca: Tubular chamber bordered anteriorly by stomodaeal cardiac valve and posteriorly by pyloric sphincter. Possesses 2–8 diverticular gastric caeca harboring symbiotic microflora and multiplying surface area.',
+      '2. Epithelial Cell Types:',
+      '• Columnar Cells: Predominant enterocytes with microvillar brush borders secreting enzymes and absorbing hydrolysates.',
+      '• Regenerative Nidi: Basal stem cell clusters that continually divide to replenish shed columnar cells during active feeding.',
+      '• Endocrine Cells: Dispersed neurosecretory cells releasing peptide hormones regulating gut motility and enzyme output.',
+      '3. Secretory Mechanism: Merocrine (exocytosis) and apocrine secretion release amylases, invertases, trypsin-like proteases, and lipases.',
+      '4. Peritrophic Matrix Integration: Directs unabsorbed bulk material backward while allowing solubilized nutrients to access brush borders.',
+    ],
+    sosTip: 'Midgut = endoderm, gastric caeca, columnar enterocytes + regenerative nidi, peritrophic matrix.',
+  },
+  {
+    id: 7,
+    questionNumber: 7,
+    questionPrompt:
+      'Q7)  Distinguish between stomodaeal and proctodaeal cuticular intima.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2020,
+    marks: '2M',
+    shortAnswerLines: [
+      '• Stomodaeal intima: Tough, thick, and sclerotized into proventricular teeth for mechanical grinding.',
+      '• Proctodaeal intima: Thinner and highly permeable to water and electrolytes at the rectal papillae.',
+    ],
+    longAnswerLines: [
+      'While both stomodaeum and proctodaeum share an ectodermal origin with cuticular lining, their intima exhibits distinct structural adaptations:',
+      '• Stomodaeum: Sclerotized and impermeable. In the gizzard, it thickens into 6 heavy primary teeth for mechanical pulverization of coarse foliage.',
+      '• Proctodaeum: Thin and flexible. Over the 6 rectal pads/papillae, it forms an ultra-thin, hydrophilic cuticular layer that permits rapid passage of water, ions, and amino acids under active suction from sub-epithelial ionic pumps.',
+    ],
+    sosTip: 'Stomodaeal = thick/grinding teeth; Proctodaeal = thin/permeable for water reabsorption.',
+  },
+  {
+    id: 8,
+    questionNumber: 8,
+    questionPrompt:
+      'Q8)  Describe the structure and function of gastric caeca in nutrient absorption.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2022,
+    marks: '5M',
+    shortAnswerLines: [
+      'Gastric caeca are finger-like diverticula situated at the anterior boundary of the midgut.',
+      '• Greatly amplify the luminal surface area for absorption.',
+      '• House symbiotic micro-organisms in wood- and plant-feeding insects.',
+      '• Actively secrete digestive enzymes into the cardiac zone.',
+    ],
+    longAnswerLines: [
+      'Gastric (hepatic) caeca are blind-ending evaginations arising circularly around the anterior extremity of the midgut:',
+      '1. Morphology: Numbers vary from 2 (Diptera) to 6 or 8 (Orthoptera e.g., locusts and grasshoppers).',
+      '2. Functional Roles:',
+      '• Surface Amplification: Increases effective absorptive surface area multi-fold within the confined abdominal hemocoel.',
+      '• Enzyme Secretion: Columnar lining releases specialized hydrolytic enzymes directly onto food exiting the gizzard.',
+      '• Fluid Cycling: Generates anteriorly directed fluid currents in the ectoperitrophic space, returning enzymes toward the proventriculus.',
+      '• Symbiont Reservoir: Houses vital intracellular or luminal bacterial symbionts producing vitamins and cellulases.',
+    ],
+    sosTip: '2-8 blind pouches at anterior midgut; amplifies absorptive surface and secretes enzymes.',
+  },
+  {
+    id: 9,
+    questionNumber: 9,
+    questionPrompt:
+      'Q9)  Explain water and osmoregulation in the rectum and rectal papillae.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2023,
+    marks: '5M',
+    shortAnswerLines: [
+      'The insect rectum possesses 6 specialized rectal pads/papillae.',
+      '• Active Na+/K+ pumps draw water from fecal matter into intercellular channels.',
+      '• Recovers up to 95% of water, producing dry uric acid pellets.',
+    ],
+    longAnswerLines: [
+      'The rectum is the crucial organ of terrestrial insect water economy:',
+      '1. Rectal Pads (Papillae): Six longitudinal swellings projecting into the rectal lumen, composed of large, columnar epithelial cells with deeply infolded lateral membranes.',
+      '2. Local Osmotic Gradient Model (Wall & Oschman):',
+      '• Na+/K+ ATPases actively transport ions into narrow lateral intercellular spaces, creating local hypertonicity.',
+      '• Water is drawn osmotically from the rectal lumen across the thin cuticular intima.',
+      '• Ions are recycled back to hemolymph while water is recovered, enabling insects to extract water even against concentrated feces.',
+    ],
+    sosTip: '6 rectal pads with ion pumps create local osmotic gradient, reabsorbing 95% water.',
+  },
+  {
+    id: 10,
+    questionNumber: 10,
+    questionPrompt:
+      'Q10) Define filter chamber and name an insect order possessing it.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2021,
+    marks: '2M',
+    shortAnswerLines: [
+      'A filter chamber is a structural modification where anterior and posterior gut regions are bound together.',
+      '• Allows excess water to bypass the digestive midgut directly into the hindgut.',
+      '• Found in sap-sucking insects of the Order Hemiptera (e.g. leafhoppers, aphids).',
+    ],
+    longAnswerLines: [
+      'A filter chamber is an anatomical specialization of the alimentary canal in fluid-feeding Homopteran insects (Order: Hemiptera):',
+      '• Structure: The anterior midgut forms a thin-walled dilated loop closely wrapped around the posterior midgut and initial segments of Malpighian tubules inside a common muscular sheath.',
+      '• Function: Since plant sap is 90–95% water and dilute in amino acids, excess water shunts directly by osmosis from anterior to posterior gut, concentrating nutrients for midgut enzymes without diluting them.',
+    ],
+    sosTip: 'Filter chamber = Hemiptera; water shunts directly from anterior to posterior gut to concentrate sap.',
+  },
+  {
+    id: 11,
+    questionNumber: 11,
+    questionPrompt:
+      'Q11) Write short notes on digestive enzymes secreted by the midgut epithelium.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2020,
+    marks: '5M',
+    shortAnswerLines: [
+      'Midgut enzymes hydrolyze carbohydrates, proteins, and lipids:',
+      '• Carbohydrases: Amylase (starch), Invertase (sucrose), Maltase (maltose).',
+      '• Proteases: Trypsin- and chymotrypsin-like endopeptidases.',
+      '• Lipases: Hydrolyze triglycerides into free fatty acids.',
+    ],
+    longAnswerLines: [
+      'The midgut enterocytes synthesize and secrete diverse hydrolases tailored to the insect’s feeding regime:',
+      '1. Carbohydrases: High activity in phytophagous insects. α-Amylase digests starch; Invertase (sucrase) cleaves sucrose into glucose and fructose; Trehalase hydrolyzes trehalose.',
+      '2. Proteases: Predominantly serine proteases (Trypsin and Chymotrypsin) functioning at alkaline midgut pH (8.0–10.0 in Lepidoptera to prevent tannin precipitation). Aminopeptidases complete terminal hydrolysis.',
+      '3. Lipases & Esterases: Cleave dietary triacylglycerols and sterol esters into monoacylglycerols and free fatty acids for microvillar absorption.',
+    ],
+    sosTip: 'Amylase (carbs), Trypsin (proteins), Lipase (fats) functioning under species-specific gut pH.',
+  },
+  {
+    id: 12,
+    questionNumber: 12,
+    questionPrompt:
+      'Q12) Differentiate between Type I and Type II peritrophic membranes.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2024,
+    marks: '2M',
+    shortAnswerLines: [
+      '• Type I PM: Delaminated from the entire midgut epithelial surface (e.g. Orthoptera, Coleoptera, Lepidoptera).',
+      '• Type II PM: Produced as a continuous sleeve by an anterior ring of cardiac valve cells (e.g. Diptera, Dermaptera).',
+    ],
+    longAnswerLines: [
+      'Key differences between PM Types:',
+      '1. Origin of Secretion:',
+      '• Type I is delaminated from microvilli across the whole length of the ventricular epithelium in response to food ingestion.',
+      '• Type II is continually synthesized by an annular group of specialized cells located at the stomodaeal invagination (cardiac valve).',
+      '2. Taxonomic Occurrence:',
+      '• Type I: Grasshoppers, beetles, caterpillars, adult bees.',
+      '• Type II: Adult flies (Diptera), earwigs (Dermaptera), and tsetse flies.',
+    ],
+    sosTip: 'Type I = entire midgut surface; Type II = specialized cardiac annular ring.',
+  },
+  {
+    id: 13,
+    questionNumber: 13,
+    questionPrompt:
+      'Q13) What is cryptonephridial arrangement and its significance?',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2022,
+    marks: '2M',
+    shortAnswerLines: [
+      'Cryptonephridial system: Distal ends of Malpighian tubules are bound closely to the rectal wall under a common perinephric membrane.',
+      '• Extracts virtually 100% moisture from feces (common in desert beetles and mealworms).',
+    ],
+    longAnswerLines: [
+      'The cryptonephridial (or cryptonephric) complex is a supreme xerophytic water-conservation adaptation:',
+      '• Anatomical Architecture: The terminal blind ends of the Malpighian tubules re-apply themselves intimately against the outer surface of the rectal epithelial pads, enclosed beneath a non-cellular perinephric membrane.',
+      '• Physiological Significance: Enables tenebrionid beetles and mealworms (Tenebrio molitor) to absorb water vapor directly from sub-saturated air or fecal pellets, excreting dry powder feces with zero water waste.',
+    ],
+    sosTip: 'Malpighian tubules attached to rectal wall = extracts 100% water from feces in dry environments.',
+  },
+  {
+    id: 14,
+    questionNumber: 14,
+    questionPrompt:
+      'Q14) Discuss physiological adaptations of the alimentary canal in fluid feeders vs solid feeders.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2023,
+    marks: '10M',
+    shortAnswerLines: [
+      '• Solid Feeders: Heavy proventriculus with grinding teeth; prominent crop for storage; robust Type I peritrophic membrane.',
+      '• Fluid Feeders: Reduced or absent gizzard teeth; muscular suction cibarial pump; diverticular crop; filter chambers in Hemiptera.',
+    ],
+    longAnswerLines: [
+      'Dietary physical consistency dictates profound morphological divergence in insect digestive architecture:',
+      '1. Solid Herbivores & Scavengers (e.g. Locusts, Cockroaches):',
+      '• Mandibulate pre-oral cavity for mastication.',
+      '• Highly sclerotized proventricular gizzard armed with 6 primary cuticular teeth for mechanical trituration.',
+      '• Multilayered Type I peritrophic membrane protecting against sharp cellulose fibers.',
+      '2. Fluid & Sap Feeders (e.g. Hemiptera, Lepidoptera, Diptera):',
+      '• Cibarial-pharyngeal sucking pump driven by powerful clypeal dilator muscles.',
+      '• Gizzard reduced to a simple one-way cardiac valve.',
+      '• Hemipterans feature filter chambers to bypass copious water directly to hindgut.',
+      '• Adult Lepidoptera and Diptera maintain a blind diverticular crop for storing liquid nectar.',
+    ],
+    sosTip: 'Solid feeders have grinding proventriculus & thick PM; liquid feeders have sucking pump & filter chamber.',
+  },
+  {
+    id: 15,
+    questionNumber: 15,
+    questionPrompt:
+      'Q15) Explain the role of cardiac and pyloric sphincters in food transit.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2021,
+    marks: '2M',
+    shortAnswerLines: [
+      '• Cardiac Sphincter (Stomodaeal valve): Regulates one-way food flow from foregut into midgut; blocks regurgitation.',
+      '• Pyloric Sphincter: Controls transit of digesta from midgut into hindgut and guards Malpighian tubule inlets.',
+    ],
+    longAnswerLines: [
+      'Internal muscular valves ensure unidirectional movement of digesta:',
+      '1. Cardiac Valve (Stomodaeal Invagination): An annular fold of foregut wall projecting into the anterior midgut lumen, preventing backward regurgitation of abrasive bolus.',
+      '2. Pyloric Valve: A circular muscular sphincter demarcating the junction of mesenteron and proctodaeum, timing the evacuation of processed chyme into the ileum while protecting Malpighian tubule orifices.',
+    ],
+    sosTip: 'Cardiac = foregut to midgut (stops regurgitation); Pyloric = midgut to hindgut.',
+  },
+  {
+    id: 16,
+    questionNumber: 16,
+    questionPrompt:
+      'Q16) Describe the pharynx and cibarial pump mechanism in piercing-sucking insects.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2024,
+    marks: '5M',
+    shortAnswerLines: [
+      'The cibarial pump is a suction apparatus inside the pre-oral cavity.',
+      '• Powerful clypeal dilator muscles expand the cibarium, sucking liquid food up the food canal.',
+      '• Elastic recoil pushes sap/blood through the pharynx into the esophagus.',
+    ],
+    longAnswerLines: [
+      'In piercing-sucking insects (e.g., Hemiptera, mosquitoes):',
+      '• Cibarium: The preoral cavity bounded anteriorly by clypeus and posteriorly by hypopharynx.',
+      '• Pump Mechanism: Powerful dilator muscles originating on the facial clypeus insert into the flexible anterior wall of the cibarium. Contraction dilates the chamber creating negative pressure, sucking plant sap or blood through the stylet food canal. Relaxation compresses the chamber, propelling the fluid past the pharyngeal valve into the esophagus.',
+    ],
+    sosTip: 'Clypeal dilator muscles expand cibarium creating vacuum to draw fluid through stylets.',
+  },
+  {
+    id: 17,
+    questionNumber: 17,
+    questionPrompt:
+      'Q17) What are regenerative cells (nidi) in the midgut?',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2020,
+    marks: '2M',
+    shortAnswerLines: [
+      'Regenerative cells are stem cells clustered in nests (nidi) or crypts along the midgut basement membrane.',
+      '• Continuously divide to replace damaged or worn columnar digestive cells.',
+    ],
+    longAnswerLines: [
+      'Because the midgut epithelium lacks protective cuticular intima, enterocytes undergo rapid senescence during intense digestive cycles:',
+      '• Morphology: Basal embryonic-like stem cells grouped in clusters called nidi (in Orthoptera/Coleoptera) or crypts.',
+      '• Function: Mitotically active cells that differentiate into mature columnar enterocytes and endocrine cells, renewing the entire midgut epithelial lining every few days.',
+    ],
+    sosTip: 'Basal stem cell clusters (nidi) that multiply to replace worn-out midgut digestive cells.',
+  },
+  {
+    id: 18,
+    questionNumber: 18,
+    questionPrompt:
+      'Q18) Explain the function of the salivary glands (labial glands).',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2023,
+    marks: '2M',
+    shortAnswerLines: [
+      'Paired labial glands in the thorax secrete saliva into the preoral cavity.',
+      '• Lubricates food and secretes amylase/invertase.',
+      '• In blood-feeders, contains anticoagulants and vasodilators.',
+    ],
+    longAnswerLines: [
+      'The salivary glands (modified labial glands) are paired acinar organs located in the thorax opening at the hypopharynx:',
+      '• Solid Feeders: Secrete watery mucus with α-amylase to moisten food and initiate starch hydrolysis.',
+      '• Blood Feeders (e.g. Mosquitoes): Saliva contains apyrase, anti-clotting factor Xa inhibitors, and vasodilators to prevent host blood coagulation during ingestion.',
+      '• Silkworms: Modified into silk glands producing fibroin and sericin.',
+    ],
+    sosTip: 'Lubricates food, initiates carbohydrate digestion, and secretes anticoagulants in blood feeders.',
+  },
+  {
+    id: 19,
+    questionNumber: 19,
+    questionPrompt:
+      'Q19) Discuss how honeydew is produced in sap-sucking Hemipterans.',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2022,
+    marks: '5M',
+    shortAnswerLines: [
+      'Honeydew is a sweet, sugary excretion produced by sap-sucking insects (aphids, mealybugs).',
+      '• Excess plant phloem sap (sucrose and water) is passed rapidly through the filter chamber.',
+      '• Egested droplets attract ants and promote sooty mold on crops.',
+    ],
+    longAnswerLines: [
+      'Honeydew production is a direct physiological consequence of feeding on vascular phloem sap:',
+      '1. Osmotic Dilemma: Phloem sap contains abundant water and sucrose but extremely low concentrations of essential amino acids.',
+      '2. Filter Chamber Shunt: To acquire sufficient nitrogen, insects ingest massive volumes of sap. The filter chamber rapidly shunts excess water and sugars into the hindgut without diluting midgut digestive enzymes.',
+      '3. Excretion: The resulting sweet, sugary egesta (honeydew) is ejected onto foliage, serving as an attractant for mutualistic ants and a substrate for black sooty mold fungus (Capnodium spp.).',
+    ],
+    sosTip: 'Produced by sap-suckers via filter chamber to extract scarce amino acids from excess sugary sap.',
+  },
+  {
+    id: 20,
+    questionNumber: 20,
+    questionPrompt:
+      'Q20) Compare the proventriculus of Orthoptera (grasshoppers) vs Dictyoptera (cockroaches).',
+    chapterText: 'Ch. 1 · Digestive',
+    year: 2024,
+    marks: '10M',
+    shortAnswerLines: [
+      '• Orthoptera (Grasshopper): 6 longitudinal rows of smaller cuticular ridges with fine denticles; adapted for fibrous grasses.',
+      '• Dictyoptera (Cockroach): 6 massive, heavily sclerotized triangular teeth and pulvilli; adapted for omnivorous, tough diets.',
+    ],
+    longAnswerLines: [
+      'A comparative analysis of the proventricular grinding armature highlights dietary specializations:',
+      '1. Dictyoptera (Periplaneta americana - Omnivorous):',
+      '• Possesses 6 enormous, heavily sclerotized, dark brown pyramidal teeth situated on primary longitudinal folds.',
+      '• Posterior to each tooth is an interdental pulvillus covered in dense bristles forming a micro-strainer.',
+      '• Exerts massive compressive crushing force on omnivorous scraps.',
+      '2. Orthoptera (Locusta migratoria - Herbivorous):',
+      '• Teeth are replaced by longitudinal ridges covered in multiple rows of micro-denticles and transverse ridges.',
+      '• Suited for shredding and shredding abrasive siliceous monocot grass blades.',
+    ],
+    sosTip: 'Cockroach has 6 massive pyramidal teeth for omnivory; Grasshopper has rows of finer teeth for grass.',
   },
 ];
+
+const YEARS = ['All Years', 2024, 2023, 2022, 2021, 2020];
 
 interface PYQViewProps {
   chapterNumber?: number;
@@ -198,321 +494,313 @@ export default function PYQView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  // State: selectedQuestionId (null = full list mode, number = model answer revealed mode)
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
-  const [selectedMark, setSelectedMark] = useState<MarkType>('2M');
+  const [selectedYear, setSelectedYear] = useState<string | number>('All Years');
+  const [completedMap, setCompletedMap] = useState<Record<number, boolean>>({});
+  const [answerModeMap, setAnswerModeMap] = useState<Record<number, AnswerMode>>({});
 
-  const questions = QUESTION_BANK_DATA;
-  const selectedQuestion =
-    selectedQuestionId !== null
-      ? questions.find((q) => q.id === selectedQuestionId) || questions[0]
-      : null;
+  // Theme tokens matching PyqDark.module.css and PyqLight.module.css
+  const bg = isDark ? '#263830' : '#F0F7F2';
+  const topAccentColor = isDark ? '#A6EDBA' : '#145E3B';
+  const titleColor = isDark ? '#F0F7F0' : '#1F2E26';
+  const subtextColor = isDark ? '#B8CFBF' : '#5E7066';
 
-  const handleCardPress = (qId: number) => {
-    Haptics.selectionAsync();
-    setSelectedQuestionId(qId);
-  };
+  // Filter track
+  const trackBg = isDark ? '#30453B' : '#FFFFFF';
+  const trackBorder = isDark ? '#577361' : '#D1E0D6';
+  const activePillBg = isDark ? '#FFF6F1' : '#2D3E36';
+  const activePillText = isDark ? '#2D3E36' : '#FFFFFF';
+  const inactivePillBg = isDark ? '#30453B' : '#FFFFFF';
+  const inactivePillBorder = isDark ? '#577361' : '#D1E0D6';
+  const inactivePillText = isDark ? '#B8CFBF' : '#5E7066';
 
-  const handleMarkChipPress = (qId: number, mark: MarkType) => {
-    Haptics.selectionAsync();
-    setSelectedQuestionId(qId);
-    setSelectedMark(mark);
-  };
+  // Card tokens
+  const cardBg = isDark ? '#30453B' : '#FFFFFF';
+  const cardBorder = isDark ? '#577361' : '#D1E0D6';
+  const cardAccent = isDark ? '#FF6361' : '#E83B3D';
+  const questionPromptColor = isDark ? '#F0F7F0' : '#1F2E26';
 
-  const handleBack = () => {
+  // Tags
+  const chapterTagBg = isDark ? '#29523B' : '#EBFAF0';
+  const chapterTagText = isDark ? '#A6EDBA' : '#145E3B';
+  const yearTagBg = '#FFE8B2';
+  const yearTagText = '#664A0F';
+  const marksTagBg = isDark ? '#3B5245' : '#E8F2EB';
+  const marksTagText = isDark ? '#F0F7F0' : '#1F2E26';
+
+  // Action buttons
+  const completeBtnBg = isDark ? '#30453B' : '#FFFFFF';
+  const completeBtnBorder = isDark ? '#577361' : '#D1E0D6';
+  const completeBtnText = isDark ? '#B8CFBF' : '#5E7066';
+  const completedActiveBg = isDark ? '#29523B' : '#EBFAF0';
+  const completedActiveText = isDark ? '#A6EDBA' : '#145E3B';
+
+  const sosBtnBg = isDark ? '#593333' : '#FFF0ED';
+  const sosBtnBorder = isDark ? '#FF6361' : '#E83B3D';
+  const sosBtnText = isDark ? '#FF6361' : '#E83B3D';
+
+  // Answer Panel
+  const answerPanelBg = isDark ? '#29523B' : '#EBFAF0';
+  const answerPanelBorder = '#A8E8BF';
+  const answerAccent = isDark ? '#47D97A' : '#14A64F';
+  const answerHeadingColor = isDark ? '#A6EDBA' : '#145E3B';
+  const answerTextColor = isDark ? '#F0F7F0' : '#1F2E26';
+
+  // Short/Long pill
+  const shortLongPillBg = isDark ? '#30453B' : '#FFFFFF';
+  const shortLongPillBorder = isDark ? '#577361' : '#D1E0D6';
+  const shortLongPillText = isDark ? '#A6EDBA' : '#145E3B';
+
+  const filteredQuestions = useMemo(() => {
+    if (selectedYear === 'All Years') return PYQ_DATA;
+    return PYQ_DATA.filter((q) => q.year === selectedYear);
+  }, [selectedYear]);
+
+  const toggleComplete = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setSelectedQuestionId(null);
+    setCompletedMap((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handlePrevQuestion = () => {
-    if (!selectedQuestion) return;
+  const toggleAnswerMode = (id: number) => {
     Haptics.selectionAsync();
-    const curIdx = questions.findIndex((q) => q.id === selectedQuestion.id);
-    if (curIdx > 0) {
-      setSelectedQuestionId(questions[curIdx - 1].id);
-    } else {
-      setSelectedQuestionId(questions[questions.length - 1].id);
-    }
+    setAnswerModeMap((prev) => ({
+      ...prev,
+      [id]: prev[id] === 'long' ? 'short' : 'long',
+    }));
   };
 
-  const handleNextQuestion = () => {
-    if (!selectedQuestion) return;
-    Haptics.selectionAsync();
-    const curIdx = questions.findIndex((q) => q.id === selectedQuestion.id);
-    if (curIdx < questions.length - 1) {
-      setSelectedQuestionId(questions[curIdx + 1].id);
-    } else {
-      setSelectedQuestionId(questions[0].id);
-    }
+  const showSOSTip = (item: PYQItem) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    Alert.alert(`SOS Recall · Q${item.questionNumber}`, item.sosTip, [{ text: 'Got it' }]);
   };
-
-  // Color Tokens based on Figma DevMode CSS (.questionBankMobile3 & .questionBankMobile4)
-  // Light Theme:
-  // - Background: #f0f7f4
-  // - Badge: #273a31
-  // - Title: #1a2924
-  // - Subtitle: #4f7d66
-  // - Divider: #b2d1c2
-  // - Instruction: #596e66
-  // - Card: #f6fbf8, border #b2d1c2
-  // - Card number: #4f7d66
-  // - Active chip: #335c4a, text #ffffff
-  // - Inactive chip: #f6fbf8, text #4f7d66
-  // - Answer badge: #4f7d66, text #ffffff
-  // - Study tip card: #e8f2eb, border #b2d1c2
-  // - Nav buttons: #2d3e36, icon #ffffff
-  // Dark Theme:
-  // - Background: #1a2921
-  // - Badge: #ffffff
-  // - Title: #f0f7f0
-  // - Subtitle: #bad1bf
-  // - Divider: #4d6e57
-  // - Instruction: #bad1bf
-  // - Card: #21362b, border #4d6e57
-  // - Card number: #b2e0c2
-  // - Active chip: #b2e0c2, text #1a2921
-  // - Inactive chip: #304d3b, text #bad1bf
-  // - Answer badge: #59b87a, text #1a2921
-  // - Study tip card: #214730, border #59b87a
-  // - Nav buttons: #b2e0c2, icon #1a2921
-  const bg = isDark ? '#1A2921' : '#F0F7F4';
-  const badgeBg = isDark ? '#FFFFFF' : '#273A31';
-  const titleColor = isDark ? '#F0F7F0' : '#1A2924';
-  const subtitleColor = isDark ? '#BAD1BF' : '#4F7D66';
-  const dividerColor = isDark ? '#4D6E57' : '#B2D1C2';
-  const instructionColor = isDark ? '#BAD1BF' : '#596E66';
-  const cardBg = isDark ? '#21362B' : '#F6FBF8';
-  const cardBorder = isDark ? '#4D6E57' : '#B2D1C2';
-  const numberColor = isDark ? '#B2E0C2' : '#4F7D66';
-  const questionTextColor = isDark ? '#F0F7F0' : '#1A2924';
-  const chapterTextColor = isDark ? '#BAD1BF' : '#596E66';
-
-  const MARK_OPTIONS: MarkType[] = ['2M', '5M', '10M'];
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
+      {/* Top Status Accent Bar (.topStatusAccent: 4px) */}
+      <View style={[styles.topStatusAccent, { backgroundColor: topAccentColor }]} />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
       >
-        {/* 1. HEADER ROW (.rectangleParent & .screenTitle) */}
-        <View style={styles.headerRow}>
-          <View style={[styles.badgeSquare, { backgroundColor: badgeBg }]}>
-            <Image source={PLANT_BADGE} style={styles.badgeImage} resizeMode="contain" />
-          </View>
-          <Text style={[styles.screenTitle, { color: titleColor }]}>Question Bank</Text>
+        {/* Page Title & Question Count (.pageTitle & .count) */}
+        <View style={styles.titleBlock}>
+          <Text style={[styles.pageTitle, { color: titleColor }]}>PYQ</Text>
+          <Text style={[styles.count, { color: subtextColor }]}>
+            20 questions · 2M, 5M & 10M answers
+          </Text>
         </View>
 
-        {/* 2. SUBTITLE (.questionCount) */}
-        <Text style={[styles.questionCount, { color: subtitleColor }]}>
-          {selectedQuestion
-            ? `Question ${selectedQuestion.numberFormatted} · Model answer`
-            : `${questions.length} questions available · 2M, 5M & 10M model answers`}
+        {/* Year Filter Track (.yearFilterTrack) */}
+        <View style={[styles.yearFilterTrack, { backgroundColor: trackBg, borderColor: trackBorder }]}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.yearsRow}
+          >
+            {YEARS.map((yr) => {
+              const isSelected = selectedYear === yr;
+              return (
+                <TouchableOpacity
+                  key={yr.toString()}
+                  style={[
+                    styles.yearButton,
+                    isSelected
+                      ? [styles.yearButtonActive, { backgroundColor: activePillBg }]
+                      : [styles.yearButtonInactive, { backgroundColor: inactivePillBg, borderColor: inactivePillBorder }],
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setSelectedYear(yr);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text
+                    style={[
+                      styles.yearLabel,
+                      {
+                        color: isSelected ? activePillText : inactivePillText,
+                        fontWeight: isSelected ? '700' : '500',
+                      },
+                    ]}
+                  >
+                    {yr}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Intro text (.intro) */}
+        <Text style={[styles.intro, { color: subtextColor }]}>
+          Select a subject to view chapter questions and model answers.
         </Text>
 
-        {/* 3. HEADER DIVIDER (.headerDivider) */}
-        <View style={[styles.headerDivider, { backgroundColor: dividerColor }]} />
-
-        {/* 4. TOP ACTION: Instruction or Back Button */}
-        {selectedQuestion ? (
-          <TouchableOpacity
-            style={[
-              styles.backButton,
-              {
-                backgroundColor: isDark ? '#21362B' : '#FFFFFF',
-                borderColor: dividerColor,
-              },
-            ]}
-            onPress={handleBack}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.backLabel, { color: isDark ? '#B2E0C2' : '#335C4A' }]}>
-              ‹  Back
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <Text style={[styles.instruction, { color: instructionColor }]}>
-            Choose a question and answer length.
-          </Text>
-        )}
-
-        {/* 5. QUESTION CARDS LIST */}
+        {/* Question Cards List */}
         <View style={styles.cardsList}>
-          {questions.map((item) => {
-            const isThisSelected = selectedQuestion?.id === item.id;
+          {filteredQuestions.map((item) => {
+            const isCompleted = !!completedMap[item.id];
+            const answerMode = answerModeMap[item.id] || 'short';
+            const answerLines =
+              answerMode === 'long' ? item.longAnswerLines : item.shortAnswerLines;
 
             return (
-              <TouchableOpacity
+              <View
                 key={item.id}
                 style={[
                   styles.questionCard,
-                  {
-                    backgroundColor: cardBg,
-                    borderColor: isThisSelected ? (isDark ? '#59B87A' : '#335C4A') : cardBorder,
-                  },
+                  { backgroundColor: cardBg, borderColor: cardBorder },
                 ]}
-                onPress={() => handleCardPress(item.id)}
-                activeOpacity={0.9}
               >
-                {/* Top Section: Number & Question Text */}
-                <View style={styles.cardHeaderRow}>
-                  <Text style={[styles.questionNumber, { color: numberColor }]}>
-                    {item.numberFormatted}
+                {/* Left Red/Coral Accent Bar (.accent) */}
+                <View style={[styles.cardAccent, { backgroundColor: cardAccent }]} />
+
+                <View style={styles.cardInner}>
+                  {/* Question Prompt (.questionPrompt) */}
+                  <Text style={[styles.questionPrompt, { color: questionPromptColor }]}>
+                    {item.questionPrompt}
                   </Text>
-                  <Text style={[styles.questionText, { color: questionTextColor }]}>
-                    {item.question}
-                  </Text>
-                </View>
 
-                {/* Mark Length Chips: 2M | 5M | 10M */}
-                <View style={styles.marksChipsRow}>
-                  {MARK_OPTIONS.map((m) => {
-                    const isActive = isThisSelected && selectedMark === m;
-
-                    return (
-                      <TouchableOpacity
-                        key={m}
-                        style={[
-                          styles.markChip,
-                          {
-                            backgroundColor: isActive
-                              ? isDark
-                                ? '#B2E0C2'
-                                : '#335C4A'
-                              : isDark
-                              ? '#304D3B'
-                              : '#F6FBF8',
-                            borderColor: isActive
-                              ? isDark
-                                ? '#B2E0C2'
-                                : '#335C4A'
-                              : dividerColor,
-                          },
-                        ]}
-                        onPress={() => handleMarkChipPress(item.id, m)}
-                        activeOpacity={0.8}
-                      >
-                        <Text
-                          style={[
-                            styles.markChipText,
-                            {
-                              color: isActive
-                                ? isDark
-                                  ? '#1A2921'
-                                  : '#FFFFFF'
-                                : isDark
-                                ? '#BAD1BF'
-                                : '#4F7D66',
-                            },
-                          ]}
-                        >
-                          {m}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                {/* Chapter Label */}
-                <Text style={[styles.chapterLabel, { color: chapterTextColor }]}>
-                  {item.chapter}
-                </Text>
-
-                {/* EXPANDED MODEL ANSWER SECTION (.modelAnswer) */}
-                {isThisSelected && (
-                  <View style={styles.expandedAnswerSection}>
-                    <View style={[styles.answerDivider, { backgroundColor: dividerColor }]} />
-                    <View style={styles.answerContentRow}>
-                      <View
-                        style={[
-                          styles.answerBadge,
-                          { backgroundColor: isDark ? '#59B87A' : '#4F7D66' },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.answerBadgeLabel,
-                            { color: isDark ? '#1A2921' : '#FFFFFF' },
-                          ]}
-                        >
-                          A
-                        </Text>
-                      </View>
-                      <Text style={[styles.modelAnswerText, { color: questionTextColor }]}>
-                        {item.answers[selectedMark]}
+                  {/* Metadata Tags Row: Chapter Tag, Year Tag, Marks */}
+                  <View style={styles.tagRow}>
+                    {/* Chapter Tag */}
+                    <View style={[styles.chapterTag, { backgroundColor: chapterTagBg }]}>
+                      <Text style={[styles.chapterText, { color: chapterTagText }]}>
+                        {item.chapterText}
                       </Text>
                     </View>
+
+                    <View style={styles.rightTagGroup}>
+                      {/* Year Tag */}
+                      <View style={[styles.yearTag, { backgroundColor: yearTagBg }]}>
+                        <Text style={[styles.yearText, { color: yearTagText }]}>
+                          ▦ {item.year}
+                        </Text>
+                      </View>
+
+                      {/* Marks Tag */}
+                      <View style={[styles.marksTag, { backgroundColor: marksTagBg }]}>
+                        <Text style={[styles.marksText, { color: marksTagText }]}>
+                          {item.marks}
+                        </Text>
+                      </View>
+                    </View>
                   </View>
-                )}
-              </TouchableOpacity>
+
+                  {/* Action Buttons: Mark Completed & SOS Button */}
+                  <View style={styles.actionRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.completeButton,
+                        {
+                          backgroundColor: isCompleted ? completedActiveBg : completeBtnBg,
+                          borderColor: isCompleted ? chapterTagText : completeBtnBorder,
+                        },
+                      ]}
+                      onPress={() => toggleComplete(item.id)}
+                      activeOpacity={0.8}
+                    >
+                      <Text
+                        style={[
+                          styles.completeText,
+                          { color: isCompleted ? completedActiveText : completeBtnText },
+                        ]}
+                      >
+                        {isCompleted ? '☑ Completed' : '□ Mark completed'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={[
+                        styles.sosButton,
+                        { backgroundColor: sosBtnBg, borderColor: sosBtnBorder },
+                      ]}
+                      onPress={() => showSOSTip(item)}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.sosText, { color: sosBtnText }]}>SOS</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {/* Answer Panel (.answerPanel) */}
+                  <View
+                    style={[
+                      styles.answerPanel,
+                      { backgroundColor: answerPanelBg, borderColor: answerPanelBorder },
+                    ]}
+                  >
+                    {/* Left Green Accent (.answerAccent) */}
+                    <View style={[styles.answerAccent, { backgroundColor: answerAccent }]} />
+
+                    <View style={styles.answerPanelContent}>
+                      {/* Header with ANSWER and Short/Long Pill */}
+                      <View style={styles.answerHeaderRow}>
+                        <Text style={[styles.answerHeading, { color: answerHeadingColor }]}>
+                          ANSWER
+                        </Text>
+
+                        <TouchableOpacity
+                          style={[
+                            styles.shortLongPill,
+                            {
+                              backgroundColor: shortLongPillBg,
+                              borderColor: shortLongPillBorder,
+                            },
+                          ]}
+                          onPress={() => toggleAnswerMode(item.id)}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            style={[
+                              styles.shortLongText,
+                              {
+                                color:
+                                  answerMode === 'short'
+                                    ? shortLongPillText
+                                    : subtextColor,
+                                fontWeight: answerMode === 'short' ? '700' : '400',
+                              },
+                            ]}
+                          >
+                            Short
+                          </Text>
+                          <Text style={[styles.shortLongDivider, { color: subtextColor }]}>·</Text>
+                          <Text
+                            style={[
+                              styles.shortLongText,
+                              {
+                                color:
+                                  answerMode === 'long'
+                                    ? shortLongPillText
+                                    : subtextColor,
+                                fontWeight: answerMode === 'long' ? '700' : '400',
+                              },
+                            ]}
+                          >
+                            Long
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      {/* Answer Lines (.answerLine) */}
+                      <View style={styles.answerLinesWrap}>
+                        {answerLines.map((line, lIdx) => (
+                          <Text
+                            key={lIdx}
+                            style={[styles.answerLine, { color: answerTextColor }]}
+                          >
+                            {line}
+                          </Text>
+                        ))}
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
             );
           })}
         </View>
-
-        {/* 6. REMEMBER STUDY TIP CARD (when answer is revealed) */}
-        {selectedQuestion && (
-          <View
-            style={[
-              styles.studyTipCard,
-              {
-                backgroundColor: isDark ? '#214730' : '#E8F2EB',
-                borderColor: isDark ? '#59B87A' : dividerColor,
-              },
-            ]}
-          >
-            <Text style={[styles.studyTipTitle, { color: isDark ? '#59B87A' : '#335C4A' }]}>
-              Remember
-            </Text>
-            <Text style={[styles.studyTipBody, { color: isDark ? '#F0F7F0' : '#1A2924' }]}>
-              {selectedQuestion.rememberTip}
-            </Text>
-          </View>
-        )}
-
-        {/* 7. BOTTOM NAVIGATION ARROWS (when answer is revealed) */}
-        {selectedQuestion && (
-          <View style={styles.navArrowsRow}>
-            <TouchableOpacity
-              style={[
-                styles.navArrowButton,
-                { backgroundColor: isDark ? '#B2E0C2' : '#2D3E36' },
-              ]}
-              onPress={handlePrevQuestion}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="arrow-back"
-                size={20}
-                color={isDark ? '#1A2921' : '#FFFFFF'}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.navArrowButton,
-                { backgroundColor: isDark ? '#B2E0C2' : '#2D3E36' },
-              ]}
-              onPress={handleNextQuestion}
-              activeOpacity={0.8}
-            >
-              <Ionicons
-                name="arrow-forward"
-                size={20}
-                color={isDark ? '#1A2921' : '#FFFFFF'}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* 8. FOOTER HINT / NOTE */}
-        <Text style={[styles.footerHint, { color: instructionColor }]}>
-          {selectedQuestion
-            ? `Model answer · ${selectedMark.toLowerCase()}-mark format`
-            : 'Select a question to view its model answer.'}
-        </Text>
-
-        <View style={{ height: 80 }} />
       </ScrollView>
     </View>
   );
@@ -522,227 +810,224 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  topStatusAccent: {
+    width: '100%',
+    height: 4,
+  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingTop: 14,
     paddingBottom: 40,
   },
   tabletContent: {
-    maxWidth: 640,
+    maxWidth: 680,
     alignSelf: 'center',
     width: '100%',
   },
-
-  /* 1. Header */
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    marginBottom: 8,
+  titleBlock: {
+    marginBottom: 10,
+    paddingHorizontal: 4,
   },
-  badgeSquare: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  badgeImage: {
-    width: 28,
-    height: 28,
-  },
-  screenTitle: {
-    flex: 1,
-    fontSize: 25,
+  pageTitle: {
+    fontSize: 22,
     fontWeight: '700',
     letterSpacing: -0.3,
   },
-  themeToggleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  /* 2. Subtitle */
-  questionCount: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 12,
-  },
-
-  /* 3. Divider */
-  headerDivider: {
-    height: 1,
-    width: '100%',
-    marginBottom: 14,
-  },
-
-  /* 4. Top Action */
-  instruction: {
-    fontSize: 12,
-    fontWeight: '500',
-    marginBottom: 16,
-  },
-  backButton: {
-    width: 76,
-    height: 30,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 14,
-  },
-  backLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-
-  /* 5. Cards List */
-  cardsList: {
-    gap: 14,
-    marginBottom: 16,
-  },
-  questionCard: {
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingTop: 14,
-    paddingBottom: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-  },
-  cardHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 10,
-  },
-  questionNumber: {
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 24,
-    width: 32,
-  },
-  questionText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    lineHeight: 20,
-  },
-
-  /* Marks Chips */
-  marksChipsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginLeft: 42,
-    marginBottom: 8,
-  },
-  markChip: {
-    width: 55,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markChipText: {
+  count: {
     fontSize: 11,
-    fontWeight: '700',
-  },
-  chapterLabel: {
-    fontSize: 10,
-    fontWeight: '500',
-    marginLeft: 42,
-  },
-
-  /* Expanded Answer Area */
-  expandedAnswerSection: {
-    marginTop: 10,
-  },
-  answerDivider: {
-    height: 1,
-    width: '100%',
-    marginBottom: 12,
-  },
-  answerContentRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  answerBadge: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontWeight: '400',
     marginTop: 2,
   },
-  answerBadgeLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  modelAnswerText: {
-    flex: 1,
-    fontSize: 12.5,
-    lineHeight: 19,
-    fontWeight: '500',
-  },
-
-  /* 6. Study Tip Card */
-  studyTipCard: {
-    borderRadius: 14,
+  yearFilterTrack: {
+    borderRadius: 13,
     borderWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    marginBottom: 16,
-    gap: 6,
+    height: 44,
+    paddingHorizontal: 6,
+    justifyContent: 'center',
+    marginBottom: 10,
   },
-  studyTipTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  studyTipBody: {
-    fontSize: 11,
-    fontWeight: '500',
-    lineHeight: 16,
-  },
-
-  /* 7. Nav Arrows */
-  navArrowsRow: {
+  yearsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-    paddingHorizontal: 4,
+    gap: 6,
   },
-  navArrowButton: {
-    width: 50,
-    height: 42,
+  yearButton: {
+    height: 30,
+    paddingHorizontal: 12,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 2,
+  },
+  yearButtonActive: {
+    elevation: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-
-  /* 8. Footer */
-  footerHint: {
+  yearButtonInactive: {
+    borderWidth: 1,
+  },
+  yearLabel: {
     fontSize: 11,
-    fontWeight: '500',
+    letterSpacing: 0.1,
+  },
+  intro: {
+    fontSize: 11,
+    lineHeight: 16,
     paddingHorizontal: 4,
+    marginBottom: 14,
+  },
+  cardsList: {
+    gap: 16,
+  },
+  questionCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  cardAccent: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 4,
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+  },
+  cardInner: {
+    paddingLeft: 14,
+    paddingRight: 10,
+    paddingTop: 12,
+    paddingBottom: 12,
+  },
+  questionPrompt: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  chapterTag: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  chapterText: {
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  rightTagGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  yearTag: {
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  yearText: {
+    fontSize: 9.5,
+    fontWeight: '600',
+  },
+  marksTag: {
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  marksText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  completeButton: {
+    borderRadius: 7,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  completeText: {
+    fontSize: 9.5,
+    fontWeight: '500',
+  },
+  sosButton: {
+    borderRadius: 7,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+  },
+  sosText: {
+    fontSize: 9.5,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  answerPanel: {
+    borderRadius: 9,
+    borderWidth: 1,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  answerAccent: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    width: 3,
+    borderTopLeftRadius: 2,
+    borderBottomLeftRadius: 2,
+  },
+  answerPanelContent: {
+    paddingLeft: 12,
+    paddingRight: 10,
+    paddingTop: 8,
+    paddingBottom: 10,
+  },
+  answerHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  answerHeading: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  shortLongPill: {
+    borderRadius: 9,
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    gap: 4,
+  },
+  shortLongText: {
+    fontSize: 8.5,
+  },
+  shortLongDivider: {
+    fontSize: 8.5,
+  },
+  answerLinesWrap: {
+    gap: 4,
+  },
+  answerLine: {
+    fontSize: 11,
+    lineHeight: 16,
   },
 });

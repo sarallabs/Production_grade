@@ -27,6 +27,8 @@ interface TopNavBarProps {
   activeSegment: string;
   onSegmentChange: (id: string) => void;
   showProfile?: boolean;
+  showBack?: boolean;
+  onBackPress?: () => void;
   chapterTitle?: string;
   onChapterPress?: () => void;
   title?: string;
@@ -37,6 +39,8 @@ export default function TopNavBar({
   activeSegment,
   onSegmentChange,
   showProfile = true,
+  showBack = true,
+  onBackPress,
   chapterTitle,
   onChapterPress,
   title,
@@ -48,6 +52,17 @@ export default function TopNavBar({
   const handleProfilePress = () => {
     Haptics.selectionAsync();
     router.push('/(tabs)/profile');
+  };
+
+  const handleBackPress = () => {
+    Haptics.selectionAsync();
+    if (onBackPress) {
+      onBackPress();
+    } else if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.push('/(tabs)');
+    }
   };
 
   const handleSegmentPress = (id: string) => {
@@ -71,9 +86,19 @@ export default function TopNavBar({
   return (
     <View style={[styles.headerContainer, { backgroundColor: bg, paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
       <View style={styles.topRow}>
-        {/* Left spacing to keep pills centered */}
+        {/* Left Slot: Go Back Arrow Button */}
         <View style={styles.sideSlot}>
-          {chapterTitle ? (
+          {showBack ? (
+            <TouchableOpacity
+              style={[styles.backButton, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
+              onPress={handleBackPress}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+            >
+              <Ionicons name="arrow-back" size={17} color={textActive} />
+            </TouchableOpacity>
+          ) : chapterTitle ? (
             <TouchableOpacity
               style={[styles.chapterPill, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
               onPress={onChapterPress}
@@ -89,7 +114,7 @@ export default function TopNavBar({
               {title}
             </Text>
           ) : (
-            <View style={{ width: 36 }} />
+            <View style={{ width: 32 }} />
           )}
         </View>
 
@@ -124,7 +149,7 @@ export default function TopNavBar({
                   {seg.vectorIcon ? (
                     <Ionicons
                       name={seg.vectorIcon}
-                      size={15}
+                      size={13}
                       color={textColor}
                     />
                   ) : seg.icon ? (
@@ -154,7 +179,7 @@ export default function TopNavBar({
 
         {/* Right Slot: Circular Profile Avatar (Matches Screenshot) */}
         <View style={styles.sideSlotRight}>
-          {showProfile && (
+          {showProfile ? (
             <TouchableOpacity
               style={[styles.avatarButton, { borderColor: avatarBorder }]}
               onPress={handleProfilePress}
@@ -162,8 +187,10 @@ export default function TopNavBar({
               accessibilityRole="button"
               accessibilityLabel="My Profile and Rankings"
             >
-              <Ionicons name="person-outline" size={19} color={isDark ? '#FFFFFF' : '#1C2E24'} />
+              <Ionicons name="person-outline" size={17} color={isDark ? '#FFFFFF' : '#1C2E24'} />
             </TouchableOpacity>
+          ) : (
+            <View style={{ width: 32 }} />
           )}
         </View>
       </View>
@@ -206,16 +233,16 @@ const styles = StyleSheet.create({
   pillsScrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 5,
     paddingHorizontal: 2,
   },
   pillButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 13,
-    borderRadius: 12,
-    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 9,
+    borderRadius: 10,
+    gap: 4,
   },
   activePillElevation: {
     elevation: 2,
@@ -225,10 +252,10 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
   },
   pillIcon: {
-    fontSize: 13,
+    fontSize: 12,
   },
   pillLabel: {
-    fontSize: 13,
+    fontSize: 12,
     letterSpacing: 0.1,
   },
   badgeWrap: {
@@ -244,25 +271,33 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   avatarButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   chapterPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
     borderRadius: BorderRadius.full,
     borderWidth: 1,
-    gap: 4,
-    maxWidth: 130,
+    gap: 3,
+    maxWidth: 95,
   },
   chapterPillText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   headerTitle: {

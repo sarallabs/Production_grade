@@ -24,7 +24,7 @@ export interface ChapterCardProps {
 export const ChapterCard: React.FC<ChapterCardProps> = ({
   chapter,
   subjectName = 'Entomology',
-  courseName = 'B.Sc Agriculture',
+  courseName = 'B.Sc. (Hons) Agriculture',
   isDark,
   onPress,
   onToolPress,

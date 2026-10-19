@@ -325,7 +325,7 @@ export const ANGRAU_SUBJECTS: Subject[] = [
 
 export const manifestService = {
   async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_cached_subjects_v4';
+    const cacheKey = 'saral_cached_subjects_v6';
     const cached = await storage.getItem<Subject[]>(cacheKey);
     if (cached && cached.length >= ANGRAU_SUBJECTS.length && cached[0].chapters?.length === ANGRAU_SUBJECTS[0].chapters.length && cached[0].chapters[0]?.name === 'Digestive System') {
       return cached;
@@ -413,7 +413,7 @@ export const manifestService = {
           chapter.completed.push(resourceType);
         }
         subject.progressPercent = this.calculateSubjectProgress(subject);
-        await storage.setItem('saral_cached_subjects_v4', subjects);
+        await storage.setItem('saral_cached_subjects_v6', subjects);
       }
     }
     return subjects;
