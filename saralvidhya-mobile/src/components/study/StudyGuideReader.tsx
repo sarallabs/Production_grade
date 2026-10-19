@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
@@ -25,59 +24,15 @@ import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 
 const { width, height } = Dimensions.get('window');
 
-// 1. Beginner Tier Icon: Single green book with bookmark ribbon
-function BeginnerBookIcon({ size = 26 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <Rect x="5" y="8" width="22" height="18" rx="2.5" fill="#3D6852" />
-      <Rect x="7" y="10" width="18" height="14" rx="1.5" fill="#FAF6EE" />
-      <Rect x="5" y="8" width="4" height="18" rx="1.5" fill="#254333" />
-      <Path d="M14 8V16L16.5 14L19 16V8H14Z" fill="#F59E0B" />
-      <Path d="M11 13H13M11 16H13M11 19H17" stroke="#CBD5E1" strokeWidth="1" strokeLinecap="round" />
-    </Svg>
-  );
-}
-
-// 2. Intermediate Tier Icon: Stack of 2 green books with sparkles
-function IntermediateBookIcon({ size = 26 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <Rect x="4" y="17" width="22" height="9" rx="2" fill="#2A4B3A" />
-      <Rect x="6" y="19" width="19" height="5" rx="1" fill="#F1ECE1" />
-      <Rect x="4" y="17" width="3.5" height="9" rx="1" fill="#1C3527" />
-
-      <Rect x="6" y="9" width="20" height="9" rx="2" fill="#3D6852" />
-      <Rect x="8" y="11" width="17" height="5" rx="1" fill="#FAF6EE" />
-      <Rect x="6" y="9" width="3.5" height="9" rx="1" fill="#254333" />
-
-      <Path d="M26 4L26.8 6.2L29 7L26.8 7.8L26 10L25.2 7.8L23 7L25.2 6.2L26 4Z" fill="#22C55E" />
-      <Path d="M3 8L3.5 9.5L5 10L3.5 10.5L3 12L2.5 10.5L1 10L2.5 9.5L3 8Z" fill="#86EFAC" />
-    </Svg>
-  );
-}
-
-// 3. Advanced Tier Icon: Stacked books with gold crown
-function AdvancedBookIcon({ size = 26 }: { size?: number }) {
-  return (
-    <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-      <Rect x="4" y="20" width="24" height="8" rx="2" fill="#20382B" />
-      <Rect x="6" y="22" width="20" height="4" rx="1" fill="#ECE7DC" />
-      <Rect x="5" y="14" width="22" height="7" rx="2" fill="#2E523F" />
-      <Rect x="7" y="16" width="18" height="3.5" rx="1" fill="#F7F3EB" />
-      <Rect x="6" y="8" width="20" height="6.5" rx="2" fill="#3D6852" />
-
-      <Path
-        d="M10 9L11.5 3.5L14 6.5L16 2L18 6.5L20.5 3.5L22 9H10Z"
-        fill="#FBBF24"
-        stroke="#D97706"
-        strokeWidth="0.8"
-      />
-      <Circle cx="11.5" cy="4" r="0.9" fill="#EF4444" />
-      <Circle cx="16" cy="2.5" r="1.1" fill="#3B82F6" />
-      <Circle cx="20.5" cy="4" r="0.9" fill="#10B981" />
-    </Svg>
-  );
-}
+// Persona Tier Icons:
+// Beginner: 1 Book with glowing rays
+// Intermediate: 2 Books with bookmark & rays
+// Advanced: 3 Books with gold star
+const PERSONA_ICONS: Record<PersonaType, any> = {
+  beginner: require('@/assets/images/personas/persona_beginner.png'),
+  intermediate: require('@/assets/images/personas/persona_intermediate.png'),
+  advanced: require('@/assets/images/personas/persona_advanced.png'),
+};
 
 
 interface StudyGuideReaderProps {
@@ -343,40 +298,20 @@ export default function StudyGuideReader({
                     }}
                     activeOpacity={0.8}
                   >
-                    {lvl === 'beginner' ? (
-                      <BeginnerBookIcon size={26} />
-                    ) : lvl === 'intermediate' ? (
-                      <IntermediateBookIcon size={26} />
-                    ) : (
-                      <AdvancedBookIcon size={26} />
-                    )}
+                    <Image
+                      source={PERSONA_ICONS[lvl]}
+                      style={styles.personaBadgeImage}
+                      resizeMode="contain"
+                    />
                   </TouchableOpacity>
                 );
               })}
             </View>
-
-            {/* Read Aloud Pill (.readAloud: height 26px, #ecf6f1 bg, #55bf7a border, #12833e text) */}
-            <TouchableOpacity
-              style={[
-                styles.readAloudInDepth,
-                {
-                  backgroundColor: isDark ? 'rgba(20, 122, 67, 0.15)' : '#ECF6F1',
-                  borderColor: isDark ? '#147A43' : '#55BF7A',
-                },
-              ]}
-              onPress={handleToggleAudio}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="headset-outline" size={11} color={isDark ? '#4ADE80' : '#12833E'} />
-              <Text style={[styles.labelAndDuration, { color: isDark ? '#4ADE80' : '#12833E' }]}>
-                {isPlayingAudio ? 'Speaking...' : 'Read Aloud · 31:22'}
-              </Text>
-            </TouchableOpacity>
           </View>
         )}
 
-        {/* 2. COMPACT READING DEPTH SELECTOR */}
-        <View style={styles.readingDepth}>
+        {/* 2. COMPACT READING DEPTH SELECTOR + READ ALOUD (BESIDE TOGGLE) */}
+        <View style={styles.readingDepthRow}>
           <View style={[styles.depthSelector, { backgroundColor: toggleBg }]}>
             {/* Essentials Pill */}
             <TouchableOpacity
@@ -434,6 +369,42 @@ export default function StudyGuideReader({
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Read Aloud Beside Toggle (Icon and Time) */}
+          <TouchableOpacity
+            style={[
+              styles.compactAudioPill,
+              {
+                backgroundColor: isPlayingAudio
+                  ? (isDark ? '#147A43' : '#2D3E36')
+                  : audioBarBg,
+                borderColor: isPlayingAudio
+                  ? (isDark ? '#4ADE80' : '#2D3E36')
+                  : audioBorder,
+              },
+            ]}
+            onPress={handleToggleAudio}
+            activeOpacity={0.8}
+            accessibilityLabel="Read aloud"
+          >
+            <Ionicons
+              name={isPlayingAudio ? 'pause' : 'headset-outline'}
+              size={14}
+              color={isPlayingAudio ? '#FFFFFF' : emeraldPrimary}
+            />
+            <Text
+              style={[
+                styles.compactAudioTime,
+                { color: isPlayingAudio ? '#FFFFFF' : emeraldPrimary },
+              ]}
+            >
+              {isPlayingAudio
+                ? 'Playing'
+                : studyMode === 'in_depth'
+                ? '31:22'
+                : '6:28'}
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* 4. ESSENTIALS MODE (.studyContent) */}
@@ -513,24 +484,6 @@ export default function StudyGuideReader({
                   </View>
                 </View>
               </View>
-
-              {/* Read Aloud Audio Action Card (.readAloud) */}
-              <TouchableOpacity
-                style={[styles.readAloud, { backgroundColor: audioBarBg, borderColor: audioBorder }]}
-                onPress={handleToggleAudio}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="headset-outline" size={20} color={emeraldPrimary} />
-                <Text style={[styles.actionLabel, { color: emeraldPrimary }]}>
-                  {isPlayingAudio ? 'Speaking...' : 'Read Aloud'}
-                </Text>
-                <Text style={[styles.duration, { color: subtextColor }]}>6:28</Text>
-                <Ionicons
-                  name={isPlayingAudio ? 'pause' : 'play-outline'}
-                  size={16}
-                  color={emeraldPrimary}
-                />
-              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.studyContent}>
@@ -931,30 +884,38 @@ const styles = StyleSheet.create({
     borderColor: '#147A43',
     borderWidth: 1.5,
   },
-  readAloudInDepth: {
-    height: 26,
-    borderRadius: 20,
-    borderWidth: 0.6,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 5,
+  personaBadgeImage: {
+    width: 29,
+    height: 29,
   },
-  labelAndDuration: {
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
-  readingDepth: {
-    paddingHorizontal: 24,
+  readingDepthRow: {
+    paddingHorizontal: 20,
     paddingTop: 4,
     paddingBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   depthSelector: {
+    flex: 1,
     flexDirection: 'row',
     borderRadius: 100,
     padding: 3,
     gap: 4,
+  },
+  compactAudioPill: {
+    height: 38,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 100,
+    borderWidth: 1,
+    gap: 5,
+  },
+  compactAudioTime: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   depthPill: {
     flex: 1,
