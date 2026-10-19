@@ -46,6 +46,11 @@ function cleanContextForAi(md: string): string {
 }
 
 const chapterContextCache = new Map<string, { text: string; expiresAt: number }>();
+const ttsMemCache = new Map<
+  string,
+  { audioContent: string; timepoints?: Array<{ markName: string; timeSeconds: number }> }
+>();
+const MAX_TTS_MEM_CACHE = 100;
 
 async function loadChapterContextFromGcs(
   livePrefix: string,
@@ -79,6 +84,11 @@ async function loadChapterContextFromGcs(
       return cleaned;
     }
   }
+  // Negative cache for 5 minutes so missing chapters don't trigger 5 sequential GCS 404 downloads per request
+  chapterContextCache.set(cacheKey, {
+    text: '',
+    expiresAt: Date.now() + 5 * 60 * 1000,
+  });
   return '';
 }
 
@@ -202,13 +212,16 @@ ${
         model: modelName,
         systemInstruction: systemPrompt,
       });
-      const result = await modelClient.generateContent({
-        contents: [{ role: 'user', parts: [{ text: question }] }],
-        generationConfig: {
-          maxOutputTokens: 4096,
-          temperature: 0.3,
+      const result = await modelClient.generateContent(
+        {
+          contents: [{ role: 'user', parts: [{ text: question }] }],
+          generationConfig: {
+            maxOutputTokens: 4096,
+            temperature: 0.3,
+          },
         },
-      });
+        { timeout: 25000 }
+      );
       const answer = result.response.text()?.trim();
       if (answer) {
         res.json({ answer, model: modelName });
@@ -227,7 +240,7 @@ ${
 
 /**
  * POST /v2/t/:tenant/ai/tts
- * Server-side Google Cloud Text-to-Speech proxy with GCS caching for synthesized audio & word timepoints.
+ * Server-side Google Cloud Text-to-Speech proxy with in-memory + GCS caching for synthesized audio & word timepoints.
  */
 router.post('/:tenant/ai/tts', async (req: AuthenticatedRequest, res: Response) => {
   const {
@@ -260,6 +273,14 @@ router.post('/:tenant/ai/tts', async (req: AuthenticatedRequest, res: Response) 
     enableTimePointing,
   });
   const cacheHash = crypto.createHash('sha256').update(hashInput).digest('hex');
+
+  const memHit = ttsMemCache.get(cacheHash);
+  if (memHit) {
+    res.setHeader('X-TTS-Cache', 'MEM-HIT');
+    res.json(memHit);
+    return;
+  }
+
   const cacheGcsPath = `tts-cache/${cacheHash}.json`;
 
   try {
@@ -268,6 +289,11 @@ router.post('/:tenant/ai/tts', async (req: AuthenticatedRequest, res: Response) 
       timepoints?: Array<{ markName: string; timeSeconds: number }>;
     }>(cacheGcsPath);
     if (cached && cached.audioContent) {
+      if (ttsMemCache.size >= MAX_TTS_MEM_CACHE) {
+        const oldest = ttsMemCache.keys().next().value;
+        if (oldest) ttsMemCache.delete(oldest);
+      }
+      ttsMemCache.set(cacheHash, cached);
       res.setHeader('X-TTS-Cache', 'HIT');
       res.json(cached);
       return;
@@ -300,6 +326,7 @@ router.post('/:tenant/ai/tts', async (req: AuthenticatedRequest, res: Response) 
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(ttsBody),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!upstream.ok) {
@@ -313,19 +340,25 @@ router.post('/:tenant/ai/tts', async (req: AuthenticatedRequest, res: Response) 
       timepoints?: Array<{ markName: string; timeSeconds: number }>;
     };
 
+    const payload = {
+      audioContent: data.audioContent,
+      timepoints: data.timepoints || [],
+    };
+
     if (data.audioContent) {
+      if (ttsMemCache.size >= MAX_TTS_MEM_CACHE) {
+        const oldest = ttsMemCache.keys().next().value;
+        if (oldest) ttsMemCache.delete(oldest);
+      }
+      ttsMemCache.set(cacheHash, payload);
       // Asynchronously persist to GCS TTS cache
-      writeJsonFile(cacheGcsPath, {
-        audioContent: data.audioContent,
-        timepoints: data.timepoints || [],
-      }).catch((e) => console.warn('[TTS Cache] Write failed:', e));
+      writeJsonFile(cacheGcsPath, payload).catch((e) =>
+        console.warn('[TTS Cache] Write failed:', e)
+      );
     }
 
     res.setHeader('X-TTS-Cache', 'MISS');
-    res.json({
-      audioContent: data.audioContent,
-      timepoints: data.timepoints || [],
-    });
+    res.json(payload);
   } catch (err: any) {
     console.error('[AI TTS] Error:', err);
     res.status(500).json({ error: 'Failed to synthesize speech' });

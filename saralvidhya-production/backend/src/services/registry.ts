@@ -1,16 +1,25 @@
 import { Firestore } from '@google-cloud/firestore';
-import { promoteStagingFiles, readJsonFile, resolveStorageAssetUrl } from './storage.js';
+import {
+  getSignedUrlForFile,
+  promoteStagingFiles,
+  readJsonFile,
+  resolveStorageAssetUrl,
+} from './storage.js';
 import { detectTools } from './toolDiscovery.js';
 
 const PROJECT_ID = process.env.GCP_PROJECT_ID || 'saralvidhya-production';
-export const firestore = new Firestore({ projectId: PROJECT_ID });
+export const firestore = new Firestore({
+  projectId: PROJECT_ID,
+  ignoreUndefinedProperties: true,
+});
 
-// ── In-Memory Cache (TTL: 60 seconds) ──────────────────────────────────
+// ── In-Memory Cache (TTL: 60 seconds) + In-Flight Deduplication ────────
 interface CacheEntry<T> {
   data: T;
   expiresAt: number;
 }
 const cache = new Map<string, CacheEntry<any>>();
+const inFlight = new Map<string, Promise<any>>();
 
 function getFromCache<T>(key: string): T | null {
   const entry = cache.get(key);
@@ -26,6 +35,16 @@ function setInCache<T>(key: string, data: T, ttlSeconds = 60): void {
     data,
     expiresAt: Date.now() + ttlSeconds * 1000,
   });
+}
+
+function withInFlight<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  const existing = inFlight.get(key);
+  if (existing) return existing as Promise<T>;
+  const promise = fn().finally(() => {
+    inFlight.delete(key);
+  });
+  inFlight.set(key, promise);
+  return promise;
 }
 
 export function invalidateCache(prefix: string): void {
@@ -209,6 +228,8 @@ export interface ChapterItem {
   videos?: VideoManifestItem[];
   tools?: Record<string, any>;
   files?: Record<string, { path: string; size?: number; contentType?: string }>;
+  signedFiles?: Record<string, string>;
+  chapterFiles?: Record<string, string>;
 }
 
 export interface PublishRequest {
@@ -236,65 +257,78 @@ export async function getTenant(tenantId: string): Promise<TenantPublic | null> 
   const cached = getFromCache<TenantPublic>(cacheKey);
   if (cached) return cached;
 
-  const doc = await firestore.collection('tenants').doc(tenantId).get();
-  if (!doc.exists) return null;
+  return withInFlight(cacheKey, async () => {
+    const doc = await firestore.collection('tenants').doc(tenantId).get();
+    if (!doc.exists) return null;
 
-  const data = doc.data()!;
-  const storageCfg = data.storage || {
-    bucket: 'saralvidhya-artifacts',
-    prefix: `${tenantId}`,
-  };
-  const livePrefix = storageCfg.prefix || tenantId;
-  const rawBranding = data.branding || { primaryColor: '#2563eb', appName: data.name || tenantId };
-  const rawAssets = data.assets || {};
+    const data = doc.data()!;
+    const storageCfg = data.storage || {
+      bucket: 'saralvidhya-artifacts',
+      prefix: `${tenantId}`,
+    };
+    const livePrefix = storageCfg.prefix || tenantId;
+    const rawBranding = data.branding || { primaryColor: '#2563eb', appName: data.name || tenantId };
+    const rawAssets = data.assets || {};
 
-  const logoRef = rawAssets.logo || rawBranding.logoBlob;
-  const faviconRef = rawAssets.favicon || rawBranding.faviconBlob;
-  const loginBannerRef = rawAssets.loginBanner || rawBranding.loginBannerBlob;
+    const logoRef = rawAssets.logo || rawBranding.logoBlob;
+    const faviconRef = rawAssets.favicon || rawBranding.faviconBlob;
+    const loginBannerRef = rawAssets.loginBanner || rawBranding.loginBannerBlob;
 
-  const [logoUrl, faviconUrl, loginBannerUrl] = await Promise.all([
-    resolveStorageAssetUrl(livePrefix, logoRef, 60),
-    resolveStorageAssetUrl(livePrefix, faviconRef, 60),
-    resolveStorageAssetUrl(livePrefix, loginBannerRef, 60),
-  ]);
+    const [logoUrl, faviconUrl, loginBannerUrl] = await Promise.all([
+      resolveStorageAssetUrl(livePrefix, logoRef, 60),
+      resolveStorageAssetUrl(livePrefix, faviconRef, 60),
+      resolveStorageAssetUrl(livePrefix, loginBannerRef, 60),
+    ]);
 
-  const tenant: TenantPublic = {
-    id: tenantId,
-    name: data.name || tenantId,
-    shortName: data.shortName || tenantId,
-    academicTerm: data.academicTerm,
-    status: data.status || 'active',
-    domains: data.domains || [],
-    branding: {
-      ...rawBranding,
-      logoUrl,
-      faviconUrl,
-      loginBannerUrl,
-    },
-    assets: {
-      ...rawAssets,
-      logoUrl,
-      faviconUrl,
-      loginBannerUrl,
-    },
-    features: data.features || {},
-    hierarchy: data.hierarchy || ['program', 'subject'],
-    storage: storageCfg,
-  };
+    const tenant: TenantPublic = {
+      id: tenantId,
+      name: data.name || tenantId,
+      shortName: data.shortName || tenantId,
+      academicTerm: data.academicTerm,
+      status: data.status || 'active',
+      domains: data.domains || [],
+      branding: {
+        ...rawBranding,
+        logoUrl,
+        faviconUrl,
+        loginBannerUrl,
+      },
+      assets: {
+        ...rawAssets,
+        logoUrl,
+        faviconUrl,
+        loginBannerUrl,
+      },
+      features: data.features || {},
+      hierarchy: data.hierarchy || ['program', 'subject'],
+      storage: storageCfg,
+    };
 
-  setInCache(cacheKey, tenant, 60);
-  return tenant;
+    setInCache(cacheKey, tenant, 60);
+    return tenant;
+  });
 }
 
 /**
  * Gets private tenant authentication credentials (internal/auth use only).
+ * Cached for 60s and invalidated immediately on password change.
  */
 export async function getTenantAuth(tenantId: string): Promise<TenantAuth | null> {
-  const doc = await firestore.collection('tenants').doc(tenantId).get();
-  if (!doc.exists) return null;
+  const cacheKey = `tenant_auth:${tenantId}`;
+  const cached = getFromCache<TenantAuth>(cacheKey);
+  if (cached) return cached;
 
-  const data = doc.data()!;
-  return (data.auth as TenantAuth) || null;
+  return withInFlight(cacheKey, async () => {
+    const doc = await firestore.collection('tenants').doc(tenantId).get();
+    if (!doc.exists) return null;
+
+    const data = doc.data()!;
+    const auth = (data.auth as TenantAuth) || null;
+    if (auth) {
+      setInCache(cacheKey, auth, 60);
+    }
+    return auth;
+  });
 }
 
 /**
@@ -323,6 +357,7 @@ export async function setTenantPassword(
   );
 
   invalidateCache(`tenant:${tenantId}`);
+  invalidateCache(`tenant_auth:${tenantId}`);
   return newVersion;
 }
 
@@ -337,118 +372,112 @@ export async function getCatalog(tenantId: string): Promise<{
   const cached = getFromCache<{ nodes: any[]; subjects: SubjectItem[] }>(cacheKey);
   if (cached) return cached;
 
-  const tenant = await getTenant(tenantId);
-  const livePrefix = tenant?.storage?.prefix || tenantId;
+  return withInFlight(cacheKey, async () => {
+    const tenant = await getTenant(tenantId);
+    const livePrefix = tenant?.storage?.prefix || tenantId;
 
-  const nodesSnap = await firestore
-    .collection('tenants')
-    .doc(tenantId)
-    .collection('nodes')
-    .orderBy('order', 'asc')
-    .get();
+    const tenantDocRef = firestore.collection('tenants').doc(tenantId);
+    const [nodesSnap, subjectsSnap] = await Promise.all([
+      tenantDocRef.collection('nodes').orderBy('order', 'asc').get(),
+      tenantDocRef.collection('subjects').where('status', '==', 'active').get(),
+    ]);
 
-  const nodes = nodesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const nodes = nodesSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-  const subjectsSnap = await firestore
-    .collection('tenants')
-    .doc(tenantId)
-    .collection('subjects')
-    .where('status', '==', 'active')
-    .get();
+    const subjects = await Promise.all(
+      subjectsSnap.docs.map(async (d) => {
+        const sdata = d.data();
+        const sid = d.id;
+        const chSnap = await d.ref.collection('chapters').get();
 
-  const subjects = await Promise.all(
-    subjectsSnap.docs.map(async (d) => {
-      const sdata = d.data();
-      const sid = d.id;
-      const chSnap = await d.ref.collection('chapters').get();
+        const rawChapters = chSnap.docs
+          .map((c) => ({ id: c.id, ...c.data() } as Record<string, any>))
+          .filter((c) => (c.status || 'published') === 'published')
+          .sort((a, b) => (a.number || 0) - (b.number || 0));
 
-      const rawChapters = chSnap.docs
-        .map((c) => ({ id: c.id, ...c.data() } as Record<string, any>))
-        .filter((c) => (c.status || 'published') === 'published')
-        .sort((a, b) => (a.number || 0) - (b.number || 0));
+        const chapters: CatalogChapterSummary[] = await Promise.all(
+          rawChapters.map(async (cd) => {
+            const cid = cd.id;
+            const chScope = `${sid}/${cid}`;
+            const heroRef = normalizeAssetPath(
+              chScope,
+              cd.assets?.heroImage || cd.heroImageBlob
+            );
+            const thumbRef = normalizeAssetPath(chScope, cd.assets?.thumbnail);
+            const [heroImageUrl, thumbnailUrl] = await Promise.all([
+              resolveStorageAssetUrl(livePrefix, heroRef, 60),
+              resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+            ]);
+            const topics = Array.isArray(cd.topics) ? cd.topics : [];
+            const videos = Array.isArray(cd.videos) ? cd.videos : [];
+            const estimatedMinutes =
+              typeof cd.estimatedMinutes === 'number'
+                ? cd.estimatedMinutes
+                : Math.max(15, topics.length * 10 || 30);
 
-      const chapters: CatalogChapterSummary[] = await Promise.all(
-        rawChapters.map(async (cd) => {
-          const cid = cd.id;
-          const chScope = `${sid}/${cid}`;
-          const heroRef = normalizeAssetPath(
-            chScope,
-            cd.assets?.heroImage || cd.heroImageBlob
-          );
-          const thumbRef = normalizeAssetPath(chScope, cd.assets?.thumbnail);
-          const [heroImageUrl, thumbnailUrl] = await Promise.all([
-            resolveStorageAssetUrl(livePrefix, heroRef, 60),
-            resolveStorageAssetUrl(livePrefix, thumbRef, 60),
-          ]);
-          const topics = Array.isArray(cd.topics) ? cd.topics : [];
-          const videos = Array.isArray(cd.videos) ? cd.videos : [];
-          const estimatedMinutes =
-            typeof cd.estimatedMinutes === 'number'
-              ? cd.estimatedMinutes
-              : Math.max(15, topics.length * 10 || 30);
+            return {
+              id: cid,
+              number: cd.number || 0,
+              title: cd.title || cid,
+              shortTitle: cd.shortTitle || cd.title || cid,
+              description: cd.description,
+              estimatedMinutes,
+              status: cd.status || 'published',
+              heroImageBlob: heroRef,
+              heroImageUrl,
+              thumbnailUrl: thumbnailUrl || heroImageUrl,
+              topics,
+              topicCount: topics.length,
+              videoCount: videos.length,
+              tools: cd.tools || {},
+            };
+          })
+        );
 
-          return {
-            id: cid,
-            number: cd.number || 0,
-            title: cd.title || cid,
-            shortTitle: cd.shortTitle || cd.title || cid,
-            description: cd.description,
-            estimatedMinutes,
-            status: cd.status || 'published',
-            heroImageBlob: heroRef,
-            heroImageUrl,
-            thumbnailUrl: thumbnailUrl || heroImageUrl,
-            topics,
-            topicCount: topics.length,
-            videoCount: videos.length,
-            tools: cd.tools || {},
-          };
-        })
-      );
+        const iconRef = normalizeAssetPath(sid, sdata.assets?.icon || sdata.iconBlob);
+        const bannerRef = normalizeAssetPath(sid, sdata.assets?.banner);
+        const thumbRef = normalizeAssetPath(sid, sdata.assets?.thumbnail);
+        const facultyAvatarRef = normalizeAssetPath(sid, sdata.faculty?.avatarBlob);
 
-      const iconRef = normalizeAssetPath(sid, sdata.assets?.icon || sdata.iconBlob);
-      const bannerRef = normalizeAssetPath(sid, sdata.assets?.banner);
-      const thumbRef = normalizeAssetPath(sid, sdata.assets?.thumbnail);
-      const facultyAvatarRef = normalizeAssetPath(sid, sdata.faculty?.avatarBlob);
+        const [iconUrl, bannerUrl, thumbnailUrl, avatarUrl] = await Promise.all([
+          resolveStorageAssetUrl(livePrefix, iconRef, 60),
+          resolveStorageAssetUrl(livePrefix, bannerRef, 60),
+          resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+          resolveStorageAssetUrl(livePrefix, facultyAvatarRef, 60),
+        ]);
 
-      const [iconUrl, bannerUrl, thumbnailUrl, avatarUrl] = await Promise.all([
-        resolveStorageAssetUrl(livePrefix, iconRef, 60),
-        resolveStorageAssetUrl(livePrefix, bannerRef, 60),
-        resolveStorageAssetUrl(livePrefix, thumbRef, 60),
-        resolveStorageAssetUrl(livePrefix, facultyAvatarRef, 60),
-      ]);
-
-      return {
-        id: sid,
-        ...(sdata as Omit<SubjectItem, 'id'>),
-        subtitle: sdata.subtitle || sdata.programLabel || tenant?.branding?.programLabel,
-        programLabel: sdata.programLabel || sdata.subtitle || tenant?.branding?.programLabel,
-        iconBlob: iconRef,
-        iconUrl,
-        bannerUrl,
-        assets: {
-          ...(sdata.assets || {}),
+        return {
+          id: sid,
+          ...(sdata as Omit<SubjectItem, 'id'>),
+          subtitle: sdata.subtitle || sdata.programLabel || tenant?.branding?.programLabel,
+          programLabel: sdata.programLabel || sdata.subtitle || tenant?.branding?.programLabel,
+          iconBlob: iconRef,
           iconUrl,
           bannerUrl,
-          thumbnailUrl,
-        },
-        faculty: sdata.faculty
-          ? {
-              ...sdata.faculty,
-              avatarUrl,
-            }
-          : undefined,
-        chapters,
-        chaptersCount: chapters.length,
-      } as SubjectItem;
-    })
-  );
+          assets: {
+            ...(sdata.assets || {}),
+            iconUrl,
+            bannerUrl,
+            thumbnailUrl,
+          },
+          faculty: sdata.faculty
+            ? {
+                ...sdata.faculty,
+                avatarUrl,
+              }
+            : undefined,
+          chapters,
+          chaptersCount: chapters.length,
+        } as SubjectItem;
+      })
+    );
 
-  subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
+    subjects.sort((a, b) => (a.order || 0) - (b.order || 0));
 
-  const result = { nodes, subjects };
-  setInCache(cacheKey, result, 60);
-  return result;
+    const result = { nodes, subjects };
+    setInCache(cacheKey, result, 60);
+    return result;
+  });
 }
 
 /**
@@ -464,92 +493,121 @@ export async function getChapter(
   const cached = getFromCache<ChapterItem>(cacheKey);
   if (cached) return cached;
 
-  const tenant = await getTenant(tenantId);
-  const livePrefix = tenant?.storage?.prefix || tenantId;
+  return withInFlight(cacheKey, async () => {
+    const tenant = await getTenant(tenantId);
+    const livePrefix = tenant?.storage?.prefix || tenantId;
 
-  const chapterRef = firestore
-    .collection('tenants')
-    .doc(tenantId)
-    .collection('subjects')
-    .doc(subjectId)
-    .collection('chapters')
-    .doc(chapterId);
+    const chapterRef = firestore
+      .collection('tenants')
+      .doc(tenantId)
+      .collection('subjects')
+      .doc(subjectId)
+      .collection('chapters')
+      .doc(chapterId);
 
-  const chapterDoc = await chapterRef.get();
-  if (!chapterDoc.exists) return null;
+    const chapterDoc = await chapterRef.get();
+    if (!chapterDoc.exists) return null;
 
-  const chapterData = chapterDoc.data()!;
-  const targetVersion = version || chapterData.currentVersion || 1;
+    const chapterData = chapterDoc.data()!;
+    const targetVersion = version || chapterData.currentVersion || 1;
 
-  const versionDoc = await chapterRef.collection('versions').doc(String(targetVersion)).get();
-  const versionData = versionDoc.exists ? versionDoc.data() : null;
+    const versionDoc = await chapterRef.collection('versions').doc(String(targetVersion)).get();
+    const versionData = versionDoc.exists ? versionDoc.data() : null;
 
-  const chScope = `${subjectId}/${chapterId}`;
-  const rawAssets = chapterData.assets || {};
-  const heroRef = normalizeAssetPath(chScope, rawAssets.heroImage || chapterData.heroImageBlob);
-  const thumbRef = normalizeAssetPath(chScope, rawAssets.thumbnail);
-  const mindmapImgRef = normalizeAssetPath(chScope, rawAssets.mindmapImage);
+    const chScope = `${subjectId}/${chapterId}`;
+    const rawAssets = chapterData.assets || {};
+    const heroRef = normalizeAssetPath(chScope, rawAssets.heroImage || chapterData.heroImageBlob);
+    const thumbRef = normalizeAssetPath(chScope, rawAssets.thumbnail);
+    const mindmapImgRef = normalizeAssetPath(chScope, rawAssets.mindmapImage);
 
-  const [heroImageUrl, thumbnailUrl, mindmapImageUrl] = await Promise.all([
-    resolveStorageAssetUrl(livePrefix, heroRef, 60),
-    resolveStorageAssetUrl(livePrefix, thumbRef, 60),
-    resolveStorageAssetUrl(livePrefix, mindmapImgRef, 60),
-  ]);
+    const [heroImageUrl, thumbnailUrl, mindmapImageUrl] = await Promise.all([
+      resolveStorageAssetUrl(livePrefix, heroRef, 60),
+      resolveStorageAssetUrl(livePrefix, thumbRef, 60),
+      resolveStorageAssetUrl(livePrefix, mindmapImgRef, 60),
+    ]);
 
-  const rawVideos: VideoManifestItem[] = Array.isArray(chapterData.videos)
-    ? chapterData.videos
-    : [];
-  const videos: VideoManifestItem[] = await Promise.all(
-    rawVideos.map(async (v) => {
-      const vThumbRef = normalizeAssetPath(chScope, v.thumbnail);
-      const vGcsRef = normalizeAssetPath(chScope, v.gcsPath);
-      const [vThumbUrl, vSignedVideoUrl] = await Promise.all([
-        resolveStorageAssetUrl(livePrefix, vThumbRef, 60),
-        resolveStorageAssetUrl(livePrefix, vGcsRef, 60),
-      ]);
-      const fallbackYtThumb =
-        v.videoId && !vThumbUrl
-          ? `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`
-          : undefined;
-      return {
-        ...v,
-        thumbnailUrl: vThumbUrl || fallbackYtThumb,
-        videoUrl: vSignedVideoUrl || v.url,
-      };
-    })
-  );
+    const rawVideos: VideoManifestItem[] = Array.isArray(chapterData.videos)
+      ? chapterData.videos
+      : [];
+    const videos: VideoManifestItem[] = await Promise.all(
+      rawVideos.map(async (v) => {
+        const vThumbRef = normalizeAssetPath(chScope, v.thumbnail);
+        const vGcsRef = normalizeAssetPath(chScope, v.gcsPath);
+        const [vThumbUrl, vSignedVideoUrl] = await Promise.all([
+          resolveStorageAssetUrl(livePrefix, vThumbRef, 60),
+          resolveStorageAssetUrl(livePrefix, vGcsRef, 60),
+        ]);
+        const fallbackYtThumb =
+          v.videoId && !vThumbUrl
+            ? `https://img.youtube.com/vi/${v.videoId}/hqdefault.jpg`
+            : undefined;
+        return {
+          ...v,
+          thumbnailUrl: vThumbUrl || fallbackYtThumb,
+          videoUrl: vSignedVideoUrl || v.url,
+        };
+      })
+    );
 
-  const topics = Array.isArray(chapterData.topics) ? chapterData.topics : [];
-  const estimatedMinutes =
-    typeof chapterData.estimatedMinutes === 'number'
-      ? chapterData.estimatedMinutes
-      : Math.max(15, topics.length * 10 || 30);
+    const rawFiles: Record<string, { path: string; size?: number; contentType?: string }> =
+      versionData?.files || {};
+    const signedFiles: Record<string, string> = {};
+    const chapterFiles: Record<string, string> = {};
+    const chPrefix = `${subjectId}/${chapterId}/`;
 
-  const result: ChapterItem = {
-    id: chapterId,
-    number: chapterData.number,
-    title: chapterData.title,
-    shortTitle: chapterData.shortTitle || chapterData.title,
-    description: chapterData.description,
-    estimatedMinutes,
-    heroImageBlob: heroRef,
-    heroImageUrl,
-    assets: {
-      ...rawAssets,
+    const fileKeys = Object.keys(rawFiles);
+    if (fileKeys.length > 0) {
+      await Promise.all(
+        fileKeys.map(async (key) => {
+          const fileEntry = rawFiles[key];
+          if (!fileEntry?.path) return;
+          const gcsPath = `${livePrefix}/${fileEntry.path.replace(/^\/+/, '')}`;
+          try {
+            const signed = await getSignedUrlForFile(gcsPath, 60);
+            signedFiles[key] = signed;
+            const relKey = key.startsWith(chPrefix) ? key.substring(chPrefix.length) : key;
+            chapterFiles[relKey] = signed;
+          } catch (e) {
+            console.warn(`[Registry] Failed signing URL for ${gcsPath}:`, e);
+          }
+        })
+      );
+    }
+
+    const topics = Array.isArray(chapterData.topics) ? chapterData.topics : [];
+    const estimatedMinutes =
+      typeof chapterData.estimatedMinutes === 'number'
+        ? chapterData.estimatedMinutes
+        : Math.max(15, topics.length * 10 || 30);
+
+    const result: ChapterItem = {
+      id: chapterId,
+      number: chapterData.number,
+      title: chapterData.title,
+      shortTitle: chapterData.shortTitle || chapterData.title,
+      description: chapterData.description,
+      estimatedMinutes,
+      heroImageBlob: heroRef,
       heroImageUrl,
-      thumbnailUrl: thumbnailUrl || heroImageUrl,
-      mindmapImageUrl,
-    },
-    status: chapterData.status || 'published',
-    currentVersion: targetVersion,
-    topics,
-    videos,
-    tools: chapterData.tools || {},
-    files: versionData?.files || {},
-  };
+      assets: {
+        ...rawAssets,
+        heroImageUrl,
+        thumbnailUrl: thumbnailUrl || heroImageUrl,
+        mindmapImageUrl,
+      },
+      status: chapterData.status || 'published',
+      currentVersion: targetVersion,
+      topics,
+      videos,
+      tools: chapterData.tools || {},
+      files: rawFiles,
+      signedFiles,
+      chapterFiles,
+    };
 
-  setInCache(cacheKey, result, 60);
-  return result;
+    setInCache(cacheKey, result, 60);
+    return result;
+  });
 }
 
 /**

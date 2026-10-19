@@ -185,27 +185,62 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
+  const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+  const hasClientKey = Boolean(GOOGLE_API_KEY && (GOOGLE_API_KEY.startsWith('AIzaSy') || GOOGLE_API_KEY.startsWith('AQ.')));
+
   const controller = new AbortController();
   inflightControllers.add(controller);
   const timeout = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch(TTS_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: controller.signal,
-  }).finally(() => {
-    clearTimeout(timeout);
-    inflightControllers.delete(controller);
-  });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Cloud TTS error ${res.status}: ${err}`);
+  let data: any = null;
+
+  // 1. Try server-side TTS proxy first (Zero browser secrets)
+  try {
+    const proxyRes = await fetch(`${API_BASE}/api/gemini/tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        ssml: ssmlParts,
+        languageCode: voice.languageCode,
+        voiceName: selectedVoiceName,
+        ssmlGender: gender,
+        speakingRate: 1.0,
+        enableTimePointing: true,
+      }),
+      signal: controller.signal,
+    });
+    if (proxyRes.ok) {
+      data = await proxyRes.json();
+    }
+  } catch (proxyErr) {
+    console.warn('[CloudTTS] Backend proxy attempt failed, checking fallback:', proxyErr);
   }
 
-  const data = await res.json();
+  // 2. Direct client fallback if client API key is configured
+  if (!data && hasClientKey) {
+    try {
+      const directRes = await fetch(TTS_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      });
+      if (directRes.ok) {
+        data = await directRes.json();
+      }
+    } catch (directErr) {
+      console.warn('[CloudTTS] Direct synthesis failed:', directErr);
+    }
+  }
+
+  clearTimeout(timeout);
+  inflightControllers.delete(controller);
+
+  if (!data || !data.audioContent) {
+    throw new Error('Cloud TTS synthesis unavailable');
+  }
+
   const base64Audio: string = data.audioContent;
-  if (!base64Audio) throw new Error('No audioContent in response');
 
   // Parse timepoints into word timings
   const wordTimings: WordTiming[] = [];
@@ -494,6 +529,7 @@ export function googleTtsSpeak(
   onStart?: () => void,
   onEnd?: () => void,
   onProgress?: (globalCharIndex: number) => void,
+  opts?: { raw?: boolean },
 ) {
   googleTtsStop();
   runId += 1;
@@ -512,8 +548,7 @@ export function googleTtsSpeak(
     ssmlGender: preferMale ? 'MALE' : 'FEMALE',
   };
 
-  const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy');
-  if (!isGcpKey) {
+  if (opts?.raw) {
     isStopped = false;
     isPlaying = true;
     onDoneCallback = null;

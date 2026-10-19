@@ -4546,9 +4546,9 @@
       "type": "mod",
       "name": "Please fill in all the required fields."
     },
-    "mod:Ekam@2026": {
+    "mod:[REDACTED_PASSWORD]": {
       "type": "mod",
-      "name": "Ekam@2026"
+      "name": "[REDACTED_PASSWORD]"
     },
     "mod:Please enter a valid email address.": {
       "type": "mod",
@@ -21439,7 +21439,7 @@
     },
     {
       "src": "file:src/pages/CourseRegister.tsx",
-      "dst": "mod:Ekam@2026",
+      "dst": "mod:[REDACTED_PASSWORD]",
       "type": "imports",
       "confidence": "exact",
       "reason": "import statement in file"

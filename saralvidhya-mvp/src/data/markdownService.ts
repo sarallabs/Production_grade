@@ -12,6 +12,8 @@ import {
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
+  resolveSubjectId,
+  getRegistryChapterData,
 } from './manifestService';
 
 /**
@@ -24,7 +26,8 @@ function getGcsApiUrl(
   resourceName: string,
   level: DifficultyLevel,
 ): string | null {
-  const subjectPath = GCS_SUBJECT_MAP[subjectId];
+  const normSubject = resolveSubjectId(subjectId) || subjectId;
+  const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subjectId];
   if (!subjectPath) return null;
   const base = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
   const map: Record<string, string> = {
@@ -34,6 +37,9 @@ function getGcsApiUrl(
     'glossary.md':      `${base}/read/glossary`,
     'mindmap.md':       `${base}/learn/mindmap`,
     'mindmap.json':     `${base}/learn/mindmap`,
+    'study_plan.md':    `${base}/learn/study_plan`,
+    'study_plan.json':  `${base}/learn/study_plan`,
+    'study_plan':       `${base}/learn/study_plan`,
     'question_bank.md':   `${base}/practice/question_bank`,
     'question_bank.json': `${base}/practice/question_bank`,
     'mock_test.md':       `${base}/practice/mock_test`,
@@ -83,24 +89,36 @@ export function getResourceFileCandidates(
 
   const aliases: Record<string, string[]> = {
     'summary.md': [
+      `Learn/Read/Quick_Study/${level}.md`,
+      `learn/read/quick_study/${level}.md`,
+      `Learn/Read/Quick_Study/DBMS_UNIT_I_Quick_Study_${level}.md`,
       `Learn/Quick_Summary/quick_summary_${level}.md`,
       `Read/Quick_Summary/quick_summary_${level}.md`,
+      `Read/Quick_Study/quick_summary_${level}.md`,
       `Reading/Quick Study/quick_summary_${level}.md`,
+      `summary_${level}.md`,
       'summary.md'
     ],
     'key_takeaways.md': [
+      `Resources/Key Takeaways/key_takeaways.md`,
+      `Resources/Key Takeaways/key_takeaways.json`,
       `Reading/Key Takeaways/key_takeaways.md`,
       `Read/Key Takeaways/key_takeaways.md`,
       `Reading/key_takeaways.md`,
       'key_takeaways.md'
     ],
     'mindmap.md': [
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap.md',
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap_L0_L1.md',
+      'Resources/Mindmaps/DBMS_UNIT_I_Mindmap.json',
       'Learn/Mindmaps/mindmap.md',
       'Learn/Mindmaps/mindmap.json',
       'mindmap.md',
       'mindmap.json'
     ],
     'study_plan.md': [
+      'Prepare/Study Plan/study_plan.md',
+      'Prepare/Study Plan/study_plan.json',
       'study_plan.md',
       'Foundation/Study Plan/study_plan.md',
       'Foundation/study_plan.md',
@@ -108,6 +126,8 @@ export function getResourceFileCandidates(
       'Foundation/Study Plan/study_plan.json',
     ],
     'mock_test.md': [
+      'Prepare/Preparation Exam/pre_final_exam.md',
+      'Prepare/Preparation Exam/pre_final_exam.json',
       'mock_test.md',
       'Prepare/Mock_Test/mock_test.md',
       'mock_test.json',
@@ -115,20 +135,30 @@ export function getResourceFileCandidates(
     'podcast_script.md': ['podcast_script.md', 'long_podcast.md', 'short_podcast.md'],
     'youtube_links.md': ['youtube_links.md', 'video_script.md'],
     'assessment.md': [
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.md`,
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.json`,
       `Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       'assessment.md', 'quiz.md', 'question_bank.md'
     ],
     'quiz.md': [
+      `Practice/Assessment/MCQ/DBMS_UNIT_I_MCQ_${assessmentLevel.charAt(0).toUpperCase() + assessmentLevel.slice(1)}.json`,
       `Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       'quiz.md', 'question_bank.md'
     ],
     'detailed_view.md': [
+      `Learn/Read/Detailed_Study/${level}.md`,
+      `learn/read/detailed_study/${level}.md`,
+      `Learn/Read/Detailed_Study/DBMS_UNIT_I_Detailed_Study_${level}.md`,
       `Learn/Detailed_Summary/detailed_summary_${level}.md`,
       `Read/Detailed_Summary/detailed_summary_${level}.md`,
+      `Read/Detailed_Study/detailed_summary_${level}.md`,
       `Reading/Detailed Study/detailed_summary_${level}.md`,
+      `detailed_summary_${level}.md`,
       'detailed_view.md', 'Detailed Notes'
     ],
     'question_bank.md': [
+      'Practice/Question Bank/dbms_question_bank_v2.md',
+      'Practice/Question Bank/dbms_question_bank_v2.json',
       'question_bank.json',
       'Practice/Question Bank/question_bank.json',
       'question_bank.md',
@@ -140,6 +170,14 @@ export function getResourceFileCandidates(
       `Practice/Assessments/MCQ/${assessmentLevel}_mcq_10.md`,
       'mcq.md',
       'quiz.md'
+    ],
+    'question_bank.json': [
+      'Practice/Question Bank/dbms_question_bank_v2.json',
+      'question_bank.json',
+      'Practice/Question Bank/question_bank.json',
+      'Practice/Question Bank/dbms_question_bank_v2.md',
+      'question_bank.md',
+      'Practice/Question Bank/question_bank.md',
     ]
   };
   const candidates = aliases[resourceName] ?? [resourceName];
@@ -275,6 +313,8 @@ export function cleanAiPreamble(text: string): string {
   for (const pattern of preamblePatterns) {
     cleaned = cleaned.replace(pattern, '').trim();
   }
+  // Convert local filesystem file:/// links into clean bold text
+  cleaned = cleaned.replace(/\[([^\]]+)\]\(file:\/\/\/[^)]+\)/g, '**$1**');
   return cleaned;
 }
 
@@ -295,6 +335,10 @@ export function resolveRelativeUrl(baseUrl: string, relativePath: string): strin
   return baseParts.join('/');
 }
 
+// Bounded LRU cache: keeps up to 6 recently fetched markdown resources in memory (~10-15MB max)
+const RESOURCE_CACHE_MAX = 6;
+const resourceContentCache = new Map<string, string>();
+
 export async function getResourceContent(
   subject: string,
   chapterNumber: number,
@@ -302,45 +346,114 @@ export async function getResourceContent(
   level: DifficultyLevel = 'intermediate',
   videoDir?: string,
 ): Promise<string> {
+  const cacheKey = `${subject}:${chapterNumber}:${resourceName}:${level}:${videoDir || ''}`;
+  if (resourceContentCache.has(cacheKey)) {
+    const cached = resourceContentCache.get(cacheKey)!;
+    resourceContentCache.delete(cacheKey);
+    resourceContentCache.set(cacheKey, cached);
+    return cached;
+  }
+
+  const cacheAndReturn = (text: string): string => {
+    if (text && text !== 'Content not available.') {
+      if (resourceContentCache.size >= RESOURCE_CACHE_MAX) {
+        const oldest = resourceContentCache.keys().next().value;
+        if (oldest) resourceContentCache.delete(oldest);
+      }
+      resourceContentCache.set(cacheKey, text);
+    }
+    return text;
+  };
+
   await getManifest();
   const chDir = getChapterDir(subject, chapterNumber);
   const localBase = getLocalSubjectBaseUrl(subject);
   const subjectBase = getSubjectBaseUrl(subject);
 
-  // ── GCS Cloud Run subjects: use canonical API routes (with 2s timeout) ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const apiUrl = getGcsApiUrl(subject, chDir, resourceName, level);
+  const normSubject = resolveSubjectId(subject) || subject;
+  const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
+
+  const rewriteGcsRelativeImages = (mdText: string): string => {
+    const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+    if (!subjectPath) return mdText;
+    const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
+    return mdText
+      .replace(/!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`)
+      .replace(/!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`);
+  };
+
+  // ── V2 Registry signed URLs: prefer direct signed GCS URLs when available ──
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+  if (regCh?.files) {
+    const regKeyCandidates: Record<string, string[]> = {
+      'summary.md':         [`read/quick/${level}.md`],
+      'detailed_view.md':   [`read/detailed/${level}.md`],
+      'key_takeaways.md':   ['read/key_takeaways.md'],
+      'glossary.md':        ['read/glossary.md'],
+      'mindmap.md':         ['learn/mindmap.md', 'learn/mindmap.json'],
+      'mindmap.json':       ['learn/mindmap.json', 'learn/mindmap.md'],
+      'study_plan.md':      ['learn/study_plan.md', 'learn/study_plan.json', 'read/study_plan.md'],
+      'study_plan.json':    ['learn/study_plan.json', 'learn/study_plan.md'],
+      'study_plan':         ['learn/study_plan.md', 'learn/study_plan.json'],
+      'question_bank.md':   ['practice/question_bank.json', 'practice/question_bank.md'],
+      'question_bank.json': ['practice/question_bank.json', 'practice/question_bank.md'],
+      'mock_test.md':       ['practice/mock_test.json', 'prepare/mock_test.json', 'prepare/pre_final_exam.json'],
+      'mock_test.json':     ['practice/mock_test.json', 'prepare/mock_test.json', 'prepare/pre_final_exam.json'],
+    };
+    const keysToTry = regKeyCandidates[resourceName] || [resourceName];
+    for (const k of keysToTry) {
+      const signedUrl = regCh.files[k]?.url;
+      if (signedUrl) {
+        try {
+          const res = await fetch(signedUrl);
+          if (res.ok) {
+            const rawText = await res.text();
+            if (resourceName === 'mindmap.json' || k.endsWith('.json')) {
+              return cacheAndReturn(rawText);
+            }
+            return cacheAndReturn(rewriteGcsRelativeImages(cleanAiPreamble(rawText)));
+          }
+        } catch (e) {
+          console.warn('[Registry] Failed fetching signed URL for', k, e);
+        }
+      }
+    }
+  }
+
+  // ── GCS Cloud Run subjects: use canonical API routes (with 35s timeout for large markdown files) ──
+  if (isGcs) {
+    const apiUrl = getGcsApiUrl(normSubject, chDir, resourceName, level);
     if (apiUrl) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
-        const res = await fetch(apiUrl, { signal: controller.signal, cache: 'no-cache' });
+        const timeoutId = setTimeout(() => controller.abort(), 35000);
+        let res = await fetch(apiUrl, { signal: controller.signal, cache: 'no-cache' });
         clearTimeout(timeoutId);
+
+        // If learn/study_plan returned non-ok, attempt fallback to read/study_plan
+        if (!res.ok && resourceName.includes('study_plan') && apiUrl.includes('/learn/study_plan')) {
+          try {
+            const fallbackUrl = apiUrl.replace('/learn/study_plan', '/read/study_plan');
+            const fallbackRes = await fetch(fallbackUrl, { cache: 'no-cache' });
+            if (fallbackRes.ok) {
+              res = fallbackRes;
+            }
+          } catch {}
+        }
+
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {
-            let md = cleanAiPreamble(await res.text());
-            // Rewrite relative image paths to absolute API URLs
-            // ../../extracted_images/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/extracted_images/X
-            // ../Mindmaps/X → {GCS_API_BASE}/api/content/{subjectPath}/{chDir}/Mindmaps/X
-            const subjectPath = GCS_SUBJECT_MAP[subject];
-            const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
-            // Replace ../../ first (two levels up), then ../ (one level up)
-            md = md.replace(
-              /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,
-              (_, alt, path) => `![${alt}](${apiBase}/${path})`
-            );
-            md = md.replace(
-              /!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g,
-              (_, alt, path) => `![${alt}](${apiBase}/${path})`
-            );
-            return md;
+            const md = rewriteGcsRelativeImages(cleanAiPreamble(await res.text()));
+            return cacheAndReturn(md);
           }
         }
       } catch (e) {
         console.warn('[GCS] Failed or timed out fetching', apiUrl, e);
       }
-      // Fall through to local static files if GCS fetch was unsuccessful
+      // For mapped GCS resources, canonical API is the single source of truth;
+      // return immediately so we do not blast 12 non-existent legacy relative URLs against Cloud Run.
+      return `Content not available.`;
     }
     // For unmapped resources (e.g. podcast transcripts) fall through to path-based fetch below.
   }
@@ -352,7 +465,7 @@ export async function getResourceContent(
   ) {
     const guide = await fetchBackendStudyGuide(subject, level);
     const text = resourceName === 'summary.md' ? guide?.quick_study : guide?.detailed_notes;
-    if (text && text.trim()) return cleanAiPreamble(text);
+    if (text && text.trim()) return cacheAndReturn(cleanAiPreamble(text));
   }
 
   const tryFetch = async (url: string, fileName: string): Promise<string | null> => {
@@ -412,19 +525,21 @@ export async function getResourceContent(
     `chapter_${chapterNumber}`,
   ]));
 
-  const basesToTry = Array.from(new Set([
-    localBase,
-    subjectBase,
-  ]));
+  const basesToTry = GCS_BACKEND_SUBJECTS.has(subject)
+    ? [subjectBase]
+    : Array.from(new Set([
+        localBase,
+        subjectBase,
+      ]));
 
   for (const base of basesToTry) {
     for (const ch of chDirsToTry) {
       for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
         const leveledResult = await tryFetch(`${base}/${ch}/${level}/${fileName}`, fileName);
-        if (leveledResult !== null) return leveledResult;
+        if (leveledResult !== null) return cacheAndReturn(leveledResult);
 
         const rootResult = await tryFetch(`${base}/${ch}/${fileName}`, fileName);
-        if (rootResult !== null) return rootResult;
+        if (rootResult !== null) return cacheAndReturn(rootResult);
       }
     }
   }

@@ -17,11 +17,11 @@ export interface Credential {
 
 const KEY = 'saral_credentials';
 
-const DEFAULTS: Credential[] = [
-  { id: '1', username: 'saralvidhya', password: 'Ekam@2026', role: 'student', createdAt: new Date().toISOString() },
-  // expert account kept in code — add back when expert mode is re-enabled
-  // { id: '2', username: 'expert', password: 'expert@123', role: 'expert', createdAt: new Date().toISOString() },
-];
+const DEFAULT_PASSWORD = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || '';
+
+const DEFAULTS: Credential[] = DEFAULT_PASSWORD ? [
+  { id: '1', username: 'saralvidhya', password: DEFAULT_PASSWORD, role: 'student', createdAt: new Date().toISOString() },
+] : [];
 
 export function loadCredentials(): Credential[] {
   try {

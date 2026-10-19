@@ -1,12 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export default function AssessmentComplete() {
   const navigate = useNavigate();
   const [persona, setPersona] = useState('intermediate');
 
   useEffect(() => {
-    const p = localStorage.getItem('user_persona') || localStorage.getItem('persona') || localStorage.getItem('global_persona') || 'intermediate';
+    const p = cloudStorage.getItem('user_persona') || cloudStorage.getItem('persona') || cloudStorage.getItem('global_persona') || 'intermediate';
     setPersona(p.toLowerCase());
   }, []);
 
@@ -140,7 +141,7 @@ export default function AssessmentComplete() {
 
         <div
           onClick={() => {
-            localStorage.removeItem('questionnaire_completed');
+            cloudStorage.removeItem('questionnaire_completed');
             navigate('/questionnaire', { replace: true });
           }}
           style={{

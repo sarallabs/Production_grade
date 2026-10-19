@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { QuickCheckQuestion } from '@/data/sectionizedReadService';
 
 interface QuickCheckModalProps {
@@ -23,7 +23,7 @@ interface QuickCheckModalProps {
   ) => void;
 }
 
-export default function QuickCheckModal({
+function QuickCheckModalInner({
   isOpen = true,
   question,
   questions,
@@ -54,9 +54,13 @@ export default function QuickCheckModal({
 
   useEffect(() => {
     if (initialSelectedKeys && Object.keys(initialSelectedKeys).length > 0) {
-      setSelectedByQ((prev) => ({ ...prev, ...initialSelectedKeys }));
+      setSelectedByQ((prev) => {
+        const keys = Object.keys(initialSelectedKeys);
+        const changed = keys.some((k) => prev[Number(k)] !== initialSelectedKeys[Number(k)]);
+        return changed ? { ...prev, ...initialSelectedKeys } : prev;
+      });
     } else if (initialSelectedKey) {
-      setSelectedByQ((prev) => ({ 0: initialSelectedKey, ...prev }));
+      setSelectedByQ((prev) => (prev[0] === initialSelectedKey ? prev : { 0: initialSelectedKey, ...prev }));
     }
   }, [initialSelectedKey, initialSelectedKeys]);
 
@@ -365,5 +369,8 @@ export default function QuickCheckModal({
     </div>
   );
 }
+
+const QuickCheckModal = React.memo(QuickCheckModalInner);
+export default QuickCheckModal;
 
 

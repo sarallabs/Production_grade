@@ -45,6 +45,7 @@ export default function QuestionBankView({
   const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [revealedCards, setRevealedCards] = useState<Record<string, boolean>>({});
   const [answerModes, setAnswerModes] = useState<Record<string, 'short' | 'long' | 'ten'>>({});
+  const [globalMark, setGlobalMark] = useState<'all' | 'short' | 'long' | 'ten'>('all');
 
   const visibleSubjects = useMemo(() => {
     if (!manifest) return [];
@@ -83,6 +84,13 @@ export default function QuestionBankView({
     [appliedChapters],
   );
 
+  const currentSelectedCount = useMemo(
+    () => Object.values(selectedChapters).reduce((sum, list) => sum + list.length, 0),
+    [selectedChapters],
+  );
+
+  const isSingleChapterMode = Boolean(currentSubjectId && currentChapterNumber) || (selectedCount === 1 && currentSelectedCount === 1);
+
   const focusedMode = Boolean(currentSubjectId);
   const focusedSubject = useMemo(() => {
     if (!focusedMode) return null;
@@ -109,6 +117,13 @@ export default function QuestionBankView({
                 const parsed = parseQuestionBankMarkdown(markdown, subjectId, subject.name, chapterNumber, chapterLabel);
                 if (parsed.length > 0) return parsed;
               }
+              try {
+                const jsonText = await getResourceContent(subjectId, chapterNumber, 'question_bank.json', persona);
+                if (jsonText && jsonText.trim().length > 0 && !jsonText.includes('Content not available')) {
+                  const parsedJson = parseQuestionBankMarkdown(jsonText, subjectId, subject.name, chapterNumber, chapterLabel);
+                  if (parsedJson.length > 0) return parsedJson;
+                }
+              } catch {}
               const pooled = await getChapterExamQuestions(subjectId, chapterNumber, 'certification');
               return pooled.map((q, idx): QuestionBankEntry => ({
                 id: `cert-${subjectId}-${chapterNumber}-${idx}`,
@@ -161,6 +176,41 @@ export default function QuestionBankView({
     });
   };
 
+  const handleGlobalMarkChange = (mark: 'all' | 'short' | 'long' | 'ten') => {
+    setGlobalMark(mark);
+    if (mark !== 'all') {
+      const updatedModes: Record<string, 'short' | 'long' | 'ten'> = {};
+      questions.forEach((q) => {
+        if (mark === 'ten' && q.tenMarkAnswer) updatedModes[q.id] = 'ten';
+        else if (mark === 'long' && q.longAnswer) updatedModes[q.id] = 'long';
+        else if (mark === 'short' && q.shortAnswer) updatedModes[q.id] = 'short';
+      });
+      setAnswerModes((prev) => ({ ...prev, ...updatedModes }));
+    }
+  };
+
+  const filteredQuestions = useMemo(() => {
+    if (globalMark === 'all') return questions;
+    if (globalMark === 'short') return questions.filter((q) => q.shortAnswer);
+    if (globalMark === 'long') return questions.filter((q) => q.longAnswer);
+    if (globalMark === 'ten') return questions.filter((q) => q.tenMarkAnswer);
+    return questions;
+  }, [questions, globalMark]);
+
+  const allExpanded = useMemo(() => {
+    if (filteredQuestions.length === 0) return false;
+    return filteredQuestions.every((q) => revealedCards[q.id]);
+  }, [filteredQuestions, revealedCards]);
+
+  const toggleAllAnswers = () => {
+    const nextState = !allExpanded;
+    const nextRevealed: Record<string, boolean> = {};
+    filteredQuestions.forEach((q) => {
+      nextRevealed[q.id] = nextState;
+    });
+    setRevealedCards((prev) => ({ ...prev, ...nextRevealed }));
+  };
+
   const toggleCardFlip = (id: string) => {
     setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   };
@@ -179,93 +229,121 @@ export default function QuestionBankView({
 
   return (
     <div className="qbank-root" ref={qbankContainerRef}>
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flex: 1, minWidth: '300px' }}>
-          {/* Icon badge */}
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        marginBottom: '28px', 
+        flexWrap: 'wrap', 
+        gap: '20px', 
+        justifyContent: 'space-between',
+        position: 'relative'
+      }}>
+        {/* Left: Icon badge & Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: '280px' }}>
           <div style={{
             background: `linear-gradient(135deg, ${G.mid} 0%, ${G.dark} 100%)`,
             borderRadius: '16px',
-            width: '72px',
-            height: '72px',
+            width: '64px',
+            height: '64px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: `0 8px 16px rgba(47,79,64,0.28)`,
             position: 'relative',
-            border: `3px solid ${G.paleBorder}`
+            border: `3px solid ${G.paleBorder}`,
+            flexShrink: 0
           }}>
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
               <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
               <line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: G.dark, margin: 0 }}>Question Bank</h1>
+          <div>
+            <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: G.dark, margin: 0 }}>Question Bank</h1>
+            {questions.length > 0 && (
+              <p style={{ margin: '4px 0 0', color: G.mid, fontSize: '0.88rem', fontWeight: 600 }}>
+                {filteredQuestions.length} {filteredQuestions.length === 1 ? 'question' : 'questions'} available (2M, 5M & 10M Model Answers)
+              </p>
+            )}
+          </div>
         </div>
 
-        {focusedSubject && (
-          <>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px', flex: 1, minWidth: '300px' }}>
-              <div className="qbank-simple-chapter-row" style={{ gap: '12px', display: 'flex' }}>
-                {focusedSubject.chapters.map((chapter) => {
-                  const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
-                  return (
-                    <button
-                      key={`${focusedSubject.id}-${chapter.number}`}
-                      onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
-                      className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
-                      style={{
-                        width: '32px',
-                        height: '32px',
-                        minWidth: '32px',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: '8px',
-                        fontSize: '0.9rem',
-                        fontWeight: 600,
-                        border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
-                        background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
-                        color: selected ? 'white' : G.dark,
-                        boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
-                        transition: 'all 0.18s ease',
-                      }}
-                    >
-                      {chapter.number}
-                    </button>
-                  );
-                })}
-              </div>
-              <button 
-                type="button" 
-                onClick={handleGo} 
-                disabled={loading || (selectedChapters[focusedSubject.id] ?? []).length === 0}
-                style={{
-                  background: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0
-                    ? G.pale
-                    : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
-                  color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '6px 20px',
-                  fontSize: '0.9rem',
-                  fontWeight: 600,
-                  cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
-                  opacity: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 0.7 : 1,
-                  boxShadow: `0 2px 8px rgba(47,79,64,0.2)`,
-                  transition: 'all 0.18s ease',
-                }}
-              >
-                {loading ? '...' : 'Go'}
-              </button>
+        {/* Center: Chapter Selection Buttons (hidden when only 1 chapter is selected) */}
+        {focusedSubject && !isSingleChapterMode && (
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            gap: '10px',
+            margin: '0 auto',
+            flex: '0 1 auto'
+          }}>
+            <div className="qbank-simple-chapter-row" style={{ gap: '8px', display: 'flex' }}>
+              {focusedSubject.chapters.map((chapter) => {
+                const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
+                return (
+                  <button
+                    key={`${focusedSubject.id}-${chapter.number}`}
+                    onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
+                    className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
+                    title={chapter.name}
+                    style={{
+                      width: '34px',
+                      height: '34px',
+                      minWidth: '34px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: '8px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600,
+                      border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
+                      background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
+                      color: selected ? 'white' : G.dark,
+                      boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
+                      transition: 'all 0.18s ease',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {chapter.number}
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ flex: 1, minWidth: '300px' }}></div>
-          </>
+            <button 
+              type="button" 
+              onClick={handleGo} 
+              disabled={loading || (selectedChapters[focusedSubject.id] ?? []).length === 0}
+              style={{
+                background: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0
+                  ? G.pale
+                  : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
+                color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '6px 18px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
+                opacity: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 0.7 : 1,
+                boxShadow: `0 2px 8px rgba(47,79,64,0.2)`,
+                transition: 'all 0.18s ease',
+              }}
+            >
+              {loading ? '...' : 'Go'}
+            </button>
+          </div>
+        )}
+
+        {/* Right Balance Spacer: Balances the left title for true centering */}
+        {!isSingleChapterMode && (
+          <div style={{ minWidth: '280px', visibility: 'hidden', pointerEvents: 'none' }} className="qbank-header-balance" aria-hidden="true" />
         )}
       </div>
 
-      {!focusedSubject && selectedSubjects.length > 0 ? (
+      {!focusedSubject && !isSingleChapterMode && selectedSubjects.length > 0 ? (
         <div className="qbank-section" style={{ marginBottom: '40px' }}>
           <div className="qbank-section-label" style={{ marginBottom: '16px', fontWeight: 600, color: G.dark }}>Chapter selection for chosen subjects</div>
           <div className="qbank-card-grid">
@@ -333,9 +411,9 @@ export default function QuestionBankView({
             </button>
           </div>
         </div>
-      ) : (
+      ) : (!focusedSubject && !isSingleChapterMode) ? (
         <div style={{ marginBottom: '24px', color: '#6B7280' }}>Select subjects to see chapters and load question bank content.</div>
-      )}
+      ) : null}
 
       {loading ? (
         <div className="loading-state">Loading selected question bank content…</div>
@@ -347,9 +425,13 @@ export default function QuestionBankView({
         <div className="qbank-empty">
           Select chapters and click Go to load questions.
         </div>
+      ) : filteredQuestions.length === 0 ? (
+        <div className="qbank-empty">
+          No questions found matching the selected mark tier. Click &quot;All Marks&quot; to view all questions.
+        </div>
       ) : (
         <div className="qbank-card-list">
-          {questions.map((entry, index) => {
+          {filteredQuestions.map((entry, index) => {
             const modeOptions = [
               entry.shortAnswer ? { key: 'short' as const, label: '2M' } : null,
               entry.longAnswer ? { key: 'long' as const, label: '5M' } : null,
@@ -358,7 +440,6 @@ export default function QuestionBankView({
             const defaultMode = modeOptions[0]?.key ?? 'short';
             const mode = answerModes[entry.id] ?? defaultMode;
             const isRevealed = revealedCards[entry.id] ?? false;
-            const hasBoth = modeOptions.length > 1;
             const shownAnswer =
               (mode === 'ten' && entry.tenMarkAnswer) ||
               (mode === 'long' && entry.longAnswer) ||
@@ -407,12 +488,14 @@ export default function QuestionBankView({
                         <div style={{
                           display: 'flex',
                           background: G.pale,
-                          border: `1px solid ${G.paleBorder}`,
+                          border: `1.5px solid ${G.paleBorder}`,
                           borderRadius: '999px',
                           padding: '2px',
+                          gap: '2px',
                         }}>
                           {modeOptions.map((opt) => {
-                            const active = mode === opt.key && isRevealed;
+                            const isCurrentMode = mode === opt.key;
+                            const active = isCurrentMode && isRevealed;
                             return (
                               <button
                                 key={opt.key}
@@ -421,17 +504,17 @@ export default function QuestionBankView({
                                   e.stopPropagation();
                                   setAnswerMode(entry.id, opt.key);
                                 }}
-                                title={active ? 'Click to hide answer' : `Click for ${opt.label} answer`}
+                                title={active ? `Click to hide ${opt.label} answer` : `Click for ${opt.label} answer`}
                                 style={{
-                                  border: 'none',
+                                  border: isCurrentMode && !isRevealed ? `1px dashed ${G.mid}` : 'none',
                                   cursor: 'pointer',
                                   borderRadius: '999px',
-                                  padding: '3px 12px',
-                                  fontSize: '0.75rem',
-                                  fontWeight: active ? 700 : 600,
-                                  background: active ? 'white' : 'transparent',
-                                  color: active ? G.dark : G.mid,
-                                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                                  padding: '4px 13px',
+                                  fontSize: '0.8rem',
+                                  fontWeight: active ? 700 : isCurrentMode ? 600 : 500,
+                                  background: active ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : isCurrentMode ? 'white' : 'transparent',
+                                  color: active ? 'white' : isCurrentMode ? G.dark : G.mid,
+                                  boxShadow: active ? '0 2px 6px rgba(47,79,64,0.3)' : 'none',
                                   transition: 'all 0.18s ease',
                                 }}
                               >

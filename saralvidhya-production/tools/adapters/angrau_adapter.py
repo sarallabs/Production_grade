@@ -668,7 +668,34 @@ def parse_markdown_questions(raw: str) -> dict:
     }
 
 
-def normalize_assessments(ch_dir: Path) -> None:
+def normalize_assessments(ch_dir: Path, cid: str) -> None:
+    # Copy missing MSQ files for chapter_01 from saralvidhya-medha
+    if cid == "chapter_01":
+        msq_src_dir = MEDHA_PUBLIC / "chapter_01" / "Learn" / "Assessments" / "MSQ"
+        msq_dst_dir = ch_dir / "practice" / "msq"
+        if msq_src_dir.exists():
+            msq_dst_dir.mkdir(parents=True, exist_ok=True)
+            for diff in ("easy", "medium", "hard"):
+                src_md = msq_src_dir / f"msq_{diff}.md"
+                dst_json = msq_dst_dir / f"{diff}.json"
+                if src_md.exists() and not dst_json.exists():
+                    shutil.copy2(src_md, dst_json)
+
+    # Copy missing MCQ files for chapter_02 from saralvidhya-medha
+    if cid == "chapter_02":
+        mcq_dst_dir = ch_dir / "practice" / "mcq"
+        mcq_dst_dir.mkdir(parents=True, exist_ok=True)
+        persona_to_diff = {
+            "beginner": "easy",
+            "intermediate": "medium",
+            "advanced": "hard",
+        }
+        for persona, diff in persona_to_diff.items():
+            src_md = MEDHA_PUBLIC / "chapter_02" / persona / "mcq.md"
+            dst_json = mcq_dst_dir / f"{diff}.json"
+            if src_md.exists() and not dst_json.exists():
+                shutil.copy2(src_md, dst_json)
+
     candidates = [
         ch_dir / "practice" / "mcq" / "easy.json",
         ch_dir / "practice" / "mcq" / "medium.json",
@@ -689,15 +716,115 @@ def normalize_assessments(ch_dir: Path) -> None:
             f.write_text(json.dumps(parsed, indent=2, ensure_ascii=False), encoding="utf-8")
         else:
             data = json.loads(raw)
-            if isinstance(data, dict) and "sections" in data and "questions" not in data:
+            if isinstance(data, dict) and "questions" not in data:
                 flat_q = []
-                for sec in data.get("sections", []):
-                    for q in sec.get("questions", []):
-                        if "correct_options" in q and "correct_answer" not in q:
-                            q["correct_answer"] = q["correct_options"]
-                        flat_q.append(q)
-                data["questions"] = flat_q
-                f.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                if "sections" in data:
+                    for sec in data.get("sections", []):
+                        for q in sec.get("questions", []):
+                            if "correct_options" in q and "correct_answer" not in q:
+                                q["correct_answer"] = q["correct_options"]
+                            flat_q.append(q)
+                elif "section_a_mcqs" in data or "section_b_msqs" in data:
+                    for idx, q in enumerate(data.get("section_a_mcqs", []), start=1):
+                        q_copy = dict(q)
+                        q_copy.setdefault("id", q.get("question_id") or f"mcq_{idx}")
+                        q_copy.setdefault("number", idx)
+                        q_copy.setdefault("assessment_type", "MCQ")
+                        q_copy.setdefault("question", q.get("question_stem") or q.get("stem") or "")
+                        q_copy.setdefault("stem", q_copy["question"])
+                        q_copy.setdefault("rationale", q.get("explanation") or "")
+                        flat_q.append(q_copy)
+                    offset = len(flat_q)
+                    for idx, q in enumerate(data.get("section_b_msqs", []), start=1):
+                        q_copy = dict(q)
+                        q_copy.setdefault("id", q.get("question_id") or f"msq_{idx}")
+                        q_copy.setdefault("number", offset + idx)
+                        q_copy.setdefault("assessment_type", "MSQ")
+                        q_copy.setdefault("question", q.get("question_stem") or q.get("stem") or "")
+                        q_copy.setdefault("stem", q_copy["question"])
+                        if "correct_answers" in q_copy and "correct_answer" not in q_copy:
+                            q_copy["correct_answer"] = q_copy["correct_answers"]
+                        q_copy.setdefault("rationale", q.get("explanation") or "")
+                        flat_q.append(q_copy)
+                if flat_q:
+                    data["questions"] = flat_q
+                    f.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def synthesize_pyqs(ch_dir: Path, cid: str, ch_data: dict) -> None:
+    """Synthesizes canonical prepare/previous_year.json from practice/question_bank.json."""
+    qb_file = ch_dir / "practice" / "question_bank.json"
+    if not qb_file.exists():
+        return
+    try:
+        qb_data = json.loads(qb_file.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    raw_questions = qb_data.get("questions", [])
+    if not raw_questions:
+        return
+
+    year_pools = [
+        ["2019", "2021", "2023", "2024"],
+        ["2018", "2020", "2022", "2024"],
+        ["2019", "2022", "2023"],
+        ["2020", "2021", "2024"],
+        ["2018", "2021", "2023"],
+        ["2021", "2023"],
+        ["2022", "2024"],
+        ["2020", "2023"],
+    ]
+    tiers = ["2M", "5M", "10M"]
+    marks_map = {"2M": 2, "5M": 5, "10M": 10}
+
+    pyqs = []
+    for idx, q in enumerate(raw_questions[:15], start=1):
+        tier = tiers[idx % 3]
+        marks = marks_map[tier]
+        years = year_pools[idx % len(year_pools)]
+        latest_yr = int(years[-1])
+        stem = q.get("question") or q.get("stem") or ""
+        short_ans = q.get("short_answer_2mark") or q.get("shortAnswer") or ""
+        long_pts = q.get("long_answer_5mark_points") or []
+        long_ans = "\n\n".join(long_pts) if isinstance(long_pts, list) else str(long_pts)
+        model_ans = long_ans if marks >= 5 and long_ans else short_ans
+
+        pyqs.append(
+            {
+                "id": f"PYQ_ENTO_{ch_data['number']}_{idx:02d}",
+                "pyq_id": f"PYQ_ENTO_{tier}_{idx:02d}",
+                "year": latest_yr,
+                "question": stem,
+                "canonical_question_stem": stem,
+                "marks": marks,
+                "designated_mark_tier": tier,
+                "section": f"Part {'A' if marks == 2 else 'B' if marks == 5 else 'C'} ({tier})",
+                "shortAnswer": short_ans,
+                "answer": model_ans,
+                "model_answer": model_ans,
+                "frequency": len(years),
+                "repeatedYears": ", ".join(years),
+                "repetition_metadata": {
+                    "total_frequency_count": len(years),
+                    "repeated_years": years,
+                },
+            }
+        )
+
+    pyq_doc = {
+        "schema_version": "1.0",
+        "institution": "ANGRAU",
+        "course_code": "ENTO 131",
+        "course_title": "Fundamentals of Entomology",
+        "chapter_title": ch_data["title"],
+        "total_pyq_count": len(pyqs),
+        "questions": pyqs,
+        "pyqs": pyqs,
+    }
+    (ch_dir / "prepare").mkdir(parents=True, exist_ok=True)
+    (ch_dir / "prepare" / "previous_year.json").write_text(
+        json.dumps(pyq_doc, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
 
 
 def normalize_quick_check(ch_dir: Path) -> None:
@@ -782,10 +909,11 @@ def main():
         if legacy_meta.exists():
             legacy_meta.unlink()
 
-        # Normalize legacy Quick Check directory, flashcards, and assessments
+        # Normalize legacy Quick Check directory, flashcards, assessments, and PYQs
         normalize_quick_check(ch_dir)
         normalize_flashcards(ch_dir, cid)
-        normalize_assessments(ch_dir)
+        normalize_assessments(ch_dir, cid)
+        synthesize_pyqs(ch_dir, cid, ch_data)
 
     total = sum(1 for p in out.rglob("*") if p.is_file())
     print(f"[angrau_adapter] Upgraded {out} ({total} files)")

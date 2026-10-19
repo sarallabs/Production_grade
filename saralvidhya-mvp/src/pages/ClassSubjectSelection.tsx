@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { setStudentPersona } from '@/utils/credentialsStore';
 import ResumePodcastToast from '@/components/ResumePodcastToast';
 import {
   getCatalog,
   getManifest,
   getChapters,
+  getVisibleBoardIds,
+  getRegistryTenantId,
   type Catalog,
   type CatalogBoard,
   type CatalogClass,
@@ -14,21 +15,29 @@ import {
   type Manifest,
   type Chapter,
 } from '@/data/contentRepository';
-import { getVisitedChapterNumbersForSubject, getAnalytics } from '@/utils/analytics';
-import { isChapterComplete, getCompletedTools } from '@/utils/guidedFlow';
-import { getVisibleBoardIds } from '@/pages/ConfigPage';
+import { getAnalytics } from '@/utils/analytics';
+import { isChapterComplete, getCompletedTools, snapToQuarter } from '@/utils/guidedFlow';
+import { useTenant } from '@/tenant/TenantProvider';
+import { cloudStorage } from '@/context/CloudStateContext';
 import './ClassSubjectSelection.css';
 
-function SubjectIcon({ subjectId }: { subjectId: string }) {
-  if (subjectId.includes('ento') || subjectId === 'ento_131') {
+function SubjectIcon({ subject }: { subject: CatalogSubject }) {
+  if (subject.iconUrl) {
+    const src =
+      subject.iconUrl.startsWith('http://') ||
+      subject.iconUrl.startsWith('https://') ||
+      subject.iconUrl.startsWith('data:')
+        ? subject.iconUrl
+        : `${import.meta.env.BASE_URL}${subject.iconUrl.replace(/^\//, '')}`;
     return (
       <img
-        src={`${import.meta.env.BASE_URL}subject-entomology-icon.png`}
-        alt="Entomology"
-        className="sv-card-book-img"
+        src={src}
+        alt={subject.name}
+        className={`sv-card-book-img ${subject.iconUrl.includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
       />
     );
   }
+  const subjectId = subject.id.toLowerCase();
   const common = { width: 28, height: 28, fill: 'none', stroke: 'currentColor', strokeWidth: 2 } as const;
   if (subjectId.includes('science') || subjectId.includes('biology') || subjectId.includes('chemistry')) {
     return (
@@ -60,27 +69,6 @@ function toTitleCase(str: string): string {
     .join(' ');
 }
 
-function getShortChapterTitle(fullName: string, chNum: number): string {
-  if (chNum === 1) return 'Digestive System';
-  if (chNum === 2) return 'Metamorphosis';
-  if (chNum === 3) return 'Weathering';
-  if (chNum === 4) return 'Pollination';
-
-  if (!fullName) return `Chapter ${chNum}`;
-  const clean = fullName.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim();
-  const lower = clean.toLowerCase();
-  if (lower.includes('digestive')) return 'Digestive System';
-  if (lower.includes('morphology') || lower.includes('metamorphosis')) return 'Metamorphosis';
-  if (lower.includes('weathering') || lower.includes('soil')) return 'Weathering';
-  if (lower.includes('pollination') || lower.includes('floral')) return 'Pollination';
-
-  const parts = clean.split('&')[0].trim().split(' ');
-  if (parts.length > 2) {
-    return parts.slice(0, 2).join(' ');
-  }
-  return clean.length > 22 ? clean.slice(0, 20) + '…' : clean;
-}
-
 function getChapterProgressStats(subjectId: string, chapterNumber: number) {
   const cleanId = (id?: string) => (id || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   const targetSub = cleanId(subjectId);
@@ -89,26 +77,28 @@ function getChapterProgressStats(subjectId: string, chapterNumber: number) {
   const toolsFromEvents = (analyticsData.toolEvents || [])
     .filter((e) => {
       const sub = cleanId(e.subjectId);
-      return (sub === targetSub || (targetSub.includes('ento') && sub.includes('ento'))) && e.chapterNumber === chapterNumber;
+      return sub === targetSub && e.chapterNumber === chapterNumber;
     })
     .map((e) => e.tool);
 
   const uniqueToolsDone = new Set([...completedFromGuided, ...toolsFromEvents]);
   const isVisited = (analyticsData.chapterVisits || []).some((v) => {
     const sub = cleanId(v.subjectId);
-    return (sub === targetSub || (targetSub.includes('ento') && sub.includes('ento'))) && v.chapterNumber === chapterNumber;
+    return sub === targetSub && v.chapterNumber === chapterNumber;
   });
 
   const totalSessions = 6;
-  const isFullyDone = isChapterComplete(subjectId, chapterNumber);
-  const completedSessions = isFullyDone ? totalSessions : Math.min(uniqueToolsDone.size, totalSessions);
-  const percent = isFullyDone 
-    ? 100 
-    : completedSessions > 0 
-    ? Math.round((completedSessions / totalSessions) * 100) 
-    : isVisited 
-    ? 15 
+  const isCompleteByStorage = isChapterComplete(subjectId, chapterNumber);
+  const rawCompletedSessions = Math.min(uniqueToolsDone.size, totalSessions);
+  const rawPercent = rawCompletedSessions > 0
+    ? Math.round((rawCompletedSessions / totalSessions) * 100)
+    : isVisited
+    ? 15
     : 0;
+
+  const isFullyDone = isCompleteByStorage || rawPercent >= 100;
+  const completedSessions = isFullyDone ? totalSessions : rawCompletedSessions;
+  const percent = isFullyDone ? 100 : rawPercent;
 
   return {
     isFullyDone,
@@ -121,27 +111,38 @@ function getChapterProgressStats(subjectId: string, chapterNumber: number) {
 
 export default function ClassSubjectSelection() {
   const navigate = useNavigate();
+  const { tenantId, tenantPath, logout: tenantLogout } = useTenant();
+  const activeTenantId = tenantId || getRegistryTenantId();
+
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
-  const treeLogoSrc = selectedBoardId?.startsWith('neb') 
-    ? `${import.meta.env.BASE_URL}neb-logo.png` 
-    : `${import.meta.env.BASE_URL}brand-logo.png`;
   const [catalog, setCatalog] = useState<Catalog>({ version: 1, boards: [] });
   const [manifest, setManifest] = useState<Manifest | null>(null);
-  const [manifestSubjects, setManifestSubjects] = useState<Subject[]>([]);
   const [chapterCounts, setChapterCounts] = useState<Record<string, number>>({});
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
 
   useEffect(() => {
     getCatalog().then((nextCatalog) => {
-      const visibleIds = getVisibleBoardIds();
-      const filtered = visibleIds
-        ? { ...nextCatalog, boards: nextCatalog.boards.filter((b) => visibleIds.includes(b.id)) }
-        : nextCatalog;
+      let boards = nextCatalog.boards;
+      if (activeTenantId) {
+        const matched = boards.filter(
+          (b) => b.id === activeTenantId || b.id === `${activeTenantId}_university`,
+        );
+        if (matched.length > 0) {
+          boards = matched;
+        }
+      } else {
+        const visibleIds = getVisibleBoardIds();
+        if (visibleIds && visibleIds.length > 0) {
+          boards = boards.filter((b) => visibleIds.includes(b.id));
+        }
+      }
+
+      const filtered = { ...nextCatalog, boards };
       setCatalog(filtered);
       const firstBoard = filtered.boards[0];
-      if (firstBoard && filtered.boards.length === 1) {
-        setSelectedBoardId(firstBoard.id);
-        if (firstBoard.id === 'angrau_university') {
+      if (firstBoard) {
+        if (filtered.boards.length === 1 || activeTenantId) {
+          setSelectedBoardId(firstBoard.id);
           setSelectedClassId(firstBoard.classes[0]?.id ?? null);
         }
       }
@@ -149,35 +150,37 @@ export default function ClassSubjectSelection() {
 
     getManifest().then((m) => {
       setManifest(m);
-      setManifestSubjects(m.subjects);
       setChapterCounts(
         Object.fromEntries(m.subjects.map((subject) => [subject.id, subject.chapters.length])),
       );
     });
-  }, []);
+  }, [activeTenantId]);
 
   const selectedBoard = useMemo(
     () => catalog.boards.find((board) => board.id === selectedBoardId) ?? null,
     [catalog.boards, selectedBoardId],
   );
 
+  const treeLogoSrc = selectedBoardId?.startsWith('neb')
+    ? `${import.meta.env.BASE_URL}neb-logo.png`
+    : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
+
   const selectedClass = useMemo(
     () => {
       if (!selectedBoard) return null;
-      // In ANGRAU we have only one course (B.Sc. Agriculture), take student straight to subjects
-      if (selectedBoard.id === 'angrau_university') {
+      if (selectedBoard.classes.length === 1 || !!activeTenantId) {
         return selectedBoard.classes[0] ?? null;
       }
       return selectedBoard.classes.find((klass) => klass.id === selectedClassId) ?? null;
     },
-    [selectedBoard, selectedClassId],
+    [selectedBoard, selectedClassId, activeTenantId],
   );
 
   const step = !selectedBoard ? 0 : !selectedClass ? 1 : 2;
 
   const handleBoardClick = (board: CatalogBoard) => {
     setSelectedBoardId(board.id);
-    if (board.id === 'angrau_university') {
+    if (board.classes.length === 1) {
       setSelectedClassId(board.classes[0]?.id ?? null);
     } else {
       setSelectedClassId(null);
@@ -198,45 +201,46 @@ export default function ClassSubjectSelection() {
       sId: subject.id,
       subjectName: subject.name,
     });
-    // Automatically apply the persona calculated from the Questionnaire
-    const userPersona = (localStorage.getItem('user_persona') || 'beginner').toLowerCase();
-    
+    const userPersona = (cloudStorage.getItem('user_persona') || 'beginner').toLowerCase();
     const cId = params.get('cId') || '';
     const sId = params.get('sId') || '';
     if (cId && sId) {
-      localStorage.setItem(`persona_${cId}_${sId}`, userPersona);
-    }
-    
-    const username = localStorage.getItem('username') || '';
-    if (username) {
-      setStudentPersona(username, userPersona);
+      cloudStorage.setItem(`persona_${cId}_${sId}`, userPersona);
     }
 
     params.set('persona', userPersona);
     if (targetChapter) {
       params.set('chapter', targetChapter.toString());
     }
-    navigate(`/chapters?${params.toString()}`);
+    navigate(tenantPath(`/chapters?${params.toString()}`));
   };
 
   const handleBackToBoard = () => {
-    if (catalog.boards.length > 1) {
+    if (!activeTenantId && catalog.boards.length > 1) {
       setSelectedBoardId(null);
       setSelectedClassId(null);
     }
   };
 
   const handleBackToClass = () => {
-    setSelectedClassId(null);
+    if (!activeTenantId) {
+      setSelectedClassId(null);
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('app_authenticated');
-    localStorage.removeItem('app_role');
-    localStorage.removeItem('app_user_id');
-    localStorage.removeItem('username');
-    localStorage.removeItem('questionnaire_completed');
-    navigate('/login', { replace: true });
+    cloudStorage.removeItem('app_authenticated');
+    cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('app_user_id');
+    cloudStorage.removeItem('username');
+    cloudStorage.removeItem('questionnaire_completed');
+    cloudStorage.removeItem('sv_video_open_counts');
+    tenantLogout();
+    if (activeTenantId) {
+      navigate(`/${activeTenantId}/login`, { replace: true });
+    } else {
+      navigate('/login', { replace: true });
+    }
   };
 
   return (
@@ -257,12 +261,16 @@ export default function ClassSubjectSelection() {
             {step > 0 && (
               <div className="sv-breadcrumb">
                 <span className="sv-bc-sep">/</span>
-                <span className="sv-bc-link" onClick={handleBackToBoard}>
-                  {selectedBoard?.shortName || selectedBoard?.name}
-                </span>
+                {activeTenantId ? (
+                  <span className="sv-bc-current">{selectedBoard?.shortName || selectedBoard?.name}</span>
+                ) : (
+                  <span className="sv-bc-link" onClick={handleBackToBoard}>
+                    {selectedBoard?.shortName || selectedBoard?.name}
+                  </span>
+                )}
                 {step > 1 && (
                   <>
-                    {selectedBoard?.id !== 'angrau_university' && (
+                    {!activeTenantId && (selectedBoard?.classes.length ?? 0) > 1 && (
                       <>
                         <span className="sv-bc-sep">/</span>
                         <span className="sv-bc-link" onClick={handleBackToClass}>
@@ -277,11 +285,43 @@ export default function ClassSubjectSelection() {
               </div>
             )}
           </div>
-          <div className="sv-topbar-right">
-            <button className="sv-logout-btn" onClick={logout}>
-              Log Out
+          <div className="sv-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={logout}
+              title="Log Out"
+              aria-label="Log Out"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '1.5px solid #EF4444',
+                background: '#FEF2F2',
+                color: '#EF4444',
+                cursor: 'pointer',
+                flexShrink: 0,
+                boxShadow: '0 1px 4px rgba(239, 68, 68, 0.12)',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = '#FEE2E2';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2';
+                (e.currentTarget as HTMLButtonElement).style.transform = 'none';
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                <polyline points="15 8 19 12 15 16" />
+                <line x1="9" y1="12" x2="19" y2="12" />
+              </svg>
             </button>
-            <button className="sv-profile-btn" onClick={() => navigate('/profile')}>
+            <button className="sv-profile-btn" onClick={() => navigate(tenantPath('/profile'))}>
               <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
               </svg>
@@ -333,33 +373,25 @@ export default function ClassSubjectSelection() {
 
               <div className={`sv-subjects-grid ${selectedClass.subjects.length === 1 ? 'sv-subjects-grid--single' : ''}`}>
                 {selectedClass.subjects.map((subject, idx) => {
-                  const isEntomology = subject.id === 'ento_131' || subject.name.toLowerCase().includes('entomology');
-                  let chaptersList: Chapter[] = manifest ? getChapters(manifest, subject.id) : [];
-                  if (chaptersList.length === 0 && isEntomology) {
-                    chaptersList = [
-                      { number: 1, name: 'Digestive System', dir: 'chapter_01', completed: [], resourceCount: 7 },
-                      { number: 2, name: 'Metamorphosis', dir: 'chapter_02', completed: [], resourceCount: 6 },
-                      { number: 3, name: 'Weathering', dir: 'chapter_03', completed: [], resourceCount: 7 },
-                      { number: 4, name: 'Pollination', dir: 'chapter_04', completed: [], resourceCount: 7 },
-                    ];
-                  }
+                  const chaptersList: Chapter[] = manifest ? getChapters(manifest, subject.id) : [];
 
-                  const totalChapters = chaptersList.length > 0 
-                    ? chaptersList.length 
-                    : (chapterCounts[subject.id] ?? (isEntomology ? 4 : 0));
-                  
+                  const totalChapters = chaptersList.length > 0
+                    ? chaptersList.length
+                    : (chapterCounts[subject.id] ?? 0);
+
                   const chapterStatsList = chaptersList.map((ch) => getChapterProgressStats(subject.id, ch.number));
-                  const totalCompletedChapters = chapterStatsList.filter((s) => s.isFullyDone || s.percent >= 100).length;
-                  const activeChaptersCount = chapterStatsList.filter((s) => s.percent > 0).length;
                   const displayTotal = totalChapters;
                   const overallCoverage = displayTotal > 0
-                    ? Math.round(chapterStatsList.reduce((acc, s) => acc + s.percent, 0) / displayTotal)
+                    ? snapToQuarter(chapterStatsList.reduce((acc, s) => acc + s.percent, 0) / displayTotal)
                     : 0;
+
+                  const isRichSubjectCard = chaptersList.length > 0;
+                  const subtitleText = subject.subtitle || subject.programLabel || selectedClass.name || '';
 
                   return (
                     <div
                       key={subject.id}
-                      className={`sv-subject-card ${isEntomology ? 'sv-subject-card--entomology' : ''}`}
+                      className={`sv-subject-card ${isRichSubjectCard ? 'sv-subject-card--entomology' : ''}`}
                       style={{
                         '--card-gradient': 'linear-gradient(135deg, #2563eb, #10b981)',
                         '--card-glow': 'rgba(37, 99, 235, 0.14)',
@@ -367,23 +399,25 @@ export default function ClassSubjectSelection() {
                       } as React.CSSProperties}
                       onClick={() => handleSubjectClick(subject)}
                     >
-                      <div className="sv-card-accent" />
                       <div className="sv-card-icon">
-                        <SubjectIcon subjectId={subject.id} />
+                        <SubjectIcon subject={subject} />
                       </div>
                       <div className="sv-card-body">
                         <div className="sv-subject-head-row">
                           <div className="sv-subject-head-info">
                             <h3 className="sv-card-title">
-                              {subject.name === 'Characterization Techniques' ? 'Analytics' : subject.name}
+                              {subject.name}
                             </h3>
-                            <span className="sv-subject-subtitle">
-                              ANGRAU B.Sc. Agriculture • {displayTotal} Core Chapters
-                            </span>
+                            {subtitleText ? (
+                              <span className="sv-subject-subtitle">
+                                {subtitleText}
+                              </span>
+                            ) : null}
                           </div>
-                          {displayTotal > 0 && (
+
+                          {displayTotal > 0 && !isRichSubjectCard && (
                             <div className="sv-course-progress-widget">
-                              <div className="sv-progress-ring-wrap">
+                              <div className="sv-progress-ring-wrap" title={`Overall Progress: ${overallCoverage}%`}>
                                 <svg className="sv-progress-ring" width="46" height="46" viewBox="0 0 46 46">
                                   <circle
                                     className="sv-progress-ring-bg"
@@ -409,67 +443,59 @@ export default function ClassSubjectSelection() {
                                 </svg>
                                 <span className="sv-progress-ring-text">{overallCoverage}%</span>
                               </div>
-                              <div className="sv-progress-widget-labels">
-                                <span className="sv-progress-widget-title">Overall Progress</span>
-                                <span className="sv-progress-widget-sub">
-                                  {overallCoverage === 100
-                                    ? '100% Completed'
-                                    : overallCoverage > 0
-                                    ? `${overallCoverage}% Completed`
-                                    : '0% Completed'}
-                                </span>
-                              </div>
                             </div>
                           )}
                         </div>
 
                         <div className="sv-progress-wrapper">
                           {displayTotal > 0 ? (
-                            <div className="sv-chapter-cards-grid" role="group" aria-label="Chapters">
+                            <div className="sv-chapter-icons-row" role="group" aria-label="Chapters">
                               {chaptersList.map((ch, chIdx) => {
-                                const stats = chapterStatsList[chIdx] || getChapterProgressStats(subject.id, ch.number);
-                                const shortTitle = getShortChapterTitle(ch.name, ch.number);
-                                return (
-                                  <button
-                                    key={ch.number}
-                                    type="button"
-                                    className={`sv-chapter-card-item ${stats.isFullyDone ? 'is-completed' : stats.percent > 0 ? 'is-visited' : ''}`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleSubjectClick(subject, ch.number);
-                                    }}
-                                    title={`Directly open Chapter ${ch.number}: ${ch.name}`}
-                                  >
-                                    <div className="sv-ch-item-top">
-                                      <span className="sv-ch-item-num">CHAPTER 0{ch.number}</span>
-                                      <span className={`sv-ch-item-badge ${stats.isFullyDone ? 'is-done' : ''}`}>
-                                        {stats.isFullyDone ? '✓ 100%' : `${stats.percent}%`}
-                                      </span>
-                                    </div>
-                                    <span className="sv-ch-item-title">{shortTitle}</span>
+                                const rawStats = chapterStatsList[chIdx] || getChapterProgressStats(subject.id, ch.number);
+                                const isDone = rawStats.isFullyDone || rawStats.percent >= 100;
+                                const stats = {
+                                  ...rawStats,
+                                  isFullyDone: isDone,
+                                  percent: isDone ? 100 : rawStats.percent,
+                                };
+                                const formattedTitle = toTitleCase(ch.shortTitle || ch.name);
 
-                                    {/* Progress update below every chapter button */}
-                                    <div className="sv-ch-progress-block">
-                                      <div className="sv-ch-progress-track">
-                                        <div
-                                          className={`sv-ch-progress-bar-fill ${stats.isFullyDone ? 'bar-complete' : ''}`}
-                                          style={{ width: `${stats.percent}%` }}
-                                        />
+                                const tickColor = stats.isFullyDone
+                                  ? '#22c55e'
+                                  : stats.percent > 0
+                                  ? '#38bdf8'
+                                  : '#f97316';
+
+                                return (
+                                  <div key={ch.number} className="sv-ch-circle-group">
+                                    <span
+                                      className="sv-ch-circle-tick"
+                                      style={{ color: tickColor }}
+                                      aria-hidden="true"
+                                    >
+                                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round">
+                                        <polyline points="20 6 9 17 4 12" />
+                                      </svg>
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className={`sv-ch-circle-btn ${stats.isFullyDone ? 'is-completed' : stats.percent > 0 ? 'is-visited' : ''}`}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleSubjectClick(subject, ch.number);
+                                      }}
+                                      title={formattedTitle}
+                                      aria-label={`Chapter ${ch.number}: ${formattedTitle}`}
+                                    >
+                                      <span className="sv-ch-circle-num">{ch.number}</span>
+                                      <div className="sv-ch-tooltip" role="tooltip">
+                                        {formattedTitle}
                                       </div>
-                                      <div className="sv-ch-progress-info">
-                                        <span className="sv-ch-progress-text">
-                                          {stats.isFullyDone
-                                            ? 'Completed'
-                                            : stats.percent > 0
-                                            ? 'In Progress'
-                                            : 'Not Started'}
-                                        </span>
-                                        <span className="sv-ch-progress-val">
-                                          {stats.percent}%
-                                        </span>
-                                      </div>
+                                    </button>
+                                    <div className="sv-ch-circle-percent">
+                                      <span>{stats.percent}%</span>
                                     </div>
-                                  </button>
+                                  </div>
                                 );
                               })}
                             </div>

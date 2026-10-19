@@ -20,6 +20,7 @@ const PILLAR_TITLES: Record<string, string> = {
   pillar_2_mechanisms_and_kinetics: 'Mechanisms & Kinetics',
   pillar_3_comparative_matrix: 'Comparative Matrix',
   pillar_4_agronomic_applications: 'Agronomic Applications',
+  pillar_4_enterprise_applications: 'Enterprise Applications & Production Case Study',
   pillar_5_diagnostic_synthesis: 'Diagnostic Synthesis',
 };
 
@@ -30,20 +31,30 @@ function formatTenMarkAnswer(raw: any): string {
   if (Array.isArray(raw)) return raw.join('\n\n');
   if (typeof raw !== 'object') return String(raw);
 
+  const getPillarTitle = (k: string) => {
+    return (
+      PILLAR_TITLES[k] ||
+      k
+        .replace(/^pillar_\d+_/, '')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    );
+  };
+
   const parts: string[] = [];
   const rubric = raw.marking_rubric;
   if (rubric && typeof rubric === 'object') {
     const rows = Object.entries(rubric)
       .filter(([k]) => k !== 'total_marks')
-      .map(([k, v]) => `| ${PILLAR_TITLES[k] || k.replace(/_/g, ' ')} | ${v} |`);
+      .map(([k, v]) => `| ${getPillarTitle(k)} | ${v} |`);
     const total = rubric.total_marks ? `| **Total** | **${rubric.total_marks}** |` : '';
     parts.push(['**Marking Scheme**', '', '| Section | Marks |', '| :--- | :--- |', ...rows, total].filter((l) => l !== undefined).join('\n'));
   }
   for (const [key, value] of Object.entries(raw)) {
     if (key === 'marking_rubric' || typeof value !== 'string' || !value.trim()) continue;
-    const title = PILLAR_TITLES[key] || key.replace(/_/g, ' ');
+    const title = getPillarTitle(key);
     // ASCII flow diagrams need a code fence to keep their alignment
-    const body = /^\s+\|\s*$/m.test(value) ? '```\n' + value + '\n```' : value;
+    const body = /^\s+\|\s*$/m.test(value) && !value.includes('```') ? '```\n' + value + '\n```' : value;
     parts.push(`### ${title}\n\n${body}`);
   }
   return parts.join('\n\n');
@@ -226,45 +237,71 @@ export function parseQuestionBankMarkdown(
     }
   }
 
-  // 2. Dual-Answer Markdown format (## Q1... **2-Mark Short Answer:**... **5-Mark Comprehensive Long Answer:**)
-  if (/##\s*Q\d+[\.:\s]/i.test(trimmed) && /\*\*2-Mark Short Answer:\*\*/i.test(trimmed)) {
-    const qBlocks = trimmed.split(/\n(?=##\s+Q\d+[\.:\s])/i);
+  // 2. Structured Mark-Based Markdown format (## Q1 / ## Question 1 ... 2-Mark ... 5-Mark ... 10-Mark)
+  const hasQuestionHeaders = /#{1,6}\s*(?:Q\d+|Question\s+\d+)[\.:\s]/i.test(trimmed);
+  const hasMarkHeadings = /(?:###?\s*|\*\*)\s*(?:2|5|10)[- ]?Marks?/i.test(trimmed) ||
+                          /(?:###?\s*|\*\*)\s*(?:2|5|10)M\b/i.test(trimmed);
+
+  if (hasQuestionHeaders && hasMarkHeadings) {
+    const qBlocks = trimmed.split(/\n(?=#{1,6}\s*(?:Q\d+|Question\s+\d+)[\.:\s])/i);
     const dualEntries: QuestionBankEntry[] = [];
 
     qBlocks.forEach((block, idx) => {
-      const qMatch = block.match(/^##\s+Q\d+[\.:\s]+([^\n]+)/i);
+      const qMatch = block.match(/^#{1,6}\s*(?:Q\d+|Question\s+\d+)[\.:\s]+([^\n]+)/i);
       if (!qMatch) return;
       const question = ensureQuestionMark(qMatch[1].trim());
 
+      const m2 = block.match(/(?:^|\n)(?:###?\s*|\*\*)\s*2[- ]?Marks?(?:\s+Short)?(?:\s+Answer)?(?::|\*\*)?[^\n]*/i);
+      const m5 = block.match(/(?:^|\n)(?:###?\s*|\*\*)\s*5[- ]?Marks?(?:\s+Comprehensive)?(?:\s+Long)?(?:\s+Answer)?(?::|\*\*)?[^\n]*/i);
+      const m10 = block.match(/(?:^|\n)(?:###?\s*|\*\*)\s*10[- ]?Marks?(?:\s+Comprehensive)?(?:\s+(?:Essay|Long|Answer))?(?::|\*\*)?[^\n]*/i);
+
+      // Collect all mark markers found in the block
+      const markers: { tier: 'short' | 'long' | 'ten'; start: number; contentStart: number }[] = [];
+      if (m2 && m2.index !== undefined) markers.push({ tier: 'short', start: m2.index, contentStart: m2.index + m2[0].length });
+      if (m5 && m5.index !== undefined) markers.push({ tier: 'long', start: m5.index, contentStart: m5.index + m5[0].length });
+      if (m10 && m10.index !== undefined) markers.push({ tier: 'ten', start: m10.index, contentStart: m10.index + m10[0].length });
+      
+      markers.sort((a, b) => a.start - b.start);
+
+      // End of answer content in this block: up to --- or end of block
+      const dividerMatch = block.match(/\n---(?:\n|$)/);
+      const blockEnd = dividerMatch && dividerMatch.index !== undefined ? dividerMatch.index : block.length;
+
       let shortAnswer = '';
-      const shortMatch = block.match(/\*\*2-Mark Short Answer:\*\*([\s\S]*?)(?=\*\*5-Mark Comprehensive Long Answer:\*\*|---|##|$)/i);
-      if (shortMatch) {
-        shortAnswer = shortMatch[1].trim();
-      }
-
       let longAnswer = '';
-      const longMatch = block.match(/\*\*5-Mark Comprehensive Long Answer:\*\*([\s\S]*?)(?=\*\*10-Mark|---|##|$)/i);
-      if (longMatch) {
-        longAnswer = longMatch[1].trim();
-      }
-
       let tenMarkAnswer = '';
-      const tenMatch = block.match(/\*\*10-Mark(?:[\w\s]+)?:\*\*([\s\S]*?)(?=---|##|$)/i);
-      if (tenMatch) {
-        tenMarkAnswer = tenMatch[1].trim();
+
+      if (markers.length > 0) {
+        for (let mIdx = 0; mIdx < markers.length; mIdx++) {
+          const cur = markers[mIdx];
+          const nextStart = mIdx + 1 < markers.length ? markers[mIdx + 1].start : blockEnd;
+          const text = block.slice(cur.contentStart, nextStart).trim();
+          if (cur.tier === 'short') shortAnswer = text;
+          else if (cur.tier === 'long') longAnswer = text;
+          else if (cur.tier === 'ten') tenMarkAnswer = text;
+        }
+      } else {
+        const mAns = block.match(/(?:^|\n)(?:###?\s*|\*\*)\s*(?:Detailed Walkthrough\s+)?(?:Answer|Solution|Explanation|Model Answer)[:\s\*]*[^\n]*/i);
+        if (mAns && mAns.index !== undefined) {
+          const ansText = block.slice(mAns.index + mAns[0].length, blockEnd).trim();
+          shortAnswer = ansText;
+          longAnswer = ansText;
+        }
       }
 
-      dualEntries.push({
-        id: `${subjectId}-${chapterNumber}-${idx}`,
-        subjectId,
-        subjectName,
-        chapterNumber,
-        chapterName,
-        question,
-        shortAnswer,
-        longAnswer: longAnswer || shortAnswer,
-        tenMarkAnswer: tenMarkAnswer || undefined,
-      });
+      if (shortAnswer || longAnswer || tenMarkAnswer) {
+        dualEntries.push({
+          id: `${subjectId}-${chapterNumber}-${idx}`,
+          subjectId,
+          subjectName,
+          chapterNumber,
+          chapterName,
+          question,
+          shortAnswer: shortAnswer || longAnswer,
+          longAnswer: longAnswer || shortAnswer,
+          tenMarkAnswer: tenMarkAnswer || undefined,
+        });
+      }
     });
 
     if (dualEntries.length > 0) {

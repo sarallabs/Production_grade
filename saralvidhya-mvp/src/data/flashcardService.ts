@@ -1,7 +1,7 @@
-import { 
-  API_BASE_URL, 
-  BACKEND_SUBJECTS, 
-  LEVEL_TO_PERSONA, 
+import {
+  API_BASE_URL,
+  BACKEND_SUBJECTS,
+  LEVEL_TO_PERSONA,
   DifficultyLevel,
   getManifest,
   getChapterDir,
@@ -10,6 +10,8 @@ import {
   GCS_BACKEND_SUBJECTS,
   GCS_API_BASE,
   GCS_SUBJECT_MAP,
+  resolveSubjectId,
+  getRegistryChapterData,
 } from './manifestService';
 
 export interface FlashCard {
@@ -17,6 +19,7 @@ export interface FlashCard {
   front: string;
   back: string;
   infographicUrl?: string;
+  mermaidDiagram?: string;
 }
 
 export interface FlashCardSet {
@@ -25,79 +28,170 @@ export interface FlashCardSet {
   flashcards: FlashCard[];
 }
 
+function mapRawCards(
+  cards: any[],
+  chapterFiles: Record<string, string>,
+  subjectPath?: string,
+  chDir?: string,
+  normLevel: DifficultyLevel = 'intermediate',
+  localBase?: string
+): FlashCard[] {
+  return cards.map((c: any, index: number) => {
+    let infoUrl = c.infographicUrl || c.infographic || c.image || c.infographic_ref;
+    if (!infoUrl && c.img) {
+      const m = typeof c.img === 'string' ? c.img.match(/!\[.*?\]\((.+?)\)/) : null;
+      infoUrl = m
+        ? m[1].trim()
+        : typeof c.img === 'string' && c.img.startsWith('data:')
+        ? c.img.trim()
+        : undefined;
+    }
+    for (const field of [c.answer, c.back, c.definition]) {
+      if (!infoUrl && typeof field === 'string') {
+        const m =
+          field.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i) ||
+          field.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
+        if (m) infoUrl = m[1].trim();
+      }
+    }
+
+    // Conventional per-card infographic path when card JSON does not inline infographicUrl
+    const rawCardId = String(c.card_id || c.id || '');
+    const idMatch = rawCardId.match(/(beginner|intermediate|advanced)_q0*(\d+)/i);
+    const cardLevel = idMatch ? idMatch[1].toLowerCase() : normLevel;
+    const cardNum = idMatch ? parseInt(idMatch[2], 10) : index + 1;
+    const isFcId = /^FC-/i.test(rawCardId);
+    const fcExt = chDir === 'chapter_04' ? 'jpg' : 'webp';
+    const conventionalRel = isFcId
+      ? `practice/flashcards/images/${rawCardId}_${normLevel}.${fcExt}`
+      : `practice/flashcards/images/card_${cardLevel}_${cardNum}.webp`;
+
+    if (!infoUrl) {
+      const signedMatch =
+        chapterFiles[conventionalRel] ||
+        (isFcId
+          ? chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.webp`] ||
+            chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.jpg`] ||
+            chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.png`]
+          : chapterFiles[`practice/flashcards/images/card_${cardLevel}_${cardNum}.png`] ||
+            chapterFiles[`practice/flashcards/images/card_${cardLevel}_${cardNum}.jpg`]);
+      if (signedMatch) {
+        infoUrl = signedMatch;
+      } else if (subjectPath && chDir) {
+        infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${conventionalRel}`;
+      } else if (localBase && chDir) {
+        infoUrl = `${import.meta.env.BASE_URL || '/'}${localBase.replace(/^\//, '')}/${chDir}/${conventionalRel}`.replace(
+          /\/\//g,
+          '/'
+        );
+      }
+    }
+
+    // Resolve relative paths via chapterFiles signed URLs first
+    if (
+      infoUrl &&
+      !infoUrl.startsWith('http://') &&
+      !infoUrl.startsWith('https://') &&
+      !infoUrl.startsWith('data:')
+    ) {
+      const cleanRel = infoUrl.replace(/^\.?\//, '');
+      const signedCandidate =
+        chapterFiles[`practice/flashcards/${cleanRel}`] ||
+        chapterFiles[cleanRel] ||
+        chapterFiles[`media/${cleanRel}`];
+      if (signedCandidate) {
+        infoUrl = signedCandidate;
+      } else if (infoUrl.startsWith('/api/')) {
+        infoUrl = `${GCS_API_BASE}${infoUrl}`;
+      } else if (infoUrl.startsWith('/generated_resources/')) {
+        infoUrl = `${import.meta.env.BASE_URL || '/'}${infoUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
+      } else if (subjectPath && chDir) {
+        const cloudRel = cleanRel.startsWith('images/')
+          ? `practice/flashcards/${cleanRel}`
+          : cleanRel;
+        infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cloudRel}`;
+      }
+    }
+
+    return {
+      id: c.id || c.card_id,
+      front: c.front ?? c.question ?? c.term ?? '',
+      back: c.back ?? c.answer ?? c.definition ?? '',
+      infographicUrl: infoUrl,
+      mermaidDiagram: c.mermaid_diagram || c.mermaid || undefined,
+    };
+  });
+}
+
 export async function getFlashcards(
   subject: string,
   chapterNumber: number,
   level: DifficultyLevel = 'intermediate',
-  videoDir?: string,
+  videoDir?: string
 ): Promise<FlashCard[]> {
   await getManifest();
 
-  // ── GCS Cloud Run subjects ──
-  if (GCS_BACKEND_SUBJECTS.has(subject)) {
-    const subjectPath = GCS_SUBJECT_MAP[subject];
-    const chDir = getChapterDir(subject, chapterNumber);
-    const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/practice/flashcards?persona=${level}`;
+  const normSubject = resolveSubjectId(subject) || subject;
+  const lvlStr = (level as string) || 'intermediate';
+  const normLevel: DifficultyLevel =
+    lvlStr === 'beginner' || lvlStr === 'easy' || lvlStr === 'naive'
+      ? 'beginner'
+      : lvlStr === 'advanced' || lvlStr === 'hard' || lvlStr === 'above_average'
+      ? 'advanced'
+      : 'intermediate';
+
+  const localBase = getLocalSubjectBaseUrl(normSubject);
+  const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
+  const chDir = getChapterDir(normSubject, chapterNumber);
+
+  // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+  const chapterFiles = regCh?.files || {};
+  const signedDeckUrl =
+    chapterFiles[`practice/flashcards/${normLevel}.json`] ||
+    chapterFiles['practice/flashcards/revise.json'] ||
+    chapterFiles['practice/flashcards/flashcards.json'];
+
+  if (signedDeckUrl) {
+    try {
+      const res = await fetch(signedDeckUrl);
+      if (res.ok) {
+        const data = await res.json();
+        const cards = Array.isArray(data) ? data : data.flashcards || data.cards || [];
+        if (cards.length > 0) {
+          return mapRawCards(cards, chapterFiles, subjectPath, chDir, normLevel, localBase);
+        }
+      }
+    } catch (e) {
+      console.warn('[Registry] Failed fetching signed flashcard deck', e);
+    }
+  }
+
+  // 2. Cloud Run /api/content fallback
+  const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
+  if (isGcs) {
+    const url = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/practice/flashcards?persona=${normLevel}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       const res = await fetch(url, { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
-        const cards = Array.isArray(data) ? data : (data.flashcards || data.cards || []);
+        const cards = Array.isArray(data) ? data : data.flashcards || data.cards || [];
         if (cards.length > 0) {
-          return cards.map((c: any) => {
-            let infoUrl = c.infographicUrl || c.infographic || c.image;
-            if (!infoUrl && c.img) {
-              const m = typeof c.img === 'string' ? c.img.match(/!\[.*?\]\((.+?)\)/) : null;
-              infoUrl = m ? m[1].trim() : (typeof c.img === 'string' && c.img.startsWith('data:') ? c.img.trim() : undefined);
-            }
-            if (!infoUrl && typeof c.answer === 'string') {
-              const m = c.answer.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
-                     || c.answer.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
-              if (m) infoUrl = m[1].trim();
-            }
-            if (!infoUrl && typeof c.back === 'string') {
-              const m = c.back.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
-                     || c.back.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
-              if (m) infoUrl = m[1].trim();
-            }
-            if (!infoUrl && typeof c.definition === 'string') {
-              const m = c.definition.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i)
-                     || c.definition.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
-              if (m) infoUrl = m[1].trim();
-            }
-            // Resolve relative URLs to GCS_API_BASE
-            if (infoUrl && !infoUrl.startsWith('http://') && !infoUrl.startsWith('https://') && !infoUrl.startsWith('data:')) {
-              if (infoUrl.startsWith('/api/')) {
-                infoUrl = `${GCS_API_BASE}${infoUrl}`;
-              } else if (infoUrl.includes('generated_infographics')) {
-                const cleanRel = infoUrl.replace(/^.*generated_infographics\//, 'generated_infographics/');
-                infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cleanRel}`;
-              } else if (infoUrl.startsWith('/')) {
-                infoUrl = `${GCS_API_BASE}${infoUrl}`;
-              } else {
-                infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${infoUrl}`;
-              }
-            }
-            return {
-              front: c.front ?? c.question ?? c.term ?? '',
-              back:  c.back  ?? c.answer  ?? c.definition ?? '',
-              infographicUrl: infoUrl,
-            };
-          });
+          return mapRawCards(cards, chapterFiles, subjectPath, chDir, normLevel, localBase);
         }
       }
     } catch (e) {
       console.warn('[GCS] Failed or timed out fetching flashcards', url, e);
     }
-    // Fall through to local static files
+    return [];
   }
 
   if (BACKEND_SUBJECTS.has(subject)) {
     try {
-      const persona = LEVEL_TO_PERSONA[level] || 'Intermediate';
+      const persona = LEVEL_TO_PERSONA[normLevel] || 'Intermediate';
       const res = await fetch(`${API_BASE_URL}/folders/${subject}/flashcards?persona=${persona}`);
       if (res.ok) {
         const data = await res.json();
@@ -113,27 +207,13 @@ export async function getFlashcards(
     }
   }
 
-  const chDir = getChapterDir(subject, chapterNumber);
-  const localBase = getLocalSubjectBaseUrl(subject);
   const subjectBase = getSubjectBaseUrl(subject);
-  const lvlStr = (level as string) || 'intermediate';
-  const normLevel: DifficultyLevel =
-    lvlStr === 'beginner' || lvlStr === 'easy' || lvlStr === 'naive'
-      ? 'beginner'
-      : lvlStr === 'advanced' || lvlStr === 'hard' || lvlStr === 'above_average'
-      ? 'advanced'
-      : 'intermediate';
 
-  const chDirsToTry = Array.from(new Set([
-    chDir,
-    `chapter_${String(chapterNumber).padStart(2, '0')}`,
-    `chapter_${chapterNumber}`,
-  ]));
+  const chDirsToTry = Array.from(
+    new Set([chDir, `chapter_${String(chapterNumber).padStart(2, '0')}`, `chapter_${chapterNumber}`])
+  );
 
-  const basesToTry = Array.from(new Set([
-    localBase,
-    subjectBase,
-  ]));
+  const basesToTry = Array.from(new Set([localBase, subjectBase]));
 
   const paths: string[] = [];
   for (const base of basesToTry) {
@@ -141,140 +221,36 @@ export async function getFlashcards(
       if (videoDir) {
         paths.push(
           `${base}/${ch}/${videoDir}/Learn/Flashcards/flashcards_${normLevel}.md`,
-          `${base}/${ch}/${videoDir}/Prepare/Flashcards/prep_flashcards.md`,
-          `${base}/${ch}/${videoDir}/Prepare/Flashcards/flashcards_prep_master.md`,
+          `${base}/${ch}/${videoDir}/Prepare/Flashcards/prep_flashcards.md`
         );
       }
       paths.push(
+        `${base}/${ch}/practice/flashcards/${normLevel}.json`,
         `${base}/${ch}/Learn/Flashcards/flashcards_${normLevel}.md`,
-        `${base}/${ch}/unit_1/Learn/Flashcards/flashcards_${normLevel}.md`,
         `${base}/${ch}/Prepare/Flashcards/prep_flashcards.md`,
-        `${base}/${ch}/Prepare/Flashcards/flashcards_prep_master.md`,
-        `${base}/${ch}/unit_1/Prepare/Flashcards/prep_flashcards.md`,
-        `${base}/${ch}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.json`,
-        `${base}/${ch}/Practice/Revise/Flashcards_Chapter/flashcards_revise_main.md`,
         `${base}/${ch}/${normLevel}/flashcards_${normLevel}.md`,
-        `${base}/${ch}/${normLevel}/flashcards.md`,
         `${base}/${ch}/${normLevel}/flashcards.json`,
-        `${base}/${ch}/flashcards.md`,
-        `${base}/${ch}/flashcards.json`,
-        `${base}/${ch}/prep_flashcards.md`,
+        `${base}/${ch}/flashcards.json`
       );
     }
   }
+
   for (const url of paths) {
     try {
       const res = await fetch(url, { cache: 'no-cache' });
       if (!res.ok) continue;
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('text/html')) continue;
-      let data = await res.text();
-      
-      const folderUrl = url.substring(0, url.lastIndexOf('/'));
-      data = data.replace(/!\[(.*?)\]\((.*?)\)/g, (match, alt, rawPath) => {
-        let fullUrl = rawPath;
-        if (!rawPath.startsWith('http://') && !rawPath.startsWith('https://') && !rawPath.startsWith('/') && !rawPath.startsWith('data:')) {
-          const parts = folderUrl.split('/').filter(Boolean);
-          const relParts = rawPath.split('/');
-          for (const part of relParts) {
-            const dec = decodeURIComponent(part);
-            if (dec === '.') continue;
-            if (dec === '..') {
-              parts.pop();
-            } else {
-              parts.push(dec);
-            }
-          }
-          fullUrl = '/' + parts.map((p) => encodeURIComponent(p)).join('/');
-        }
-        return `<!-- INFOGRAPHIC_URL:${fullUrl} -->`;
-      });
-
-      let cards: FlashCard[] | undefined;
-      
-      try {
-        const parsed = JSON.parse(data);
-        let rawCards = Array.isArray(parsed) ? parsed : (parsed.flashcards || parsed.cards || parsed.items || []);
-        cards = rawCards.map((c: any) => {
-          let infoUrl = c.image || c.infographic || c.infographicUrl || c.infographic_ref || undefined;
-          if (infoUrl && !infoUrl.startsWith('http') && !infoUrl.startsWith('/') && !infoUrl.startsWith('data:')) {
-            infoUrl = folderUrl + '/' + infoUrl;
-          }
-          return {
-            front: c.front || c.term || c.question || '',
-            back: c.back || c.definition || c.answer || '',
-            infographicUrl: infoUrl,
-          };
-        });
-      } catch (e) {
-        const jsonMatch = data.match(/```json\s*([\s\S]*?)\s*```/);
-        if (jsonMatch) {
-          try {
-            const parsed = JSON.parse(jsonMatch[1]);
-            let rawCards = Array.isArray(parsed) ? parsed : (parsed.flashcards || parsed.cards || parsed.items || []);
-            cards = rawCards.map((c: any) => {
-              let infoUrl = c.image || c.infographic || c.infographicUrl || c.infographic_ref || undefined;
-              if (infoUrl && !infoUrl.startsWith('http') && !infoUrl.startsWith('/') && !infoUrl.startsWith('data:')) {
-                infoUrl = folderUrl + '/' + infoUrl;
-              }
-              return {
-                front: c.front || c.term || c.question || '',
-                back: c.back || c.definition || c.answer || '',
-                infographicUrl: infoUrl,
-              };
-            });
-          } catch (e2) {}
-        }
-        
-        if (!cards?.length) {
-          const regex = /(?:\*\*(?:Q|Front):\*\*|###\s*Q:)\s*([\s\S]*?)\s*(?:\*\*(?:A|Back):\*\*|###\s*Ans:)\s*([\s\S]*?)(?=\n#{1,6}[ \t]+\S|\n---\s*|\n(?:\*\*(?:Q|Front):|###\s*Q:)|$)/g;
-          const matches = [...data.matchAll(regex)];
-          if (matches.length > 0) {
-            cards = matches.map(m => {
-              const front = m[1].trim();
-              let back = m[2].trim();
-              let infographicUrl: string | undefined;
-              const infoMatch = back.match(/<!-- INFOGRAPHIC_URL:([\s\S]*?) -->/);
-              if (infoMatch) {
-                infographicUrl = infoMatch[1].trim();
-                back = back.replace(infoMatch[0], '').trim();
-              } else {
-                const imgTagMatch = back.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
-                if (imgTagMatch) {
-                  infographicUrl = imgTagMatch[1];
-                  back = back.replace(imgTagMatch[0], '').trim();
-                }
-              }
-              const isPhysics = subject === 'anu_physics' || subject.includes('physics');
-              if (isPhysics) {
-                const lower = (infographicUrl || '').toLowerCase();
-                if (!infographicUrl || lower.includes('placeholder') || lower.includes('generated_infographics') || lower.includes('infographic_card') || lower.includes('dummy')) {
-                  const PHYSICS_REAL_INFOGRAPHICS = [
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Overview.png',
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/1.%20Klein-Gordon%20Equation/klein_gordon_infographic.png',
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/2.%20Difficulties%20of%20K-G/difficulties_infographic.png',
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/3.%20Dirac%20Equation/dirac_equation_infographic.png',
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/4.%20Hydrogen%20Atom/hydrogen_atom_infographic.png',
-                    '/generated_resources/Nagarjuna_University/physics/chapter_01/Learn/MindMaps/AQM%20Infographics%20VD-1/AQM_Mind_Map.png',
-                  ];
-                  const cardIdx = matches.indexOf(m);
-                  infographicUrl = PHYSICS_REAL_INFOGRAPHICS[(cardIdx >= 0 ? cardIdx : 0) % PHYSICS_REAL_INFOGRAPHICS.length];
-                }
-              }
-              back = back
-                .replace(
-                  /(?:^|\n)\s*>?\s*\*\*(?:Infographic Prompt|Difficulty|Type|Source|Source Reference|Bloom['’]s Level|Mindmap Depth|Mindmap Node|Mindmap Location|Node Depth|Sub-Topic|Topic):\*\*[\s\S]*$/gm,
-                  '',
-                )
-                .trim();
-              return { front, back, infographicUrl };
-            });
-          }
-        }
+      const data = await res.text();
+      const parsed = JSON.parse(data);
+      const rawCards = Array.isArray(parsed)
+        ? parsed
+        : parsed.flashcards || parsed.cards || parsed.items || [];
+      if (rawCards.length > 0) {
+        return mapRawCards(rawCards, chapterFiles, subjectPath, chDir, normLevel, localBase);
       }
-      
-      if (cards?.length) return cards;
     } catch {
+      // try next
     }
   }
   return [{ front: 'Error', back: 'Could not load flashcards.' }];

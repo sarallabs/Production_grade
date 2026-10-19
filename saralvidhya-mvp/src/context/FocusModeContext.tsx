@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export const FLOW_STEPS = ['welcome', 'youtube_links.md', 'podcast_script.md', 'flashcards', 'summary.md', 'detailed_view.md', 'assessment.md'] as const;
 export type FlowStep = typeof FLOW_STEPS[number];
@@ -9,7 +10,7 @@ export const FOCUS_STEP_LABELS = new Proxy<Record<number, string>>({}, {
     const index = Number(prop);
     if (isNaN(index)) return Reflect.get(target, prop);
 
-    const isMoocs = sessionStorage.getItem('sv_moocs_mode') === 'true';
+    const isMoocs = cloudStorage.getItem('sv_moocs_mode') === 'true';
     const labels = isMoocs
       ? {
           0: 'Welcome',
@@ -57,7 +58,7 @@ export function FocusModeProvider({ children }: { children: ReactNode }) {
     returnUrl: '/',
   });
 
-  const isMooc = sessionStorage.getItem('sv_moocs_mode') === 'true';
+  const isMooc = cloudStorage.getItem('sv_moocs_mode') === 'true';
   const flowSteps = isMooc
     ? ['welcome', 'youtube_links.md', 'podcast_script.md', 'flashcards', 'summary.md', 'detailed_view.md', 'assessment.md']
     : ['welcome', 'summary.md', 'detailed_view.md', 'flashcards', 'assessment.md'];

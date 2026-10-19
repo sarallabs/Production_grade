@@ -40,7 +40,7 @@ router.post(
   loginLimiter,
   tenantMiddleware,
   async (req: TenantRequest, res: Response) => {
-    const { password, email, studentId, displayName } = req.body || {};
+    const { password, email, studentId, displayName, userKey } = req.body || {};
     if (!password || typeof password !== 'string') {
       res.status(400).json({ error: 'Password is required' });
       return;
@@ -60,12 +60,15 @@ router.post(
       return;
     }
 
-    // Derive deterministic userId if email or studentId is provided; otherwise generate a unique student userId
-    const rawIdentity = (email || studentId || displayName || '').toString().trim().toLowerCase();
+    const sessionId = `s_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    // Derive deterministic userId if email, studentId, or userKey is provided; otherwise scope to unique sessionId
+    const rawIdentity = (email || studentId || userKey || displayName || '')
+      .toString()
+      .trim()
+      .toLowerCase();
     const userId = rawIdentity
       ? `u_${tenant.id}_${crypto.createHash('sha256').update(rawIdentity).digest('hex').slice(0, 16)}`
-      : `u_${tenant.id}_default_student`;
-    const sessionId = `s_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      : `u_${tenant.id}_${sessionId.replace(/^s_/, '').slice(0, 16)}`;
 
     const token = createSessionToken({
       tenantId: tenant.id,

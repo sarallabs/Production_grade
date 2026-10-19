@@ -1,155 +1,175 @@
-import React, { useRef, useCallback, useEffect } from "react";
+import React, { useRef, useEffect } from "react";
 import MarkdownView from "@/components/MarkdownView";
+import {
+  registerReadRoot,
+  invalidateReadMap,
+  getReadSnapshot,
+} from "@/utils/readAloudDom";
 
 /**
- * High-performance component to highlight currently read words when using text-to-speech.
- * Uses a non-destructive floating overlay and CSS Custom Highlight API.
- * Never destroys text nodes or runs TreeWalker repeatedly, eliminating freezing and layout thrashing.
+ * Highlights the word currently being read aloud.
+ *
+ * `startWord` / `endWord` are GLOBAL word indices into the read-aloud DOM snapshot
+ * (see utils/readAloudDom). The speech text is generated from the very same snapshot,
+ * so the index always lands on the word being spoken. Several instances (one per
+ * section) can coexist; only the instance that contains the target word draws.
  */
-export default function ReadingHighlightView({
+function ReadingHighlightViewInner({
   content,
   active,
   startWord,
   endWord,
+  isPurpleTheme = false,
 }: {
   content: string;
   active: boolean;
   startWord: number;
   endWord: number;
+  isPurpleTheme?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
-  const lastScrolledWordRef = useRef<number>(-1);
+  const lastScrollTimeRef = useRef<number>(0);
+  const lastScrollWordRef = useRef<number>(-1);
+  const userScrollPauseUntilRef = useRef<number>(0);
 
-  // Pre-built map: wordIndex → { node, offset, length }
-  const wordMapRef = useRef<
-    Array<{ node: Text; offset: number; length: number }>
-  >([]);
-  const mapBuiltRef = useRef(false);
-
-  // Build the word map ONCE when content renders
-  const buildWordMap = useCallback(() => {
+  // Register this container as a read-aloud source (document order handled by the util)
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    wordMapRef.current = [];
-    mapBuiltRef.current = false;
-
-    // Collect all text nodes in document order
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let n: Text | null;
-    while ((n = walker.nextNode() as Text | null)) {
-      if (n.textContent && n.textContent.trim().length > 0) {
-        textNodes.push(n);
-      }
-    }
-
-    // Split each text node into words, recording exact character boundaries
-    const wordRegex = /\S+/g;
-    for (const node of textNodes) {
-      const text = node.textContent || "";
-      let m: RegExpExecArray | null;
-      wordRegex.lastIndex = 0;
-      while ((m = wordRegex.exec(text)) !== null) {
-        wordMapRef.current.push({ node, offset: m.index, length: m[0].length });
-      }
-    }
-    mapBuiltRef.current = true;
+    return registerReadRoot(el);
   }, []);
 
-  // Build map immediately when content changes
+  // Markdown may finish rendering a tick after mount (images, tables) — refresh the map
   useEffect(() => {
-    buildWordMap();
-  }, [content, buildWordMap]);
+    invalidateReadMap();
+    const t = setTimeout(invalidateReadMap, 120);
+    return () => clearTimeout(t);
+  }, [content]);
 
-  // Update highlight position without DOM destruction
+  // Pause auto-scroll while the user is scrolling/touching
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollParent =
+      (container.closest(".st-mainview") as HTMLElement | null) || window;
+    const onUser = () => {
+      userScrollPauseUntilRef.current = Date.now() + 3500;
+    };
+    scrollParent.addEventListener("wheel", onUser, { passive: true });
+    scrollParent.addEventListener("touchmove", onUser, { passive: true });
+    return () => {
+      scrollParent.removeEventListener("wheel", onUser);
+      scrollParent.removeEventListener("touchmove", onUser);
+    };
+  }, []);
+
   useEffect(() => {
     const overlay = overlayRef.current;
     const container = containerRef.current;
+    const hide = () => {
+      if (overlay) overlay.style.display = "none";
+    };
 
     if (!active || startWord < 0) {
-      if (overlay) overlay.style.display = "none";
+      hide();
       if (typeof Highlight !== "undefined" && CSS.highlights) {
         CSS.highlights.delete("reading-active-word");
       }
       return;
     }
+    if (!container || !overlay) return;
 
-    if (!mapBuiltRef.current) {
-      buildWordMap();
+    let snap = getReadSnapshot();
+    let entry = snap.words[Math.min(startWord, snap.words.length - 1)];
+    // Stale snapshot (content re-rendered): rebuild once
+    if (entry && !entry.node.isConnected) {
+      invalidateReadMap();
+      snap = getReadSnapshot();
+      entry = snap.words[Math.min(startWord, snap.words.length - 1)];
     }
-
-    const map = wordMapRef.current;
-    if (!map.length || !container) return;
-
-    const idx = Math.min(startWord, map.length - 1);
-    if (idx < 0 || idx >= map.length) return;
-
-    const startEntry = map[idx];
-    if (!startEntry || !startEntry.node.parentNode) return;
-
-    const endIdx = Math.max(idx, Math.min(endWord, map.length - 1));
-    const endEntry = endIdx === idx ? startEntry : map[endIdx];
+    // Word lives in another section's view — that view draws it
+    if (!entry || !container.contains(entry.node)) {
+      hide();
+      return;
+    }
 
     try {
       const range = document.createRange();
-      range.setStart(startEntry.node, Math.min(startEntry.offset, startEntry.node.length));
-      range.setEnd(
-        endEntry.node,
-        Math.min(endEntry.offset + endEntry.length, endEntry.node.length)
-      );
+      range.setStart(entry.node, Math.min(entry.offset, entry.node.length));
+      range.setEnd(entry.node, Math.min(entry.offset + entry.length, entry.node.length));
 
-      // 1. Native CSS Custom Highlight API (zero layout recalculation)
       if (typeof Highlight !== "undefined" && CSS.highlights) {
         CSS.highlights.set("reading-active-word", new Highlight(range));
       }
 
-      // 2. High-performance non-destructive floating overlay box
-      const rect = range.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0 && overlay) {
-        const containerRect = container.getBoundingClientRect();
-        const top = rect.top - containerRect.top;
-        const left = rect.left - containerRect.left;
+      let rect = range.getBoundingClientRect();
+      if ((rect.width <= 0 || rect.height <= 0) && entry.node.parentElement) {
+        rect = entry.node.parentElement.getBoundingClientRect();
+      }
+      if (rect.width <= 0 || rect.height <= 0) {
+        hide();
+        return;
+      }
 
-        overlay.style.display = "block";
-        overlay.style.top = `${top - 1}px`;
-        overlay.style.left = `${left - 2}px`;
-        overlay.style.width = `${rect.width + 4}px`;
-        overlay.style.height = `${rect.height + 2}px`;
+      const cRect = container.getBoundingClientRect();
+      overlay.style.display = "block";
+      overlay.style.transform = `translate3d(${rect.left - cRect.left - 2}px, ${rect.top - cRect.top - 1}px, 0)`;
+      overlay.style.width = `${rect.width + 4}px`;
+      overlay.style.height = `${rect.height + 2}px`;
 
-        // 3. Smooth scroll within actual scroll parent when word drifts (throttled)
-        if (Math.abs(startWord - lastScrolledWordRef.current) >= 2) {
-          lastScrolledWordRef.current = startWord;
-          let scrollParent: HTMLElement | null = container.parentElement;
-          while (scrollParent && scrollParent !== document.body) {
-            const style = window.getComputedStyle(scrollParent);
-            if (style.overflowY === "auto" || style.overflowY === "scroll") break;
-            scrollParent = scrollParent.parentElement;
+      // ── Auto-scroll: keep the spoken word comfortably in view ──
+      const now = Date.now();
+      if (now < userScrollPauseUntilRef.current) return;
+
+      let scrollParent: HTMLElement | null = container.closest(".st-mainview") as HTMLElement | null;
+      if (!scrollParent) {
+        let p: HTMLElement | null = container.parentElement;
+        while (p && p !== document.body && p !== document.documentElement) {
+          const oy = window.getComputedStyle(p).overflowY;
+          if (oy === "auto" || oy === "scroll") {
+            scrollParent = p;
+            break;
           }
-          if (scrollParent) {
-            const sRect = scrollParent.getBoundingClientRect();
-            const relY = rect.top - sRect.top;
-            if (relY < sRect.height * 0.25 || relY > sRect.height * 0.70) {
-              const targetScroll = scrollParent.scrollTop + relY - sRect.height * 0.45;
-              scrollParent.scrollTo({ top: targetScroll, behavior: "smooth" });
-            }
-          }
+          p = p.parentElement;
         }
       }
+      if (!scrollParent) return;
+
+      const sRect = scrollParent.getBoundingClientRect();
+      const relY = rect.top - sRect.top;
+      const nearBottom = relY > sRect.height * 0.8;
+      const offTop = relY < 0;
+      // Throttle, and ignore tiny index changes so table rows never cause twitching
+      if (
+        (nearBottom || offTop) &&
+        now - lastScrollTimeRef.current > 1200 &&
+        startWord !== lastScrollWordRef.current
+      ) {
+        lastScrollTimeRef.current = now;
+        lastScrollWordRef.current = startWord;
+        scrollParent.scrollTo({
+          top: scrollParent.scrollTop + relY - sRect.height * 0.3,
+          behavior: "smooth",
+        });
+      }
     } catch {
-      // Range calculation fallback
+      /* range may be invalid mid re-render; next tick recovers */
     }
-  }, [active, startWord, endWord, buildWordMap]);
+  }, [active, startWord, endWord]);
 
   return (
     <div ref={containerRef} style={{ position: "relative" }}>
       <div
         ref={overlayRef}
-        className="reading-highlight-overlay"
+        className={`reading-highlight-overlay${isPurpleTheme ? " is-purple" : ""}`}
         style={{ display: "none" }}
         aria-hidden="true"
       />
-      <MarkdownView content={content} />
+      <MarkdownView content={content} isPurpleTheme={isPurpleTheme} />
     </div>
   );
 }
+
+const ReadingHighlightView = React.memo(ReadingHighlightViewInner);
+export default ReadingHighlightView;

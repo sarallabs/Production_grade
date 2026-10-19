@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * LeaderboardView component
@@ -22,7 +23,7 @@ export default function LeaderboardView({ subjectId }: { subjectId: string }) {
     // Sum points from storage
     for (let i = 1; i <= 15; i++) {
       const scoreKey = `ekam_quiz_score_${subjectId}_${i}`;
-      const scoreRaw = localStorage.getItem(scoreKey);
+      const scoreRaw = cloudStorage.getItem(scoreKey);
       if (scoreRaw) myTotalPoints += parseInt(scoreRaw, 10);
     }
 

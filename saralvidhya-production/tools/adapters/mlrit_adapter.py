@@ -46,62 +46,72 @@ VIDEOS = [
         "id": "vid_dbms_01",
         "title": "Part 1: Database System Concepts & Architecture",
         "provider": "youtube",
-        "videoId": "3C5rpBM1bXU",
-        "thumbnail": "media/hero.png",
-        "duration": "15:30min",
-        "durationSeconds": 930,
+        "videoId": "lBf1H_J6tj4",
+        "duration": "16:20min",
+        "durationSeconds": 980,
         "topics": [
             "Database Fundamentals & 3-Schema Engine Architecture",
             "Data Independence (Logical vs Physical) & DBMS Engine Components",
-            "Database Users, DBA Roles & System Environment",
+            "Database Users, DBA Roles & System Environment"
         ],
-        "order": 1,
+        "order": 1
     },
     {
         "id": "vid_dbms_02",
         "title": "Part 2: Entity-Relationship (ER) & Extended ER Modeling",
         "provider": "youtube",
-        "videoId": "_UATsTUW7ck",
-        "thumbnail": "media/hero.png",
-        "duration": "15:30min",
-        "durationSeconds": 930,
+        "videoId": "mYWnYfsHQoQ",
+        "duration": "15:12min",
+        "durationSeconds": 912,
         "topics": [
             "Entity Types, Attributes, Keys & Relationship Cardinalities",
             "Weak Entities, Identifying Relationships & Participation Constraints",
-            "Advanced ER & Extended ER (EER) Specialization/Generalization",
+            "Advanced ER & Extended ER (EER) Specialization/Generalization"
         ],
-        "order": 2,
+        "order": 2
     },
     {
         "id": "vid_dbms_03",
         "title": "Part 3: Relational Model & Integrity Constraints",
         "provider": "youtube",
-        "videoId": "lEVbyiGNaIk",
-        "thumbnail": "media/hero.png",
-        "duration": "15:30min",
-        "durationSeconds": 930,
+        "videoId": "JA0_3WDjasY",
+        "duration": "15:52min",
+        "durationSeconds": 952,
         "topics": [
             "Relational Model Foundations, Domains & Relation Schemas",
             "Superkeys, Candidate Keys, Primary Keys & Foreign Key Rules",
-            "Domain, Entity Integrity & Referential Integrity Constraints",
+            "Domain, Entity Integrity & Referential Integrity Constraints"
         ],
-        "order": 3,
+        "order": 3
     },
     {
         "id": "vid_dbms_04",
         "title": "Part 4: Logical Database Design, SQL Views & Schema Evolution",
         "provider": "youtube",
-        "videoId": "UJutdBotS_I",
-        "thumbnail": "media/hero.png",
-        "duration": "15:30min",
-        "durationSeconds": 930,
+        "videoId": "Cmc0E1CMa3A",
+        "duration": "3:59min",
+        "durationSeconds": 239,
         "topics": [
             "Logical Database Design: 7-Step ER-to-Relational Schema Translation",
             "Mapping Weak Entities, M:N Relationships & EER Hierarchies",
-            "Relational Querying Foundations, SQL Views & Schema Evolution",
+            "Relational Querying Foundations, SQL Views & Schema Evolution"
         ],
-        "order": 4,
+        "order": 4
     },
+    {
+        "id": "vid_dbms_complete",
+        "title": "DBMS Complete Lecture: Database System Concepts, ER Model & Relational Design",
+        "provider": "youtube",
+        "videoId": "EQl-5nKXme0",
+        "duration": "51:23min",
+        "durationSeconds": 3083,
+        "topics": [
+            "Database Fundamentals & 3-Schema Engine Architecture",
+            "Conceptual Database Design, ER & Extended ER (EER) Modeling",
+            "Relational Model, Integrity Constraints, 7-Step Mapping & SQL Views"
+        ],
+        "order": 5
+    }
 ]
 
 CHAPTER = {

@@ -16,7 +16,8 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Ekam@2026') {
+    const expertPass = (import.meta as any).env?.VITE_EXPERT_PASSWORD || '';
+    if (expertPass && password === expertPass) {
       sessionStorage.setItem('expert_access', 'true');
       onLogin();
     } else {

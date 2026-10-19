@@ -116,7 +116,7 @@ export async function fetchAndParseFirst(
               explanation: explanationText,
               videoTime: 0,
             };
-          }).filter((q: AssessmentQuestion) => q.q && q.options.length > 0);
+          }).filter((q: AssessmentQuestion) => q.q && ('options' in q ? (q as any).options.length > 0 : true));
 
           if (mapped.length > 0) return mapped;
         }

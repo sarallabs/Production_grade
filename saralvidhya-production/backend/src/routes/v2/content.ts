@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import path from 'path';
 import { tenantMiddleware } from '../../middleware/tenant.js';
 import { requireSession, AuthenticatedRequest } from '../../middleware/requireSession.js';
 import {
@@ -72,27 +73,8 @@ router.get(
         return;
       }
 
-      // Generate signed URLs for files in this chapter version
-      const signedFiles: Record<string, string> = {};
-      const chapterFiles: Record<string, string> = {};
-      const chPrefix = `${subjectId}/${chapterId}/`;
-
-      if (chapter.files) {
-        const fileKeys = Object.keys(chapter.files);
-        const signedPromises = fileKeys.map(async (key) => {
-          const fileEntry = chapter.files![key];
-          const gcsPath = `${tenant.storage.prefix}/${fileEntry.path.replace(/^\/+/, '')}`;
-          try {
-            const signed = await getSignedUrlForFile(gcsPath, 60);
-            signedFiles[key] = signed;
-            const relKey = key.startsWith(chPrefix) ? key.substring(chPrefix.length) : key;
-            chapterFiles[relKey] = signed;
-          } catch (e) {
-            console.warn(`[Content] Failed signing URL for ${gcsPath}:`, e);
-          }
-        });
-        await Promise.all(signedPromises);
-      }
+      const signedFiles: Record<string, string> = chapter.signedFiles || {};
+      const chapterFiles: Record<string, string> = chapter.chapterFiles || {};
 
       res.setHeader('Cache-Control', 'private, max-age=60');
       res.json({
@@ -126,20 +108,28 @@ router.get(
  */
 router.get('/:tenant/signed-url', async (req: AuthenticatedRequest, res: Response) => {
   const tenant = req.tenant!;
-  const filePath = ((req.query.path as string) || '').trim();
+  const rawPath = ((req.query.path as string) || '').trim();
 
-  if (!filePath) {
+  if (!rawPath) {
     res.status(400).json({ error: 'File path query parameter is required' });
     return;
   }
 
+  const normalizedPath = path.posix.normalize(rawPath.replace(/\\/g, '/'));
+
   // Prevent path traversal outside tenant prefix
-  if (filePath.includes('..') || filePath.startsWith('/')) {
+  if (
+    !normalizedPath ||
+    normalizedPath === '.' ||
+    normalizedPath.includes('..') ||
+    normalizedPath.startsWith('/') ||
+    normalizedPath.includes('\0')
+  ) {
     res.status(400).json({ error: 'Invalid file path' });
     return;
   }
 
-  const gcsPath = `${tenant.storage.prefix}/${filePath}`;
+  const gcsPath = `${tenant.storage.prefix}/${normalizedPath}`;
   try {
     const signedUrl = await getSignedUrlForFile(gcsPath, 30);
     res.json({ signedUrl, expiresInMinutes: 30 });

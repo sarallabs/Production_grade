@@ -131,33 +131,6 @@ export const SUBJECT_METADATA: Record<string, SubjectInfo> = {
       'What is the primary goal of brand equity evaluation in modern marketing?',
     ],
   },
-  ento_131: {
-    id: 'ento_131',
-    name: 'Fundamentals of Entomology',
-    code: 'ENTO-131',
-    professorName: 'Dr. Cherukuri Sreenivasa Rao',
-    professorTitle: 'Dean of Agriculture(I/c)',
-    professorAvatar: '/prof-rao.jpg',
-    university: 'Saral Vidhya',
-    units: [
-      'Unit 1: Insect Digestive System',
-      'Unit 2: Insect Physiology & Development',
-      'Unit 3: Insect Classification & Taxonomy',
-      'Unit 4: Ecology & Behavior of Insects',
-      'Unit 5: Economic Entomology & Pest Management',
-    ],
-    fallbackOptions: [
-      'Foregut (Stomodeum)',
-      'Midgut (Mesenteron)',
-      'Hindgut (Proctodeum)',
-      'Malpighian tubules',
-    ],
-    defaultQuestions: [
-      'Which part of the insect digestive system is primarily responsible for nutrient absorption?',
-      'What is the function of the peritrophic membrane in the insect midgut?',
-      'Which structures are the primary excretory organs in insects?',
-    ],
-  },
 };
 
 const INITIAL_AUTO_MATRIX: MatrixRow[] = [
@@ -221,12 +194,8 @@ export default function ExaminerConsole() {
 
   // Subject and Chapter selection
   const initialSub = searchParams.get('sId') || searchParams.get('subjectId') || 'anu_physics';
-  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(
-    SUBJECT_METADATA[initialSub] ? initialSub : 'anu_physics'
-  );
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>(initialSub);
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(4);
-
-  const activeSubjectInfo = SUBJECT_METADATA[selectedSubjectId] || SUBJECT_METADATA.anu_physics;
 
   // Mode Selection: 'auto' | 'manual' | null (No default selection; hidden until user picks)
   const [mode, setMode] = useState<'auto' | 'manual' | null>(null);
@@ -249,6 +218,20 @@ export default function ExaminerConsole() {
   }, [totalQuestions]);
 
   const [availableSubjects, setAvailableSubjects] = useState<CatalogSubject[]>([]);
+
+  const matchedCatalogSub = availableSubjects.find(s => s.id === selectedSubjectId) as any;
+  const activeSubjectInfo: any = SUBJECT_METADATA[selectedSubjectId] || (matchedCatalogSub ? {
+    id: matchedCatalogSub.id,
+    name: matchedCatalogSub.name,
+    code: matchedCatalogSub.id.toUpperCase().replace(/_/g, '-'),
+    professorName: matchedCatalogSub.professorName || 'Faculty Coordinator',
+    professorTitle: 'Course Instructor',
+    professorAvatar: '/prof-rao.jpg',
+    university: 'Saral Vidhya',
+    units: (matchedCatalogSub.chapters || []).slice(0, 5).map((c: any) => `Unit ${c.number}: ${c.name}`),
+    fallbackOptions: ['Option A', 'Option B', 'Option C', 'Option D'],
+    defaultQuestions: ['Select the most accurate statement regarding this unit.'],
+  } : SUBJECT_METADATA.anu_physics);
 
   useEffect(() => {
     getCatalog().then(catalog => {
@@ -282,7 +265,7 @@ export default function ExaminerConsole() {
     if (sub === 'anu_physics') chaptersToFetch = [4, 1];
     else if (sub === 'anu_characterization') chaptersToFetch = [5];
     else if (sub === 'management') chaptersToFetch = [1, 2];
-    else if (sub === 'ento_131') chaptersToFetch = [1, 2];
+    else chaptersToFetch = [1, 2];
     for (const cNum of chaptersToFetch) {
       const cert = await getChapterExamQuestions(sub, cNum, 'certification');
       const preFinal = await getChapterExamQuestions(sub, cNum, 'pre_final');
@@ -1292,22 +1275,24 @@ export default function ExaminerConsole() {
 
                 {/* Options List A, B, C, D (Markdown & KaTeX Rendered) */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {q.options.map((opt) => (
-                    <div
-                      key={opt.label}
-                      style={{
-                        padding: '12px 18px',
-                        borderRadius: '8px',
-                        border: '1px solid #e2e8f0',
-                        background: '#ffffff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#334155',
-                      }}
-                    >
+                  {q.options.map((opt, optIdx) => {
+                    const isEven = optIdx % 2 === 0;
+                    return (
+                      <div
+                        key={opt.label}
+                        style={{
+                          padding: '12px 18px',
+                          borderRadius: '8px',
+                          border: isEven ? '1px solid #e2e8f0' : '1px solid #cbdcd1',
+                          background: isEven ? '#ffffff' : '#f4f7f5',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#334155',
+                        }}
+                      >
                       {/* Option Indicator: Square Checkbox for MSQ, Round Radio Circle for MCQ */}
                       <div
                         style={{
@@ -1327,7 +1312,8 @@ export default function ExaminerConsole() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
 
                   {/* Bottom Row: Green Highlighted Correct Answer + Blue Swap Button */}
                   <div

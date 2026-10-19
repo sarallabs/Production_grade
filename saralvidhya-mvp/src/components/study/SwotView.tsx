@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * SwotView component
@@ -23,9 +24,9 @@ export default function SwotView({ subjectId }: { subjectId: string; chapterNumb
 
     for (let i = 1; i <= maxChapters; i++) {
       const timeKey = `ekam_time_${subjectId}_${i}`;
-      const timeSpent = parseInt(localStorage.getItem(timeKey) || "0", 10);
+      const timeSpent = parseInt(cloudStorage.getItem(timeKey) || "0", 10);
       const scoreKey = `ekam_quiz_score_${subjectId}_${i}`;
-      const scoreRaw = localStorage.getItem(scoreKey);
+      const scoreRaw = cloudStorage.getItem(scoreKey);
       const score = scoreRaw ? parseInt(scoreRaw, 10) : null;
 
       const chapterName = `Chapter ${i}`;

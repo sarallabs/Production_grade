@@ -4,6 +4,7 @@ export const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'saralvidhya-artifacts
 const storage = new Storage();
 export const bucket = storage.bucket(BUCKET_NAME);
 
+const MAX_SIGNED_URL_CACHE_SIZE = 5000;
 const signedUrlCache = new Map<string, { url: string; expiresAt: number }>();
 
 /**
@@ -31,6 +32,11 @@ export async function getSignedUrlForFile(
     expires: expiresAt,
     responseType: contentType,
   });
+
+  if (signedUrlCache.size >= MAX_SIGNED_URL_CACHE_SIZE) {
+    const oldestKey = signedUrlCache.keys().next().value;
+    if (oldestKey) signedUrlCache.delete(oldestKey);
+  }
 
   // Cache for half of its validity period (e.g., 30 mins for a 60-min signed URL)
   signedUrlCache.set(cacheKey, {

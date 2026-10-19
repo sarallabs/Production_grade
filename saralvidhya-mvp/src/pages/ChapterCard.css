@@ -271,36 +271,59 @@
 }
 
 /* Progress Box & Action */
+.chapter-hero-card .chapter-progress-box,
 .chapter-progress-box {
   width: 100%;
-  padding-top: 2px;
+  padding-top: 4px;
+  text-align: center;
 }
 
+.chapter-hero-card .chapter-progress-labels,
 .chapter-progress-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: block;
+  text-align: center;
   width: 100%;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
   font-size: 14px;
   font-weight: 700;
   color: #111827;
 }
 
-.chapter-progress-track {
-  width: 100%;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.6);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 0;
-  position: relative;
+.chapter-progress-labels--center {
+  display: flex !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  margin-bottom: 8px !important;
 }
 
+.chapter-hero-card .chapter-progress-track,
+.chapter-progress-track {
+  display: block !important;
+  width: 50% !important;
+  max-width: 280px;
+  height: 10px !important;
+  min-height: 10px !important;
+  background: rgba(255, 255, 255, 0.7) !important;
+  border-radius: 999px !important;
+  overflow: hidden !important;
+  margin: 0 auto !important;
+  flex: none !important;
+  position: relative !important;
+  box-sizing: border-box;
+}
+
+.chapter-progress-track--half {
+  width: 50% !important;
+  margin: 0 auto !important;
+}
+
+.chapter-hero-card .chapter-progress-fill,
 .chapter-progress-fill {
-  height: 100%;
-  background: #273C33;
-  border-radius: 999px;
+  display: block !important;
+  height: 100% !important;
+  background: #273C33 !important;
+  border-radius: 999px !important;
   transition: width 0.4s ease;
 }
 

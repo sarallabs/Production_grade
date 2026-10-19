@@ -7,6 +7,7 @@ import FileTreeSidebar from '@/components/expert/FileTreeSidebar';
 import FileEditor from '@/components/expert/FileEditor';
 import CreateItemModal from '@/components/expert/CreateItemModal';
 import { FileNode, SaveStatus } from '@/components/expert/types';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 const turndownService = new TurndownService({
   headingStyle: 'atx',
@@ -22,7 +23,7 @@ const API_BASE = import.meta.env.VITE_API_URL || (
 
 export default function ExpertPanel() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
-    sessionStorage.getItem('expert_access') === 'true'
+    cloudStorage.getItem('expert_access') === 'true'
   );
   const [tree, setTree] = useState<FileNode[]>([]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -522,7 +523,7 @@ export default function ExpertPanel() {
           onLoadFile={loadFile}
           onOpenCreateModal={openCreateModal}
           onExit={() => {
-            sessionStorage.removeItem('expert_access');
+            cloudStorage.removeItem('expert_access');
             setIsAuthenticated(false);
           }}
         />

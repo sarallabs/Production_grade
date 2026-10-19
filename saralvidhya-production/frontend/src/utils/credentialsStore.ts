@@ -17,13 +17,11 @@ export interface Credential {
 
 const KEY = 'saral_credentials';
 
-const DEFAULT_PASSWORD = import.meta.env.VITE_DEFAULT_PASSWORD || 'Ekam@2026';
+const DEFAULT_PASSWORD = import.meta.env.VITE_DEFAULT_PASSWORD || '';
 
-const DEFAULTS: Credential[] = [
+const DEFAULTS: Credential[] = DEFAULT_PASSWORD ? [
   { id: '1', username: 'saralvidhya', password: DEFAULT_PASSWORD, role: 'student', createdAt: new Date().toISOString() },
-  // expert account kept in code — add back when expert mode is re-enabled
-  // { id: '2', username: 'expert', password: 'expert@123', role: 'expert', createdAt: new Date().toISOString() },
-];
+] : [];
 
 export function loadCredentials(): Credential[] {
   let creds: Credential[];

@@ -178,7 +178,6 @@ export function setCloudAuthContext(tenantId: string | null, token: string | nul
   }
   if (tenantId && token) {
     memoryKv.set(`sv_session_${tenantId}`, token);
-    writeFirstPartyCookie(`sv_session_${tenantId}`, token);
     memoryKv.set('app_authenticated', 'true');
     if (!memoryKv.get('username')) {
       const displayName = `${tenantId.toUpperCase()} Student`;
@@ -285,10 +284,16 @@ export const cloudStorage = {
     const strVal = String(value);
     const prev = memoryKv.get(key);
     memoryKv.set(key, strVal);
-    if (key.startsWith('sv_session_') || key === 'current_tenant_id' || key === 'user_persona') {
+    if (key === 'current_tenant_id' || key === 'user_persona') {
       writeFirstPartyCookie(key, strVal);
     }
-    if (!skipRemoteSync && prev !== strVal && !key.startsWith('sv_session_') && !key.startsWith('tenant_cfg_')) {
+    if (
+      !skipRemoteSync &&
+      prev !== strVal &&
+      !key.startsWith('sv_session_') &&
+      !key.startsWith('tenant_cfg_') &&
+      key !== 'saral_credentials'
+    ) {
       pendingClientStateUpdates[key] = strVal;
       scheduleCloudKvFlush();
     }
@@ -299,7 +304,7 @@ export const cloudStorage = {
     if (key.startsWith('sv_session_') || key === 'current_tenant_id' || key === 'user_persona') {
       deleteFirstPartyCookie(key);
     }
-    if (!key.startsWith('sv_session_') && !key.startsWith('tenant_cfg_')) {
+    if (!key.startsWith('sv_session_') && !key.startsWith('tenant_cfg_') && key !== 'saral_credentials') {
       pendingClientStateUpdates[key] = '';
       scheduleCloudKvFlush();
     }

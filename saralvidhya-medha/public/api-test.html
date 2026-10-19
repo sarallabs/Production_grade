@@ -206,7 +206,8 @@
     </div>
 
     <script>
-        const API_KEY = window.GEMINI_API_KEY || '[REDACTED_GEMINI_API_KEY]';
+        // Retrieve API key from query parameter ?key=... (zero hardcoded secrets in source)
+        const API_KEY = new URLSearchParams(window.location.search).get('key') || '';
         let results = {};
 
         function log(testNum, message, type = 'info') {

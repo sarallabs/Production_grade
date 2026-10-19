@@ -164,7 +164,7 @@ Every file that currently hardcodes university names, board IDs, or branding mus
 | [university_config.json](file:///d:/saralvidhya-mvp/src/config/university_config.json) | `defaultVisibleBoards: ["angrau_university"]` | Delete file. Use `tenant.defaultVisibleBoards` |
 | [public/index.html](file:///d:/saralvidhya-mvp/public/index.html) | `<title>ANGRAU Student Learning</title>` | Use a Vite HTML plugin to inject `tenant.appName` at build time |
 | [App.tsx](file:///d:/saralvidhya-mvp/src/App.tsx) | `document.title = branding.appName` | `document.title = tenant.appName` |
-| [credentialsStore.ts](file:///d:/saralvidhya-mvp/src/utils/credentialsStore.ts) | `password: 'Ekam@2026'` | Remove entirely (auth moves to Firebase in Phase 4) |
+| [credentialsStore.ts](file:///d:/saralvidhya-mvp/src/utils/credentialsStore.ts) | `password: '[REDACTED_PASSWORD]'` | Remove entirely (auth moves to Firebase in Phase 4) |
 | [ExaminerConsole.tsx](file:///d:/saralvidhya-mvp/src/pages/ExaminerConsole.tsx) | `SUBJECT_METADATA` with hardcoded professor names, unit lists | Move to DB (Phase 5). Short-term: import from `tenant`-scoped config |
 | [contentRepository.ts](file:///d:/saralvidhya-mvp/src/data/contentRepository.ts) | `getVisibleBoardIds()` reads from `universityConfig` | Read from `tenant.defaultVisibleBoards` |
 | [server/index.js](file:///d:/saralvidhya-mvp/server/index.js) | `process.env.UNIVERSITY_NAME \|\| 'angrau_university'` | `process.env.TENANT_ID \|\| 'angrau'` |
@@ -398,7 +398,7 @@ Remove the `loadCredentials()` / plaintext password matching. Replace with Fireb
 
 #### [MODIFY] [ExpertPanel.tsx](file:///d:/saralvidhya-mvp/src/pages/ExpertPanel.tsx)
 
-Remove the hardcoded `Ekam@2026` password check. Replace with:
+Remove the hardcoded `[REDACTED_PASSWORD]` password check. Replace with:
 ```tsx
 const { user, role } = useAuth();
 if (role !== 'expert' && role !== 'admin') return <AccessDenied />;

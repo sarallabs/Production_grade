@@ -4,6 +4,7 @@ import { getAssessments } from "@/data/contentRepository";
 import { parseQuestionBank } from "@/utils/quizParser";
 import { type AssessmentQuestion } from "@/utils/assessmentTypes";
 import { StudyToolLoadingWaitScreen } from "@/pages/StudyTable";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * AssessmentView Component
@@ -192,7 +193,7 @@ export function AssessmentView({
     if (step === questions.length - 1) {
       const finalScore = isAnswerCorrect ? score + 1 : score;
       const pct = Math.round((finalScore / questions.length) * 100);
-      localStorage.setItem(`ekam_quiz_score_${subjectId}_${chapterNumber}`, pct.toString());
+      cloudStorage.setItem(`ekam_quiz_score_${subjectId}_${chapterNumber}`, pct.toString());
     }
   };
 
@@ -700,11 +701,14 @@ export function AssessmentView({
                             {currentQ.options.map((option, idx) => {
                               const isSelected = selectedMCQ === idx;
                               const isCorrectAnswer = idx === currentQ.answer;
+                              const isEven = idx % 2 === 0;
 
-                              // Very light, subtle sage tints for maximum readability:
-                              const optionLightTints = ["#E6ECE8", "#E1E9E3", "#E6ECE8", "#E1E9E3"];
-                              let bgStyle = isSelected ? "#CDE4D6" : optionLightTints[idx % optionLightTints.length];
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #BDCDC2";
+                              // Alternating lighter (#FFFFFF) and darker (#EAF0EC) shades:
+                              const defaultBg = isEven ? "#FFFFFF" : "#EAF0EC";
+                              const defaultBorder = isEven ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
+
+                              let bgStyle = isSelected ? "#CDE4D6" : defaultBg;
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : defaultBorder;
                               let rightIcon = null;
 
                               if (submitted) {
@@ -734,14 +738,14 @@ export function AssessmentView({
                                   disabled={submitted}
                                   onMouseEnter={(e) => {
                                     if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = "#D7E3DC";
+                                      e.currentTarget.style.background = "#D6E4DB";
                                       e.currentTarget.style.borderColor = "#9EB5A6";
                                     }
                                   }}
                                   onMouseLeave={(e) => {
                                     if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = bgStyle;
-                                      e.currentTarget.style.borderColor = "#BDCDC2";
+                                      e.currentTarget.style.background = defaultBg;
+                                      e.currentTarget.style.borderColor = isEven ? "#D7E3DB" : "#BACEC1";
                                     }
                                   }}
                                   style={{
@@ -795,8 +799,8 @@ export function AssessmentView({
                                       width: "24px",
                                       height: "24px",
                                       borderRadius: "6px",
-                                      background: isSelected ? "#B4D5C1" : "#D1DFD6",
-                                      border: isSelected ? "1px solid #2D3E36" : "1px solid rgba(45, 62, 54, 0.22)",
+                                      background: isSelected ? "#B4D5C1" : (isEven ? "#EDF3EF" : "#D4E2D8"),
+                                      border: isSelected ? "1px solid #2D3E36" : (isEven ? "1px solid #D7E3DB" : "1px solid #BACEC1"),
                                       color: isSelected ? "#16241C" : "#1E2F26",
                                       fontWeight: "700",
                                       fontSize: "13px",
@@ -830,11 +834,14 @@ export function AssessmentView({
                             {currentQ.options.map((option, idx) => {
                               const isSelected = selectedMSQ.includes(idx);
                               const isCorrectOption = currentQ.answer.includes(idx);
+                              const isEven = idx % 2 === 0;
 
-                              // Very light, subtle sage tints for maximum readability:
-                              const optionLightTints = ["#E6ECE8", "#E1E9E3", "#E6ECE8", "#E1E9E3"];
-                              let bgStyle = isSelected ? "#CDE4D6" : optionLightTints[idx % optionLightTints.length];
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : "1.5px solid #BDCDC2";
+                              // Alternating lighter (#FFFFFF) and darker (#EAF0EC) shades:
+                              const defaultBg = isEven ? "#FFFFFF" : "#EAF0EC";
+                              const defaultBorder = isEven ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
+
+                              let bgStyle = isSelected ? "#CDE4D6" : defaultBg;
+                              let borderStyle = isSelected ? "2px solid #2D3E36" : defaultBorder;
                               let rightIcon = null;
 
                               if (submitted) {
@@ -856,14 +863,14 @@ export function AssessmentView({
                                   disabled={submitted}
                                   onMouseEnter={(e) => {
                                     if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = "#D7E3DC";
+                                      e.currentTarget.style.background = "#D6E4DB";
                                       e.currentTarget.style.borderColor = "#9EB5A6";
                                     }
                                   }}
                                   onMouseLeave={(e) => {
                                     if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = bgStyle;
-                                      e.currentTarget.style.borderColor = "#BDCDC2";
+                                      e.currentTarget.style.background = defaultBg;
+                                      e.currentTarget.style.borderColor = isEven ? "#D7E3DB" : "#BACEC1";
                                     }
                                   }}
                                   style={{
@@ -909,8 +916,8 @@ export function AssessmentView({
                                       width: "24px",
                                       height: "24px",
                                       borderRadius: "6px",
-                                      background: isSelected ? "#B4D5C1" : "#D1DFD6",
-                                      border: isSelected ? "1px solid #2D3E36" : "1px solid rgba(45, 62, 54, 0.22)",
+                                      background: isSelected ? "#B4D5C1" : (isEven ? "#EDF3EF" : "#D4E2D8"),
+                                      border: isSelected ? "1px solid #2D3E36" : (isEven ? "1px solid #D7E3DB" : "1px solid #BACEC1"),
                                       color: isSelected ? "#16241C" : "#1E2F26",
                                       fontWeight: "700",
                                       fontSize: "13px",
@@ -937,12 +944,15 @@ export function AssessmentView({
                         {/* Type 2: True / False */}
                         {currentQ.type === "true_false" && (
                           <div style={{ display: "flex", gap: "14px", justifyContent: "center", marginTop: "12px" }}>
-                            {[true, false].map((val) => {
+                            {[true, false].map((val, tfIdx) => {
                               const isSelected = selectedTF === val;
                               const isCorrectAnswer = val === currentQ.answer;
 
-                              let btnBg = isSelected ? "#CDE4D6" : val ? "#E6ECE8" : "#E1E9E3";
-                              let btnBorder = isSelected ? "2px solid #2D3E36" : "1.5px solid #BDCDC2";
+                              const defaultBg = tfIdx === 0 ? "#FFFFFF" : "#EAF0EC";
+                              const defaultBorder = tfIdx === 0 ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
+
+                              let btnBg = isSelected ? "#CDE4D6" : defaultBg;
+                              let btnBorder = isSelected ? "2px solid #2D3E36" : defaultBorder;
                               let btnTextColor = "#111A15";
 
                               if (submitted) {

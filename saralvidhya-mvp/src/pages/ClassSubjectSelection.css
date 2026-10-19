@@ -1,54 +1,57 @@
-/* ClassSubjectSelection.css — Custom Styles for Subjects and Entomology Card */
+/* ClassSubjectSelection.css — Custom Styles for Subjects, Entomology and MLRIT Cards */
 
-.sv-subject-card--entomology {
-  background: #1c2e25 !important;
-  background: linear-gradient(145deg, #1f3329 0%, #16261f 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.12) !important;
-  border-radius: 28px !important;
-  padding: 34px 38px !important;
+.sv-subject-card--entomology,
+.sv-subject-card--mlrit {
+  border-radius: 36px !important;
+  padding: 28px 36px !important;
   display: flex !important;
   align-items: center !important;
-  gap: 28px !important;
-  box-shadow: 0 16px 40px rgba(10, 20, 15, 0.28) !important;
-  transition: transform 0.22s ease, box-shadow 0.22s ease !important;
+  gap: 32px !important;
   position: relative !important;
-  overflow: hidden !important;
-  min-height: 250px !important;
+  overflow: visible !important;
+  min-height: 220px !important;
   box-sizing: border-box !important;
   cursor: pointer;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease !important;
+}
+
+.sv-subject-card--entomology {
+  background: #23342b !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 44px rgba(10, 20, 15, 0.32) !important;
 }
 
 .sv-subject-card--entomology:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 20px 48px rgba(10, 20, 15, 0.36) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 22px 52px rgba(10, 20, 15, 0.4) !important;
 }
 
-/* Hide old gradient accent circle on Entomology card */
+/* Hide old gradient accent circle on rich subject cards */
 .sv-subject-card--entomology .sv-card-accent {
   display: none !important;
 }
 
-/* Icon container */
+/* Icon container: pure white squircle badge matching mockup */
 .sv-subject-card--entomology .sv-card-icon {
-  width: 140px !important;
-  height: 140px !important;
-  min-width: 140px !important;
-  min-height: 140px !important;
-  border-radius: 24px !important;
-  background: #FFF6F0 !important;
+  width: 172px !important;
+  height: 172px !important;
+  min-width: 172px !important;
+  min-height: 172px !important;
+  border-radius: 28px !important;
+  background: #ffffff !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   flex-shrink: 0 !important;
-  box-shadow: none !important;
-  padding: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+  padding: 14px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
   transition: transform 0.22s ease !important;
 }
 
 .sv-subject-card--entomology:hover .sv-card-icon {
-  transform: scale(1.03) !important;
+  transform: scale(1.02) !important;
 }
 
 .sv-card-book-img {
@@ -87,7 +90,8 @@
 }
 
 /* Card Body */
-.sv-subject-card--entomology .sv-card-body {
+.sv-subject-card--entomology .sv-card-body,
+.sv-subject-card--mlrit .sv-card-body {
   flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -98,11 +102,10 @@
 /* Title & Header Row */
 .sv-subject-head-row {
   display: flex !important;
-  align-items: center !important;
+  align-items: flex-start !important;
   justify-content: space-between !important;
   gap: 16px !important;
-  margin-bottom: 20px !important;
-  flex-wrap: wrap !important;
+  margin-bottom: 16px !important;
 }
 
 .sv-subject-head-info {
@@ -110,13 +113,24 @@
   flex-direction: column !important;
 }
 
-.sv-subject-card--entomology .sv-card-title {
-  font-size: 32px !important;
+.sv-subject-card--entomology .sv-card-title,
+.sv-subject-card--mlrit .sv-card-title {
+  font-size: 38px !important;
   font-weight: 800 !important;
   color: #FFFFFF !important;
   margin: 0 !important;
-  letter-spacing: -0.4px !important;
-  line-height: 1.15 !important;
+  letter-spacing: -0.5px !important;
+  line-height: 1.12 !important;
+}
+
+.sv-subject-card--entomology .sv-subject-subtitle {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #E07A5F !important;
+  margin-top: 6px !important;
+  margin-bottom: 4px !important;
+  display: block !important;
+  letter-spacing: 0.1px !important;
 }
 
 .sv-subject-subtitle {
@@ -126,6 +140,11 @@
   margin-top: 4px !important;
   display: block !important;
   letter-spacing: 0.2px !important;
+}
+
+.sv-subject-card--mlrit .sv-subject-subtitle {
+  color: rgba(186, 230, 253, 0.85) !important;
+  font-weight: 600 !important;
 }
 
 /* Overall Course Progress Widget (Replaces Bar Lines) */
@@ -138,6 +157,11 @@
   border-radius: 9999px !important;
   padding: 6px 16px 6px 8px !important;
   flex-shrink: 0 !important;
+}
+
+.sv-subject-card--mlrit .sv-course-progress-widget {
+  background: rgba(15, 23, 42, 0.7) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
 }
 
 .sv-progress-ring-wrap {
@@ -162,6 +186,10 @@
   line-height: 1 !important;
 }
 
+.sv-subject-card--mlrit .sv-progress-ring-text {
+  color: #38bdf8 !important;
+}
+
 .sv-progress-widget-labels {
   display: flex !important;
   flex-direction: column !important;
@@ -184,12 +212,134 @@
 }
 
 /* Progress Wrapper */
-.sv-subject-card--entomology .sv-progress-wrapper {
+.sv-subject-card--entomology .sv-progress-wrapper,
+.sv-subject-card--mlrit .sv-progress-wrapper {
   margin-top: 0 !important;
   display: flex !important;
   flex-direction: column !important;
   gap: 10px !important;
   width: 100% !important;
+}
+
+/* ── Chapter Icons Row (Circular Chapter Number Buttons matching Screenshot) ── */
+.sv-chapter-icons-row {
+  display: flex !important;
+  align-items: center !important;
+  gap: 22px !important;
+  margin-top: 16px !important;
+  width: 100% !important;
+  flex-wrap: wrap !important;
+}
+
+.sv-ch-circle-group {
+  display: inline-flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+.sv-ch-circle-btn {
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 50% !important;
+  background: rgba(255, 255, 255, 0.11) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  outline: none !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18) !important;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+  padding: 0 !important;
+  position: relative !important;
+}
+
+.sv-ch-circle-btn:hover {
+  background: rgba(255, 255, 255, 0.22) !important;
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+.sv-ch-circle-btn.is-completed {
+  background: rgba(255, 255, 255, 0.13) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.sv-ch-circle-num {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  color: #FFFFFF !important;
+  line-height: 1 !important;
+}
+
+/* Tooltip on Hover */
+.sv-ch-tooltip {
+  position: absolute !important;
+  bottom: calc(100% + 10px) !important;
+  left: 50% !important;
+  transform: translateX(-50%) translateY(4px) !important;
+  background: #0f172a !important;
+  color: #f8fafc !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s !important;
+  z-index: 100 !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+.sv-ch-tooltip::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 100% !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  border-width: 5px !important;
+  border-style: solid !important;
+  border-color: #0f172a transparent transparent transparent !important;
+}
+
+.sv-ch-circle-btn:hover .sv-ch-tooltip {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+/* Plain percentage text below circle */
+.sv-ch-circle-percent,
+.sv-subject-card--entomology .sv-ch-circle-badge,
+.sv-ch-circle-badge {
+  margin-top: 8px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: #FFFFFF !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  letter-spacing: 0.1px !important;
+  box-shadow: none !important;
+}
+
+/* Tick mark sits above the circle (always visible) */
+.sv-ch-circle-tick {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 18px !important;
+  margin-bottom: 6px !important;
+  pointer-events: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 /* ── Interactive Chapter Cards Grid (Taller & Spacious) ── */

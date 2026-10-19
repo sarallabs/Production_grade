@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 /**
  * Props for the ExpertLogin component
@@ -16,8 +17,9 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password === 'Ekam@2026') {
-      sessionStorage.setItem('expert_access', 'true');
+    const expertPass = (import.meta as any).env?.VITE_EXPERT_PASSWORD || '';
+    if (expertPass && password === expertPass) {
+      cloudStorage.setItem('expert_access', 'true');
       onLogin();
     } else {
       setError(true);

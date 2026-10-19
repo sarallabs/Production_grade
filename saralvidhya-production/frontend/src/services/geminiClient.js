@@ -23,7 +23,7 @@ if (!GOOGLE_API_KEY || !((GOOGLE_API_KEY.startsWith('AQ.') && GOOGLE_API_KEY.len
   console.warn('[Gemini] WARNING: GOOGLE_API_KEY is not set or is invalid in .env');
 }
 
-const genAI = new GoogleGenerativeAI({ apiKey: GOOGLE_API_KEY });
+const genAI = GOOGLE_API_KEY ? new GoogleGenerativeAI({ apiKey: GOOGLE_API_KEY }) : null;
 
 function buildPrompt(question, systemInstruction) {
   if (systemInstruction) {
@@ -86,7 +86,7 @@ export async function generateGeminiText(
 ) {
   if (!GOOGLE_API_KEY || !((GOOGLE_API_KEY.startsWith('AQ.') && GOOGLE_API_KEY.length >= 50) || (GOOGLE_API_KEY.startsWith('AIzaSy') && GOOGLE_API_KEY.length >= 35))) {
     throw new Error(
-      'Missing or invalid GOOGLE_API_KEY. Create a .env file with GOOGLE_API_KEY=your_api_key_here',
+      'AI service is temporarily unavailable. Please verify API configuration.',
     );
   }
 

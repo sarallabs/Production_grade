@@ -438,16 +438,20 @@ export async function recordToolOrChapterProgress(
     updatedAt: now,
   };
 
+  const lastActiveUpdate: Record<string, any> = {
+    subjectId,
+    chapterId,
+    updatedAt: now,
+  };
+  if (payload.completedTool) {
+    lastActiveUpdate.toolId = payload.completedTool;
+  }
+
   await Promise.all([
     progRef.set(updatedDoc, { merge: true }),
     userRef.set(
       {
-        lastActive: {
-          subjectId,
-          chapterId,
-          toolId: payload.completedTool || undefined,
-          updatedAt: now,
-        },
+        lastActive: lastActiveUpdate,
         updatedAt: now,
       },
       { merge: true }
@@ -518,10 +522,10 @@ export async function updateAudioPlaybackProgress(
     tenantId,
     subjectId,
     chapterId,
-    chapterNumber: payload.chapterNumber,
+    ...(payload.chapterNumber !== undefined ? { chapterNumber: payload.chapterNumber } : {}),
     trackId,
     title: payload.title || trackId,
-    chapterTitle: payload.chapterTitle,
+    ...(payload.chapterTitle !== undefined ? { chapterTitle: payload.chapterTitle } : {}),
     currentTime,
     duration,
     completed: isCompleted,
