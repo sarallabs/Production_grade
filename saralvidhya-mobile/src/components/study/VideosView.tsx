@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,11 @@ import {
   Image,
   LayoutChangeEvent,
   Platform,
+  Modal,
+  StatusBar,
+  TouchableWithoutFeedback,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
 import * as Haptics from 'expo-haptics';
@@ -45,118 +50,41 @@ interface VideoLessonItem {
 const CHAPTER_VIDEO_LESSONS: Record<number, VideoLessonItem[]> = {
   1: [
     {
-      id: 'lesson_01',
+      id: 'lesson_1_01',
       lessonNumber: 'LESSON 01',
       title: 'Insects Digestive System',
       topic: 'Foregut, midgut & hindgut',
       duration: '10:55',
-      status: '60% · Resume',
-      progressPct: 60,
-      filterStatus: 'in_progress',
-      thumbSource: THUMB_01,
+      status: 'Ready to watch',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: { uri: 'https://img.youtube.com/vi/Ioa25iYy53g/hqdefault.jpg' },
       ytId: 'Ioa25iYy53g',
       topicsWhatYouLearn: [
         {
           number: '01',
           title: 'Anatomy of the Insect Alimentary Canal',
-          subtitle: 'Foregut, midgut & hindgut',
+          subtitle: 'Foregut, midgut & hindgut differentiation and histology',
         },
         {
           number: '02',
           title: 'Stomodaeal Specializations',
-          subtitle: 'Pharynx, crop & proventriculus',
+          subtitle: 'Pharynx, crop food storage & proventriculus cuticular teeth',
         },
         {
           number: '03',
           title: 'Mesenteron Physiology',
-          subtitle: 'Secretory epithelium & peritrophic membrane',
-        },
-      ],
-    },
-    {
-      id: 'lesson_02',
-      lessonNumber: 'LESSON 02',
-      title: 'External Morphology',
-      topic: 'Head, thorax & abdomen',
-      duration: '12:40',
-      status: 'Completed · Watch again',
-      progressPct: 100,
-      filterStatus: 'completed',
-      thumbSource: THUMB_02,
-      ytId: 'UMJFfCFFF4M',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Tagmosis & Body Segmentation',
-          subtitle: 'Head, thorax & abdomen sclerites',
+          subtitle: 'Secretory microvilli epithelium & peritrophic membrane barrier',
         },
         {
-          number: '02',
-          title: 'Sensory Structures & Appendages',
-          subtitle: 'Antennae, compound eyes & ocelli',
+          number: '04',
+          title: 'Proctodaeum & Excretion',
+          subtitle: 'Malpighian tubules & rectal pad water reabsorption',
         },
         {
-          number: '03',
-          title: 'Locomotory Systems',
-          subtitle: 'Leg modifications & wing venation',
-        },
-      ],
-    },
-    {
-      id: 'lesson_03',
-      lessonNumber: 'LESSON 03',
-      title: 'Mesenteron & Absorption',
-      topic: 'Microvilli & enzyme secretion',
-      duration: '08:25',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_03,
-      ytId: 'elWWuKv5b9Q',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Columnar & Regenerative Cells',
-          subtitle: 'Enzyme kinetics & tissue repair',
-        },
-        {
-          number: '02',
-          title: 'Peritrophic Membrane Barrier',
-          subtitle: 'Type I and Type II chitin mesh',
-        },
-        {
-          number: '03',
-          title: 'Bt Toxin Binding Mechanism',
-          subtitle: 'Cadherin receptors & pore formation',
-        },
-      ],
-    },
-    {
-      id: 'lesson_04',
-      lessonNumber: 'LESSON 04',
-      title: 'Proctodaeum & Excretion',
-      topic: 'Malpighian tubules & rectal pads',
-      duration: '09:30',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_04,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Uric Acid Filtration',
-          subtitle: 'Potassium pump and crystallization',
-        },
-        {
-          number: '02',
-          title: 'Rectal Water Reabsorption',
-          subtitle: 'Extraction of up to 95% of fluids',
-        },
-        {
-          number: '03',
-          title: 'Cryptonephridial Systems',
-          subtitle: 'Adaptations in desert beetle larvae',
+          number: '05',
+          title: 'Enzymatic Digestion & Nutritional Adaptations',
+          subtitle: 'Proteases, amylases, lipases and symbiotic digestion',
         },
       ],
     },
@@ -165,116 +93,39 @@ const CHAPTER_VIDEO_LESSONS: Record<number, VideoLessonItem[]> = {
     {
       id: 'lesson_2_01',
       lessonNumber: 'LESSON 01',
-      title: 'Metamorphosis Architecture',
-      topic: 'Ametaboly to holometaboly',
-      duration: '11:15',
-      status: '60% · Resume',
-      progressPct: 60,
-      filterStatus: 'in_progress',
-      thumbSource: THUMB_03,
-      ytId: 'elWWuKv5b9Q',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Ametabolous Development',
-          subtitle: 'Primitive wingless insects (Silverfish)',
-        },
-        {
-          number: '02',
-          title: 'Hemimetabolous Nymphs',
-          subtitle: 'External wing pads in grasshoppers and bugs',
-        },
-        {
-          number: '03',
-          title: 'Holometabolous Niches',
-          subtitle: 'Complete separation of larval & adult forms',
-        },
-      ],
-    },
-    {
-      id: 'lesson_2_02',
-      lessonNumber: 'LESSON 02',
-      title: 'Larval Classifications',
-      topic: 'Eruciform, scarabaeiform, campodeiform',
-      duration: '13:05',
-      status: 'Completed · Watch again',
-      progressPct: 100,
-      filterStatus: 'completed',
-      thumbSource: THUMB_01,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Eruciform Caterpillars',
-          subtitle: 'Abdominal prolegs with crochets in Lepidoptera',
-        },
-        {
-          number: '02',
-          title: 'Scarabaeiform White Grubs',
-          subtitle: 'C-shaped subterranean root borers',
-        },
-        {
-          number: '03',
-          title: 'Vermiform Maggots',
-          subtitle: 'Headless mouthhook larvae in Diptera',
-        },
-      ],
-    },
-    {
-      id: 'lesson_2_03',
-      lessonNumber: 'LESSON 03',
-      title: 'Pupal Types & Histogenesis',
-      topic: 'Exarate, obtect & coarctate',
-      duration: '09:40',
-      status: 'Not started',
+      title: 'Insect Metamorphosis & Life Cycles',
+      topic: 'Metamorphosis, larvae, pupae & hormones',
+      duration: '12:40',
+      status: 'Ready to watch',
       progressPct: 0,
       filterStatus: 'not_started',
-      thumbSource: THUMB_02,
-      ytId: 'UMJFfCFFF4M',
+      thumbSource: { uri: 'https://img.youtube.com/vi/7TyeiuOEVBo/hqdefault.jpg' },
+      ytId: '7TyeiuOEVBo',
       topicsWhatYouLearn: [
         {
           number: '01',
-          title: 'Imaginal Discs',
-          subtitle: 'Adult tissue morphogenesis',
+          title: 'Three Categories of Insect Metamorphosis',
+          subtitle: 'Ametabolous, hemimetabolous & holometabolous development',
         },
         {
           number: '02',
-          title: 'Obtect Chrysalis',
-          subtitle: 'Adhesive cuticular cementation',
+          title: 'Larval Classifications & Field Adaptations',
+          subtitle: 'Eruciform, scarabaeiform, campodeiform & vermiform larvae',
         },
         {
           number: '03',
-          title: 'Coarctate Puparium',
-          subtitle: 'Hardened 4th larval skin barrel',
-        },
-      ],
-    },
-    {
-      id: 'lesson_2_04',
-      lessonNumber: 'LESSON 04',
-      title: 'Neuroendocrine Control of Ecdysis',
-      topic: 'PTTH, ecdysone & juvenile hormone',
-      duration: '10:20',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_04,
-      ytId: 'elWWuKv5b9Q',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Brain PTTH Secretion',
-          subtitle: 'Activation of prothoracic glands',
+          title: 'Pupal Types & Eclosion Strategies',
+          subtitle: 'Exarate, obtect & coarctate pupal morphology',
         },
         {
-          number: '02',
-          title: 'Juvenile Hormone Titer',
-          subtitle: 'Larval maintenance versus metamorphosis',
+          number: '04',
+          title: 'Neuroendocrine Regulatory Cascade',
+          subtitle: 'Brain PTTH, prothoracic ecdysone & juvenile hormone titers',
         },
         {
-          number: '03',
-          title: 'Bursicon & Sclerotization',
-          subtitle: 'Post-emergence wing tanning',
+          number: '05',
+          title: 'Diapause vs Quiescence',
+          subtitle: 'Environmental dormancy triggers, photoperiod & cold hardiness',
         },
       ],
     },
@@ -283,116 +134,39 @@ const CHAPTER_VIDEO_LESSONS: Record<number, VideoLessonItem[]> = {
     {
       id: 'lesson_3_01',
       lessonNumber: 'LESSON 01',
-      title: 'Thermal Ecology & Poikilothermy',
-      topic: 'Optimum range & lethal limits',
+      title: 'Weathering of Rocks and Minerals',
+      topic: 'Regolith, physical & chemical weathering',
       duration: '11:50',
-      status: '50% · Resume',
-      progressPct: 50,
-      filterStatus: 'in_progress',
-      thumbSource: THUMB_02,
+      status: 'Ready to watch',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: { uri: 'https://img.youtube.com/vi/UMJFfCFFF4M/hqdefault.jpg' },
       ytId: 'UMJFfCFFF4M',
       topicsWhatYouLearn: [
         {
           number: '01',
-          title: 'Van \'t Hoff Q10 Law',
-          subtitle: 'Metabolic doubling with temperature rise',
+          title: 'Foundations of Weathering & Regolith Genesis',
+          subtitle: 'Bedrock disintegration and saprolite boundary dynamics',
         },
         {
           number: '02',
-          title: 'Upper Thermal Breakdown',
-          subtitle: 'Wax layer melting and protein denaturation',
+          title: 'Physical Weathering & Mechanical Forces',
+          subtitle: 'Frost wedging (9% expansion), thermal exfoliation & abrasion',
         },
         {
           number: '03',
-          title: 'Freeze Tolerance Adaptations',
-          subtitle: 'Ice nucleating agents and polyols',
-        },
-      ],
-    },
-    {
-      id: 'lesson_3_02',
-      lessonNumber: 'LESSON 02',
-      title: 'Degree-Day Modeling',
-      topic: 'Thermal constant K calculations',
-      duration: '12:15',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_01,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Threshold Base Temperature T0',
-          subtitle: 'Mathematical baseline for development',
+          title: 'Chemical Weathering Reactions',
+          subtitle: 'Hydrolysis, hydration, carbonation, oxidation and reduction pathways',
         },
         {
-          number: '02',
-          title: 'Thermal Summation Formula',
-          subtitle: 'K = y(T - T0) degree days',
+          number: '04',
+          title: 'Biological Agents of Weathering',
+          subtitle: 'Pioneer lichens, microbial organic acids & tree root wedging',
         },
         {
-          number: '03',
-          title: 'Field Spray Forecasting',
-          subtitle: 'Timing interventions to larval emergence',
-        },
-      ],
-    },
-    {
-      id: 'lesson_3_03',
-      lessonNumber: 'LESSON 03',
-      title: 'Cuticular Wax & Humidity',
-      topic: 'Desiccation defense in insects',
-      duration: '09:10',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_03,
-      ytId: 'elWWuKv5b9Q',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Epicuticular Hydrocarbon Monolayer',
-          subtitle: 'Waterproofing against arid atmospheres',
-        },
-        {
-          number: '02',
-          title: 'Critical Equilibrium Humidity',
-          subtitle: 'Active water vapor absorption from air',
-        },
-        {
-          number: '03',
-          title: 'Epizootic Fungal Outbreaks',
-          subtitle: 'High humidity triggers entomopathogens',
-        },
-      ],
-    },
-    {
-      id: 'lesson_3_04',
-      lessonNumber: 'LESSON 04',
-      title: 'Photoperiodism & Dispersal',
-      topic: 'Circadian clocks & winds',
-      duration: '10:05',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_04,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Token Photoperiod Stimuli',
-          subtitle: 'Astronomical precision for diapause induction',
-        },
-        {
-          number: '02',
-          title: 'Critical Daylength Threshold',
-          subtitle: '50% population diapause trigger',
-        },
-        {
-          number: '03',
-          title: 'Synoptic Wind Jet Streams',
-          subtitle: 'Transboundary planthopper migration',
+          number: '05',
+          title: 'Goldich Stability Series vs Bowen Series',
+          subtitle: 'Mineral weathering vulnerability and soil profile development',
         },
       ],
     },
@@ -401,191 +175,122 @@ const CHAPTER_VIDEO_LESSONS: Record<number, VideoLessonItem[]> = {
     {
       id: 'lesson_4_01',
       lessonNumber: 'LESSON 01',
-      title: 'Floral Reproductive Anatomy',
-      topic: 'Anther locules & dehiscence',
+      title: 'Pollination, Pollinizers & Parthenocarpy in Fruit Crops',
+      topic: 'Floral biology, cross-pollination & orchard management',
       duration: '11:30',
-      status: '65% · Resume',
-      progressPct: 65,
-      filterStatus: 'in_progress',
-      thumbSource: THUMB_01,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Microsporangial Architecture',
-          subtitle: '4 locules lined by nutritive tapetum',
-        },
-        {
-          number: '02',
-          title: 'Pollen Wall Genesis',
-          subtitle: 'Sporopollenin synthesis & pollenkitt coating',
-        },
-        {
-          number: '03',
-          title: 'Stomium Dehiscence Dynamics',
-          subtitle: 'Hygroscopic contraction of endothecial cells',
-        },
-      ],
-    },
-    {
-      id: 'lesson_4_02',
-      lessonNumber: 'LESSON 02',
-      title: 'Cross-Pollination Enforcements',
-      topic: 'Dichogamy, herkogamy & SI',
-      duration: '12:45',
-      status: 'Not started',
+      status: 'Ready to watch',
       progressPct: 0,
       filterStatus: 'not_started',
-      thumbSource: THUMB_02,
-      ytId: 'UMJFfCFFF4M',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Protandry vs Protogyny',
-          subtitle: 'Temporal separation in sunflowers and millet',
-        },
-        {
-          number: '02',
-          title: 'Spatial Barriers (Herkogamy)',
-          subtitle: 'Stigma elevation and heterostyly forms',
-        },
-        {
-          number: '03',
-          title: 'Self-Incompatibility Systems',
-          subtitle: 'S-allele rejection of self pollen tubes',
-        },
-      ],
-    },
-    {
-      id: 'lesson_4_03',
-      lessonNumber: 'LESSON 03',
-      title: 'Honey Bee Pollinator Guilds',
-      topic: 'Apis mellifera & corbiculae',
-      duration: '10:15',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_03,
+      thumbSource: { uri: 'https://img.youtube.com/vi/elWWuKv5b9Q/hqdefault.jpg' },
       ytId: 'elWWuKv5b9Q',
       topicsWhatYouLearn: [
         {
           number: '01',
-          title: 'Tibial Corbicula Structure',
-          subtitle: 'Pollen basket loading mechanics',
+          title: 'Floral Biology Architecture & Double Fertilization',
+          subtitle: 'Microsporangial locules, sporopollenin & angiosperm syngamy',
         },
         {
           number: '02',
-          title: 'Floral Constancy Fidelity',
-          subtitle: 'Mono-specific foraging trips',
+          title: 'Cross-Pollination Enforcements & Barriers',
+          subtitle: 'Dichogamy (protandry/protogyny), herkogamy & self-incompatibility',
         },
         {
           number: '03',
-          title: 'UV Nectar Guide Detection',
-          subtitle: 'Trichromatic visual spectrum orientation',
-        },
-      ],
-    },
-    {
-      id: 'lesson_4_04',
-      lessonNumber: 'LESSON 04',
-      title: 'Commercial Orchard Management',
-      topic: 'Stocking rates & spray safety',
-      duration: '09:50',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_04,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        {
-          number: '01',
-          title: 'Colony Stocking Densities',
-          subtitle: '2 to 4 colonies per hectare for fruit set',
+          title: 'Managed Pollinator Guilds & Apiculture',
+          subtitle: 'Apis mellifera foraging fidelity and tibial corbiculae loading',
         },
         {
-          number: '02',
-          title: 'Pollinizer Row Layout',
-          subtitle: '10% compatible cultivars placement',
+          number: '04',
+          title: 'Commercial Orchard Planting Geometry',
+          subtitle: 'Pollinizer cultivar proportion, windbreaks & minimum stocking rates',
         },
         {
-          number: '03',
-          title: 'Pesticide Toxicity Mitigation',
-          subtitle: 'Dusk spraying and bloom phase precautions',
+          number: '05',
+          title: 'Parthenocarpy Physiological Pathways',
+          subtitle: 'Vegetative, stimulative & stenospermocarpy mechanisms',
         },
       ],
     },
   ],
 };
 
-function getChapterVideoLessons(chNum: number, chName: string): VideoLessonItem[] {
-  if (CHAPTER_VIDEO_LESSONS[chNum]) return CHAPTER_VIDEO_LESSONS[chNum];
+function getChapterVideoLessons(chNum: number, chName: string, subjectId?: string): VideoLessonItem[] {
+  if (subjectId === 'pubadm_ur' && chNum === 1) {
+    return [
+      {
+        id: 'lesson_pa_01',
+        lessonNumber: 'LESSON 01',
+        title: 'Video Lecture Part 1: Intro to Public Administration',
+        topic: 'Foundations & core concepts',
+        duration: '12:00',
+        status: 'Ready to watch',
+        progressPct: 0,
+        filterStatus: 'not_started',
+        thumbSource: { uri: 'https://img.youtube.com/vi/zudAdjtoraA/hqdefault.jpg' },
+        ytId: 'zudAdjtoraA',
+        topicsWhatYouLearn: [
+          { number: '01', title: 'Core Concepts & Scope', subtitle: 'Evolution of administrative thought' },
+          { number: '02', title: 'Public vs Private Admin', subtitle: 'Key structural and operational differences' },
+          { number: '03', title: 'Modern Governance Roles', subtitle: 'Accountability and service delivery' },
+        ],
+      },
+      {
+        id: 'lesson_pa_02',
+        lessonNumber: 'LESSON 02',
+        title: 'Video Lecture Part 2: Administrative Theories',
+        topic: 'Scientific & classical theories',
+        duration: '14:00',
+        status: 'Ready to watch',
+        progressPct: 0,
+        filterStatus: 'not_started',
+        thumbSource: { uri: 'https://img.youtube.com/vi/LEfMH2SNznY/hqdefault.jpg' },
+        ytId: 'LEfMH2SNznY',
+        topicsWhatYouLearn: [
+          { number: '01', title: 'Taylorism & Scientific Management', subtitle: 'Efficiency and workflow analysis' },
+          { number: '02', title: 'Henri Fayol Classical Theory', subtitle: 'Principles of departmental organization' },
+          { number: '03', title: 'Human Relations Approach', subtitle: 'Hawthorne experiments and group behavior' },
+        ],
+      },
+      {
+        id: 'lesson_pa_03',
+        lessonNumber: 'LESSON 03',
+        title: 'Video Lecture Part 3: Decision Making & Ethics',
+        topic: 'Herbert Simon & leadership',
+        duration: '15:00',
+        status: 'Ready to watch',
+        progressPct: 0,
+        filterStatus: 'not_started',
+        thumbSource: { uri: 'https://img.youtube.com/vi/vb9N0S158GA/hqdefault.jpg' },
+        ytId: 'vb9N0S158GA',
+        topicsWhatYouLearn: [
+          { number: '01', title: 'Herbert Simon Decision Making', subtitle: 'Bounded rationality model' },
+          { number: '02', title: 'Leadership & Motivation', subtitle: 'Public organizational dynamics' },
+          { number: '03', title: 'Development Administration', subtitle: 'Comparative public administration' },
+        ],
+      },
+    ];
+  }
+
+  if (CHAPTER_VIDEO_LESSONS[chNum]) {
+    return CHAPTER_VIDEO_LESSONS[chNum];
+  }
+
   return [
     {
-      id: `lesson_${chNum}_01`,
+      id: 'lesson_' + chNum + '_01',
       lessonNumber: 'LESSON 01',
-      title: `${chName} — Fundamentals`,
-      topic: 'Core concepts & overview',
-      duration: '10:30',
-      status: 'Not started',
+      title: chName + ' — Comprehensive Lecture',
+      topic: 'Core principles & foundations',
+      duration: '11:00',
+      status: 'Ready to watch',
       progressPct: 0,
       filterStatus: 'not_started',
-      thumbSource: THUMB_01,
+      thumbSource: { uri: 'https://img.youtube.com/vi/Ioa25iYy53g/hqdefault.jpg' },
       ytId: 'Ioa25iYy53g',
       topicsWhatYouLearn: [
-        { number: '01', title: 'Foundational Principles', subtitle: `${chName} structure` },
+        { number: '01', title: 'Foundational Principles', subtitle: chName + ' structure and overview' },
         { number: '02', title: 'Biological Mechanisms', subtitle: 'Detailed physiological pathways' },
-        { number: '03', title: 'Agro-Ecological Relevance', subtitle: 'Field applications' },
-      ],
-    },
-    {
-      id: `lesson_${chNum}_02`,
-      lessonNumber: 'LESSON 02',
-      title: `${chName} — Structural Breakdown`,
-      topic: 'Morphology & anatomy',
-      duration: '12:00',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_02,
-      ytId: 'UMJFfCFFF4M',
-      topicsWhatYouLearn: [
-        { number: '01', title: 'Morphological Adaptations', subtitle: 'Comparative structures' },
-        { number: '02', title: 'Functional Dynamics', subtitle: 'System interactions' },
-        { number: '03', title: 'Key Identification Marks', subtitle: 'Taxonomic features' },
-      ],
-    },
-    {
-      id: `lesson_${chNum}_03`,
-      lessonNumber: 'LESSON 03',
-      title: `${chName} — Advanced Physiology`,
-      topic: 'Cellular & hormonal pathways',
-      duration: '09:45',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_03,
-      ytId: 'elWWuKv5b9Q',
-      topicsWhatYouLearn: [
-        { number: '01', title: 'Endocrine Regulation', subtitle: 'Chemical signaling' },
-        { number: '02', title: 'Metabolic Interactions', subtitle: 'Bioenergetics' },
-        { number: '03', title: 'Host Plant Defense', subtitle: 'Resistance mechanisms' },
-      ],
-    },
-    {
-      id: `lesson_${chNum}_04`,
-      lessonNumber: 'LESSON 04',
-      title: `${chName} — Exam Pointers & Summary`,
-      topic: 'Viva & high-yield revision',
-      duration: '08:50',
-      status: 'Not started',
-      progressPct: 0,
-      filterStatus: 'not_started',
-      thumbSource: THUMB_04,
-      ytId: 'Ioa25iYy53g',
-      topicsWhatYouLearn: [
-        { number: '01', title: 'University Exam Focus', subtitle: 'Frequently asked questions' },
-        { number: '02', title: 'Diagrammatic Blueprints', subtitle: 'Drawing exam schematics' },
-        { number: '03', title: 'Quick Summary', subtitle: 'Master key takeaways' },
+        { number: '03', title: 'Agro-Ecological Relevance', subtitle: 'Field applications and key exam takeaways' },
       ],
     },
   ];
@@ -603,6 +308,7 @@ interface VideosViewProps {
 }
 
 export default function VideosView({
+  subjectId = 'entomology',
   subjectName = 'ENTOMOLOGY',
   chapterNumber = 1,
   chapterName = 'Insect Digestive System & Anatomy',
@@ -612,23 +318,225 @@ export default function VideosView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  // Mode: null = Multi-Video Library List; string = Single Lesson Player/Details
-  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const [filter, setFilter] = useState<FilterType>('all');
+  // Dynamic Video Lessons for the current chapter
+  const currentChapterLessons = useMemo(() => {
+    return getChapterVideoLessons(chapterNumber, chapterName, subjectId);
+  }, [chapterNumber, chapterName, subjectId]);
+
+  // If chapter has only 1 video, skip selection screen completely!
+  const isSingleVideoUnit = currentChapterLessons.length <= 1;
+
+  // Selected lesson state:
+  // When unit is single video, default directly to that video id so selection screen is never shown.
+  // When unit has multiple videos, start with null (showing library list) unless user selects one.
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(
+    isSingleVideoUnit ? currentChapterLessons[0]?.id || null : null
+  );
+
+  useEffect(() => {
+    if (isSingleVideoUnit) {
+      setSelectedLessonId(currentChapterLessons[0]?.id || null);
+    } else {
+      setSelectedLessonId(null);
+    }
+  }, [chapterNumber, subjectId, isSingleVideoUnit, currentChapterLessons]);
+
+  const currentLesson = useMemo(() => {
+    return (
+      currentChapterLessons.find((l) => l.id === selectedLessonId) ||
+      currentChapterLessons[0]
+    );
+  }, [currentChapterLessons, selectedLessonId]);
+
+  // Player & Controls State
   const [isPlayingVideo, setIsPlayingVideo] = useState(false);
-  const [isSaved, setIsSaved] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
+  const [showSpeedModal, setShowSpeedModal] = useState(false);
+  const [showCaptions, setShowCaptions] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('all');
   const [containerWidth, setContainerWidth] = useState(0);
 
-  // Dynamic Video Lessons for the current chapter
-  const currentChapterLessons = React.useMemo(() => {
-    return getChapterVideoLessons(chapterNumber, chapterName);
-  }, [chapterNumber, chapterName]);
+  // Auto-hide controls state (YouTube style)
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const hideControlsTimerRef = useRef<any>(null);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const playerRef = useRef<any>(null);
 
-  // Selected Lesson Item (defaults to Lesson 01)
-  const currentLesson =
-    currentChapterLessons.find((l) => l.id === selectedLessonId) || currentChapterLessons[0];
+  // Convert duration string "10:55" into total seconds as fallback
+  const totalDurationSecs = useMemo(() => {
+    if (duration > 0) return duration;
+    if (!currentLesson?.duration) return 655;
+    const parts = currentLesson.duration.split(':').map((p) => parseInt(p, 10));
+    return (parts[0] || 0) * 60 + (parts[1] || 0);
+  }, [duration, currentLesson]);
 
-  // Filtering for library list
+  // Format seconds to mm:ss
+  const formatTime = useCallback((totalSecs: number) => {
+    const s = Math.max(0, Math.floor(totalSecs));
+    const mins = Math.floor(s / 60);
+    const secs = s % 60;
+    return `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }, []);
+
+  // Controls Visibility & Auto-Hide handling
+  const resetHideTimer = useCallback(() => {
+    if (hideControlsTimerRef.current) {
+      clearTimeout(hideControlsTimerRef.current);
+    }
+    setControlsVisible(true);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+
+    // Auto-hide after 3.2 seconds if video is currently playing
+    if (isPlayingVideo) {
+      hideControlsTimerRef.current = setTimeout(() => {
+        setControlsVisible(false);
+        setShowVolumeSlider(false);
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 3200);
+    }
+  }, [isPlayingVideo, fadeAnim]);
+
+  useEffect(() => {
+    resetHideTimer();
+    return () => {
+      if (hideControlsTimerRef.current) {
+        clearTimeout(hideControlsTimerRef.current);
+      }
+    };
+  }, [isPlayingVideo, resetHideTimer]);
+
+  const toggleControls = useCallback(() => {
+    if (controlsVisible) {
+      setControlsVisible(false);
+      setShowVolumeSlider(false);
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 250,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      resetHideTimer();
+    }
+  }, [controlsVisible, fadeAnim, resetHideTimer]);
+
+  // Video Actions
+  const handlePlayFullscreen = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsPlayingVideo(true);
+    setIsFullScreen(true);
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  const handleTogglePlayPause = useCallback(() => {
+    Haptics.selectionAsync();
+    setIsPlayingVideo((prev) => {
+      const next = !prev;
+      if (!next) {
+        // Paused: keep controls visible
+        setControlsVisible(true);
+        Animated.timing(fadeAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+        if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+      } else {
+        resetHideTimer();
+      }
+      return next;
+    });
+  }, [fadeAnim, resetHideTimer]);
+
+  const handleSeekRewind = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const target = Math.max(0, currentTime - 10);
+    setCurrentTime(target);
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(target, true);
+    }
+    resetHideTimer();
+  }, [currentTime, resetHideTimer]);
+
+  const handleSeekForward = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const target = Math.min(totalDurationSecs, currentTime + 10);
+    setCurrentTime(target);
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(target, true);
+    }
+    resetHideTimer();
+  }, [currentTime, totalDurationSecs, resetHideTimer]);
+
+  const handleScrubberPress = useCallback(
+    (evt: any) => {
+      const locationX = evt.nativeEvent.locationX;
+      const trackWidth = containerWidth > 0 ? containerWidth - 32 : 320;
+      if (trackWidth <= 0) return;
+      const ratio = Math.max(0, Math.min(1, locationX / trackWidth));
+      const newSec = Math.round(ratio * totalDurationSecs);
+      setCurrentTime(newSec);
+      if (playerRef.current?.seekTo) {
+        playerRef.current.seekTo(newSec, true);
+      }
+      resetHideTimer();
+    },
+    [containerWidth, totalDurationSecs, resetHideTimer]
+  );
+
+  const handleToggleMute = useCallback(() => {
+    Haptics.selectionAsync();
+    setIsMuted((prev) => !prev);
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  const handleToggleFullScreen = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsFullScreen((prev) => !prev);
+    resetHideTimer();
+  }, [resetHideTimer]);
+
+  // Progress ticker for simulated playback if iframe state doesn't sync
+  useEffect(() => {
+    let interval: any = null;
+    if (isPlayingVideo) {
+      interval = setInterval(() => {
+        setCurrentTime((prev) => {
+          if (prev >= totalDurationSecs) {
+            setIsPlayingVideo(false);
+            return totalDurationSecs;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isPlayingVideo, totalDurationSecs]);
+
+  // Statistics for multi-video view
+  const totalVideos = currentChapterLessons.length;
+  const inProgressCount = currentChapterLessons.filter((l) => l.filterStatus === 'in_progress').length;
+  const completedCount = currentChapterLessons.filter((l) => l.filterStatus === 'completed').length;
+  const totalMinutes = useMemo(() => {
+    return currentChapterLessons.reduce((acc, l) => {
+      const parts = l.duration.split(':').map((p) => parseInt(p, 10));
+      const mins = (parts[0] || 0) + (parts[1] && parts[1] >= 30 ? 1 : 0);
+      return acc + mins;
+    }, 0);
+  }, [currentChapterLessons]);
+
+  const completionPct = totalVideos > 0 ? Math.round((completedCount / totalVideos) * 100) : 0;
+
   const filteredLessons = currentChapterLessons.filter((lesson) => {
     if (filter === 'all') return true;
     return lesson.filterStatus === filter;
@@ -653,13 +561,7 @@ export default function VideosView({
     setIsPlayingVideo(false);
   };
 
-  // Color Tokens from Figma DevMode
-  // Background: #f1f6f2
-  // Brand color: #265945
-  // Card bg: #fefefe / #ffffff
-  // Active card border: #8dae9b, Inactive card border: #e0e3d9
-  // Text dark: #1a2924, Text muted: #596b66
-  // Progress fill: #4f7b64, Progress track: #dce7de
+  // Color Tokens
   const bg = isDark ? '#121E17' : '#F1F6F2';
   const cardBg = isDark ? '#1C2B23' : '#FEFEFE';
   const cardBorder = isDark ? '#2D4538' : '#E0E3D9';
@@ -671,7 +573,169 @@ export default function VideosView({
   const progressFill = isDark ? '#4ADE80' : '#4F7B64';
   const iconTileBg = isDark ? 'rgba(38, 89, 69, 0.25)' : '#E8F0E8';
 
-  const playerHeight = Math.round((containerWidth * 9) / 16) || 206;
+  const playerHeight = Math.round((containerWidth * 9) / 16) || 215;
+  const progressRatio = totalDurationSecs > 0 ? Math.min(1, currentTime / totalDurationSecs) : 0;
+
+  // Shared Bottom Controls Bar Component (Matching User's PNG + Clean No-Overlap Spacing)
+  const renderControlsBar = (isFull: boolean) => {
+    return (
+      <Animated.View
+        style={[
+          styles.controlsOverlayContainer,
+          isFull ? styles.controlsFullScreenPosition : styles.controlsInlinePosition,
+          { opacity: fadeAnim },
+        ]}
+      >
+        {/* Blue Scrubber Progress Bar */}
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={handleScrubberPress}
+          style={styles.scrubberTouchArea}
+        >
+          <View style={styles.scrubberTrack}>
+            <View style={[styles.scrubberFill, { width: `${progressRatio * 100}%` }]} />
+            <View style={[styles.scrubberThumb, { left: `${progressRatio * 100}%` }]} />
+          </View>
+        </TouchableOpacity>
+
+        {/* Dark Controls Bar */}
+        <View style={styles.controlsBarRow}>
+          {/* Left Controls: Play, Rewind, Forward, Speaker (+ Popout Volume Slider) */}
+          <View style={styles.controlsLeftGroup}>
+            {/* Play/Pause Button */}
+            <TouchableOpacity
+              onPress={handleTogglePlayPause}
+              style={styles.playPauseCircleBtn}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name={isPlayingVideo ? 'pause' : 'play'}
+                size={15}
+                color="#FFFFFF"
+                style={isPlayingVideo ? undefined : { marginLeft: 2 }}
+              />
+            </TouchableOpacity>
+
+            {/* Rewind 10s */}
+            <TouchableOpacity
+              onPress={handleSeekRewind}
+              style={styles.controlIconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="play-back" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* Fast-forward 10s */}
+            <TouchableOpacity
+              onPress={handleSeekForward}
+              style={styles.controlIconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="play-forward" size={16} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* Speaker Icon - Tapping toggles the hidden volume slider */}
+            <View style={styles.volumeControlGroup}>
+              <TouchableOpacity
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setShowVolumeSlider((prev) => !prev);
+                  resetHideTimer();
+                }}
+                onLongPress={handleToggleMute}
+                style={styles.controlIconBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={isMuted ? 'volume-mute' : 'volume-high'}
+                  size={18}
+                  color="#FFFFFF"
+                />
+              </TouchableOpacity>
+
+              {/* Volume Track - ONLY displayed when user taps speaker! */}
+              {showVolumeSlider && (
+                <TouchableOpacity
+                  activeOpacity={0.9}
+                  onPress={handleToggleMute}
+                  style={styles.volumeTrack}
+                >
+                  <View
+                    style={[
+                      styles.volumeFill,
+                      { width: isMuted ? '0%' : '75%' },
+                    ]}
+                  />
+                  <View
+                    style={[
+                      styles.volumeThumb,
+                      { left: isMuted ? '0%' : '75%' },
+                    ]}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* Timestamp Counter */}
+            <Text style={styles.timeCounterText}>
+              {`${formatTime(currentTime)} / ${formatTime(totalDurationSecs)}`}
+            </Text>
+          </View>
+
+          {/* Right Controls: CC, Gear, Fullscreen */}
+          <View style={styles.controlsRightGroup}>
+            {/* Subtitles [CC] */}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.selectionAsync();
+                setShowCaptions((c) => !c);
+                resetHideTimer();
+              }}
+              style={[
+                styles.ccBadge,
+                showCaptions && styles.ccBadgeActive,
+              ]}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.ccBadgeText,
+                  showCaptions && styles.ccBadgeTextActive,
+                ]}
+              >
+                CC
+              </Text>
+            </TouchableOpacity>
+
+            {/* Settings Gear */}
+            <TouchableOpacity
+              onPress={() => {
+                Haptics.selectionAsync();
+                setShowSpeedModal(true);
+              }}
+              style={styles.controlIconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="settings-sharp" size={17} color="#FFFFFF" />
+            </TouchableOpacity>
+
+            {/* Fullscreen Expand / Minimize */}
+            <TouchableOpacity
+              onPress={handleToggleFullScreen}
+              style={styles.controlIconBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name={isFull ? 'contract' : 'expand'}
+                size={18}
+                color="#FFFFFF"
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
@@ -681,11 +745,11 @@ export default function VideosView({
         showsVerticalScrollIndicator={false}
       >
         {/* ========================================================================= */}
-        {/* VIEW 1: MULTI-VIDEO LESSONS LIBRARY (EntomologyVideoLessonsMobile)        */}
+        {/* VIEW 1: MULTI-VIDEO SELECTION SCREEN (Shown ONLY if videos > 1)           */}
         {/* ========================================================================= */}
-        {selectedLessonId === null ? (
+        {!isSingleVideoUnit && selectedLessonId === null ? (
           <>
-            {/* 1. PAGE TITLE & CHAPTER SELECTOR */}
+            {/* Page Header */}
             <View style={styles.introduction}>
               <View style={styles.headerTitleRow}>
                 <View style={{ flex: 1 }}>
@@ -712,22 +776,36 @@ export default function VideosView({
               </View>
             </View>
 
-            {/* 3. LEARNING PROGRESS CARD (.learningProgress) */}
-            <View style={[styles.learningProgress, { backgroundColor: isDark ? '#1C2B23' : '#E8F0E8' }]}>
-              <View style={styles.progressSummary}>
-                <Text style={[styles.completionCount, { color: brandGreen }]}>
-                  1 of 4 lessons completed
-                </Text>
-                <Text style={[styles.progressPctText, { color: brandGreen }]}>40%</Text>
+            {/* Progress Card */}
+            <View style={[styles.learningProgressCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              <View style={styles.progressTopRow}>
+                <View style={[styles.progressIconWrap, { backgroundColor: iconTileBg }]}>
+                  <Ionicons name="play-circle" size={24} color={brandGreen} />
+                </View>
+                <View style={styles.progressStatsWrap}>
+                  <Text style={[styles.progressNumber, { color: textDark }]}>
+                    {completedCount} of {totalVideos}
+                  </Text>
+                  <Text style={[styles.progressLabel, { color: textMuted }]}>
+                    Lessons Completed ({completionPct}%)
+                  </Text>
+                </View>
               </View>
-              <View style={[styles.courseProgressTrack, { backgroundColor: progressBg }]}>
-                <View style={[styles.courseProgressFill, { backgroundColor: progressFill, width: '40%' }]} />
+              <View style={[styles.progressTrack, { backgroundColor: progressBg, marginTop: 12 }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      backgroundColor: progressFill,
+                      width: `${completionPct}%`,
+                    },
+                  ]}
+                />
               </View>
             </View>
 
-            {/* 4. LESSON FILTERS (.lessonFilters) */}
-            <View style={styles.lessonFilters}>
-              {/* All videos */}
+            {/* Filter Pills */}
+            <View style={styles.filterBar}>
               <TouchableOpacity
                 style={[
                   styles.filterPill,
@@ -744,14 +822,16 @@ export default function VideosView({
                 <Text
                   style={[
                     styles.filterPillText,
-                    { color: filter === 'all' ? '#FFFFFF' : textMuted, fontWeight: filter === 'all' ? '600' : '500' },
+                    {
+                      color: filter === 'all' ? '#FFFFFF' : textMuted,
+                      fontWeight: filter === 'all' ? '600' : '500',
+                    },
                   ]}
                 >
-                  All videos (4)
+                  All ({totalVideos})
                 </Text>
               </TouchableOpacity>
 
-              {/* In progress */}
               <TouchableOpacity
                 style={[
                   styles.filterPill,
@@ -774,11 +854,10 @@ export default function VideosView({
                     },
                   ]}
                 >
-                  In progress (1)
+                  In Progress ({inProgressCount})
                 </Text>
               </TouchableOpacity>
 
-              {/* Completed */}
               <TouchableOpacity
                 style={[
                   styles.filterPill,
@@ -801,18 +880,20 @@ export default function VideosView({
                     },
                   ]}
                 >
-                  Completed (1)
+                  Completed ({completedCount})
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {/* 5. LESSON LIST HEADING (.lessonListHeading) */}
+            {/* Lessons List Heading */}
             <View style={styles.lessonListHeading}>
               <Text style={[styles.listHeadingText, { color: brandGreen }]}>YOUR VIDEO LESSONS</Text>
-              <Text style={[styles.totalDuration, { color: textMuted }]}>4 videos · 41 min</Text>
+              <Text style={[styles.totalDuration, { color: textMuted }]}>
+                {totalVideos} video{totalVideos === 1 ? '' : 's'} · {totalMinutes} min
+              </Text>
             </View>
 
-            {/* 6. VIDEO LESSONS LIST (.videoLessons) */}
+            {/* Multi-Video Cards */}
             <View style={styles.videoLessonsList}>
               {filteredLessons.map((item) => {
                 const isInProgress = item.filterStatus === 'in_progress';
@@ -829,9 +910,13 @@ export default function VideosView({
                     onPress={() => handleSelectLesson(item.id)}
                     activeOpacity={0.88}
                   >
-                    {/* Thumbnail (.videoThumbnail) */}
                     <View style={styles.videoThumbnail}>
-                      <Image source={item.thumbSource} style={styles.lessonImageIcon} resizeMode="cover" />
+                      <Image
+                        source={item.thumbSource || { uri: `https://img.youtube.com/vi/${item.ytId}/hqdefault.jpg` }}
+                        defaultSource={THUMB_01}
+                        style={styles.lessonImageIcon}
+                        resizeMode="cover"
+                      />
                       <View style={styles.playLessonBtn}>
                         <Ionicons name="play" size={11} color="#265945" style={{ marginLeft: 2 }} />
                       </View>
@@ -840,7 +925,6 @@ export default function VideosView({
                       </View>
                     </View>
 
-                    {/* Lesson Details (.lessonDetails) */}
                     <View style={styles.lessonDetails}>
                       <Text style={[styles.lessonNumber, { color: textMuted }]}>
                         {item.lessonNumber}
@@ -852,7 +936,6 @@ export default function VideosView({
                         {item.topic}
                       </Text>
 
-                      {/* Watch Progress (.watchProgress) */}
                       <View style={styles.watchProgress}>
                         <Text
                           style={[
@@ -883,7 +966,6 @@ export default function VideosView({
               })}
             </View>
 
-            {/* 7. SAVED PROGRESS NOTE (.savedProgressNote) */}
             <View style={styles.savedProgressNote}>
               <Ionicons name="checkmark-circle-outline" size={14} color={textMuted} />
               <Text style={[styles.savedProgressText, { color: textMuted }]}>
@@ -893,32 +975,63 @@ export default function VideosView({
           </>
         ) : (
           /* ========================================================================= */
-          /* VIEW 2: DEDICATED SINGLE LESSON PLAYER (EntomologyVideoLessonMobile412918) */
+          /* VIEW 2: DEDICATED SINGLE VIDEO SCREEN (Clean Header + Thumb + Bullets)     */
           /* ========================================================================= */
           <>
-            {/* 1. SINGLE LESSON HEADER WITH BACK BUTTON */}
-            <View style={styles.singleLessonHeaderRow}>
-              <TouchableOpacity
-                style={[styles.backToLibraryBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                onPress={handleBackToLibrary}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="arrow-back" size={18} color={textDark} />
-              </TouchableOpacity>
-              <Text style={[styles.singleLessonHeaderTitle, { color: textDark }]} numberOfLines={1}>
-                {currentLesson.title}
-              </Text>
+            {/* 1. UNIT HEADER TITLE WITH BLUE ACCENT UNDERLINE */}
+            <View style={styles.unitHeaderRow}>
+              {!isSingleVideoUnit && (
+                <TouchableOpacity
+                  style={[styles.backToLibraryBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                  onPress={handleBackToLibrary}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="arrow-back" size={18} color={textDark} />
+                </TouchableOpacity>
+              )}
+
+              <View style={styles.unitTitleWrapper}>
+                <View style={styles.unitBadgeContainer}>
+                  <Text style={styles.unitBadgeLabel}>
+                    Unit-{chapterNumber}:
+                  </Text>
+                  <View style={styles.unitBadgeUnderline} />
+                </View>
+                <Text style={[styles.unitTitleText, { color: textDark }]} numberOfLines={1}>
+                  {currentLesson.title}
+                </Text>
+              </View>
+
+              {onChapterPress && (
+                <TouchableOpacity
+                  style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                  onPress={onChapterPress}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="book-outline" size={13} color={brandGreen} />
+                  <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
+                    Ch {chapterNumber}
+                  </Text>
+                  <Ionicons name="chevron-down" size={12} color={textMuted} />
+                </TouchableOpacity>
+              )}
             </View>
 
-            {/* 2. VIDEO THUMBNAIL / PLAYER CARD (.image103Parent) */}
-            <View onLayout={onLayout} style={[styles.heroVideoCard, { borderColor: cardBorder }]}>
+            {/* 2. VIDEO PLAYER CARD (Real Video Thumbnail + Red Play + YouTube Controls) */}
+            <View
+              onLayout={onLayout}
+              style={[
+                styles.videoPlayerCard,
+                { backgroundColor: '#000000', borderColor: isDark ? '#223547' : '#E2E8F0' },
+              ]}
+            >
+              {/* Video Play Area */}
               {isPlayingVideo ? (
-                /* Live YouTube Player */
-                <View style={[styles.playerWrap, { height: playerHeight }]}>
+                <View style={[styles.inlinePlayerContainer, { height: playerHeight }]}>
                   {Platform.OS === 'web' ? (
                     React.createElement('iframe', {
                       key: currentLesson.ytId,
-                      src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&rel=0&modestbranding=1`,
+                      src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0`,
                       width: '100%',
                       height: '100%',
                       style: { border: 0, display: 'block' },
@@ -929,84 +1042,66 @@ export default function VideosView({
                     })
                   ) : (
                     <YoutubePlayer
+                      ref={playerRef}
                       height={playerHeight}
-                      width={containerWidth || 366}
+                      width={containerWidth || Dimensions.get('window').width - 32}
                       videoId={currentLesson.ytId}
-                      play={true}
-                      initialPlayerParams={{ rel: false, modestbranding: true }}
+                      play={isPlayingVideo}
+                      initialPlayerParams={{ rel: false, modestbranding: true, controls: false }}
                     />
                   )}
+
+                  {/* Touch overlay to toggle controls */}
+                  <TouchableWithoutFeedback onPress={toggleControls}>
+                    <View style={styles.inlineTouchSurface} />
+                  </TouchableWithoutFeedback>
+
+                  {/* Inline Controls Bar */}
+                  {renderControlsBar(false)}
                 </View>
               ) : (
-                /* Interactive Lecture Video Poster */
+                /* Poster View (Real Video Thumbnail + Red Play Button + Controls) */
                 <TouchableOpacity
-                  style={styles.heroPosterTouch}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setIsPlayingVideo(true);
-                  }}
+                  style={[styles.posterContainer, { height: playerHeight }]}
+                  onPress={handlePlayFullscreen}
                   activeOpacity={0.92}
                 >
-                  <Image source={THUMB_HERO} style={styles.heroPosterImage} resizeMode="cover" />
-                  <View style={styles.heroPosterOverlay} />
-                  <View style={styles.heroPlayCircle}>
-                    <Ionicons name="play" size={20} color="#265945" style={{ marginLeft: 3 }} />
+                  {/* Real Video Thumbnail Image */}
+                  <Image
+                    source={currentLesson.thumbSource || { uri: `https://img.youtube.com/vi/${currentLesson.ytId}/hqdefault.jpg` }}
+                    defaultSource={THUMB_HERO}
+                    style={styles.posterImage}
+                    resizeMode="cover"
+                  />
+
+                  {/* Subtle darkening tint for contrast */}
+                  <View style={styles.posterTintOverlay} />
+
+                  {/* Center Large White Play Button with Red Triangle */}
+                  <View style={styles.centerPlayCircle}>
+                    <Ionicons name="play" size={32} color="#EF4444" style={{ marginLeft: 4 }} />
                   </View>
-                  <View style={styles.heroMinBadge}>
-                    <Text style={styles.heroMinText}>{`${currentLesson.duration} min`}</Text>
-                  </View>
+
+                  {/* Controls Bar at bottom of poster */}
+                  {renderControlsBar(false)}
                 </TouchableOpacity>
               )}
             </View>
 
-            {/* 3. LESSON TITLE & SUBTITLE */}
-            <View style={styles.lessonTitleSection}>
-              <Text style={[styles.heroLessonTitle, { color: textDark }]}>{currentLesson.title}</Text>
-              <Text style={[styles.heroLessonSubtitle, { color: textMuted }]}>
-                Video lecture · Chapter {chapterNumber}
-              </Text>
-
-              {/* Meta Pills */}
-              <View style={styles.metaPillsRow}>
-                <View style={[styles.metaPill, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                  <Ionicons name="time-outline" size={13} color={textMuted} />
-                  <Text style={[styles.metaPillText, { color: textDark }]}>
-                    {`${currentLesson.duration} min`}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.metaPill,
-                    { backgroundColor: cardBg, borderColor: isSaved ? '#265945' : cardBorder },
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    setIsSaved((s) => !s);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name={isSaved ? 'star' : 'star-outline'}
-                    size={13}
-                    color={isSaved ? '#EAB308' : textMuted}
-                  />
-                  <Text style={[styles.metaPillText, { color: isSaved ? '#265945' : textDark }]}>
-                    {isSaved ? 'Saved' : 'Save'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* 4. WHAT YOU'LL LEARN HEADING */}
+            {/* 3. WHAT YOU'LL LEARN HEADING & BULLET POINTS (Directly below video card) */}
             <View style={styles.topicsHeadingParent}>
-              <Text style={[styles.topicsHeading, { color: brandGreen }]}>WHAT YOU’LL LEARN</Text>
+              <View style={styles.topicsHeadingRow}>
+                <View style={styles.topicsBulletDot} />
+                <Text style={[styles.topicsHeading, { color: brandGreen }]}>
+                  WHAT YOU’LL LEARN
+                </Text>
+              </View>
               <Text style={[styles.topicsCount, { color: textMuted }]}>
                 {`${currentLesson.topicsWhatYouLearn.length} TOPICS`}
               </Text>
             </View>
 
-            {/* 5. TOPIC CARDS (01, 02, 03) */}
+            {/* 4. TOPIC BULLET POINT CARDS (01, 02, 03, 04, 05) */}
             <View style={styles.topicCardsList}>
               {currentLesson.topicsWhatYouLearn.map((topic) => (
                 <View
@@ -1014,13 +1109,13 @@ export default function VideosView({
                   style={[styles.topicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
                 >
                   <View style={[styles.topicIconTile, { backgroundColor: iconTileBg }]}>
-                    <Ionicons name="pencil" size={16} color={brandGreen} />
+                    <Ionicons name="checkmark-circle" size={18} color={brandGreen} />
                   </View>
                   <View style={styles.topicInfoWrap}>
                     <Text style={[styles.topicTitle, { color: textDark }]} numberOfLines={2}>
                       {topic.title}
                     </Text>
-                    <Text style={[styles.topicSubtitle, { color: textMuted }]} numberOfLines={2}>
+                    <Text style={[styles.topicSubtitle, { color: textMuted }]} numberOfLines={3}>
                       {topic.subtitle}
                     </Text>
                   </View>
@@ -1028,28 +1123,125 @@ export default function VideosView({
                 </View>
               ))}
             </View>
-
-            {/* 6. CONTINUE LEARNING BUTTON */}
-            <TouchableOpacity
-              style={[styles.continueButton, { backgroundColor: '#265945' }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                setIsPlayingVideo(true);
-                onContinueLearning?.();
-              }}
-              activeOpacity={0.88}
-            >
-              <Text style={styles.continueButtonText}>Continue learning  →</Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.lessonNote, { color: textMuted }]}>
-              Your lesson progress is saved automatically.
-            </Text>
           </>
         )}
-
-        <View style={{ height: 60 }} />
       </ScrollView>
+
+      {/* ========================================================================= */}
+      {/* FULLSCREEN YOUTUBE MODAL (YouTube-Style Overlay & Controls Auto-Hide)      */}
+      {/* ========================================================================= */}
+      <Modal
+        visible={isFullScreen}
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={handleToggleFullScreen}
+      >
+        <StatusBar hidden={isFullScreen} />
+        <View style={styles.fullScreenContainer}>
+          {/* Main Fullscreen Video Player */}
+          <View style={styles.fullScreenVideoWrap}>
+            {Platform.OS === 'web' ? (
+              React.createElement('iframe', {
+                key: `fs-${currentLesson.ytId}`,
+                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0`,
+                width: '100%',
+                height: '100%',
+                style: { border: 0, display: 'block', backgroundColor: '#000000' },
+                allow:
+                  'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
+                allowFullScreen: true,
+                title: currentLesson.title,
+              })
+            ) : (
+              <YoutubePlayer
+                ref={playerRef}
+                height={Dimensions.get('window').height}
+                width={Dimensions.get('window').width}
+                videoId={currentLesson.ytId}
+                play={isPlayingVideo}
+                initialPlayerParams={{ rel: false, modestbranding: true, controls: false }}
+              />
+            )}
+          </View>
+
+          {/* Fullscreen Touch Tap Surface to Toggle / Reset Controls */}
+          <TouchableWithoutFeedback onPress={toggleControls}>
+            <View style={styles.fullScreenTouchLayer}>
+              {/* Top Bar Overlay */}
+              <Animated.View style={[styles.fullScreenTopBar, { opacity: fadeAnim }]}>
+                <TouchableOpacity
+                  onPress={handleToggleFullScreen}
+                  style={styles.fullScreenBackBtn}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <Text style={styles.fullScreenVideoTitle} numberOfLines={1}>
+                    {`Unit ${chapterNumber}: ${currentLesson.title}`}
+                  </Text>
+                  <Text style={styles.fullScreenVideoSub}>{currentLesson.topic}</Text>
+                </View>
+                <TouchableOpacity
+                  onPress={handleToggleFullScreen}
+                  style={styles.fullScreenMinimizeBtn}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="contract" size={22} color="#FFFFFF" />
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* Bottom Fullscreen Controls Bar (Matching User's PNG) */}
+              {renderControlsBar(true)}
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </Modal>
+
+      {/* Speed Selector Modal */}
+      <Modal
+        visible={showSpeedModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowSpeedModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.speedModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowSpeedModal(false)}
+        >
+          <View style={[styles.speedModalContent, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+            <Text style={[styles.speedModalTitle, { color: textDark }]}>Playback Speed</Text>
+            {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+              <TouchableOpacity
+                key={speed}
+                style={[
+                  styles.speedOptionRow,
+                  playbackSpeed === speed && styles.speedOptionSelected,
+                ]}
+                onPress={() => {
+                  Haptics.selectionAsync();
+                  setPlaybackSpeed(speed);
+                  setShowSpeedModal(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.speedOptionText,
+                    { color: textDark },
+                    playbackSpeed === speed && { color: '#2563EB', fontWeight: '700' },
+                  ]}
+                >
+                  {speed === 1.0 ? 'Normal (1.0x)' : `${speed}x`}
+                </Text>
+                {playbackSpeed === speed && (
+                  <Ionicons name="checkmark" size={18} color="#2563EB" />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 }
@@ -1064,445 +1256,609 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 16,
     paddingTop: 12,
-    paddingBottom: 40,
+    paddingBottom: 48,
   },
   tabletContent: {
-    maxWidth: 680,
+    paddingHorizontal: 32,
+    maxWidth: 960,
     alignSelf: 'center',
     width: '100%',
   },
-  /* 1. Brand Header (.brandHeader) */
-  brandHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 14,
-    paddingHorizontal: 2,
-    gap: 10,
-  },
-  backToLibraryBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  singleLessonHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-    paddingHorizontal: 2,
-  },
-  singleLessonHeaderTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    flex: 1,
-  },
-  brandMark: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  brandMarkLetter: {
-    color: '#FFFFFF',
-    fontSize: 19,
-    fontWeight: '700',
-  },
-  brandIdentity: {
-    flex: 1,
-    gap: 2,
-  },
-  brandName: {
-    fontSize: 18,
-    fontWeight: '700',
-    lineHeight: 22,
-  },
-  section: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  /* 2. Introduction / Page Title (.introduction, .pageTitle) */
+
+  /* Introduction / Header */
   introduction: {
-    marginBottom: 12,
-    paddingHorizontal: 2,
+    marginBottom: 16,
   },
   headerTitleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
   },
   pageTitle: {
-    fontSize: 23,
-    fontWeight: '700',
-    letterSpacing: -0.4,
-    lineHeight: 28,
+    fontSize: 22,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   chapterSubheading: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 2,
     fontWeight: '500',
   },
   chapterPillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
-    gap: 4,
+    gap: 5,
   },
   chapterPillBtnText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
   },
-  /* 3. Learning Progress Card (.learningProgress) */
-  learningProgress: {
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 9,
-    marginBottom: 14,
-  },
-  progressSummary: {
+
+  /* Unit Header Row */
+  unitHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    marginTop: 4,
   },
-  completionCount: {
-    fontSize: 11,
-    fontWeight: '600',
+  backToLibraryBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
   },
-  progressPctText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  courseProgressTrack: {
-    height: 5,
-    borderRadius: 4,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  courseProgressFill: {
-    height: 5,
-    borderRadius: 4,
-  },
-  /* 4. Lesson Filters (.lessonFilters) */
-  lessonFilters: {
+  unitTitleWrapper: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  unitBadgeContainer: {
+    position: 'relative',
+    paddingBottom: 4,
+  },
+  unitBadgeLabel: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#2563EB',
+    letterSpacing: -0.2,
+  },
+  unitBadgeUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3.5,
+    borderRadius: 2,
+    backgroundColor: '#2563EB',
+  },
+  unitTitleText: {
+    fontSize: 17,
+    fontWeight: '700',
+    flex: 1,
+    letterSpacing: -0.2,
+  },
+
+  /* Multi-Video Progress Card */
+  learningProgressCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
     marginBottom: 16,
   },
+  progressTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  progressIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressStatsWrap: {
+    flex: 1,
+  },
+  progressNumber: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  progressLabel: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  progressTrack: {
+    height: 7,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+
+  /* Filter Bar */
+  filterBar: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 18,
+  },
   filterPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
   },
   filterPillText: {
-    fontSize: 11,
+    fontSize: 12,
   },
-  /* 5. Lesson List Heading (.lessonListHeading) */
+
+  /* Lesson List Heading */
   lessonListHeading: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
-    paddingHorizontal: 2,
+    marginBottom: 12,
   },
   listHeadingText: {
     fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
   },
   totalDuration: {
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 12,
   },
-  /* 6. Video Lessons List (.videoLessons) */
+
+  /* Video Lessons List */
   videoLessonsList: {
-    gap: 10,
-    marginBottom: 16,
+    gap: 12,
   },
   videoLessonCard: {
-    minHeight: 112,
-    borderRadius: 13,
+    flexDirection: 'row',
+    borderRadius: 16,
     borderWidth: 1,
     padding: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
+    alignItems: 'center',
   },
   videoThumbnail: {
-    width: 124,
-    height: 86,
-    borderRadius: 8,
+    width: 104,
+    height: 72,
+    borderRadius: 10,
     overflow: 'hidden',
     position: 'relative',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000000',
+    backgroundColor: '#000',
   },
   lessonImageIcon: {
     width: '100%',
     height: '100%',
-    position: 'absolute',
   },
   playLessonBtn: {
-    width: 25,
-    height: 25,
-    borderRadius: 12.5,
-    backgroundColor: 'rgba(255, 255, 255, 0.93)',
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 1,
   },
   durationBadge: {
     position: 'absolute',
     bottom: 5,
     right: 5,
+    backgroundColor: 'rgba(0,0,0,0.7)',
     borderRadius: 4,
-    backgroundColor: 'rgba(23, 42, 35, 0.85)',
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    zIndex: 2,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
   },
   durationBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
+    color: '#FFF',
+    fontSize: 9,
     fontWeight: '600',
   },
   lessonDetails: {
     flex: 1,
-    gap: 3,
   },
   lessonNumber: {
-    fontSize: 9,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    marginBottom: 2,
   },
   lessonTitleText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
-    lineHeight: 17,
+    marginBottom: 2,
   },
   lessonTopicText: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 12,
+    marginBottom: 6,
   },
   watchProgress: {
-    marginTop: 4,
+    flexDirection: 'column',
     gap: 4,
   },
   progressStatusText: {
-    fontSize: 9.5,
+    fontSize: 11,
   },
-  progressTrack: {
-    height: 3,
-    borderRadius: 3,
-    width: '100%',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 3,
-    borderRadius: 3,
-  },
-  /* 7. Saved Progress Note (.savedProgressNote) */
   savedProgressNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
-    marginTop: 8,
-    marginBottom: 10,
+    justifyContent: 'center',
+    marginTop: 20,
   },
   savedProgressText: {
-    fontSize: 11,
+    fontSize: 12,
   },
 
-  /* ========================================================================= */
-  /* DETAIL / PLAYER VIEW STYLES                                               */
-  /* ========================================================================= */
-  heroVideoCard: {
-    width: '100%',
-    aspectRatio: 16 / 9,
-    borderRadius: 10,
-    overflow: 'hidden',
+  /* Video Player Card (Real Video Thumbnail) */
+  videoPlayerCard: {
+    borderRadius: 20,
     borderWidth: 1,
-    backgroundColor: '#000000',
+    overflow: 'hidden',
+    position: 'relative',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 4,
     marginBottom: 16,
   },
-  playerWrap: {
+  posterContainer: {
     width: '100%',
-    overflow: 'hidden',
-  },
-  heroPosterTouch: {
-    width: '100%',
-    height: '100%',
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#000000',
   },
-  heroPosterImage: {
+  posterImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: '100%',
     height: '100%',
   },
-  heroPosterOverlay: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+  posterTintOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
   },
-  heroPlayCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  centerPlayCircle: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 2,
   },
-  heroMinBadge: {
+  inlinePlayerContainer: {
+    width: '100%',
+    position: 'relative',
+    backgroundColor: '#000000',
+  },
+  inlineTouchSurface: {
     position: 'absolute',
-    bottom: 10,
-    right: 10,
-    borderRadius: 6,
-    backgroundColor: 'rgba(7, 7, 7, 0.6)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 2,
   },
-  heroMinText: {
-    color: '#FFFFFF',
-    fontSize: 9.5,
-    fontWeight: '600',
+
+  /* Shared Custom Controls Bar Overlay (Matching User's PNG) */
+  controlsOverlayContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
   },
-  lessonTitleSection: {
-    marginBottom: 16,
-    paddingHorizontal: 2,
+  controlsInlinePosition: {
+    borderBottomLeftRadius: 19,
+    borderBottomRightRadius: 19,
+    overflow: 'hidden',
   },
-  heroLessonTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 26,
+  controlsFullScreenPosition: {
+    paddingBottom: Platform.OS === 'ios' ? 24 : 12,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
   },
-  heroLessonSubtitle: {
-    fontSize: 11,
-    marginTop: 3,
+
+  /* Scrubber Track */
+  scrubberTouchArea: {
+    height: 18,
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
   },
-  metaPillsRow: {
+  scrubberTrack: {
+    height: 4,
+    backgroundColor: '#334155',
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  scrubberFill: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+  },
+  scrubberThumb: {
+    position: 'absolute',
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#3B82F6',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    top: -5,
+    marginLeft: -7,
+  },
+
+  /* Dark Controls Bar Row */
+  controlsBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#0F172A',
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
+  controlsLeftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginTop: 10,
   },
-  metaPill: {
+  controlsRightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 4.5,
-    borderRadius: 16,
-    borderWidth: 1,
+    gap: 10,
   },
-  metaPillText: {
+  playPauseCircleBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  controlIconBtn: {
+    padding: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  volumeControlGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  volumeTrack: {
+    width: 44,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#334155',
+    position: 'relative',
+    justifyContent: 'center',
+    marginLeft: 2,
+  },
+  volumeFill: {
+    height: '100%',
+    borderRadius: 2,
+    backgroundColor: '#3B82F6',
+  },
+  volumeThumb: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+    top: -2,
+    marginLeft: -4,
+  },
+  timeCounterText: {
+    color: '#E2E8F0',
     fontSize: 10.5,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginLeft: 2,
   },
+  ccBadge: {
+    borderWidth: 1.2,
+    borderColor: '#94A3B8',
+    borderRadius: 4,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  ccBadgeActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: '#1E3A8A',
+  },
+  ccBadgeText: {
+    color: '#94A3B8',
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  ccBadgeTextActive: {
+    color: '#FFFFFF',
+  },
+
+  /* What You'll Learn Heading */
   topicsHeadingParent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
-    paddingHorizontal: 2,
+    marginTop: 2,
   },
-  topicsHeading: {
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  topicsCount: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  topicCardsList: {
-    gap: 10,
-    marginBottom: 20,
-  },
-  topicCard: {
-    minHeight: 88,
-    borderRadius: 13,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+  topicsHeadingRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 6,
+  },
+  topicsBulletDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#265945',
+  },
+  topicsHeading: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  topicsCount: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
+  /* Topic Bullet Point Cards */
+  topicCardsList: {
+    gap: 10,
+  },
+  topicCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 12,
+    alignItems: 'flex-start',
     gap: 12,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
   },
   topicIconTile: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    marginTop: 2,
   },
   topicInfoWrap: {
     flex: 1,
-    gap: 3,
   },
   topicTitle: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    lineHeight: 18,
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 3,
   },
   topicSubtitle: {
-    fontSize: 11,
+    fontSize: 12,
     lineHeight: 16,
   },
   topicNumber: {
-    fontSize: 11,
-    fontWeight: '700',
-    alignSelf: 'flex-end',
-    marginBottom: 2,
-  },
-  continueButton: {
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  continueButtonText: {
-    color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '800',
+  },
+
+  /* FullScreen Modal Styles */
+  fullScreenContainer: {
+    flex: 1,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenVideoWrap: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#000000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenTouchLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  fullScreenTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    paddingTop: Platform.OS === 'ios' ? 44 : 20,
+    paddingBottom: 14,
+    paddingHorizontal: 16,
+  },
+  fullScreenBackBtn: {
+    padding: 4,
+  },
+  fullScreenMinimizeBtn: {
+    padding: 4,
+  },
+  fullScreenVideoTitle: {
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '700',
   },
-  lessonNote: {
-    fontSize: 11,
-    textAlign: 'center',
-    marginTop: 10,
-    paddingHorizontal: 10,
+  fullScreenVideoSub: {
+    color: '#94A3B8',
+    fontSize: 12,
+  },
+
+  /* Speed Selector Modal */
+  speedModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  speedModalContent: {
+    width: '100%',
+    maxWidth: 280,
+    borderRadius: 20,
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  speedModalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  speedOptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'rgba(150,150,150,0.2)',
+  },
+  speedOptionSelected: {
+    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    borderRadius: 8,
+    paddingHorizontal: 8,
+  },
+  speedOptionText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
