@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchStudyPlan } from '@/services/contentService';
 
 export interface StudyPlanTask {
   id: string;
@@ -59,7 +61,51 @@ export const DEFAULT_STUDY_TASKS: StudyPlanTask[] = [
   },
 ];
 
+function parseStudyPlanTasks(markdown: string, chapterNum: number): StudyPlanTask[] {
+  const tasks: StudyPlanTask[] = [];
+  const lines = markdown.split('\n');
+  let count = 0;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if ((trimmed.startsWith('- [ ]') || trimmed.startsWith('•') || trimmed.startsWith('*') || /^\d+\.\s+\*\*/.test(trimmed)) && trimmed.length > 10) {
+      count++;
+      const clean = trimmed.replace(/^[-*•\d\.\s\[\]]+/, '').replace(/\*\*/g, '').trim();
+      const type: 'mindmap' | 'review' | 'video' | 'quiz' =
+        clean.toLowerCase().includes('video') || clean.toLowerCase().includes('lecture') ? 'video' :
+        clean.toLowerCase().includes('mindmap') || clean.toLowerCase().includes('diagram') ? 'mindmap' :
+        clean.toLowerCase().includes('quiz') || clean.toLowerCase().includes('mcq') || clean.toLowerCase().includes('mock') ? 'quiz' : 'review';
+      
+      const actionLabel =
+        type === 'video' ? 'Watch →' :
+        type === 'mindmap' ? 'Open →' :
+        type === 'quiz' ? 'Start →' : 'Review →';
+
+      tasks.push({
+        id: `task_${chapterNum}_${count}`,
+        title: clean.length > 55 ? clean.slice(0, 52) + '...' : clean,
+        category: type === 'video' ? 'Video Lecture' : type === 'mindmap' ? 'Mind Map' : type === 'quiz' ? 'Assessment' : 'Revision',
+        duration: count % 2 === 0 ? '15m' : '20m',
+        actionLabel,
+        type,
+      });
+      if (tasks.length >= 6) break;
+    }
+  }
+
+  if (tasks.length === 0) {
+    return [
+      { id: `task_${chapterNum}_1`, title: 'Mindmaps & Hierarchical Architecture', category: 'Mindmap', duration: '10m', actionLabel: 'Open →', type: 'mindmap' },
+      { id: `task_${chapterNum}_2`, title: 'Key Takeaways Rapid Reactivation', category: 'Review', duration: '15m', actionLabel: 'Open →', type: 'review' },
+      { id: `task_${chapterNum}_3`, title: 'Video Lecture Breakdown', category: 'Video', duration: '20m', actionLabel: 'Watch →', type: 'video' },
+      { id: `task_${chapterNum}_4`, title: 'Assessment & Question Bank Practice', category: 'Quiz', duration: '15m', actionLabel: 'Start →', type: 'quiz' },
+    ];
+  }
+  return tasks;
+}
+
 interface StudyPlanViewProps {
+  subjectId?: string;
+  chapterNumber?: number;
   unitCode?: string;
   unitName?: string;
   subjectName?: string;
@@ -74,6 +120,8 @@ interface StudyPlanViewProps {
 }
 
 export default function StudyPlanView({
+  subjectId = 'entomology',
+  chapterNumber = 1,
   unitCode = 'ENTO 131 · UNIT I',
   unitName = 'Insect Digestive System & Anatomy',
   subjectName = 'Entomology',
@@ -92,6 +140,35 @@ export default function StudyPlanView({
 
   const [tasks, setTasks] = useState<StudyPlanTask[]>(DEFAULT_STUDY_TASKS);
   const [completedTaskIds, setCompletedTaskIds] = useState<Record<string, boolean>>({});
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchStudyPlan(subjectId, chapterNumber, controller.signal)
+      .then((markdown) => {
+        if (isMounted) {
+          if (markdown && markdown.length > 50) {
+            const parsed = parseStudyPlanTasks(markdown, chapterNumber);
+            setTasks(parsed);
+          }
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[StudyPlanView] Error fetching study plan:', err);
+        }
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber]);
 
   const completedTodayCount = tasks.filter((t) => completedTaskIds[t.id]).length;
   const todayProgressPercent = Math.round((completedTodayCount / tasks.length) * 100);

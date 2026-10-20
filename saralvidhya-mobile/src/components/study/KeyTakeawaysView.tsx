@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -14,6 +15,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchKeyTakeaways } from '@/services/contentService';
+import MarkdownReader from '@/components/study/MarkdownReader';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
 
@@ -24,13 +27,48 @@ interface StudyGuideItem {
   checked: boolean;
 }
 
+const DEFAULT_CHECKLIST: StudyGuideItem[] = [
+  { id: 'sec_1', num: '01', title: 'Three primary gut regions', checked: true },
+  { id: 'sec_2', num: '02', title: 'Histological wall layers', checked: true },
+  { id: 'sec_3', num: '03', title: 'Digestive secretions', checked: false },
+  { id: 'sec_4', num: '04', title: 'Key physiological formulas', checked: false },
+];
+
+function extractChecklistFromMarkdown(md: string): StudyGuideItem[] {
+  const items: StudyGuideItem[] = [];
+  const lines = md.split('\n');
+  let num = 0;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (
+      (trimmed.startsWith('## ') || trimmed.startsWith('### ')) &&
+      !trimmed.toLowerCase().includes('scope') &&
+      !trimmed.toLowerCase().includes('introduction')
+    ) {
+      num++;
+      const title = trimmed.replace(/^#+\s*(\d+[\.\)]*)?\s*/, '').replace(/[\*\_]/g, '').trim();
+      const numFormatted = num < 10 ? `0${num}` : `${num}`;
+      items.push({
+        id: `sec_${num}`,
+        num: numFormatted,
+        title: title.length > 35 ? title.slice(0, 32) + '...' : title,
+        checked: num <= 2,
+      });
+      if (items.length >= 5) break;
+    }
+  }
+  return items.length > 0 ? items : DEFAULT_CHECKLIST;
+}
+
 interface KeyTakeawaysViewProps {
+  subjectId?: string;
   chapterNumber?: number;
   chapterName?: string;
   subjectName?: string;
 }
 
 export default function KeyTakeawaysView({
+  subjectId = 'entomology',
   chapterNumber = 1,
   chapterName = 'Insect Digestive System',
   subjectName = 'Entomology',
@@ -39,15 +77,39 @@ export default function KeyTakeawaysView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  // Interactive revision checklist state (default items 1 & 2 checked as in Figma "2/4")
-  const [checklist, setChecklist] = useState<StudyGuideItem[]>([
-    { id: 'sec_1', num: '01', title: 'Three primary gut regions', checked: true },
-    { id: 'sec_2', num: '02', title: 'Histological wall layers', checked: true },
-    { id: 'sec_3', num: '03', title: 'Digestive secretions', checked: false },
-    { id: 'sec_4', num: '04', title: 'Key physiological formulas', checked: false },
-  ]);
-
+  const [checklist, setChecklist] = useState<StudyGuideItem[]>(DEFAULT_CHECKLIST);
   const [activeRegion, setActiveRegion] = useState<string | null>(null);
+  const [markdownText, setMarkdownText] = useState<string>('');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchKeyTakeaways(subjectId, chapterNumber, controller.signal)
+      .then((text) => {
+        if (isMounted) {
+          if (text && text.trim().length > 50) {
+            setMarkdownText(text);
+            const dynamicChecklist = extractChecklistFromMarkdown(text);
+            setChecklist(dynamicChecklist);
+          }
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[KeyTakeawaysView] Error fetching key takeaways:', err);
+        }
+        if (isMounted) setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber]);
 
   const colors = isDark
     ? {
@@ -272,171 +334,198 @@ export default function KeyTakeawaysView({
           <View style={[styles.separatorLine, { backgroundColor: colors.separator }]} />
 
           <Text style={[styles.revisionChecklistLabel, { color: colors.checklistLabel }]}>
-            REVISION CHECKLIST · {completedCount}/4
+            REVISION CHECKLIST · {completedCount}/{checklist.length}
           </Text>
         </View>
 
-        {/* Section 01: Three primary gut regions Card */}
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-        >
-          <View style={styles.sectionHeaderRow}>
-            <View style={[styles.sectionBadgeBig, { backgroundColor: colors.badge01Bg }]}>
-              <Text style={[styles.sectionBadgeBigText, { color: colors.badge01Text }]}>01</Text>
-            </View>
-            <Text style={[styles.sectionHeadingTitle, { color: colors.brandName }]}>
-              Three primary gut regions
-            </Text>
+        {/* Dynamic Markdown Content Card */}
+        {markdownText ? (
+          <View
+            style={[
+              styles.sectionCard,
+              {
+                backgroundColor: colors.cardBg,
+                borderColor: colors.cardBorder,
+                padding: 16,
+              },
+            ]}
+          >
+            <MarkdownReader
+              content={markdownText}
+              title={chapterName}
+              chapterNumber={chapterNumber}
+            />
           </View>
-
-          <Text style={[styles.subSectionTag, { color: colors.subSectionTag }]}>
-            TRIPARTITE DIVISION
-          </Text>
-          <Text style={[styles.sectionIntro, { color: colors.intro }]}>
-            The alimentary canal has three distinct regions:
-          </Text>
-
-          {/* 3 Sub-regions Row */}
-          <View style={styles.regionsRow}>
-            {/* Foregut */}
-            <TouchableOpacity
+        ) : chapterNumber === 1 ? (
+          <>
+            {/* Section 01: Three primary gut regions Card */}
+            <View
               style={[
-                styles.regionCard,
+                styles.sectionCard,
                 {
-                  backgroundColor: colors.regionCardBg,
-                  borderColor:
-                    activeRegion === 'foregut'
-                      ? colors.regionCardActiveBorder
-                      : colors.regionCardBorder,
+                  backgroundColor: colors.cardBg,
+                  borderColor: colors.cardBorder,
                 },
               ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveRegion(activeRegion === 'foregut' ? null : 'foregut');
-              }}
-              activeOpacity={0.8}
             >
-              <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>FOREGUT</Text>
-              <Text style={[styles.regionName, { color: colors.regionName }]}>Stomodaeum</Text>
-              <Text style={[styles.regionNote, { color: colors.regionNote }]}>
-                Ectoderm · cuticular intima
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.sectionHeaderRow}>
+                <View style={[styles.sectionBadgeBig, { backgroundColor: colors.badge01Bg }]}>
+                  <Text style={[styles.sectionBadgeBigText, { color: colors.badge01Text }]}>01</Text>
+                </View>
+                <Text style={[styles.sectionHeadingTitle, { color: colors.brandName }]}>
+                  Three primary gut regions
+                </Text>
+              </View>
 
-            {/* Midgut */}
-            <TouchableOpacity
+              <Text style={[styles.subSectionTag, { color: colors.subSectionTag }]}>
+                TRIPARTITE DIVISION
+              </Text>
+              <Text style={[styles.sectionIntro, { color: colors.intro }]}>
+                The alimentary canal has three distinct regions:
+              </Text>
+
+              {/* 3 Sub-regions Row */}
+              <View style={styles.regionsRow}>
+                {/* Foregut */}
+                <TouchableOpacity
+                  style={[
+                    styles.regionCard,
+                    {
+                      backgroundColor: colors.regionCardBg,
+                      borderColor:
+                        activeRegion === 'foregut'
+                          ? colors.regionCardActiveBorder
+                          : colors.regionCardBorder,
+                    },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setActiveRegion(activeRegion === 'foregut' ? null : 'foregut');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>FOREGUT</Text>
+                  <Text style={[styles.regionName, { color: colors.regionName }]}>Stomodaeum</Text>
+                  <Text style={[styles.regionNote, { color: colors.regionNote }]}>
+                    Ectoderm · cuticular intima
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Midgut */}
+                <TouchableOpacity
+                  style={[
+                    styles.regionCard,
+                    {
+                      backgroundColor: colors.regionCardBg,
+                      borderColor:
+                        activeRegion === 'midgut'
+                          ? colors.regionCardActiveBorder
+                          : colors.regionCardBorder,
+                    },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setActiveRegion(activeRegion === 'midgut' ? null : 'midgut');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>MIDGUT</Text>
+                  <Text style={[styles.regionName, { color: colors.regionName }]}>Mesenteron</Text>
+                  <Text style={[styles.regionNote, { color: colors.regionNote }]}>
+                    Endoderm · no intima
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Hindgut */}
+                <TouchableOpacity
+                  style={[
+                    styles.regionCard,
+                    {
+                      backgroundColor: colors.regionCardBg,
+                      borderColor:
+                        activeRegion === 'hindgut'
+                          ? colors.regionCardActiveBorder
+                          : colors.regionCardBorder,
+                    },
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setActiveRegion(activeRegion === 'hindgut' ? null : 'hindgut');
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>HINDGUT</Text>
+                  <Text style={[styles.regionName, { color: colors.regionName }]}>Proctodaeum</Text>
+                  <Text style={[styles.regionNote, { color: colors.regionNote }]}>
+                    Ectoderm · cuticular intima
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Section 02: Histological wall layers Card */}
+            <View
               style={[
-                styles.regionCard,
+                styles.sectionCard,
                 {
-                  backgroundColor: colors.regionCardBg,
-                  borderColor:
-                    activeRegion === 'midgut'
-                      ? colors.regionCardActiveBorder
-                      : colors.regionCardBorder,
+                  backgroundColor: colors.cardBg,
+                  borderColor: colors.cardBorder,
                 },
               ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveRegion(activeRegion === 'midgut' ? null : 'midgut');
-              }}
-              activeOpacity={0.8}
             >
-              <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>MIDGUT</Text>
-              <Text style={[styles.regionName, { color: colors.regionName }]}>Mesenteron</Text>
-              <Text style={[styles.regionNote, { color: colors.regionNote }]}>
-                Endoderm · no intima
-              </Text>
-            </TouchableOpacity>
+              <View style={styles.sectionHeaderRow}>
+                <View style={[styles.sectionBadgeBig, { backgroundColor: colors.badge02Bg }]}>
+                  <Text style={[styles.sectionBadgeBigText, { color: colors.badge02Text }]}>02</Text>
+                </View>
+                <Text style={[styles.sectionHeadingTitle, { color: colors.brandName }]}>
+                  Histological wall layers
+                </Text>
+              </View>
 
-            {/* Hindgut */}
-            <TouchableOpacity
-              style={[
-                styles.regionCard,
-                {
-                  backgroundColor: colors.regionCardBg,
-                  borderColor:
-                    activeRegion === 'hindgut'
-                      ? colors.regionCardActiveBorder
-                      : colors.regionCardBorder,
-                },
-              ]}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setActiveRegion(activeRegion === 'hindgut' ? null : 'hindgut');
-              }}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.regionLabel, { color: colors.regionLabel }]}>HINDGUT</Text>
-              <Text style={[styles.regionName, { color: colors.regionName }]}>Proctodaeum</Text>
-              <Text style={[styles.regionNote, { color: colors.regionNote }]}>
-                Ectoderm · cuticular intima
-              </Text>
-            </TouchableOpacity>
+              <Text style={[styles.subSectionTag, { color: colors.subSectionTag }]}>LUMEN OUTWARD</Text>
+
+              {/* 4 Layers Table */}
+              <View style={styles.layersTable}>
+                <View style={styles.layerRow}>
+                  <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>01</Text>
+                  <Text style={[styles.layerName, { color: colors.layerName }]}>Peritrophic matrix</Text>
+                  <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
+                    Protective lining
+                  </Text>
+                </View>
+
+                <View style={styles.layerRow}>
+                  <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>02</Text>
+                  <Text style={[styles.layerName, { color: colors.layerName }]}>Epithelium</Text>
+                  <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
+                    Secretion & absorption
+                  </Text>
+                </View>
+
+                <View style={styles.layerRow}>
+                  <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>03</Text>
+                  <Text style={[styles.layerName, { color: colors.layerName }]}>Basement membrane</Text>
+                  <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
+                    Structural support
+                  </Text>
+                </View>
+
+                <View style={styles.layerRow}>
+                  <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>04</Text>
+                  <Text style={[styles.layerName, { color: colors.layerName }]}>Muscle layers</Text>
+                  <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
+                    Mixing & peristalsis
+                  </Text>
+                </View>
+              </View>
+            </View>
+          </>
+        ) : (
+          <View style={[styles.sectionCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder, padding: 24, alignItems: 'center' }]}>
+            <ActivityIndicator size="large" color="#22c55e" />
+            <Text style={{ marginTop: 12, color: colors.intro }}>Loading key takeaways...</Text>
           </View>
-        </View>
-
-        {/* Section 02: Histological wall layers Card */}
-        <View
-          style={[
-            styles.sectionCard,
-            {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-        >
-          <View style={styles.sectionHeaderRow}>
-            <View style={[styles.sectionBadgeBig, { backgroundColor: colors.badge02Bg }]}>
-              <Text style={[styles.sectionBadgeBigText, { color: colors.badge02Text }]}>02</Text>
-            </View>
-            <Text style={[styles.sectionHeadingTitle, { color: colors.brandName }]}>
-              Histological wall layers
-            </Text>
-          </View>
-
-          <Text style={[styles.subSectionTag, { color: colors.subSectionTag }]}>LUMEN OUTWARD</Text>
-
-          {/* 4 Layers Table */}
-          <View style={styles.layersTable}>
-            <View style={styles.layerRow}>
-              <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>01</Text>
-              <Text style={[styles.layerName, { color: colors.layerName }]}>Peritrophic matrix</Text>
-              <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
-                Protective lining
-              </Text>
-            </View>
-
-            <View style={styles.layerRow}>
-              <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>02</Text>
-              <Text style={[styles.layerName, { color: colors.layerName }]}>Epithelium</Text>
-              <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
-                Secretion & absorption
-              </Text>
-            </View>
-
-            <View style={styles.layerRow}>
-              <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>03</Text>
-              <Text style={[styles.layerName, { color: colors.layerName }]}>Basement membrane</Text>
-              <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
-                Structural support
-              </Text>
-            </View>
-
-            <View style={styles.layerRow}>
-              <Text style={[styles.layerIndex, { color: colors.layerIndex }]}>04</Text>
-              <Text style={[styles.layerName, { color: colors.layerName }]}>Muscle layers</Text>
-              <Text style={[styles.layerFunction, { color: colors.layerFunction }]}>
-                Mixing & peristalsis
-              </Text>
-            </View>
-          </View>
-        </View>
+        )}
 
         {/* 5-Min Revision Route Banner */}
         <View style={[styles.revisionRouteBanner, { backgroundColor: colors.routeBannerBg }]}>

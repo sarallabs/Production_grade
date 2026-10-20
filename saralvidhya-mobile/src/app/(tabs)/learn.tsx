@@ -98,6 +98,7 @@ export default function LearnScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               markResourceCompleted(activeSubject.id, currentChapter.number, 'videos');
             }}
+            onChapterPress={() => setShowChapterModal(true)}
           />
         </View>
       ) : activeSegment === 'listen' ? (
@@ -105,6 +106,7 @@ export default function LearnScreen() {
           chapterNumber={selectedChapterNum}
           chapterTitle={currentChapter.name}
           initialMode={listenInitialMode}
+          onChapterPress={() => setShowChapterModal(true)}
           onNavigateToRead={() => {
             markResourceCompleted(activeSubject.id, currentChapter.number, 'audio');
             setActiveSegment('read');
@@ -113,6 +115,7 @@ export default function LearnScreen() {
         />
       ) : (
         <StudyGuideReader
+          key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
           chapterNumber={selectedChapterNum}
           chapterTitle={currentChapter.name}
           subjectName={activeSubject.name}

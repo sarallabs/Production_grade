@@ -126,6 +126,7 @@ export default function PracticeScreen() {
       {activePart === 'assessments' ? (
         /* Assessments View: MCQ Single Choice */
         <AssessmentView
+          subjectId={activeSubject.id}
           chapterNumber={selectedChapterNum}
           subjectName={activeSubject.name}
           onFinish={() => {
@@ -171,6 +172,7 @@ export default function PracticeScreen() {
       ) : (
         /* Question Bank View: Questions assigned by teachers */
         <TeacherQuestionBankView
+          subjectId={activeSubject.id}
           chapterNumber={selectedChapterNum}
           chapterName={currentChapter.name}
         />

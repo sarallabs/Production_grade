@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Image,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,10 +17,12 @@ import {
   SAMPLE_ASSESSMENT_QUESTIONS,
   AssessmentQuestion,
 } from '@/services/assessmentService';
+import { fetchMockTest } from '@/services/contentService';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
 
 interface AssessmentViewProps {
+  subjectId?: string;
   chapterNumber?: number;
   subjectName?: string;
   onFinish?: () => void;
@@ -27,6 +30,7 @@ interface AssessmentViewProps {
 }
 
 export default function AssessmentView({
+  subjectId = 'entomology',
   chapterNumber = 1,
   subjectName = 'Entomology',
   onFinish,
@@ -35,18 +39,56 @@ export default function AssessmentView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const questions: AssessmentQuestion[] =
-    SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1];
-
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>(
+    SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isEvaluated, setIsEvaluated] = useState(false);
   const [userAnswersRecord, setUserAnswersRecord] = useState<Record<string, number[]>>({});
   const [isQuizComplete, setIsQuizComplete] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchMockTest(subjectId, chapterNumber, controller.signal)
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.assessmentQuestions.length > 0) {
+            setQuestions(data.assessmentQuestions);
+          } else {
+            setQuestions(SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []);
+          }
+          setCurrentIndex(0);
+          setSelectedOptions([]);
+          setIsEvaluated(false);
+          setUserAnswersRecord({});
+          setIsQuizComplete(false);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[AssessmentView] Error fetching mock test:', err);
+        }
+        if (isMounted) {
+          setQuestions(SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber]);
+
   const currentQ = questions[currentIndex] || questions[0];
   const questionNumberFormatted = currentIndex + 1 < 10 ? `0${currentIndex + 1}` : `${currentIndex + 1}`;
-  const totalQuestions = questions.length >= 20 ? questions.length : 20;
+  const totalQuestions = questions.length;
 
   const handleSelectOption = (idx: number) => {
     Haptics.selectionAsync();
@@ -131,6 +173,17 @@ export default function AssessmentView({
     selectedOptions.length > 0 &&
     selectedOptions.length === currentQ.correctAnswers.length &&
     selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: bg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#22c55e" />
+        <Text style={{ marginTop: 12, color: isDark ? '#BAD1BF' : '#4F7D66', fontSize: 14, fontWeight: '500' }}>
+          Loading assessment questions for Chapter {chapterNumber}...
+        </Text>
+      </View>
+    );
+  }
 
   if (isQuizComplete) {
     // Score calculation

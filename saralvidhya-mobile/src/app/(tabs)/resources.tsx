@@ -91,12 +91,15 @@ export default function ResourcesScreen() {
       <View style={styles.contentContainer}>
         {activeSegment === 'mindmaps' ? (
           <MindMapRadialDiagramView
+            subjectId={activeSubject.id}
+            chapterNumber={currentChapter.number}
             chapterTitle={currentChapter.name}
             subjectName={activeSubject.name}
             onNavigateBack={() => setActiveSegment('mindmaps')}
           />
         ) : activeSegment === 'key_takeaways' ? (
           <KeyTakeawaysView
+            subjectId={activeSubject.id}
             chapterNumber={currentChapter.number}
             chapterName={currentChapter.name}
             subjectName={activeSubject.name}

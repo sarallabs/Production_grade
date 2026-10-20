@@ -42,124 +42,554 @@ interface VideoLessonItem {
   topicsWhatYouLearn: VideoTopicItem[];
 }
 
-const VIDEO_LESSONS_DATA: VideoLessonItem[] = [
-  {
-    id: 'lesson_01',
-    lessonNumber: 'LESSON 01',
-    title: 'Insects Digestive System',
-    topic: 'Foregut, midgut & hindgut',
-    duration: '10:55',
-    status: '60% · Resume',
-    progressPct: 60,
-    filterStatus: 'in_progress',
-    thumbSource: THUMB_01,
-    ytId: 'Ioa25iYy53g',
-    topicsWhatYouLearn: [
-      {
-        number: '01',
-        title: 'Anatomy of the Insect Alimentary Canal',
-        subtitle: 'Foregut, midgut & hindgut',
-      },
-      {
-        number: '02',
-        title: 'Stomodaeal Specializations',
-        subtitle: 'Pharynx, crop & proventriculus',
-      },
-      {
-        number: '03',
-        title: 'Mesenteron Physiology',
-        subtitle: 'Secretory epithelium & peritrophic membrane',
-      },
-    ],
-  },
-  {
-    id: 'lesson_02',
-    lessonNumber: 'LESSON 02',
-    title: 'External Morphology',
-    topic: 'Head, thorax & abdomen',
-    duration: '12:40',
-    status: 'Completed · Watch again',
-    progressPct: 100,
-    filterStatus: 'completed',
-    thumbSource: THUMB_02,
-    ytId: 'UMJFfCFFF4M',
-    topicsWhatYouLearn: [
-      {
-        number: '01',
-        title: 'Tagmosis & Body Segmentation',
-        subtitle: 'Head, thorax & abdomen sclerites',
-      },
-      {
-        number: '02',
-        title: 'Sensory Structures & Appendages',
-        subtitle: 'Antennae, compound eyes & ocelli',
-      },
-      {
-        number: '03',
-        title: 'Locomotory Systems',
-        subtitle: 'Leg modifications & wing venation',
-      },
-    ],
-  },
-  {
-    id: 'lesson_03',
-    lessonNumber: 'LESSON 03',
-    title: 'Insect Metamorphosis',
-    topic: 'From egg to adult',
-    duration: '08:25',
-    status: 'Not started',
-    progressPct: 0,
-    filterStatus: 'not_started',
-    thumbSource: THUMB_03,
-    ytId: 'elWWuKv5b9Q',
-    topicsWhatYouLearn: [
-      {
-        number: '01',
-        title: 'Ametabolous & Hemimetabolous Development',
-        subtitle: 'Simple versus incomplete metamorphosis',
-      },
-      {
-        number: '02',
-        title: 'Holometabolous Life Cycles',
-        subtitle: 'Larval, pupal & imaginal stages',
-      },
-      {
-        number: '03',
-        title: 'Hormonal Control of Ecdysis',
-        subtitle: 'Ecdysone & Juvenile Hormone pathways',
-      },
-    ],
-  },
-  {
-    id: 'lesson_04',
-    lessonNumber: 'LESSON 04',
-    title: 'Insect Mouthparts',
-    topic: 'Biting, chewing & sucking',
-    duration: '09:30',
-    status: 'Not started',
-    progressPct: 0,
-    filterStatus: 'not_started',
-    thumbSource: THUMB_04,
-    ytId: 'Ioa25iYy53g',
-    topicsWhatYouLearn: [
-      {
-        number: '01',
-        title: 'Mandibulate (Chewing) Apparatus',
-        subtitle: 'Labrum, mandibles, maxillae & labium',
-      },
-      {
-        number: '02',
-        title: 'Haustellate (Piercing-Sucking) Types',
-        subtitle: 'Stylet fascicle & salivary pumps in Hemiptera',
-      },
-      {
-        number: '03',
-        title: 'Siphoning & Sponging Adaptations',
-        subtitle: 'Proboscis galeae & labellar pseudotracheae',
-      },
-    ],
-  },
-];
+const CHAPTER_VIDEO_LESSONS: Record<number, VideoLessonItem[]> = {
+  1: [
+    {
+      id: 'lesson_01',
+      lessonNumber: 'LESSON 01',
+      title: 'Insects Digestive System',
+      topic: 'Foregut, midgut & hindgut',
+      duration: '10:55',
+      status: '60% · Resume',
+      progressPct: 60,
+      filterStatus: 'in_progress',
+      thumbSource: THUMB_01,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Anatomy of the Insect Alimentary Canal',
+          subtitle: 'Foregut, midgut & hindgut',
+        },
+        {
+          number: '02',
+          title: 'Stomodaeal Specializations',
+          subtitle: 'Pharynx, crop & proventriculus',
+        },
+        {
+          number: '03',
+          title: 'Mesenteron Physiology',
+          subtitle: 'Secretory epithelium & peritrophic membrane',
+        },
+      ],
+    },
+    {
+      id: 'lesson_02',
+      lessonNumber: 'LESSON 02',
+      title: 'External Morphology',
+      topic: 'Head, thorax & abdomen',
+      duration: '12:40',
+      status: 'Completed · Watch again',
+      progressPct: 100,
+      filterStatus: 'completed',
+      thumbSource: THUMB_02,
+      ytId: 'UMJFfCFFF4M',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Tagmosis & Body Segmentation',
+          subtitle: 'Head, thorax & abdomen sclerites',
+        },
+        {
+          number: '02',
+          title: 'Sensory Structures & Appendages',
+          subtitle: 'Antennae, compound eyes & ocelli',
+        },
+        {
+          number: '03',
+          title: 'Locomotory Systems',
+          subtitle: 'Leg modifications & wing venation',
+        },
+      ],
+    },
+    {
+      id: 'lesson_03',
+      lessonNumber: 'LESSON 03',
+      title: 'Mesenteron & Absorption',
+      topic: 'Microvilli & enzyme secretion',
+      duration: '08:25',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_03,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Columnar & Regenerative Cells',
+          subtitle: 'Enzyme kinetics & tissue repair',
+        },
+        {
+          number: '02',
+          title: 'Peritrophic Membrane Barrier',
+          subtitle: 'Type I and Type II chitin mesh',
+        },
+        {
+          number: '03',
+          title: 'Bt Toxin Binding Mechanism',
+          subtitle: 'Cadherin receptors & pore formation',
+        },
+      ],
+    },
+    {
+      id: 'lesson_04',
+      lessonNumber: 'LESSON 04',
+      title: 'Proctodaeum & Excretion',
+      topic: 'Malpighian tubules & rectal pads',
+      duration: '09:30',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_04,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Uric Acid Filtration',
+          subtitle: 'Potassium pump and crystallization',
+        },
+        {
+          number: '02',
+          title: 'Rectal Water Reabsorption',
+          subtitle: 'Extraction of up to 95% of fluids',
+        },
+        {
+          number: '03',
+          title: 'Cryptonephridial Systems',
+          subtitle: 'Adaptations in desert beetle larvae',
+        },
+      ],
+    },
+  ],
+  2: [
+    {
+      id: 'lesson_2_01',
+      lessonNumber: 'LESSON 01',
+      title: 'Metamorphosis Architecture',
+      topic: 'Ametaboly to holometaboly',
+      duration: '11:15',
+      status: '60% · Resume',
+      progressPct: 60,
+      filterStatus: 'in_progress',
+      thumbSource: THUMB_03,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Ametabolous Development',
+          subtitle: 'Primitive wingless insects (Silverfish)',
+        },
+        {
+          number: '02',
+          title: 'Hemimetabolous Nymphs',
+          subtitle: 'External wing pads in grasshoppers and bugs',
+        },
+        {
+          number: '03',
+          title: 'Holometabolous Niches',
+          subtitle: 'Complete separation of larval & adult forms',
+        },
+      ],
+    },
+    {
+      id: 'lesson_2_02',
+      lessonNumber: 'LESSON 02',
+      title: 'Larval Classifications',
+      topic: 'Eruciform, scarabaeiform, campodeiform',
+      duration: '13:05',
+      status: 'Completed · Watch again',
+      progressPct: 100,
+      filterStatus: 'completed',
+      thumbSource: THUMB_01,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Eruciform Caterpillars',
+          subtitle: 'Abdominal prolegs with crochets in Lepidoptera',
+        },
+        {
+          number: '02',
+          title: 'Scarabaeiform White Grubs',
+          subtitle: 'C-shaped subterranean root borers',
+        },
+        {
+          number: '03',
+          title: 'Vermiform Maggots',
+          subtitle: 'Headless mouthhook larvae in Diptera',
+        },
+      ],
+    },
+    {
+      id: 'lesson_2_03',
+      lessonNumber: 'LESSON 03',
+      title: 'Pupal Types & Histogenesis',
+      topic: 'Exarate, obtect & coarctate',
+      duration: '09:40',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_02,
+      ytId: 'UMJFfCFFF4M',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Imaginal Discs',
+          subtitle: 'Adult tissue morphogenesis',
+        },
+        {
+          number: '02',
+          title: 'Obtect Chrysalis',
+          subtitle: 'Adhesive cuticular cementation',
+        },
+        {
+          number: '03',
+          title: 'Coarctate Puparium',
+          subtitle: 'Hardened 4th larval skin barrel',
+        },
+      ],
+    },
+    {
+      id: 'lesson_2_04',
+      lessonNumber: 'LESSON 04',
+      title: 'Neuroendocrine Control of Ecdysis',
+      topic: 'PTTH, ecdysone & juvenile hormone',
+      duration: '10:20',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_04,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Brain PTTH Secretion',
+          subtitle: 'Activation of prothoracic glands',
+        },
+        {
+          number: '02',
+          title: 'Juvenile Hormone Titer',
+          subtitle: 'Larval maintenance versus metamorphosis',
+        },
+        {
+          number: '03',
+          title: 'Bursicon & Sclerotization',
+          subtitle: 'Post-emergence wing tanning',
+        },
+      ],
+    },
+  ],
+  3: [
+    {
+      id: 'lesson_3_01',
+      lessonNumber: 'LESSON 01',
+      title: 'Thermal Ecology & Poikilothermy',
+      topic: 'Optimum range & lethal limits',
+      duration: '11:50',
+      status: '50% · Resume',
+      progressPct: 50,
+      filterStatus: 'in_progress',
+      thumbSource: THUMB_02,
+      ytId: 'UMJFfCFFF4M',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Van \'t Hoff Q10 Law',
+          subtitle: 'Metabolic doubling with temperature rise',
+        },
+        {
+          number: '02',
+          title: 'Upper Thermal Breakdown',
+          subtitle: 'Wax layer melting and protein denaturation',
+        },
+        {
+          number: '03',
+          title: 'Freeze Tolerance Adaptations',
+          subtitle: 'Ice nucleating agents and polyols',
+        },
+      ],
+    },
+    {
+      id: 'lesson_3_02',
+      lessonNumber: 'LESSON 02',
+      title: 'Degree-Day Modeling',
+      topic: 'Thermal constant K calculations',
+      duration: '12:15',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_01,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Threshold Base Temperature T0',
+          subtitle: 'Mathematical baseline for development',
+        },
+        {
+          number: '02',
+          title: 'Thermal Summation Formula',
+          subtitle: 'K = y(T - T0) degree days',
+        },
+        {
+          number: '03',
+          title: 'Field Spray Forecasting',
+          subtitle: 'Timing interventions to larval emergence',
+        },
+      ],
+    },
+    {
+      id: 'lesson_3_03',
+      lessonNumber: 'LESSON 03',
+      title: 'Cuticular Wax & Humidity',
+      topic: 'Desiccation defense in insects',
+      duration: '09:10',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_03,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Epicuticular Hydrocarbon Monolayer',
+          subtitle: 'Waterproofing against arid atmospheres',
+        },
+        {
+          number: '02',
+          title: 'Critical Equilibrium Humidity',
+          subtitle: 'Active water vapor absorption from air',
+        },
+        {
+          number: '03',
+          title: 'Epizootic Fungal Outbreaks',
+          subtitle: 'High humidity triggers entomopathogens',
+        },
+      ],
+    },
+    {
+      id: 'lesson_3_04',
+      lessonNumber: 'LESSON 04',
+      title: 'Photoperiodism & Dispersal',
+      topic: 'Circadian clocks & winds',
+      duration: '10:05',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_04,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Token Photoperiod Stimuli',
+          subtitle: 'Astronomical precision for diapause induction',
+        },
+        {
+          number: '02',
+          title: 'Critical Daylength Threshold',
+          subtitle: '50% population diapause trigger',
+        },
+        {
+          number: '03',
+          title: 'Synoptic Wind Jet Streams',
+          subtitle: 'Transboundary planthopper migration',
+        },
+      ],
+    },
+  ],
+  4: [
+    {
+      id: 'lesson_4_01',
+      lessonNumber: 'LESSON 01',
+      title: 'Floral Reproductive Anatomy',
+      topic: 'Anther locules & dehiscence',
+      duration: '11:30',
+      status: '65% · Resume',
+      progressPct: 65,
+      filterStatus: 'in_progress',
+      thumbSource: THUMB_01,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Microsporangial Architecture',
+          subtitle: '4 locules lined by nutritive tapetum',
+        },
+        {
+          number: '02',
+          title: 'Pollen Wall Genesis',
+          subtitle: 'Sporopollenin synthesis & pollenkitt coating',
+        },
+        {
+          number: '03',
+          title: 'Stomium Dehiscence Dynamics',
+          subtitle: 'Hygroscopic contraction of endothecial cells',
+        },
+      ],
+    },
+    {
+      id: 'lesson_4_02',
+      lessonNumber: 'LESSON 02',
+      title: 'Cross-Pollination Enforcements',
+      topic: 'Dichogamy, herkogamy & SI',
+      duration: '12:45',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_02,
+      ytId: 'UMJFfCFFF4M',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Protandry vs Protogyny',
+          subtitle: 'Temporal separation in sunflowers and millet',
+        },
+        {
+          number: '02',
+          title: 'Spatial Barriers (Herkogamy)',
+          subtitle: 'Stigma elevation and heterostyly forms',
+        },
+        {
+          number: '03',
+          title: 'Self-Incompatibility Systems',
+          subtitle: 'S-allele rejection of self pollen tubes',
+        },
+      ],
+    },
+    {
+      id: 'lesson_4_03',
+      lessonNumber: 'LESSON 03',
+      title: 'Honey Bee Pollinator Guilds',
+      topic: 'Apis mellifera & corbiculae',
+      duration: '10:15',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_03,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Tibial Corbicula Structure',
+          subtitle: 'Pollen basket loading mechanics',
+        },
+        {
+          number: '02',
+          title: 'Floral Constancy Fidelity',
+          subtitle: 'Mono-specific foraging trips',
+        },
+        {
+          number: '03',
+          title: 'UV Nectar Guide Detection',
+          subtitle: 'Trichromatic visual spectrum orientation',
+        },
+      ],
+    },
+    {
+      id: 'lesson_4_04',
+      lessonNumber: 'LESSON 04',
+      title: 'Commercial Orchard Management',
+      topic: 'Stocking rates & spray safety',
+      duration: '09:50',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_04,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        {
+          number: '01',
+          title: 'Colony Stocking Densities',
+          subtitle: '2 to 4 colonies per hectare for fruit set',
+        },
+        {
+          number: '02',
+          title: 'Pollinizer Row Layout',
+          subtitle: '10% compatible cultivars placement',
+        },
+        {
+          number: '03',
+          title: 'Pesticide Toxicity Mitigation',
+          subtitle: 'Dusk spraying and bloom phase precautions',
+        },
+      ],
+    },
+  ],
+};
+
+function getChapterVideoLessons(chNum: number, chName: string): VideoLessonItem[] {
+  if (CHAPTER_VIDEO_LESSONS[chNum]) return CHAPTER_VIDEO_LESSONS[chNum];
+  return [
+    {
+      id: `lesson_${chNum}_01`,
+      lessonNumber: 'LESSON 01',
+      title: `${chName} — Fundamentals`,
+      topic: 'Core concepts & overview',
+      duration: '10:30',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_01,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        { number: '01', title: 'Foundational Principles', subtitle: `${chName} structure` },
+        { number: '02', title: 'Biological Mechanisms', subtitle: 'Detailed physiological pathways' },
+        { number: '03', title: 'Agro-Ecological Relevance', subtitle: 'Field applications' },
+      ],
+    },
+    {
+      id: `lesson_${chNum}_02`,
+      lessonNumber: 'LESSON 02',
+      title: `${chName} — Structural Breakdown`,
+      topic: 'Morphology & anatomy',
+      duration: '12:00',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_02,
+      ytId: 'UMJFfCFFF4M',
+      topicsWhatYouLearn: [
+        { number: '01', title: 'Morphological Adaptations', subtitle: 'Comparative structures' },
+        { number: '02', title: 'Functional Dynamics', subtitle: 'System interactions' },
+        { number: '03', title: 'Key Identification Marks', subtitle: 'Taxonomic features' },
+      ],
+    },
+    {
+      id: `lesson_${chNum}_03`,
+      lessonNumber: 'LESSON 03',
+      title: `${chName} — Advanced Physiology`,
+      topic: 'Cellular & hormonal pathways',
+      duration: '09:45',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_03,
+      ytId: 'elWWuKv5b9Q',
+      topicsWhatYouLearn: [
+        { number: '01', title: 'Endocrine Regulation', subtitle: 'Chemical signaling' },
+        { number: '02', title: 'Metabolic Interactions', subtitle: 'Bioenergetics' },
+        { number: '03', title: 'Host Plant Defense', subtitle: 'Resistance mechanisms' },
+      ],
+    },
+    {
+      id: `lesson_${chNum}_04`,
+      lessonNumber: 'LESSON 04',
+      title: `${chName} — Exam Pointers & Summary`,
+      topic: 'Viva & high-yield revision',
+      duration: '08:50',
+      status: 'Not started',
+      progressPct: 0,
+      filterStatus: 'not_started',
+      thumbSource: THUMB_04,
+      ytId: 'Ioa25iYy53g',
+      topicsWhatYouLearn: [
+        { number: '01', title: 'University Exam Focus', subtitle: 'Frequently asked questions' },
+        { number: '02', title: 'Diagrammatic Blueprints', subtitle: 'Drawing exam schematics' },
+        { number: '03', title: 'Quick Summary', subtitle: 'Master key takeaways' },
+      ],
+    },
+  ];
+}
 
 type FilterType = 'all' | 'in_progress' | 'completed';
 
@@ -169,12 +599,15 @@ interface VideosViewProps {
   chapterNumber?: number;
   chapterName?: string;
   onContinueLearning?: () => void;
+  onChapterPress?: () => void;
 }
 
 export default function VideosView({
   subjectName = 'ENTOMOLOGY',
   chapterNumber = 1,
+  chapterName = 'Insect Digestive System & Anatomy',
   onContinueLearning,
+  onChapterPress,
 }: VideosViewProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
@@ -186,12 +619,17 @@ export default function VideosView({
   const [isSaved, setIsSaved] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
 
+  // Dynamic Video Lessons for the current chapter
+  const currentChapterLessons = React.useMemo(() => {
+    return getChapterVideoLessons(chapterNumber, chapterName);
+  }, [chapterNumber, chapterName]);
+
   // Selected Lesson Item (defaults to Lesson 01)
   const currentLesson =
-    VIDEO_LESSONS_DATA.find((l) => l.id === selectedLessonId) || VIDEO_LESSONS_DATA[0];
+    currentChapterLessons.find((l) => l.id === selectedLessonId) || currentChapterLessons[0];
 
   // Filtering for library list
-  const filteredLessons = VIDEO_LESSONS_DATA.filter((lesson) => {
+  const filteredLessons = currentChapterLessons.filter((lesson) => {
     if (filter === 'all') return true;
     return lesson.filterStatus === filter;
   });
@@ -247,11 +685,31 @@ export default function VideosView({
         {/* ========================================================================= */}
         {selectedLessonId === null ? (
           <>
-            {/* 1. PAGE TITLE */}
+            {/* 1. PAGE TITLE & CHAPTER SELECTOR */}
             <View style={styles.introduction}>
-              <Text style={[styles.pageTitle, { color: textDark }]}>
-                Video Lessons
-              </Text>
+              <View style={styles.headerTitleRow}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.pageTitle, { color: textDark }]}>
+                    Video Lessons
+                  </Text>
+                  <Text style={[styles.chapterSubheading, { color: textMuted }]} numberOfLines={1}>
+                    Chapter {chapterNumber}: {chapterName}
+                  </Text>
+                </View>
+                {onChapterPress && (
+                  <TouchableOpacity
+                    style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                    onPress={onChapterPress}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="book-outline" size={13} color={brandGreen} />
+                    <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
+                      Ch {chapterNumber}
+                    </Text>
+                    <Ionicons name="chevron-down" size={12} color={textMuted} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </View>
 
             {/* 3. LEARNING PROGRESS CARD (.learningProgress) */}
@@ -672,11 +1130,35 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 2,
   },
+  headerTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 8,
+  },
   pageTitle: {
     fontSize: 23,
     fontWeight: '700',
     letterSpacing: -0.4,
     lineHeight: 28,
+  },
+  chapterSubheading: {
+    fontSize: 12,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  chapterPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  chapterPillBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   /* 3. Learning Progress Card (.learningProgress) */
   learningProgress: {

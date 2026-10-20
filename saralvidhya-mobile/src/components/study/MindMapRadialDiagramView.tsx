@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Dimensions,
   Platform,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Line } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchMindmap } from '@/services/contentService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -97,13 +99,17 @@ const CONCEPTS: ConceptData[] = [
 
 interface MindMapRadialDiagramViewProps {
   onNavigateBack?: () => void;
+  chapterNumber?: number;
   chapterTitle?: string;
+  subjectId?: string;
   subjectName?: string;
 }
 
 export default function MindMapRadialDiagramView({
   onNavigateBack,
+  chapterNumber = 1,
   chapterTitle = 'Insect Digestive System & Anatomy',
+  subjectId = 'entomology',
   subjectName = 'Insect Gut',
 }: MindMapRadialDiagramViewProps) {
   const insets = useSafeAreaInsets();
@@ -116,6 +122,98 @@ export default function MindMapRadialDiagramView({
     subtitle?: string;
     detail: string;
   } | null>(null);
+
+  const [branches, setBranches] = useState<BranchData[]>(BRANCHES);
+  const [concepts, setConcepts] = useState<ConceptData[]>(CONCEPTS);
+  const [centerTitle, setCenterTitle] = useState<string>('INSECT GUT');
+  const [centerSubtitle, setCenterSubtitle] = useState<string>('DIGESTION');
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+
+    fetchMindmap(subjectId, chapterNumber, controller.signal)
+      .then((data) => {
+        if (!isMounted) return;
+        if (data && data.rootNode && data.rootNode.children && data.rootNode.children.length > 0) {
+          const rootChildren = data.rootNode.children;
+          const mappedBranches: BranchData[] = rootChildren.slice(0, 4).map((child, idx) => {
+            const rawSub =
+              child.details?.[0] ||
+              (child.children?.length ? `${child.children.length} subtopics` : 'Core Concept');
+            const detailText =
+              [
+                child.details?.join('\n\n'),
+                child.children
+                  ?.map(
+                    (sub) =>
+                      `• ${sub.title}${sub.details?.length ? ': ' + sub.details.join('; ') : ''}`
+                  )
+                  .join('\n\n'),
+              ]
+                .filter(Boolean)
+                .join('\n\n') || child.title;
+
+            return {
+              id: idx + 1,
+              title: child.title.toUpperCase(),
+              subtitle: rawSub.length > 32 ? rawSub.slice(0, 29) + '...' : rawSub,
+              detail: detailText,
+            };
+          });
+
+          while (mappedBranches.length < 4) {
+            const idx = mappedBranches.length;
+            mappedBranches.push(BRANCHES[idx] || BRANCHES[0]);
+          }
+
+          setBranches(mappedBranches);
+
+          const allSubs: { label: string; detail: string }[] = [];
+          rootChildren.forEach((child) => {
+            if (child.children) {
+              child.children.forEach((sub) => {
+                allSubs.push({
+                  label: sub.title,
+                  detail: sub.details?.join('\n\n') || sub.title,
+                });
+              });
+            }
+          });
+
+          if (allSubs.length >= 4) {
+            const symbols = ['✦', '↓', '↻', '✧'];
+            const mappedConcepts: ConceptData[] = allSubs.slice(0, 4).map((s, i) => ({
+              id: `concept_${i + 1}`,
+              symbol: symbols[i],
+              label: s.label.length > 20 ? s.label.slice(0, 18) + '...' : s.label,
+              detail: s.detail,
+            }));
+            setConcepts(mappedConcepts);
+          }
+
+          const rawTitle = data.title || chapterTitle;
+          const words = rawTitle.replace(/Chapter \d+[:\s]*/i, '').split(/[\s:·—-]+/).filter(Boolean);
+          if (words.length >= 2) {
+            setCenterTitle(words.slice(0, 2).join(' ').toUpperCase());
+            setCenterSubtitle(words.slice(2, 4).join(' ').toUpperCase() || 'FRAMEWORK');
+          } else {
+            setCenterTitle(rawTitle.slice(0, 14).toUpperCase());
+            setCenterSubtitle('FRAMEWORK');
+          }
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[MindMapRadial] Error loading mindmap:', err);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber, chapterTitle]);
 
   // Exact theme token mappings from user's Figma React & CSS files
   const colors = isDark
@@ -448,14 +546,14 @@ export default function MindMapRadialDiagramView({
               {/* Flower / Botanical icon */}
               <Text style={[styles.centerFlowerIcon, { color: colors.centerIconColor }]}>✿</Text>
               <Text style={[styles.centerTitleText, { color: colors.centerTitle }]}>
-                INSECT GUT
+                {centerTitle}
               </Text>
               <Text style={[styles.centerSubtitleText, { color: colors.centerSubtitle }]}>
-                DIGESTION
+                {centerSubtitle}
               </Text>
             </View>
 
-            {/* Branch Card 1: STRUCTURE (Top Left) */}
+            {/* Branch Card 1: Top Left */}
             <TouchableOpacity
               style={[
                 styles.branchCard,
@@ -469,8 +567,8 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: '1. STRUCTURE: Parts of the gut',
-                  detail: BRANCHES[0].detail,
+                  title: `1. ${branches[0]?.title || 'TOPIC'}: ${branches[0]?.subtitle || ''}`,
+                  detail: branches[0]?.detail || '',
                 });
               }}
               activeOpacity={0.8}
@@ -479,12 +577,16 @@ export default function MindMapRadialDiagramView({
                 <View style={[styles.branchNumberBadge, { backgroundColor: colors.branchBadgeBg }]}>
                   <Text style={[styles.branchNumberText, { color: colors.branchBadgeText }]}>1</Text>
                 </View>
-                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]}>STRUCTURE</Text>
+                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]} numberOfLines={1}>
+                  {branches[0]?.title || 'TOPIC 1'}
+                </Text>
               </View>
-              <Text style={[styles.branchCardSub, { color: colors.branchSub }]}>Parts of the gut</Text>
+              <Text style={[styles.branchCardSub, { color: colors.branchSub }]} numberOfLines={1}>
+                {branches[0]?.subtitle || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Branch Card 2: FUNCTION (Top Right) */}
+            {/* Branch Card 2: Top Right */}
             <TouchableOpacity
               style={[
                 styles.branchCard,
@@ -498,8 +600,8 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: '2. FUNCTION: What it does',
-                  detail: BRANCHES[1].detail,
+                  title: `2. ${branches[1]?.title || 'TOPIC'}: ${branches[1]?.subtitle || ''}`,
+                  detail: branches[1]?.detail || '',
                 });
               }}
               activeOpacity={0.8}
@@ -508,12 +610,16 @@ export default function MindMapRadialDiagramView({
                 <View style={[styles.branchNumberBadge, { backgroundColor: colors.branchBadgeBg }]}>
                   <Text style={[styles.branchNumberText, { color: colors.branchBadgeText }]}>2</Text>
                 </View>
-                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]}>FUNCTION</Text>
+                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]} numberOfLines={1}>
+                  {branches[1]?.title || 'TOPIC 2'}
+                </Text>
               </View>
-              <Text style={[styles.branchCardSub, { color: colors.branchSub }]}>What it does</Text>
+              <Text style={[styles.branchCardSub, { color: colors.branchSub }]} numberOfLines={1}>
+                {branches[1]?.subtitle || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Branch Card 3: PROCESS (Bottom Left) */}
+            {/* Branch Card 3: Bottom Left */}
             <TouchableOpacity
               style={[
                 styles.branchCard,
@@ -527,8 +633,8 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: '3. PROCESS: Food breakdown',
-                  detail: BRANCHES[2].detail,
+                  title: `3. ${branches[2]?.title || 'TOPIC'}: ${branches[2]?.subtitle || ''}`,
+                  detail: branches[2]?.detail || '',
                 });
               }}
               activeOpacity={0.8}
@@ -537,12 +643,16 @@ export default function MindMapRadialDiagramView({
                 <View style={[styles.branchNumberBadge, { backgroundColor: colors.branchBadgeBg }]}>
                   <Text style={[styles.branchNumberText, { color: colors.branchBadgeText }]}>3</Text>
                 </View>
-                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]}>PROCESS</Text>
+                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]} numberOfLines={1}>
+                  {branches[2]?.title || 'TOPIC 3'}
+                </Text>
               </View>
-              <Text style={[styles.branchCardSub, { color: colors.branchSub }]}>Food breakdown</Text>
+              <Text style={[styles.branchCardSub, { color: colors.branchSub }]} numberOfLines={1}>
+                {branches[2]?.subtitle || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Branch Card 4: ADAPTATIONS (Bottom Right) */}
+            {/* Branch Card 4: Bottom Right */}
             <TouchableOpacity
               style={[
                 styles.branchCard,
@@ -556,8 +666,8 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: '4. ADAPTATIONS: Special features',
-                  detail: BRANCHES[3].detail,
+                  title: `4. ${branches[3]?.title || 'TOPIC'}: ${branches[3]?.subtitle || ''}`,
+                  detail: branches[3]?.detail || '',
                 });
               }}
               activeOpacity={0.8}
@@ -566,12 +676,16 @@ export default function MindMapRadialDiagramView({
                 <View style={[styles.branchNumberBadge, { backgroundColor: colors.branchBadgeBg }]}>
                   <Text style={[styles.branchNumberText, { color: colors.branchBadgeText }]}>4</Text>
                 </View>
-                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]}>ADAPTATIONS</Text>
+                <Text style={[styles.branchCardTitle, { color: colors.branchTitle }]} numberOfLines={1}>
+                  {branches[3]?.title || 'TOPIC 4'}
+                </Text>
               </View>
-              <Text style={[styles.branchCardSub, { color: colors.branchSub }]}>Special features</Text>
+              <Text style={[styles.branchCardSub, { color: colors.branchSub }]} numberOfLines={1}>
+                {branches[3]?.subtitle || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Sub-Concept Card 1: Enzymes */}
+            {/* Sub-Concept Card 1 */}
             <TouchableOpacity
               style={[
                 styles.conceptCard,
@@ -585,9 +699,9 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: 'Enzymes',
-                  subtitle: 'Digestive Physiology',
-                  detail: CONCEPTS[0].detail,
+                  title: concepts[0]?.label || 'Concept 1',
+                  subtitle: 'Physiology & Structure',
+                  detail: concepts[0]?.detail || '',
                 });
               }}
               activeOpacity={0.75}
@@ -607,13 +721,17 @@ export default function MindMapRadialDiagramView({
                     { backgroundColor: colors.conceptIconInnerBg },
                   ]}
                 >
-                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>✦</Text>
+                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>
+                    {concepts[0]?.symbol || '✦'}
+                  </Text>
                 </View>
               </View>
-              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]}>Enzymes</Text>
+              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]} numberOfLines={1}>
+                {concepts[0]?.label || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Sub-Concept Card 2: Absorption */}
+            {/* Sub-Concept Card 2 */}
             <TouchableOpacity
               style={[
                 styles.conceptCard,
@@ -627,9 +745,9 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: 'Absorption',
-                  subtitle: 'Midgut Microvilli',
-                  detail: CONCEPTS[1].detail,
+                  title: concepts[1]?.label || 'Concept 2',
+                  subtitle: 'Biological Process',
+                  detail: concepts[1]?.detail || '',
                 });
               }}
               activeOpacity={0.75}
@@ -649,13 +767,17 @@ export default function MindMapRadialDiagramView({
                     { backgroundColor: colors.conceptIconInnerBg },
                   ]}
                 >
-                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>↓</Text>
+                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>
+                    {concepts[1]?.symbol || '↓'}
+                  </Text>
                 </View>
               </View>
-              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]}>Absorption</Text>
+              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]} numberOfLines={1}>
+                {concepts[1]?.label || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Sub-Concept Card 3: Water reuse */}
+            {/* Sub-Concept Card 3 */}
             <TouchableOpacity
               style={[
                 styles.conceptCard,
@@ -669,9 +791,9 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: 'Water reuse',
-                  subtitle: 'Hindgut Papillae',
-                  detail: CONCEPTS[2].detail,
+                  title: concepts[2]?.label || 'Concept 3',
+                  subtitle: 'Function & Kinetics',
+                  detail: concepts[2]?.detail || '',
                 });
               }}
               activeOpacity={0.75}
@@ -691,13 +813,17 @@ export default function MindMapRadialDiagramView({
                     { backgroundColor: colors.conceptIconInnerBg },
                   ]}
                 >
-                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>↻</Text>
+                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>
+                    {concepts[2]?.symbol || '↻'}
+                  </Text>
                 </View>
               </View>
-              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]}>Water reuse</Text>
+              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]} numberOfLines={1}>
+                {concepts[2]?.label || ''}
+              </Text>
             </TouchableOpacity>
 
-            {/* Sub-Concept Card 4: Wood & sap */}
+            {/* Sub-Concept Card 4 */}
             <TouchableOpacity
               style={[
                 styles.conceptCard,
@@ -711,9 +837,9 @@ export default function MindMapRadialDiagramView({
               onPress={() => {
                 Haptics.selectionAsync();
                 setSelectedNode({
-                  title: 'Wood & sap',
+                  title: concepts[3]?.label || 'Concept 4',
                   subtitle: 'Ecological Adaptations',
-                  detail: CONCEPTS[3].detail,
+                  detail: concepts[3]?.detail || '',
                 });
               }}
               activeOpacity={0.75}
@@ -733,10 +859,14 @@ export default function MindMapRadialDiagramView({
                     { backgroundColor: colors.conceptIconInnerBg },
                   ]}
                 >
-                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>✧</Text>
+                  <Text style={[styles.conceptIconSymbol, { color: colors.conceptIconSymbol }]}>
+                    {concepts[3]?.symbol || '✧'}
+                  </Text>
                 </View>
               </View>
-              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]}>Wood & sap</Text>
+              <Text style={[styles.conceptLabelText, { color: colors.conceptLabel }]} numberOfLines={1}>
+                {concepts[3]?.label || ''}
+              </Text>
             </TouchableOpacity>
           </View>
 

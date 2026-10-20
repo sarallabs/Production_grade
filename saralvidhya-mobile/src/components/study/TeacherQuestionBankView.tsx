@@ -1,26 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchQuestionBank, MarkType } from '@/services/contentService';
 
-export type MarkType = '2M' | '5M' | '10M';
+export type { MarkType };
 
 export interface TeacherQuestion {
-  id: number;
+  id: number | string;
   numberFormatted: string;
   question: string;
   assignedBy: string;
   chapter: string;
   answers: Record<MarkType, string>;
   teacherTip: string;
+  bloomLevel?: string;
+  difficulty?: string;
+  topicId?: string;
+  mindmapPath?: string;
 }
 
 const TEACHER_QUESTIONS: TeacherQuestion[] = [
@@ -154,19 +160,65 @@ const TEACHER_QUESTIONS: TeacherQuestion[] = [
 ];
 
 interface TeacherQuestionBankViewProps {
+  subjectId?: string;
   chapterNumber?: number;
   chapterName?: string;
 }
 
 export default function TeacherQuestionBankView({
+  subjectId = 'entomology',
   chapterNumber = 1,
   chapterName = 'Insect Digestive System',
 }: TeacherQuestionBankViewProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
+  const [questions, setQuestions] = useState<TeacherQuestion[]>(
+    chapterNumber === 1 ? TEACHER_QUESTIONS : []
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | string | null>(null);
   const [selectedMark, setSelectedMark] = useState<MarkType>('2M');
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchQuestionBank(subjectId, chapterNumber, chapterName, controller.signal)
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.length > 0) {
+            setQuestions(data);
+            setSelectedQuestionId(data[0]?.id ?? null);
+          } else if (chapterNumber === 1) {
+            setQuestions(TEACHER_QUESTIONS);
+            setSelectedQuestionId(TEACHER_QUESTIONS[0]?.id ?? null);
+          } else {
+            setQuestions([]);
+            setSelectedQuestionId(null);
+          }
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[QuestionBankView] Error fetching questions:', err);
+        }
+        if (isMounted) {
+          if (chapterNumber === 1 && questions.length === 0) {
+            setQuestions(TEACHER_QUESTIONS);
+            setSelectedQuestionId(TEACHER_QUESTIONS[0]?.id ?? null);
+          }
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber, chapterName]);
 
   // Color tokens
   const bg = isDark ? '#1A2921' : '#F0F7F4';
@@ -187,12 +239,7 @@ export default function TeacherQuestionBankView({
 
   const MARK_OPTIONS: MarkType[] = ['2M', '5M', '10M'];
 
-  const selectedQuestion =
-    selectedQuestionId !== null
-      ? TEACHER_QUESTIONS.find((q) => q.id === selectedQuestionId) || TEACHER_QUESTIONS[0]
-      : null;
-
-  const handleSelectQuestion = (id: number) => {
+  const handleSelectQuestion = (id: number | string) => {
     Haptics.selectionAsync();
     setSelectedQuestionId(selectedQuestionId === id ? null : id);
   };
@@ -213,13 +260,35 @@ export default function TeacherQuestionBankView({
         <View style={styles.headerBlock}>
           <Text style={[styles.pageTitle, { color: titleColor }]}>Question Bank</Text>
           <Text style={[styles.subtitle, { color: subtitleColor }]}>
-            Questions assigned by faculty & teachers · 2M, 5M & 10M Model Answers
+            {isLoading
+              ? 'Loading official university faculty questions...'
+              : `${questions.length} Questions for Chapter ${chapterNumber} · 2M, 5M & 10M Model Answers`}
           </Text>
         </View>
 
+        {/* Loading Spinner */}
+        {isLoading && (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#22c55e" />
+            <Text style={{ marginTop: 12, color: subtitleColor, fontSize: 13 }}>
+              Loading faculty questions & marking schemes...
+            </Text>
+          </View>
+        )}
+
+        {/* Empty state */}
+        {!isLoading && questions.length === 0 && (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
+            <Ionicons name="document-text-outline" size={40} color={subtitleColor} />
+            <Text style={{ marginTop: 12, color: titleColor, fontSize: 15, fontWeight: '600' }}>
+              No questions found for this chapter yet.
+            </Text>
+          </View>
+        )}
+
         {/* Question Cards */}
         <View style={styles.cardsList}>
-          {TEACHER_QUESTIONS.map((item) => {
+          {questions.map((item) => {
             const isExpanded = selectedQuestionId === item.id;
             return (
               <View
@@ -247,9 +316,18 @@ export default function TeacherQuestionBankView({
                     <Text style={[styles.questionText, { color: questionTextColor }]}>
                       {item.question}
                     </Text>
-                    <Text style={[styles.assignedByText, { color: assignedByColor }]}>
-                      Assigned by: {item.assignedBy}
-                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      <Text style={[styles.assignedByText, { color: assignedByColor, marginTop: 0 }]}>
+                        Assigned by: {item.assignedBy}
+                      </Text>
+                      {item.bloomLevel ? (
+                        <View style={{ backgroundColor: isDark ? '#193B2B' : '#E0F2E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#86EFAC' : '#1B6B40' }}>
+                            {item.bloomLevel}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
                   </View>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}

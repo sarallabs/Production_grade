@@ -115,6 +115,8 @@ export default function PrepareScreen() {
         />
       ) : activeSegment === 'prep_exam' ? (
         <PreparationExamView
+          subjectId={activeSubject.id}
+          chapterNumber={currentChapter.number}
           subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
           onBack={() => {
             if (router.canGoBack()) {
@@ -134,6 +136,8 @@ export default function PrepareScreen() {
         />
       ) : activeSegment === 'study_plan' ? (
         <StudyPlanView
+          subjectId={activeSubject.id}
+          chapterNumber={currentChapter.number}
           unitCode={`${activeSubject.code} · UNIT ${currentChapter.number}`}
           unitName={currentChapter.name}
           subjectName={activeSubject.name}

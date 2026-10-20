@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
+import { fetchQuickStudyGuide, fetchDetailedNotes } from '@/services/contentService';
 
 const { width } = Dimensions.get('window');
 
@@ -27,6 +28,7 @@ interface ListenScreenProps {
   initialMode?: ListenMode;
   onNavigateToRead?: (moduleNumber?: number) => void;
   onBackPress?: () => void;
+  onChapterPress?: () => void;
 }
 
 const SPEED_OPTIONS = [1.0, 1.25, 1.5, 2.0];
@@ -39,7 +41,109 @@ const GLOSSARY_TOOLTIPS: Record<string, string> = {
   midgut: 'Mesenteron: central digestive chamber lined with columnar microvilli, lacking cuticle.',
   hindgut: 'Proctodaeum: posterior chamber (ileum, colon, rectum) responsible for water reabsorption.',
   Ferrari: 'Metaphor for high metabolic energy throughput in flying insects.',
+  metamorphosis: 'Post-embryonic structural changes occurring between egg hatching and adult sexual maturity.',
+  ecdysis: 'The process of shedding the old cuticular exoskeleton (moulting).',
+  poikilothermic: 'Cold-blooded organisms whose body temperature tracks ambient microclimates.',
+  'degree-day': 'Unit of heat accumulation used to predict insect development timing.',
+  photoperiod: 'The duration of daily light exposure regulating diapause and seasonal cycles.',
+  diapause: 'Hormonally regulated dormancy enabling survival during harsh climatic conditions.',
+  pollination: 'Transfer of pollen grains from anther to stigma facilitating fertilization.',
+  apiculture: 'The scientific management and rearing of honey bees for pollination and honey.',
+  weathering: 'Physical disintegration and chemical decomposition of minerals and agro-substrates.',
 };
+
+export interface TokenizedWord {
+  index: number;
+  raw: string;
+  clean: string;
+  isGlossary: boolean;
+  glossaryKey?: string;
+}
+
+function tokenizeParagraph(text: string): TokenizedWord[] {
+  const words: TokenizedWord[] = [];
+  const tokens = text.split(/\s+/).filter(Boolean);
+  const glossaryKeys = Object.keys(GLOSSARY_TOOLTIPS);
+
+  tokens.forEach((raw, idx) => {
+    const clean = raw.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const matchedKey = glossaryKeys.find(
+      (k) => k.toLowerCase() === clean || clean === k.toLowerCase().replace(/[^a-z0-9]/g, '')
+    );
+
+    words.push({
+      index: idx,
+      raw,
+      clean,
+      isGlossary: !!matchedKey,
+      glossaryKey: matchedKey,
+    });
+  });
+
+  return words;
+}
+
+function markdownToAudioParagraphs(markdown: string, chapterNum: number, chapterTitle: string): string[] {
+  if (!markdown || markdown.trim().length === 0) {
+    return [
+      `Welcome to the audio study session for Chapter ${chapterNum}: ${chapterTitle}.`,
+      `Focus on the structural concepts, biological definitions, and faculty exam pointers covered in your lecture guides.`,
+      `Review each section carefully, and follow along with the transcript to master the subject material for your upcoming assessments.`,
+    ];
+  }
+
+  // 1. Remove markdown images & links [text](url) -> text
+  let text = markdown
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[(.*?)\]\(.*?\)/g, '$1');
+
+  // 2. Remove math formulas $$...$$ or $...$ -> clean spoken text
+  text = text
+    .replace(/\$\$(.*?)\$\$/gs, '$1')
+    .replace(/\$(.*?)\$/g, '$1')
+    .replace(/\\text\{(.*?)\}/g, '$1')
+    .replace(/\\longrightarrow/g, 'yields')
+    .replace(/\\approx/g, 'approximately')
+    .replace(/\\circ\s*C/g, ' degrees Celsius');
+
+  // 3. Remove tables (lines with |)
+  text = text.replace(/^\|.*\|$/gm, '');
+
+  // 4. Convert headers: e.g. "### 1. Three Primary Gut Regions" -> "Three Primary Gut Regions."
+  text = text.replace(/^#{1,6}\s*(?:[\d.]+\s*)?/gm, '');
+
+  // 5. Remove horizontal rules
+  text = text.replace(/^---$/gm, '');
+
+  // 6. Remove blockquotes and formatting symbols (*, _, `, >)
+  text = text.replace(/^[>]\s*/gm, '');
+  text = text.replace(/[*_`]/g, '');
+
+  // 7. Clean bullet points: e.g. "- Pharynx:" -> "Pharynx:"
+  text = text.replace(/^\s*[-*+]\s+/gm, '');
+  text = text.replace(/^\s*\d+\.\s+/gm, '');
+
+  // 8. Split by double newlines or single newlines with content into paragraphs
+  const rawParagraphs = text.split(/\n+/);
+  const cleaned: string[] = [];
+
+  for (const raw of rawParagraphs) {
+    const trimmed = raw.replace(/\s+/g, ' ').trim();
+    if (trimmed.length > 25 && !trimmed.startsWith('|')) {
+      cleaned.push(trimmed);
+    }
+  }
+
+  if (cleaned.length > 0) {
+    return cleaned;
+  }
+
+  return [
+    `Welcome to the audio study session for Chapter ${chapterNum}: ${chapterTitle}.`,
+    `Focus on the structural concepts, definitions, and faculty pointers covered in your lecture guides.`,
+    `Follow along with the transcript to master the material for your upcoming assessments.`,
+  ];
+}
 
 interface MicrocastEpisode {
   id: number;
@@ -50,64 +154,183 @@ interface MicrocastEpisode {
   recap: string;
 }
 
-const MICROCAST_EPISODES: MicrocastEpisode[] = [
-  {
-    id: 1,
-    title: 'Anatomy of the three-part insect gut',
-    status: 'Paused · 01:36 · Recap: 3 questions',
-    durationSec: 96,
-    durationLabel: '01:36',
-    recap: 'Recap: 3 questions',
+const CHAPTER_MICROCASTS: Record<number, { episodes: { id: number; title: string; recap: string }[]; transcripts: Record<number, string[]> }> = {
+  1: {
+    episodes: [
+      { id: 1, title: 'Anatomy of the Three-Part Insect Gut', recap: 'Foregut, midgut & hindgut' },
+      { id: 2, title: 'Inside the Insect Foregut and Gizzard', recap: 'Crop & proventricular teeth' },
+      { id: 3, title: 'How Insect Digestion Activates Bt Toxins', recap: 'Alkaline pH & receptor binding' },
+      { id: 4, title: 'How Insects Recycle Water from Waste', recap: 'Malpighian tubules & rectal pads' },
+      { id: 5, title: 'Peritrophic Membrane & Bt Toxin Defense', recap: 'Chitin sheath & barrier defense' },
+    ],
+    transcripts: {
+      1: [
+        'The insect gut is divided into three distinct embryological zones: the foregut for ingestion, the midgut for enzymatic absorption, and the hindgut for water recycling.',
+        'Notice that the foregut and hindgut arise from ectoderm, retaining a cuticular intima shed during each larval molt, whereas the midgut is of endodermal origin.',
+        'This fundamental anatomical distinction explains why digestion and nutrient uptake take place almost exclusively across the midgut microvillar epithelium.',
+      ],
+      2: [
+        'In the foregut, the thin-walled crop functions as an expandable storage reservoir for food particles and floral nectar.',
+        'Just behind the crop, the proventriculus or gizzard is armed with six powerful chitinous teeth and backward-facing spines that mechanically grind solid food particles.',
+        'In sucking insects such as aphids and bugs, the muscular pharynx acts as a powerful cibarial suction pump to draw plant sap upwards into the digestive tract.',
+      ],
+      3: [
+        'Bacillus thuringiensis crystal endotoxins are ingested as inactive protoxins by susceptible agricultural caterpillars in field crops.',
+        'The highly alkaline pH of the insect midgut solubilizes these crystals, allowing specific gut proteases to cleave them into pore-forming toxins.',
+        'These activated endotoxins bind to cadherin receptors on midgut epithelial columnar cells, creating osmotic pores that disrupt cell integrity and lead to insect mortality.',
+      ],
+      4: [
+        'Malpighian tubules float freely in the abdominal hemolymph to filter out nitrogenous wastes as insoluble potassium and uric acid crystals.',
+        'As metabolic waste passes into the hindgut, specialized rectal pads actively reabsorb over ninety-five percent of water, sodium, and potassium ions.',
+        'This hyper-efficient water conservation mechanism allows terrestrial insects and stored-grain pests to thrive in extremely arid agricultural environments.',
+      ],
+      5: [
+        'The peritrophic membrane is a semi-permeable sheath composed of chitin and proteins that envelops food bolus within the insect midgut.',
+        'It shields delicate single-cell microvillar midgut epithelial cells from mechanical abrasion caused by rough plant fibers and mineral particles.',
+        'Additionally, it acts as a selective ultrafiltration barrier preventing entomopathogenic bacteria, viruses, and fungi from penetrating the hemocoel.',
+      ],
+    },
   },
-  {
-    id: 2,
-    title: 'Inside the Insect Foregut and Gizzard',
-    status: 'Resume at 0:48 · 02:10',
-    durationSec: 130,
-    durationLabel: '02:10',
-    recap: 'Links to Read §2',
+  2: {
+    episodes: [
+      { id: 1, title: 'Ametabolous & Hemimetabolous Development', recap: 'Direct vs incomplete metamorphosis' },
+      { id: 2, title: 'Holometabolous Life Cycles & Imaginal Discs', recap: 'Larval, pupal & adult stages' },
+      { id: 3, title: 'Larval Classifications & Field Adaptations', recap: 'Eruciform, scarabaeiform & vermiform' },
+      { id: 4, title: 'The Neuroendocrine Regulatory Cascade', recap: 'PTTH, ecdysone & juvenile hormone' },
+      { id: 5, title: 'Diapause vs Quiescence in Insect Dormancy', recap: 'Hormonal arrest vs direct slowdown' },
+    ],
+    transcripts: {
+      1: [
+        'Metamorphosis begins with the basic evolutionary division between ametabolous and hemimetabolous insects.',
+        'Ametabolous species like silverfish undergo no true metamorphosis, emerging as miniature adults that continue molting throughout their reproductive lives.',
+        'Hemimetabolous insects like grasshoppers and cockroaches develop external wing pads over successive nymphal instars without an intervening pupal phase.',
+      ],
+      2: [
+        'Complete metamorphosis or holometaboly represents an evolutionary breakthrough separating larval feeding niches from adult reproductive dispersal.',
+        'During the pupal stage, larval organ systems undergo histolysis while adult organs develop from dormant clusters of stem cells called imaginal discs.',
+        'This developmental architecture prevents caterpillars and butterflies from competing with one another for the same agricultural food resources.',
+      ],
+      3: [
+        'Insect larvae exhibit distinct body forms tailored to their specific agro-ecological feeding habits.',
+        'Caterpillars display an eruciform shape with thoracic legs and abdominal prolegs, while white grubs in sugarcane exhibit a fleshy C-shaped scarabaeiform body.',
+        'In contrast, predatory ground beetles possess agile campodeiform bodies, and housefly maggots possess legless vermiform bodies adapted for decaying substrates.',
+      ],
+      4: [
+        'The insect endocrine axis orchestrates every molt through a quantitative balance between juvenile hormone and ecdysone.',
+        'Brain neurosecretory cells release prothoracicotropic hormone PTTH, which signals the prothoracic glands to synthesize ecdysone for cuticular renewal.',
+        'When juvenile hormone titer drops to zero in the final instar, ecdysone triggers pupal-to-adult metamorphosis rather than another larval molt.',
+      ],
+      5: [
+        'Insects survive adverse seasonal extremes through two distinct biological dormancy strategies.',
+        'Quiescence is a direct, immediate arrest of growth caused by acute unfavorable cold or drought, resuming immediately once conditions improve.',
+        'Diapause, however, is a genetically programmed neuroendocrine arrest triggered in advance by token environmental stimuli such as photoperiod.',
+      ],
+    },
   },
-  {
-    id: 3,
-    title: 'How Insect Digestion Activates Bt Toxins',
-    status: '01:36 · Links to Read §3',
-    durationSec: 96,
-    durationLabel: '01:36',
-    recap: 'Links to Read §3',
+  3: {
+    episodes: [
+      { id: 1, title: 'Thermal Thresholds & Poikilothermic Kinetics', recap: 'Optimal range & lethal limits' },
+      { id: 2, title: 'Degree-Day Mathematical Modeling', recap: 'Thermal summation constant K' },
+      { id: 3, title: 'Cuticular Wax Layer & Water Balance', recap: 'Hydrocarbon barrier to desiccation' },
+      { id: 4, title: 'Photoperiodic Clocks & Seasonal Diapause', recap: 'Critical daylength & token cues' },
+      { id: 5, title: 'Synoptic Winds & Migration Ecology', recap: 'Long-distance pest dispersal' },
+    ],
+    transcripts: {
+      1: [
+        'Insects are poikilothermic animals whose internal physiological rates mirror ambient microclimatic temperatures.',
+        'Metabolic reaction velocity approximately doubles with each ten-degree Celsius elevation within the physiological tolerance window of twenty to thirty-five degrees.',
+        'Above forty-five degrees Celsius, critical wax layers melt and proteins denature, triggering catastrophic cellular failure and rapid insect mortality.',
+      ],
+      2: [
+        'Degree-day modeling enables entomologists to accurately forecast field pest emergence and spray timings based on heat accumulation.',
+        'The thermal constant K equals the developmental duration in days multiplied by the effective temperature above the developmental threshold T-zero.',
+        'By continuously tracking accumulated degree-days from seasonal biofix dates, growers can time insecticide applications to coincide with the most vulnerable larval stages.',
+      ],
+      3: [
+        'Maintaining body water balance is the foremost physiological challenge confronting terrestrial insects in agricultural fields.',
+        'An ultra-thin monolayer of epicuticular wax hydrocarbons forms an impermeable barrier against lethal evaporative water loss.',
+        'When ambient relative humidity drops below critical equilibrium levels, insects restrict spiracular opening and maximize rectal water recovery.',
+      ],
+      4: [
+        'Photoperiod serves as the most dependable astronomical cue regulating seasonal life cycle transitions across agricultural landscapes.',
+        'Unlike temperature and rainfall which fluctuate wildly from year to year, daylength changes with astronomical precision.',
+        'When daylength drops below the species-specific critical photoperiod, diapause-inducing hormones shut down reproductive development before the onset of winter.',
+      ],
+      5: [
+        'Atmospheric movements and wind currents dictate the regional dispersal and transboundary migration of major agricultural crop pests.',
+        'Light winds below five kilometers per hour allow male moths to track female sex pheromone plumes upwind to locate mates.',
+        'In contrast, upper-level synoptic winds and monsoon depressions transport brown planthoppers across hundreds of kilometers of open ocean.',
+      ],
+    },
   },
-  {
-    id: 4,
-    title: 'How insects recycle water from waste',
-    status: '02:44 · Links to Read §4',
-    durationSec: 164,
-    durationLabel: '02:44',
-    recap: 'Links to Read §4',
+  4: {
+    episodes: [
+      { id: 1, title: 'Floral Reproductive Anatomy & Pollen Dehiscence', recap: 'Anther locules & microsporangia' },
+      { id: 2, title: 'Cross-Pollination Enforcements & Dichogamy', recap: 'Protandry vs protogyny & herkogamy' },
+      { id: 3, title: 'Apiculture & Honey Bee Pollinator Vectors', recap: 'Apis mellifera & corbicular loading' },
+      { id: 4, title: 'Floral Constancy & Nectar Guide Signaling', recap: 'UV reflectance & scent attractants' },
+      { id: 5, title: 'Commercial Colony Management in Orchards', recap: 'Stocking density & pesticide safety' },
+    ],
+    transcripts: {
+      1: [
+        'Pollination constitutes the vital biological gateway to double fertilization, seed formation, and commercial fruit set in angiosperm crops.',
+        'Each anther contains four microsporangial locules lined by nutritive tapetum cells which synthesize resistant sporopollenin coats around pollen grains.',
+        'Hygroscopic contraction of endothecial cells causes longitudinal dehiscence along the stomium line as ambient relative humidity falls during morning sunlight.',
+      ],
+      2: [
+        'Angiosperms possess evolutionary floral adaptations designed to enforce cross-pollination and prevent inbreeding depression.',
+        'Dichogamy separates anther dehiscence and stigma receptivity temporally, either through protandry in sunflowers or protogyny in pearl millet.',
+        'Herkogamy and heterostyly impose physical spatial separations, while multi-allelic self-incompatibility systems biochemically abort self-pollen tube germination.',
+      ],
+      3: [
+        'Honey bees of the genus Apis represent the premier managed insect pollinators across global horticultural and oilseed agro-ecosystems.',
+        'Worker bees gather pollen using specialized tibial corbiculae or pollen baskets, transferring tens of thousands of viable pollen grains per foraging flight.',
+        'Systematic bee pollination enhances seed yields in sunflower, mustard, alfalfa, and apple by fifty to over two hundred percent.',
+      ],
+      4: [
+        'Entomophilous flowers deploy multisensory attractants to guide insect pollinators directly toward reproductive organs.',
+        'Petals exhibit ultraviolet-reflective nectar guides visible to the trichromatic visual spectrum of bees but invisible to human vision.',
+        'Floral constancy ensures individual bees repeatedly visit flowers of the identical plant taxon, minimizing wasteful heterospecific pollen transfer.',
+      ],
+      5: [
+        'Optimal crop pollination demands calculated commercial honey bee colony stocking rates ranging between two and four hives per hectare.',
+        'Colonies should be introduced only after ten to twenty percent crop bloom has commenced to discourage foragers from orienting toward competing weed species.',
+        'Pesticide sprays must be scheduled strictly at dusk when bee flight has ceased, and toxic neonicotinoids must be avoided during anthesis.',
+      ],
+    },
   },
-  {
-    id: 5,
-    title: 'Peritrophic Membrane & Bt Toxin Defense',
-    status: '02:15 · Links to Read §5',
-    durationSec: 135,
-    durationLabel: '02:15',
-    recap: 'Links to Read §5',
-  },
-];
+};
 
 export default function ListenScreen({
   chapterNumber = 1,
-  chapterTitle = 'Insect Digestive System & Anatomy',
+  chapterTitle,
   initialMode = 'quick',
   onNavigateToRead,
   onBackPress,
+  onChapterPress,
 }: ListenScreenProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
+  // Dynamically compute the chapter title if not explicitly provided
+  const defaultTitle =
+    chapterNumber === 1
+      ? 'Insect Digestive System & Anatomy'
+      : chapterNumber === 2
+      ? 'Insect Metamorphosis & Life Cycles'
+      : chapterNumber === 3
+      ? 'Weathering of Rocks & Minerals'
+      : chapterNumber === 4
+      ? 'Insect Pollination & Floral Biology'
+      : 'Study Guide';
+  const effectiveChapterTitle = chapterTitle || defaultTitle;
+
   const [mode, setMode] = useState<ListenMode>(initialMode);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [activeParagraphIndex, setActiveParagraphIndex] = useState<number>(0);
+  const [activeWordIndex, setActiveWordIndex] = useState<number>(-1);
   const [currentSec, setCurrentSec] = useState<number>(0);
   const [speedIndex, setSpeedIndex] = useState<number>(0);
-  const [selectedModule, setSelectedModule] = useState<number>(1);
   const [selectedMicrocastId, setSelectedMicrocastId] = useState<number>(1);
   const [activeTooltip, setActiveTooltip] = useState<{ term: string; text: string } | null>(null);
 
@@ -116,29 +339,304 @@ export default function ListenScreen({
   const isDetailed = mode === 'detailed';
   const isMicro = mode === 'microcasts';
 
-  // Active microcast item
-  const activeMicrocast =
-    MICROCAST_EPISODES.find((e) => e.id === selectedMicrocastId) || MICROCAST_EPISODES[0];
+  // Dynamic Microcasts for Current Chapter
+  const currentChapterMicro = useMemo(() => {
+    if (CHAPTER_MICROCASTS[chapterNumber]) {
+      return CHAPTER_MICROCASTS[chapterNumber];
+    }
+    const fallbackSummary = SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
+    const audioParas = markdownToAudioParagraphs(fallbackSummary, chapterNumber, effectiveChapterTitle);
+    const episodes = [
+      { id: 1, title: `${effectiveChapterTitle} — Core Principles`, recap: 'Foundational concepts' },
+      { id: 2, title: `${effectiveChapterTitle} — Key Morphological Features`, recap: 'Structural analysis' },
+      { id: 3, title: `${effectiveChapterTitle} — Physiological Mechanisms`, recap: 'Biological pathways' },
+      { id: 4, title: `${effectiveChapterTitle} — Agro-Ecological Impact`, recap: 'Crop & field dynamics' },
+      { id: 5, title: `${effectiveChapterTitle} — Exam & Viva Master Notes`, recap: 'High-yield pointers' },
+    ];
+    const transcripts: Record<number, string[]> = {
+      1: audioParas.slice(0, 3),
+      2: audioParas.slice(1, 4),
+      3: audioParas.slice(2, 5),
+      4: audioParas.slice(0, 2),
+      5: audioParas.slice(1, 3),
+    };
+    return { episodes, transcripts };
+  }, [chapterNumber, effectiveChapterTitle]);
 
-  // Duration in seconds: Quick = 20:24 (1224s), Detailed = 44:39 (2679s), Micro = 01:36 (96s)
-  const totalDurationSec = isQuick ? 1224 : isDetailed ? 2679 : activeMicrocast.durationSec;
-  const totalDurationLabel = isQuick ? '20:24' : isDetailed ? '44:39' : activeMicrocast.durationLabel;
+  const microcastEpisodes: MicrocastEpisode[] = useMemo(() => {
+    return currentChapterMicro.episodes.map((item) => {
+      const paras = currentChapterMicro.transcripts[item.id] || [];
+      const words = paras.join(' ').split(/\s+/).filter(Boolean);
+      const durationSec = Math.max(25, Math.round(words.length / 3.4));
+      const m = Math.floor(durationSec / 60);
+      const s = durationSec % 60;
+      const durationLabel = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+      return {
+        id: item.id,
+        title: item.title,
+        recap: item.recap,
+        durationSec,
+        durationLabel,
+        status: `${durationLabel} · ${item.recap}`,
+      };
+    });
+  }, [currentChapterMicro]);
+
+  // Active microcast item
+  const activeMicrocast = useMemo(() => {
+    return (
+      microcastEpisodes.find((e) => e.id === selectedMicrocastId) || microcastEpisodes[0]
+    );
+  }, [microcastEpisodes, selectedMicrocastId]);
+
+  // Dynamic chapter content from DB / Service
+  const [chapterContent, setChapterContent] = useState<{
+    quickText: string;
+    detailedText: string;
+  }>({
+    quickText: SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '',
+    detailedText: SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '',
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadContent = async () => {
+      try {
+        const [quickRes, detailedRes] = await Promise.all([
+          fetchQuickStudyGuide('entomology', chapterNumber),
+          fetchDetailedNotes('entomology', chapterNumber),
+        ]);
+        if (isMounted) {
+          setChapterContent({
+            quickText: quickRes,
+            detailedText: detailedRes,
+          });
+        }
+      } catch {
+        if (isMounted) {
+          setChapterContent({
+            quickText: SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '',
+            detailedText: SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '',
+          });
+        }
+      }
+    };
+    loadContent();
+    return () => {
+      isMounted = false;
+    };
+  }, [chapterNumber]);
+
+  // Derived audio paragraphs
+  const quickParagraphs = useMemo(() => {
+    const md = chapterContent.quickText || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
+    return markdownToAudioParagraphs(md, chapterNumber, effectiveChapterTitle);
+  }, [chapterContent.quickText, chapterNumber, effectiveChapterTitle]);
+
+  const detailedParagraphs = useMemo(() => {
+    const md = chapterContent.detailedText || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
+    return markdownToAudioParagraphs(md, chapterNumber, effectiveChapterTitle);
+  }, [chapterContent.detailedText, chapterNumber, effectiveChapterTitle]);
+
+  const activeParagraphs: string[] = useMemo(() => {
+    if (isMicro) {
+      return (
+        currentChapterMicro.transcripts[selectedMicrocastId] ||
+        currentChapterMicro.transcripts[1] ||
+        []
+      );
+    }
+    return isDetailed ? detailedParagraphs : quickParagraphs;
+  }, [isMicro, isDetailed, selectedMicrocastId, detailedParagraphs, quickParagraphs, currentChapterMicro]);
+
+  // Tokenized paragraphs for word-level karaoke
+  const tokenizedParagraphs = useMemo(() => {
+    return activeParagraphs.map((p) => tokenizeParagraph(p));
+  }, [activeParagraphs]);
+
+  // Total word count
+  const totalWordCount = useMemo(() => {
+    return tokenizedParagraphs.reduce((acc, words) => acc + words.length, 0);
+  }, [tokenizedParagraphs]);
+
+  // Dynamic duration calculated from actual words (~135 words per minute)
+  const totalDurationSec = useMemo(() => {
+    if (isMicro) return activeMicrocast.durationSec;
+    return Math.max(30, Math.round((totalWordCount / 135) * 60));
+  }, [isMicro, activeMicrocast.durationSec, totalWordCount]);
+
+  const totalDurationLabel = useMemo(() => {
+    const m = Math.floor(totalDurationSec / 60);
+    const s = totalDurationSec % 60;
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  }, [totalDurationSec]);
 
   const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wordTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const isPlayingRef = useRef<boolean>(isPlaying);
+  const speedRef = useRef<number>(SPEED_OPTIONS[speedIndex]);
+  const tokenizedRef = useRef<TokenizedWord[][]>(tokenizedParagraphs);
+  const startTimeRef = useRef<number>(0);
+  const lastBoundaryTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    tokenizedRef.current = tokenizedParagraphs;
+  }, [tokenizedParagraphs]);
+
+  useEffect(() => {
+    speedRef.current = SPEED_OPTIONS[speedIndex];
+  }, [speedIndex]);
 
   useEffect(() => {
     return () => {
       Speech.stop();
       if (tickerRef.current) clearInterval(tickerRef.current);
+      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     };
   }, []);
+
+  // Reset playback if chapter changes
+  useEffect(() => {
+    Speech.stop();
+    if (tickerRef.current) clearInterval(tickerRef.current);
+    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+    setIsPlaying(false);
+    isPlayingRef.current = false;
+    setCurrentSec(0);
+    setActiveParagraphIndex(0);
+    setActiveWordIndex(-1);
+  }, [chapterNumber]);
+
+  const startTicker = () => {
+    if (tickerRef.current) clearInterval(tickerRef.current);
+    tickerRef.current = setInterval(() => {
+      setCurrentSec((prev) => {
+        const next = prev + 1;
+        if (next >= totalDurationSec) {
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          Speech.stop();
+          if (tickerRef.current) clearInterval(tickerRef.current);
+          if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+          return 0;
+        }
+        return next;
+      });
+    }, 1000 / speedRef.current);
+  };
+
+  const speakFromWord = (paraIdx: number, wordIdx: number = 0) => {
+    const paras = tokenizedRef.current;
+    if (paraIdx >= paras.length) {
+      setIsPlaying(false);
+      isPlayingRef.current = false;
+      setActiveParagraphIndex(0);
+      setActiveWordIndex(-1);
+      if (tickerRef.current) clearInterval(tickerRef.current);
+      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      return;
+    }
+
+    setActiveParagraphIndex(paraIdx);
+    setActiveWordIndex(wordIdx);
+    setIsPlaying(true);
+    isPlayingRef.current = true;
+
+    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+
+    const paraWords = paras[paraIdx];
+    const wordsToSpeak = paraWords.slice(wordIdx);
+    const textToSpeak = wordsToSpeak.map((w) => w.raw).join(' ');
+
+    Speech.stop();
+    startTimeRef.current = Date.now();
+    lastBoundaryTimeRef.current = Date.now();
+
+    // Precompute character offsets for wordsToSpeak:
+    const wordCharOffsets: number[] = [];
+    let accChar = 0;
+    for (let i = 0; i < wordsToSpeak.length; i++) {
+      wordCharOffsets.push(accChar);
+      accChar += wordsToSpeak[i].raw.length + 1;
+    }
+
+    // Natural English TTS speaking tempo: ~22.0 characters per second at 1.0x rate on mobile.
+    const charsPerSec = 22.0 * speedRef.current;
+
+    wordTickerRef.current = setInterval(() => {
+      if (!isPlayingRef.current) {
+        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+        return;
+      }
+      if (Date.now() - lastBoundaryTimeRef.current > 120) {
+        const elapsedSec = (Date.now() - startTimeRef.current) / 1000;
+        const currentTargetChar = elapsedSec * charsPerSec;
+
+        let foundIdx = 0;
+        for (let i = 0; i < wordCharOffsets.length; i++) {
+          if (currentTargetChar >= wordCharOffsets[i]) {
+            foundIdx = i;
+          } else {
+            break;
+          }
+        }
+        setActiveWordIndex(wordIdx + foundIdx);
+      }
+    }, 35);
+
+    Speech.speak(textToSpeak, {
+      rate: speedRef.current,
+      onBoundary: (ev: any) => {
+        if (ev && typeof ev.charIndex === 'number' && ev.charIndex > 0) {
+          lastBoundaryTimeRef.current = Date.now();
+          const charIdx = ev.charIndex;
+          for (let i = 0; i < wordCharOffsets.length; i++) {
+            const nextOffset = i + 1 < wordCharOffsets.length ? wordCharOffsets[i + 1] : Infinity;
+            if (charIdx >= wordCharOffsets[i] && charIdx < nextOffset) {
+              setActiveWordIndex(wordIdx + i);
+              break;
+            }
+          }
+        }
+      },
+      onDone: () => {
+        if (!isPlayingRef.current) return;
+        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+
+        if (paraIdx + 1 < paras.length) {
+          speakFromWord(paraIdx + 1, 0);
+        } else {
+          setIsPlaying(false);
+          isPlayingRef.current = false;
+          setActiveParagraphIndex(0);
+          setActiveWordIndex(-1);
+          setCurrentSec(totalDurationSec);
+          if (tickerRef.current) clearInterval(tickerRef.current);
+        }
+      },
+      onError: () => {
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+        if (tickerRef.current) clearInterval(tickerRef.current);
+        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      },
+    });
+  };
 
   const handleSelectMode = (newMode: ListenMode) => {
     Haptics.selectionAsync();
     Speech.stop();
     if (tickerRef.current) clearInterval(tickerRef.current);
+    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     setIsPlaying(false);
+    isPlayingRef.current = false;
     setCurrentSec(0);
+    setActiveParagraphIndex(0);
+    setActiveWordIndex(-1);
     setMode(newMode);
   };
 
@@ -146,53 +644,89 @@ export default function ListenScreen({
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     if (isPlaying) {
       if (tickerRef.current) clearInterval(tickerRef.current);
+      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
       Speech.stop();
       setIsPlaying(false);
+      isPlayingRef.current = false;
     } else {
-      setIsPlaying(true);
-      let textToSpeak = isQuick
-        ? 'Imagine pouring solid wood chips or liquid blood directly into the gas tank of a Ferrari. The engine would struggle to process it. In the insect world, that rule of engineering is turned upside down. We are looking at a biological landscape where a microscopic tube has adapted to process incredibly diverse fuels. The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each plays a different role in extracting energy and keeping the insect alive.'
-        : isDetailed
-        ? 'Yuteng once said, happiness for me is largely a matter of digestion. I mean, he is not wrong. If you are listening to this, you might think about digestion after a heavy meal. But for insects, digestion is not just processing lunch. It is a high-stakes evolutionary battleground. Today, we are unpacking the insect elementary canal and the specialized systems that help insects survive.'
-        : 'This is the brief on insect digestive anatomy, drawing from Dr. Chirukari Srinivasa Rao’s lectures. To understand how agricultural pests process their food, we must examine the highly specialized three-part tube of their digestive tract. Function dictates form. Foregut and hindgut have an ectodermal origin; the midgut has an endodermal origin.';
-
-      if (chapterNumber !== 1 && SAMPLE_STUDY_CONTENT[chapterNumber]) {
-        const raw = isDetailed
-          ? SAMPLE_STUDY_CONTENT[chapterNumber].detailed
-          : SAMPLE_STUDY_CONTENT[chapterNumber].summary;
-        textToSpeak = raw.replace(/[#*`_>\[\]$|\\]/g, ' ').replace(/\s+/g, ' ').slice(0, 500);
-      }
-
-      Speech.stop();
-      Speech.speak(textToSpeak, {
-        rate: SPEED_OPTIONS[speedIndex],
-        onDone: () => setIsPlaying(false),
-      });
-
-      tickerRef.current = setInterval(() => {
-        setCurrentSec((prev) => {
-          const next = prev + 1;
-          if (next >= totalDurationSec) {
-            setIsPlaying(false);
-            Speech.stop();
-            if (tickerRef.current) clearInterval(tickerRef.current);
-            return 0;
-          }
-          return next;
-        });
-      }, 1000 / SPEED_OPTIONS[speedIndex]);
+      const pIdx =
+        activeParagraphIndex < tokenizedParagraphs.length ? activeParagraphIndex : 0;
+      const wIdx =
+        activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.length || 0)
+          ? activeWordIndex
+          : 0;
+      speakFromWord(pIdx, wIdx);
+      startTicker();
     }
+  };
+
+  const handleWordPress = (pIdx: number, w: TokenizedWord) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (w.isGlossary && w.glossaryKey) {
+      setActiveTooltip({
+        term: w.glossaryKey,
+        text: GLOSSARY_TOOLTIPS[w.glossaryKey] || 'Glossary definition',
+      });
+    }
+
+    let wordsBefore = 0;
+    for (let i = 0; i < pIdx; i++) {
+      wordsBefore += tokenizedParagraphs[i].length;
+    }
+    wordsBefore += w.index;
+
+    const targetSec = Math.min(
+      totalDurationSec,
+      Math.floor((wordsBefore / (totalWordCount || 1)) * totalDurationSec)
+    );
+    setCurrentSec(targetSec);
+
+    speakFromWord(pIdx, w.index);
+    startTicker();
   };
 
   const handleSkip = (deltaSeconds: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setCurrentSec((prev) => Math.max(0, Math.min(totalDurationSec, prev + deltaSeconds)));
+    const newSec = Math.max(0, Math.min(totalDurationSec, currentSec + deltaSeconds));
+    setCurrentSec(newSec);
+
+    const targetGlobalWord = Math.floor((newSec / (totalDurationSec || 1)) * totalWordCount);
+    let accumulated = 0;
+    let targetPIdx = 0;
+    let targetWIdx = 0;
+
+    for (let i = 0; i < tokenizedParagraphs.length; i++) {
+      const len = tokenizedParagraphs[i].length;
+      if (targetGlobalWord >= accumulated && targetGlobalWord < accumulated + len) {
+        targetPIdx = i;
+        targetWIdx = targetGlobalWord - accumulated;
+        break;
+      }
+      accumulated += len;
+      if (i === tokenizedParagraphs.length - 1) {
+        targetPIdx = i;
+        targetWIdx = Math.max(0, len - 1);
+      }
+    }
+
+    if (isPlaying) {
+      speakFromWord(targetPIdx, targetWIdx);
+      startTicker();
+    } else {
+      setActiveParagraphIndex(targetPIdx);
+      setActiveWordIndex(targetWIdx);
+    }
   };
 
   const handleCycleSpeed = () => {
     Haptics.selectionAsync();
     const nextIdx = (speedIndex + 1) % SPEED_OPTIONS.length;
     setSpeedIndex(nextIdx);
+    speedRef.current = SPEED_OPTIONS[nextIdx];
+    if (isPlaying) {
+      speakFromWord(activeParagraphIndex, activeWordIndex >= 0 ? activeWordIndex : 0);
+      startTicker();
+    }
   };
 
   const formatSeconds = (sec: number) => {
@@ -237,7 +771,7 @@ export default function ListenScreen({
           /* Chapter Title Header */
           <View style={styles.listenChapterHeader}>
             <Text style={[styles.listenChapterTitle, { color: textDark }]}>
-              {chapterTitle || `Chapter ${chapterNumber}`}
+              {effectiveChapterTitle}
             </Text>
           </View>
         )}
@@ -318,45 +852,46 @@ export default function ListenScreen({
         {/* ========================================================================= */}
         {!isMicro ? (
           <>
-            {/* 3. Section Label (.sectionLabel) */}
-            <Text style={[styles.sectionLabel, { color: textMuted }]}>
-              {isQuick ? 'QUICK LISTEN · STANDARD DEPTH' : 'DETAILED LISTEN · 1 OF 1 MATCH'}
-            </Text>
-
-            {/* 4. Chapter Audio Summary Card (.chapterAudioSummary) */}
-            <TouchableOpacity
-              style={[
-                styles.chapterAudioSummary,
-                { backgroundColor: cardBg, borderColor: isQuick ? emeraldPrimary : cardBorder },
-              ]}
-              onPress={handleTogglePlay}
-              activeOpacity={0.9}
-            >
-              <View style={[styles.playChapter, { backgroundColor: emeraldPrimary }]}>
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={16} color="#FFFFFF" />
-              </View>
-              <View style={styles.chapterAudioInfo}>
-                <Text style={[styles.chapterTitle, { color: textDark }]}>
-                  {isQuick ? '1. Chapter Quick Recap' : '1. Chapter Complete Coverage'}
-                </Text>
-                <Text style={[styles.chapterStatus, { color: textMuted }]}>
-                  {isPlaying ? 'Playing' : 'Paused'} · {formatSeconds(currentSec)} of {totalDurationLabel}
-                  {isQuick ? ' · Complete chapter coverage' : ''}
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            {/* 5. Player Header (.playerTitle & .playerSubtitle) */}
-            <View style={styles.playerHeader}>
-              <Text style={[styles.playerTitle, { color: textDark }]}>
-                {isQuick ? '1. Chapter Quick Recap' : '1. Chapter Complete Coverage'}
+            {/* 3. Section Label & Chapter Switcher */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionLabel, { color: textMuted }]}>
+                {isQuick ? 'QUICK LISTEN · STANDARD DEPTH' : 'DETAILED LISTEN · 1 OF 1 MATCH'}
               </Text>
+              {onChapterPress && (
+                <TouchableOpacity
+                  style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                  onPress={onChapterPress}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="book-outline" size={13} color={emeraldPrimary} />
+                  <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
+                    Ch {chapterNumber}
+                  </Text>
+                  <Ionicons name="chevron-down" size={12} color={textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {/* 4. Single Main Player Header */}
+            <View style={styles.playerHeader}>
+              <TouchableOpacity
+                onPress={onChapterPress}
+                activeOpacity={onChapterPress ? 0.7 : 1}
+                style={styles.playerTitleRow}
+              >
+                <Text style={[styles.playerTitle, { color: textDark }]}>
+                  {isQuick ? `${chapterNumber}. Chapter Quick Recap` : `${chapterNumber}. Chapter Complete Coverage`}
+                </Text>
+                {onChapterPress && (
+                  <Ionicons name="chevron-forward" size={15} color={emeraldPrimary} style={{ marginLeft: 4 }} />
+                )}
+              </TouchableOpacity>
               <Text style={[styles.playerSubtitle, { color: textMuted }]}>
-                {chapterTitle}
+                {effectiveChapterTitle}
               </Text>
             </View>
 
-            {/* 6. Audio Player Controls Card (.audioPlayerControls) */}
+            {/* 5. Audio Player Controls Card (.audioPlayerControls) */}
             <View style={[styles.audioPlayerControls, { backgroundColor: cardBg, borderColor: cardBorder }]}>
               {/* Skip Back 15s */}
               <TouchableOpacity
@@ -402,7 +937,7 @@ export default function ListenScreen({
               </Text>
             </View>
 
-            {/* 7. Audio Progress Track (.audioProgressTrack) */}
+            {/* 6. Audio Progress Track (.audioProgressTrack) */}
             <View style={[styles.audioProgressTrack, { backgroundColor: isDark ? '#263B30' : '#D1E3D9' }]}>
               <View
                 style={[
@@ -412,187 +947,63 @@ export default function ListenScreen({
               />
             </View>
 
-            {/* 8. Transcript Section (.transcriptHeading & .transcriptReadingCard) */}
+            {/* 7. Transcript Section (.transcriptHeading & .transcriptReadingCard) */}
             <View style={styles.transcriptSection}>
               <Text style={[styles.transcriptHeading, { color: textDark }]}>Transcript</Text>
               <Text style={[styles.transcriptHint, { color: textMuted }]}>
-                {isQuick
-                  ? 'Karaoke sync · Tap a word to jump · Dotted terms to define'
-                  : 'Tap a word to jump · Dotted terms to define'}
+                Karaoke sync · Tap any word to jump · Dotted terms to define
               </Text>
 
               <View style={[styles.transcriptReadingCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                {isQuick ? (
-                  <>
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      Imagine pouring solid wood chips or liquid blood directly into the gas tank of a{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Ferrari',
-                            text: GLOSSARY_TOOLTIPS['Ferrari'],
-                          })
-                        }
-                      >
-                        Ferrari
-                      </Text>
-                      . The engine would struggle to process it. In the insect world, that rule of
-                      engineering is turned upside down.
-                    </Text>
-
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      We’re looking at a biological landscape where a microscopic tube has adapted to
-                      process incredibly diverse fuels.
-                    </Text>
-
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      The insect gut has three distinct zones: the{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Foregut',
-                            text: GLOSSARY_TOOLTIPS['foregut'],
-                          })
-                        }
-                      >
-                        foregut
-                      </Text>
-                      ,{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Midgut',
-                            text: GLOSSARY_TOOLTIPS['midgut'],
-                          })
-                        }
-                      >
-                        midgut
-                      </Text>
-                      , and{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Hindgut',
-                            text: GLOSSARY_TOOLTIPS['hindgut'],
-                          })
-                        }
-                      >
-                        hindgut
-                      </Text>
-                      . Each plays a different role in extracting energy and keeping the insect alive.
-                    </Text>
-                  </>
-                ) : (
-                  <>
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      Yuteng once said, happiness for me is largely a matter of{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Digestion',
-                            text: GLOSSARY_TOOLTIPS['digestion'],
-                          })
-                        }
-                      >
-                        digestion
-                      </Text>
-                      . I mean, he’s not wrong. If you’re listening to this, you might think about
-                      digestion after a heavy meal.
-                    </Text>
-
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      But for insects, digestion isn’t just processing lunch. It is a high-stakes
-                      evolutionary battleground.
-                    </Text>
-
-                    <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                      Today, we’re unpacking the insect{' '}
-                      <Text
-                        style={styles.dottedTerm}
-                        onPress={() =>
-                          setActiveTooltip({
-                            term: 'Elementary Canal',
-                            text: GLOSSARY_TOOLTIPS['elementary canal'],
-                          })
-                        }
-                      >
-                        elementary canal
-                      </Text>{' '}
-                      and the specialized systems that help insects survive.
-                    </Text>
-                  </>
-                )}
-              </View>
-            </View>
-
-            {/* 9. Follow Along in Read (.followHeading, .moduleChips, .topicFocusCard) */}
-            <View style={styles.followAlongWrap}>
-              <View style={styles.followAlongHeader}>
-                <Text style={[styles.followHeading, { color: textDark }]}>FOLLOW ALONG IN READ</Text>
-                <Text style={[styles.topicCounter, { color: textMuted }]}>
-                  {isDetailed ? 'TOPIC 1 OF 8' : 'TOPIC 1 OF 6'}
-                </Text>
-              </View>
-
-              {/* Module Chips (M1, M2, M3, M4, M5, M6) */}
-              <View style={[styles.moduleChips, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                {[1, 2, 3, 4, 5, 6].map((num) => {
-                  // In Detailed: M1 & M2 are highlighted; in Quick: M1 is highlighted
-                  const isHighlighted = isDetailed ? num <= 2 : num === 1;
+                {tokenizedParagraphs.map((paraWords, pIdx) => {
                   return (
-                    <TouchableOpacity
-                      key={num}
-                      style={[
-                        styles.moduleChipBtn,
-                        isHighlighted
-                          ? { backgroundColor: '#1F4D40', borderColor: '#1F4D40' }
-                          : { backgroundColor: cardBg, borderColor: cardBorder },
-                      ]}
-                      onPress={() => {
-                        Haptics.selectionAsync();
-                        setSelectedModule(num);
-                      }}
-                      activeOpacity={0.8}
+                    <View
+                      key={pIdx}
+                      style={styles.transcriptParagraphCard}
                     >
-                      <Text
-                        style={[
-                          styles.moduleLabel,
-                          { color: isHighlighted ? '#FFFFFF' : textDark },
-                        ]}
-                      >
-                        M{num}
+                      <Text style={[styles.transcriptParagraph, { color: textDark }]}>
+                        {paraWords.map((w) => {
+                          const isWordActive =
+                            activeParagraphIndex === pIdx &&
+                            activeWordIndex === w.index;
+                          const isWordPast =
+                            pIdx < activeParagraphIndex ||
+                            (pIdx === activeParagraphIndex && w.index < activeWordIndex);
+
+                          return (
+                            <Text
+                              key={w.index}
+                              onPress={() => handleWordPress(pIdx, w)}
+                              style={[
+                                styles.wordInline,
+                                isWordActive && [
+                                  styles.wordInlineActive,
+                                  { backgroundColor: emeraldPrimary },
+                                ],
+                                w.isGlossary && styles.wordInlineGlossary,
+                                {
+                                  color: isWordActive
+                                    ? '#FFFFFF'
+                                    : isPlaying && !isWordPast
+                                    ? (isDark ? '#8DA297' : '#687D72')
+                                    : textDark,
+                                  fontWeight: isWordActive
+                                    ? '700'
+                                    : w.isGlossary
+                                    ? '600'
+                                    : '400',
+                                },
+                              ]}
+                            >
+                              {w.raw}{' '}
+                            </Text>
+                          );
+                        })}
                       </Text>
-                    </TouchableOpacity>
+                    </View>
                   );
                 })}
               </View>
-
-              {/* Topic Focus Card (.topicFocusCard) */}
-              <TouchableOpacity
-                style={[
-                  styles.topicFocusCard,
-                  {
-                    backgroundColor: isDark ? 'rgba(5, 153, 107, 0.12)' : '#E8F5ED',
-                    borderColor: cardBorder,
-                  },
-                ]}
-                onPress={() => onNavigateToRead?.(selectedModule)}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.focusEyebrow, { color: emeraldPrimary }]}>
-                  MODULE {selectedModule} · TOPIC FOCUS
-                </Text>
-                <Text style={[styles.focusTitle, { color: textDark }]}>
-                  {isQuick
-                    ? 'Quick Review of Database Concepts & Architecture'
-                    : 'Introduction to the World of Databases'}
-                </Text>
-              </TouchableOpacity>
             </View>
           </>
         ) : (
@@ -617,7 +1028,7 @@ export default function ListenScreen({
 
             {/* List of Microcast Lesson Cards */}
             <View style={styles.microList}>
-              {MICROCAST_EPISODES.map((ep) => {
+              {microcastEpisodes.map((ep) => {
                 const isSelected = selectedMicrocastId === ep.id;
                 return (
                   <TouchableOpacity
@@ -638,8 +1049,12 @@ export default function ListenScreen({
                       Haptics.selectionAsync();
                       setSelectedMicrocastId(ep.id);
                       if (!isSelected) {
+                        Speech.stop();
+                        if (tickerRef.current) clearInterval(tickerRef.current);
                         setCurrentSec(0);
                         setIsPlaying(false);
+                        isPlayingRef.current = false;
+                        setActiveParagraphIndex(0);
                       }
                     }}
                     activeOpacity={0.85}
@@ -681,20 +1096,6 @@ export default function ListenScreen({
                         {ep.status}
                       </Text>
                     </View>
-
-                    {/* Download Action Glyph (21x21 circle) */}
-                    <TouchableOpacity
-                      style={[
-                        styles.downloadAction,
-                        {
-                          backgroundColor: cardBg,
-                          borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                        },
-                      ]}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="arrow-down" size={11} color={isDark ? '#A6C5B3' : '#637375'} />
-                    </TouchableOpacity>
                   </TouchableOpacity>
                 );
               })}
@@ -723,7 +1124,7 @@ export default function ListenScreen({
                     {activeMicrocast.title}
                   </Text>
                   <Text style={[styles.episodeProgress, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                    Episode {activeMicrocast.id} of {MICROCAST_EPISODES.length} · {isPlaying ? 'Playing' : 'Paused'}
+                    Episode {activeMicrocast.id} of {microcastEpisodes.length} · {isPlaying ? 'Playing' : 'Paused'}
                   </Text>
                 </View>
               </View>
@@ -798,62 +1199,66 @@ export default function ListenScreen({
                 Transcript
               </Text>
               <Text style={[styles.transcriptHelper, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                Karaoke sync · tap dotted terms to define
+                Karaoke sync · tap any word to jump · dotted terms to define
               </Text>
 
               {/* Transcript Divider (.transcriptDivider) */}
               <View style={[styles.transcriptDivider, { backgroundColor: isDark ? '#2D4538' : '#DBE5E0' }]} />
 
               <View style={styles.transcriptParagraphsWrap}>
-                <Text style={[styles.transcriptParagraphText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
-                  This is the brief on insect digestive anatomy, drawing from Dr. Chirukari Srinivasa
-                  Rao’s lectures. To understand how agricultural pests process their food, we must
-                  examine the highly specialized three-part tube of their{' '}
-                  <Text
-                    style={styles.dottedTerm}
-                    onPress={() =>
-                      setActiveTooltip({
-                        term: 'Alimentary Canal',
-                        text: GLOSSARY_TOOLTIPS['alimentary canal'],
-                      })
-                    }
-                  >
-                    digestive tract
-                  </Text>
-                  .
-                </Text>
-                <Text style={[styles.transcriptParagraphText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
-                  Why would parts of the same gut have completely different linings? Function dictates
-                  form. Foregut and hindgut have an ectodermal origin; the{' '}
-                  <Text
-                    style={styles.dottedTerm}
-                    onPress={() =>
-                      setActiveTooltip({
-                        term: 'Midgut',
-                        text: GLOSSARY_TOOLTIPS['midgut'],
-                      })
-                    }
-                  >
-                    midgut
-                  </Text>{' '}
-                  has an endodermal origin.
-                </Text>
-                <Text style={[styles.transcriptParagraphText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
-                  The foregut and hindgut have a cuticular intima that is shed at each larval molt. The
-                  midgut lacks this lining, allowing chemical{' '}
-                  <Text
-                    style={styles.dottedTerm}
-                    onPress={() =>
-                      setActiveTooltip({
-                        term: 'Digestion',
-                        text: GLOSSARY_TOOLTIPS['digestion'],
-                      })
-                    }
-                  >
-                    digestion
-                  </Text>{' '}
-                  and nutrient absorption.
-                </Text>
+                {tokenizedParagraphs.map((paraWords, pIdx) => {
+                  return (
+                    <View
+                      key={pIdx}
+                      style={styles.microTranscriptCard}
+                    >
+                      <Text
+                        style={[
+                          styles.transcriptParagraphText,
+                          { color: isDark ? '#FFFFFF' : '#1A282D' },
+                        ]}
+                      >
+                        {paraWords.map((w) => {
+                          const isWordActive =
+                            activeParagraphIndex === pIdx &&
+                            activeWordIndex === w.index;
+                          const isWordPast =
+                            pIdx < activeParagraphIndex ||
+                            (pIdx === activeParagraphIndex && w.index < activeWordIndex);
+
+                          return (
+                            <Text
+                              key={w.index}
+                              onPress={() => handleWordPress(pIdx, w)}
+                              style={[
+                                styles.wordInline,
+                                isWordActive && [
+                                  styles.wordInlineActive,
+                                  { backgroundColor: '#00996E' },
+                                ],
+                                w.isGlossary && styles.wordInlineGlossary,
+                                {
+                                  color: isWordActive
+                                    ? '#FFFFFF'
+                                    : isPlaying && !isWordPast
+                                    ? (isDark ? '#8DA297' : '#687D72')
+                                    : (isDark ? '#FFFFFF' : '#1A282D'),
+                                  fontWeight: isWordActive
+                                    ? '700'
+                                    : w.isGlossary
+                                    ? '600'
+                                    : '400',
+                                },
+                              ]}
+                            >
+                              {w.raw}{' '}
+                            </Text>
+                          );
+                        })}
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           </View>
@@ -1084,13 +1489,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  chapterStatus: {
-    fontSize: 9.5,
+  /* Section Header Row with Chapter Switcher */
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  chapterPillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    gap: 4,
+  },
+  chapterPillBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   /* Player Header (.playerTitle, .playerSubtitle) */
   playerHeader: {
     marginBottom: 10,
     paddingHorizontal: 2,
+  },
+  playerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   playerTitle: {
     fontSize: 13,
@@ -1158,7 +1584,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     width: '100%',
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   audioProgress: {
     height: 5,
@@ -1180,73 +1606,43 @@ const styles = StyleSheet.create({
   transcriptReadingCard: {
     borderRadius: 14,
     borderWidth: 1,
-    padding: 16,
-    gap: 12,
-  },
-  transcriptParagraph: {
-    fontSize: 12,
-    lineHeight: 19,
-  },
-  dottedTerm: {
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
-    fontWeight: '600',
-  },
-  /* Follow Along in Read (.followHeading, .moduleChips, .topicFocusCard) */
-  followAlongWrap: {
-    gap: 10,
-  },
-  followAlongHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 2,
-  },
-  followHeading: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  topicCounter: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  moduleChips: {
-    height: 42,
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
+    padding: 12,
     gap: 8,
   },
-  moduleChipBtn: {
-    width: 52,
-    height: 27,
-    borderRadius: 7,
-    borderWidth: 1,
+  transcriptParagraphCard: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: 6,
+  },
+  transcriptParagraphActive: {
+    borderRadius: 6,
+  },
+  activeSpeakerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    marginBottom: 4,
   },
-  moduleLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  topicFocusCard: {
-    height: 57,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    justifyContent: 'center',
-    gap: 2,
-  },
-  focusEyebrow: {
+  activeSpeakerText: {
     fontSize: 9,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
-  focusTitle: {
+  transcriptParagraph: {
     fontSize: 12.5,
-    fontWeight: '600',
+    lineHeight: 22,
+  },
+  wordInline: {
+    fontSize: 12.5,
+    lineHeight: 22,
+  },
+  wordInlineActive: {
+    borderRadius: 4,
+    paddingHorizontal: 3,
+  },
+  wordInlineGlossary: {
+    textDecorationLine: 'underline',
+    textDecorationStyle: 'dotted',
   },
   /* Microcasts Layout (.microcastsMobile412918) */
   microcastsView: {
@@ -1319,14 +1715,6 @@ const styles = StyleSheet.create({
   },
   microEpisodeMetadata: {
     fontSize: 9,
-  },
-  downloadAction: {
-    width: 21,
-    height: 21,
-    borderRadius: 10.5,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   /* Compact Audio Player Card (.audioPlayer) */
   audioPlayerCard: {
@@ -1429,7 +1817,12 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   transcriptParagraphsWrap: {
-    gap: 10,
+    gap: 6,
+  },
+  microTranscriptCard: {
+    paddingVertical: 4,
+    paddingHorizontal: 4,
+    borderRadius: 6,
   },
   transcriptParagraphText: {
     fontSize: 11.5,

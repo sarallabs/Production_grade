@@ -245,7 +245,60 @@ export async function fetchMindmap(
     if (cached) raw = cached;
   }
 
+  if (raw && (raw.trim().startsWith('{') || raw.trim().startsWith('['))) {
+    try {
+      const json = JSON.parse(raw);
+      if (json && (json.children || json.title || json.name)) {
+        return parseJsonMindmap(json, chapterNum);
+      }
+    } catch {
+      // fallback to mermaid
+    }
+  }
+
   return parseMermaidMindmap(raw, chapterNum);
+}
+
+/**
+ * Parses JSON Mindmap schema returned by the API
+ */
+export function parseJsonMindmap(json: any, chapterNum: number): MindmapData {
+  const rootTitle = json.title || json.name || `Chapter ${chapterNum} Mindmap`;
+
+  const formatNode = (node: any, depth: number = 0): MindmapNode => {
+    let details: string[] = [];
+    if (Array.isArray(node.details)) {
+      details = node.details.filter(Boolean).map(String);
+    } else if (typeof node.description === 'string' && node.description.trim()) {
+      details = [node.description.trim()];
+    }
+
+    return {
+      id: String(node.id || `node_${Math.random().toString(36).slice(2, 9)}`),
+      title: String(node.title || node.name || 'Topic'),
+      depth,
+      bloomLevel: node.bloomLevel || node.bloom_level,
+      children: Array.isArray(node.children) ? node.children.map((c: any) => formatNode(c, depth + 1)) : [],
+      details,
+    };
+  };
+
+  const rootChildren = Array.isArray(json.children)
+    ? json.children.map((c: any) => formatNode(c, 1))
+    : [];
+
+  return {
+    title: rootTitle,
+    subject: 'Fundamentals of Entomology (ENTO 131)',
+    chapter: chapterNum,
+    rawMermaid: typeof json.mindmap === 'string' ? json.mindmap : '',
+    rootNode: {
+      id: String(json.id || 'root'),
+      title: rootTitle,
+      depth: 0,
+      children: rootChildren,
+    },
+  };
 }
 
 /**
@@ -629,4 +682,334 @@ export async function markVideoWatched(
   const next = [...current, ytId];
   await storage.setItem(watchedKey(subjectId, chapterNum), next);
   return next;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Question Bank (2M, 5M, 10M questions assigned by teachers)
+// ─────────────────────────────────────────────────────────────
+
+export type MarkType = '2M' | '5M' | '10M';
+
+export interface TeacherQuestion {
+  id: number | string;
+  numberFormatted: string;
+  question: string;
+  assignedBy: string;
+  chapter: string;
+  answers: Record<MarkType, string>;
+  teacherTip: string;
+  bloomLevel?: string;
+  difficulty?: string;
+  topicId?: string;
+  mindmapPath?: string;
+}
+
+const PILLAR_TITLES: Record<string, string> = {
+  pillar_1_nomenclature: 'Introduction & Nomenclature',
+  pillar_2_mechanisms_and_kinetics: 'Mechanisms & Kinetics',
+  pillar_3_comparative_matrix: 'Comparative Matrix',
+  pillar_4_agronomic_applications: 'Agronomic Applications',
+  pillar_4_enterprise_applications: 'Enterprise Applications & Production Case Study',
+  pillar_5_diagnostic_synthesis: 'Diagnostic Synthesis',
+};
+
+/** Converts the nested essay_answer_10mark JSON object (or string/array) into formatted readable answer text. */
+export function formatTenMarkAnswer(raw: any): string {
+  if (!raw) return '';
+  if (typeof raw === 'string') return raw;
+  if (Array.isArray(raw)) return raw.join('\n\n');
+  if (typeof raw !== 'object') return String(raw);
+
+  const getPillarTitle = (k: string) => {
+    return (
+      PILLAR_TITLES[k] ||
+      k
+        .replace(/^pillar_\d+_/, '')
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c) => c.toUpperCase())
+    );
+  };
+
+  const parts: string[] = [];
+  const rubric = raw.marking_rubric;
+  if (rubric && typeof rubric === 'object') {
+    const rows = Object.entries(rubric)
+      .filter(([k]) => k !== 'total_marks')
+      .map(([k, v]) => `• ${getPillarTitle(k)}: ${v}`);
+    const total = rubric.total_marks ? `[Total Marks: ${rubric.total_marks}]` : '';
+    parts.push(`Marking Scheme:\n${rows.join('\n')}${total ? '\n' + total : ''}`);
+  }
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (key === 'marking_rubric' || typeof value !== 'string' || !value.trim()) continue;
+    const title = getPillarTitle(key);
+    parts.push(`${title}:\n${value}`);
+  }
+
+  return parts.join('\n\n');
+}
+
+/**
+ * Fetches dynamic Question Bank questions for a chapter
+ */
+export async function fetchQuestionBank(
+  subjectId: string,
+  chapterNum: number,
+  chapterTitle?: string,
+  signal?: AbortSignal
+): Promise<TeacherQuestion[]> {
+  const cacheKey = `question_bank_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/question_bank`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const data = await res.json();
+      const rawQuestions = Array.isArray(data) ? data : data.questions || [];
+
+      if (rawQuestions.length > 0) {
+        const formatted: TeacherQuestion[] = rawQuestions.map((q: any, idx: number) => {
+          const num = idx + 1;
+          const numFormatted = num < 10 ? `0${num}` : `${num}`;
+
+          const shortAns = q.short_answer_2mark || q.answers?.['2M'] || q.shortAnswer || '2-mark answer available in syllabus notes.';
+          const longAns = Array.isArray(q.long_answer_5mark_points)
+            ? q.long_answer_5mark_points.join('\n\n')
+            : (q.long_answer_5mark_points || q.answers?.['5M'] || q.longAnswer || '5-mark structured points available in detailed study guide.');
+          const tenAns = q.essay_answer_10mark
+            ? formatTenMarkAnswer(q.essay_answer_10mark)
+            : (q.answers?.['10M'] || q.tenMarkAnswer || '10-mark comprehensive synthesis available in detailed syllabus.');
+
+          const tip = q.teacher_tip ||
+            (q.diagram_ref ? `Diagram Focus: ${q.diagram_ref}` :
+            (q.bloom_level ? `Bloom Level: ${q.bloom_level} · University Exam High-Yield Question` : 'Vital ANGRAU exam concept. Focus on key nomenclature and diagram labels.'));
+
+          const faculty = q.assigned_by || (idx % 2 === 0 ? 'Prof. C. Srinivasa Rao (Dept. of Entomology)' : 'Dr. V. K. Sharma (Senior Faculty)');
+
+          return {
+            id: q.id || `qb_${chapterNum}_${num}`,
+            numberFormatted: numFormatted,
+            question: q.question || q.stem || `Question ${num}`,
+            assignedBy: faculty,
+            chapter: chapterTitle ? `Chapter ${chapterNum} · ${chapterTitle}` : `Chapter ${chapterNum}`,
+            answers: {
+              '2M': shortAns,
+              '5M': longAns,
+              '10M': tenAns,
+            },
+            teacherTip: tip,
+            bloomLevel: q.bloom_level,
+            difficulty: q.difficulty,
+            topicId: q.topic_id,
+            mindmapPath: q.mindmap_path,
+          };
+        });
+
+        await storage.setItem(cacheKey, formatted);
+        return formatted;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Question Bank: ${err?.message || err}`);
+    }
+  }
+
+  // Fallback to cache
+  const cached = await storage.getItem<TeacherQuestion[]>(cacheKey);
+  if (cached && cached.length > 0) return cached;
+
+  return [];
+}
+
+// ─────────────────────────────────────────────────────────────
+// Mock Test / Assessment Questions (50 MCQ questions per chapter)
+// ─────────────────────────────────────────────────────────────
+
+export interface AssessmentQuestion {
+  id: string;
+  question: string;
+  isMultipleSelect: boolean;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  options: string[];
+  correctAnswers: number[]; // indices of correct options
+  explanation: string;
+}
+
+export interface ExamQuestion {
+  id: number;
+  part: string;
+  marks: string;
+  taxonomy: string;
+  topicTitle: string;
+  questionText: string;
+  guidanceText?: string;
+}
+
+/**
+ * Fetches dynamic Mock Test questions for Assessments and Preparation Exams
+ */
+export async function fetchMockTest(
+  subjectId: string,
+  chapterNum: number,
+  signal?: AbortSignal
+): Promise<{
+  assessmentQuestions: AssessmentQuestion[];
+  examQuestions: ExamQuestion[];
+}> {
+  const cacheKey = `mock_test_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/mock_test`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const data = await res.json();
+      const rawQuestions = Array.isArray(data) ? data : data.questions || [];
+
+      if (rawQuestions.length > 0) {
+        const optionKeys = ['A', 'B', 'C', 'D'];
+
+        const assessmentQuestions: AssessmentQuestion[] = rawQuestions.map((q: any, idx: number) => {
+          let opts: string[] = [];
+          if (q.options && typeof q.options === 'object' && !Array.isArray(q.options)) {
+            opts = optionKeys.map((k) => q.options[k]).filter(Boolean);
+          } else if (Array.isArray(q.options)) {
+            opts = q.options;
+          } else {
+            opts = ['Option A', 'Option B', 'Option C', 'Option D'];
+          }
+
+          let correctIndices: number[] = [0];
+          if (typeof q.correct_answer === 'string') {
+            const letter = q.correct_answer.trim().toUpperCase();
+            const foundIdx = optionKeys.indexOf(letter);
+            if (foundIdx !== -1) correctIndices = [foundIdx];
+          } else if (typeof q.correct_answer === 'number') {
+            correctIndices = [q.correct_answer];
+          } else if (Array.isArray(q.correct_answer)) {
+            correctIndices = q.correct_answer.map((ans: any) =>
+              typeof ans === 'string' ? optionKeys.indexOf(ans.toUpperCase()) : Number(ans)
+            ).filter((i: number) => i >= 0);
+          }
+
+          const diff: 'Easy' | 'Medium' | 'Hard' =
+            q.bloom_level === 'Analyze' || q.bloom_level === 'Evaluate' ? 'Hard' :
+            q.bloom_level === 'Apply' ? 'Medium' : 'Easy';
+
+          return {
+            id: q.id || `mock_${chapterNum}_${idx + 1}`,
+            question: q.question || q.stem || `Question ${idx + 1}`,
+            isMultipleSelect: correctIndices.length > 1,
+            difficulty: diff,
+            options: opts,
+            correctAnswers: correctIndices,
+            explanation: q.rationale || q.explanation || 'Refer to the detailed chapter notes for full explanation.',
+          };
+        });
+
+        const examQuestions: ExamQuestion[] = rawQuestions.map((q: any, idx: number) => {
+          const num = q.number || idx + 1;
+          const isShort = idx < 25;
+          return {
+            id: num,
+            part: isShort ? 'PART A · SHORT ANSWER' : 'PART B · ESSAY QUESTION',
+            marks: isShort ? '★ 2 marks' : '★ 5 marks',
+            taxonomy: q.bloom_level || (isShort ? 'Remembering' : 'Analyzing'),
+            topicTitle: q.topic || `Concept ${num}`,
+            questionText: q.question || q.stem || `Question ${num}`,
+            guidanceText: q.rationale || (isShort ? 'Be clear and concise · 2 marks' : 'Provide detailed functional summary · 5 marks'),
+          };
+        });
+
+        const result = { assessmentQuestions, examQuestions };
+        await storage.setItem(cacheKey, result);
+        return result;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Mock Test: ${err?.message || err}`);
+    }
+  }
+
+  // Fallback to cache
+  const cached = await storage.getItem<{
+    assessmentQuestions: AssessmentQuestion[];
+    examQuestions: ExamQuestion[];
+  }>(cacheKey);
+  if (cached && cached.assessmentQuestions?.length > 0) return cached;
+
+  return { assessmentQuestions: [], examQuestions: [] };
+}
+
+// ─────────────────────────────────────────────────────────────
+// Key Takeaways & Study Plan
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Fetches dynamic single-page revision Key Takeaways markdown
+ */
+export async function fetchKeyTakeaways(
+  subjectId: string,
+  chapterNum: number,
+  signal?: AbortSignal
+): Promise<string> {
+  const cacheKey = `key_takeaways_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/read/key_takeaways`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.trim().length > 50) {
+        await storage.setItem(cacheKey, text);
+        return text;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Key Takeaways: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<string>(cacheKey);
+  if (cached) return cached;
+
+  return `# Key Takeaways (Chapter ${chapterNum})\n\nComprehensive revision sheet is being compiled for this chapter.`;
+}
+
+/**
+ * Fetches dynamic day-by-day Study Plan markdown
+ */
+export async function fetchStudyPlan(
+  subjectId: string,
+  chapterNum: number,
+  signal?: AbortSignal
+): Promise<string> {
+  const cacheKey = `study_plan_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/learn/study_plan`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.trim().length > 50) {
+        await storage.setItem(cacheKey, text);
+        return text;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Study Plan: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<string>(cacheKey);
+  if (cached) return cached;
+
+  return `# Study Plan (Chapter ${chapterNum})\n\nStructured study modules and tasks are being compiled for this chapter.`;
 }

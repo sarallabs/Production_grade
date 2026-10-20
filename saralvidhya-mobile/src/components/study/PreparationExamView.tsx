@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   KeyboardAvoidingView,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -16,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchMockTest } from '@/services/contentService';
 
 export interface ExamQuestion {
   id: number;
@@ -82,13 +84,17 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
 
 interface PreparationExamViewProps {
   questions?: ExamQuestion[];
+  subjectId?: string;
+  chapterNumber?: number;
   subjectName?: string;
   onBack?: () => void;
   onSubmit?: (answers: Record<number, string>) => void;
 }
 
 export default function PreparationExamView({
-  questions = SAMPLE_EXAM_QUESTIONS,
+  questions,
+  subjectId = 'entomology',
+  chapterNumber = 1,
   subjectName = 'INSECT DIGESTIVE SYSTEM & ANATOMY',
   onBack,
   onSubmit,
@@ -97,9 +103,51 @@ export default function PreparationExamView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
+  const [examQuestions, setExamQuestions] = useState<ExamQuestion[]>(
+    questions && questions.length > 0 ? questions : SAMPLE_EXAM_QUESTIONS
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(!questions || questions.length === 0);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [secondsRemaining, setSecondsRemaining] = useState<number>(7185); // 119:45
+
+  useEffect(() => {
+    if (questions && questions.length > 0) {
+      setExamQuestions(questions);
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchMockTest(subjectId, chapterNumber, controller.signal)
+      .then((data) => {
+        if (isMounted) {
+          if (data && data.examQuestions.length > 0) {
+            setExamQuestions(data.examQuestions);
+          } else {
+            setExamQuestions(SAMPLE_EXAM_QUESTIONS);
+          }
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[PreparationExamView] Error fetching exam questions:', err);
+        }
+        if (isMounted) {
+          setExamQuestions(SAMPLE_EXAM_QUESTIONS);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [questions, subjectId, chapterNumber]);
 
   // 1-second countdown timer
   useEffect(() => {
@@ -116,9 +164,9 @@ export default function PreparationExamView({
     return `${mins}:${pad(secs)}`;
   };
 
-  const totalQuestions = questions.length;
-  const currentQ = questions[currentIndex] || questions[0];
-  const currentAnswer = answers[currentQ.id] || '';
+  const totalQuestions = examQuestions.length;
+  const currentQ = examQuestions[currentIndex] || examQuestions[0];
+  const currentAnswer = currentQ ? answers[currentQ.id] || '' : '';
 
   // Word count calculation
   const wordCount = currentAnswer.trim()
@@ -255,6 +303,17 @@ export default function PreparationExamView({
       ]);
     }
   };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.screenBg, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#22c55e" />
+        <Text style={{ marginTop: 12, color: colors.subText, fontSize: 14 }}>
+          Loading official preparation exam questions...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <KeyboardAvoidingView
