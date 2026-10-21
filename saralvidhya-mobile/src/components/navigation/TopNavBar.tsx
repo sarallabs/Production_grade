@@ -92,6 +92,7 @@ export default function TopNavBar({
             <TouchableOpacity
               style={[styles.backButton, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
               onPress={handleBackPress}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Go back"
@@ -102,6 +103,7 @@ export default function TopNavBar({
             <TouchableOpacity
               style={[styles.chapterPill, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
               onPress={onChapterPress}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               activeOpacity={0.7}
             >
               <Text style={[styles.chapterPillText, { color: textActive }]} numberOfLines={1}>
@@ -123,6 +125,7 @@ export default function TopNavBar({
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
             contentContainerStyle={styles.pillsScrollContent}
             style={styles.pillsScroll}
           >
@@ -142,6 +145,7 @@ export default function TopNavBar({
                     isActive && styles.activePillElevation,
                   ]}
                   onPress={() => handleSegmentPress(seg.id)}
+                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
                   activeOpacity={0.75}
                   accessibilityRole="button"
                   accessibilityState={{ selected: isActive }}
@@ -239,8 +243,9 @@ const styles = StyleSheet.create({
   pillButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 9,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    minHeight: 34,
     borderRadius: 10,
     gap: 4,
   },

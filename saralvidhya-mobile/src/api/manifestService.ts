@@ -1,6 +1,6 @@
 import { storage } from '@/utils/storage';
 
-export const GCS_API_BASE = 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+export const GCS_API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
 
 export interface Chapter {
   number: number;

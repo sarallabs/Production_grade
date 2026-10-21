@@ -1,17 +1,23 @@
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   Platform,
+  Image,
+  ActivityIndicator,
+  Modal,
+  TouchableOpacity,
+  Dimensions,
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import FitImage from 'react-native-fit-image';
+import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { GCS_API_BASE } from '@/services/contentService';
 
 interface MarkdownReaderProps {
   content: string;
@@ -63,24 +69,207 @@ function parseFlowchartSteps(raw: string): FlowchartStep[] {
   return Array.from(stepMap.values());
 }
 
+/**
+ * High-performance, responsive infographic renderer with full-screen zoom,
+ * aspect ratio auto-calibration, and graceful fallback handling.
+ */
+interface SmartInfographicCardProps {
+  uri: string;
+  alt?: string;
+  isDark: boolean;
+}
+
+function SmartInfographicCard({ uri, alt, isDark }: SmartInfographicCardProps) {
+  const [aspectRatio, setAspectRatio] = useState<number>(16 / 10);
+  const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isZoomed, setIsZoomed] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+    setIsLoading(true);
+
+    if (uri && !uri.startsWith('data:')) {
+      Image.getSize(
+        uri,
+        (w, h) => {
+          if (w > 0 && h > 0) {
+            setAspectRatio(Math.max(0.7, Math.min(2.4, w / h)));
+          }
+          setIsLoading(false);
+        },
+        () => {
+          setIsLoading(false);
+        }
+      );
+    } else {
+      setIsLoading(false);
+    }
+  }, [uri]);
+
+  const cardBg = isDark ? '#1C2B23' : '#FFFFFF';
+  const cardBorder = isDark ? '#2D4538' : '#D1E3D9';
+  const emeraldPrimary = '#05996B';
+  const textDark = isDark ? '#FFFFFF' : '#172933';
+  const textMuted = isDark ? '#A6C5B3' : '#637375';
+
+  return (
+    <>
+      <View style={[styles.infographicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+        {/* Card Header: Infographic Badge & Expand Button */}
+        <View style={styles.infographicCardHeader}>
+          <View style={styles.infographicBadgeWrap}>
+            <Ionicons name="sparkles" size={12} color={emeraldPrimary} />
+            <Text style={[styles.infographicBadgeLabel, { color: emeraldPrimary }]}>
+              SCIENTIFIC INFOGRAPHIC
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.expandButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              setIsZoomed(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.expandButtonText, { color: emeraldPrimary }]}>Expand</Text>
+            <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Image Touch Area */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setIsZoomed(true);
+          }}
+          style={[styles.infographicImageTouch, { aspectRatio }]}
+        >
+          {!hasError ? (
+            <Image
+              source={{ uri }}
+              style={styles.infographicImage}
+              resizeMode="contain"
+              onLoad={(e) => {
+                setIsLoading(false);
+                const { width, height } = e.nativeEvent.source;
+                if (width > 0 && height > 0) {
+                  setAspectRatio(Math.max(0.7, Math.min(2.4, width / height)));
+                }
+              }}
+              onError={() => {
+                setHasError(true);
+                setIsLoading(false);
+              }}
+            />
+          ) : (
+            <View style={styles.infographicFallbackBox}>
+              <Ionicons name="image-outline" size={38} color={emeraldPrimary} />
+              <Text style={[styles.infographicFallbackTitle, { color: textDark }]}>
+                {alt || 'Curated Study Infographic'}
+              </Text>
+              <Text style={[styles.infographicFallbackSubtitle, { color: textMuted }]}>
+                Tap to inspect high-resolution visual details
+              </Text>
+            </View>
+          )}
+
+          {isLoading && (
+            <View style={styles.infographicLoadingOverlay}>
+              <ActivityIndicator size="small" color={emeraldPrimary} />
+            </View>
+          )}
+        </TouchableOpacity>
+
+        {/* Caption */}
+        {alt ? (
+          <View style={[styles.captionRow, { borderTopColor: cardBorder }]}>
+            <Text style={[styles.infographicCaptionText, { color: isDark ? '#E2E8F0' : '#2D3748' }]}>
+              {alt}
+            </Text>
+          </View>
+        ) : null}
+      </View>
+
+      {/* Fullscreen Zoom Modal */}
+      <Modal
+        visible={isZoomed}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setIsZoomed(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalCard, { backgroundColor: isDark ? '#142019' : '#FFFFFF' }]}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleWrap}>
+                <Ionicons name="pie-chart" size={15} color={emeraldPrimary} />
+                <Text style={[styles.modalTitleText, { color: textDark }]} numberOfLines={1}>
+                  {alt || 'Scientific Diagram'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setIsZoomed(false)}
+                style={styles.modalCloseBtn}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="close" size={20} color={textDark} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalImageWrap}>
+              <Image
+                source={{ uri }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
+}
+
 export default function MarkdownReader({ content, title, chapterNumber = 1 }: MarkdownReaderProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
   const chDir = `chapter_${chapterNumber < 10 ? '0' : ''}${chapterNumber}`;
-  const apiBase = `https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/${chDir}`;
+  const apiBase = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}`;
 
-  // Clean raw HTML, AI preambles, and resolve relative image paths according to master conventions
-  const cleanedMarkdown = content
-    .replace(/base64,\s+/g, 'base64,')
-    .replace(/^.*Word count:.*Persona:.*$/gmi, '')
-    .replace(/!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`)
-    .replace(/!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`)
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .trim();
+  // 1. Memoize cleaned markdown processing so heavy regex replacements are never re-run during scrolling or micro-renders
+  const cleanedMarkdown = useMemo(() => {
+    let cleaned = content
+      .replace(/base64,\s+/g, 'base64,')
+      .replace(/^.*Word count:.*Persona:.*$/gmi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<br\s*\/?>/gi, '\n');
 
-  const markdownStyles = {
+    // 2. Convert HTML <img> tags to Markdown images (essential for Chapter 3 webp/base64 diagrams)
+    cleaned = cleaned.replace(/<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi, (match, src) => {
+      const altMatch = match.match(/alt=["']([^"']*)["']/i);
+      const alt = altMatch ? altMatch[1] : 'Scientific Infographic';
+      return `\n\n![${alt}](${src})\n\n`;
+    });
+
+    // 3. Resolve relative image paths and safely encode parentheses so markdown-it never truncates URLs
+    cleaned = cleaned.replace(
+      /^!\[([^\]]*)\]\((.+)\)$/gm,
+      (match, alt, rawUrl) => {
+        const trimmedUrl = rawUrl.trim();
+        if (trimmedUrl.startsWith('http') || trimmedUrl.startsWith('data:')) {
+          return `![${alt}](${trimmedUrl})`;
+        }
+        const cleanPath = trimmedUrl.replace(/^(\.\.\/)+/, '').replace(/^(\.\/)+/, '');
+        const safePath = cleanPath.replace(/\(/g, '%28').replace(/\)/g, '%29');
+        return `![${alt}](${apiBase}/${safePath})`;
+      }
+    );
+
+    return cleaned.trim();
+  }, [content, apiBase]);
+
+  const markdownStyles = useMemo(() => ({
     body: {
       color: isDark ? '#e2e8f0' : '#334155',
       fontSize: isTablet ? 17 : 15,
@@ -168,9 +357,9 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
       padding: 8,
       color: isDark ? '#E5DDD8' : '#334155',
     },
-  };
+  }), [isDark, isTablet]);
 
-  const markdownRules = {
+  const markdownRules = useMemo(() => ({
     image: (
       node: any,
       children: any,
@@ -182,10 +371,11 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
       const { src, alt } = node.attributes || {};
       let imageUri = src;
 
-      // Handle relative paths
+      // Handle relative paths fallback
       if (src && !src.startsWith('http') && !src.startsWith('data:')) {
         const cleanPath = src.replace(/^(\.\.\/)+/, '').replace(/^(\.\/)+/, '');
-        imageUri = `${apiBase}/${cleanPath}`;
+        const safePath = cleanPath.replace(/\(/g, '%28').replace(/\)/g, '%29');
+        imageUri = `${apiBase}/${safePath}`;
       }
 
       if (!imageUri || typeof imageUri !== 'string' || imageUri.trim().length === 0) {
@@ -193,16 +383,12 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
       }
 
       return (
-        <View key={node.key} style={styles.imageCardContainer}>
-          <FitImage
-            indicator={true}
-            style={styles._VIEW_SAFE_image || styles.image}
-            source={{ uri: imageUri }}
-            accessible={!!alt}
-            accessibilityLabel={alt}
-          />
-          {alt ? <Text style={styles.imageCaption}>{alt}</Text> : null}
-        </View>
+        <SmartInfographicCard
+          key={node.key}
+          uri={imageUri}
+          alt={alt}
+          isDark={isDark}
+        />
       );
     },
 
@@ -254,8 +440,8 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
                       style={[
                         styles.flowchartNode,
                         {
-                          backgroundColor: isDark ? '#1F3429' : '#FFFFFF',
-                          borderColor: isDark ? '#2D513B' : '#BEE3CD',
+                          backgroundColor: isDark ? '#1F3528' : '#FFFFFF',
+                          borderColor: isDark ? '#2D583D' : '#D1EAD8',
                         },
                       ]}
                     >
@@ -264,10 +450,7 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
                           <Text style={styles.nodeStepNumber}>{step.stepNum}</Text>
                         </View>
                         <Text
-                          style={[
-                            styles.nodeTitle,
-                            { color: isDark ? '#E2FBE9' : '#166534' },
-                          ]}
+                          style={[styles.nodeTitle, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}
                           numberOfLines={2}
                         >
                           {step.title}
@@ -275,10 +458,7 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
                       </View>
                       {step.details ? (
                         <Text
-                          style={[
-                            styles.nodeDetails,
-                            { color: isDark ? '#9EB9A8' : '#4B6354' },
-                          ]}
+                          style={[styles.nodeDetails, { color: isDark ? '#A6C5B3' : '#64748B' }]}
                           numberOfLines={3}
                         >
                           {step.details}
@@ -286,52 +466,46 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
                       ) : null}
                     </View>
 
-                    {/* Arrow between nodes */}
                     {idx < steps.length - 1 && (
                       <View style={styles.flowchartArrowWrap}>
-                        <Ionicons name="arrow-forward" size={16} color="#22c55e" />
+                        <Ionicons
+                          name="arrow-forward"
+                          size={18}
+                          color={isDark ? '#4ADE80' : '#22c55e'}
+                        />
                       </View>
                     )}
                   </React.Fragment>
                 ))}
               </ScrollView>
 
-              <Text style={styles.flowchartSwipeHint}>
-                Swipe horizontally to follow the full biological sequence →
-              </Text>
+              <Text style={styles.flowchartSwipeHint}>Swipe horizontally to trace process steps →</Text>
             </View>
           );
         }
       }
 
-      // Default styled code block
       return (
         <View
           key={node.key}
           style={[
             styles.codeBlockCard,
             {
-              backgroundColor: isDark ? '#18241D' : '#F1F5F9',
-              borderColor: isDark ? '#2A4032' : '#CBD5E1',
+              backgroundColor: isDark ? '#1A2920' : '#F8F9FA',
+              borderColor: isDark ? '#2C4435' : '#E2E8F0',
             },
           ]}
         >
-          <Text
-            style={[
-              styles.codeBlockText,
-              { color: isDark ? '#86EFAC' : '#15803D' },
-            ]}
-          >
+          <Text style={[styles.codeBlockText, { color: isDark ? '#4ADE80' : '#166534' }]}>
             {rawContent.trim()}
           </Text>
         </View>
       );
     },
-  };
+  }), [apiBase, isDark]);
 
   return (
     <View style={[styles.container, isTablet && { width: '100%', maxWidth: 760, alignSelf: 'center' }]}>
-      {/* Rendered Markdown Body (without duplicate Read Aloud bar) */}
       <View style={styles.markdownWrapper}>
         <Markdown rules={markdownRules} style={markdownStyles}>
           {cleanedMarkdown}
@@ -348,17 +522,132 @@ const styles = StyleSheet.create({
   markdownWrapper: {
     paddingTop: Spacing.one,
   },
-  imageCardContainer: {
-    marginVertical: 12,
-    borderRadius: BorderRadius.md,
+  // High-end Infographic Card Styles
+  infographicCard: {
+    marginVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  infographicCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  infographicBadgeWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  infographicBadgeLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+  },
+  expandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  expandButtonText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  infographicImageTouch: {
+    width: '100%',
+    backgroundColor: '#00000008',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  infographicImage: {
+    width: '100%',
+    height: '100%',
+  },
+  infographicLoadingOverlay: {
+    ...(StyleSheet.absoluteFill as any),
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+  },
+  infographicFallbackBox: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  infographicFallbackTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  infographicFallbackSubtitle: {
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  captionRow: {
+    borderTopWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  infographicCaptionText: {
+    fontSize: 12,
+    fontWeight: '500',
+    lineHeight: 17,
+  },
+  // Zoom Modal
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCard: {
+    width: '100%',
+    maxHeight: '90%',
+    borderRadius: 16,
     overflow: 'hidden',
   },
-  imageCaption: {
-    fontSize: 12,
-    color: '#829A8C',
-    textAlign: 'center',
-    marginTop: 6,
-    fontStyle: 'italic',
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#00000015',
+  },
+  modalTitleWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+  },
+  modalTitleText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalImageWrap: {
+    width: '100%',
+    height: 440,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#00000008',
+  },
+  modalImage: {
+    width: '100%',
+    height: '100%',
   },
   // Visual Flowchart Infographic styles
   flowchartCard: {

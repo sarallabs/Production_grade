@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -22,6 +23,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
 import { Flashcard } from '@/data/sampleFlashcards';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { GCS_API_BASE } from '@/services/contentService';
 
 const EXCRETORY_INFOGRAPHIC = require('@/assets/images/excretory_loop_infographic.png');
 
@@ -90,6 +92,8 @@ export default function FlashcardDeck({
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const [showAnswerText, setShowAnswerText] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const flipAnimation = useSharedValue(0);
 
@@ -106,12 +110,37 @@ export default function FlashcardDeck({
   }, [cards]);
 
   const currentCard = deck[currentIndex];
-  const cardImageSource =
-    currentCard?.id === 'fc_1_4'
-      ? EXCRETORY_INFOGRAPHIC
-      : currentCard?.infographicUrl
-      ? { uri: currentCard.infographicUrl }
-      : EXCRETORY_INFOGRAPHIC;
+
+  // Self-heal card image URL if it was cached without the full chapter endpoint path
+  const resolvedInfographicUrl = useMemo(() => {
+    let url = currentCard?.infographicUrl;
+    if (url && !url.startsWith('data:')) {
+      if (url.startsWith('http')) {
+        if (url.includes('/images/card_') && !url.includes('/api/content/')) {
+          const filename = url.split('/images/').pop();
+          url = `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/practice/flashcards/images/${filename}`;
+        }
+      } else if (url.startsWith('/api/content/')) {
+        url = `${GCS_API_BASE}${url}`;
+      } else {
+        const clean = url.replace(/^\.?\/?(practice\/flashcards\/)?/, '');
+        url = `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/practice/flashcards/${clean.startsWith('/') ? clean.slice(1) : clean}`;
+      }
+    }
+    return url;
+  }, [currentCard?.infographicUrl]);
+
+  useEffect(() => {
+    setImageError(false);
+    setImageLoading(true);
+  }, [currentIndex, resolvedInfographicUrl]);
+
+  const cardImageSource = useMemo(() => {
+    if (imageError) return EXCRETORY_INFOGRAPHIC;
+    if (currentCard?.id === 'fc_1_4') return EXCRETORY_INFOGRAPHIC;
+    if (resolvedInfographicUrl) return { uri: resolvedInfographicUrl };
+    return EXCRETORY_INFOGRAPHIC;
+  }, [imageError, currentCard?.id, resolvedInfographicUrl]);
 
   const handlePersonaSelect = (p: PersonaType) => {
     Haptics.selectionAsync();
@@ -251,7 +280,7 @@ export default function FlashcardDeck({
 
   return (
     <View style={styles.screenWrapper}>
-      {/* 3-Part Persona Switcher Bar: [ Beginner 📗 | Intermediate 📚 | Advanced 🌟 ] */}
+      {/* 3-Part Persona Switcher Bar: [ 📗 | 📚 | 🌟 ] (Logos only) */}
       <View
         style={[
           styles.personaBar,
@@ -279,30 +308,14 @@ export default function FlashcardDeck({
               ]}
               onPress={() => handlePersonaSelect(item.id)}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel={item.label}
             >
               <Image
                 source={PERSONA_ICONS[item.id]}
                 style={styles.personaBookImg}
                 resizeMode="contain"
               />
-              <Text
-                style={[
-                  styles.personaPillText,
-                  {
-                    color: isActive
-                      ? isDark
-                        ? '#FFFFFF'
-                        : '#1C2E24'
-                      : isDark
-                      ? '#A6C5B3'
-                      : '#596B66',
-                  },
-                  isActive && styles.personaPillTextActive,
-                ]}
-                numberOfLines={1}
-              >
-                {item.label}
-              </Text>
             </TouchableOpacity>
           );
         })}
@@ -423,7 +436,18 @@ export default function FlashcardDeck({
                       source={cardImageSource}
                       style={styles.infographicThumb}
                       resizeMode="cover"
+                      onLoadStart={() => setImageLoading(true)}
+                      onLoadEnd={() => setImageLoading(false)}
+                      onError={() => {
+                        setImageError(true);
+                        setImageLoading(false);
+                      }}
                     />
+                    {imageLoading && (
+                      <View style={styles.imageLoadingOverlay}>
+                        <ActivityIndicator size="small" color="#05996B" />
+                      </View>
+                    )}
                     {/* Zoom indicator chip */}
                     <View style={styles.zoomChip}>
                       <Ionicons name="scan-outline" size={12} color="#FFFFFF" />
@@ -577,40 +601,36 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    height: 40,
-    borderRadius: 20,
+    height: 44,
+    borderRadius: 22,
     padding: 3,
     borderWidth: 1,
     marginBottom: 14,
   },
   personaPill: {
     flex: 1,
-    height: 34,
-    borderRadius: 17,
-    flexDirection: 'row',
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingHorizontal: 6,
   },
   personaPillActive: {
     borderWidth: 1,
-    elevation: 2,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.14,
-    shadowRadius: 2.5,
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.16,
+    shadowRadius: 3,
   },
   personaBookImg: {
-    width: 20,
-    height: 20,
+    width: 24,
+    height: 24,
   },
-  personaPillText: {
-    fontSize: 11.5,
-    fontWeight: '600',
-  },
-  personaPillTextActive: {
-    fontWeight: '800',
+  imageLoadingOverlay: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.45)',
   },
   /* Card Outer Container */
   cardOuterContainer: {

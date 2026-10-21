@@ -13,19 +13,18 @@ import {
   TouchableWithoutFeedback,
   Animated,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import YoutubePlayer from 'react-native-youtube-iframe';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
-// Thumbnail Assets
-const THUMB_01 = require('@/assets/images/video_thumb_01.png');
-const THUMB_02 = require('@/assets/images/video_thumb_02.png');
-const THUMB_03 = require('@/assets/images/video_thumb_03.png');
-const THUMB_04 = require('@/assets/images/video_thumb_04.png');
-const THUMB_HERO = require('@/assets/images/video_lecture_thumbnail.png');
+// Fallback thumbnail URI helper
+const getYoutubeThumb = (ytId: string) => `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
 
 interface VideoTopicItem {
   number: string;
@@ -304,7 +303,6 @@ interface VideosViewProps {
   chapterNumber?: number;
   chapterName?: string;
   onContinueLearning?: () => void;
-  onChapterPress?: () => void;
 }
 
 export default function VideosView({
@@ -313,10 +311,11 @@ export default function VideosView({
   chapterNumber = 1,
   chapterName = 'Insect Digestive System & Anatomy',
   onContinueLearning,
-  onChapterPress,
 }: VideosViewProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
 
   // Dynamic Video Lessons for the current chapter
   const currentChapterLessons = useMemo(() => {
@@ -354,6 +353,7 @@ export default function VideosView({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isMuted, setIsMuted] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState<number>(100);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [showSpeedModal, setShowSpeedModal] = useState(false);
@@ -366,6 +366,54 @@ export default function VideosView({
   const hideControlsTimerRef = useRef<any>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const playerRef = useRef<any>(null);
+
+  // Orientation handling: Lock to landscape for fullscreen, restore portrait/default on exit
+  const lockLandscape = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } catch (e) {
+      console.warn('[VideosView] lockAsync error:', e);
+    }
+  }, []);
+
+  const restoreOrientation = useCallback(async () => {
+    if (Platform.OS === 'web') return;
+    try {
+      const s = Dimensions.get('screen');
+      const isTabletDevice = Math.min(s.width, s.height) >= 600;
+      if (isTabletDevice) {
+        await ScreenOrientation.unlockAsync();
+      } else {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      }
+    } catch (e) {
+      console.warn('[VideosView] unlock error:', e);
+    }
+  }, []);
+
+  // Sync orientation with isFullScreen state (only lock landscape when fullscreen is active)
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    if (isFullScreen) {
+      lockLandscape();
+    }
+  }, [isFullScreen, lockLandscape]);
+
+  // Cleanup: ensure portrait/default is restored if component unmounts while in fullscreen
+  useEffect(() => {
+    return () => {
+      if (Platform.OS !== 'web') {
+        const s = Dimensions.get('screen');
+        const isTabletDevice = Math.min(s.width, s.height) >= 600;
+        if (isTabletDevice) {
+          ScreenOrientation.unlockAsync().catch(() => {});
+        } else {
+          ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+        }
+      }
+    };
+  }, []);
 
   // Convert duration string "10:55" into total seconds as fallback
   const totalDurationSecs = useMemo(() => {
@@ -432,13 +480,54 @@ export default function VideosView({
     }
   }, [controlsVisible, fadeAnim, resetHideTimer]);
 
-  // Video Actions
-  const handlePlayFullscreen = useCallback(() => {
+  // Video Actions - Opens fullscreen in landscape and starts playback
+  const handlePlayFullscreen = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsPlayingVideo(true);
     setIsFullScreen(true);
     resetHideTimer();
-  }, [resetHideTimer]);
+    await lockLandscape();
+  }, [resetHideTimer, lockLandscape]);
+
+  const handleExitFullScreen = useCallback(async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setIsFullScreen(false);
+    resetHideTimer();
+    await restoreOrientation();
+  }, [resetHideTimer, restoreOrientation]);
+
+  const handleToggleFullScreen = useCallback(async () => {
+    if (isFullScreen) {
+      await handleExitFullScreen();
+    } else {
+      await handlePlayFullscreen();
+    }
+  }, [isFullScreen, handleExitFullScreen, handlePlayFullscreen]);
+
+  const handlePlayLessonDirectly = useCallback(async (lessonId: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSelectedLessonId(lessonId);
+    setIsPlayingVideo(true);
+    setIsFullScreen(true);
+    resetHideTimer();
+    await lockLandscape();
+  }, [resetHideTimer, lockLandscape]);
+
+  const handlePlayerStateChange = useCallback((state: string) => {
+    if (state === 'playing') {
+      setIsPlayingVideo(true);
+    } else if (state === 'paused') {
+      setIsPlayingVideo(false);
+    } else if (state === 'ended') {
+      setIsPlayingVideo(false);
+    }
+  }, []);
+
+  const handlePlayerReady = useCallback(() => {
+    if (isPlayingVideo) {
+      setIsPlayingVideo(true);
+    }
+  }, [isPlayingVideo]);
 
   const handleTogglePlayPause = useCallback(() => {
     Haptics.selectionAsync();
@@ -456,9 +545,18 @@ export default function VideosView({
     });
   }, [fadeAnim, resetHideTimer]);
 
-  const handleSeekRewind = useCallback(() => {
+  const handleSeekRewind = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const target = Math.max(0, currentTime - 10);
+    let cur = currentTime;
+    try {
+      if (playerRef.current?.getCurrentTime) {
+        const t = await playerRef.current.getCurrentTime();
+        if (typeof t === 'number' && !isNaN(t) && t >= 0) {
+          cur = t;
+        }
+      }
+    } catch {}
+    const target = Math.max(0, cur - 10);
     setCurrentTime(target);
     if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(target, true);
@@ -466,9 +564,18 @@ export default function VideosView({
     resetHideTimer();
   }, [currentTime, resetHideTimer]);
 
-  const handleSeekForward = useCallback(() => {
+  const handleSeekForward = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const target = Math.min(totalDurationSecs, currentTime + 10);
+    let cur = currentTime;
+    try {
+      if (playerRef.current?.getCurrentTime) {
+        const t = await playerRef.current.getCurrentTime();
+        if (typeof t === 'number' && !isNaN(t) && t >= 0) {
+          cur = t;
+        }
+      }
+    } catch {}
+    const target = Math.min(totalDurationSecs, cur + 10);
     setCurrentTime(target);
     if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(target, true);
@@ -498,11 +605,7 @@ export default function VideosView({
     resetHideTimer();
   }, [resetHideTimer]);
 
-  const handleToggleFullScreen = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setIsFullScreen((prev) => !prev);
-    resetHideTimer();
-  }, [resetHideTimer]);
+  const handleToggleFullScreenOld = handleToggleFullScreen;
 
   // Progress ticker for simulated playback if iframe state doesn't sync
   useEffect(() => {
@@ -575,6 +678,18 @@ export default function VideosView({
 
   const playerHeight = Math.round((containerWidth * 9) / 16) || 215;
   const progressRatio = totalDurationSecs > 0 ? Math.min(1, currentTime / totalDurationSecs) : 0;
+
+  // Fullscreen video dimensions in landscape:
+  const fsScreenWidth = isFullScreen ? Math.max(windowWidth, windowHeight) : windowWidth;
+  const fsScreenHeight = isFullScreen ? Math.min(windowWidth, windowHeight) : windowHeight;
+
+  let playerFsWidth = fsScreenWidth;
+  let playerFsHeight = Math.round((fsScreenWidth * 9) / 16);
+
+  if (playerFsHeight > fsScreenHeight) {
+    playerFsHeight = fsScreenHeight;
+    playerFsWidth = Math.round((fsScreenHeight * 16) / 9);
+  }
 
   // Shared Bottom Controls Bar Component (Matching User's PNG + Clean No-Overlap Spacing)
   const renderControlsBar = (isFull: boolean) => {
@@ -760,19 +875,6 @@ export default function VideosView({
                     Chapter {chapterNumber}: {chapterName}
                   </Text>
                 </View>
-                {onChapterPress && (
-                  <TouchableOpacity
-                    style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                    onPress={onChapterPress}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="book-outline" size={13} color={brandGreen} />
-                    <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
-                      Ch {chapterNumber}
-                    </Text>
-                    <Ionicons name="chevron-down" size={12} color={textMuted} />
-                  </TouchableOpacity>
-                )}
               </View>
             </View>
 
@@ -910,10 +1012,13 @@ export default function VideosView({
                     onPress={() => handleSelectLesson(item.id)}
                     activeOpacity={0.88}
                   >
-                    <View style={styles.videoThumbnail}>
+                    <TouchableOpacity
+                      style={styles.videoThumbnail}
+                      onPress={() => handlePlayLessonDirectly(item.id)}
+                      activeOpacity={0.8}
+                    >
                       <Image
-                        source={item.thumbSource || { uri: `https://img.youtube.com/vi/${item.ytId}/hqdefault.jpg` }}
-                        defaultSource={THUMB_01}
+                        source={item.thumbSource || { uri: getYoutubeThumb(item.ytId) }}
                         style={styles.lessonImageIcon}
                         resizeMode="cover"
                       />
@@ -923,7 +1028,7 @@ export default function VideosView({
                       <View style={styles.durationBadge}>
                         <Text style={styles.durationBadgeText}>{item.duration}</Text>
                       </View>
-                    </View>
+                    </TouchableOpacity>
 
                     <View style={styles.lessonDetails}>
                       <Text style={[styles.lessonNumber, { color: textMuted }]}>
@@ -1001,20 +1106,6 @@ export default function VideosView({
                   {currentLesson.title}
                 </Text>
               </View>
-
-              {onChapterPress && (
-                <TouchableOpacity
-                  style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                  onPress={onChapterPress}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="book-outline" size={13} color={brandGreen} />
-                  <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
-                    Ch {chapterNumber}
-                  </Text>
-                  <Ionicons name="chevron-down" size={12} color={textMuted} />
-                </TouchableOpacity>
-              )}
             </View>
 
             {/* 2. VIDEO PLAYER CARD (Real Video Thumbnail + Red Play + YouTube Controls) */}
@@ -1026,7 +1117,7 @@ export default function VideosView({
               ]}
             >
               {/* Video Play Area */}
-              {isPlayingVideo ? (
+              {isPlayingVideo && !isFullScreen ? (
                 <View style={[styles.inlinePlayerContainer, { height: playerHeight }]}>
                   {Platform.OS === 'web' ? (
                     React.createElement('iframe', {
@@ -1044,10 +1135,21 @@ export default function VideosView({
                     <YoutubePlayer
                       ref={playerRef}
                       height={playerHeight}
-                      width={containerWidth || Dimensions.get('window').width - 32}
+                      width={containerWidth || windowWidth - 32}
                       videoId={currentLesson.ytId}
                       play={isPlayingVideo}
+                      mute={isMuted}
+                      volume={isMuted ? 0 : volumeLevel}
+                      playbackRate={playbackSpeed}
+                      forceAndroidAutoplay={true}
+                      webViewProps={{
+                        allowsInlineMediaPlayback: true,
+                        mediaPlaybackRequiresUserAction: false,
+                        androidLayerType: 'hardware',
+                      }}
                       initialPlayerParams={{ rel: false, modestbranding: true, controls: false }}
+                      onChangeState={handlePlayerStateChange}
+                      onReady={handlePlayerReady}
                     />
                   )}
 
@@ -1068,8 +1170,7 @@ export default function VideosView({
                 >
                   {/* Real Video Thumbnail Image */}
                   <Image
-                    source={currentLesson.thumbSource || { uri: `https://img.youtube.com/vi/${currentLesson.ytId}/hqdefault.jpg` }}
-                    defaultSource={THUMB_HERO}
+                    source={currentLesson.thumbSource || { uri: getYoutubeThumb(currentLesson.ytId) }}
                     style={styles.posterImage}
                     resizeMode="cover"
                   />
@@ -1128,17 +1229,20 @@ export default function VideosView({
       </ScrollView>
 
       {/* ========================================================================= */}
-      {/* FULLSCREEN YOUTUBE MODAL (YouTube-Style Overlay & Controls Auto-Hide)      */}
+      {/* FULLSCREEN YOUTUBE MODAL (Rotates to Landscape & Auto-Plays)              */}
+      {/* ========================================================================= */}
+      {/* ========================================================================= */}
+      {/* FULLSCREEN YOUTUBE MODAL (Rotates to Landscape & Auto-Plays)              */}
       {/* ========================================================================= */}
       <Modal
         visible={isFullScreen}
         animationType="fade"
         statusBarTranslucent
-        onRequestClose={handleToggleFullScreen}
+        onRequestClose={handleExitFullScreen}
       >
         <StatusBar hidden={isFullScreen} />
         <View style={styles.fullScreenContainer}>
-          {/* Main Fullscreen Video Player */}
+          {/* Layer 1: Video Player (Sized 16:9 to fill landscape screen) */}
           <View style={styles.fullScreenVideoWrap}>
             {Platform.OS === 'web' ? (
               React.createElement('iframe', {
@@ -1155,92 +1259,351 @@ export default function VideosView({
             ) : (
               <YoutubePlayer
                 ref={playerRef}
-                height={Dimensions.get('window').height}
-                width={Dimensions.get('window').width}
+                height={playerFsHeight}
+                width={playerFsWidth}
                 videoId={currentLesson.ytId}
                 play={isPlayingVideo}
-                initialPlayerParams={{ rel: false, modestbranding: true, controls: false }}
+                mute={isMuted}
+                volume={isMuted ? 0 : volumeLevel}
+                playbackRate={playbackSpeed}
+                forceAndroidAutoplay={true}
+                webViewProps={{
+                  allowsInlineMediaPlayback: true,
+                  mediaPlaybackRequiresUserAction: false,
+                  androidLayerType: 'hardware',
+                }}
+                initialPlayerParams={{
+                  rel: false,
+                  modestbranding: true,
+                  controls: false,
+                  preventFullScreen: true,
+                  showClosedCaptions: showCaptions,
+                }}
+                onChangeState={handlePlayerStateChange}
+                onReady={handlePlayerReady}
               />
             )}
           </View>
 
-          {/* Fullscreen Touch Tap Surface to Toggle / Reset Controls */}
+          {/* Layer 2: Invisible tap surface behind controls to toggle controls on/off */}
           <TouchableWithoutFeedback onPress={toggleControls}>
-            <View style={styles.fullScreenTouchLayer}>
-              {/* Top Bar Overlay */}
-              <Animated.View style={[styles.fullScreenTopBar, { opacity: fadeAnim }]}>
-                <TouchableOpacity
-                  onPress={handleToggleFullScreen}
-                  style={styles.fullScreenBackBtn}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="arrow-back" size={22} color="#FFFFFF" />
-                </TouchableOpacity>
-                <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={styles.fullScreenVideoTitle} numberOfLines={1}>
-                    {`Unit ${chapterNumber}: ${currentLesson.title}`}
-                  </Text>
-                  <Text style={styles.fullScreenVideoSub}>{currentLesson.topic}</Text>
-                </View>
-                <TouchableOpacity
-                  onPress={handleToggleFullScreen}
-                  style={styles.fullScreenMinimizeBtn}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons name="contract" size={22} color="#FFFFFF" />
-                </TouchableOpacity>
-              </Animated.View>
-
-              {/* Bottom Fullscreen Controls Bar (Matching User's PNG) */}
-              {renderControlsBar(true)}
-            </View>
+            <View style={StyleSheet.absoluteFill} />
           </TouchableWithoutFeedback>
-        </View>
-      </Modal>
 
-      {/* Speed Selector Modal */}
-      <Modal
-        visible={showSpeedModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowSpeedModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.speedModalBackdrop}
-          activeOpacity={1}
-          onPress={() => setShowSpeedModal(false)}
-        >
-          <View style={[styles.speedModalContent, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
-            <Text style={[styles.speedModalTitle, { color: textDark }]}>Playback Speed</Text>
-            {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+          {/* Layer 3: Controls Overlay (Auto-hiding, pointerEvents="box-none") */}
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              styles.fullScreenControlsOverlay,
+              { opacity: fadeAnim },
+            ]}
+            pointerEvents={controlsVisible ? 'box-none' : 'none'}
+          >
+            {/* Top Bar Overlay */}
+            <View
+              style={[
+                styles.fullScreenTopBar,
+                {
+                  paddingTop: Math.max(insets.top, 10),
+                  paddingLeft: Math.max(insets.left, 16),
+                  paddingRight: Math.max(insets.right, 16),
+                },
+              ]}
+            >
               <TouchableOpacity
-                key={speed}
-                style={[
-                  styles.speedOptionRow,
-                  playbackSpeed === speed && styles.speedOptionSelected,
-                ]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setPlaybackSpeed(speed);
-                  setShowSpeedModal(false);
-                }}
+                onPress={handleExitFullScreen}
+                style={styles.fullScreenBackBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
               >
-                <Text
-                  style={[
-                    styles.speedOptionText,
-                    { color: textDark },
-                    playbackSpeed === speed && { color: '#2563EB', fontWeight: '700' },
-                  ]}
-                >
-                  {speed === 1.0 ? 'Normal (1.0x)' : `${speed}x`}
-                </Text>
-                {playbackSpeed === speed && (
-                  <Ionicons name="checkmark" size={18} color="#2563EB" />
-                )}
+                <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
               </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
+              <View style={{ flex: 1, marginLeft: 14 }}>
+                <Text style={styles.fullScreenVideoTitle} numberOfLines={1}>
+                  {`Unit ${chapterNumber}: ${currentLesson.title}`}
+                </Text>
+                <Text style={styles.fullScreenVideoSub} numberOfLines={1}>
+                  {currentLesson.topic}
+                </Text>
+              </View>
+              {/* Screen Minimise Button (Top Bar) */}
+              <TouchableOpacity
+                onPress={handleExitFullScreen}
+                style={styles.fullScreenMinimizeBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 15, bottom: 15, left: 15, right: 15 }}
+              >
+                <Ionicons name="contract" size={22} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Center Quick Controls Row (10s Rewind, Play/Pause, 10s Forward) */}
+            <View style={styles.fullScreenCenterControlsRow} pointerEvents="box-none">
+              {/* 10 Seconds Backward Button */}
+              <TouchableOpacity
+                onPress={handleSeekRewind}
+                style={styles.centerSkipBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="play-back" size={28} color="#FFFFFF" />
+                <Text style={styles.centerSkipText}>-10s</Text>
+              </TouchableOpacity>
+
+              {/* Center Play / Pause Button */}
+              <TouchableOpacity
+                onPress={handleTogglePlayPause}
+                style={styles.centerPlayPauseBtn}
+                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons
+                  name={isPlayingVideo ? 'pause' : 'play'}
+                  size={36}
+                  color="#FFFFFF"
+                  style={isPlayingVideo ? undefined : { marginLeft: 4 }}
+                />
+              </TouchableOpacity>
+
+              {/* 10 Seconds Forward Button */}
+              <TouchableOpacity
+                onPress={handleSeekForward}
+                style={styles.centerSkipBtn}
+                activeOpacity={0.7}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="play-forward" size={28} color="#FFFFFF" />
+                <Text style={styles.centerSkipText}>+10s</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Bottom Fullscreen Controls Bar (Real layout with full touch responsiveness) */}
+            <View
+              style={[
+                styles.fullScreenBottomBarWrapper,
+                {
+                  paddingLeft: Math.max(insets.left, 16),
+                  paddingRight: Math.max(insets.right, 16),
+                  paddingBottom: Math.max(insets.bottom, 10),
+                },
+              ]}
+            >
+              {/* Blue Scrubber Progress Bar */}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={handleScrubberPress}
+                style={styles.scrubberTouchArea}
+                hitSlop={{ top: 10, bottom: 10 }}
+              >
+                <View style={styles.scrubberTrack}>
+                  <View style={[styles.scrubberFill, { width: `${progressRatio * 100}%` }]} />
+                  <View style={[styles.scrubberThumb, { left: `${progressRatio * 100}%` }]} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Controls Bar Row */}
+              <View style={styles.fullScreenControlsBarRow}>
+                {/* Left group: Play/Pause, Rewind, Forward, Volume, Time */}
+                <View style={styles.controlsLeftGroup}>
+                  {/* Play/Pause Button */}
+                  <TouchableOpacity
+                    onPress={handleTogglePlayPause}
+                    style={styles.playPauseCircleBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons
+                      name={isPlayingVideo ? 'pause' : 'play'}
+                      size={16}
+                      color="#FFFFFF"
+                      style={isPlayingVideo ? undefined : { marginLeft: 2 }}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Rewind 10s Button */}
+                  <TouchableOpacity
+                    onPress={handleSeekRewind}
+                    style={styles.controlIconBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="play-back" size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+
+                  {/* Forward 10s Button */}
+                  <TouchableOpacity
+                    onPress={handleSeekForward}
+                    style={styles.controlIconBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="play-forward" size={18} color="#FFFFFF" />
+                  </TouchableOpacity>
+
+                  {/* Volume / Mute Button */}
+                  <View style={styles.volumeControlGroup}>
+                    <TouchableOpacity
+                      onPress={handleToggleMute}
+                      style={styles.controlIconBtn}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                    >
+                      <Ionicons
+                        name={isMuted ? 'volume-mute' : 'volume-high'}
+                        size={20}
+                        color={isMuted ? '#EF4444' : '#FFFFFF'}
+                      />
+                    </TouchableOpacity>
+
+                    {/* Popout Volume Track */}
+                    {showVolumeSlider && (
+                      <TouchableOpacity
+                        activeOpacity={0.9}
+                        onPress={handleToggleMute}
+                        style={styles.volumeTrack}
+                      >
+                        <View
+                          style={[
+                            styles.volumeFill,
+                            { width: isMuted ? '0%' : '100%' },
+                          ]}
+                        />
+                        <View
+                          style={[
+                            styles.volumeThumb,
+                            { left: isMuted ? '0%' : '100%' },
+                          ]}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Timestamp Counter */}
+                  <Text style={styles.timeCounterText}>
+                    {`${formatTime(currentTime)} / ${formatTime(totalDurationSecs)}`}
+                  </Text>
+                </View>
+
+                {/* Right Group: CC, Speed, Minimise */}
+                <View style={styles.controlsRightGroup}>
+                  {/* CC Button (Subtitles) */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setShowCaptions((c) => !c);
+                      resetHideTimer();
+                    }}
+                    style={[
+                      styles.ccBadge,
+                      showCaptions && styles.ccBadgeActive,
+                    ]}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  >
+                    <Text
+                      style={[
+                        styles.ccBadgeText,
+                        showCaptions && styles.ccBadgeTextActive,
+                      ]}
+                    >
+                      CC
+                    </Text>
+                  </TouchableOpacity>
+
+                  {/* Speed Button (shows speed selector overlay) */}
+                  <TouchableOpacity
+                    onPress={() => {
+                      Haptics.selectionAsync();
+                      setShowSpeedModal((prev) => !prev);
+                      resetHideTimer();
+                    }}
+                    style={[
+                      styles.speedBadgeBtn,
+                      playbackSpeed !== 1.0 && styles.speedBadgeBtnActive,
+                    ]}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="speedometer-outline" size={15} color="#FFFFFF" style={{ marginRight: 3 }} />
+                    <Text style={styles.speedBadgeBtnText}>{playbackSpeed === 1.0 ? '1.0x' : `${playbackSpeed}x`}</Text>
+                  </TouchableOpacity>
+
+                  {/* Screen Minimise Button */}
+                  <TouchableOpacity
+                    onPress={handleExitFullScreen}
+                    style={styles.controlIconBtn}
+                    activeOpacity={0.7}
+                    hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name="contract"
+                      size={20}
+                      color="#FFFFFF"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Animated.View>
+
+          {/* Layer 4: Speed Selector In-Player Dialog (NO nested Modal!) */}
+          {showSpeedModal && (
+            <TouchableOpacity
+              style={styles.inPlayerSpeedBackdrop}
+              activeOpacity={1}
+              onPress={() => setShowSpeedModal(false)}
+            >
+              <View style={[styles.inPlayerSpeedCard, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+                <View style={styles.inPlayerSpeedHeader}>
+                  <Text style={[styles.inPlayerSpeedTitle, { color: textDark }]}>Playback Speed</Text>
+                  <TouchableOpacity onPress={() => setShowSpeedModal(false)} style={{ padding: 4 }}>
+                    <Ionicons name="close" size={20} color={textMuted} />
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.speedOptionsGrid}>
+                  {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+                    <TouchableOpacity
+                      key={speed}
+                      style={[
+                        styles.speedPillOption,
+                        playbackSpeed === speed && styles.speedPillOptionActive,
+                      ]}
+                      onPress={() => {
+                        Haptics.selectionAsync();
+                        setPlaybackSpeed(speed);
+                        setShowSpeedModal(false);
+                        resetHideTimer();
+                      }}
+                    >
+                      <Text
+                        style={[
+                          styles.speedPillText,
+                          { color: textDark },
+                          playbackSpeed === speed && { color: '#FFFFFF', fontWeight: '700' },
+                        ]}
+                      >
+                        {speed === 1.0 ? '1.0x (Normal)' : `${speed}x`}
+                      </Text>
+                      {playbackSpeed === speed && (
+                        <Ionicons name="checkmark" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            </TouchableOpacity>
+          )}
+
+          {/* Subtitles Toast Indicator */}
+          {showCaptions && controlsVisible && (
+            <View style={styles.captionsIndicatorWrap} pointerEvents="none">
+              <View style={styles.captionsIndicator}>
+                <Ionicons name="chatbox-ellipses-outline" size={14} color="#4ADE80" />
+                <Text style={styles.captionsIndicatorText}>Subtitles enabled</Text>
+              </View>
+            </View>
+          )}
+        </View>
       </Modal>
     </View>
   );
@@ -1799,66 +2162,192 @@ const styles = StyleSheet.create({
   fullScreenTopBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
-    paddingTop: Platform.OS === 'ios' ? 44 : 20,
-    paddingBottom: 14,
+    backgroundColor: 'rgba(15, 23, 42, 0.88)',
+    paddingBottom: 10,
     paddingHorizontal: 16,
   },
   fullScreenBackBtn: {
-    padding: 4,
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fullScreenMinimizeBtn: {
-    padding: 4,
+    padding: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   fullScreenVideoTitle: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
   },
   fullScreenVideoSub: {
     color: '#94A3B8',
-    fontSize: 12,
+    fontSize: 11,
+    marginTop: 1,
   },
-
-  /* Speed Selector Modal */
-  speedModalBackdrop: {
+  fullScreenCenterTapArea: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
   },
-  speedModalContent: {
-    width: '100%',
-    maxWidth: 280,
-    borderRadius: 20,
-    padding: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
+  fullScreenCenterControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 48,
+  },
+  centerSkipBtn: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerSkipText: {
+    color: '#E2E8F0',
+    fontSize: 9.5,
+    fontWeight: '700',
+    marginTop: -2,
+  },
+  centerPlayPauseBtn: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(38, 89, 69, 0.95)',
+    borderWidth: 2.5,
+    borderColor: '#4ADE80',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
     elevation: 8,
   },
-  speedModalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 14,
+
+  /* FullScreen Controls Overlay & Bottom Bar */
+  fullScreenControlsOverlay: {
+    justifyContent: 'space-between',
+    zIndex: 10,
   },
-  speedOptionRow: {
+  fullScreenBottomBarWrapper: {
+    backgroundColor: 'rgba(15, 23, 42, 0.92)',
+    paddingTop: 8,
+  },
+  fullScreenControlsBarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
+
+  /* Speed Selector Badge & In-Player Dialog */
+  speedBadgeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+  },
+  speedBadgeBtnActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#60A5FA',
+  },
+  speedBadgeBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11.5,
+    fontWeight: '700',
+  },
+  inPlayerSpeedBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 30,
+  },
+  inPlayerSpeedCard: {
+    width: 290,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  inPlayerSpeedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(150,150,150,0.2)',
+    marginBottom: 12,
   },
-  speedOptionSelected: {
-    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+  inPlayerSpeedTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  speedOptionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  speedPillOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     borderRadius: 8,
-    paddingHorizontal: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(150, 150, 150, 0.25)',
+    backgroundColor: 'rgba(150, 150, 150, 0.08)',
+    minWidth: 80,
   },
-  speedOptionText: {
-    fontSize: 14,
-    fontWeight: '500',
+  speedPillOptionActive: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  speedPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  /* Captions Indicator */
+  captionsIndicatorWrap: {
+    position: 'absolute',
+    top: 60,
+    alignSelf: 'center',
+    zIndex: 20,
+  },
+  captionsIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#4ADE80',
+  },
+  captionsIndicatorText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

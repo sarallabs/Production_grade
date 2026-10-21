@@ -2,7 +2,7 @@ import { storage } from '@/utils/storage';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import { SAMPLE_FLASHCARDS, Flashcard } from '@/data/sampleFlashcards';
 
-export const GCS_API_BASE = 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+export const GCS_API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
 
 export interface MindmapNode {
   id: string;
@@ -180,8 +180,19 @@ export async function fetchFlashcards(
       if (rawCards.length > 0) {
         const formatted: Flashcard[] = rawCards.map((c: any, idx: number) => {
           let img = c.infographicUrl || c.infographic || c.image;
-          if (img && !img.startsWith('http') && !img.startsWith('data:')) {
-            img = `${GCS_API_BASE}${img.startsWith('/') ? '' : '/'}${img}`;
+          if (img && !img.startsWith('data:')) {
+            if (img.startsWith('http')) {
+              // Self-heal corrupted cached or relative root URLs
+              if (img.includes('/images/card_') && !img.includes('/api/content/')) {
+                const filename = img.split('/images/').pop();
+                img = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/flashcards/images/${filename}`;
+              }
+            } else if (img.startsWith('/api/content/')) {
+              img = `${GCS_API_BASE}${img}`;
+            } else {
+              const cleanImg = img.replace(/^\.?\/?(practice\/flashcards\/)?/, '');
+              img = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/flashcards/${cleanImg.startsWith('/') ? cleanImg.slice(1) : cleanImg}`;
+            }
           }
 
           return {
@@ -204,9 +215,19 @@ export async function fetchFlashcards(
     }
   }
 
-  // Fallback to local cache
+  // Fallback to local cache with URL self-repair
   const cached = await storage.getItem<Flashcard[]>(cacheKey);
-  if (cached && cached.length > 0) return cached;
+  if (cached && cached.length > 0) {
+    const sanitized = cached.map((c) => {
+      let img = c.infographicUrl;
+      if (img && img.startsWith('http') && img.includes('/images/card_') && !img.includes('/api/content/')) {
+        const filename = img.split('/images/').pop();
+        img = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/flashcards/images/${filename}`;
+      }
+      return { ...c, infographicUrl: img };
+    });
+    return sanitized;
+  }
 
   // Fallback to sample flashcards
   return SAMPLE_FLASHCARDS[chapterNum] || SAMPLE_FLASHCARDS[1] || [];

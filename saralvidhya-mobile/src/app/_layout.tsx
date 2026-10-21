@@ -34,8 +34,6 @@ function useOrientationPolicy() {
       }
     };
     apply();
-    const sub = Dimensions.addEventListener('change', apply);
-    return () => sub.remove();
   }, []);
 }
 

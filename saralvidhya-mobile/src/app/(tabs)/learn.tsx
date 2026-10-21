@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Modal,
   Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -30,6 +29,50 @@ const LEARN_SEGMENTS: NavSegment[] = [
   { id: 'watch', label: 'Videos', vectorIcon: 'play-circle-outline' },
 ];
 
+class SafeErrorBoundary extends React.Component<
+  { sectionName: string; children: React.ReactNode },
+  { hasError: boolean; error: any }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, info: any) {
+    console.warn(`[LearnScreen ${this.props.sectionName} Error]:`, error, info);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+          <Ionicons name="alert-circle-outline" size={44} color="#EF4444" />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#EF4444', marginTop: 12 }}>
+            Unable to display {this.props.sectionName}
+          </Text>
+          <Text style={{ fontSize: 13, color: '#888', marginTop: 6, textAlign: 'center' }}>
+            {String(this.state.error?.message || 'A temporary rendering error occurred.')}
+          </Text>
+          <TouchableOpacity
+            style={{
+              marginTop: 18,
+              backgroundColor: '#05996B',
+              paddingHorizontal: 20,
+              paddingVertical: 10,
+              borderRadius: 10,
+            }}
+            onPress={() => this.setState({ hasError: false, error: null })}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 14 }}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function LearnScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -47,7 +90,6 @@ export default function LearnScreen() {
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
   );
-  const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (params.chapter) {
@@ -80,119 +122,71 @@ export default function LearnScreen() {
           if (router.canGoBack()) {
             router.back();
           } else {
-            router.push('/(tabs)');
+            router.push('/subjects');
           }
         }}
         showProfile={true}
       />
 
-      {/* 2. MAIN ACTIVE VIEW */}
+      {/* 2. MAIN ACTIVE VIEW - Wrapped in SafeErrorBoundary */}
       {activeSegment === 'watch' ? (
-        <View style={{ flex: 1 }}>
-          <VideosView
-            subjectId={activeSubject.id}
-            subjectName={activeSubject.name}
-            chapterNumber={currentChapter.number}
-            chapterName={currentChapter.name}
-            onContinueLearning={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              markResourceCompleted(activeSubject.id, currentChapter.number, 'videos');
-            }}
-            onChapterPress={() => setShowChapterModal(true)}
-          />
-        </View>
-      ) : activeSegment === 'listen' ? (
-        <ListenScreen
-          chapterNumber={selectedChapterNum}
-          chapterTitle={currentChapter.name}
-          initialMode={listenInitialMode}
-          onChapterPress={() => setShowChapterModal(true)}
-          onNavigateToRead={() => {
-            markResourceCompleted(activeSubject.id, currentChapter.number, 'audio');
-            setActiveSegment('read');
-          }}
-          onBackPress={() => setActiveSegment('read')}
-        />
-      ) : (
-        <StudyGuideReader
-          key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
-          chapterNumber={selectedChapterNum}
-          chapterTitle={currentChapter.name}
-          subjectName={activeSubject.name}
-          subjectId={activeSubject.id}
-          onBackPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.push('/(tabs)');
-            }
-          }}
-          onChapterPress={() => setShowChapterModal(true)}
-          onBookmarkPress={() => {
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            markResourceCompleted(activeSubject.id, currentChapter.number, 'summary');
-          }}
-          onCompleteReading={(mode) => {
-            const resourceKey = mode === 'in_depth' ? 'detailed_view' : 'summary';
-            markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
-          }}
-          onOpenListen={(targetMode) => {
-            setListenInitialMode(targetMode);
-            setActiveSegment('listen');
-          }}
-        />
-      )}
-
-      {/* Chapter Selector Modal */}
-      <Modal
-        visible={showChapterModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowChapterModal(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowChapterModal(false)}
-        >
-          <View style={[styles.modalSheet, { backgroundColor: isDark ? '#1C2B23' : '#FEFEFE' }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: textColor }]}>
-                Select Chapter ({activeSubject.code})
-              </Text>
-              <TouchableOpacity onPress={() => setShowChapterModal(false)}>
-                <Ionicons name="close" size={24} color={subtextColor} />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView style={{ maxHeight: 380 }}>
-              {activeSubject.chapters.map((ch) => {
-                const isCur = ch.number === selectedChapterNum;
-                return (
-                  <TouchableOpacity
-                    key={ch.number}
-                    style={[styles.modalChapterRow, isCur && styles.modalChapterRowActive]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setSelectedChapterNum(ch.number);
-                      setShowChapterModal(false);
-                    }}
-                  >
-                    <View style={[styles.modalNumBadge, isCur && styles.modalNumBadgeActive]}>
-                      <Text style={[styles.modalNumText, isCur && styles.modalNumTextActive]}>
-                        {ch.number}
-                      </Text>
-                    </View>
-                    <Text style={[styles.modalChapterText, isCur && styles.modalChapterTextActive, { color: textColor }]}>
-                      {ch.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
+        <SafeErrorBoundary sectionName="Video Lessons" key={`watch_${currentChapter.number}`}>
+          <View style={{ flex: 1 }}>
+            <VideosView
+              subjectId={activeSubject.id}
+              subjectName={activeSubject.name}
+              chapterNumber={currentChapter.number}
+              chapterName={currentChapter.name}
+              onContinueLearning={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                markResourceCompleted(activeSubject.id, currentChapter.number, 'videos');
+              }}
+            />
           </View>
-        </TouchableOpacity>
-      </Modal>
+        </SafeErrorBoundary>
+      ) : activeSegment === 'listen' ? (
+        <SafeErrorBoundary sectionName="Audio Lessons" key={`listen_${selectedChapterNum}`}>
+          <ListenScreen
+            chapterNumber={selectedChapterNum}
+            chapterTitle={currentChapter.name}
+            initialMode={listenInitialMode}
+            onNavigateToRead={() => {
+              markResourceCompleted(activeSubject.id, currentChapter.number, 'audio');
+              setActiveSegment('read');
+            }}
+            onBackPress={() => setActiveSegment('read')}
+          />
+        </SafeErrorBoundary>
+      ) : (
+        <SafeErrorBoundary sectionName="Study Guide" key={`read_${selectedChapterNum}`}>
+          <StudyGuideReader
+            key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
+            chapterNumber={selectedChapterNum}
+            chapterTitle={currentChapter.name}
+            subjectName={activeSubject.name}
+            subjectId={activeSubject.id}
+            onBackPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/subjects');
+              }
+            }}
+            onBookmarkPress={() => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              markResourceCompleted(activeSubject.id, currentChapter.number, 'summary');
+            }}
+            onCompleteReading={(mode) => {
+              const resourceKey = mode === 'in_depth' ? 'detailed_view' : 'summary';
+              markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
+            }}
+            onOpenListen={(targetMode) => {
+              setListenInitialMode(targetMode);
+              setActiveSegment('listen');
+            }}
+          />
+        </SafeErrorBoundary>
+      )}
     </View>
   );
 }

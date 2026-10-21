@@ -16,7 +16,7 @@ import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
-import { fetchQuickStudyGuide, fetchDetailedNotes } from '@/services/contentService';
+import { SAMPLE_PODCASTS, PodcastParagraph } from '@/data/samplePodcasts';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +28,6 @@ interface ListenScreenProps {
   initialMode?: ListenMode;
   onNavigateToRead?: (moduleNumber?: number) => void;
   onBackPress?: () => void;
-  onChapterPress?: () => void;
 }
 
 const SPEED_OPTIONS = [1.0, 1.25, 1.5, 2.0];
@@ -81,6 +80,39 @@ function tokenizeParagraph(text: string): TokenizedWord[] {
   });
 
   return words;
+}
+
+/**
+ * Calibrated word duration and pause calculation for mobile Text-to-Speech (TTS).
+ * Natural English speech tempo on mobile Android TTS (Google TTS) averages ~130 words per minute at 1.0x rate.
+ */
+function getWordDurationMs(rawWord: string, speedRate: number): number {
+  const clean = rawWord.trim();
+  const len = clean.length;
+  // Syllable-proportional base phoneme duration calibrated for standard Android TTS (~130 WPM)
+  let duration = 130 + Math.min(len, 14) * 38;
+
+  // Additional articulation duration for longer multi-syllabic academic & scientific terminology
+  if (len > 7) {
+    duration += Math.min(len - 7, 8) * 18;
+  }
+
+  // Natural TTS pause on sentence end (. ! ?)
+  if (/[.!?]$/.test(clean)) {
+    duration += 450;
+  }
+  // Natural TTS pause on clause delimiters (, ; : — -)
+  else if (/[,;:\u2014\u2013-]$/.test(clean)) {
+    duration += 260;
+  }
+
+  return Math.max(200, Math.round(duration / (speedRate || 1.0)));
+}
+
+function formatSeconds(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
 }
 
 function markdownToAudioParagraphs(markdown: string, chapterNum: number, chapterTitle: string): string[] {
@@ -154,146 +186,11 @@ interface MicrocastEpisode {
   recap: string;
 }
 
-const CHAPTER_MICROCASTS: Record<number, { episodes: { id: number; title: string; recap: string }[]; transcripts: Record<number, string[]> }> = {
-  1: {
-    episodes: [
-      { id: 1, title: 'Anatomy of the Three-Part Insect Gut', recap: 'Foregut, midgut & hindgut' },
-      { id: 2, title: 'Inside the Insect Foregut and Gizzard', recap: 'Crop & proventricular teeth' },
-      { id: 3, title: 'How Insect Digestion Activates Bt Toxins', recap: 'Alkaline pH & receptor binding' },
-      { id: 4, title: 'How Insects Recycle Water from Waste', recap: 'Malpighian tubules & rectal pads' },
-      { id: 5, title: 'Peritrophic Membrane & Bt Toxin Defense', recap: 'Chitin sheath & barrier defense' },
-    ],
-    transcripts: {
-      1: [
-        'The insect gut is divided into three distinct embryological zones: the foregut for ingestion, the midgut for enzymatic absorption, and the hindgut for water recycling.',
-        'Notice that the foregut and hindgut arise from ectoderm, retaining a cuticular intima shed during each larval molt, whereas the midgut is of endodermal origin.',
-        'This fundamental anatomical distinction explains why digestion and nutrient uptake take place almost exclusively across the midgut microvillar epithelium.',
-      ],
-      2: [
-        'In the foregut, the thin-walled crop functions as an expandable storage reservoir for food particles and floral nectar.',
-        'Just behind the crop, the proventriculus or gizzard is armed with six powerful chitinous teeth and backward-facing spines that mechanically grind solid food particles.',
-        'In sucking insects such as aphids and bugs, the muscular pharynx acts as a powerful cibarial suction pump to draw plant sap upwards into the digestive tract.',
-      ],
-      3: [
-        'Bacillus thuringiensis crystal endotoxins are ingested as inactive protoxins by susceptible agricultural caterpillars in field crops.',
-        'The highly alkaline pH of the insect midgut solubilizes these crystals, allowing specific gut proteases to cleave them into pore-forming toxins.',
-        'These activated endotoxins bind to cadherin receptors on midgut epithelial columnar cells, creating osmotic pores that disrupt cell integrity and lead to insect mortality.',
-      ],
-      4: [
-        'Malpighian tubules float freely in the abdominal hemolymph to filter out nitrogenous wastes as insoluble potassium and uric acid crystals.',
-        'As metabolic waste passes into the hindgut, specialized rectal pads actively reabsorb over ninety-five percent of water, sodium, and potassium ions.',
-        'This hyper-efficient water conservation mechanism allows terrestrial insects and stored-grain pests to thrive in extremely arid agricultural environments.',
-      ],
-      5: [
-        'The peritrophic membrane is a semi-permeable sheath composed of chitin and proteins that envelops food bolus within the insect midgut.',
-        'It shields delicate single-cell microvillar midgut epithelial cells from mechanical abrasion caused by rough plant fibers and mineral particles.',
-        'Additionally, it acts as a selective ultrafiltration barrier preventing entomopathogenic bacteria, viruses, and fungi from penetrating the hemocoel.',
-      ],
-    },
-  },
-  2: {
-    episodes: [
-      { id: 1, title: 'Ametabolous & Hemimetabolous Development', recap: 'Direct vs incomplete metamorphosis' },
-      { id: 2, title: 'Holometabolous Life Cycles & Imaginal Discs', recap: 'Larval, pupal & adult stages' },
-      { id: 3, title: 'Larval Classifications & Field Adaptations', recap: 'Eruciform, scarabaeiform & vermiform' },
-      { id: 4, title: 'The Neuroendocrine Regulatory Cascade', recap: 'PTTH, ecdysone & juvenile hormone' },
-      { id: 5, title: 'Diapause vs Quiescence in Insect Dormancy', recap: 'Hormonal arrest vs direct slowdown' },
-    ],
-    transcripts: {
-      1: [
-        'Metamorphosis begins with the basic evolutionary division between ametabolous and hemimetabolous insects.',
-        'Ametabolous species like silverfish undergo no true metamorphosis, emerging as miniature adults that continue molting throughout their reproductive lives.',
-        'Hemimetabolous insects like grasshoppers and cockroaches develop external wing pads over successive nymphal instars without an intervening pupal phase.',
-      ],
-      2: [
-        'Complete metamorphosis or holometaboly represents an evolutionary breakthrough separating larval feeding niches from adult reproductive dispersal.',
-        'During the pupal stage, larval organ systems undergo histolysis while adult organs develop from dormant clusters of stem cells called imaginal discs.',
-        'This developmental architecture prevents caterpillars and butterflies from competing with one another for the same agricultural food resources.',
-      ],
-      3: [
-        'Insect larvae exhibit distinct body forms tailored to their specific agro-ecological feeding habits.',
-        'Caterpillars display an eruciform shape with thoracic legs and abdominal prolegs, while white grubs in sugarcane exhibit a fleshy C-shaped scarabaeiform body.',
-        'In contrast, predatory ground beetles possess agile campodeiform bodies, and housefly maggots possess legless vermiform bodies adapted for decaying substrates.',
-      ],
-      4: [
-        'The insect endocrine axis orchestrates every molt through a quantitative balance between juvenile hormone and ecdysone.',
-        'Brain neurosecretory cells release prothoracicotropic hormone PTTH, which signals the prothoracic glands to synthesize ecdysone for cuticular renewal.',
-        'When juvenile hormone titer drops to zero in the final instar, ecdysone triggers pupal-to-adult metamorphosis rather than another larval molt.',
-      ],
-      5: [
-        'Insects survive adverse seasonal extremes through two distinct biological dormancy strategies.',
-        'Quiescence is a direct, immediate arrest of growth caused by acute unfavorable cold or drought, resuming immediately once conditions improve.',
-        'Diapause, however, is a genetically programmed neuroendocrine arrest triggered in advance by token environmental stimuli such as photoperiod.',
-      ],
-    },
-  },
-  3: {
-    episodes: [
-      { id: 1, title: 'How weathering transforms bedrock into regolith', recap: 'Bedrock disintegration & saprolite dynamics' },
-      { id: 2, title: 'Mechanical forces breaking down Indian landscapes', recap: 'Exfoliation, thermal expansion & V6 wind law' },
-      { id: 3, title: 'How life turns solid rock into soil', recap: 'Tree roots, rhizosphere acids & termite pedoturbation' },
-      { id: 4, title: 'Mathematical Forces Turning Rock into Soil', recap: 'Hydraulic thresholds, frost wedging & surface area loop' },
-    ],
-    transcripts: {
-      1: [
-        'Across the deeply weathered regolith of the Deccan Plateau, vast agricultural soils are formed as solid bedrock transforms over time to sustain plant life.',
-        'Mechanical disintegration causes physical fragmentation without chemical change, while chemical decomposition dissolves mineral matrices into simpler oxides.',
-        'This continuous synergistic reaction chain between physical fracturing and chemical weathering produces the loose fertile mantle known as regolith.',
-      ],
-      2: [
-        'In physical weathering, mineral permeability and diurnal temperature swings dictate the rate of mechanical rock breakdown.',
-        'Quartz expands at double the rate of feldspar, baking stones under the Indian sun until curved outer layers exfoliate like onion skins.',
-        'In mountain streams, rushing water speed dictates sediment carrying power, while freezing hydraulic wedges exert over fourteen hundred tons of bursting pressure.',
-      ],
-      3: [
-        'Living organisms, from towering peepal trees to subterranean termites, actively dismantle solid rock to manufacture fertile agricultural soil.',
-        'Expanding plant root tips act as slow-motion crowbars in rock joints, while rhizosphere microbial acids solubilize insoluble soil minerals.',
-        'Subterranean termites continuously burrow galleries, excavating subsoil minerals and transporting lower horizon nutrients directly to the surface.',
-      ],
-      4: [
-        'The soil genesis feedback loop demonstrates that physical fracturing exponentially multiplies reactive surface area for chemical and biological reactions.',
-        'Hydraulic velocity rules govern river sediment transport, where steep mountain sources cause dramatically greater mechanical disintegration.',
-        'According to the velocity sixth power law, a marginal increase in wind speed produces an exponential surge in erosive sandblasting power.',
-      ],
-    },
-  },
-  4: {
-    episodes: [
-      { id: 1, title: 'Floral Reproductive Anatomy & Pollen Dehiscence', recap: 'Anther locules & microsporangia' },
-      { id: 2, title: 'Cross-Pollination Enforcements & Dichogamy', recap: 'Protandry vs protogyny & herkogamy' },
-      { id: 3, title: 'Apiculture & Honey Bee Pollinator Vectors', recap: 'Apis mellifera & corbicular loading' },
-      { id: 4, title: 'Floral Constancy & Nectar Guide Signaling', recap: 'UV reflectance & scent attractants' },
-      { id: 5, title: 'Commercial Colony Management in Orchards', recap: 'Stocking density & pesticide safety' },
-    ],
-    transcripts: {
-      1: [
-        'Pollination constitutes the vital biological gateway to double fertilization, seed formation, and commercial fruit set in angiosperm crops.',
-        'Each anther contains four microsporangial locules lined by nutritive tapetum cells which synthesize resistant sporopollenin coats around pollen grains.',
-        'Hygroscopic contraction of endothecial cells causes longitudinal dehiscence along the stomium line as ambient relative humidity falls during morning sunlight.',
-      ],
-      2: [
-        'Angiosperms possess evolutionary floral adaptations designed to enforce cross-pollination and prevent inbreeding depression.',
-        'Dichogamy separates anther dehiscence and stigma receptivity temporally, either through protandry in sunflowers or protogyny in pearl millet.',
-        'Herkogamy and heterostyly impose physical spatial separations, while multi-allelic self-incompatibility systems biochemically abort self-pollen tube germination.',
-      ],
-      3: [
-        'Honey bees of the genus Apis represent the premier managed insect pollinators across global horticultural and oilseed agro-ecosystems.',
-        'Worker bees gather pollen using specialized tibial corbiculae or pollen baskets, transferring tens of thousands of viable pollen grains per foraging flight.',
-        'Systematic bee pollination enhances seed yields in sunflower, mustard, alfalfa, and apple by fifty to over two hundred percent.',
-      ],
-      4: [
-        'Entomophilous flowers deploy multisensory attractants to guide insect pollinators directly toward reproductive organs.',
-        'Petals exhibit ultraviolet-reflective nectar guides visible to the trichromatic visual spectrum of bees but invisible to human vision.',
-        'Floral constancy ensures individual bees repeatedly visit flowers of the identical plant taxon, minimizing wasteful heterospecific pollen transfer.',
-      ],
-      5: [
-        'Optimal crop pollination demands calculated commercial honey bee colony stocking rates ranging between two and four hives per hectare.',
-        'Colonies should be introduced only after ten to twenty percent crop bloom has commenced to discourage foragers from orienting toward competing weed species.',
-        'Pesticide sprays must be scheduled strictly at dusk when bee flight has ceased, and toxic neonicotinoids must be avoided during anthesis.',
-      ],
-    },
-  },
-};
+export interface TokenizedParagraphItem {
+  timestamp: string;
+  startSec: number;
+  words: TokenizedWord[];
+}
 
 export default function ListenScreen({
   chapterNumber = 1,
@@ -301,7 +198,6 @@ export default function ListenScreen({
   initialMode = 'quick',
   onNavigateToRead,
   onBackPress,
-  onChapterPress,
 }: ListenScreenProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
@@ -333,145 +229,69 @@ export default function ListenScreen({
   const isDetailed = mode === 'detailed';
   const isMicro = mode === 'microcasts';
 
-  // Dynamic Microcasts for Current Chapter
-  const currentChapterMicro = useMemo(() => {
-    if (CHAPTER_MICROCASTS[chapterNumber]) {
-      return CHAPTER_MICROCASTS[chapterNumber];
-    }
-    const fallbackSummary = SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
-    const audioParas = markdownToAudioParagraphs(fallbackSummary, chapterNumber, effectiveChapterTitle);
-    const episodes = [
-      { id: 1, title: `${effectiveChapterTitle} — Core Principles`, recap: 'Foundational concepts' },
-      { id: 2, title: `${effectiveChapterTitle} — Key Morphological Features`, recap: 'Structural analysis' },
-      { id: 3, title: `${effectiveChapterTitle} — Physiological Mechanisms`, recap: 'Biological pathways' },
-      { id: 4, title: `${effectiveChapterTitle} — Agro-Ecological Impact`, recap: 'Crop & field dynamics' },
-      { id: 5, title: `${effectiveChapterTitle} — Exam & Viva Master Notes`, recap: 'High-yield pointers' },
-    ];
-    const transcripts: Record<number, string[]> = {
-      1: audioParas.slice(0, 3),
-      2: audioParas.slice(1, 4),
-      3: audioParas.slice(2, 5),
-      4: audioParas.slice(0, 2),
-      5: audioParas.slice(1, 3),
-    };
-    return { episodes, transcripts };
-  }, [chapterNumber, effectiveChapterTitle]);
-
-  const microcastEpisodes: MicrocastEpisode[] = useMemo(() => {
-    return currentChapterMicro.episodes.map((item) => {
-      const paras = currentChapterMicro.transcripts[item.id] || [];
-      const words = paras.join(' ').split(/\s+/).filter(Boolean);
-      const durationSec = Math.max(25, Math.round(words.length / 3.4));
-      const m = Math.floor(durationSec / 60);
-      const s = durationSec % 60;
-      const durationLabel = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-      return {
-        id: item.id,
-        title: item.title,
-        recap: item.recap,
-        durationSec,
-        durationLabel,
-        status: `${durationLabel} · ${item.recap}`,
-      };
-    });
-  }, [currentChapterMicro]);
-
-  // Active microcast item
-  const activeMicrocast = useMemo(() => {
-    return (
-      microcastEpisodes.find((e) => e.id === selectedMicrocastId) || microcastEpisodes[0]
-    );
-  }, [microcastEpisodes, selectedMicrocastId]);
-
-  // Dynamic chapter content from DB / Service
-  const [chapterContent, setChapterContent] = useState<{
-    quickText: string;
-    detailedText: string;
-  }>({
-    quickText: SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '',
-    detailedText: SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '',
-  });
-
-  useEffect(() => {
-    let isMounted = true;
-    const loadContent = async () => {
-      try {
-        const [quickRes, detailedRes] = await Promise.all([
-          fetchQuickStudyGuide('entomology', chapterNumber),
-          fetchDetailedNotes('entomology', chapterNumber),
-        ]);
-        if (isMounted) {
-          setChapterContent({
-            quickText: quickRes,
-            detailedText: detailedRes,
-          });
-        }
-      } catch {
-        if (isMounted) {
-          setChapterContent({
-            quickText: SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '',
-            detailedText: SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '',
-          });
-        }
-      }
-    };
-    loadContent();
-    return () => {
-      isMounted = false;
-    };
+  // Canonical podcast dataset matching web app 1:1
+  const currentBundle = useMemo(() => {
+    return SAMPLE_PODCASTS[chapterNumber] || SAMPLE_PODCASTS[1];
   }, [chapterNumber]);
 
-  // Derived audio paragraphs
-  const quickParagraphs = useMemo(() => {
-    const md = chapterContent.quickText || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
-    return markdownToAudioParagraphs(md, chapterNumber, effectiveChapterTitle);
-  }, [chapterContent.quickText, chapterNumber, effectiveChapterTitle]);
+  const microcastEpisodes: MicrocastEpisode[] = useMemo(() => {
+    return currentBundle.microcasts.map((item) => ({
+      id: item.id,
+      title: item.title,
+      recap: item.recap,
+      durationSec: item.durationSec,
+      durationLabel: item.durationLabel,
+      status: `${item.durationLabel} · ${item.recap}`,
+    }));
+  }, [currentBundle]);
 
-  const detailedParagraphs = useMemo(() => {
-    const md = chapterContent.detailedText || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
-    return markdownToAudioParagraphs(md, chapterNumber, effectiveChapterTitle);
-  }, [chapterContent.detailedText, chapterNumber, effectiveChapterTitle]);
+  const activeMicrocast = useMemo(() => {
+    return (
+      currentBundle.microcasts.find((e) => e.id === selectedMicrocastId) ||
+      currentBundle.microcasts[0]
+    );
+  }, [currentBundle, selectedMicrocastId]);
 
-  const activeParagraphs: string[] = useMemo(() => {
-    if (isMicro) {
-      return (
-        currentChapterMicro.transcripts[selectedMicrocastId] ||
-        currentChapterMicro.transcripts[1] ||
-        []
-      );
-    }
-    return isDetailed ? detailedParagraphs : quickParagraphs;
-  }, [isMicro, isDetailed, selectedMicrocastId, detailedParagraphs, quickParagraphs, currentChapterMicro]);
+  const activeTrack = useMemo(() => {
+    if (isMicro) return activeMicrocast;
+    return isDetailed ? currentBundle.detailed : currentBundle.quick;
+  }, [isMicro, isDetailed, activeMicrocast, currentBundle]);
 
-  // Tokenized paragraphs for word-level karaoke
-  const tokenizedParagraphs = useMemo(() => {
-    return activeParagraphs.map((p) => tokenizeParagraph(p));
+  const activeParagraphs: PodcastParagraph[] = useMemo(() => {
+    return activeTrack.paragraphs;
+  }, [activeTrack]);
+
+  // Tokenized paragraphs for word-level karaoke and timestamp positioning
+  const tokenizedParagraphs: TokenizedParagraphItem[] = useMemo(() => {
+    return activeParagraphs.map((p) => ({
+      timestamp: p.timestamp,
+      startSec: p.startSec,
+      words: tokenizeParagraph(p.text),
+    }));
   }, [activeParagraphs]);
 
   // Total word count
   const totalWordCount = useMemo(() => {
-    return tokenizedParagraphs.reduce((acc, words) => acc + words.length, 0);
+    return tokenizedParagraphs.reduce((acc, p) => acc + p.words.length, 0);
   }, [tokenizedParagraphs]);
 
-  // Dynamic duration calculated from actual words (~135 words per minute)
   const totalDurationSec = useMemo(() => {
-    if (isMicro) return activeMicrocast.durationSec;
-    return Math.max(30, Math.round((totalWordCount / 135) * 60));
-  }, [isMicro, activeMicrocast.durationSec, totalWordCount]);
+    return activeTrack.durationSec;
+  }, [activeTrack]);
 
   const totalDurationLabel = useMemo(() => {
-    const m = Math.floor(totalDurationSec / 60);
-    const s = totalDurationSec % 60;
-    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+    return formatSeconds(totalDurationSec);
   }, [totalDurationSec]);
 
   const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wordTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isPlayingRef = useRef<boolean>(isPlaying);
   const speedRef = useRef<number>(SPEED_OPTIONS[speedIndex]);
-  const tokenizedRef = useRef<TokenizedWord[][]>(tokenizedParagraphs);
+  const tokenizedRef = useRef<TokenizedParagraphItem[]>(tokenizedParagraphs);
   const startTimeRef = useRef<number>(0);
   const lastBoundaryTimeRef = useRef<number>(0);
+  const hasNativeBoundaryRef = useRef<boolean>(false);
+  const utteranceIdRef = useRef<number>(0);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -487,7 +307,9 @@ export default function ListenScreen({
 
   useEffect(() => {
     return () => {
-      Speech.stop();
+      try {
+        Speech.stop().catch(() => {});
+      } catch {}
       if (tickerRef.current) clearInterval(tickerRef.current);
       if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     };
@@ -495,7 +317,9 @@ export default function ListenScreen({
 
   // Reset playback if chapter changes
   useEffect(() => {
-    Speech.stop();
+    try {
+      Speech.stop().catch(() => {});
+    } catch {}
     if (tickerRef.current) clearInterval(tickerRef.current);
     if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     setIsPlaying(false);
@@ -535,6 +359,9 @@ export default function ListenScreen({
       return;
     }
 
+    const currentUtteranceId = ++utteranceIdRef.current;
+    hasNativeBoundaryRef.current = false;
+
     setActiveParagraphIndex(paraIdx);
     setActiveWordIndex(wordIdx);
     setIsPlaying(true);
@@ -542,7 +369,11 @@ export default function ListenScreen({
 
     if (wordTickerRef.current) clearInterval(wordTickerRef.current);
 
-    const paraWords = paras[paraIdx];
+    const paraItem = paras[paraIdx];
+    if (wordIdx === 0 && paraItem) {
+      setCurrentSec(paraItem.startSec);
+    }
+    const paraWords = paraItem.words;
     const wordsToSpeak = paraWords.slice(wordIdx);
     const textToSpeak = wordsToSpeak.map((w) => w.raw).join(' ');
 
@@ -550,7 +381,7 @@ export default function ListenScreen({
     startTimeRef.current = Date.now();
     lastBoundaryTimeRef.current = Date.now();
 
-    // Precompute character offsets for wordsToSpeak:
+    // Precompute character boundary offsets for wordsToSpeak:
     const wordCharOffsets: number[] = [];
     let accChar = 0;
     for (let i = 0; i < wordsToSpeak.length; i++) {
@@ -558,51 +389,103 @@ export default function ListenScreen({
       accChar += wordsToSpeak[i].raw.length + 1;
     }
 
-    // Natural English TTS speaking tempo: ~22.0 characters per second at 1.0x rate on mobile.
-    const charsPerSec = 22.0 * speedRef.current;
+    // Precompute word timing offsets in milliseconds calibrated to TTS speed:
+    const wordStartTimesMs: number[] = [];
+    let accMs = 0;
+    for (let i = 0; i < wordsToSpeak.length; i++) {
+      wordStartTimesMs.push(accMs);
+      accMs += getWordDurationMs(wordsToSpeak[i].raw, speedRef.current);
+    }
 
     wordTickerRef.current = setInterval(() => {
-      if (!isPlayingRef.current) {
-        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) {
+        if (wordTickerRef.current) {
+          clearInterval(wordTickerRef.current);
+          wordTickerRef.current = null;
+        }
         return;
       }
-      if (Date.now() - lastBoundaryTimeRef.current > 120) {
-        const elapsedSec = (Date.now() - startTimeRef.current) / 1000;
-        const currentTargetChar = elapsedSec * charsPerSec;
 
-        let foundIdx = 0;
-        for (let i = 0; i < wordCharOffsets.length; i++) {
-          if (currentTargetChar >= wordCharOffsets[i]) {
-            foundIdx = i;
-          } else {
-            break;
-          }
+      // If native boundaries are active, do NOT run the fallback ticker
+      if (hasNativeBoundaryRef.current) {
+        if (wordTickerRef.current) {
+          clearInterval(wordTickerRef.current);
+          wordTickerRef.current = null;
         }
-        setActiveWordIndex(wordIdx + foundIdx);
+        return;
       }
-    }, 35);
+
+      const elapsedMs = Date.now() - startTimeRef.current;
+      // Speech warmup period: hold first word for the initial ~90ms
+      if (elapsedMs < 90) {
+        return;
+      }
+
+      let foundIdx = 0;
+      for (let i = 0; i < wordStartTimesMs.length; i++) {
+        if (elapsedMs >= wordStartTimesMs[i]) {
+          foundIdx = i;
+        } else {
+          break;
+        }
+      }
+
+      const nextWordIdx = wordIdx + foundIdx;
+      if (nextWordIdx < paraWords.length) {
+        // MONOTONIC: strictly forward only, never bounces backward!
+        setActiveWordIndex((prev) => (nextWordIdx > prev ? nextWordIdx : prev));
+      }
+    }, 40);
 
     Speech.speak(textToSpeak, {
       rate: speedRef.current,
+      pitch: 1.0,
+      onStart: () => {
+        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
+        // Anchor timeline exactly when audio starts emitting sound
+        startTimeRef.current = Date.now();
+        lastBoundaryTimeRef.current = Date.now();
+      },
       onBoundary: (ev: any) => {
-        if (ev && typeof ev.charIndex === 'number' && ev.charIndex > 0) {
-          lastBoundaryTimeRef.current = Date.now();
-          const charIdx = ev.charIndex;
+        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
+        const charIdx = ev && typeof ev.charIndex === 'number' ? ev.charIndex : -1;
+        if (charIdx >= 0) {
+          hasNativeBoundaryRef.current = true;
+          // Immediately destroy fallback ticker so it NEVER fights with native boundary events!
+          if (wordTickerRef.current) {
+            clearInterval(wordTickerRef.current);
+            wordTickerRef.current = null;
+          }
+
+          let matchedOffset = -1;
           for (let i = 0; i < wordCharOffsets.length; i++) {
             const nextOffset = i + 1 < wordCharOffsets.length ? wordCharOffsets[i + 1] : Infinity;
             if (charIdx >= wordCharOffsets[i] && charIdx < nextOffset) {
-              setActiveWordIndex(wordIdx + i);
+              matchedOffset = i;
               break;
             }
+          }
+
+          if (matchedOffset >= 0) {
+            const nextWordIdx = wordIdx + matchedOffset;
+            // MONOTONIC: Highlight strictly moves forward, preventing any jitter or bouncing backward!
+            setActiveWordIndex((prev) => (nextWordIdx > prev ? nextWordIdx : prev));
           }
         }
       },
       onDone: () => {
-        if (!isPlayingRef.current) return;
-        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
+        if (wordTickerRef.current) {
+          clearInterval(wordTickerRef.current);
+          wordTickerRef.current = null;
+        }
 
         if (paraIdx + 1 < paras.length) {
-          speakFromWord(paraIdx + 1, 0);
+          setTimeout(() => {
+            if (isPlayingRef.current && utteranceIdRef.current === currentUtteranceId) {
+              speakFromWord(paraIdx + 1, 0);
+            }
+          }, 140);
         } else {
           setIsPlaying(false);
           isPlayingRef.current = false;
@@ -613,15 +496,20 @@ export default function ListenScreen({
         }
       },
       onError: () => {
+        if (utteranceIdRef.current !== currentUtteranceId) return;
         setIsPlaying(false);
         isPlayingRef.current = false;
         if (tickerRef.current) clearInterval(tickerRef.current);
-        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+        if (wordTickerRef.current) {
+          clearInterval(wordTickerRef.current);
+          wordTickerRef.current = null;
+        }
       },
     });
   };
 
   const handleSelectMode = (newMode: ListenMode) => {
+    if (newMode === mode) return;
     Haptics.selectionAsync();
     Speech.stop();
     if (tickerRef.current) clearInterval(tickerRef.current);
@@ -646,12 +534,21 @@ export default function ListenScreen({
       const pIdx =
         activeParagraphIndex < tokenizedParagraphs.length ? activeParagraphIndex : 0;
       const wIdx =
-        activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.length || 0)
+        activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.words.length || 0)
           ? activeWordIndex
           : 0;
       speakFromWord(pIdx, wIdx);
       startTicker();
     }
+  };
+
+  const handleSeekToParagraph = (pIdx: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const targetPara = tokenizedParagraphs[pIdx];
+    if (!targetPara) return;
+    setCurrentSec(targetPara.startSec);
+    speakFromWord(pIdx, 0);
+    startTicker();
   };
 
   const handleWordPress = (pIdx: number, w: TokenizedWord) => {
@@ -663,15 +560,14 @@ export default function ListenScreen({
       });
     }
 
-    let wordsBefore = 0;
-    for (let i = 0; i < pIdx; i++) {
-      wordsBefore += tokenizedParagraphs[i].length;
-    }
-    wordsBefore += w.index;
-
+    const targetPara = tokenizedParagraphs[pIdx];
+    const paraStartSec = targetPara?.startSec || 0;
+    const nextParaStartSec = tokenizedParagraphs[pIdx + 1]?.startSec || totalDurationSec;
+    const paraDuration = Math.max(1, nextParaStartSec - paraStartSec);
+    const wordProgress = targetPara && targetPara.words.length > 0 ? w.index / targetPara.words.length : 0;
     const targetSec = Math.min(
       totalDurationSec,
-      Math.floor((wordsBefore / (totalWordCount || 1)) * totalDurationSec)
+      Math.floor(paraStartSec + wordProgress * paraDuration)
     );
     setCurrentSec(targetSec);
 
@@ -684,31 +580,21 @@ export default function ListenScreen({
     const newSec = Math.max(0, Math.min(totalDurationSec, currentSec + deltaSeconds));
     setCurrentSec(newSec);
 
-    const targetGlobalWord = Math.floor((newSec / (totalDurationSec || 1)) * totalWordCount);
-    let accumulated = 0;
     let targetPIdx = 0;
-    let targetWIdx = 0;
-
     for (let i = 0; i < tokenizedParagraphs.length; i++) {
-      const len = tokenizedParagraphs[i].length;
-      if (targetGlobalWord >= accumulated && targetGlobalWord < accumulated + len) {
+      if (tokenizedParagraphs[i].startSec <= newSec) {
         targetPIdx = i;
-        targetWIdx = targetGlobalWord - accumulated;
+      } else {
         break;
-      }
-      accumulated += len;
-      if (i === tokenizedParagraphs.length - 1) {
-        targetPIdx = i;
-        targetWIdx = Math.max(0, len - 1);
       }
     }
 
     if (isPlaying) {
-      speakFromWord(targetPIdx, targetWIdx);
+      speakFromWord(targetPIdx, 0);
       startTicker();
     } else {
       setActiveParagraphIndex(targetPIdx);
-      setActiveWordIndex(targetWIdx);
+      setActiveWordIndex(0);
     }
   };
 
@@ -721,12 +607,6 @@ export default function ListenScreen({
       speakFromWord(activeParagraphIndex, activeWordIndex >= 0 ? activeWordIndex : 0);
       startTicker();
     }
-  };
-
-  const formatSeconds = (sec: number) => {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   const progressPercent = Math.min(100, (currentSec / totalDurationSec) * 100);
@@ -751,6 +631,7 @@ export default function ListenScreen({
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* 1. BRANDING HEADER OR MICROCASTS HEADER */}
         {isMicro ? (
@@ -779,7 +660,8 @@ export default function ListenScreen({
               mode === 'quick' && [styles.listenTabSelected, { backgroundColor: emeraldPrimary }],
             ]}
             onPress={() => handleSelectMode('quick')}
-            activeOpacity={0.85}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            activeOpacity={0.75}
           >
             <View
               style={[
@@ -799,7 +681,8 @@ export default function ListenScreen({
               mode === 'detailed' && [styles.listenTabSelected, { backgroundColor: emeraldPrimary }],
             ]}
             onPress={() => handleSelectMode('detailed')}
-            activeOpacity={0.85}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            activeOpacity={0.75}
           >
             <View
               style={[
@@ -819,7 +702,8 @@ export default function ListenScreen({
               mode === 'microcasts' && [styles.microcastsActiveTab, { backgroundColor: '#00996E' }],
             ]}
             onPress={() => handleSelectMode('microcasts')}
-            activeOpacity={0.85}
+            hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
+            activeOpacity={0.75}
           >
             <View
               style={[
@@ -846,42 +730,37 @@ export default function ListenScreen({
         {/* ========================================================================= */}
         {!isMicro ? (
           <>
-            {/* 3. Section Label & Chapter Switcher */}
+            {/* 3. Section Label & Badges */}
             <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionLabel, { color: textMuted }]}>
-                {isQuick ? 'QUICK LISTEN · STANDARD DEPTH' : 'DETAILED LISTEN · 1 OF 1 MATCH'}
-              </Text>
-              {onChapterPress && (
-                <TouchableOpacity
-                  style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                  onPress={onChapterPress}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="book-outline" size={13} color={emeraldPrimary} />
-                  <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
-                    Ch {chapterNumber}
+              <View style={styles.badgeGroupRow}>
+                <View style={[styles.durationBadgePill, { backgroundColor: isDark ? '#1C3328' : '#E6F4EA' }]}>
+                  <Ionicons name="time-outline" size={13} color="#00996E" />
+                  <Text style={[styles.durationBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
+                    {activeTrack.durationLabel}
                   </Text>
-                  <Ionicons name="chevron-down" size={12} color={textMuted} />
-                </TouchableOpacity>
-              )}
+                </View>
+                <View style={[styles.countBadgePill, { backgroundColor: isDark ? '#1C3328' : '#F0FDF4' }]}>
+                  <Text style={[styles.countBadgeText, { color: isDark ? '#81C995' : '#15803D' }]}>
+                    1 Podcast
+                  </Text>
+                </View>
+              </View>
+              <View style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                <Ionicons name="book-outline" size={13} color={emeraldPrimary} />
+                <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
+                  Ch {chapterNumber}
+                </Text>
+              </View>
             </View>
 
             {/* 4. Single Main Player Header */}
             <View style={styles.playerHeader}>
-              <TouchableOpacity
-                onPress={onChapterPress}
-                activeOpacity={onChapterPress ? 0.7 : 1}
-                style={styles.playerTitleRow}
-              >
-                <Text style={[styles.playerTitle, { color: textDark }]}>
-                  {isQuick ? `${chapterNumber}. Chapter Quick Recap` : `${chapterNumber}. Chapter Complete Coverage`}
-                </Text>
-                {onChapterPress && (
-                  <Ionicons name="chevron-forward" size={15} color={emeraldPrimary} style={{ marginLeft: 4 }} />
-                )}
-              </TouchableOpacity>
+              <Text style={[styles.podcastOverline, { color: '#00996E' }]}>PODCAST 1 OF 1</Text>
+              <Text style={[styles.playerTitle, { color: textDark }]}>
+                {activeTrack.title}
+              </Text>
               <Text style={[styles.playerSubtitle, { color: textMuted }]}>
-                {effectiveChapterTitle}
+                {effectiveChapterTitle} · {isQuick ? 'Essentials' : 'In-depth'}
               </Text>
             </View>
 
@@ -891,6 +770,7 @@ export default function ListenScreen({
               <TouchableOpacity
                 style={[styles.back15Seconds, { backgroundColor: mintPillBg }]}
                 onPress={() => handleSkip(-15)}
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                 activeOpacity={0.75}
               >
                 <Text style={[styles.backLabel, { color: textDark }]}>↶15</Text>
@@ -900,7 +780,8 @@ export default function ListenScreen({
               <TouchableOpacity
                 style={[styles.playAudio, { backgroundColor: emeraldPrimary }]}
                 onPress={handleTogglePlay}
-                activeOpacity={0.85}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.75}
               >
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color="#FFFFFF" />
               </TouchableOpacity>
@@ -909,6 +790,7 @@ export default function ListenScreen({
               <TouchableOpacity
                 style={[styles.forward30Seconds, { backgroundColor: mintPillBg }]}
                 onPress={() => handleSkip(15)}
+                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                 activeOpacity={0.75}
               >
                 <Text style={[styles.forwardLabel, { color: textDark }]}>15↷</Text>
@@ -918,6 +800,7 @@ export default function ListenScreen({
               <TouchableOpacity
                 style={styles.speedBtn}
                 onPress={handleCycleSpeed}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                 activeOpacity={0.75}
               >
                 <Text style={[styles.speedText, { color: textDark }]}>
@@ -944,56 +827,77 @@ export default function ListenScreen({
             {/* 7. Transcript Section (.transcriptHeading & .transcriptReadingCard) */}
             <View style={styles.transcriptSection}>
               <Text style={[styles.transcriptHeading, { color: textDark }]}>Transcript</Text>
-              <Text style={[styles.transcriptHint, { color: textMuted }]}>
-                Karaoke sync · Tap any word to jump · Dotted terms to define
-              </Text>
 
               <View style={[styles.transcriptReadingCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                {tokenizedParagraphs.map((paraWords, pIdx) => {
+                {tokenizedParagraphs.map((paraItem, pIdx) => {
                   return (
                     <View
                       key={pIdx}
                       style={styles.transcriptParagraphCard}
                     >
-                      <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                        {paraWords.map((w) => {
-                          const isWordActive =
-                            activeParagraphIndex === pIdx &&
-                            activeWordIndex === w.index;
-                          const isWordPast =
-                            pIdx < activeParagraphIndex ||
-                            (pIdx === activeParagraphIndex && w.index < activeWordIndex);
-
-                          return (
-                            <Text
-                              key={w.index}
-                              onPress={() => handleWordPress(pIdx, w)}
-                              style={[
-                                styles.wordInline,
-                                isWordActive && [
-                                  styles.wordInlineActive,
-                                  { backgroundColor: emeraldPrimary },
-                                ],
-                                w.isGlossary && styles.wordInlineGlossary,
-                                {
-                                  color: isWordActive
-                                    ? '#FFFFFF'
-                                    : isPlaying && !isWordPast
-                                    ? (isDark ? '#8DA297' : '#687D72')
+                      <TouchableOpacity
+                        style={[styles.timestampBadge, { backgroundColor: isDark ? '#1C3328' : '#E8F5E9' }]}
+                        onPress={() => handleSeekToParagraph(pIdx)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.timestampBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
+                          [{paraItem.timestamp}]
+                        </Text>
+                      </TouchableOpacity>
+                      {pIdx === activeParagraphIndex ? (
+                        <Text style={[styles.transcriptParagraph, { color: textDark }]}>
+                          {paraItem.words.map((w) => {
+                            const isWordActive = activeWordIndex === w.index;
+                            return (
+                              <Text
+                                key={w.index}
+                                onPress={() => handleWordPress(pIdx, w)}
+                                style={[
+                                  styles.wordInline,
+                                  isWordActive && [
+                                    styles.wordInlineActive,
+                                    { backgroundColor: emeraldPrimary },
+                                  ],
+                                  w.isGlossary && styles.wordInlineGlossary,
+                                  {
+                                    color: isWordActive
+                                      ? '#FFFFFF'
+                                      : textDark,
+                                    fontWeight: isWordActive
+                                      ? '700'
+                                      : w.isGlossary
+                                      ? '600'
+                                      : '400',
+                                  },
+                                ]}
+                              >
+                                {w.raw}{' '}
+                              </Text>
+                            );
+                          })}
+                        </Text>
+                      ) : (
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleSeekToParagraph(pIdx)}
+                        >
+                          <Text
+                            style={[
+                              styles.transcriptParagraph,
+                              {
+                                color:
+                                  isPlaying && pIdx < activeParagraphIndex
+                                    ? isDark
+                                      ? '#8DA297'
+                                      : '#687D72'
                                     : textDark,
-                                  fontWeight: isWordActive
-                                    ? '700'
-                                    : w.isGlossary
-                                    ? '600'
-                                    : '400',
-                                },
-                              ]}
-                            >
-                              {w.raw}{' '}
-                            </Text>
-                          );
-                        })}
-                      </Text>
+                              },
+                            ]}
+                          >
+                            {activeParagraphs[pIdx]?.text || ''}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   );
                 })}
@@ -1146,6 +1050,7 @@ export default function ListenScreen({
                       },
                     ]}
                     onPress={() => handleSkip(-15)}
+                    hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
                     activeOpacity={0.75}
                   >
                     <Ionicons name="refresh" size={11} color={isDark ? '#FFFFFF' : '#1A282D'} />
@@ -1155,7 +1060,8 @@ export default function ListenScreen({
                   <TouchableOpacity
                     style={[styles.playButton, { backgroundColor: '#00996E' }]}
                     onPress={handleTogglePlay}
-                    activeOpacity={0.85}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.75}
                   >
                     <Ionicons name={isPlaying ? 'pause' : 'play'} size={14} color="#FFFFFF" />
                   </TouchableOpacity>
@@ -1164,6 +1070,7 @@ export default function ListenScreen({
                   <TouchableOpacity
                     style={styles.speedControlBtn}
                     onPress={handleCycleSpeed}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     activeOpacity={0.75}
                   >
                     <Text style={styles.speedControlText}>
@@ -1192,64 +1099,87 @@ export default function ListenScreen({
               <Text style={[styles.transcriptHeadingText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
                 Transcript
               </Text>
-              <Text style={[styles.transcriptHelper, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                Karaoke sync · tap any word to jump · dotted terms to define
-              </Text>
 
               {/* Transcript Divider (.transcriptDivider) */}
               <View style={[styles.transcriptDivider, { backgroundColor: isDark ? '#2D4538' : '#DBE5E0' }]} />
 
               <View style={styles.transcriptParagraphsWrap}>
-                {tokenizedParagraphs.map((paraWords, pIdx) => {
+                {tokenizedParagraphs.map((paraItem, pIdx) => {
                   return (
                     <View
                       key={pIdx}
                       style={styles.microTranscriptCard}
                     >
-                      <Text
-                        style={[
-                          styles.transcriptParagraphText,
-                          { color: isDark ? '#FFFFFF' : '#1A282D' },
-                        ]}
+                      <TouchableOpacity
+                        style={[styles.timestampBadge, { backgroundColor: isDark ? '#1C3328' : '#E8F5E9' }]}
+                        onPress={() => handleSeekToParagraph(pIdx)}
+                        activeOpacity={0.7}
                       >
-                        {paraWords.map((w) => {
-                          const isWordActive =
-                            activeParagraphIndex === pIdx &&
-                            activeWordIndex === w.index;
-                          const isWordPast =
-                            pIdx < activeParagraphIndex ||
-                            (pIdx === activeParagraphIndex && w.index < activeWordIndex);
-
-                          return (
-                            <Text
-                              key={w.index}
-                              onPress={() => handleWordPress(pIdx, w)}
-                              style={[
-                                styles.wordInline,
-                                isWordActive && [
-                                  styles.wordInlineActive,
-                                  { backgroundColor: '#00996E' },
-                                ],
-                                w.isGlossary && styles.wordInlineGlossary,
-                                {
-                                  color: isWordActive
+                        <Text style={[styles.timestampBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
+                          [{paraItem.timestamp}]
+                        </Text>
+                      </TouchableOpacity>
+                      {pIdx === activeParagraphIndex ? (
+                        <Text
+                          style={[
+                            styles.transcriptParagraphText,
+                            { color: isDark ? '#FFFFFF' : '#1A282D' },
+                          ]}
+                        >
+                          {paraItem.words.map((w) => {
+                            const isWordActive = activeWordIndex === w.index;
+                            return (
+                              <Text
+                                key={w.index}
+                                onPress={() => handleWordPress(pIdx, w)}
+                                style={[
+                                  styles.wordInline,
+                                  isWordActive && [
+                                    styles.wordInlineActive,
+                                    { backgroundColor: '#00996E' },
+                                  ],
+                                  w.isGlossary && styles.wordInlineGlossary,
+                                  {
+                                    color: isWordActive
+                                      ? '#FFFFFF'
+                                      : (isDark ? '#FFFFFF' : '#1A282D'),
+                                    fontWeight: isWordActive
+                                      ? '700'
+                                      : w.isGlossary
+                                      ? '600'
+                                      : '400',
+                                  },
+                                ]}
+                              >
+                                {w.raw}{' '}
+                              </Text>
+                            );
+                          })}
+                        </Text>
+                      ) : (
+                        <TouchableOpacity
+                          activeOpacity={0.8}
+                          onPress={() => handleSeekToParagraph(pIdx)}
+                        >
+                          <Text
+                            style={[
+                              styles.transcriptParagraphText,
+                              {
+                                color:
+                                  isPlaying && pIdx < activeParagraphIndex
+                                    ? isDark
+                                      ? '#8DA297'
+                                      : '#687D72'
+                                    : isDark
                                     ? '#FFFFFF'
-                                    : isPlaying && !isWordPast
-                                    ? (isDark ? '#8DA297' : '#687D72')
-                                    : (isDark ? '#FFFFFF' : '#1A282D'),
-                                  fontWeight: isWordActive
-                                    ? '700'
-                                    : w.isGlossary
-                                    ? '600'
-                                    : '400',
-                                },
-                              ]}
-                            >
-                              {w.raw}{' '}
-                            </Text>
-                          );
-                        })}
-                      </Text>
+                                    : '#1A282D',
+                              },
+                            ]}
+                          >
+                            {activeParagraphs[pIdx]?.text || ''}
+                          </Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
                   );
                 })}
@@ -1404,12 +1334,12 @@ const styles = StyleSheet.create({
   },
   /* Mode Tabs (.listenModeTabs) */
   listenModeTabs: {
-    height: 42,
+    height: 46,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 3,
+    padding: 4,
     marginBottom: 16,
   },
   tabDot: {
@@ -1426,7 +1356,7 @@ const styles = StyleSheet.create({
   },
   listenTab: {
     flex: 1,
-    height: 34,
+    height: 38,
     borderRadius: 18,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1591,7 +1521,7 @@ const styles = StyleSheet.create({
   transcriptHeading: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 2,
+    marginBottom: 8,
   },
   transcriptHint: {
     fontSize: 9.5,
@@ -1867,6 +1797,51 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
     paddingBottom: 4,
+  },
+  badgeGroupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  durationBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    gap: 4,
+  },
+  durationBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  countBadgePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+  },
+  countBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  podcastOverline: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  timestampBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginBottom: 4,
+  },
+  timestampBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   listenChapterTitle: {
     fontSize: 22,

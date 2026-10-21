@@ -19,7 +19,7 @@ import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import MarkdownReader from './MarkdownReader';
-import { fetchQuickStudyGuide, fetchDetailedNotes } from '@/services/contentService';
+import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 
 const { width, height } = Dimensions.get('window');
@@ -42,7 +42,6 @@ interface StudyGuideReaderProps {
   subjectId?: string;
   onBackPress?: () => void;
   onBookmarkPress?: () => void;
-  onChapterPress?: () => void;
   onOpenListen?: (mode: 'quick' | 'detailed') => void;
   onCompleteReading?: (mode: 'essentials' | 'in_depth') => void;
 }
@@ -115,8 +114,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Alimentary Canal Tripartite Blueprint',
       subtitle: 'Foregut • Midgut • Hindgut',
       badgeLabel: 'ALIMENTARY CANAL',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/Insect_Digestive_System_Blueprint.png',
-      imageSource: require('@/assets/images/infographics/insect_digestive_system_blueprint.png'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/insect_digestive_system_blueprint.png'),
       regions: [
         { label: 'Foregut', scientific: 'Stomodaeum (Ingestion & Mastication)' },
         { label: 'Midgut', scientific: 'Mesenteron (Enzymatic Absorption)' },
@@ -127,8 +126,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Midgut Histology & Cellular Labor Architecture',
       subtitle: 'Columnar Cells • Nidi • Peritrophic Membrane',
       badgeLabel: 'GUT HISTOLOGY BLUEPRINT',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_01/Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/2.%20Midgut%20(Mesenteron)/The_Insect_Midgut_Biological_Engine.png',
-      imageSource: require('@/assets/images/infographics/digestive_system_mindmap.jpg'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/2.%20Midgut%20(Mesenteron)/The_Insect_Midgut_Biological_Engine.png`,
+      imageSource: require('../../../assets/images/infographics/digestive_system_mindmap.jpg'),
       regions: [
         { label: 'Columnar Epithelium', scientific: 'Active Hydrolysis & Microvillar Absorption' },
         { label: 'Peritrophic Envelope', scientific: 'Chitin-Protein Food Abrasion & Pathogen Shield' },
@@ -141,8 +140,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Metamorphosis Life Cycles & Developmental Stages',
       subtitle: 'Ametabola • Hemimetabola • Holometabola',
       badgeLabel: 'METAMORPHOSIS BLUEPRINT',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_02/generated_infographics/intermediate/infographic_card_001.png',
-      imageSource: require('@/assets/images/infographics/metamorphosis_card_01.png'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/metamorphosis_card_01.png'),
       regions: [
         { label: 'Ametabola', scientific: 'Direct (Egg → Young → Adult, Lepisma)' },
         { label: 'Hemimetabola', scientific: 'Incomplete (Egg → Nymph → Adult)' },
@@ -153,8 +152,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Neuroendocrine Regulation & Hormonal Balance Axis',
       subtitle: 'PTTH • Ecdysone • Juvenile Hormone Cascade',
       badgeLabel: 'ENDOCRINE AXIS BLUEPRINT',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_02/generated_infographics/advanced/infographic_card_002.png',
-      imageSource: require('@/assets/images/infographics/metamorphosis_mindmap.png'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/generated_infographics/advanced/infographic_card_002.png`,
+      imageSource: require('../../../assets/images/infographics/metamorphosis_mindmap.png'),
       regions: [
         { label: 'Brain PTTH', scientific: 'Protocerebral Neurosecretory Activation' },
         { label: 'Prothoracic Ecdysone', scientific: 'Apolysis & Cuticular Synthesis Trigger' },
@@ -167,8 +166,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Rock Weathering & Regolith Petrogenesis',
       subtitle: 'Physical • Chemical • Biological Disintegration',
       badgeLabel: 'WEATHERING ARCHITECTURE',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_03/Foundation/Mind%20Maps/Weathering_Mind%20Map.png',
-      imageSource: require('@/assets/images/infographics/weathering_regolith_blueprint.jpg'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/weathering_regolith_blueprint.jpg'),
       regions: [
         { label: 'Physical / Mechanical', scientific: 'Frost Wedging & Thermal Exfoliation' },
         { label: 'Chemical Decomposition', scientific: 'Hydration, Hydrolysis & Oxidation' },
@@ -179,8 +178,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Comprehensive Soil Profile & Weathering Mind Map',
       subtitle: 'Bedrock Saprolite • Regolith Mantle • Solum Horizons',
       badgeLabel: 'PEDOGENESIS & SOIL PROFILE',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_03/Foundation/Mind%20Maps/Weathering_Mind%20Map.png',
-      imageSource: require('@/assets/images/infographics/weathering_mindmap.png'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/weathering_mindmap.png'),
       regions: [
         { label: 'Horizon Differentiation', scientific: 'Topsoil (O/A) to Subsoil (B) & Saprolite' },
         { label: 'Mineral Transformation', scientific: 'Secondary Clay Mineral Genesis & Solum' },
@@ -193,8 +192,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Floral Reproductive Anatomy & Pollination Process',
       subtitle: 'Stamen Locules • Anther Dehiscence • Honey Bee Vectors',
       badgeLabel: 'FLORAL POLLINATION BLUEPRINT',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_04/media/hero.png',
-      imageSource: require('@/assets/images/infographics/floral_pollination_blueprint.jpg'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/floral_pollination_blueprint.jpg'),
       regions: [
         { label: 'Stamen & Anther', scientific: '4 Microsporangial Locules & Pollen Dehiscence' },
         { label: 'Insect Vector', scientific: 'Apis mellifera Honey Bee Pollen Transfer' },
@@ -205,8 +204,8 @@ const CHAPTER_INFOGRAPHICS: Record<number, ChapterModeInfographics> = {
       title: 'Entomophilous Pollination Ecology & Agro-Ecosystems',
       subtitle: 'Floral Adaptations • Vector Ecology • Yield Thresholds',
       badgeLabel: 'POLLINATION ECOLOGY',
-      remoteUri: 'https://saralvidhya-api-193782571555.asia-south1.run.app/api/content/angrau/entomology/chapter_04/media/hero.png',
-      imageSource: require('@/assets/images/infographics/chapter-pollination-hero.png'),
+      remoteUri: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
+      imageSource: require('../../../assets/images/infographics/chapter-pollination-hero.png'),
       regions: [
         { label: 'Entomophily', scientific: 'Melittophily, Nectar Rewards & Floral Guides' },
         { label: 'Pollen Transport', scientific: 'Corbicula (Pollen Basket) Loading Dynamics' },
@@ -256,7 +255,6 @@ export default function StudyGuideReader({
   subjectId = 'ento_131',
   onBackPress,
   onBookmarkPress,
-  onChapterPress,
   onOpenListen,
   onCompleteReading,
 }: StudyGuideReaderProps) {
@@ -306,34 +304,36 @@ export default function StudyGuideReader({
     SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
   );
 
+  // Sync instant fallback content synchronously whenever chapterNumber changes
+  useEffect(() => {
+    setQuickContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '');
+    setDetailedContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '');
+  }, [chapterNumber]);
+
+  // Fast mode-specific fetch: avoids downloading 5MB detailed notes on initial mount
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
 
-    // 1. Immediately update from local sample/fallback so UI updates synchronously
-    const fallbackQuick = SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
-    const fallbackDetailed = SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
-    setQuickContent(fallbackQuick);
-    setDetailedContent(fallbackDetailed);
-
-    // 2. Fetch fresh canonical markdown from Cloud Run API in background
-    Promise.all([
-      fetchQuickStudyGuide(subjectId, chapterNumber, persona, controller.signal),
-      fetchDetailedNotes(subjectId, chapterNumber, persona, controller.signal),
-    ])
-      .then(([quick, detailed]) => {
-        if (isMounted) {
-          if (quick && quick.trim().length > 50) setQuickContent(quick);
-          if (detailed && detailed.trim().length > 50) setDetailedContent(detailed);
-        }
-      })
-      .catch(() => {});
+    if (studyMode === 'essentials') {
+      fetchQuickStudyGuide(subjectId, chapterNumber, persona, controller.signal)
+        .then((quick) => {
+          if (isMounted && quick && quick.trim().length > 50) setQuickContent(quick);
+        })
+        .catch(() => {});
+    } else {
+      fetchDetailedNotes(subjectId, chapterNumber, persona, controller.signal)
+        .then((detailed) => {
+          if (isMounted && detailed && detailed.trim().length > 50) setDetailedContent(detailed);
+        })
+        .catch(() => {});
+    }
 
     return () => {
       isMounted = false;
       controller.abort();
     };
-  }, [chapterNumber, subjectId, persona]);
+  }, [chapterNumber, subjectId, persona, studyMode]);
 
   useEffect(() => {
     const unsub = speechService.subscribe((speaking) => {
@@ -402,31 +402,28 @@ export default function StudyGuideReader({
           { paddingBottom: insets.bottom + 80 },
         ]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* 1. CHAPTER HEADING ROW WITH SAVE BUTTON */}
         {studyMode === 'essentials' ? (
           /* Essentials Header (.guideIntroduction) */
           <View style={styles.guideIntroduction}>
             <View style={styles.guideTitleRow}>
-              <TouchableOpacity
-                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
-                onPress={onChapterPress}
-                activeOpacity={onChapterPress ? 0.7 : 1}
-              >
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
                   <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
                     Ch {chapterNumber}
                   </Text>
-                  <Ionicons name="chevron-down" size={11} color={emeraldPrimary} />
                 </View>
                 <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
                   {effectiveChapterTitle}
                 </Text>
-              </TouchableOpacity>
+              </View>
               <TouchableOpacity
                 style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
                 onPress={handleToggleBookmark}
-                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                activeOpacity={0.75}
                 accessibilityLabel="Save chapter"
               >
                 <Ionicons
@@ -441,25 +438,21 @@ export default function StudyGuideReader({
           /* In-depth Header (.frameParent & .readAloud) */
           <View style={[styles.inDepthHeader, { borderBottomColor: isDark ? '#2D4538' : '#C6EBDC' }]}>
             <View style={styles.guideTitleRow}>
-              <TouchableOpacity
-                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}
-                onPress={onChapterPress}
-                activeOpacity={onChapterPress ? 0.7 : 1}
-              >
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
                   <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
                     Ch {chapterNumber}
                   </Text>
-                  <Ionicons name="chevron-down" size={11} color={emeraldPrimary} />
                 </View>
                 <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
                   {effectiveChapterTitle}
                 </Text>
-              </TouchableOpacity>
+              </View>
               <TouchableOpacity
                 style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
                 onPress={handleToggleBookmark}
-                activeOpacity={0.8}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                activeOpacity={0.75}
                 accessibilityLabel="Save chapter"
               >
                 <Ionicons
@@ -483,10 +476,13 @@ export default function StudyGuideReader({
                       isActive && styles.groupBadgeActive,
                     ]}
                     onPress={() => {
-                      Haptics.selectionAsync();
-                      updatePersona(lvl);
+                      if (persona !== lvl) {
+                        Haptics.selectionAsync();
+                        updatePersona(lvl);
+                      }
                     }}
-                    activeOpacity={0.8}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.75}
                   >
                     <Image
                       source={PERSONA_ICONS[lvl]}
@@ -510,10 +506,13 @@ export default function StudyGuideReader({
                 studyMode === 'essentials' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
               ]}
               onPress={() => {
-                Haptics.selectionAsync();
-                setStudyMode('essentials');
+                if (studyMode !== 'essentials') {
+                  Haptics.selectionAsync();
+                  setStudyMode('essentials');
+                }
               }}
-              activeOpacity={0.85}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              activeOpacity={0.75}
             >
               <Ionicons
                 name="flash"
@@ -538,10 +537,13 @@ export default function StudyGuideReader({
                 studyMode === 'in_depth' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
               ]}
               onPress={() => {
-                Haptics.selectionAsync();
-                setStudyMode('in_depth');
+                if (studyMode !== 'in_depth') {
+                  Haptics.selectionAsync();
+                  setStudyMode('in_depth');
+                }
               }}
-              activeOpacity={0.85}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              activeOpacity={0.75}
             >
               <Ionicons
                 name="add-circle-outline"
@@ -574,7 +576,8 @@ export default function StudyGuideReader({
               },
             ]}
             onPress={handleToggleAudio}
-            activeOpacity={0.8}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.75}
             accessibilityLabel="Read aloud"
           >
             <Ionicons
@@ -987,13 +990,14 @@ const styles = StyleSheet.create({
   },
   depthSelector: {
     flex: 1,
+    height: 42,
     flexDirection: 'row',
     borderRadius: 100,
     padding: 3,
     gap: 4,
   },
   compactAudioPill: {
-    height: 38,
+    height: 40,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
@@ -1008,7 +1012,7 @@ const styles = StyleSheet.create({
   },
   depthPill: {
     flex: 1,
-    height: 32,
+    height: 36,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1099,9 +1103,11 @@ const styles = StyleSheet.create({
   },
   diagramTouch: {
     width: '100%',
-    height: 110,
+    height: 180,
     justifyContent: 'center',
     alignItems: 'center',
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   originalDiagramDetail: {
     width: '100%',
