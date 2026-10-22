@@ -26,7 +26,6 @@ export interface ExamQuestion {
   taxonomy: string;
   topicTitle: string;
   questionText: string;
-  guidanceText?: string;
 }
 
 export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
@@ -38,7 +37,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Three regions of the insect gut',
     questionText:
       'State the embryonic germ layer origins of the Foregut (Stomodaeum), Midgut (Mesenteron), and Hindgut (Proctodaeum), and note whether each has a cuticular intima.',
-    guidanceText: 'Be clear and concise · 2 marks',
   },
   {
     id: 2,
@@ -48,7 +46,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Proventricular Teeth & Gizzard Action',
     questionText:
       'Describe the histological arrangement of the proventriculus in Orthopteran insects and explain its mechanical grinding action.',
-    guidanceText: 'Point-to-point structural notes · 2 marks',
   },
   {
     id: 3,
@@ -58,7 +55,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Peritrophic Membrane Structure',
     questionText:
       'Distinguish between Type I and Type II peritrophic membranes in terms of site of secretion and chitin mesh arrangement.',
-    guidanceText: 'Mention anatomical origins · 2 marks',
   },
   {
     id: 4,
@@ -68,7 +64,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Malpighian Tubules & Cryptonephridial System',
     questionText:
       'Explain the adaptive significance of the cryptonephridial arrangement in desert beetles for extreme water conservation.',
-    guidanceText: 'Focus on rectal absorption dynamics · 2 marks',
   },
   {
     id: 5,
@@ -78,7 +73,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Midgut Epithelial Cell Diversity',
     questionText:
       'Detail the physiological roles of columnar digestive cells, goblet cells, and regenerative nidi cells in insect mesenteron epithelium.',
-    guidanceText: 'Provide detailed functional summary · 5 marks',
   },
   {
     id: 6,
@@ -88,7 +82,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Filter Chamber in Hemiptera',
     questionText:
       'Explain the anatomical modification and functional role of the filter chamber in sap-sucking Hemipteran insects.',
-    guidanceText: 'Focus on osmoregulation and nutrient concentration · 2 marks',
   },
   {
     id: 7,
@@ -98,7 +91,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Salivary Glands in Insects',
     questionText:
       'Describe the morphology of insect labial salivary glands and list three key enzymes or anticoagulants secreted by them.',
-    guidanceText: 'State enzymes with functions · 2 marks',
   },
   {
     id: 8,
@@ -108,7 +100,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Rectal Pads & Papillae',
     questionText:
       'What are rectal pads? Explain their ultrastructure and critical role in water and ion reabsorption from primary urine.',
-    guidanceText: 'Explain ionic recycling · 2 marks',
   },
   {
     id: 9,
@@ -118,7 +109,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Insect Ecdysis & Cuticular Moulting',
     questionText:
       'Outline the sequential physiological steps of ecdysis, detailing the hormonal interplay between PTTH, ecdysone, and bursicon.',
-    guidanceText: 'Provide stepwise hormonal cascade · 5 marks',
   },
   {
     id: 10,
@@ -128,7 +118,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Symbiont-Mediated Digestion in Termites',
     questionText:
       'How do wood-feeding termites digest cellulose? Name the protozoan and bacterial endosymbionts involved.',
-    guidanceText: 'Mention hindgut paunch dynamics · 2 marks',
   },
   {
     id: 11,
@@ -138,7 +127,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Stomodaeal Cardiac Valve',
     questionText:
       'Describe the position and function of the cardiac (oesophageal) valve in preventing retrograde flow of food bolus.',
-    guidanceText: 'Include morphological position · 2 marks',
   },
   {
     id: 12,
@@ -148,7 +136,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Digestive Proteases in Predatory Insects',
     questionText:
       'Compare extra-oral digestion in larval Neuroptera/Coleoptera with intra-oral enzymatic processing in chewing herbivorous insects.',
-    guidanceText: 'Contrast extra-oral injection vs gut lysis · 2 marks',
   },
   {
     id: 13,
@@ -158,7 +145,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Insect Endocrine Control of Metamorphosis',
     questionText:
       'Critically evaluate the role of Juvenile Hormone (JH) titers in determining whether a larval moult or a pupal/imaginal moult occurs.',
-    guidanceText: 'Draw diagrammatic titer profile · 5 marks',
   },
   {
     id: 14,
@@ -168,7 +154,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Haemolymph Circulation & Dorsal Vessel',
     questionText:
       'Diagrammatically represent the open circulatory system in insects and trace the flow of haemolymph through the ostia and aorta.',
-    guidanceText: 'Direction of pulsating flow · 2 marks',
   },
   {
     id: 15,
@@ -178,7 +163,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Tracheal System & Spiracular Closure',
     questionText:
       'Explain the mechanism of discontinuous gas exchange cycles (DGC) in insects and how it minimizes respiratory water loss.',
-    guidanceText: 'Flutter, open, and closed phases · 2 marks',
   },
   {
     id: 16,
@@ -188,7 +172,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Types of Insect Antennae',
     questionText:
       'Differentiate between plumose, flabellate, and geniculate antennae with one agricultural pest example for each type.',
-    guidanceText: 'Name pest species with antenna type · 2 marks',
   },
   {
     id: 17,
@@ -198,7 +181,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Insect Leg Modifications',
     questionText:
       'Describe the morphological adaptations in fossorial and raptorial legs, citing specific insect orders exhibiting them.',
-    guidanceText: 'Tibial and tarsal modifications · 2 marks',
   },
   {
     id: 18,
@@ -208,7 +190,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Insect Excretory Physiology & Nitrogen Metabolism',
     questionText:
       'Explain the biochemical synthesis of uric acid in insects and outline the active transport mechanisms operating in Malpighian tubule cells.',
-    guidanceText: 'Discuss uricotelism advantages · 5 marks',
   },
   {
     id: 19,
@@ -218,7 +199,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Compound Eye Ommatidium Anatomy',
     questionText:
       'Label the optical components of an insect ommatidium and distinguish between apposition and superposition visual mechanisms.',
-    guidanceText: 'Diurnal vs nocturnal vision · 2 marks',
   },
   {
     id: 20,
@@ -228,7 +208,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Johnston’s Organ Function',
     questionText:
       'Where is Johnston’s organ located in the antenna and what mechanoreceptive and auditory roles does it play in male mosquitoes?',
-    guidanceText: 'Pedicel location and frequency tuning · 2 marks',
   },
   {
     id: 21,
@@ -238,7 +217,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Wing Venation: Comstock-Needham System',
     questionText:
       'List the principal longitudinal veins in the Comstock-Needham system from Costa to Anal vein.',
-    guidanceText: 'Standard vein abbreviations · 2 marks',
   },
   {
     id: 22,
@@ -248,7 +226,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Fat Body Metabolic Functions',
     questionText:
       'Summarize the trophic, storage, and immunological functions of trophocytes, urocytes, and mycetocytes within insect fat bodies.',
-    guidanceText: 'Vitellogenin and energy reserves · 2 marks',
   },
   {
     id: 23,
@@ -258,7 +235,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Venom Glands in Hymenoptera',
     questionText:
       'Explain how the female ovipositor is modified into a sting apparatus in aculeate Hymenoptera with acid and alkaline gland secretions.',
-    guidanceText: 'Lancets, stylet and poison sac · 2 marks',
   },
   {
     id: 24,
@@ -268,7 +244,6 @@ export const SAMPLE_EXAM_QUESTIONS: ExamQuestion[] = [
     topicTitle: 'Integrated Insect Digestive Architecture',
     questionText:
       'Present a comprehensive functional overview of the insect alimentary system, correlating histological specialization with diverse feeding guilds (phytophagous, fluid-feeding, and xylophagous).',
-    guidanceText: 'Synthesis across all three gut regions · 10 marks',
   },
 ];
 
@@ -653,9 +628,11 @@ export default function PreparationExamView({
           </View>
 
           {/* Question Topic Title */}
-          <Text style={[styles.topicTitle, { color: colors.primaryText }]}>
-            {currentQ.topicTitle}
-          </Text>
+          {currentQ.topicTitle && !currentQ.topicTitle.startsWith('Concept ') ? (
+            <Text style={[styles.topicTitle, { color: colors.primaryText }]}>
+              {currentQ.topicTitle}
+            </Text>
+          ) : null}
 
           {/* Question Full Text */}
           <Text style={[styles.questionBody, { color: colors.primaryText }]}>
@@ -667,9 +644,6 @@ export default function PreparationExamView({
         <View style={styles.answerSectionHeader}>
           <Text style={[styles.yourAnswerTitle, { color: colors.primaryText }]}>
             Your answer
-          </Text>
-          <Text style={[styles.answerGuidance, { color: colors.subText }]}>
-            {currentQ.guidanceText || 'Be clear and concise · 2 marks'}
           </Text>
         </View>
 
@@ -971,16 +945,11 @@ const styles = StyleSheet.create({
   answerSectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 8,
   },
   yourAnswerTitle: {
     fontSize: 17,
     fontWeight: '700',
-  },
-  answerGuidance: {
-    fontSize: 12.5,
-    fontWeight: '400',
   },
   answerInputCard: {
     borderRadius: 14,

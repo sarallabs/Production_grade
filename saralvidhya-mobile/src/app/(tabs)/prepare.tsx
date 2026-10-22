@@ -97,9 +97,10 @@ export default function PrepareScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar is shown for other tabs (PYQ, Study Plan).
-          Preparation Exam has its own dedicated 1:1 header from the PNG design. */}
-      {activeSegment !== 'prep_exam' && (
+      {/* 1. TOP TOOLBAR: [ Back Arrow ] [ PYQ's | Preparation Exam | Study Plan ] [ Profile ]
+          Always visible so users can freely toggle across all three Prepare features.
+          Only hidden when the user is actively inside the timed full-screen exam. */}
+      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && (
         <TopNavBar
           segments={PREPARE_SEGMENTS}
           activeSegment={activeSegment}
@@ -128,11 +129,12 @@ export default function PrepareScreen() {
         />
       ) : activeSegment === 'prep_exam' ? (
         prepExamStep === 'selection' ? (
-          /* SCREEN 1: SELECTION SCREEN (1st and 2nd PNG) */
+          /* SCREEN 1: SELECTION SCREEN */
           <PreparationExamSelectionView
             units={subjectUnits}
             pageTitle="Preparation Exam"
             backLabel="Back to Study Table"
+            hideHeader={true}
             onBack={() => {
               if (router.canGoBack()) {
                 router.back();

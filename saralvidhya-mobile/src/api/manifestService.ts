@@ -72,7 +72,7 @@ export const ANGRAU_SUBJECTS: Subject[] = [
         name: 'Weathering',
         dir: 'chapter_03',
         description: 'Abiotic environmental factors, temperature, humidity and photoperiod influence on insect population.',
-        completed: ['summary', 'detailed_view'],
+        completed: ['summary'],
         resourceCount: 4,
       },
       {
@@ -85,249 +85,13 @@ export const ANGRAU_SUBJECTS: Subject[] = [
       },
     ],
   },
-  {
-    id: 'agro_101',
-    code: 'AGRO 101',
-    name: 'Agronomy',
-    credits: '3 (2+1)',
-    semester: 'Semester 3',
-    university: 'Acharya N.G. Ranga Agricultural University',
-    progressPercent: 50,
-    chapters: [
-      {
-        number: 1,
-        name: 'Tillage and Tilth Concepts',
-        dir: 'chapter_01',
-        description: 'Objectives of tillage, primary vs secondary tillage, zero-tillage principles.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 2,
-        name: 'Crop Nutrition and Organic Manures',
-        dir: 'chapter_02',
-        description: 'Essential plant nutrients, biofertilizers, and balanced fertilizer application.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 3,
-        name: 'Water Management & Irrigation Systems',
-        dir: 'chapter_03',
-        description: 'Crop water requirements, drip, sprinkler irrigation and drainage methods.',
-        completed: ['summary'],
-        resourceCount: 4,
-      },
-      {
-        number: 4,
-        name: 'Weed Biology & Management',
-        dir: 'chapter_04',
-        description: 'Classification of weeds, herbicide selectivity, integrated weed control.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 5,
-        name: 'Dryland Farming & Water Conservation',
-        dir: 'chapter_05',
-        description: 'Drought coping mechanisms, mulching, watershed development.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 6,
-        name: 'Sustainable Cropping Systems',
-        dir: 'chapter_06',
-        description: 'Crop rotation, mixed cropping, intercropping indices and agroforestry.',
-        completed: [],
-        resourceCount: 4,
-      },
-    ],
-  },
-  {
-    id: 'path_101',
-    code: 'PATH 101',
-    name: 'Plant Pathology',
-    credits: '3 (2+1)',
-    semester: 'Semester 3',
-    university: 'Acharya N.G. Ranga Agricultural University',
-    progressPercent: 50,
-    chapters: [
-      {
-        number: 1,
-        name: 'Introduction to Plant Pathogens',
-        dir: 'chapter_01',
-        description: 'History, concepts of biotic and abiotic causes of plant diseases.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 2,
-        name: 'Fungal Plant Diseases & Morphology',
-        dir: 'chapter_02',
-        description: 'Mastigomycotina, Ascomycotina, Basidiomycotina life cycles.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 3,
-        name: 'Bacterial Phytopathogens',
-        dir: 'chapter_03',
-        description: 'Symptoms, transmission, survival of Xanthomonas, Ralstonia.',
-        completed: ['summary'],
-        resourceCount: 4,
-      },
-      {
-        number: 4,
-        name: 'Plant Viruses & Fastidious Microbes',
-        dir: 'chapter_04',
-        description: 'Tobacco mosaic virus, geminiviruses, vector relationships.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 5,
-        name: 'Disease Triangle & Epidemiology',
-        dir: 'chapter_05',
-        description: 'Infection cycles, inoculum potential, epidemic forecasting.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 6,
-        name: 'Integrated Disease Management',
-        dir: 'chapter_06',
-        description: 'Fungicides, systemic resistance, biological antagonists.',
-        completed: [],
-        resourceCount: 4,
-      },
-    ],
-  },
-  {
-    id: 'soil_101',
-    code: 'SOIL 101',
-    name: 'Soil Science',
-    credits: '3 (2+1)',
-    semester: 'Semester 3',
-    university: 'Acharya N.G. Ranga Agricultural University',
-    progressPercent: 50,
-    chapters: [
-      {
-        number: 1,
-        name: 'Soil Genesis & Formation',
-        dir: 'chapter_01',
-        description: 'Weathering of rocks, soil forming factors and profile horizonation.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 2,
-        name: 'Soil Physical Properties',
-        dir: 'chapter_02',
-        description: 'Soil texture, structure, bulk density, porosity, soil water constants.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 3,
-        name: 'Soil Chemistry & Colloids',
-        dir: 'chapter_03',
-        description: 'Cation and anion exchange capacity, base saturation, pH buffer capacity.',
-        completed: ['summary'],
-        resourceCount: 4,
-      },
-      {
-        number: 4,
-        name: 'Soil Organic Matter & Organisms',
-        dir: 'chapter_04',
-        description: 'Humus formation, carbon nitrogen ratio, mycorrhizae.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 5,
-        name: 'Problem Soils & Reclamation',
-        dir: 'chapter_05',
-        description: 'Saline, sodic, acid soils and lime/gypsum remediation.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 6,
-        name: 'Soil Survey & Land Capability',
-        dir: 'chapter_06',
-        description: 'Soil taxonomy orders, fertility evaluation and soil health card.',
-        completed: [],
-        resourceCount: 4,
-      },
-    ],
-  },
-  {
-    id: 'gpb_101',
-    code: 'GPB 101',
-    name: 'Genetics & Breeding',
-    credits: '3 (2+1)',
-    semester: 'Semester 3',
-    university: 'Acharya N.G. Ranga Agricultural University',
-    progressPercent: 50,
-    chapters: [
-      {
-        number: 1,
-        name: 'Mendelian Genetics & Heredity',
-        dir: 'chapter_01',
-        description: 'Monohybrid, dihybrid crosses, gene interaction and epistasis.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 2,
-        name: 'Chromosomal Basis of Inheritance',
-        dir: 'chapter_02',
-        description: 'Mitosis, meiosis, chromosome morphology and karyotyping.',
-        completed: ['summary', 'flashcards', 'quiz', 'detailed_view'],
-        resourceCount: 4,
-      },
-      {
-        number: 3,
-        name: 'Linkage & Crossing Over',
-        dir: 'chapter_03',
-        description: 'Genetic mapping, interference, coefficient of coincidence.',
-        completed: ['summary'],
-        resourceCount: 4,
-      },
-      {
-        number: 4,
-        name: 'Mutation & Polyploidy in Crops',
-        dir: 'chapter_04',
-        description: 'Spontaneous vs induced mutagenesis, autopolyploids and allopolyploids.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 5,
-        name: 'Plant Breeding Methods',
-        dir: 'chapter_05',
-        description: 'Mass selection, pure-line selection, pedigree and bulk methods.',
-        completed: [],
-        resourceCount: 4,
-      },
-      {
-        number: 6,
-        name: 'Heterosis & Hybrid Seed Production',
-        dir: 'chapter_06',
-        description: 'Cytoplasmic genetic male sterility (CGMS), hybrid vigour utilization.',
-        completed: [],
-        resourceCount: 4,
-      },
-    ],
-  },
 ];
 
 export const manifestService = {
   async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_cached_subjects_v6';
+    const cacheKey = 'saral_cached_subjects_v10_ento_starting_card';
     const cached = await storage.getItem<Subject[]>(cacheKey);
-    if (cached && cached.length >= ANGRAU_SUBJECTS.length && cached[0].chapters?.length === ANGRAU_SUBJECTS[0].chapters.length && cached[0].chapters[0]?.name === 'Digestive System') {
+    if (cached && cached.length === ANGRAU_SUBJECTS.length && cached[0].chapters?.length === 4) {
       return cached;
     }
 
@@ -413,7 +177,7 @@ export const manifestService = {
           chapter.completed.push(resourceType);
         }
         subject.progressPercent = this.calculateSubjectProgress(subject);
-        await storage.setItem('saral_cached_subjects_v6', subjects);
+        await storage.setItem('saral_cached_subjects_v8_strict_webapp', subjects);
       }
     }
     return subjects;

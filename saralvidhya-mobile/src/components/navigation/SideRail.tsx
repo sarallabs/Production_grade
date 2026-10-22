@@ -33,15 +33,13 @@ const ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: 
  */
 export default function SideRail({ state, descriptors, navigation }: SideRailProps) {
   const { isDark } = useAppTheme();
-  const { isLandscape } = useDeviceLayout();
   const insets = useSafeAreaInsets();
 
-  const bg = isDark ? '#23322B' : '#FFF6F1';
-  const border = isDark ? '#35483E' : '#EED9CE';
-  const active = isDark ? '#4ade80' : '#22c55e';
-  const inactive = isDark ? '#7E998B' : '#8A7A70';
-  const activeBg = isDark ? '#2F4A3C' : '#ECFDF5';
-  const wide = isLandscape;
+  const bg = isDark ? '#16231B' : '#FFFFFF';
+  const border = isDark ? '#2D4538' : '#E2EBE5';
+  const activeTint = isDark ? '#4ADE80' : '#147A43';
+  const inactiveTint = isDark ? '#8A9E92' : '#5E7A6B';
+  const activePillBg = isDark ? '#23392D' : '#DCECE2';
 
   // Filter out auxiliary/hidden routes like study, leaderboard, profile with href: null
   const visibleRoutes = state.routes.filter((route) => {
@@ -54,31 +52,28 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
       style={[
         styles.rail,
         {
-          width: wide ? 190 : 84,
+          width: 76,
           backgroundColor: bg,
           borderRightColor: border,
-          paddingTop: insets.top + 16,
-          paddingBottom: insets.bottom + 16,
+          paddingTop: Math.max(insets.top, 14),
+          paddingBottom: Math.max(insets.bottom, 16),
         },
       ]}
     >
-      <View style={[styles.brand, wide && styles.brandWide]}>
-        <View style={[styles.logo, { backgroundColor: active }]}>
-          <Ionicons name="school" size={22} color="#FFFFFF" />
+      {/* Top Brand Logo: 4-dot leaf in light green squircle */}
+      <View style={styles.brand}>
+        <View style={[styles.logo, { backgroundColor: isDark ? '#23392D' : '#DCECE2' }]}>
+          <Ionicons name="apps" size={20} color={activeTint} />
         </View>
-        {wide && (
-          <Text style={[styles.brandText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]} numberOfLines={1}>
-            Saral Vidhya
-          </Text>
-        )}
       </View>
 
+      {/* Center Nav Items */}
       <View style={styles.items}>
         {visibleRoutes.map((route) => {
           const focused = state.routes[state.index]?.key === route.key;
           const icon = ICONS[route.name] ?? ICONS.index;
           const label = descriptors[route.key]?.options.title ?? route.name;
-          const color = focused ? active : inactive;
+          const color = focused ? activeTint : inactiveTint;
 
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
@@ -96,20 +91,18 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
               accessibilityLabel={label}
               style={({ pressed }) => [
                 styles.item,
-                wide ? styles.itemWide : styles.itemCompact,
-                focused && { backgroundColor: activeBg },
-                pressed && { opacity: 0.7 },
+                focused && { backgroundColor: activePillBg },
+                pressed && { opacity: 0.75 },
               ]}
             >
               {descriptors[route.key]?.options?.tabBarIcon ? (
-                descriptors[route.key].options.tabBarIcon!({ color, focused, size: 24 })
+                descriptors[route.key].options.tabBarIcon!({ color, focused, size: 21 })
               ) : (
-                <Ionicons name={focused ? icon.active : icon.inactive} size={24} color={color} />
+                <Ionicons name={focused ? icon.active : icon.inactive} size={21} color={color} />
               )}
               <Text
                 style={[
                   styles.label,
-                  wide ? styles.labelWide : styles.labelCompact,
                   { color, fontWeight: focused ? '700' : '600' },
                 ]}
                 numberOfLines={1}
@@ -120,6 +113,17 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
           );
         })}
       </View>
+
+      {/* Bottom Help '?' Button */}
+      <View style={styles.bottomSection}>
+        <Pressable
+          style={[styles.helpBtn, { borderColor: border }]}
+          onPress={() => {}}
+          accessibilityLabel="Help"
+        >
+          <Text style={[styles.helpText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>?</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -127,23 +131,53 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
 const styles = StyleSheet.create({
   rail: {
     borderRightWidth: 1,
-    paddingHorizontal: 10,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  brand: { alignItems: 'center', marginBottom: 24 },
-  brandWide: { flexDirection: 'row', paddingHorizontal: 8, gap: 10 },
+  brand: {
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   logo: {
-    width: 40,
-    height: 40,
-    borderRadius: BorderRadius.md,
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandText: { fontSize: 18, fontWeight: '800', flexShrink: 1 },
-  items: { gap: 6 },
-  item: { borderRadius: BorderRadius.md, minHeight: 56 },
-  itemCompact: { alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
-  itemWide: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, gap: 14 },
-  label: { fontSize: 13 },
-  labelCompact: { marginTop: 4, fontSize: 12 },
-  labelWide: { fontSize: 16 },
+  items: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 12,
+    paddingTop: 8,
+  },
+  item: {
+    width: 58,
+    height: 58,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    gap: 3,
+  },
+  label: {
+    fontSize: 11,
+    textAlign: 'center',
+  },
+  bottomSection: {
+    alignItems: 'center',
+    paddingTop: 8,
+  },
+  helpBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  helpText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

@@ -29,7 +29,7 @@ export const DEFAULT_UNITS: UnitItem[] = [
   {
     id: 2,
     title: 'Unit 2',
-    description: 'Metamorphosis & Life Cycles',
+    description: 'Metamorphosis',
   },
   {
     id: 3,

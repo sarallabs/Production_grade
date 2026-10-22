@@ -6,12 +6,67 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { fetchQuestionBank, MarkType } from '@/services/contentService';
+import { getTermDefinition, COMPILED_GLOSSARY_REGEX } from '@/data/glossaryTerms';
+
+interface HighlightedGlossaryTextProps {
+  text: string;
+  style?: any;
+  isDark: boolean;
+  onTermPress: (term: string, definition: string) => void;
+}
+
+const HighlightedGlossaryText = React.memo(function HighlightedGlossaryText({
+  text,
+  style,
+  isDark,
+  onTermPress,
+}: HighlightedGlossaryTextProps) {
+  if (!text || typeof text !== 'string') return null;
+
+  const parts = text.split(COMPILED_GLOSSARY_REGEX);
+  if (parts.length <= 1) {
+    return <Text style={style}>{text}</Text>;
+  }
+
+  const flattened = StyleSheet.flatten(style) || {};
+
+  return (
+    <Text style={style}>
+      {parts.map((part, idx) => {
+        const def = getTermDefinition(part);
+        if (def) {
+          return (
+            <Text
+              key={`term_${idx}_${part}`}
+              style={[
+                style,
+                {
+                  textDecorationLine: 'underline',
+                  textDecorationStyle: 'dotted',
+                  textDecorationColor: isDark ? '#4ADE80' : '#16A34A',
+                  color: flattened.color || (isDark ? '#FFFFFF' : '#111827'),
+                  fontWeight: flattened.fontWeight || '600',
+                },
+              ]}
+              onPress={() => onTermPress(part, def)}
+              suppressHighlighting={false}
+            >
+              {part}
+            </Text>
+          );
+        }
+        return part;
+      })}
+    </Text>
+  );
+});
 
 export type { MarkType };
 
@@ -179,6 +234,14 @@ export default function TeacherQuestionBankView({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedQuestionId, setSelectedQuestionId] = useState<number | string | null>(null);
   const [selectedMark, setSelectedMark] = useState<MarkType>('2M');
+  const [activeTooltip, setActiveTooltip] = useState<{ term: string; definition: string } | null>(null);
+
+  const handleTermPress = React.useCallback((term: string, definition: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+    setActiveTooltip({ term, definition });
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -313,9 +376,12 @@ export default function TeacherQuestionBankView({
                     </Text>
                   </View>
                   <View style={styles.cardQuestionInfo}>
-                    <Text style={[styles.questionText, { color: questionTextColor }]}>
-                      {item.question}
-                    </Text>
+                    <HighlightedGlossaryText
+                      text={item.question}
+                      style={[styles.questionText, { color: questionTextColor }]}
+                      isDark={isDark}
+                      onTermPress={handleTermPress}
+                    />
                     <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
                       <Text style={[styles.assignedByText, { color: assignedByColor, marginTop: 0 }]}>
                         Assigned by: {item.assignedBy}
@@ -391,9 +457,12 @@ export default function TeacherQuestionBankView({
                           <Text style={styles.answerBadgeText}>FACULTY ANSWER ({selectedMark})</Text>
                         </View>
                       </View>
-                      <Text style={[styles.answerText, { color: answerTextColor }]}>
-                        {item.answers[selectedMark]}
-                      </Text>
+                      <HighlightedGlossaryText
+                        text={item.answers[selectedMark]}
+                        style={[styles.answerText, { color: answerTextColor }]}
+                        isDark={isDark}
+                        onTermPress={handleTermPress}
+                      />
                     </View>
 
                     {/* Teacher Exam Tip */}
@@ -401,7 +470,12 @@ export default function TeacherQuestionBankView({
                       <Ionicons name="bulb-outline" size={15} color={tipText} />
                       <Text style={[styles.tipText, { color: tipText }]}>
                         <Text style={{ fontWeight: '700' }}>Teacher Tip: </Text>
-                        {item.teacherTip}
+                        <HighlightedGlossaryText
+                          text={item.teacherTip}
+                          style={[styles.tipText, { color: tipText }]}
+                          isDark={isDark}
+                          onTermPress={handleTermPress}
+                        />
                       </Text>
                     </View>
                   </View>
@@ -411,6 +485,81 @@ export default function TeacherQuestionBankView({
           })}
         </View>
       </ScrollView>
+
+      {/* Interactive Glossary Concept Definition Tooltip Popover */}
+      {activeTooltip && (
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setActiveTooltip(null)}
+        >
+          <TouchableOpacity
+            style={styles.tooltipBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveTooltip(null)}
+          >
+            <View
+              style={[
+                styles.tooltipCard,
+                {
+                  backgroundColor: isDark ? '#172B20' : '#FFFFFF',
+                  borderColor: isDark ? '#2B4A37' : '#D1E6DA',
+                },
+              ]}
+              onStartShouldSetResponder={() => true}
+            >
+              {/* Header with Key Concept Badge & Close Icon */}
+              <View style={styles.tooltipHeader}>
+                <View
+                  style={[
+                    styles.tooltipBadge,
+                    { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.16)' : '#E8F5EE' },
+                  ]}
+                >
+                  <Ionicons name="sparkles" size={13} color={isDark ? '#4ADE80' : '#16A34A'} />
+                  <Text
+                    style={[
+                      styles.tooltipBadgeText,
+                      { color: isDark ? '#4ADE80' : '#16A34A' },
+                    ]}
+                  >
+                    KEY CONCEPT
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setActiveTooltip(null)}
+                  style={styles.tooltipCloseBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Ionicons name="close" size={18} color={isDark ? '#A6C5B3' : '#64748B'} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Term Title */}
+              <Text
+                style={[
+                  styles.tooltipTermTitle,
+                  { color: isDark ? '#4ADE80' : '#15803D' },
+                ]}
+              >
+                {activeTooltip.term.charAt(0).toUpperCase() + activeTooltip.term.slice(1)}
+              </Text>
+
+              {/* Definition Text */}
+              <Text
+                style={[
+                  styles.tooltipDefinition,
+                  { color: isDark ? '#E2E8F0' : '#334155' },
+                ]}
+              >
+                {activeTooltip.definition}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -546,5 +695,62 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 16,
     flex: 1,
+  },
+  // Glossary Definition Tooltip Popover Styles
+  tooltipBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  tooltipCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  tooltipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  tooltipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tooltipBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  tooltipCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tooltipTermTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  tooltipDefinition: {
+    fontSize: 14.5,
+    lineHeight: 22,
+    marginBottom: 4,
   },
 });

@@ -113,20 +113,22 @@ export default function LearnScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* 1. TOP TOOLBAR: [ Back Arrow ] [ Read | Listen | Video ] [ Profile ] */}
-      <TopNavBar
-        segments={LEARN_SEGMENTS}
-        activeSegment={activeSegment}
-        onSegmentChange={(segId) => setActiveSegment(segId as any)}
-        onBackPress={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.push('/subjects');
-          }
-        }}
-        showProfile={true}
-      />
+      {/* 1. TOP TOOLBAR: Shown on mobile phones only; tablet design begins directly with breadcrumb */}
+      {!isTablet && (
+        <TopNavBar
+          segments={LEARN_SEGMENTS}
+          activeSegment={activeSegment}
+          onSegmentChange={(segId) => setActiveSegment(segId as any)}
+          onBackPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/subjects');
+            }
+          }}
+          showProfile={true}
+        />
+      )}
 
       {/* 2. MAIN ACTIVE VIEW - Wrapped in SafeErrorBoundary */}
       {activeSegment === 'watch' ? (

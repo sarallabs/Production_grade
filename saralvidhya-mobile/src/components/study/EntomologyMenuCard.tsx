@@ -8,44 +8,62 @@ import {
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { Subject, Chapter, manifestService } from '@/api/manifestService';
+import { Subject, manifestService } from '@/api/manifestService';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
-export interface SubjectMenuCardProps {
-  subject: Subject;
-  degree?: string;
-  isDark: boolean;
-  onPress: () => void;
+export interface ChapterProgressItem {
+  chapter: number;
+  name?: string;
+  percentage: number;
+  statusColor: string;
 }
 
-export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
+export interface EntomologyMenuCardProps {
+  subject?: Subject;
+  title?: string;
+  subtitle?: string;
+  isDark: boolean;
+  onPress: () => void;
+  onChapterPress?: (chapterNumber: number) => void;
+  chapters?: ChapterProgressItem[];
+}
+
+const DEFAULT_CHAPTERS: ChapterProgressItem[] = [
+  { chapter: 1, name: 'Digestive System', percentage: 100, statusColor: '#22c55e' },
+  { chapter: 2, name: 'Metamorphosis', percentage: 100, statusColor: '#22c55e' },
+  { chapter: 3, name: 'Weathering', percentage: 25, statusColor: '#3b82f6' },
+  { chapter: 4, name: 'Pollination', percentage: 0, statusColor: '#f97316' },
+];
+
+export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
   subject,
-  degree = 'B.Sc Agriculture',
+  title = 'Entomology',
+  subtitle = 'B.Sc Agriculture',
   isDark,
   onPress,
+  onChapterPress,
+  chapters,
 }) => {
-  // DB-Driven calculations:
-  // 1. Title from Subject database
-  const title = subject.name || subject.code;
+  const { isTablet } = useDeviceLayout();
+  const displayTitle = subject?.name || title || 'Entomology';
+  const displaySubtitle = subtitle || 'B.Sc Agriculture';
 
-  // 2. Subtitle from Student degree/board
-  const subtitle = degree;
+  const overallProgress = subject
+    ? manifestService.calculateSubjectProgress(subject)
+    : 50;
 
-  // 3. Dynamic overall progress calculated from DB chapters
-  const overallProgress = manifestService.calculateSubjectProgress(subject);
-
-  // 4. Dynamic chapter status list calculated from DB chapters
-  const chaptersData = (subject.chapters || []).map((ch: Chapter) => {
-    const progressInfo = manifestService.calculateChapterProgress(ch);
+  const dynamicChapters: ChapterProgressItem[] = chapters || (subject?.chapters || []).slice(0, 4).map((ch) => {
+    const info = manifestService.calculateChapterProgress(ch);
     return {
       chapter: ch.number,
-      percentage: progressInfo.percentage,
-      statusColor: progressInfo.statusColor,
+      name: ch.name,
+      percentage: info.percentage,
+      statusColor: info.statusColor,
     };
   });
 
-  // Color tokens matching user reference images
-  // In Dark Theme (Screen is #2D3E36): Card is #FFF6F1
-  // In Light Theme (Screen is #FFF6F1): Card is #2D3E36
+  const finalChapters = dynamicChapters.length > 0 ? dynamicChapters : DEFAULT_CHAPTERS;
+
   const cardBg = isDark ? '#FFF6F1' : '#2D3E36';
   const imgBoxBg = isDark ? '#6E997E' : '#FFF6F1';
   const titleColor = isDark ? '#1C2E24' : '#FFFFFF';
@@ -59,14 +77,23 @@ export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
   const circleTextColor = isDark ? '#1C2E24' : '#FFFFFF';
   const statPercentColor = isDark ? '#3D5246' : '#E0ECE4';
 
-  const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onPress();
-  };
-
   const thumbSource = isDark
     ? require('@/assets/images/card_thumb_light.png')
     : require('@/assets/images/card_thumb_dark.png');
+
+  const handleCardPress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    onPress();
+  };
+
+  const handleChapterClick = (num: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (onChapterPress) {
+      onChapterPress(num);
+    } else {
+      onPress();
+    }
+  };
 
   return (
     <TouchableOpacity
@@ -76,14 +103,20 @@ export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
           backgroundColor: cardBg,
           shadowColor: isDark ? '#000' : '#1a2921',
         },
+        isTablet && { padding: 24, borderRadius: 28 },
       ]}
-      onPress={handlePress}
-      activeOpacity={0.88}
+      onPress={handleCardPress}
+      activeOpacity={0.92}
     >
-      {/* Top Section: Thumbnail + Info + Progress Ring */}
-      <View style={styles.topRow}>
-        {/* Left Book Illustration Box */}
-        <View style={styles.thumbnailBox}>
+      {/* Top Row: Thumbnail + Info (Entomology / B.Sc Agriculture) + Progress Ring */}
+      <View style={[styles.topRow, isTablet && { marginBottom: 22 }]}>
+        <View
+          style={[
+            styles.thumbnailBox,
+            { backgroundColor: imgBoxBg },
+            isTablet && { width: 92, height: 86, borderRadius: 22 },
+          ]}
+        >
           <Image
             source={thumbSource}
             style={styles.bookIllustration}
@@ -91,17 +124,21 @@ export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
           />
         </View>
 
-        {/* Center Title & Subtitle (DB Driven placeholders) */}
-        <View style={styles.infoColumn}>
-          <Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
-            {title}
+        <View style={[styles.infoColumn, isTablet && { marginLeft: 18 }]}>
+          <Text
+            style={[styles.titleText, { color: titleColor }, isTablet && { fontSize: 26, marginBottom: 6 }]}
+            numberOfLines={1}
+          >
+            {displayTitle}
           </Text>
-          <Text style={[styles.subtitleText, { color: subtitleColor }]} numberOfLines={1}>
-            {subtitle}
+          <Text
+            style={[styles.subtitleText, { color: subtitleColor }, isTablet && { fontSize: 15 }]}
+            numberOfLines={1}
+          >
+            {displaySubtitle}
           </Text>
         </View>
 
-        {/* Right Circular Progress Indicator (DB Driven %) */}
         <View style={styles.progressContainer}>
           <View
             style={[
@@ -111,39 +148,55 @@ export const EntomologyMenuCard: React.FC<SubjectMenuCardProps> = ({
                 borderTopColor: ringActiveColor,
                 borderRightColor: ringActiveColor,
               },
+              isTablet && { width: 56, height: 56, borderRadius: 28, borderWidth: 4.5 },
             ]}
           >
-            <Text style={[styles.progressNumber, { color: ringTextColor }]}>
+            <Text
+              style={[styles.progressNumber, { color: ringTextColor }, isTablet && { fontSize: 14 }]}
+            >
               {overallProgress}%
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Bottom Section: Chapter Numbers & Progress Checkmarks (DB Driven Chapters) */}
-      <View style={styles.chaptersRow}>
-        {chaptersData.map((item) => (
-          <View key={item.chapter} style={styles.chapterCol}>
-            {/* Number Circle */}
-            <View style={[styles.numberCircle, { backgroundColor: circleBg }]}>
-              <Text style={[styles.numberText, { color: circleTextColor }]}>
+      {/* Bottom Section: 1 2 3 4 Chapters with Progress & Status Checkmarks */}
+      <View style={[styles.chaptersRow, isTablet && { paddingTop: 10 }]}>
+        {finalChapters.map((item) => (
+          <TouchableOpacity
+            key={item.chapter}
+            style={styles.chapterCol}
+            onPress={() => handleChapterClick(item.chapter)}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[
+                styles.numberCircle,
+                { backgroundColor: circleBg },
+                isTablet && { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
+              ]}
+            >
+              <Text
+                style={[styles.numberText, { color: circleTextColor }, isTablet && { fontSize: 18 }]}
+              >
                 {item.chapter}
               </Text>
             </View>
 
-            {/* Percentage & Checkmark */}
             <View style={styles.percentRow}>
-              <Text style={[styles.percentLabel, { color: statPercentColor }]}>
+              <Text
+                style={[styles.percentLabel, { color: statPercentColor }, isTablet && { fontSize: 13 }]}
+              >
                 {item.percentage}%
               </Text>
               <Ionicons
                 name="checkmark"
-                size={11}
+                size={isTablet ? 14 : 11}
                 color={item.statusColor}
                 style={styles.checkIcon}
               />
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </View>
     </TouchableOpacity>
@@ -169,16 +222,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   thumbnailBox: {
-    width: 86,
-    height: 78,
+    width: 76,
+    height: 72,
     borderRadius: 18,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
   },
   bookIllustration: {
-    width: '90%',
-    height: '90%',
+    width: '100%',
+    height: '100%',
   },
   infoColumn: {
     flex: 1,
@@ -201,22 +254,22 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   progressCircleTrack: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    borderWidth: 4,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 3.8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressNumber: {
-    fontSize: 11,
-    fontWeight: '700',
+    fontSize: 12,
+    fontWeight: '800',
   },
   chaptersRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 4,
+    paddingTop: 6,
   },
   chapterCol: {
     alignItems: 'center',
@@ -241,8 +294,8 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   percentLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
   },
   checkIcon: {
     marginLeft: 1,

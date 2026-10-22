@@ -17,6 +17,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import { SAMPLE_PODCASTS, PodcastParagraph } from '@/data/samplePodcasts';
+import ListenScreenTablet from './ListenScreen.tablet';
 
 const { width } = Dimensions.get('window');
 
@@ -218,6 +219,19 @@ export default function ListenScreen({
       ? 'Insect Pollination & Floral Biology'
       : 'Study Guide';
   const effectiveChapterTitle = chapterTitle || defaultTitle;
+
+  // Tablet-specific layout delegation matching user design PNG
+  if (isTablet) {
+    return (
+      <ListenScreenTablet
+        chapterNumber={chapterNumber}
+        chapterTitle={effectiveChapterTitle}
+        initialMode={initialMode}
+        onNavigateToRead={onNavigateToRead}
+        onBackPress={onBackPress}
+      />
+    );
+  }
 
   const [mode, setMode] = useState<ListenMode>(initialMode);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);

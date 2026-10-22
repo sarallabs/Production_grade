@@ -72,7 +72,7 @@ export default function ResourcesScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Back Button + Toggle Pills + Profile Avatar */}
+      {/* Top Navigation Bar with Back Button + Toggle Pills + Profile Avatar: Always visible across all 3 segments */}
       <TopNavBar
         segments={RESOURCE_SEGMENTS}
         activeSegment={activeSegment}
@@ -95,7 +95,13 @@ export default function ResourcesScreen() {
             chapterNumber={currentChapter.number}
             chapterTitle={currentChapter.name}
             subjectName={activeSubject.name}
-            onNavigateBack={() => setActiveSegment('mindmaps')}
+            onNavigateBack={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/(tabs)');
+              }
+            }}
           />
         ) : activeSegment === 'key_takeaways' ? (
           <KeyTakeawaysView

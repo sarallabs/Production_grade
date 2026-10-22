@@ -22,6 +22,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import MarkdownReader from './MarkdownReader';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
+import StudyGuideReaderTablet from './StudyGuideReader.tablet';
 
 const { width, height } = Dimensions.get('window');
 
@@ -275,6 +276,21 @@ export default function StudyGuideReader({
       ? 'Insect Pollination & Floral Biology'
       : 'Study Guide';
   const effectiveChapterTitle = chapterTitle || defaultTitle;
+
+  if (isTablet) {
+    return (
+      <StudyGuideReaderTablet
+        chapterNumber={chapterNumber}
+        chapterTitle={effectiveChapterTitle}
+        subjectName={subjectName}
+        subjectId={subjectId}
+        onBackPress={onBackPress}
+        onBookmarkPress={onBookmarkPress}
+        onOpenListen={onOpenListen}
+        onCompleteReading={onCompleteReading}
+      />
+    );
+  }
 
   // Mode: 'essentials' vs 'in_depth'
   const [studyMode, setStudyMode] = useState<'essentials' | 'in_depth'>('essentials');

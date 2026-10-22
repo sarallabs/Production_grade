@@ -6,21 +6,31 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  StatusBar,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { manifestService, Subject, Chapter } from '@/api/manifestService';
-import { BorderRadius, Spacing } from '@/constants/theme';
+import { ChapterCard } from '@/components/study/ChapterCard';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function SubjectChaptersScreen() {
   const { subjectId } = useLocalSearchParams<{ subjectId: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const { isDark } = useAppTheme();
+  const { isTablet, columns } = useDeviceLayout();
+  const { selectSubject, selectChapter, selectedCourse } = useCourseContext();
+
   const [subject, setSubject] = useState<Subject | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   useEffect(() => {
     loadSubjectData();
@@ -29,121 +39,177 @@ export default function SubjectChaptersScreen() {
   const loadSubjectData = async () => {
     if (!subjectId) return;
     setLoading(true);
-    const sub = await manifestService.getSubject(subjectId);
-    setSubject(sub || null);
-    setLoading(false);
+    try {
+      const allSubjects = await manifestService.getSubjects();
+      const sub =
+        allSubjects.find((s) => s.id === subjectId || s.code.toLowerCase().replace(/\s+/g, '_') === subjectId) ||
+        (await manifestService.getSubject(subjectId));
+      if (sub) {
+        setSubject(sub);
+        selectSubject(sub);
+      }
+    } catch (e) {
+      console.warn('Failed to load subject in [subjectId]', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleOpenChapter = (ch: Chapter) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    router.push({
-      pathname: '/study',
-      params: {
-        subjectId: subject?.id || 'ento_131',
-        chapter: ch.number.toString(),
-      },
-    });
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSubjectData();
+    setRefreshing(false);
   };
+
+  const handleOpenStudyMaterials = (chapter: Chapter, toolId?: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (subject) {
+      selectSubject(subject);
+    }
+    selectChapter(chapter);
+
+    if (toolId === 'flashcards') {
+      router.push({
+        pathname: '/(tabs)/practice',
+        params: {
+          part: 'revise',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'quiz' || toolId === 'assessment') {
+      router.push({
+        pathname: '/(tabs)/practice',
+        params: {
+          part: 'assessments',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'audio' || toolId === 'podcasts' || toolId === 'listen') {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'listen',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else if (toolId === 'videos' || toolId === 'watch') {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'watch',
+          chapter: chapter.number.toString(),
+        },
+      });
+    } else {
+      router.push({
+        pathname: '/(tabs)/learn',
+        params: {
+          segment: 'read',
+          chapter: chapter.number.toString(),
+        },
+      });
+    }
+  };
+
+  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
+  const headerTextColor = isDark ? '#FFFFFF' : '#1C2E24';
+  const subtextColor = isDark ? '#A6C5B3' : '#688875';
+  const iconBtnBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(45, 62, 54, 0.08)';
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}>
-        <ActivityIndicator size="large" color="#22c55e" />
+      <View style={[styles.loadingContainer, { backgroundColor: screenBg }]}>
+        <ActivityIndicator size="large" color={isDark ? '#4ade80' : '#22c55e'} />
+        <Text style={[styles.loadingText, { color: subtextColor }]}>
+          Loading syllabus chapters...
+        </Text>
       </View>
     );
   }
 
+  const courseDisplayName = selectedCourse?.name || user?.program || 'B.Sc. (Hons) Agriculture';
+
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' }]}
-      contentContainerStyle={styles.scrollContent}
-    >
-      {/* Back button and title */}
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: screenBg }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={screenBg}
+      />
+
+      {/* Top Header */}
+      <View style={styles.navBar}>
         <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
+          style={[styles.navButton, { backgroundColor: iconBtnBg }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          activeOpacity={0.8}
         >
-          <Ionicons name="arrow-back" size={20} color="#22c55e" />
+          <Ionicons name="arrow-back" size={20} color={headerTextColor} />
         </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.codeText}>{subject?.code} • {subject?.credits} Credits</Text>
-          <Text style={[styles.titleText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
-            {subject?.name}
+
+        <View style={styles.navTitleContainer}>
+          <Text style={[styles.navTitle, { color: headerTextColor }]} numberOfLines={1}>
+            {subject?.name || 'Subject Units'}
+          </Text>
+          <Text style={[styles.navSubtitle, { color: subtextColor }]} numberOfLines={1}>
+            {subject?.code} • {subject?.credits || '3 (2+1) Credits'} • {subject?.chapters.length || 0} Units
           </Text>
         </View>
+
+        <View style={{ width: 40, height: 40 }} />
       </View>
 
-      {/* Info card */}
-      <View style={styles.uniBanner}>
-        <Ionicons name="school" size={20} color="#22c55e" />
-        <Text style={styles.uniBannerText}>
-          Official Syllabus
-        </Text>
-      </View>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletScrollContent]}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={isDark ? '#4ade80' : '#22c55e'}
+          />
+        }
+      >
+        <View style={isTablet ? styles.tabletColumn : undefined}>
+          {/* Helper Banner */}
+          <View
+            style={[
+              styles.helperBanner,
+              { backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(45, 62, 54, 0.05)' },
+            ]}
+          >
+            <Ionicons name="book-outline" size={17} color={isDark ? '#4ade80' : '#22c55e'} />
+            <Text style={[styles.helperBannerText, { color: subtextColor }]}>
+              {courseDisplayName} • Official curriculum units. Tap any module to study.
+            </Text>
+          </View>
 
-      {/* Chapters list */}
-      <View style={styles.chaptersContainer}>
-        <Text style={[styles.chaptersHeading, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
-          Syllabus Chapters ({subject?.chapters.length || 0})
-        </Text>
-
-        {subject?.chapters.map((ch) => {
-          const isCompleted = (ch.completed?.length || 0) > 4;
-          return (
-            <TouchableOpacity
-              key={ch.number}
-              style={[
-                styles.chapterCard,
-                {
-                  backgroundColor: isDark ? '#23322B' : '#ffffff',
-                  borderColor: isDark ? '#3D5449' : '#E5DDD8',
-                },
-              ]}
-              onPress={() => handleOpenChapter(ch)}
-              activeOpacity={0.8}
-            >
-              <View style={styles.chapterTopRow}>
-                <View style={[styles.chapterNumBadge, isCompleted && styles.chapterNumBadgeDone]}>
-                  <Text style={[styles.chapterNumText, isCompleted && styles.chapterNumTextDone]}>
-                    {ch.number}
-                  </Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.chapterName, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>
-                    {ch.name}
-                  </Text>
-                  <Text style={styles.toolsCountText}>
-                    {ch.resourceCount || 7} Study Resources (Notes, Quiz, Flashcards, Audio)
-                  </Text>
-                </View>
-                <Ionicons
-                  name={isCompleted ? 'checkmark-circle' : 'chevron-forward'}
-                  size={22}
-                  color={isCompleted ? '#22c55e' : '#94a3b8'}
+          {/* Chapters List using ChapterCard */}
+          <View style={isTablet ? styles.tabletGrid : undefined}>
+            {(subject?.chapters || []).map((ch) => (
+              <View
+                key={ch.number}
+                style={isTablet ? { width: columns === 3 ? '32%' : '48.5%' } : undefined}
+              >
+                <ChapterCard
+                  chapter={ch}
+                  subjectCode={subject?.code || 'ENTO 131'}
+                  subjectName={subject?.name || 'Entomology'}
+                  courseName={courseDisplayName}
+                  isDark={isDark}
+                  onPress={() => handleOpenStudyMaterials(ch)}
+                  onToolPress={(toolId) => handleOpenStudyMaterials(ch, toolId)}
                 />
               </View>
+            ))}
+          </View>
 
-              {ch.description ? (
-                <Text style={styles.chapterDesc}>{ch.description}</Text>
-              ) : null}
-
-              <View style={styles.chapterFooter}>
-                <View style={styles.toolIconsRow}>
-                  <Text style={styles.toolIcon}>📖</Text>
-                  <Text style={styles.toolIcon}>🗂️</Text>
-                  <Text style={styles.toolIcon}>🎯</Text>
-                  <Text style={styles.toolIcon}>🎙️</Text>
-                  <Text style={styles.toolIcon}>📺</Text>
-                </View>
-                <Text style={styles.openBtnText}>Open Study Table →</Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </ScrollView>
+          <View style={{ height: 40 }} />
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -151,137 +217,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scrollContent: {
-    padding: Spacing.four,
-    paddingTop: Platform.OS === 'android' ? 50 : 30,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 14 : 10,
     paddingBottom: 40,
   },
-  header: {
+  tabletScrollContent: {
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  tabletColumn: {
+    width: '100%',
+    maxWidth: 960,
+  },
+  tabletGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  navBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 48 : 40,
+    paddingBottom: 14,
     gap: 12,
-    marginBottom: Spacing.three,
   },
-  backButton: {
+  navButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#064e3b22',
-    alignItems: 'center',
     justifyContent: 'center',
-  },
-  codeText: {
-    color: '#22c55e',
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  titleText: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginTop: 2,
-  },
-  uniBanner: {
-    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111827',
-    borderWidth: 1,
-    borderColor: '#1e293b',
-    borderRadius: BorderRadius.md,
-    padding: Spacing.two,
-    gap: 8,
-    marginBottom: Spacing.four,
   },
-  uniBannerText: {
-    color: '#94a3b8',
-    fontSize: 12,
-    fontWeight: '600',
+  navTitleContainer: {
     flex: 1,
   },
-  chaptersContainer: {
-    gap: Spacing.three,
-  },
-  chaptersHeading: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  chapterCard: {
-    borderRadius: BorderRadius.xl,
-    padding: Spacing.three,
-    borderWidth: 1,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-  },
-  chapterTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  chapterNumBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#1e293b',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  chapterNumBadgeDone: {
-    backgroundColor: '#064e3b33',
-    borderColor: '#22c55e',
-    borderWidth: 1,
-  },
-  chapterNumText: {
-    color: '#94a3b8',
-    fontSize: 14,
+  navTitle: {
+    fontSize: 20,
     fontWeight: '800',
+    letterSpacing: -0.3,
   },
-  chapterNumTextDone: {
-    color: '#22c55e',
-  },
-  chapterName: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  toolsCountText: {
-    fontSize: 11,
-    color: '#94a3b8',
+  navSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
     marginTop: 2,
   },
-  chapterDesc: {
-    fontSize: 12,
-    color: '#94a3b8',
-    lineHeight: 17,
-    marginTop: 8,
-    paddingLeft: 48,
-  },
-  chapterFooter: {
+  helperBanner: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#1e293b',
-    paddingTop: 8,
-    marginTop: 10,
+    gap: 10,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    marginBottom: 16,
   },
-  toolIconsRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  toolIcon: {
-    fontSize: 14,
-  },
-  openBtnText: {
-    color: '#22c55e',
+  helperBannerText: {
+    flex: 1,
     fontSize: 12,
-    fontWeight: '700',
+    lineHeight: 17,
+    fontWeight: '600',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 14,
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

@@ -16,58 +16,33 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useCourseContext } from '@/context/CourseContext';
-import { manifestService, CourseOverviewData, CourseSubjectProgress } from '@/api/manifestService';
-import { CourseOverviewCard } from '@/components/study/CourseOverviewCard';
+import { manifestService, Subject } from '@/api/manifestService';
+import { EntomologyMenuCard } from '@/components/study/EntomologyMenuCard';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function CourseSelectionScreen() {
   const router = useRouter();
-  const { user, persona, logout } = useAuth();
-  const { isDark, themeMode, setThemeMode } = useAppTheme();
+  const { user, persona } = useAuth();
+  const { isDark, setThemeMode } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const { selectedCourse, selectCourse, selectSubjectById, subjects } = useCourseContext();
+  const { selectSubject, selectChapter } = useCourseContext();
 
-  const [courseData, setCourseData] = useState<CourseOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [entomologySubject, setEntomologySubject] = useState<Subject | null>(null);
 
   useEffect(() => {
-    loadCourseOverviewFromDb();
-  }, [user, selectedCourse, subjects]);
+    loadEntomologyData();
+  }, []);
 
-  const loadCourseOverviewFromDb = async () => {
+  const loadEntomologyData = async () => {
     setLoading(true);
     try {
-      const courseName = selectedCourse?.name || 'B.Sc. (Hons) Agriculture';
-      const subjects = await manifestService.getSubjects();
-
-      // Dynamic subjects list with real DB progress
-      const unitProgressList: CourseSubjectProgress[] = subjects.map((subj, index) => {
-        const pct = manifestService.calculateSubjectProgress(subj);
-        const statusColor = pct === 100 ? '#22c55e' : pct > 0 ? '#3b82f6' : '#f97316';
-        return {
-          index: index + 1,
-          id: subj.id,
-          code: subj.code,
-          name: subj.name,
-          progressPercent: pct,
-          statusColor,
-        };
-      });
-
-      const totalProgress = subjects.reduce((sum, s) => sum + manifestService.calculateSubjectProgress(s), 0);
-      const overallProgress = subjects.length > 0 ? Math.round(totalProgress / subjects.length) : 50;
-
-      setCourseData({
-        courseId: selectedCourse?.id || 'bsc_agri',
-        courseName,
-        degree: selectedCourse?.degree || 'Undergraduate • Semester 3',
-        semester: selectedCourse?.semester || 'Semester 3',
-        overallProgress,
-        subjects: unitProgressList,
-      });
+      const allSubjs = await manifestService.getSubjects();
+      const ento = allSubjs.find((s) => s.id === 'ento_131') || allSubjs[0];
+      setEntomologySubject(ento);
     } catch (e) {
-      console.warn('Failed to load course overview from DB', e);
+      console.warn('Failed to load entomology subject', e);
     } finally {
       setLoading(false);
     }
@@ -75,42 +50,51 @@ export default function CourseSelectionScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadCourseOverviewFromDb();
+    await loadEntomologyData();
     setRefreshing(false);
   };
 
-  const handleCardPress = () => {
+  // Tapping the card opens the subject units & syllabus
+  const handleSelectEntomology = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    if (entomologySubject) {
+      await selectSubject(entomologySubject);
+    }
     router.push({
       pathname: '/subjects',
       params: {
-        courseId: courseData?.courseId || 'bsc_agri',
-        courseName: courseData?.courseName || 'B.Sc. (Hons) Agriculture',
+        courseId: 'bsc_agri',
+        subjectId: 'ento_131',
+        view: 'units',
       },
     });
   };
 
-  const handleSubjectPress = async (subj: CourseSubjectProgress) => {
+  // Tapping circle 1, 2, 3, or 4 navigates directly to that chapter in 4-phase workspace
+  const handleChapterPress = async (chapterNumber: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await selectSubjectById(subj.id);
+    if (entomologySubject) {
+      await selectSubject(entomologySubject);
+      const ch = entomologySubject.chapters?.find((c) => c.number === chapterNumber);
+      if (ch) {
+        selectChapter(ch);
+      }
+    }
     router.push({
-      pathname: '/subjects',
+      pathname: '/(tabs)/learn',
       params: {
-        subjectId: subj.id,
-        courseId: courseData?.courseId || 'bsc_agri',
-        courseName: courseData?.courseName || 'B.Sc. (Hons) Agriculture',
+        chapter: chapterNumber.toString(),
+        segment: 'read',
       },
     });
   };
 
   // Color tokens matching user reference images:
-  // Dark Theme: Screen background is #2D3E36
-  // Light Theme: Screen background is #FFF6F1
+  // Dark Theme: #2D3E36
+  // Light Theme: #FFF6F1
   const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const headerTextColor = isDark ? '#FFFFFF' : '#1C2E24';
   const subtextColor = isDark ? '#A6C5B3' : '#688875';
-  const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
-  const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
   const badgeBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(45, 62, 54, 0.08)';
 
   return (
@@ -139,7 +123,7 @@ export default function CourseSelectionScreen() {
                 Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
               </Text>
               <Text style={[styles.uniBadge, { color: subtextColor }]}>
-                Acharya N.G. Ranga Agricultural University
+                Saral Vidhya Learning Portal
               </Text>
             </View>
 
@@ -171,29 +155,33 @@ export default function CourseSelectionScreen() {
           {/* Section Title */}
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: headerTextColor }]}>
-              Degree Courses & Progress
+              Enrolled Subject
             </Text>
             <Text style={[styles.semesterTag, { color: subtextColor, backgroundColor: badgeBg }]}>
-              Semester 3
+              ANGRAU
             </Text>
           </View>
 
-          {/* EXACT ORIGINAL CourseOverviewCard (Matching Figma DevMode CSS and PNG references) */}
-          {loading || !courseData ? (
+          {/* Entomology Starting Card with 1, 2, 3, 4 Chapters */}
+          {loading ? (
             <View style={styles.loadingContainer}>
               <ActivityIndicator size="large" color={isDark ? '#4ade80' : '#22c55e'} />
               <Text style={[styles.loadingText, { color: subtextColor }]}>
-                Loading course overview from database...
+                Loading course modules...
               </Text>
             </View>
           ) : (
-            <View style={styles.cardWrapper}>
-              <CourseOverviewCard
-                data={courseData}
-                isDark={isDark}
-                onPress={handleCardPress}
-                onSubjectPress={handleSubjectPress}
-              />
+            <View style={styles.cardsList}>
+              <View style={styles.cardItem}>
+                <EntomologyMenuCard
+                  subject={entomologySubject || undefined}
+                  title="Entomology"
+                  subtitle="B.Sc Agriculture"
+                  isDark={isDark}
+                  onPress={handleSelectEntomology}
+                  onChapterPress={handleChapterPress}
+                />
+              </View>
             </View>
           )}
 
@@ -225,7 +213,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 24,
   },
   greetingText: {
     fontSize: 22,
@@ -265,7 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 16,
     paddingHorizontal: 4,
   },
   sectionTitle: {
@@ -280,24 +268,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
   },
-  cardWrapper: {
+  cardsList: {
     width: '100%',
-    alignItems: 'center',
-    marginVertical: 4,
+    gap: 12,
   },
-  infoCallout: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 16,
-    marginTop: 18,
-    gap: 10,
-  },
-  infoCalloutText: {
-    flex: 1,
-    fontSize: 12.5,
-    lineHeight: 18,
-    fontWeight: '500',
+  cardItem: {
+    width: '100%',
   },
   loadingContainer: {
     paddingVertical: 60,
@@ -308,46 +284,5 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  subjectListWrap: {
-    gap: 10,
-    marginTop: 20,
-  },
-  subjectListTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  subjectRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 14,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 12,
-  },
-  miniIndexCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  miniIndexText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  subjCode: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  subjName: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  subjPercent: {
-    fontSize: 14,
-    fontWeight: '800',
   },
 });

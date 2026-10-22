@@ -29,7 +29,7 @@ export const DEFAULT_UNITS: UnitItem[] = [
   {
     id: 2,
     title: 'Unit 2',
-    description: 'Insect Morphology & Structural Taxonomy',
+    description: 'Metamorphosis',
   },
   {
     id: 3,
@@ -47,6 +47,7 @@ interface PreparationExamSelectionViewProps {
   units?: UnitItem[];
   pageTitle?: string;
   backLabel?: string;
+  hideHeader?: boolean;
   onBack?: () => void;
   onStart?: (config: { selectedUnits: number[]; questionCount: number }) => void;
 }
@@ -55,6 +56,7 @@ export default function PreparationExamSelectionView({
   units = DEFAULT_UNITS,
   pageTitle = 'Preparation Exam',
   backLabel = 'Back to Study Table',
+  hideHeader = false,
   onBack,
   onStart,
 }: PreparationExamSelectionViewProps) {
@@ -171,7 +173,7 @@ export default function PreparationExamSelectionView({
         contentContainerStyle={[
           styles.scrollContent,
           {
-            paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 8),
+            paddingTop: hideHeader ? 12 : insets.top + (Platform.OS === 'android' ? 12 : 8),
             paddingBottom: insets.bottom + 28,
           },
           isTablet && styles.tabletContainer,
@@ -179,32 +181,34 @@ export default function PreparationExamSelectionView({
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.mainStack}>
-          {/* Header Row: Circular back button + Back to Study Table / Preparation Exam */}
-          <View style={styles.header}>
-            <TouchableOpacity
-              style={[
-                styles.backButton,
-                {
-                  backgroundColor: colors.backCircleBg,
-                  borderColor: colors.backCircleBorder,
-                },
-              ]}
-              onPress={onBack}
-              activeOpacity={0.75}
-              accessibilityLabel="Back"
-            >
-              <Ionicons name="arrow-back" size={20} color={colors.backArrowColor} />
-            </TouchableOpacity>
+          {/* Header Row: Circular back button + Back to Study Table / Preparation Exam (omitted when TopNavBar is present) */}
+          {!hideHeader && (
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={[
+                  styles.backButton,
+                  {
+                    backgroundColor: colors.backCircleBg,
+                    borderColor: colors.backCircleBorder,
+                  },
+                ]}
+                onPress={onBack}
+                activeOpacity={0.75}
+                accessibilityLabel="Back"
+              >
+                <Ionicons name="arrow-back" size={20} color={colors.backArrowColor} />
+              </TouchableOpacity>
 
-            <View style={styles.headerCopy}>
-              <Text style={[styles.backLabel, { color: colors.backLabelColor }]}>
-                {backLabel}
-              </Text>
-              <Text style={[styles.pageTitle, { color: colors.titleColor }]}>
-                {pageTitle}
-              </Text>
+              <View style={styles.headerCopy}>
+                <Text style={[styles.backLabel, { color: colors.backLabelColor }]}>
+                  {backLabel}
+                </Text>
+                <Text style={[styles.pageTitle, { color: colors.titleColor }]}>
+                  {pageTitle}
+                </Text>
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Card 1: Choose units to prepare */}
           <View

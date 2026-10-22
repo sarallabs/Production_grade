@@ -1,35 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { CourseOverviewData, CourseSubjectProgress } from '@/api/manifestService';
+import { CourseOverviewData } from '@/api/manifestService';
+import { useDeviceLayout } from '@/hooks/use-device-layout';
+
+export interface ChapterProgressItem {
+  chapter: number;
+  percentage: number;
+  statusColor: string;
+}
 
 export interface CourseOverviewCardProps {
   data: CourseOverviewData;
   isDark: boolean;
   onPress: () => void;
-  onSubjectPress?: (subject: CourseSubjectProgress) => void;
+  onChapterPress?: (chapterNum: number) => void;
+  onSubjectPress?: (subject: any) => void;
+  chapters?: ChapterProgressItem[];
 }
+
+const DEFAULT_CHAPTERS: ChapterProgressItem[] = [
+  { chapter: 1, percentage: 100, statusColor: '#22c55e' },
+  { chapter: 2, percentage: 100, statusColor: '#22c55e' },
+  { chapter: 3, percentage: 25, statusColor: '#3b82f6' },
+  { chapter: 4, percentage: 0, statusColor: '#f97316' },
+];
 
 export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
   data,
   isDark,
   onPress,
-  onSubjectPress,
+  onChapterPress,
+  chapters = DEFAULT_CHAPTERS,
 }) => {
-  const [selectedSubject, setSelectedSubject] = useState<CourseSubjectProgress | null>(null);
-
-  // Visual Theme Tokens matching user's design reference:
-  // Dark Mode: Screen is #2D3E36 -> Card is #FFF6F1 (cream), text #1C2E24, badge #6E997E
-  // Light Mode: Screen is #FFF6F1 -> Card is #2D3E36 (forest green), text #FFFFFF, badge #FFF6F1
+  const { isTablet } = useDeviceLayout();
   const cardBg = isDark ? '#FFF6F1' : '#2D3E36';
   const imgBoxBg = isDark ? '#6E997E' : '#FFF6F1';
   const titleColor = isDark ? '#1C2E24' : '#FFFFFF';
@@ -43,23 +54,25 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
   const circleTextColor = isDark ? '#1C2E24' : '#FFFFFF';
   const statPercentColor = isDark ? '#3D5246' : '#E0ECE4';
 
+  const thumbSource = isDark
+    ? require('@/assets/images/card_thumb_light.png')
+    : require('@/assets/images/card_thumb_dark.png');
+
   const handleCardPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress();
   };
 
-  const handleNumberPress = (subj: CourseSubjectProgress) => {
+  const handleChapterClick = (num: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSelectedSubject(subj);
-    if (onSubjectPress) {
-      onSubjectPress(subj);
+    if (onChapterPress) {
+      onChapterPress(num);
+    } else {
+      onPress();
     }
   };
 
-  // Use the clean cropped book illustration matching the user's PNG (NO cockroach)
-  const thumbSource = isDark
-    ? require('@/assets/images/card_thumb_light.png')
-    : require('@/assets/images/card_thumb_dark.png');
+  const overallProgress = data.overallProgress || 50;
 
   return (
     <View style={styles.outerWrapper}>
@@ -70,14 +83,21 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
             backgroundColor: cardBg,
             shadowColor: isDark ? '#000' : '#1a2921',
           },
+          isTablet && { padding: 24, borderRadius: 28 },
         ]}
         onPress={handleCardPress}
         activeOpacity={0.92}
       >
-        {/* Top Header Section: Thumbnail + Course Info + Overall Progress */}
-        <View style={styles.topRow}>
-          {/* Left Book Illustration Box - Exact clean 3 books with leaves */}
-          <View style={styles.thumbnailBox}>
+        {/* Top Row: Thumbnail + Info (Entomology / B.Sc Agriculture) + Progress Ring */}
+        <View style={[styles.topRow, isTablet && { marginBottom: 22 }]}>
+          {/* Left Book Illustration Box in squircle */}
+          <View
+            style={[
+              styles.thumbnailBox,
+              { backgroundColor: imgBoxBg },
+              isTablet && { width: 92, height: 86, borderRadius: 22 },
+            ]}
+          >
             <Image
               source={thumbSource}
               style={styles.bookIllustration}
@@ -85,17 +105,23 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
             />
           </View>
 
-          {/* Center Course / Degree Title - NO University Name */}
-          <View style={styles.infoColumn}>
-            <Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
-              {data.courseName || 'B.Sc. (Hons) Agriculture'}
+          {/* Center: Entomology Title & B.Sc Agriculture Subtitle */}
+          <View style={[styles.infoColumn, isTablet && { marginLeft: 18 }]}>
+            <Text
+              style={[styles.titleText, { color: titleColor }, isTablet && { fontSize: 26, marginBottom: 6 }]}
+              numberOfLines={1}
+            >
+              {data.courseName || 'Entomology'}
             </Text>
-            <Text style={[styles.subtitleText, { color: subtitleColor }]} numberOfLines={1}>
-              {data.degree || 'Undergraduate • 4 Years'}
+            <Text
+              style={[styles.subtitleText, { color: subtitleColor }, isTablet && { fontSize: 15 }]}
+              numberOfLines={1}
+            >
+              {data.degree || 'B.Sc Agriculture'}
             </Text>
           </View>
 
-          {/* Right Circular Overall Course Progress Ring */}
+          {/* Right Circular Progress Indicator */}
           <View style={styles.progressContainer}>
             <View
               style={[
@@ -105,40 +131,53 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
                   borderTopColor: ringActiveColor,
                   borderRightColor: ringActiveColor,
                 },
+                isTablet && { width: 56, height: 56, borderRadius: 28, borderWidth: 4.5 },
               ]}
             >
-              <Text style={[styles.progressNumber, { color: ringTextColor }]}>
-                {data.overallProgress}%
+              <Text
+                style={[styles.progressNumber, { color: ringTextColor }, isTablet && { fontSize: 14 }]}
+              >
+                {overallProgress}%
               </Text>
             </View>
           </View>
         </View>
 
-        {/* Bottom Section: Numbered Subject Pills & Subject Completion % */}
-        <View style={styles.subjectsRow}>
-          {data.subjects.map((subj) => (
+        {/* Bottom Section: 1 2 3 4 Chapters with Progress & Status Checkmarks */}
+        <View style={[styles.chaptersRow, isTablet && { paddingTop: 10 }]}>
+          {chapters.map((item) => (
             <TouchableOpacity
-              key={subj.id}
-              style={styles.subjectCol}
-              onPress={() => handleNumberPress(subj)}
+              key={item.chapter}
+              style={styles.chapterCol}
+              onPress={() => handleChapterClick(item.chapter)}
               activeOpacity={0.7}
             >
-              {/* Number Circle (1, 2, 3... representing each Subject present in DB) */}
-              <View style={[styles.numberCircle, { backgroundColor: circleBg }]}>
-                <Text style={[styles.numberText, { color: circleTextColor }]}>
-                  {subj.index}
+              {/* Number Circle (1, 2, 3, 4) */}
+              <View
+                style={[
+                  styles.numberCircle,
+                  { backgroundColor: circleBg },
+                  isTablet && { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
+                ]}
+              >
+                <Text
+                  style={[styles.numberText, { color: circleTextColor }, isTablet && { fontSize: 18 }]}
+                >
+                  {item.chapter}
                 </Text>
               </View>
 
-              {/* Percentage completed for this specific subject */}
+              {/* Percentage & Checkmark */}
               <View style={styles.percentRow}>
-                <Text style={[styles.percentLabel, { color: statPercentColor }]}>
-                  {subj.progressPercent}%
+                <Text
+                  style={[styles.percentLabel, { color: statPercentColor }, isTablet && { fontSize: 13 }]}
+                >
+                  {item.percentage}%
                 </Text>
                 <Ionicons
                   name="checkmark"
-                  size={11}
-                  color={subj.statusColor}
+                  size={isTablet ? 14 : 11}
+                  color={item.statusColor}
                   style={styles.checkIcon}
                 />
               </View>
@@ -146,136 +185,6 @@ export const CourseOverviewCard: React.FC<CourseOverviewCardProps> = ({
           ))}
         </View>
       </TouchableOpacity>
-
-      {/* Modal / Popover shown when user taps a subject number */}
-      <Modal
-        visible={!!selectedSubject}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedSubject(null)}
-      >
-        <Pressable
-          style={styles.modalOverlay}
-          onPress={() => setSelectedSubject(null)}
-        >
-          <View
-            style={[
-              styles.modalCard,
-              {
-                backgroundColor: isDark ? '#FFF6F1' : '#2D3E36',
-                borderColor: isDark ? '#E5DDD8' : '#3D5449',
-              },
-            ]}
-          >
-            {selectedSubject && (
-              <>
-                <View style={styles.modalHeader}>
-                  <View
-                    style={[
-                      styles.modalIndexBadge,
-                      { backgroundColor: isDark ? '#6E997E' : '#3E5247' },
-                    ]}
-                  >
-                    <Text style={styles.modalIndexText}>
-                      Unit #{selectedSubject.index}
-                    </Text>
-                  </View>
-                  <TouchableOpacity
-                    onPress={() => setSelectedSubject(null)}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                  >
-                    <Ionicons
-                      name="close-circle"
-                      size={22}
-                      color={isDark ? '#557A65' : '#D4A88E'}
-                    />
-                  </TouchableOpacity>
-                </View>
-
-                <Text
-                  style={[
-                    styles.modalSubjectName,
-                    { color: isDark ? '#1C2E24' : '#FFFFFF' },
-                  ]}
-                >
-                  {selectedSubject.name}
-                </Text>
-                <Text
-                  style={[
-                    styles.modalSubjectCode,
-                    { color: isDark ? '#557A65' : '#A6C5B3' },
-                  ]}
-                >
-                  Code: {selectedSubject.code}
-                </Text>
-
-                <View style={styles.modalProgressSection}>
-                  <View style={styles.modalProgressHeader}>
-                    <Text
-                      style={[
-                        styles.modalProgressLabel,
-                        { color: isDark ? '#3D5246' : '#E0ECE4' },
-                      ]}
-                    >
-                      Subject Completion
-                    </Text>
-                    <Text
-                      style={[
-                        styles.modalProgressValue,
-                        { color: isDark ? '#1C2E24' : '#FFFFFF' },
-                      ]}
-                    >
-                      {selectedSubject.progressPercent}%
-                    </Text>
-                  </View>
-                  <View
-                    style={[
-                      styles.modalProgressBarTrack,
-                      { backgroundColor: isDark ? '#E8E0DA' : '#3D5449' },
-                    ]}
-                  >
-                    <View
-                      style={[
-                        styles.modalProgressBarFill,
-                        {
-                          width: `${selectedSubject.progressPercent}%`,
-                          backgroundColor: selectedSubject.statusColor,
-                        },
-                      ]}
-                    />
-                  </View>
-                </View>
-
-                <TouchableOpacity
-                  style={[
-                    styles.viewSubjectBtn,
-                    { backgroundColor: isDark ? '#2D3E36' : '#FFF6F1' },
-                  ]}
-                  onPress={() => {
-                    setSelectedSubject(null);
-                    onPress();
-                  }}
-                  activeOpacity={0.85}
-                >
-                  <Text
-                    style={[
-                      styles.viewSubjectBtnText,
-                      { color: isDark ? '#FFF6F1' : '#2D3E36' },
-                    ]}
-                  >
-                    Open Subject Units
-                  </Text>
-                  <Ionicons
-                    name="arrow-forward"
-                    size={16}
-                    color={isDark ? '#FFF6F1' : '#2D3E36'}
-                  />
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </Pressable>
-      </Modal>
     </View>
   );
 };
@@ -300,16 +209,16 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   thumbnailBox: {
-    width: 86,
-    height: 78,
+    width: 76,
+    height: 72,
     borderRadius: 18,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    overflow: 'hidden',
   },
   bookIllustration: {
-    width: '90%',
-    height: '90%',
+    width: '100%',
+    height: '100%',
   },
   infoColumn: {
     flex: 1,
@@ -317,7 +226,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   titleText: {
-    fontSize: 21,
+    fontSize: 22,
     fontWeight: '800',
     letterSpacing: -0.3,
     marginBottom: 4,
@@ -335,129 +244,48 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 3.5,
+    borderWidth: 3.8,
     justifyContent: 'center',
     alignItems: 'center',
   },
   progressNumber: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
-  subjectsRow: {
+  chaptersRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingTop: 8,
+    paddingTop: 6,
   },
-  subjectCol: {
+  chapterCol: {
     alignItems: 'center',
     flex: 1,
   },
   numberCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 6,
   },
   numberText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '800',
   },
   percentRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 2,
   },
   percentLabel: {
     fontSize: 11,
     fontWeight: '700',
   },
   checkIcon: {
-    marginLeft: 2,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 360,
-    borderRadius: 24,
-    padding: 22,
-    borderWidth: 1,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  modalIndexBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  modalIndexText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
-  modalSubjectName: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  modalSubjectCode: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 16,
-  },
-  modalProgressSection: {
-    marginBottom: 20,
-  },
-  modalProgressHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  modalProgressLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  modalProgressValue: {
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  modalProgressBarTrack: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  modalProgressBarFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  viewSubjectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 14,
-    gap: 8,
-  },
-  viewSubjectBtnText: {
-    fontSize: 14,
-    fontWeight: '700',
+    marginLeft: 1,
+    marginTop: 0.5,
   },
 });

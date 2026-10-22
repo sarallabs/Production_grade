@@ -865,7 +865,6 @@ export interface ExamQuestion {
   taxonomy: string;
   topicTitle: string;
   questionText: string;
-  guidanceText?: string;
 }
 
 /**
@@ -940,7 +939,6 @@ export async function fetchMockTest(
             taxonomy: q.bloom_level || (isShort ? 'Remembering' : 'Analyzing'),
             topicTitle: q.topic || `Concept ${num}`,
             questionText: q.question || q.stem || `Question ${num}`,
-            guidanceText: q.rationale || (isShort ? 'Be clear and concise · 2 marks' : 'Provide detailed functional summary · 5 marks'),
           };
         });
 
@@ -1034,3 +1032,101 @@ export async function fetchStudyPlan(
 
   return `# Study Plan (Chapter ${chapterNum})\n\nStructured study modules and tasks are being compiled for this chapter.`;
 }
+
+/**
+ * Fetches chapter podcast metadata (microcast count & titles) from cloud DB
+ */
+export async function fetchPodcastMetadata(
+  subjectId: string,
+  chapterNum: number,
+  signal?: AbortSignal
+): Promise<{ microcast_count: number; microcast_titles: string[] } | null> {
+  const cacheKey = `podcast_meta_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/metadata`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.microcast_titles)) {
+        await storage.setItem(cacheKey, data);
+        return data;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Podcast Meta: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<{ microcast_count: number; microcast_titles: string[] }>(cacheKey);
+  return cached || null;
+}
+
+/**
+ * Fetches microcast transcript text from cloud DB
+ */
+export async function fetchMicrocastTranscript(
+  subjectId: string,
+  chapterNum: number,
+  microcastIndex: number,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const n = String(microcastIndex).padStart(2, '0');
+  const cacheKey = `microcast_transcript_${subjectId}_${chapterNum}_${n}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/podcasts/microcast_${n}.md`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.trim().length > 20) {
+        await storage.setItem(cacheKey, text);
+        return text;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for Microcast ${n}: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<string>(cacheKey);
+  return cached || null;
+}
+
+/**
+ * Fetches short or long podcast transcript from cloud DB
+ */
+export async function fetchPodcastTranscript(
+  subjectId: string,
+  chapterNum: number,
+  type: 'short' | 'long',
+  signal?: AbortSignal
+): Promise<string | null> {
+  const filename = type === 'short' ? 'short_podcast.md' : 'long_podcast.md';
+  const cacheKey = `podcast_${type}_transcript_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const url = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/podcasts/${filename}`;
+
+  try {
+    const res = await fetchWithTimeout(url, 15000, signal);
+    if (res.ok) {
+      const text = await res.text();
+      if (text && text.trim().length > 20) {
+        await storage.setItem(cacheKey, text);
+        return text;
+      }
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] API fetch failed for ${filename}: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<string>(cacheKey);
+  return cached || null;
+}
+
