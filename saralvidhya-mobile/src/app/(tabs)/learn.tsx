@@ -159,32 +159,34 @@ export default function LearnScreen() {
         </SafeErrorBoundary>
       ) : (
         <SafeErrorBoundary sectionName="Study Guide" key={`read_${selectedChapterNum}`}>
-          <StudyGuideReader
-            key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
-            chapterNumber={selectedChapterNum}
-            chapterTitle={currentChapter.name}
-            subjectName={activeSubject.name}
-            subjectId={activeSubject.id}
-            onBackPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.push('/subjects');
-              }
-            }}
-            onBookmarkPress={() => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-              markResourceCompleted(activeSubject.id, currentChapter.number, 'summary');
-            }}
-            onCompleteReading={(mode) => {
-              const resourceKey = mode === 'in_depth' ? 'detailed_view' : 'summary';
-              markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
-            }}
-            onOpenListen={(targetMode) => {
-              setListenInitialMode(targetMode);
-              setActiveSegment('listen');
-            }}
-          />
+          <View style={{ flex: 1 }}>
+            <StudyGuideReader
+              key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
+              chapterNumber={selectedChapterNum}
+              chapterTitle={currentChapter.name}
+              subjectName={activeSubject.name}
+              subjectId={activeSubject.id}
+              onBackPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.push('/subjects');
+                }
+              }}
+              onBookmarkPress={() => {
+                try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); } catch {}
+                markResourceCompleted(activeSubject.id, currentChapter.number, 'summary');
+              }}
+              onCompleteReading={(mode) => {
+                const resourceKey = mode === 'in_depth' ? 'detailed_view' : 'summary';
+                markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
+              }}
+              onOpenListen={(targetMode) => {
+                setListenInitialMode(targetMode);
+                setActiveSegment('listen');
+              }}
+            />
+          </View>
         </SafeErrorBoundary>
       )}
     </View>

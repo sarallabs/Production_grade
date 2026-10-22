@@ -21,9 +21,8 @@ export interface DeviceLayout {
 export function useDeviceLayout(): DeviceLayout {
   const { width, height } = useWindowDimensions();
   const shortestSide = Math.min(width, height);
-  const longestSide = Math.max(width, height);
-  // Tablet qualification: shortest side >= 600dp (standard Android/iOS sw600dp), width >= 768, or longest side >= 960
-  const isTablet = shortestSide >= 600 || width >= TABLET_MIN_WIDTH || longestSide >= 960;
+  // Tablet qualification: shortest side >= 600dp (standard Android/iOS sw600dp) or width >= 768dp
+  const isTablet = shortestSide >= 600 || width >= TABLET_MIN_WIDTH;
   const isLandscape = width > height;
   const columns: 1 | 2 | 3 = !isTablet ? 1 : width >= 1024 ? 3 : 2;
 

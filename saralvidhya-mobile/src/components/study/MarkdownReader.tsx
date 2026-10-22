@@ -18,6 +18,9 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { GCS_API_BASE } from '@/services/contentService';
+import { Image as ExpoImage } from 'expo-image';
+import { useDynamicImageLoad } from '@/services/imageConcurrencyService';
+import { getTermDefinition, COMPILED_GLOSSARY_REGEX } from '@/data/glossaryTerms';
 
 interface MarkdownReaderProps {
   content: string;
@@ -77,35 +80,20 @@ interface SmartInfographicCardProps {
   uri: string;
   alt?: string;
   isDark: boolean;
+  index?: number;
+  onExpand?: (uri: string, alt?: string) => void;
 }
 
-function SmartInfographicCard({ uri, alt, isDark }: SmartInfographicCardProps) {
-  const [aspectRatio, setAspectRatio] = useState<number>(16 / 10);
+const SmartInfographicCard = React.memo(function SmartInfographicCard({
+  uri,
+  alt,
+  isDark,
+  index = 0,
+  onExpand,
+}: SmartInfographicCardProps) {
+  const { shouldLoad, onLoaded, onError } = useDynamicImageLoad(uri, index);
   const [hasError, setHasError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [isZoomed, setIsZoomed] = useState(false);
-
-  useEffect(() => {
-    setHasError(false);
-    setIsLoading(true);
-
-    if (uri && !uri.startsWith('data:')) {
-      Image.getSize(
-        uri,
-        (w, h) => {
-          if (w > 0 && h > 0) {
-            setAspectRatio(Math.max(0.7, Math.min(2.4, w / h)));
-          }
-          setIsLoading(false);
-        },
-        () => {
-          setIsLoading(false);
-        }
-      );
-    } else {
-      setIsLoading(false);
-    }
-  }, [uri]);
 
   const cardBg = isDark ? '#1C2B23' : '#FFFFFF';
   const cardBorder = isDark ? '#2D4538' : '#D1E3D9';
@@ -113,148 +101,180 @@ function SmartInfographicCard({ uri, alt, isDark }: SmartInfographicCardProps) {
   const textDark = isDark ? '#FFFFFF' : '#172933';
   const textMuted = isDark ? '#A6C5B3' : '#637375';
 
+  const handleExpand = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+    onExpand?.(uri, alt);
+  };
+
   return (
-    <>
-      <View style={[styles.infographicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-        {/* Card Header: Infographic Badge & Expand Button */}
-        <View style={styles.infographicCardHeader}>
-          <View style={styles.infographicBadgeWrap}>
-            <Ionicons name="sparkles" size={12} color={emeraldPrimary} />
-            <Text style={[styles.infographicBadgeLabel, { color: emeraldPrimary }]}>
-              SCIENTIFIC INFOGRAPHIC
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={styles.expandButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setIsZoomed(true);
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={[styles.expandButtonText, { color: emeraldPrimary }]}>Expand</Text>
-            <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
-          </TouchableOpacity>
+    <View style={[styles.infographicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+      {/* Card Header: Infographic Badge & Expand Button */}
+      <View style={styles.infographicCardHeader}>
+        <View style={styles.infographicBadgeWrap}>
+          <Ionicons name="sparkles" size={12} color={emeraldPrimary} />
+          <Text style={[styles.infographicBadgeLabel, { color: emeraldPrimary }]}>
+            SCIENTIFIC INFOGRAPHIC {index >= 0 ? `• #${index + 1}` : ''}
+          </Text>
         </View>
-
-        {/* Image Touch Area */}
         <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsZoomed(true);
-          }}
-          style={[styles.infographicImageTouch, { aspectRatio }]}
+          style={styles.expandButton}
+          onPress={handleExpand}
+          activeOpacity={0.7}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          {!hasError ? (
-            <Image
-              source={{ uri }}
-              style={styles.infographicImage}
-              resizeMode="contain"
-              onLoad={(e) => {
-                setIsLoading(false);
-                const { width, height } = e.nativeEvent.source;
-                if (width > 0 && height > 0) {
-                  setAspectRatio(Math.max(0.7, Math.min(2.4, width / height)));
-                }
-              }}
-              onError={() => {
-                setHasError(true);
-                setIsLoading(false);
-              }}
-            />
-          ) : (
-            <View style={styles.infographicFallbackBox}>
-              <Ionicons name="image-outline" size={38} color={emeraldPrimary} />
-              <Text style={[styles.infographicFallbackTitle, { color: textDark }]}>
-                {alt || 'Curated Study Infographic'}
-              </Text>
-              <Text style={[styles.infographicFallbackSubtitle, { color: textMuted }]}>
-                Tap to inspect high-resolution visual details
-              </Text>
-            </View>
-          )}
-
-          {isLoading && (
-            <View style={styles.infographicLoadingOverlay}>
-              <ActivityIndicator size="small" color={emeraldPrimary} />
-            </View>
-          )}
+          <Text style={[styles.expandButtonText, { color: emeraldPrimary }]}>Expand</Text>
+          <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
         </TouchableOpacity>
-
-        {/* Caption */}
-        {alt ? (
-          <View style={[styles.captionRow, { borderTopColor: cardBorder }]}>
-            <Text style={[styles.infographicCaptionText, { color: isDark ? '#E2E8F0' : '#2D3748' }]}>
-              {alt}
-            </Text>
-          </View>
-        ) : null}
       </View>
 
-      {/* Fullscreen Zoom Modal */}
-      <Modal
-        visible={isZoomed}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setIsZoomed(false)}
+      {/* Image Touch Area with Dynamic Concurrency Loading */}
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={handleExpand}
+        style={[styles.infographicImageTouch, { aspectRatio: 16 / 10 }]}
       >
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalCard, { backgroundColor: isDark ? '#142019' : '#FFFFFF' }]}>
-            <View style={styles.modalHeader}>
-              <View style={styles.modalTitleWrap}>
-                <Ionicons name="pie-chart" size={15} color={emeraldPrimary} />
-                <Text style={[styles.modalTitleText, { color: textDark }]} numberOfLines={1}>
-                  {alt || 'Scientific Diagram'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                onPress={() => setIsZoomed(false)}
-                style={styles.modalCloseBtn}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={20} color={textDark} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.modalImageWrap}>
-              <Image
-                source={{ uri }}
-                style={styles.modalImage}
-                resizeMode="contain"
-              />
-            </View>
+        {!shouldLoad ? (
+          // Waiting in concurrency queue: lightweight skeleton placeholder, zero network load
+          <View style={styles.infographicSkeletonBox}>
+            <ActivityIndicator size="small" color={emeraldPrimary} />
+            <Text style={[styles.infographicQueuedText, { color: textMuted }]}>
+              {alt || 'Curated Study Infographic'}
+            </Text>
           </View>
+        ) : !hasError ? (
+          // Active slot granted: hardware accelerated Glide/SDWebImage load with memory-disk caching
+          <ExpoImage
+            source={{ uri }}
+            style={styles.infographicImage}
+            contentFit="contain"
+            cachePolicy="memory-disk"
+            priority={index < 3 ? 'high' : 'normal'}
+            recyclingKey={uri}
+            transition={200}
+            onLoad={() => {
+              setIsLoading(false);
+              onLoaded();
+            }}
+            onError={() => {
+              setHasError(true);
+              setIsLoading(false);
+              onError();
+            }}
+          />
+        ) : (
+          <View style={styles.infographicFallbackBox}>
+            <Ionicons name="image-outline" size={38} color={emeraldPrimary} />
+            <Text style={[styles.infographicFallbackTitle, { color: textDark }]}>
+              {alt || 'Curated Study Infographic'}
+            </Text>
+            <Text style={[styles.infographicFallbackSubtitle, { color: textMuted }]}>
+              Tap to inspect high-resolution visual details
+            </Text>
+          </View>
+        )}
+
+        {shouldLoad && isLoading && !hasError && (
+          <View style={styles.infographicLoadingOverlay} pointerEvents="none">
+            <ActivityIndicator size="small" color={emeraldPrimary} />
+          </View>
+        )}
+      </TouchableOpacity>
+
+      {/* Caption */}
+      {alt ? (
+        <View style={[styles.captionRow, { borderTopColor: cardBorder }]}>
+          <Text style={[styles.infographicCaptionText, { color: isDark ? '#E2E8F0' : '#2D3748' }]}>
+            {alt}
+          </Text>
         </View>
-      </Modal>
-    </>
+      ) : null}
+    </View>
   );
+});
+
+interface ContentSegment {
+  type: 'markdown' | 'image';
+  content?: string;
+  uri?: string;
+  alt?: string;
+  index?: number;
 }
 
 export default function MarkdownReader({ content, title, chapterNumber = 1 }: MarkdownReaderProps) {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
+  const [zoomedImage, setZoomedImage] = useState<{ uri: string; alt?: string } | null>(null);
+  const [activeTooltip, setActiveTooltip] = useState<{ term: string; definition: string } | null>(null);
+
+  const handleTermPress = React.useCallback((term: string, definition: string) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+    setActiveTooltip({ term, definition });
+  }, []);
 
   const chDir = `chapter_${chapterNumber < 10 ? '0' : ''}${chapterNumber}`;
   const apiBase = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}`;
 
-  // 1. Memoize cleaned markdown processing so heavy regex replacements are never re-run during scrolling or micro-renders
+  // 1. Memoize cleaned markdown processing so heavy regex replacements are never re-run during scrolling
   const cleanedMarkdown = useMemo(() => {
-    let cleaned = content
-      .replace(/base64,\s+/g, 'base64,')
-      .replace(/^.*Word count:.*Persona:.*$/gmi, '')
-      .replace(/<!--[\s\S]*?-->/g, '')
-      .replace(/<br\s*\/?>/gi, '\n');
+    let cleaned = content;
 
-    // 2. Convert HTML <img> tags to Markdown images (essential for Chapter 3 webp/base64 diagrams)
+    // A. Strip duplicate top headers & metadata lines (since chapter number & name are already prominently shown in the app header)
+    cleaned = cleaned
+      .replace(/^#\s*Quick Study Guide:?.*$/gmi, '')
+      .replace(/^#\s*Detailed (Study )?Notes:?.*$/gmi, '')
+      .replace(/^#\s*Chapter\s*\d+:?.*$/gmi, '')
+      .replace(/^\*\*Subject:\*\*.*$/gmi, '')
+      .replace(/^\*\*Audience Level:\*\*.*$/gmi, '')
+      .replace(/^\*\*Target Bloom.*$/gmi, '')
+      .replace(/^.*Word count:.*Persona:.*$/gmi, '');
+
+    // B. Fix base64 padding & strip comments
+    cleaned = cleaned
+      .replace(/base64,\s+/g, 'base64,')
+      .replace(/<!--[\s\S]*?-->/g, '');
+
+    // C. Normalize unicode smart/curly quotes often used in HTML attributes: <div align=“center” style=“margin: 24px 0;”>
+    cleaned = cleaned.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+
+    // D. Convert HTML <img> tags to Markdown images before stripping container tags
     cleaned = cleaned.replace(/<img\s+[^>]*src=["']([^"']+)["'][^>]*>/gi, (match, src) => {
       const altMatch = match.match(/alt=["']([^"']*)["']/i);
       const alt = altMatch ? altMatch[1] : 'Scientific Infographic';
       return `\n\n![${alt}](${src})\n\n`;
     });
 
-    // 3. Resolve relative image paths and safely encode parentheses so markdown-it never truncates URLs
+    // E. Convert inline formatting HTML tags into standard Markdown
+    cleaned = cleaned
+      .replace(/<em\b[^>]*>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<i\b[^>]*>([\s\S]*?)<\/i>/gi, '*$1*')
+      .replace(/<strong\b[^>]*>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<b\b[^>]*>([\s\S]*?)<\/b>/gi, '**$1**')
+      .replace(/<figcaption\b[^>]*>([\s\S]*?)<\/figcaption>/gi, '\n*$1*\n')
+      .replace(/<p\b[^>]*>([\s\S]*?)<\/p>/gi, '\n\n$1\n\n');
+
+    // F. Strip all container and structural HTML tags (e.g. <div align="center" ...>, </div>, <center>, <span>, etc.)
+    cleaned = cleaned.replace(/<\/?(div|center|span|figure|section|font|header|footer)\b[^>]*>/gi, '\n');
+    cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
+
+    // G. Strip any residual raw HTML tags (ensures no <div ...> or <p ...> can ever leak into rendered text)
+    cleaned = cleaned.replace(/<\/?[a-z][a-z0-9_-]*(\s+[^>]*)?\/?>/gi, '');
+
+    // H. Decode HTML entities
+    cleaned = cleaned
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
+
+    // I. Resolve relative image paths and safely encode parentheses so markdown URLs are well-formed
     cleaned = cleaned.replace(
-      /^!\[([^\]]*)\]\((.+)\)$/gm,
+      /!\[([^\]]*)\]\(([^)]+)\)/g,
       (match, alt, rawUrl) => {
         const trimmedUrl = rawUrl.trim();
         if (trimmedUrl.startsWith('http') || trimmedUrl.startsWith('data:')) {
@@ -266,8 +286,50 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
       }
     );
 
+    // J. Strip leading horizontal rules or blank lines left after stripping the top title
+    cleaned = cleaned.replace(/^\s*(---|___|\*\*\*)\s*/, '');
+
     return cleaned.trim();
   }, [content, apiBase]);
+
+  // 2. Segment document into alternating pure Markdown text blocks and standalone Infographic Cards
+  // This completely eliminates nesting View/TouchableOpacity inside react-native-markdown-display's <Text>
+  const segments = useMemo(() => {
+    const list: ContentSegment[] = [];
+    const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let imgIdx = 0;
+    let match: RegExpExecArray | null;
+
+    while ((match = imageRegex.exec(cleanedMarkdown)) !== null) {
+      const textChunk = cleanedMarkdown.substring(lastIndex, match.index).trim();
+      if (textChunk.length > 0) {
+        list.push({
+          type: 'markdown',
+          content: textChunk,
+        });
+      }
+
+      list.push({
+        type: 'image',
+        alt: match[1] || 'Scientific Infographic',
+        uri: match[2].trim(),
+        index: imgIdx++,
+      });
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    const tail = cleanedMarkdown.substring(lastIndex).trim();
+    if (tail.length > 0) {
+      list.push({
+        type: 'markdown',
+        content: tail,
+      });
+    }
+
+    return list;
+  }, [cleanedMarkdown]);
 
   const markdownStyles = useMemo(() => ({
     body: {
@@ -360,35 +422,74 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
   }), [isDark, isTablet]);
 
   const markdownRules = useMemo(() => ({
-    image: (
-      node: any,
-      children: any,
-      parent: any,
-      styles: any,
-      allowedImageHandlers: any,
-      defaultImageHandler: any
-    ) => {
-      const { src, alt } = node.attributes || {};
-      let imageUri = src;
-
-      // Handle relative paths fallback
-      if (src && !src.startsWith('http') && !src.startsWith('data:')) {
-        const cleanPath = src.replace(/^(\.\.\/)+/, '').replace(/^(\.\/)+/, '');
-        const safePath = cleanPath.replace(/\(/g, '%28').replace(/\)/g, '%29');
-        imageUri = `${apiBase}/${safePath}`;
+    // Interactive Glossary Terms Highlight (Green dotted underline with tap-to-define popover)
+    text: (node: any, children: any, parent: any, styles: any, inheritedStyles = {}) => {
+      const rawText = node.content;
+      if (!rawText || typeof rawText !== 'string' || rawText.length < 3) {
+        return (
+          <Text key={node.key} style={[inheritedStyles, styles.text]}>
+            {rawText}
+          </Text>
+        );
       }
 
-      if (!imageUri || typeof imageUri !== 'string' || imageUri.trim().length === 0) {
-        return null;
+      const parts = rawText.split(COMPILED_GLOSSARY_REGEX);
+      if (parts.length <= 1) {
+        return (
+          <Text key={node.key} style={[inheritedStyles, styles.text]}>
+            {rawText}
+          </Text>
+        );
       }
 
       return (
-        <SmartInfographicCard
-          key={node.key}
-          uri={imageUri}
-          alt={alt}
-          isDark={isDark}
-        />
+        <Text key={node.key} style={[inheritedStyles, styles.text]}>
+          {parts.map((part, idx) => {
+            const def = getTermDefinition(part);
+            if (def) {
+              return (
+                <Text
+                  key={`${node.key}_term_${idx}`}
+                  style={[
+                    styles.text,
+                    inheritedStyles,
+                    {
+                      textDecorationLine: 'underline',
+                      textDecorationStyle: 'dotted',
+                      textDecorationColor: isDark ? '#4ADE80' : '#16A34A',
+                      color: isDark ? '#FFFFFF' : '#111827',
+                      fontWeight: (inheritedStyles as any)?.fontWeight || '600',
+                    },
+                  ]}
+                  onPress={() => handleTermPress(part, def)}
+                  suppressHighlighting={false}
+                >
+                  {part}
+                </Text>
+              );
+            }
+            return part;
+          })}
+        </Text>
+      );
+    },
+
+    // Safe textgroup rule prevents any nested Views from being forced inside Text
+    textgroup: (node: any, children: any, parent: any, styles: any) => {
+      const hasBlockChild = node.children?.some(
+        (c: any) => c.type === 'image' || c.type === 'fence' || c.type === 'blocklink'
+      );
+      if (hasBlockChild) {
+        return (
+          <View key={node.key} style={{ width: '100%' }}>
+            {children}
+          </View>
+        );
+      }
+      return (
+        <Text key={node.key} style={styles.textgroup}>
+          {children}
+        </Text>
       );
     },
 
@@ -431,6 +532,7 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
               {/* Horizontal Process Steps Flow */}
               <ScrollView
                 horizontal
+                nestedScrollEnabled={true}
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={styles.flowchartScrollContent}
               >
@@ -502,15 +604,153 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
         </View>
       );
     },
-  }), [apiBase, isDark]);
+  }), [isDark, handleTermPress]);
 
   return (
     <View style={[styles.container, isTablet && { width: '100%', maxWidth: 760, alignSelf: 'center' }]}>
       <View style={styles.markdownWrapper}>
-        <Markdown rules={markdownRules} style={markdownStyles}>
-          {cleanedMarkdown}
-        </Markdown>
+        {segments.map((seg, idx) => {
+          if (seg.type === 'image' && seg.uri) {
+            return (
+              <SmartInfographicCard
+                key={`infographic_${idx}_${seg.uri}`}
+                uri={seg.uri}
+                alt={seg.alt}
+                isDark={isDark}
+                index={seg.index ?? 0}
+                onExpand={(u, a) => setZoomedImage({ uri: u, alt: a })}
+              />
+            );
+          }
+          if (seg.type === 'markdown' && seg.content) {
+            return (
+              <Markdown
+                key={`md_${idx}`}
+                rules={markdownRules}
+                style={markdownStyles}
+              >
+                {seg.content}
+              </Markdown>
+            );
+          }
+          return null;
+        })}
       </View>
+
+      {/* Single On-Demand Fullscreen Zoom Modal (Never mounted in background) */}
+      {zoomedImage && (
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setZoomedImage(null)}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalCard, { backgroundColor: isDark ? '#142019' : '#FFFFFF' }]}>
+              <View style={styles.modalHeader}>
+                <View style={styles.modalTitleWrap}>
+                  <Ionicons name="pie-chart" size={15} color="#05996B" />
+                  <Text style={[styles.modalTitleText, { color: isDark ? '#FFFFFF' : '#172933' }]} numberOfLines={1}>
+                    {zoomedImage.alt || 'Scientific Diagram'}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  onPress={() => setZoomedImage(null)}
+                  style={styles.modalCloseBtn}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Ionicons name="close" size={20} color={isDark ? '#FFFFFF' : '#172933'} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.modalImageWrap}>
+                <ExpoImage
+                  source={{ uri: zoomedImage.uri }}
+                  style={styles.modalImage}
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  priority="high"
+                />
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Interactive Glossary Concept Definition Tooltip Popover */}
+      {activeTooltip && (
+        <Modal
+          visible={true}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setActiveTooltip(null)}
+        >
+          <TouchableOpacity
+            style={styles.tooltipBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveTooltip(null)}
+          >
+            <View
+              style={[
+                styles.tooltipCard,
+                {
+                  backgroundColor: isDark ? '#172B20' : '#FFFFFF',
+                  borderColor: isDark ? '#2B4A37' : '#D1E6DA',
+                },
+              ]}
+              onStartShouldSetResponder={() => true}
+            >
+              {/* Header with Key Concept Badge & Close Icon */}
+              <View style={styles.tooltipHeader}>
+                <View
+                  style={[
+                    styles.tooltipBadge,
+                    { backgroundColor: isDark ? 'rgba(74, 222, 128, 0.16)' : '#E8F5EE' },
+                  ]}
+                >
+                  <Ionicons name="sparkles" size={13} color={isDark ? '#4ADE80' : '#16A34A'} />
+                  <Text
+                    style={[
+                      styles.tooltipBadgeText,
+                      { color: isDark ? '#4ADE80' : '#16A34A' },
+                    ]}
+                  >
+                    KEY CONCEPT
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  onPress={() => setActiveTooltip(null)}
+                  style={styles.tooltipCloseBtn}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                >
+                  <Ionicons name="close" size={18} color={isDark ? '#A6C5B3' : '#64748B'} />
+                </TouchableOpacity>
+              </View>
+
+              {/* Term Title */}
+              <Text
+                style={[
+                  styles.tooltipTermTitle,
+                  { color: isDark ? '#4ADE80' : '#15803D' },
+                ]}
+              >
+                {activeTooltip.term.charAt(0).toUpperCase() + activeTooltip.term.slice(1)}
+              </Text>
+
+              {/* Definition Text */}
+              <Text
+                style={[
+                  styles.tooltipDefinition,
+                  { color: isDark ? '#E2E8F0' : '#334155' },
+                ]}
+              >
+                {activeTooltip.definition}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -570,6 +810,21 @@ const styles = StyleSheet.create({
   infographicImage: {
     width: '100%',
     height: '100%',
+  },
+  infographicSkeletonBox: {
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#00000005',
+    width: '100%',
+    height: '100%',
+  },
+  infographicQueuedText: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    textAlign: 'center',
+    letterSpacing: 0.2,
   },
   infographicLoadingOverlay: {
     ...(StyleSheet.absoluteFill as any),
@@ -762,5 +1017,62 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     lineHeight: 20,
+  },
+  // Glossary Definition Tooltip Popover Styles
+  tooltipBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  tooltipCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14,
+    elevation: 8,
+  },
+  tooltipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  tooltipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  tooltipBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+  },
+  tooltipCloseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tooltipTermTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 8,
+    letterSpacing: -0.2,
+  },
+  tooltipDefinition: {
+    fontSize: 14.5,
+    lineHeight: 22,
+    marginBottom: 4,
   },
 });

@@ -84,29 +84,33 @@ function tokenizeParagraph(text: string): TokenizedWord[] {
 
 /**
  * Calibrated word duration and pause calculation for mobile Text-to-Speech (TTS).
- * Natural English speech tempo on mobile Android TTS (Google TTS) averages ~130 words per minute at 1.0x rate.
+ * Natural English speech tempo on mobile Android TTS (Google TTS) and iOS (AVSpeech)
+ * averages ~170-175 words per minute at 1.0x rate (~340-350ms per word including pauses).
  */
-function getWordDurationMs(rawWord: string, speedRate: number): number {
+function getWordDurationMs(rawWord: string, speedRate: number = 1.0): number {
   const clean = rawWord.trim();
   const len = clean.length;
-  // Syllable-proportional base phoneme duration calibrated for standard Android TTS (~130 WPM)
-  let duration = 130 + Math.min(len, 14) * 38;
 
-  // Additional articulation duration for longer multi-syllabic academic & scientific terminology
+  // Syllable-proportional base phoneme duration calibrated for standard TTS (~170 WPM)
+  // Average word length of 5-6 letters yields ~250-280ms base duration
+  let duration = 120 + Math.min(len, 12) * 26;
+
+  // Articulation duration for longer multi-syllabic academic & scientific terminology
   if (len > 7) {
-    duration += Math.min(len - 7, 8) * 18;
+    duration += Math.min(len - 7, 7) * 14;
   }
 
-  // Natural TTS pause on sentence end (. ! ?)
+  // Natural TTS pause on sentence end (. ! ?) -> TTS pauses ~180-200ms
   if (/[.!?]$/.test(clean)) {
-    duration += 450;
+    duration += 190;
   }
-  // Natural TTS pause on clause delimiters (, ; : — -)
+  // Natural TTS pause on clause delimiters (, ; : — -) -> TTS pauses ~80-90ms
   else if (/[,;:\u2014\u2013-]$/.test(clean)) {
-    duration += 260;
+    duration += 90;
   }
 
-  return Math.max(200, Math.round(duration / (speedRate || 1.0)));
+  const effectiveSpeed = speedRate > 0 ? speedRate : 1.0;
+  return Math.max(110, Math.round(duration / effectiveSpeed));
 }
 
 function formatSeconds(sec: number): string {
@@ -378,8 +382,6 @@ export default function ListenScreen({
     const textToSpeak = wordsToSpeak.map((w) => w.raw).join(' ');
 
     Speech.stop();
-    startTimeRef.current = Date.now();
-    lastBoundaryTimeRef.current = Date.now();
 
     // Precompute character boundary offsets for wordsToSpeak:
     const wordCharOffsets: number[] = [];
@@ -389,13 +391,38 @@ export default function ListenScreen({
       accChar += wordsToSpeak[i].raw.length + 1;
     }
 
-    // Precompute word timing offsets in milliseconds calibrated to TTS speed:
+    // Calculate target paragraph duration if known from timestamps:
+    const nextParaItem = paras[paraIdx + 1];
+    const targetParaDurationSec =
+      (nextParaItem ? nextParaItem.startSec : totalDurationSec) - paraItem.startSec;
+
+    // Precompute raw word timing offsets:
+    const rawDurations = wordsToSpeak.map((w) => getWordDurationMs(w.raw, 1.0));
+    const rawTotalMs = rawDurations.reduce((sum, d) => sum + d, 0);
+
+    // If we have a reliable target duration for the full paragraph (> 0 and < 300s):
+    let scale = 1.0;
+    if (targetParaDurationSec > 0 && targetParaDurationSec < 300 && rawTotalMs > 0) {
+      const allParaDurations = paraWords.map((w) => getWordDurationMs(w.raw, 1.0));
+      const totalAllMs = allParaDurations.reduce((sum, d) => sum + d, 0);
+      const remainingFraction = totalAllMs > 0 ? rawTotalMs / totalAllMs : 1.0;
+      const expectedRemainingMs = targetParaDurationSec * 1000 * remainingFraction;
+      const ratio = expectedRemainingMs / rawTotalMs;
+      // Clamp scale ratio between 0.80 and 1.20 to prevent any distortion
+      scale = Math.max(0.80, Math.min(1.20, ratio));
+    }
+
     const wordStartTimesMs: number[] = [];
     let accMs = 0;
     for (let i = 0; i < wordsToSpeak.length; i++) {
       wordStartTimesMs.push(accMs);
-      accMs += getWordDurationMs(wordsToSpeak[i].raw, speedRef.current);
+      const scaledDuration = Math.round((rawDurations[i] * scale) / speedRef.current);
+      accMs += Math.max(80, scaledDuration);
     }
+
+    let isAudioStarted = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+    startTimeRef.current = 0;
 
     wordTickerRef.current = setInterval(() => {
       if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) {
@@ -415,11 +442,12 @@ export default function ListenScreen({
         return;
       }
 
-      const elapsedMs = Date.now() - startTimeRef.current;
-      // Speech warmup period: hold first word for the initial ~90ms
-      if (elapsedMs < 90) {
+      // Wait until audio has actually started emitting sound
+      if (!isAudioStarted || !startTimeRef.current) {
         return;
       }
+
+      const elapsedMs = Date.now() - startTimeRef.current;
 
       let foundIdx = 0;
       for (let i = 0; i < wordStartTimesMs.length; i++) {
@@ -435,14 +463,15 @@ export default function ListenScreen({
         // MONOTONIC: strictly forward only, never bounces backward!
         setActiveWordIndex((prev) => (nextWordIdx > prev ? nextWordIdx : prev));
       }
-    }, 40);
+    }, 30);
 
     Speech.speak(textToSpeak, {
       rate: speedRef.current,
       pitch: 1.0,
       onStart: () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
-        // Anchor timeline exactly when audio starts emitting sound
+        isAudioStarted = true;
         startTimeRef.current = Date.now();
         lastBoundaryTimeRef.current = Date.now();
       },
@@ -474,10 +503,16 @@ export default function ListenScreen({
         }
       },
       onDone: () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
         if (wordTickerRef.current) {
           clearInterval(wordTickerRef.current);
           wordTickerRef.current = null;
+        }
+
+        // Highlight the final word of the paragraph briefly
+        if (paraWords.length > 0) {
+          setActiveWordIndex(paraWords.length - 1);
         }
 
         if (paraIdx + 1 < paras.length) {
@@ -485,7 +520,7 @@ export default function ListenScreen({
             if (isPlayingRef.current && utteranceIdRef.current === currentUtteranceId) {
               speakFromWord(paraIdx + 1, 0);
             }
-          }, 140);
+          }, 120);
         } else {
           setIsPlaying(false);
           isPlayingRef.current = false;
@@ -496,6 +531,7 @@ export default function ListenScreen({
         }
       },
       onError: () => {
+        if (fallbackTimer) clearTimeout(fallbackTimer);
         if (utteranceIdRef.current !== currentUtteranceId) return;
         setIsPlaying(false);
         isPlayingRef.current = false;
@@ -506,6 +542,15 @@ export default function ListenScreen({
         }
       },
     });
+
+    // Fallback: If onStart does not trigger within 200ms (e.g. web or certain TTS engines), start ticker
+    fallbackTimer = setTimeout(() => {
+      if (!isAudioStarted && isPlayingRef.current && utteranceIdRef.current === currentUtteranceId) {
+        isAudioStarted = true;
+        startTimeRef.current = Date.now();
+        lastBoundaryTimeRef.current = Date.now();
+      }
+    }, 200);
   };
 
   const handleSelectMode = (newMode: ListenMode) => {
@@ -589,12 +634,19 @@ export default function ListenScreen({
       }
     }
 
+    const currentParaStart = tokenizedParagraphs[targetPIdx]?.startSec || 0;
+    const nextParaStart = tokenizedParagraphs[targetPIdx + 1]?.startSec || totalDurationSec;
+    const paraDuration = Math.max(1, nextParaStart - currentParaStart);
+    const paraWordCount = tokenizedParagraphs[targetPIdx]?.words.length || 1;
+    const progressInPara = Math.max(0, Math.min(0.95, (newSec - currentParaStart) / paraDuration));
+    const targetWIdx = Math.floor(progressInPara * paraWordCount);
+
     if (isPlaying) {
-      speakFromWord(targetPIdx, 0);
+      speakFromWord(targetPIdx, targetWIdx);
       startTicker();
     } else {
       setActiveParagraphIndex(targetPIdx);
-      setActiveWordIndex(0);
+      setActiveWordIndex(targetWIdx);
     }
   };
 

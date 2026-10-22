@@ -19,6 +19,7 @@ import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import PYQView from '@/components/study/PYQView';
 import StudyPlanView from '@/components/study/StudyPlanView';
 import PreparationExamView from '@/components/study/PreparationExamView';
+import PreparationExamSelectionView, { DEFAULT_UNITS } from '@/components/study/PreparationExamSelectionView';
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const PREPARE_SEGMENTS: NavSegment[] = [
@@ -38,7 +39,7 @@ export default function PrepareScreen() {
   const [activeSegment, setActiveSegment] = useState<string>(
     params.segment && ['pyq', 'prep_exam', 'study_plan'].includes(params.segment)
       ? params.segment
-      : 'pyq'
+      : 'prep_exam'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
@@ -57,8 +58,8 @@ export default function PrepareScreen() {
     }
   }, [params.chapter, params.segment]);
 
-  // PYQ 2-step flow state (selection -> exam)
-  const [pyqStep, setPyqStep] = useState<'selection' | 'exam'>('selection');
+  // Preparation Exam 2-step flow state: 'selection' (screen 1) -> 'exam' (screen 2)
+  const [prepExamStep, setPrepExamStep] = useState<'selection' | 'exam'>('selection');
   const [examConfig, setExamConfig] = useState<{ selectedUnits: number[]; questionCount: number }>({
     selectedUnits: [1],
     questionCount: 10,
@@ -68,44 +69,56 @@ export default function PrepareScreen() {
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
 
-  const subjectUnits = activeSubject.chapters.map((ch) => ({
-    id: ch.number,
-    title: `Unit ${ch.number}`,
-    description: ch.description || ch.name,
-  }));
+  const subjectUnits =
+    activeSubject.chapters && activeSubject.chapters.length > 0
+      ? activeSubject.chapters.map((ch) => ({
+          id: ch.number,
+          title: `Unit ${ch.number}`,
+          description:
+            ch.number === 1 && activeSubject.id.includes('ento')
+              ? 'Insect Digestive System & Anatomy'
+              : ch.number === 2 && activeSubject.id.includes('ento')
+              ? 'Insect Morphology & Structural Taxonomy'
+              : ch.number === 3 && activeSubject.id.includes('ento')
+              ? 'Weathering'
+              : ch.number === 4 && activeSubject.id.includes('ento')
+              ? 'Pollination'
+              : ch.description || ch.name,
+        }))
+      : DEFAULT_UNITS;
 
-  const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
+  const screenBg = activeSegment === 'prep_exam'
+    ? (isDark ? '#0F1713' : '#F4F7F5')
+    : (isDark ? '#2D3E36' : '#FFF6F1');
   const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
   const cardBorder = isDark ? '#3D5449' : '#E5DDD8';
   const textColor = isDark ? '#FEFEFE' : '#172A24';
   const subtextColor = isDark ? '#ACC0B5' : '#5C7066';
 
-  const handleStartExam = (config: { selectedUnits: number[]; questionCount: number }) => {
-    setExamConfig(config);
-    setPyqStep('exam');
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* Top Navigation Bar with Back Button + Sub-Parts + Profile Avatar */}
-      <TopNavBar
-        segments={PREPARE_SEGMENTS}
-        activeSegment={activeSegment}
-        onSegmentChange={(segId) => {
-          setActiveSegment(segId);
-          if (segId === 'pyq') {
-            setPyqStep('selection');
-          }
-        }}
-        onBackPress={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.push('/(tabs)');
-          }
-        }}
-        showProfile={true}
-      />
+      {/* Top Navigation Bar is shown for other tabs (PYQ, Study Plan).
+          Preparation Exam has its own dedicated 1:1 header from the PNG design. */}
+      {activeSegment !== 'prep_exam' && (
+        <TopNavBar
+          segments={PREPARE_SEGMENTS}
+          activeSegment={activeSegment}
+          onSegmentChange={(segId) => {
+            setActiveSegment(segId);
+            if (segId === 'prep_exam') {
+              setPrepExamStep('selection');
+            }
+          }}
+          onBackPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/(tabs)');
+            }
+          }}
+          showProfile={true}
+        />
+      )}
 
       {/* Main Content Area based on Active Segment */}
       {activeSegment === 'pyq' ? (
@@ -114,26 +127,41 @@ export default function PrepareScreen() {
           chapterName={currentChapter.name}
         />
       ) : activeSegment === 'prep_exam' ? (
-        <PreparationExamView
-          subjectId={activeSubject.id}
-          chapterNumber={currentChapter.number}
-          subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
-          onBack={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.push('/(tabs)');
-            }
-          }}
-          onSubmit={() => {
-            markResourceCompleted(activeSubject.id, currentChapter.number, 'prep_exam');
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.push('/(tabs)');
-            }
-          }}
-        />
+        prepExamStep === 'selection' ? (
+          /* SCREEN 1: SELECTION SCREEN (1st and 2nd PNG) */
+          <PreparationExamSelectionView
+            units={subjectUnits}
+            pageTitle="Preparation Exam"
+            backLabel="Back to Study Table"
+            onBack={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.push('/(tabs)');
+              }
+            }}
+            onStart={(config) => {
+              setExamConfig(config);
+              setPrepExamStep('exam');
+            }}
+          />
+        ) : (
+          /* SCREEN 2: EXAM SCREEN */
+          <PreparationExamView
+            subjectId={activeSubject.id}
+            chapterNumber={examConfig.selectedUnits[0] || currentChapter.number}
+            subjectName={`${activeSubject.name.toUpperCase()} · ${currentChapter.name.toUpperCase()}`}
+            selectedUnits={examConfig.selectedUnits}
+            questionCount={examConfig.questionCount}
+            onBack={() => {
+              setPrepExamStep('selection');
+            }}
+            onSubmit={() => {
+              markResourceCompleted(activeSubject.id, currentChapter.number, 'prep_exam');
+              setPrepExamStep('selection');
+            }}
+          />
+        )
       ) : activeSegment === 'study_plan' ? (
         <StudyPlanView
           subjectId={activeSubject.id}

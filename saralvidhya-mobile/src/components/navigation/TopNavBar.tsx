@@ -50,12 +50,12 @@ export default function TopNavBar({
   const { isDark } = useAppTheme();
 
   const handleProfilePress = () => {
-    Haptics.selectionAsync();
+    try { Haptics.selectionAsync().catch(() => {}); } catch {}
     router.push('/(tabs)/profile');
   };
 
   const handleBackPress = () => {
-    Haptics.selectionAsync();
+    try { Haptics.selectionAsync().catch(() => {}); } catch {}
     if (onBackPress) {
       onBackPress();
     } else if (router.canGoBack()) {
@@ -67,7 +67,7 @@ export default function TopNavBar({
 
   const handleSegmentPress = (id: string) => {
     if (id === activeSegment) return;
-    Haptics.selectionAsync();
+    try { Haptics.selectionAsync().catch(() => {}); } catch {}
     onSegmentChange(id);
   };
 
@@ -82,6 +82,56 @@ export default function TopNavBar({
   const textActive = isDark ? '#FFFFFF' : '#1C2E24';
   const activeBorder = isDark ? '#4ade80' : '#203328';
   const avatarBorder = isDark ? 'rgba(255, 255, 255, 0.5)' : '#4D6256';
+
+  const renderPill = (seg: NavSegment) => {
+    const isActive = seg.id === activeSegment;
+    const textColor = isActive ? textActive : textInactive;
+    return (
+      <TouchableOpacity
+        key={seg.id}
+        style={[
+          styles.pillButton,
+          {
+            backgroundColor: isActive ? pillActiveBg : pillInactiveBg,
+            borderColor: isActive ? activeBorder : pillBorder,
+            borderWidth: isActive ? 1.5 : 1,
+          },
+          isActive && styles.activePillElevation,
+        ]}
+        onPress={() => handleSegmentPress(seg.id)}
+        hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityState={{ selected: isActive }}
+      >
+        {seg.vectorIcon ? (
+          <Ionicons
+            name={seg.vectorIcon}
+            size={13}
+            color={textColor}
+          />
+        ) : seg.icon ? (
+          <Text style={styles.pillIcon}>{seg.icon}</Text>
+        ) : null}
+        <Text
+          style={[
+            styles.pillLabel,
+            {
+              color: textColor,
+              fontWeight: isActive ? '700' : '600',
+            },
+          ]}
+        >
+          {seg.label}
+        </Text>
+        {seg.badge ? (
+          <View style={styles.badgeWrap}>
+            <Text style={styles.badgeText}>{seg.badge}</Text>
+          </View>
+        ) : null}
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={[styles.headerContainer, { backgroundColor: bg, paddingTop: insets.top + (Platform.OS === 'android' ? 8 : 4) }]}>
@@ -122,63 +172,21 @@ export default function TopNavBar({
 
         {/* Center Toggle Pills (Matches User's Screenshots) */}
         <View style={styles.centerSlot}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.pillsScrollContent}
-            style={styles.pillsScroll}
-          >
-            {segments.map((seg) => {
-              const isActive = seg.id === activeSegment;
-              const textColor = isActive ? textActive : textInactive;
-              return (
-                <TouchableOpacity
-                  key={seg.id}
-                  style={[
-                    styles.pillButton,
-                    {
-                      backgroundColor: isActive ? pillActiveBg : pillInactiveBg,
-                      borderColor: isActive ? activeBorder : pillBorder,
-                      borderWidth: isActive ? 1.5 : 1,
-                    },
-                    isActive && styles.activePillElevation,
-                  ]}
-                  onPress={() => handleSegmentPress(seg.id)}
-                  hitSlop={{ top: 10, bottom: 10, left: 6, right: 6 }}
-                  activeOpacity={0.75}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: isActive }}
-                >
-                  {seg.vectorIcon ? (
-                    <Ionicons
-                      name={seg.vectorIcon}
-                      size={13}
-                      color={textColor}
-                    />
-                  ) : seg.icon ? (
-                    <Text style={styles.pillIcon}>{seg.icon}</Text>
-                  ) : null}
-                  <Text
-                    style={[
-                      styles.pillLabel,
-                      {
-                        color: textColor,
-                        fontWeight: isActive ? '700' : '600',
-                      },
-                    ]}
-                  >
-                    {seg.label}
-                  </Text>
-                  {seg.badge ? (
-                    <View style={styles.badgeWrap}>
-                      <Text style={styles.badgeText}>{seg.badge}</Text>
-                    </View>
-                  ) : null}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          {segments.length <= 4 ? (
+            <View style={styles.pillsScrollContent}>
+              {segments.map(renderPill)}
+            </View>
+          ) : (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.pillsScrollContent}
+              style={styles.pillsScroll}
+            >
+              {segments.map(renderPill)}
+            </ScrollView>
+          )}
         </View>
 
         {/* Right Slot: Circular Profile Avatar (Matches Screenshot) */}

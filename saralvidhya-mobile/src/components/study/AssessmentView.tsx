@@ -523,11 +523,6 @@ export default function AssessmentView({
           </TouchableOpacity>
         </View>
 
-        {/* 7. FOOTER (.questionFooter) */}
-        <Text style={[styles.questionFooter, { color: footerTextColor }]}>
-          {`${totalQuestions} questions  ·  Chapter ${chapterNumber}`}
-        </Text>
-
         <View style={{ height: 60 }} />
       </ScrollView>
     </View>

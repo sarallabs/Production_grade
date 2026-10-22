@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
@@ -346,13 +347,13 @@ export default function StudyGuideReader({
   }, []);
 
   const handleToggleBookmark = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
     setIsBookmarked((prev) => !prev);
     onBookmarkPress?.();
   };
 
   const handleToggleAudio = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
     if (onOpenListen) {
       onOpenListen(studyMode === 'essentials' ? 'quick' : 'detailed');
       return;
@@ -369,7 +370,7 @@ export default function StudyGuideReader({
   };
 
   const handleTermPress = (termKey: string) => {
-    Haptics.selectionAsync();
+    try { Haptics.selectionAsync().catch(() => {}); } catch {}
     setActiveGlossaryKey(termKey);
   };
 
@@ -405,96 +406,33 @@ export default function StudyGuideReader({
         keyboardShouldPersistTaps="handled"
       >
         {/* 1. CHAPTER HEADING ROW WITH SAVE BUTTON */}
-        {studyMode === 'essentials' ? (
-          /* Essentials Header (.guideIntroduction) */
-          <View style={styles.guideIntroduction}>
-            <View style={styles.guideTitleRow}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
-                  <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
-                    Ch {chapterNumber}
-                  </Text>
-                </View>
-                <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
-                  {effectiveChapterTitle}
+        <View style={styles.guideIntroduction}>
+          <View style={styles.guideTitleRow}>
+            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
+                <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
+                  Ch {chapterNumber}
                 </Text>
               </View>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                onPress={handleToggleBookmark}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                activeOpacity={0.75}
-                accessibilityLabel="Save chapter"
-              >
-                <Ionicons
-                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                  size={19}
-                  color={isBookmarked ? emeraldPrimary : textColor}
-                />
-              </TouchableOpacity>
+              <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
+                {effectiveChapterTitle}
+              </Text>
             </View>
+            <TouchableOpacity
+              style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+              onPress={handleToggleBookmark}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.75}
+              accessibilityLabel="Save chapter"
+            >
+              <Ionicons
+                name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+                size={19}
+                color={isBookmarked ? emeraldPrimary : textColor}
+              />
+            </TouchableOpacity>
           </View>
-        ) : (
-          /* In-depth Header (.frameParent & .readAloud) */
-          <View style={[styles.inDepthHeader, { borderBottomColor: isDark ? '#2D4538' : '#C6EBDC' }]}>
-            <View style={styles.guideTitleRow}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
-                  <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
-                    Ch {chapterNumber}
-                  </Text>
-                </View>
-                <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
-                  {effectiveChapterTitle}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-                onPress={handleToggleBookmark}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                activeOpacity={0.75}
-                accessibilityLabel="Save chapter"
-              >
-                <Ionicons
-                  name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                  size={19}
-                  color={isBookmarked ? emeraldPrimary : textColor}
-                />
-              </TouchableOpacity>
-            </View>
-
-            {/* 3 Persona / Tier Level Badges (.frameParent: 41x41px each, 4px radius, subtle shadow) */}
-            <View style={styles.frameParent}>
-              {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
-                const isActive = persona === lvl;
-                return (
-                  <TouchableOpacity
-                    key={lvl}
-                    style={[
-                      styles.groupBadge,
-                      { backgroundColor: cardBg, borderColor: isActive ? emeraldPrimary : cardBorder },
-                      isActive && styles.groupBadgeActive,
-                    ]}
-                    onPress={() => {
-                      if (persona !== lvl) {
-                        Haptics.selectionAsync();
-                        updatePersona(lvl);
-                      }
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.75}
-                  >
-                    <Image
-                      source={PERSONA_ICONS[lvl]}
-                      style={styles.personaBadgeImage}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-        )}
+        </View>
 
         {/* 2. COMPACT READING DEPTH SELECTOR + READ ALOUD (BESIDE TOGGLE) */}
         <View style={styles.readingDepthRow}>
@@ -507,7 +445,7 @@ export default function StudyGuideReader({
               ]}
               onPress={() => {
                 if (studyMode !== 'essentials') {
-                  Haptics.selectionAsync();
+                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
                   setStudyMode('essentials');
                 }
               }}
@@ -538,7 +476,7 @@ export default function StudyGuideReader({
               ]}
               onPress={() => {
                 if (studyMode !== 'in_depth') {
-                  Haptics.selectionAsync();
+                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
                   setStudyMode('in_depth');
                 }
               }}
@@ -600,60 +538,46 @@ export default function StudyGuideReader({
           </TouchableOpacity>
         </View>
 
-        {/* 4. ESSENTIALS MODE (.studyContent) */}
+        {/* 3. PERSONA LOGO BADGES (Logos only - Beginner, Intermediate, Advanced) */}
+        <View style={styles.personaRowContainer}>
+          <View style={styles.personaBadgesRow}>
+            {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
+              const isActive = persona === lvl;
+              return (
+                <TouchableOpacity
+                  key={lvl}
+                  style={[
+                    styles.personaBadgeBtn,
+                    {
+                      backgroundColor: isActive ? (isDark ? '#1E3B2C' : '#E8F5EE') : cardBg,
+                      borderColor: isActive ? emeraldPrimary : cardBorder,
+                    },
+                    isActive && styles.personaBadgeBtnActive,
+                  ]}
+                  onPress={() => {
+                    if (persona !== lvl) {
+                      try { Haptics.selectionAsync().catch(() => {}); } catch {}
+                      updatePersona(lvl);
+                    }
+                  }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.75}
+                  accessibilityLabel={`Persona: ${lvl}`}
+                >
+                  <Image
+                    source={PERSONA_ICONS[lvl]}
+                    style={styles.personaBadgeIcon}
+                    resizeMode="contain"
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* 4. ESSENTIALS MODE (.studyContent) - Clean Markdown study guide without redundant static card */}
         {studyMode === 'essentials' && (
           <View style={styles.studyContent}>
-            {/* Visual Scientific Infographic Card for the chapter */}
-            <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              {/* Figure Tools (.figureTools) */}
-              <View style={styles.figureTools}>
-                <Text style={[styles.figureLabel, { color: subtextColor }]}>
-                  {activeInfographic.badgeLabel}
-                </Text>
-                <TouchableOpacity
-                  style={styles.expandDiagram}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setIsDiagramZoomed(true);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
-                  <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Diagram Graphic Preview */}
-              <TouchableOpacity
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                  setIsDiagramZoomed(true);
-                }}
-                activeOpacity={0.9}
-                style={styles.diagramTouch}
-              >
-                <Image
-                  source={infographicSource}
-                  onError={() => setRemoteImageFailed(true)}
-                  style={styles.originalDiagramDetail}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-
-              {/* Divider (.divider) */}
-              <View style={[styles.divider, { backgroundColor: cardBorder }]} />
-
-              {/* Regional Key (.regionalKey) */}
-              <View style={styles.regionalKey}>
-                {activeInfographic.regions.map((reg, idx) => (
-                  <View key={idx} style={styles.anatomicalRegion}>
-                    <Text style={[styles.regionName, { color: textColor }]}>{reg.label}</Text>
-                    <Text style={[styles.scientificName, { color: subtextColor }]}>{reg.scientific}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-
             {/* Complete Chapter Matter rendered via MarkdownReader */}
             <MarkdownReader
               title={effectiveChapterTitle}
@@ -687,17 +611,20 @@ export default function StudyGuideReader({
 
               <TouchableOpacity
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
                   setIsDiagramZoomed(true);
                 }}
                 activeOpacity={0.9}
                 style={styles.diagramTouch}
               >
-                <Image
+                <ExpoImage
                   source={infographicSource}
                   onError={() => setRemoteImageFailed(true)}
                   style={styles.originalDiagramDetail}
-                  resizeMode="contain"
+                  contentFit="contain"
+                  cachePolicy="memory-disk"
+                  priority="high"
+                  transition={200}
                 />
               </TouchableOpacity>
 
@@ -755,95 +682,103 @@ export default function StudyGuideReader({
       </ScrollView>
 
 
-      {/* 6. FULL-SCREEN INTERACTIVE DIAGRAM MODAL */}
-      <Modal
-        visible={isDiagramZoomed}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsDiagramZoomed(false)}
-      >
-        <TouchableOpacity
-          style={styles.zoomModalBackdrop}
-          activeOpacity={1}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            setIsDiagramZoomed(false);
-          }}
+      {/* 6. FULL-SCREEN INTERACTIVE DIAGRAM MODAL (Never mounted in background) */}
+      {isDiagramZoomed && (
+        <Modal
+          visible={true}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsDiagramZoomed(false)}
         >
-          <View style={styles.zoomHeader}>
-            <View>
-              <Text style={styles.zoomTitle}>{activeInfographic.title}</Text>
-              <Text style={styles.zoomSubtitle}>{activeInfographic.subtitle}</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.zoomCloseBtn}
-              onPress={() => setIsDiagramZoomed(false)}
-            >
-              <Ionicons name="close" size={20} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.zoomImgWrap}>
-            <Image
-              source={infographicSource}
-              style={styles.zoomedImage}
-              resizeMode="contain"
-            />
-          </View>
-
-          <View style={styles.shrinkPill}>
-            <Ionicons name="contract-outline" size={15} color="#FFFFFF" />
-            <Text style={styles.shrinkPillText}>Tap anywhere to shrink</Text>
-          </View>
-        </TouchableOpacity>
-      </Modal>
-
-      {/* 7. CLICKABLE GLOSSARY DEFINITION MODAL */}
-      <Modal
-        visible={activeGlossaryKey !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setActiveGlossaryKey(null)}
-      >
-        <TouchableOpacity
-          style={styles.glossaryBackdrop}
-          activeOpacity={1}
-          onPress={() => setActiveGlossaryKey(null)}
-        >
-          <View
-            style={[styles.glossaryCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+          <TouchableOpacity
+            style={styles.zoomModalBackdrop}
+            activeOpacity={1}
+            onPress={() => {
+              try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
+              setIsDiagramZoomed(false);
+            }}
           >
-            {activeGlossaryKey && GLOSSARY_TERMS[activeGlossaryKey] && (
-              <>
-                <View style={styles.glossaryHeader}>
-                  <Ionicons name="book" size={18} color="#16a34a" />
-                  <Text style={[styles.glossaryTermText, { color: textColor }]}>
-                    {GLOSSARY_TERMS[activeGlossaryKey].term}
+            <View style={styles.zoomHeader}>
+              <View>
+                <Text style={styles.zoomTitle}>{activeInfographic.title}</Text>
+                <Text style={styles.zoomSubtitle}>{activeInfographic.subtitle}</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.zoomCloseBtn}
+                onPress={() => setIsDiagramZoomed(false)}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              >
+                <Ionicons name="close" size={20} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.zoomImgWrap}>
+              <ExpoImage
+                source={infographicSource}
+                style={styles.zoomedImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                priority="high"
+              />
+            </View>
+
+            <View style={styles.shrinkPill}>
+              <Ionicons name="contract-outline" size={15} color="#FFFFFF" />
+              <Text style={styles.shrinkPillText}>Tap anywhere to shrink</Text>
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
+
+      {/* 7. CLICKABLE GLOSSARY DEFINITION MODAL (Never mounted in background) */}
+      {activeGlossaryKey !== null && (
+        <Modal
+          visible={true}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setActiveGlossaryKey(null)}
+        >
+          <TouchableOpacity
+            style={styles.glossaryBackdrop}
+            activeOpacity={1}
+            onPress={() => setActiveGlossaryKey(null)}
+          >
+            <View
+              style={[styles.glossaryCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+            >
+              {activeGlossaryKey && GLOSSARY_TERMS[activeGlossaryKey] && (
+                <>
+                  <View style={styles.glossaryHeader}>
+                    <Ionicons name="book" size={18} color="#16a34a" />
+                    <Text style={[styles.glossaryTermText, { color: textColor }]}>
+                      {GLOSSARY_TERMS[activeGlossaryKey].term}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.glossaryDefText, { color: isDark ? '#D8E5DC' : '#2D3E36' }]}>
+                    {GLOSSARY_TERMS[activeGlossaryKey].definition}
                   </Text>
-                </View>
 
-                <Text style={[styles.glossaryDefText, { color: isDark ? '#D8E5DC' : '#2D3E36' }]}>
-                  {GLOSSARY_TERMS[activeGlossaryKey].definition}
-                </Text>
+                  <View style={styles.examTipBox}>
+                    <Ionicons name="school-outline" size={15} color="#16a34a" />
+                    <Text style={styles.examTipText}>
+                      {GLOSSARY_TERMS[activeGlossaryKey].examTip}
+                    </Text>
+                  </View>
 
-                <View style={styles.examTipBox}>
-                  <Ionicons name="school-outline" size={15} color="#16a34a" />
-                  <Text style={styles.examTipText}>
-                    {GLOSSARY_TERMS[activeGlossaryKey].examTip}
-                  </Text>
-                </View>
-
-                <TouchableOpacity
-                  style={[styles.glossaryCloseBtn, { backgroundColor: isDark ? '#2E4438' : '#203328' }]}
-                  onPress={() => setActiveGlossaryKey(null)}
-                >
-                  <Text style={styles.glossaryCloseText}>Close</Text>
-                </TouchableOpacity>
-              </>
-            )}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+                  <TouchableOpacity
+                    style={[styles.glossaryCloseBtn, { backgroundColor: isDark ? '#2E4438' : '#203328' }]}
+                    onPress={() => setActiveGlossaryKey(null)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Text style={styles.glossaryCloseText}>Close</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </TouchableOpacity>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -987,6 +922,44 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+  },
+  personaRowContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  personaBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  personaBadgeBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  personaBadgeBtnActive: {
+    borderWidth: 2,
+    elevation: 3,
+    shadowColor: '#147A43',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.22,
+    shadowRadius: 4,
+    transform: [{ scale: 1.06 }],
+  },
+  personaBadgeIcon: {
+    width: 30,
+    height: 30,
   },
   depthSelector: {
     flex: 1,
