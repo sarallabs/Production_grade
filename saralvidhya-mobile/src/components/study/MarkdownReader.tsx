@@ -21,6 +21,7 @@ import { GCS_API_BASE } from '@/services/contentService';
 import { Image as ExpoImage } from 'expo-image';
 import { useDynamicImageLoad } from '@/services/imageConcurrencyService';
 import { getTermDefinition, COMPILED_GLOSSARY_REGEX } from '@/data/glossaryTerms';
+import ZoomableImageModal from './ZoomableImageModal';
 
 interface MarkdownReaderProps {
   content: string;
@@ -637,45 +638,14 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
         })}
       </View>
 
-      {/* Single On-Demand Fullscreen Zoom Modal (Never mounted in background) */}
-      {zoomedImage && (
-        <Modal
-          visible={true}
-          transparent={true}
-          animationType="fade"
-          onRequestClose={() => setZoomedImage(null)}
-        >
-          <View style={styles.modalBackdrop}>
-            <View style={[styles.modalCard, { backgroundColor: isDark ? '#142019' : '#FFFFFF' }]}>
-              <View style={styles.modalHeader}>
-                <View style={styles.modalTitleWrap}>
-                  <Ionicons name="pie-chart" size={15} color="#05996B" />
-                  <Text style={[styles.modalTitleText, { color: isDark ? '#FFFFFF' : '#172933' }]} numberOfLines={1}>
-                    {zoomedImage.alt || 'Scientific Diagram'}
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  onPress={() => setZoomedImage(null)}
-                  style={styles.modalCloseBtn}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                >
-                  <Ionicons name="close" size={20} color={isDark ? '#FFFFFF' : '#172933'} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.modalImageWrap}>
-                <ExpoImage
-                  source={{ uri: zoomedImage.uri }}
-                  style={styles.modalImage}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                  priority="high"
-                />
-              </View>
-            </View>
-          </View>
-        </Modal>
-      )}
+      {/* Single On-Demand Fullscreen Interactive Zoom Modal for Infographics */}
+      <ZoomableImageModal
+        visible={Boolean(zoomedImage)}
+        imageSource={{ uri: zoomedImage?.uri || '' }}
+        title={zoomedImage?.alt || 'Scientific Infographic'}
+        subtitle="Pinch, pan, or double-tap to zoom into fine details"
+        onClose={() => setZoomedImage(null)}
+      />
 
       {/* Interactive Glossary Concept Definition Tooltip Popover */}
       {activeTooltip && (

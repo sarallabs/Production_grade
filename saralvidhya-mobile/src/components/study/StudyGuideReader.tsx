@@ -31,6 +31,7 @@ import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import StudyGuideReaderTablet from './StudyGuideReader.tablet';
+import ZoomableImageModal from './ZoomableImageModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -1050,53 +1051,14 @@ export default function StudyGuideReader({
         </TouchableOpacity>
       )}
 
-      {/* 6. FULL-SCREEN INTERACTIVE DIAGRAM MODAL (Never mounted in background) */}
-      {isDiagramZoomed && (
-        <Modal
-          visible={true}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setIsDiagramZoomed(false)}
-        >
-          <TouchableOpacity
-            style={styles.zoomModalBackdrop}
-            activeOpacity={1}
-            onPress={() => {
-              try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
-              setIsDiagramZoomed(false);
-            }}
-          >
-            <View style={styles.zoomHeader}>
-              <View>
-                <Text style={styles.zoomTitle}>{activeInfographic.title}</Text>
-                <Text style={styles.zoomSubtitle}>{activeInfographic.subtitle}</Text>
-              </View>
-              <TouchableOpacity
-                style={styles.zoomCloseBtn}
-                onPress={() => setIsDiagramZoomed(false)}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Ionicons name="close" size={20} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.zoomImgWrap}>
-              <ExpoImage
-                source={infographicSource}
-                style={styles.zoomedImage}
-                contentFit="contain"
-                cachePolicy="memory-disk"
-                priority="high"
-              />
-            </View>
-
-            <View style={styles.shrinkPill}>
-              <Ionicons name="contract-outline" size={15} color="#FFFFFF" />
-              <Text style={styles.shrinkPillText}>Tap anywhere to shrink</Text>
-            </View>
-          </TouchableOpacity>
-        </Modal>
-      )}
+      {/* 6. FULL-SCREEN INTERACTIVE ZOOMABLE DIAGRAM MODAL */}
+      <ZoomableImageModal
+        visible={isDiagramZoomed}
+        imageSource={infographicSource}
+        title={activeInfographic.title}
+        subtitle={activeInfographic.subtitle}
+        onClose={() => setIsDiagramZoomed(false)}
+      />
 
       {/* 7. CLICKABLE GLOSSARY DEFINITION MODAL (Never mounted in background) */}
       {activeGlossaryKey !== null && (
