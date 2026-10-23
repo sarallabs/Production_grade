@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,13 @@ import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
 import MarkdownReader from './MarkdownReader';
 import ReadAloudBar from './ReadAloudBar';
+import QuickCheckCard from './QuickCheckCard';
+import {
+  fetchQuickCheckQuestions,
+  QuickCheckQuestion,
+  FALLBACK_QUICK_CHECK_BANK,
+} from '@/data/quickCheckData';
+import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import {
   fetchQuickStudyGuide,
   fetchDetailedNotes,
@@ -105,10 +112,22 @@ export default function StudyGuideReaderTablet({
     SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
   );
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>(() =>
+    FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
+  );
+  const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [sectionLayouts, setSectionLayouts] = useState<Record<number, number>>({});
+
   // Sync state whenever chapter changes
   useEffect(() => {
     setQuickContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '');
     setDetailedContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '');
+    setQuickCheckQuestions(
+      FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
+    );
+    setCompletedQuickChecks(new Set());
   }, [chapterNumber]);
 
   // Pull live content from cloud database parameterized by activePersona and chapter
@@ -141,11 +160,58 @@ export default function StudyGuideReaderTablet({
         });
     }
 
+    const track = studyMode === 'in_depth' ? 'detailed' : 'quick';
+    fetchQuickCheckQuestions(chapterNumber, track, activePersona, controller.signal)
+      .then((questions) => {
+        if (isMounted && questions && questions.length > 0) {
+          setQuickCheckQuestions(questions);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       isMounted = false;
       controller.abort();
     };
   }, [chapterNumber, subjectId, activePersona, studyMode]);
+
+  const activeRawContent =
+    studyMode === 'in_depth'
+      ? detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+      : quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
+
+  const sections = useMemo(() => {
+    return parseMarkdownSections(activeRawContent, quickCheckQuestions);
+  }, [activeRawContent, quickCheckQuestions]);
+
+  const totalSections = sections.length;
+  const chapterProgressPercent = Math.min(
+    100,
+    Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
+  );
+
+  const handleScrollToSection = (targetIndex: number) => {
+    if (targetIndex >= 0 && targetIndex < sections.length) {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch {}
+      setActiveSectionIndex(targetIndex);
+      const targetY = sectionLayouts[targetIndex];
+      if (typeof targetY === 'number') {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 20), animated: true });
+      }
+    }
+  };
+
+  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean) => {
+    if (isCorrect) {
+      setCompletedQuickChecks((prev) => {
+        const next = new Set(prev);
+        next.add(sectionNumber);
+        return next;
+      });
+    }
+  };
 
   const [showReadAloudBar, setShowReadAloudBar] = useState(false);
 
@@ -228,6 +294,7 @@ export default function StudyGuideReaderTablet({
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
@@ -418,7 +485,104 @@ export default function StudyGuideReaderTablet({
             </TouchableOpacity>
           </View>
 
-          {/* 6. STUDY GUIDE ARTICLE CONTENT */}
+          {/* 6. "IN THIS CHAPTER" READING GUIDE */}
+          {sections.length > 1 && (
+            <View style={styles.readingGuideContainer}>
+              <View style={styles.readingGuideHeader}>
+                <View style={styles.readingGuideTitleRow}>
+                  <Ionicons name="compass-outline" size={15} color={pillOutlineColor} />
+                  <Text style={[styles.readingGuideLabel, { color: breadcrumbColor }]}>
+                    IN THIS CHAPTER
+                  </Text>
+                </View>
+                <Text style={[styles.chapterProgressLabel, { color: pillOutlineColor }]}>
+                  {chapterProgressPercent}% Done
+                </Text>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.sectionPillsScroll}
+              >
+                {sections.map((sec, sIdx) => {
+                  const isQcDone = completedQuickChecks.has(sec.sectionNumber);
+                  const isCurrent = activeSectionIndex === sIdx;
+
+                  return (
+                    <TouchableOpacity
+                      key={sec.id}
+                      style={[
+                        styles.sectionNavPill,
+                        {
+                          backgroundColor: isCurrent
+                            ? (isDark ? '#1C3A2B' : '#E8F5EE')
+                            : (isDark ? '#17241D' : '#FEFEFE'),
+                          borderColor: isCurrent ? pillOutlineColor : personaBtnActiveBorder,
+                        },
+                      ]}
+                      onPress={() => handleScrollToSection(sIdx)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.sectionNavPillTop}>
+                        <View
+                          style={[
+                            styles.sectionDot,
+                            {
+                              backgroundColor: isQcDone
+                                ? '#16A34A'
+                                : isCurrent
+                                ? pillOutlineColor
+                                : breadcrumbColor,
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.sectionPillTitle,
+                            {
+                              color: isCurrent ? (isDark ? '#FFFFFF' : '#147A43') : textColor,
+                              fontWeight: isCurrent ? '700' : '600',
+                            },
+                          ]}
+                          numberOfLines={1}
+                        >
+                          {sec.shortTitle}
+                        </Text>
+                      </View>
+
+                      <View
+                        style={[
+                          styles.qcStatusBadge,
+                          {
+                            backgroundColor: isQcDone
+                              ? (isDark ? '#143322' : '#DCFCE7')
+                              : (isDark ? '#202E26' : '#F1F5F9'),
+                          },
+                        ]}
+                      >
+                        <Ionicons
+                          name={isQcDone ? 'checkmark-circle' : 'flash'}
+                          size={11}
+                          color={isQcDone ? '#16A34A' : breadcrumbColor}
+                        />
+                        <Text
+                          style={[
+                            styles.qcStatusText,
+                            { color: isQcDone ? '#16A34A' : breadcrumbColor },
+                          ]}
+                        >
+                          {isQcDone ? 'Quick Check Done' : 'Quick Check'}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
+
+          {/* 7. STUDY GUIDE ARTICLE CONTENT WITH FORMATIVE QUICK CHECKS */}
           <View style={styles.articleContainer}>
             {/* Main Article Title */}
             <Text style={[styles.articleMainTitle, { color: textColor }]}>
@@ -427,16 +591,41 @@ export default function StudyGuideReaderTablet({
                 : `Quick Study Guide: ${cleanTitle}`}
             </Text>
 
-            {/* Markdown Body Content pulled directly from cloud database */}
-            <MarkdownReader
-              title={chapterTitle}
-              chapterNumber={chapterNumber}
-              content={
-                studyMode === 'in_depth'
-                  ? detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
-                  : quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-              }
-            />
+            {/* Render Each Section + Inline Quick Check Card */}
+            {sections.map((sec, idx) => (
+              <View
+                key={sec.id}
+                onLayout={(e) => {
+                  const layoutY = e.nativeEvent.layout.y;
+                  setSectionLayouts((prev) => ({ ...prev, [idx]: layoutY }));
+                }}
+                style={styles.sectionBlock}
+              >
+                <MarkdownReader
+                  title={sec.title}
+                  chapterNumber={chapterNumber}
+                  content={sec.content}
+                />
+
+                {sec.quickChecks && sec.quickChecks.length > 0 && (
+                  <QuickCheckCard
+                    questions={sec.quickChecks}
+                    sectionNumber={sec.sectionNumber}
+                    totalSections={sections.length}
+                    sectionTitle={sec.shortTitle}
+                    nextSectionTitle={sections[idx + 1]?.shortTitle}
+                    onNextSection={
+                      idx + 1 < sections.length
+                        ? () => handleScrollToSection(idx + 1)
+                        : undefined
+                    }
+                    onAnswerSubmitted={(isCorrect) => {
+                      handleQcAnswer(sec.sectionNumber, isCorrect);
+                    }}
+                  />
+                )}
+              </View>
+            ))}
 
             {/* Key Concept Callout Box (as shown in user design PNG) */}
             <View style={[styles.keyConceptCard, { backgroundColor: isDark ? '#192C22' : '#E1EFE6' }]}>
@@ -649,5 +838,76 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 15,
+  },
+  /* Reading Guide & Section Styles */
+  readingGuideContainer: {
+    marginTop: 10,
+    marginBottom: 20,
+    gap: 8,
+  },
+  readingGuideHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  readingGuideTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  readingGuideLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  chapterProgressLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  sectionPillsScroll: {
+    gap: 10,
+    paddingVertical: 2,
+  },
+  sectionNavPill: {
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    gap: 5,
+    minWidth: 160,
+    maxWidth: 240,
+  },
+  sectionNavPillTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sectionDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  sectionPillTitle: {
+    fontSize: 13.5,
+    flex: 1,
+  },
+  qcStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+    marginTop: 2,
+  },
+  qcStatusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  sectionBlock: {
+    marginBottom: 16,
   },
 });

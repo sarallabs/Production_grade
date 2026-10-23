@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,6 +21,13 @@ import { speechService } from '@/services/speechService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import MarkdownReader from './MarkdownReader';
 import ReadAloudBar from './ReadAloudBar';
+import QuickCheckCard from './QuickCheckCard';
+import {
+  fetchQuickCheckQuestions,
+  QuickCheckQuestion,
+  FALLBACK_QUICK_CHECK_BANK,
+} from '@/data/quickCheckData';
+import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import StudyGuideReaderTablet from './StudyGuideReader.tablet';
@@ -322,10 +329,22 @@ export default function StudyGuideReader({
     SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
   );
 
+  const scrollViewRef = useRef<ScrollView>(null);
+  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>(() =>
+    FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
+  );
+  const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
+  const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
+  const [sectionLayouts, setSectionLayouts] = useState<Record<number, number>>({});
+
   // Sync instant fallback content synchronously whenever chapterNumber changes
   useEffect(() => {
     setQuickContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '');
     setDetailedContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '');
+    setQuickCheckQuestions(
+      FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
+    );
+    setCompletedQuickChecks(new Set());
   }, [chapterNumber]);
 
   // Fast mode-specific fetch: avoids downloading 5MB detailed notes on initial mount
@@ -347,11 +366,58 @@ export default function StudyGuideReader({
         .catch(() => {});
     }
 
+    const track = studyMode === 'in_depth' ? 'detailed' : 'quick';
+    fetchQuickCheckQuestions(chapterNumber, track, persona, controller.signal)
+      .then((questions) => {
+        if (isMounted && questions && questions.length > 0) {
+          setQuickCheckQuestions(questions);
+        }
+      })
+      .catch(() => {});
+
     return () => {
       isMounted = false;
       controller.abort();
     };
   }, [chapterNumber, subjectId, persona, studyMode]);
+
+  const activeRawContent =
+    studyMode === 'essentials'
+      ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
+      : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
+
+  const sections = useMemo(() => {
+    return parseMarkdownSections(activeRawContent, quickCheckQuestions);
+  }, [activeRawContent, quickCheckQuestions]);
+
+  const totalSections = sections.length;
+  const chapterProgressPercent = Math.min(
+    100,
+    Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
+  );
+
+  const handleScrollToSection = (targetIndex: number) => {
+    if (targetIndex >= 0 && targetIndex < sections.length) {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch {}
+      setActiveSectionIndex(targetIndex);
+      const targetY = sectionLayouts[targetIndex];
+      if (typeof targetY === 'number') {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 15), animated: true });
+      }
+    }
+  };
+
+  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean) => {
+    if (isCorrect) {
+      setCompletedQuickChecks((prev) => {
+        const next = new Set(prev);
+        next.add(sectionNumber);
+        return next;
+      });
+    }
+  };
 
   const [showReadAloudBar, setShowReadAloudBar] = useState(false);
 
@@ -419,6 +485,7 @@ export default function StudyGuideReader({
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
@@ -598,79 +665,194 @@ export default function StudyGuideReader({
           </View>
         </View>
 
-        {/* 4. ESSENTIALS MODE (.studyContent) - Clean Markdown study guide without redundant static card */}
-        {studyMode === 'essentials' && (
-          <View style={styles.studyContent}>
-            {/* Complete Chapter Matter rendered via MarkdownReader */}
-            <MarkdownReader
-              title={effectiveChapterTitle}
-              chapterNumber={chapterNumber}
-              content={quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''}
-            />
-          </View>
-        )}
-
-        {/* 5. IN-DEPTH MODE (.guidePanel) */}
-        {studyMode === 'in_depth' && (
-          <View style={styles.guidePanel}>
-            {/* Architectural Blueprint & Infographic Card */}
-            <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              <View style={styles.figureTools}>
-                <Text style={[styles.figureLabel, { color: subtextColor }]}>
-                  {activeInfographic.badgeLabel} • IN-DEPTH
+        {/* 4. "IN THIS CHAPTER" READING GUIDE (Matching Web App Screenshot Drawer) */}
+        {sections.length > 1 && (
+          <View style={styles.readingGuideContainer}>
+            <View style={styles.readingGuideHeader}>
+              <View style={styles.readingGuideTitleRow}>
+                <Ionicons name="compass-outline" size={14} color={emeraldPrimary} />
+                <Text style={[styles.readingGuideLabel, { color: subtextColor }]}>
+                  IN THIS CHAPTER
                 </Text>
-                <TouchableOpacity
-                  style={styles.expandDiagram}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setIsDiagramZoomed(true);
-                  }}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
-                  <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
-                </TouchableOpacity>
               </View>
-
-              <TouchableOpacity
-                onPress={() => {
-                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
-                  setIsDiagramZoomed(true);
-                }}
-                activeOpacity={0.9}
-                style={styles.diagramTouch}
-              >
-                <ExpoImage
-                  source={infographicSource}
-                  onError={() => setRemoteImageFailed(true)}
-                  style={styles.originalDiagramDetail}
-                  contentFit="contain"
-                  cachePolicy="memory-disk"
-                  priority="high"
-                  transition={200}
-                />
-              </TouchableOpacity>
-
-              <View style={[styles.divider, { backgroundColor: cardBorder }]} />
-
-              <View style={styles.regionalKey}>
-                {activeInfographic.regions.map((reg, idx) => (
-                  <View key={idx} style={styles.anatomicalRegion}>
-                    <Text style={[styles.regionName, { color: textColor }]}>{reg.label}</Text>
-                    <Text style={[styles.scientificName, { color: subtextColor }]}>{reg.scientific}</Text>
-                  </View>
-                ))}
-              </View>
+              <Text style={[styles.chapterProgressLabel, { color: emeraldPrimary }]}>
+                {chapterProgressPercent}% Done
+              </Text>
             </View>
 
-            {/* Complete Detailed Chapter Matter rendered via MarkdownReader */}
-            <MarkdownReader
-              title={effectiveChapterTitle}
-              chapterNumber={chapterNumber}
-              content={detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''}
-            />
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.sectionPillsScroll}
+            >
+              {sections.map((sec, sIdx) => {
+                const isQcDone = completedQuickChecks.has(sec.sectionNumber);
+                const isCurrent = activeSectionIndex === sIdx;
+
+                return (
+                  <TouchableOpacity
+                    key={sec.id}
+                    style={[
+                      styles.sectionNavPill,
+                      {
+                        backgroundColor: isCurrent
+                          ? (isDark ? '#1C3A2B' : '#E8F5EE')
+                          : (isDark ? '#17241D' : '#FEFEFE'),
+                        borderColor: isCurrent ? emeraldPrimary : cardBorder,
+                      },
+                    ]}
+                    onPress={() => handleScrollToSection(sIdx)}
+                    activeOpacity={0.8}
+                  >
+                    <View style={styles.sectionNavPillTop}>
+                      <View
+                        style={[
+                          styles.sectionDot,
+                          {
+                            backgroundColor: isQcDone
+                              ? '#16A34A'
+                              : isCurrent
+                              ? emeraldPrimary
+                              : subtextColor,
+                          },
+                        ]}
+                      />
+                      <Text
+                        style={[
+                          styles.sectionPillTitle,
+                          {
+                            color: isCurrent ? (isDark ? '#FFFFFF' : '#147A43') : textColor,
+                            fontWeight: isCurrent ? '700' : '600',
+                          },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {sec.shortTitle}
+                      </Text>
+                    </View>
+
+                    <View
+                      style={[
+                        styles.qcStatusBadge,
+                        {
+                          backgroundColor: isQcDone
+                            ? (isDark ? '#143322' : '#DCFCE7')
+                            : (isDark ? '#202E26' : '#F1F5F9'),
+                        },
+                      ]}
+                    >
+                      <Ionicons
+                        name={isQcDone ? 'checkmark-circle' : 'flash'}
+                        size={10.5}
+                        color={isQcDone ? '#16A34A' : subtextColor}
+                      />
+                      <Text
+                        style={[
+                          styles.qcStatusText,
+                          { color: isQcDone ? '#16A34A' : subtextColor },
+                        ]}
+                      >
+                        {isQcDone ? 'Quick Check Done' : 'Quick Check'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
           </View>
         )}
+
+        {/* 5. SECTIONIZED READING MATTER + FORMATIVE QUICK CHECKS */}
+        <View style={styles.sectionsContainer}>
+          {sections.map((sec, idx) => (
+            <View
+              key={sec.id}
+              onLayout={(e) => {
+                const layoutY = e.nativeEvent.layout.y;
+                setSectionLayouts((prev) => ({ ...prev, [idx]: layoutY }));
+              }}
+              style={styles.sectionBlock}
+            >
+              {/* If In-depth and Section 1 (index 0), render the Architectural Blueprint Infographic Card */}
+              {studyMode === 'in_depth' && idx === 0 && (
+                <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                  <View style={styles.figureTools}>
+                    <Text style={[styles.figureLabel, { color: subtextColor }]}>
+                      {activeInfographic.badgeLabel} • IN-DEPTH
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.expandDiagram}
+                      onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setIsDiagramZoomed(true);
+                      }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
+                      <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
+                    </TouchableOpacity>
+                  </View>
+
+                  <TouchableOpacity
+                    onPress={() => {
+                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
+                      setIsDiagramZoomed(true);
+                    }}
+                    activeOpacity={0.9}
+                    style={styles.diagramTouch}
+                  >
+                    <ExpoImage
+                      source={infographicSource}
+                      onError={() => setRemoteImageFailed(true)}
+                      style={styles.originalDiagramDetail}
+                      contentFit="contain"
+                      cachePolicy="memory-disk"
+                      priority="high"
+                      transition={200}
+                    />
+                  </TouchableOpacity>
+
+                  <View style={[styles.divider, { backgroundColor: cardBorder }]} />
+
+                  <View style={styles.regionalKey}>
+                    {activeInfographic.regions.map((reg, rIdx) => (
+                      <View key={rIdx} style={styles.anatomicalRegion}>
+                        <Text style={[styles.regionName, { color: textColor }]}>{reg.label}</Text>
+                        <Text style={[styles.scientificName, { color: subtextColor }]}>{reg.scientific}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Section Markdown Reading Content */}
+              <MarkdownReader
+                title={sec.title}
+                chapterNumber={chapterNumber}
+                content={sec.content}
+              />
+
+              {/* Formative Quick Check Card at the end of this Section */}
+              {sec.quickChecks && sec.quickChecks.length > 0 && (
+                <QuickCheckCard
+                  questions={sec.quickChecks}
+                  sectionNumber={sec.sectionNumber}
+                  totalSections={sections.length}
+                  sectionTitle={sec.shortTitle}
+                  nextSectionTitle={sections[idx + 1]?.shortTitle}
+                  onNextSection={
+                    idx + 1 < sections.length
+                      ? () => handleScrollToSection(idx + 1)
+                      : undefined
+                  }
+                  onAnswerSubmitted={(isCorrect) => {
+                    handleQcAnswer(sec.sectionNumber, isCorrect);
+                  }}
+                />
+              )}
+            </View>
+          ))}
+        </View>
 
         {/* Dynamic Completion Button */}
         <TouchableOpacity
@@ -1322,5 +1504,79 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '700',
+  },
+  /* Reading Guide & Section Navigation Styles */
+  readingGuideContainer: {
+    marginTop: 6,
+    marginBottom: 16,
+    gap: 8,
+  },
+  readingGuideHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 2,
+  },
+  readingGuideTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  readingGuideLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  chapterProgressLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionPillsScroll: {
+    gap: 8,
+    paddingVertical: 2,
+  },
+  sectionNavPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    gap: 4,
+    minWidth: 140,
+    maxWidth: 200,
+  },
+  sectionNavPillTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  sectionDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+  },
+  sectionPillTitle: {
+    fontSize: 12.5,
+    flex: 1,
+  },
+  qcStatusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    gap: 4,
+    marginTop: 2,
+  },
+  qcStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  sectionsContainer: {
+    gap: 12,
+  },
+  sectionBlock: {
+    marginBottom: 6,
   },
 });
