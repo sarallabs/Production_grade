@@ -166,27 +166,43 @@ export function parseMarkdownSections(
     qcByModule[modId].push(q);
   }
 
-  // Split markdown on H2 or H1 section markers
+  // Split markdown on H2 section markers
   const h2Parts = rawMarkdown.split(/(?=^##\s+)/m);
-  let parts = h2Parts.length >= 2 ? h2Parts : rawMarkdown.split(/(?=^#\s+(?:[\u{1F300}-\u{1F9FF}\s]*\d+\.|\bModule\s*\d+))/imu);
+  let topicParts: string[] = [];
 
-  if (parts.length <= 1) {
+  if (h2Parts.length >= 2) {
+    // Document contains H2 topic sections. Filter out preamble that doesn't start with ##
+    topicParts = h2Parts.filter((p) => p.trim().startsWith('## '));
+  } else {
+    // Check for H1 topic/module sections
+    const h1Parts = rawMarkdown.split(/(?=^#\s+(?:[\u{1F300}-\u{1F9FF}\s]*\d+\.|\bModule\s*\d+|\bTopic\s*\d+))/imu);
+    topicParts = h1Parts.filter((p) =>
+      /^#\s+(?:[\u{1F300}-\u{1F9FF}\s]*\d+\.|\bModule\s*\d+|\bTopic\s*\d+)/iu.test(p.trim())
+    );
+  }
+
+  // Fallback if no structured topic headings found
+  if (topicParts.length === 0) {
+    topicParts = rawMarkdown.trim() ? [rawMarkdown.trim()] : [];
+  }
+
+  if (topicParts.length <= 1) {
     const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[1] || {
       full: 'Asked in 2023 & 2024 - 8 marks',
       short: "asked '23 '24 - 8 marks",
-      hasInfographic: true,
+      hasInfographic: false,
     };
 
     return [
       {
         id: 'sec-1',
         sectionNumber: 1,
-        title: 'Chapter Study Notes',
-        shortTitle: 'All Topics',
+        title: 'Architectural Blueprint & Regional Partitioning',
+        shortTitle: 'Blueprint',
         content: rawMarkdown,
         readTimeMinutes: estimateReadingTime(rawMarkdown),
         quickChecks: quickChecks.length > 0 ? quickChecks : [],
-        hasInfographic: badgeInfo.hasInfographic ?? true,
+        hasInfographic: false,
         examBadge: badgeInfo.full,
         subBulletBadge: badgeInfo.short,
       },
@@ -194,13 +210,9 @@ export function parseMarkdownSections(
   }
 
   const sections: StudySection[] = [];
-  const part0 = parts[0]?.trim() || '';
-  const hasIntroInPart0 = !part0.startsWith('## ') && !part0.startsWith('# ');
-  const startIndex = hasIntroInPart0 ? 1 : 0;
-  const introContent = hasIntroInPart0 ? part0 : '';
 
-  for (let i = startIndex; i < parts.length; i++) {
-    const part = parts[i].trim();
+  for (let i = 0; i < topicParts.length; i++) {
+    const part = topicParts[i].trim();
     if (!part) continue;
 
     const headingMatch = part.match(/^#{1,3}\s+([^\n\r]+)/);
@@ -226,15 +238,10 @@ export function parseMarkdownSections(
       }
     }
 
-    let sectionBody = part;
-    if (sections.length === 0 && introContent && introContent.length > 30) {
-      sectionBody = `${introContent}\n\n---\n\n${part}`;
-    }
-
     const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[secNum] || {
       full: secNum === 1 ? 'Asked in 2023 & 2024 - 8 marks' : undefined,
       short: secNum === 1 ? "asked '23 '24 - 8 marks" : undefined,
-      hasInfographic: secNum === 1 || sectionBody.toLowerCase().includes('infographic'),
+      hasInfographic: false,
     };
 
     sections.push({
@@ -242,8 +249,8 @@ export function parseMarkdownSections(
       sectionNumber: secNum,
       title: cleanTitle,
       shortTitle: shortTitle || `Section ${seqIndex}`,
-      content: sectionBody,
-      readTimeMinutes: estimateReadingTime(sectionBody),
+      content: part,
+      readTimeMinutes: estimateReadingTime(part),
       quickChecks: matchedQuestions,
       hasInfographic: badgeInfo.hasInfographic,
       examBadge: badgeInfo.full,

@@ -924,58 +924,6 @@ export default function StudyGuideReader({
                 content={sec.content}
               />
 
-              {/* Hero Infographic Card for Section 1 (always displayed in Section 1 as in web app) */}
-              {idx === 0 && (
-                <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder, marginTop: 16 }]}>
-                  <View style={styles.figureTools}>
-                    <Text style={[styles.figureLabel, { color: subtextColor }]}>
-                      {activeInfographic.badgeLabel} • INFOGRAPHIC
-                    </Text>
-                    <TouchableOpacity
-                      style={styles.expandDiagram}
-                      onPress={() => {
-                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
-                        setIsDiagramZoomed(true);
-                      }}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.expandLabel, { color: emeraldPrimary }]}>Expand</Text>
-                      <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <TouchableOpacity
-                    onPress={() => {
-                      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
-                      setIsDiagramZoomed(true);
-                    }}
-                    activeOpacity={0.9}
-                    style={styles.diagramTouch}
-                  >
-                    <ExpoImage
-                      source={infographicSource}
-                      onError={() => setRemoteImageFailed(true)}
-                      style={styles.originalDiagramDetail}
-                      contentFit="contain"
-                      cachePolicy="memory-disk"
-                      priority="high"
-                      transition={200}
-                    />
-                  </TouchableOpacity>
-
-                  <View style={[styles.divider, { backgroundColor: cardBorder }]} />
-
-                  <View style={styles.regionalKey}>
-                    {activeInfographic.regions.map((reg, rIdx) => (
-                      <View key={rIdx} style={styles.anatomicalRegion}>
-                        <Text style={[styles.regionName, { color: textColor }]}>{reg.label}</Text>
-                        <Text style={[styles.scientificName, { color: subtextColor }]}>{reg.scientific}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-
               {/* Formative Quick Check Card at the end of this Section */}
               {sec.quickChecks && sec.quickChecks.length > 0 && (
                 <View

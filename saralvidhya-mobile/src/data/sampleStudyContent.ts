@@ -2,23 +2,14 @@ import { formatChapterDir, GCS_API_BASE } from '@/services/contentService';
 
 export const SAMPLE_STUDY_CONTENT: Record<number, { summary: string; detailed: string }> = {
   1: {
-    summary: `# Quick Study Guide: Insect Digestive System
+    summary: `## 1. Architectural Blueprint & Regional Partitioning
 
-**Subject:** Entomology | **Chapter 13:** Digestive System  
-**Audience Level:** Intermediate (Visual Learner Focus)  
-**Target Bloom's Levels:** Applying & Analyzing  
+The insect alimentary canal is a specialized muscular tube extending from the mouth to the anus. It is divided into three distinct anatomical chambers: the **Foregut (Stomodaeum)**, the **Midgut (Mesenteron)**, and the **Hindgut (Proctodaeum)**. This division reflects fundamental embryonic origins that govern how food is processed and eliminated.
 
----
-
-## 🖼️ 1. Master System & Blueprint Infographics
-
-Learn the complete architecture of the insect alimentary canal at a glance:
-
-![Master System Overview](../Mindmaps/Digestive%20System%20Infographics/00.%20insect_digestive_system_master_overview.jpg)
-
-![Structural Guide](../Mindmaps/Digestive%20System%20Infographics/01.%20Insect_Alimentary_Canal_Structural_Guide.png)
-
-![Insect Digestive System Overview](../Mindmaps/Digestive%20System%20Infographics/03%20Insect-Digestive-System.png)
+- **Strategic Boundary Checkpoints**: The **cardiac valve** regulates flow between foregut and midgut, while the insertion ring of the **Malpighian tubules** marks the transition between midgut and hindgut.
+- **Tripartite Division of Labor**: The foregut handles ingestion and physical crushing; the midgut executes chemical digestion and absorption; the hindgut recovers water and vital mineral ions before solid waste expulsion.
+- **Embryonic Origins & Protective Cuticle**: The foregut and hindgut develop from embryonic ectoderm and are lined internally with a **cuticular intima** (a protective chitin layer continuous with the exoskeleton). This lining shields living tissue from sharp food particles and is shed and rebuilt at every larval molt (ecdysis).
+- **Unshielded Midgut Surface**: The midgut develops from embryonic endoderm and entirely lacks a cuticle lining. This allows midgut cells to actively secrete digestive enzymes and directly absorb nutrients into the surrounding hemolymph.
 
 ![Tripartite Blueprint](../Mindmaps/Digestive%20System%20Infographics/1.Three%20Primary%20Regions/Insect_Digestive_System_Blueprint.png)
 
@@ -120,17 +111,7 @@ Discover salivary versatile functions, sap-sucking filter chambers, and termite 
 - **Filter Chamber:** Sap-feeders shunt 90% water directly to hindgut, excreting honeydew while digesting concentrated slurry.
 - **Termite Symbiosis:** Rectal pouch houses *Trichonympha* flagellates secreting cellulase to ferment wood into absorbable sugars.
 `,
-    detailed: `# Complete Anatomical and Physiological Guide to the Insect Digestive System
-
-**Subject:** Entomology  
-**Chapter:** 13 - Digestive System  
-**Academic Reference:** Dr. Cherukuri Sreenivasa Rao, Professor, Department of Entomology, Acharya N. G. Ranga Agricultural University (ANGRAU), Bapatla, AP, India  
-**Audience Level:** Intermediate (Undergraduate / Exam Candidate)  
-**Target Bloom's Levels:** Applying & Analyzing  
-
----
-
-## 1. Architectural Blueprint and Division of Labor in the Insect Gut
+    detailed: `## 1. Architectural Blueprint and Division of Labor in the Insect Gut
 
 The insect alimentary canal is one of the most remarkable evolutionary adaptations in the animal kingdom. Rather than functioning as a uniform, undifferentiated tube, the digestive tract operates as a highly coordinated biological assembly line. It is compartmentalized into three primary regions: the foregut (stomodaeum), midgut (mesenteron), and hindgut (proctodaeum). Each region performs a distinct physiological assignment, transforming food into molecular energy while conserving vital body fluids.
 
