@@ -559,56 +559,47 @@ export default function StudyGuideReader({
           </TouchableOpacity>
         </View>
 
-        {/* 2. TOP CONTROLS BAR: PERSONA SELECTOR + DEPTH TOGGLE + AUDIO BUTTON */}
-        <View style={styles.topControlsRow}>
-          {/* Persona Selector Tabs (Beginner, Intermediate, Advanced) */}
-          <View style={styles.personaTabsWrap}>
-            {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
-              const isActive = persona === lvl;
-              const label = lvl.charAt(0).toUpperCase() + lvl.slice(1);
-              return (
-                <TouchableOpacity
-                  key={lvl}
-                  style={[
-                    styles.personaTabBtn,
-                    {
-                      backgroundColor: isActive
-                        ? (isDark ? '#2D2210' : '#FFFBEB')
-                        : (isDark ? '#17241D' : '#FEFEFE'),
-                      borderColor: isActive
-                        ? '#D97706'
-                        : (isDark ? '#2E4438' : '#E2E8F0'),
-                    },
-                    isActive && styles.personaTabBtnActive,
-                  ]}
-                  onPress={() => {
-                    if (persona !== lvl) {
-                      try { Haptics.selectionAsync().catch(() => {}); } catch {}
-                      updatePersona(lvl);
-                    }
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <Image
-                    source={PERSONA_ICONS[lvl]}
-                    style={styles.personaTabIcon}
-                    resizeMode="contain"
-                  />
-                  <Text
-                    style={[
-                      styles.personaTabText,
-                      { color: isActive ? (isDark ? '#FDE68A' : '#92400E') : subtextColor },
-                      isActive && styles.personaTabTextActive,
-                    ]}
-                  >
-                    {label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+        {/* 2. PERSONA SELECTOR: ONLY LOGOS & CENTERED */}
+        <View style={styles.personaCenterRow}>
+          {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
+            const isActive = persona === lvl;
+            return (
+              <TouchableOpacity
+                key={lvl}
+                style={[
+                  styles.personaLogoBtn,
+                  {
+                    backgroundColor: isActive
+                      ? (isDark ? '#2D2210' : '#FFFBEB')
+                      : (isDark ? '#17241D' : '#FEFEFE'),
+                    borderColor: isActive
+                      ? '#D97706'
+                      : (isDark ? '#2E4438' : '#E2E8F0'),
+                  },
+                  isActive && styles.personaLogoBtnActive,
+                ]}
+                onPress={() => {
+                  if (persona !== lvl) {
+                    try { Haptics.selectionAsync().catch(() => {}); } catch {}
+                    updatePersona(lvl);
+                  }
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                activeOpacity={0.75}
+                accessibilityLabel={`Persona: ${lvl}`}
+              >
+                <Image
+                  source={PERSONA_ICONS[lvl]}
+                  style={styles.personaLogoIcon}
+                  resizeMode="contain"
+                />
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
-          {/* Reading Depth Tabs (Essentials / In-depth) */}
+        {/* 3. ESSENTIALS & IN-DEPTH TOGGLE: CENTERED */}
+        <View style={styles.depthCenterRow}>
           <View style={[styles.depthToggleCapsule, { backgroundColor: toggleBg }]}>
             <TouchableOpacity
               style={[
@@ -624,11 +615,12 @@ export default function StudyGuideReader({
                   setStudyMode('essentials');
                 }
               }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.8}
             >
               <Ionicons
                 name="flash"
-                size={12}
+                size={13}
                 color={studyMode === 'essentials' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569'}
               />
               <Text
@@ -656,11 +648,12 @@ export default function StudyGuideReader({
                   setStudyMode('in_depth');
                 }
               }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               activeOpacity={0.8}
             >
               <Ionicons
                 name="book-outline"
-                size={12}
+                size={13}
                 color={studyMode === 'in_depth' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569'}
               />
               <Text
@@ -675,13 +668,14 @@ export default function StudyGuideReader({
             </TouchableOpacity>
           </View>
 
-          {/* Audio Circle Button (Green Outline Speaker) */}
+          {/* Audio Circle Button Beside Centered Toggle */}
           <TouchableOpacity
             style={[
               styles.audioCircleBtn,
               isPlayingAudio && styles.audioCircleBtnActive,
             ]}
             onPress={handleToggleAudio}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             activeOpacity={0.8}
             accessibilityLabel="Toggle read aloud"
           >
@@ -1694,82 +1688,86 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flex: 1,
   },
-  /* Top Controls Bar: Persona + Depth + Audio */
-  topControlsRow: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  /* Persona Selector (Centered, Logos Only) */
+  personaCenterRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  personaTabsWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  personaTabBtn: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 8,
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 6,
+  },
+  personaLogoBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
     borderWidth: 1.5,
-    minWidth: 56,
-  },
-  personaTabBtnActive: {
-    elevation: 2,
-    shadowColor: '#D97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 1,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
-  personaTabIcon: {
-    width: 22,
-    height: 22,
-    marginBottom: 2,
+  personaLogoBtnActive: {
+    borderWidth: 2,
+    borderColor: '#D97706',
+    elevation: 3,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    transform: [{ scale: 1.05 }],
   },
-  personaTabText: {
-    fontSize: 10.5,
-    fontWeight: '600',
+  personaLogoIcon: {
+    width: 32,
+    height: 32,
   },
-  personaTabTextActive: {
-    fontWeight: '700',
+  /* Reading Depth Toggle (Centered) */
+  depthCenterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    marginBottom: 4,
   },
   depthToggleCapsule: {
     flexDirection: 'row',
     borderRadius: 100,
     padding: 3,
-    gap: 3,
+    gap: 4,
     alignItems: 'center',
   },
   depthCapsuleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
     borderRadius: 100,
-    gap: 4,
+    gap: 5,
   },
   depthCapsuleBtnActive: {
-    elevation: 1,
+    elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
   },
   depthCapsuleText: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     fontWeight: '600',
   },
   depthCapsuleTextActive: {
     fontWeight: '700',
   },
   audioCircleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1.5,
     borderColor: '#16A34A',
     alignItems: 'center',

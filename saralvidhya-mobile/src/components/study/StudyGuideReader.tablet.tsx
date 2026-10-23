@@ -871,6 +871,7 @@ const styles = StyleSheet.create({
   personaRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 12,
     marginBottom: 18,
   },
