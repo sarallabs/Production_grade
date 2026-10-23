@@ -111,28 +111,9 @@ const SmartInfographicCard = React.memo(function SmartInfographicCard({
 
   return (
     <View style={[styles.infographicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-      {/* Card Header: Infographic Badge & Expand Button */}
-      <View style={styles.infographicCardHeader}>
-        <View style={styles.infographicBadgeWrap}>
-          <Ionicons name="sparkles" size={12} color={emeraldPrimary} />
-          <Text style={[styles.infographicBadgeLabel, { color: emeraldPrimary }]}>
-            SCIENTIFIC INFOGRAPHIC {index >= 0 ? `• #${index + 1}` : ''}
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.expandButton}
-          onPress={handleExpand}
-          activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Text style={[styles.expandButtonText, { color: emeraldPrimary }]}>Expand</Text>
-          <Ionicons name="expand-outline" size={13} color={emeraldPrimary} />
-        </TouchableOpacity>
-      </View>
-
       {/* Image Touch Area with Dynamic Concurrency Loading */}
       <TouchableOpacity
-        activeOpacity={0.9}
+        activeOpacity={0.92}
         onPress={handleExpand}
         style={[styles.infographicImageTouch, { aspectRatio: 16 / 10 }]}
       >
@@ -140,9 +121,6 @@ const SmartInfographicCard = React.memo(function SmartInfographicCard({
           // Waiting in concurrency queue: lightweight skeleton placeholder, zero network load
           <View style={styles.infographicSkeletonBox}>
             <ActivityIndicator size="small" color={emeraldPrimary} />
-            <Text style={[styles.infographicQueuedText, { color: textMuted }]}>
-              {alt || 'Curated Study Infographic'}
-            </Text>
           </View>
         ) : !hasError ? (
           // Active slot granted: hardware accelerated Glide/SDWebImage load with memory-disk caching
@@ -167,12 +145,6 @@ const SmartInfographicCard = React.memo(function SmartInfographicCard({
         ) : (
           <View style={styles.infographicFallbackBox}>
             <Ionicons name="image-outline" size={38} color={emeraldPrimary} />
-            <Text style={[styles.infographicFallbackTitle, { color: textDark }]}>
-              {alt || 'Curated Study Infographic'}
-            </Text>
-            <Text style={[styles.infographicFallbackSubtitle, { color: textMuted }]}>
-              Tap to inspect high-resolution visual details
-            </Text>
           </View>
         )}
 
@@ -182,15 +154,6 @@ const SmartInfographicCard = React.memo(function SmartInfographicCard({
           </View>
         )}
       </TouchableOpacity>
-
-      {/* Caption */}
-      {alt ? (
-        <View style={[styles.captionRow, { borderTopColor: cardBorder }]}>
-          <Text style={[styles.infographicCaptionText, { color: isDark ? '#E2E8F0' : '#2D3748' }]}>
-            {alt}
-          </Text>
-        </View>
-      ) : null}
     </View>
   );
 });
