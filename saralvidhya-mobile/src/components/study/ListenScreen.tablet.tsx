@@ -367,12 +367,31 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
     setSpeedIndex(nextIdx);
   };
 
-  // Select a microcast card
-  const handleSelectMicrocast = (mId: number) => {
+  // Select a microcast card & play inline directly
+  const handleSelectAndPlayMicrocast = (mId: number) => {
     try {
-      Haptics.selectionAsync().catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch {}
+
+    if (selectedMicrocastId === mId) {
+      handleTogglePlay();
+      return;
+    }
+
+    try {
+      Speech.stop().catch(() => {});
+    } catch {}
+    if (tickerRef.current) clearInterval(tickerRef.current);
+    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+    setIsPlaying(false);
+    setCurrentSec(0);
+    setActiveWordIndex(-1);
+
     setSelectedMicrocastId(mId);
+
+    setTimeout(() => {
+      handleTogglePlay();
+    }, 60);
   };
 
   // Select module M1-M6
@@ -905,6 +924,110 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                   const isSelected = selectedMicrocastId === item.id;
                   const formattedNum = `${item.id < 10 ? '0' : ''}${item.id}`;
 
+                  if (isSelected) {
+                    return (
+                      <View
+                        key={item.id}
+                        style={[
+                          styles.microcastCard,
+                          {
+                            backgroundColor: cardBg,
+                            borderColor: activeBorder,
+                            borderWidth: 1.5,
+                            flexDirection: 'column',
+                            alignItems: 'stretch',
+                            padding: 16,
+                            gap: 12,
+                          },
+                        ]}
+                      >
+                        <TouchableOpacity
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}
+                          onPress={() => handleTogglePlay()}
+                          activeOpacity={0.8}
+                        >
+                          <View
+                            style={[
+                              styles.numberBadge,
+                              { backgroundColor: brandGreen },
+                            ]}
+                          >
+                            <Ionicons
+                              name={isPlaying ? 'pause' : 'play'}
+                              size={15}
+                              color="#FFFFFF"
+                              style={!isPlaying ? { marginLeft: 1.5 } : undefined}
+                            />
+                          </View>
+
+                          <View style={styles.cardInfoCol}>
+                            <Text style={[styles.cardTitle, { color: textColor, fontWeight: '700' }]}>
+                              {item.title}
+                            </Text>
+                            <Text style={[styles.cardSubtitle, { color: brandGreen, fontWeight: '600' }]}>
+                              Episode {item.id} of {microcastList.length} · {isPlaying ? 'Playing now' : 'Paused'}
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
+
+                        {/* Scrubber */}
+                        <View style={[styles.scrubberTrack, { backgroundColor: isDark ? '#24352B' : '#E0EDE5', height: 4, borderRadius: 2, marginTop: 4 }]}>
+                          <View
+                            style={[
+                              styles.scrubberFill,
+                              {
+                                backgroundColor: brandGreen,
+                                width: `${progressRatio * 100}%`,
+                                height: 4,
+                                borderRadius: 2,
+                              },
+                            ]}
+                          />
+                        </View>
+
+                        {/* Controls */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                            <TouchableOpacity
+                              style={[styles.replayBtn, { borderColor: cardBorder, width: 32, height: 32, borderRadius: 8 }]}
+                              onPress={handleReplay15s}
+                              activeOpacity={0.75}
+                            >
+                              <Ionicons name="refresh" size={14} color={mutedTextColor} />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.mainPlayCircle, { backgroundColor: brandGreen, width: 34, height: 34, borderRadius: 17 }]}
+                              onPress={handleTogglePlay}
+                              activeOpacity={0.85}
+                            >
+                              <Ionicons
+                                name={isPlaying ? 'pause' : 'play'}
+                                size={16}
+                                color="#FFFFFF"
+                                style={!isPlaying ? { marginLeft: 1.5 } : undefined}
+                              />
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.speedBtn, { paddingHorizontal: 8, paddingVertical: 4 }]}
+                              onPress={handleCycleSpeed}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[styles.speedText, { color: brandGreen, fontSize: 13 }]}>
+                                {currentSpeed}x
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          <Text style={[styles.detailedTimestamp, { color: mutedTextColor, fontSize: 12 }]}>
+                            {formatSec(currentSec)} / {item.durationFormatted.replace(/^00:/, '')}
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
+
                   return (
                     <TouchableOpacity
                       key={item.id}
@@ -912,22 +1035,18 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                         styles.microcastCard,
                         {
                           backgroundColor: cardBg,
-                          borderColor: isSelected ? activeBorder : cardBorder,
-                          borderWidth: isSelected ? 1.5 : 1,
+                          borderColor: cardBorder,
+                          borderWidth: 1,
                         },
                       ]}
-                      onPress={() => handleSelectMicrocast(item.id)}
+                      onPress={() => handleSelectAndPlayMicrocast(item.id)}
                       activeOpacity={0.85}
                     >
                       <View
                         style={[
                           styles.numberBadge,
                           {
-                            backgroundColor: isSelected
-                              ? brandGreen
-                              : isDark
-                              ? '#24352B'
-                              : '#F0F4F1',
+                            backgroundColor: isDark ? '#24352B' : '#F0F4F1',
                           },
                         ]}
                       >
@@ -935,8 +1054,8 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                           style={[
                             styles.numberBadgeText,
                             {
-                              color: isSelected ? '#FFFFFF' : mutedTextColor,
-                              fontWeight: isSelected ? '800' : '700',
+                              color: mutedTextColor,
+                              fontWeight: '700',
                             },
                           ]}
                         >
@@ -953,90 +1072,12 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                         </Text>
                       </View>
 
-                      <TouchableOpacity
-                        style={[styles.downloadBtn, { borderColor: cardBorder }]}
-                        onPress={() => {
-                          try {
-                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(
-                              () => {}
-                            );
-                          } catch {}
-                        }}
-                        activeOpacity={0.7}
-                      >
-                        <Ionicons name="arrow-down" size={17} color={brandGreen} />
-                      </TouchableOpacity>
+                      <View style={[styles.downloadBtn, { borderColor: cardBorder }]}>
+                        <Ionicons name="play" size={15} color={brandGreen} style={{ marginLeft: 1.5 }} />
+                      </View>
                     </TouchableOpacity>
                   );
                 })}
-              </View>
-
-              {/* Bottom Microcast Player */}
-              <View style={[styles.playerCard, { backgroundColor: cardBg, borderColor: cardBorder, marginTop: 22 }]}>
-                <View style={styles.playerInfoRow}>
-                  <View style={[styles.musicSquircle, { backgroundColor: mintActiveBg }]}>
-                    <Ionicons name="musical-notes" size={20} color={brandGreen} />
-                  </View>
-                  <View style={styles.playerTextCol}>
-                    <Text style={[styles.playerTitle, { color: textColor }]} numberOfLines={1}>
-                      {activeTrack.title}
-                    </Text>
-                    <Text style={[styles.playerSubtitle, { color: mutedTextColor }]}>
-                      {activeTrack.subtitle}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={[styles.scrubberTrack, { backgroundColor: isDark ? '#24352B' : '#E0EDE5', marginTop: 16 }]}>
-                  <View
-                    style={[
-                      styles.scrubberFill,
-                      {
-                        backgroundColor: brandGreen,
-                        width: `${progressRatio * 100}%`,
-                      },
-                    ]}
-                  />
-                </View>
-
-                <View style={styles.playerControlsRow}>
-                  <View style={styles.leftControlsGroup}>
-                    <TouchableOpacity
-                      style={[styles.replayBtn, { borderColor: cardBorder }]}
-                      onPress={handleReplay15s}
-                      activeOpacity={0.75}
-                    >
-                      <Ionicons name="refresh" size={16} color={mutedTextColor} />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[styles.mainPlayCircle, { backgroundColor: brandGreen }]}
-                      onPress={handleTogglePlay}
-                      activeOpacity={0.85}
-                    >
-                      <Ionicons
-                        name={isPlaying ? 'pause' : 'play'}
-                        size={20}
-                        color="#FFFFFF"
-                        style={{ marginLeft: isPlaying ? 0 : 2 }}
-                      />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.speedBtn}
-                      onPress={handleCycleSpeed}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.speedText, { color: brandGreen }]}>
-                        {currentSpeed}x
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <Text style={[styles.detailedTimestamp, { color: mutedTextColor }]}>
-                    {`${formatSec(currentSec)} / ${activeTrack.durationFormatted}`}
-                  </Text>
-                </View>
               </View>
 
               {/* Microcast Transcript */}

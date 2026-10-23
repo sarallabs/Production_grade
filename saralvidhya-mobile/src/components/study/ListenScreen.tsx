@@ -567,6 +567,62 @@ export default function ListenScreen({
     }, 200);
   };
 
+  const handleSelectAndPlayMicrocast = (epId: number) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    } catch {}
+
+    // If the tapped card is ALREADY the selected microcast:
+    if (selectedMicrocastId === epId) {
+      if (isPlaying) {
+        if (tickerRef.current) clearInterval(tickerRef.current);
+        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+        Speech.stop();
+        setIsPlaying(false);
+        isPlayingRef.current = false;
+      } else {
+        const pIdx =
+          activeParagraphIndex < tokenizedParagraphs.length ? activeParagraphIndex : 0;
+        const wIdx =
+          activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.words.length || 0)
+            ? activeWordIndex
+            : 0;
+        speakFromWord(pIdx, wIdx);
+        startTicker();
+      }
+      return;
+    }
+
+    // A DIFFERENT microcast card was tapped:
+    // 1. Immediately halt current audio & tickers
+    Speech.stop();
+    if (tickerRef.current) clearInterval(tickerRef.current);
+    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+    setIsPlaying(false);
+    isPlayingRef.current = false;
+    setCurrentSec(0);
+    setActiveParagraphIndex(0);
+    setActiveWordIndex(-1);
+
+    // 2. Resolve the new microcast's paragraphs immediately
+    const targetMicro =
+      currentBundle.microcasts.find((m) => m.id === epId) || currentBundle.microcasts[0];
+    const targetTokenized: TokenizedParagraphItem[] = (targetMicro?.paragraphs || []).map((p) => ({
+      timestamp: p.timestamp,
+      startSec: p.startSec,
+      words: tokenizeParagraph(p.text),
+    }));
+
+    tokenizedRef.current = targetTokenized;
+    setSelectedMicrocastId(epId);
+
+    // 3. Start playback immediately on the new card!
+    setTimeout(() => {
+      speakFromWord(0, 0);
+      startTicker();
+    }, 60);
+  };
+
   const handleSelectMode = (newMode: ListenMode) => {
     if (newMode === mode) return;
     Haptics.selectionAsync();
@@ -990,65 +1046,149 @@ export default function ListenScreen({
               </TouchableOpacity>
             </View>
 
-            {/* List of Microcast Lesson Cards */}
+            {/* List of Microcast Lesson Cards (Cards play inline directly with no separate player) */}
             <View style={styles.microList}>
               {microcastEpisodes.map((ep) => {
                 const isSelected = selectedMicrocastId === ep.id;
+
+                if (isSelected) {
+                  return (
+                    <View
+                      key={ep.id}
+                      style={[
+                        styles.microLessonCard,
+                        styles.microLessonCardActive,
+                        {
+                          backgroundColor: isDark ? 'rgba(0, 153, 110, 0.15)' : '#E8F7ED',
+                          borderColor: '#00996E',
+                        },
+                      ]}
+                    >
+                      {/* Top Row: Play/Pause circle, Title & Status */}
+                      <TouchableOpacity
+                        style={styles.microCardTopRow}
+                        onPress={() => handleSelectAndPlayMicrocast(ep.id)}
+                        activeOpacity={0.8}
+                      >
+                        <View style={[styles.microEpisodeNumberActive, { backgroundColor: '#00996E' }]}>
+                          <Ionicons
+                            name={isPlaying ? 'pause' : 'play'}
+                            size={14}
+                            color="#FFFFFF"
+                            style={!isPlaying ? { marginLeft: 1.5 } : undefined}
+                          />
+                        </View>
+
+                        <View style={styles.microLessonInfo}>
+                          <Text
+                            style={[
+                              styles.microEpisodeTitle,
+                              { color: isDark ? '#FFFFFF' : '#1A282D', fontWeight: '700' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {ep.title}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.microEpisodeMetadata,
+                              { color: isDark ? '#A6C5B3' : '#175945', fontWeight: '600' },
+                            ]}
+                          >
+                            Episode {ep.id} of {microcastEpisodes.length} · {isPlaying ? 'Playing now' : 'Paused'}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+
+                      {/* Integrated Playback Scrubber Track */}
+                      <View style={[styles.inlinePlaybackTrack, { backgroundColor: isDark ? '#263B30' : '#DBE5E0' }]}>
+                        <View
+                          style={[
+                            styles.inlinePlaybackProgress,
+                            { width: `${progressPercent}%`, backgroundColor: '#00996E' },
+                          ]}
+                        />
+                      </View>
+
+                      {/* Integrated Controls Row */}
+                      <View style={styles.inlineControlsRow}>
+                        <View style={styles.inlineControlsLeft}>
+                          <TouchableOpacity
+                            style={[
+                              styles.inlineReplayBtn,
+                              {
+                                backgroundColor: cardBg,
+                                borderColor: isDark ? '#2D4538' : '#DBE5E0',
+                              },
+                            ]}
+                            onPress={() => handleSkip(-15)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="refresh" size={11} color={isDark ? '#FFFFFF' : '#1A282D'} />
+                            <Text style={[styles.inlineReplayText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>-15s</Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={[styles.inlinePlayPauseBtn, { backgroundColor: '#00996E' }]}
+                            onPress={() => handleSelectAndPlayMicrocast(ep.id)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            activeOpacity={0.75}
+                          >
+                            <Ionicons
+                              name={isPlaying ? 'pause' : 'play'}
+                              size={13}
+                              color="#FFFFFF"
+                              style={!isPlaying ? { marginLeft: 1.5 } : undefined}
+                            />
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
+                            style={styles.inlineSpeedBtn}
+                            onPress={handleCycleSpeed}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            activeOpacity={0.7}
+                          >
+                            <Text style={styles.inlineSpeedText}>{SPEED_OPTIONS[speedIndex]}x</Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        <Text style={[styles.inlineTimeText, { color: isDark ? '#A6C5B3' : '#637375' }]}>
+                          {formatSeconds(currentSec)} / {ep.durationLabel}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                }
+
+                // Inactive Card: Tapping it turns it on and immediately starts playback
                 return (
                   <TouchableOpacity
                     key={ep.id}
                     style={[
                       styles.microLessonCard,
-                      isSelected
-                        ? {
-                            backgroundColor: isDark ? 'rgba(0, 153, 110, 0.15)' : '#E8F7ED',
-                            borderColor: '#00996E',
-                          }
-                        : {
-                            backgroundColor: cardBg,
-                            borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                          },
+                      {
+                        backgroundColor: cardBg,
+                        borderColor: isDark ? '#2D4538' : '#DBE5E0',
+                      },
                     ]}
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setSelectedMicrocastId(ep.id);
-                      if (!isSelected) {
-                        Speech.stop();
-                        if (tickerRef.current) clearInterval(tickerRef.current);
-                        setCurrentSec(0);
-                        setIsPlaying(false);
-                        isPlayingRef.current = false;
-                        setActiveParagraphIndex(0);
-                      }
-                    }}
-                    activeOpacity={0.85}
+                    onPress={() => handleSelectAndPlayMicrocast(ep.id)}
+                    activeOpacity={0.8}
                   >
-                    {/* Circle badge: active = green with play/pause or number; inactive = white with gray border & dark text */}
-                    {isSelected ? (
-                      <View style={[styles.microEpisodeNumberActive, { backgroundColor: '#00996E' }]}>
-                        {isPlaying ? (
-                          <Ionicons name="pause" size={13} color="#FFFFFF" />
-                        ) : (
-                          <Text style={styles.microEpisodeNumberActiveText}>{ep.id}</Text>
-                        )}
-                      </View>
-                    ) : (
-                      <View
-                        style={[
-                          styles.microEpisodeNumberInactive,
-                          {
-                            backgroundColor: cardBg,
-                            borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                          },
-                        ]}
-                      >
-                        <Text style={[styles.microEpisodeNumberInactiveText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
-                          {ep.id}
-                        </Text>
-                      </View>
-                    )}
+                    <View
+                      style={[
+                        styles.microEpisodeNumberInactive,
+                        {
+                          backgroundColor: cardBg,
+                          borderColor: isDark ? '#2D4538' : '#DBE5E0',
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.microEpisodeNumberInactiveText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
+                        {ep.id}
+                      </Text>
+                    </View>
 
-                    {/* Lesson Info: Title & Metadata */}
                     <View style={styles.microLessonInfo}>
                       <Text
                         style={[styles.microEpisodeTitle, { color: isDark ? '#FFFFFF' : '#1A282D' }]}
@@ -1060,96 +1200,13 @@ export default function ListenScreen({
                         {ep.status}
                       </Text>
                     </View>
+
+                    <View style={[styles.microPlayIconWrap, { backgroundColor: isDark ? '#1C2B23' : '#E8F7ED' }]}>
+                      <Ionicons name="play" size={13} color="#00996E" style={{ marginLeft: 1.5 }} />
+                    </View>
                   </TouchableOpacity>
                 );
               })}
-            </View>
-
-            {/* Microcast Compact Audio Player Card (.audioPlayer) */}
-            <View
-              style={[
-                styles.audioPlayerCard,
-                {
-                  backgroundColor: cardBg,
-                  borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                },
-              ]}
-            >
-              {/* Top Row: Headphones Icon, Title, Episode progress, and Track */}
-              <View style={styles.audioPlayerTopRow}>
-                <View style={[styles.headphonesIconBg, { backgroundColor: isDark ? '#1C2B23' : '#E8F7ED' }]}>
-                  <Ionicons name="headset" size={17} color="#175945" />
-                </View>
-                <View style={styles.audioPlayerTitleWrap}>
-                  <Text
-                    style={[styles.nowPlayingTitle, { color: isDark ? '#FFFFFF' : '#1A282D' }]}
-                    numberOfLines={1}
-                  >
-                    {activeMicrocast.title}
-                  </Text>
-                  <Text style={[styles.episodeProgress, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                    Episode {activeMicrocast.id} of {microcastEpisodes.length} · {isPlaying ? 'Playing' : 'Paused'}
-                  </Text>
-                </View>
-              </View>
-
-              {/* Middle Row: Thin 3px Playback Track (.playbackTrack) */}
-              <View style={[styles.playbackTrack, { backgroundColor: isDark ? '#263B30' : '#DBE5E0' }]}>
-                <View
-                  style={[
-                    styles.playbackTrackProgress,
-                    { width: `${progressPercent}%`, backgroundColor: '#00996E' },
-                  ]}
-                />
-              </View>
-
-              {/* Bottom Row: Replay 15s, Play/Pause Button, Speed Control, Playback Time */}
-              <View style={styles.audioPlayerBottomRow}>
-                <View style={styles.audioControlsLeft}>
-                  {/* Replay 15s (.replay15Seconds) */}
-                  <TouchableOpacity
-                    style={[
-                      styles.replay15Seconds,
-                      {
-                        backgroundColor: cardBg,
-                        borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                      },
-                    ]}
-                    onPress={() => handleSkip(-15)}
-                    hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name="refresh" size={11} color={isDark ? '#FFFFFF' : '#1A282D'} />
-                  </TouchableOpacity>
-
-                  {/* Play Button (.playButton) */}
-                  <TouchableOpacity
-                    style={[styles.playButton, { backgroundColor: '#00996E' }]}
-                    onPress={handleTogglePlay}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    activeOpacity={0.75}
-                  >
-                    <Ionicons name={isPlaying ? 'pause' : 'play'} size={14} color="#FFFFFF" />
-                  </TouchableOpacity>
-
-                  {/* Speed Control (.speedControl) */}
-                  <TouchableOpacity
-                    style={styles.speedControlBtn}
-                    onPress={handleCycleSpeed}
-                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={styles.speedControlText}>
-                      {SPEED_OPTIONS[speedIndex]}x
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* Playback Time (.playbackTime) */}
-                <Text style={[styles.playbackTime, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                  {formatSeconds(currentSec)} / {activeMicrocast.durationLabel}
-                </Text>
-              </View>
             </View>
 
             {/* Microcast Transcript Panel (.transcriptPanel) */}
@@ -1706,85 +1763,82 @@ const styles = StyleSheet.create({
   microEpisodeMetadata: {
     fontSize: 9,
   },
-  /* Compact Audio Player Card (.audioPlayer) */
-  audioPlayerCard: {
-    borderRadius: 14,
-    borderWidth: 1,
+  /* Active Inline Playing Card Styles */
+  microLessonCardActive: {
+    flexDirection: 'column',
+    alignItems: 'stretch',
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-    marginTop: 4,
+    paddingVertical: 12,
+    gap: 10,
+    borderWidth: 1.5,
   },
-  audioPlayerTopRow: {
+  microCardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  headphonesIconBg: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+  microPlayIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  audioPlayerTitleWrap: {
-    flex: 1,
-    gap: 2,
-  },
-  nowPlayingTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  episodeProgress: {
-    fontSize: 9,
-  },
-  playbackTrack: {
-    height: 3,
+  inlinePlaybackTrack: {
+    height: 4,
     width: '100%',
-    borderRadius: 1.5,
+    borderRadius: 2,
     overflow: 'hidden',
+    marginTop: 2,
   },
-  playbackTrackProgress: {
-    height: 3,
-    borderRadius: 1.5,
+  inlinePlaybackProgress: {
+    height: 4,
+    borderRadius: 2,
   },
-  audioPlayerBottomRow: {
+  inlineControlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginTop: 2,
   },
-  audioControlsLeft: {
+  inlineControlsLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  replay15Seconds: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+  inlineReplayBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderWidth: 1,
+  },
+  inlineReplayText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  inlinePlayPauseBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  playButton: {
-    width: 31,
-    height: 31,
-    borderRadius: 15.5,
-    alignItems: 'center',
-    justifyContent: 'center',
+  inlineSpeedBtn: {
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  speedControlBtn: {
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+  inlineSpeedText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#00996E',
   },
-  speedControlText: {
-    fontSize: 9,
+  inlineTimeText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#175945',
-  },
-  playbackTime: {
-    fontSize: 8,
-    fontWeight: '500',
   },
   /* Microcasts Transcript Panel (.transcriptPanel) */
   transcriptPanel: {
