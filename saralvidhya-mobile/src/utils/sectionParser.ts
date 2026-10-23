@@ -8,7 +8,105 @@ export interface StudySection {
   content: string;
   readTimeMinutes: number;
   quickChecks: QuickCheckQuestion[];
+  hasInfographic?: boolean;
+  examBadge?: string;
+  subBulletBadge?: string;
 }
+
+// ANGRAU & University Past Year Exam Questions (PYQ) metadata per chapter & module
+const CHAPTER_EXAM_BADGES: Record<
+  number,
+  Record<number, { full: string; short: string; hasInfographic?: boolean }>
+> = {
+  1: {
+    1: {
+      full: 'Asked in 2023 & 2024 - 8 marks',
+      short: "asked '23 '24 - 8 marks",
+      hasInfographic: true,
+    },
+    2: {
+      full: 'Asked in 2022 & 2023 - 5 marks',
+      short: "asked '22 '23 - 5 marks",
+      hasInfographic: false,
+    },
+    3: {
+      full: 'Asked in 2023 - 8 marks',
+      short: "asked '23 - 8 marks",
+      hasInfographic: false,
+    },
+    4: {
+      full: 'Asked in 2021 & 2024 - 5 marks',
+      short: "asked '21 '24 - 5 marks",
+      hasInfographic: false,
+    },
+    5: {
+      full: 'Asked in 2022 - 4 marks',
+      short: "asked '22 - 4 marks",
+      hasInfographic: false,
+    },
+  },
+  2: {
+    1: {
+      full: 'Asked in 2023 & 2024 - 10 marks',
+      short: "asked '23 '24 - 10 marks",
+      hasInfographic: true,
+    },
+    2: {
+      full: 'Asked in 2022 - 5 marks',
+      short: "asked '22 - 5 marks",
+      hasInfographic: false,
+    },
+    3: {
+      full: 'Asked in 2023 - 8 marks',
+      short: "asked '23 - 8 marks",
+      hasInfographic: false,
+    },
+    4: {
+      full: 'Asked in 2024 - 5 marks',
+      short: "asked '24 - 5 marks",
+      hasInfographic: false,
+    },
+  },
+  3: {
+    1: {
+      full: 'Asked in 2023 & 2024 - 8 marks',
+      short: "asked '23 '24 - 8 marks",
+      hasInfographic: true,
+    },
+    2: {
+      full: 'Asked in 2022 - 6 marks',
+      short: "asked '22 - 6 marks",
+      hasInfographic: false,
+    },
+    3: {
+      full: 'Asked in 2023 - 5 marks',
+      short: "asked '23 - 5 marks",
+      hasInfographic: false,
+    },
+    4: {
+      full: 'Asked in 2024 - 5 marks',
+      short: "asked '24 - 5 marks",
+      hasInfographic: false,
+    },
+  },
+  4: {
+    1: {
+      full: 'Asked in 2023 & 2024 - 8 marks',
+      short: "asked '23 '24 - 8 marks",
+      hasInfographic: true,
+    },
+    2: {
+      full: 'Asked in 2023 - 5 marks',
+      short: "asked '23 - 5 marks",
+      hasInfographic: false,
+    },
+    3: {
+      full: 'Asked in 2022 & 2024 - 8 marks',
+      short: "asked '22 '24 - 8 marks",
+      hasInfographic: false,
+    },
+  },
+};
 
 function estimateReadingTime(text: string): number {
   const words = text
@@ -53,7 +151,8 @@ function getShortTitle(rawTitle: string): string {
  */
 export function parseMarkdownSections(
   rawMarkdown: string,
-  quickChecks: QuickCheckQuestion[]
+  quickChecks: QuickCheckQuestion[],
+  chapterNumber: number = 1
 ): StudySection[] {
   if (!rawMarkdown || rawMarkdown.trim().length === 0) return [];
 
@@ -72,7 +171,12 @@ export function parseMarkdownSections(
   let parts = h2Parts.length >= 2 ? h2Parts : rawMarkdown.split(/(?=^#\s+(?:[\u{1F300}-\u{1F9FF}\s]*\d+\.|\bModule\s*\d+))/imu);
 
   if (parts.length <= 1) {
-    // Single contiguous section
+    const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[1] || {
+      full: 'Asked in 2023 & 2024 - 8 marks',
+      short: "asked '23 '24 - 8 marks",
+      hasInfographic: true,
+    };
+
     return [
       {
         id: 'sec-1',
@@ -82,6 +186,9 @@ export function parseMarkdownSections(
         content: rawMarkdown,
         readTimeMinutes: estimateReadingTime(rawMarkdown),
         quickChecks: quickChecks.length > 0 ? quickChecks : [],
+        hasInfographic: badgeInfo.hasInfographic ?? true,
+        examBadge: badgeInfo.full,
+        subBulletBadge: badgeInfo.short,
       },
     ];
   }
@@ -124,6 +231,12 @@ export function parseMarkdownSections(
       sectionBody = `${introContent}\n\n---\n\n${part}`;
     }
 
+    const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[secNum] || {
+      full: secNum === 1 ? 'Asked in 2023 & 2024 - 8 marks' : undefined,
+      short: secNum === 1 ? "asked '23 '24 - 8 marks" : undefined,
+      hasInfographic: secNum === 1 || sectionBody.toLowerCase().includes('infographic'),
+    };
+
     sections.push({
       id: `sec-${seqIndex}-${secNum}`,
       sectionNumber: secNum,
@@ -132,6 +245,9 @@ export function parseMarkdownSections(
       content: sectionBody,
       readTimeMinutes: estimateReadingTime(sectionBody),
       quickChecks: matchedQuestions,
+      hasInfographic: badgeInfo.hasInfographic,
+      examBadge: badgeInfo.full,
+      subBulletBadge: badgeInfo.short,
     });
   }
 

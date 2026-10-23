@@ -181,10 +181,13 @@ export default function StudyGuideReaderTablet({
       : quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
 
   const sections = useMemo(() => {
-    return parseMarkdownSections(activeRawContent, quickCheckQuestions);
-  }, [activeRawContent, quickCheckQuestions]);
+    return parseMarkdownSections(activeRawContent, quickCheckQuestions, chapterNumber);
+  }, [activeRawContent, quickCheckQuestions, chapterNumber]);
 
   const totalSections = sections.length;
+  const totalReadingMinutes = useMemo(() => {
+    return sections.reduce((acc, s) => acc + s.readTimeMinutes, 0) || 10;
+  }, [sections]);
   const chapterProgressPercent = Math.min(
     100,
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
@@ -601,12 +604,41 @@ export default function StudyGuideReaderTablet({
 
           {/* 7. STUDY GUIDE ARTICLE CONTENT WITH FORMATIVE QUICK CHECKS */}
           <View style={styles.articleContainer}>
-            {/* Main Article Title */}
-            <Text style={[styles.articleMainTitle, { color: textColor }]}>
-              {studyMode === 'in_depth'
-                ? `Detailed Study Guide: ${cleanTitle}`
-                : `Quick Study Guide: ${cleanTitle}`}
-            </Text>
+            {/* Chapter Overview Meta Line (Matching Web App Screenshot) */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <View
+                style={{
+                  backgroundColor: '#FEF3C7',
+                  borderColor: '#FDE68A',
+                  borderWidth: 1,
+                  paddingVertical: 5,
+                  paddingHorizontal: 12,
+                  borderRadius: 6,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 5,
+                }}
+              >
+                <Ionicons name="time-outline" size={14} color="#92400E" />
+                <Text style={{ color: '#92400E', fontSize: 13, fontWeight: '700' }}>
+                  {totalReadingMinutes} min total read
+                </Text>
+              </View>
+              <View
+                style={{
+                  backgroundColor: '#F1F5F9',
+                  borderColor: '#E2E8F0',
+                  borderWidth: 1,
+                  paddingVertical: 5,
+                  paddingHorizontal: 12,
+                  borderRadius: 6,
+                }}
+              >
+                <Text style={{ color: '#475569', fontSize: 13, fontWeight: '600' }}>
+                  {totalSections} Sections
+                </Text>
+              </View>
+            </View>
 
             {/* Render Each Section + Inline Quick Check Card */}
             {sections.map((sec, idx) => (
@@ -621,13 +653,32 @@ export default function StudyGuideReaderTablet({
                 {/* Tablet Section Header Banner with Quick Check shortcut button */}
                 <View style={styles.sectionHeaderBanner}>
                   <View style={styles.sectionMetaTop}>
-                    <Text style={[styles.sectionOrderLabel, { color: pillOutlineColor }]}>
+                    <Text style={[styles.sectionOrderLabel, { color: isDark ? '#F59E0B' : '#B45309' }]}>
                       SECTION {sec.sectionNumber} OF {sections.length}
                     </Text>
                   </View>
-                  <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
-                    {sec.title}
-                  </Text>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                    <Text style={[styles.sectionHeadingTitle, { color: textColor, flex: 1 }]}>
+                      {sec.title}
+                    </Text>
+                    {sec.hasInfographic && (
+                      <View
+                        style={{
+                          backgroundColor: '#FFEDD5',
+                          paddingHorizontal: 9,
+                          paddingVertical: 4,
+                          borderRadius: 6,
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        <Text style={{ color: '#C2410C', fontSize: 11, fontWeight: '800', letterSpacing: 0.6 }}>
+                          INFOGRAPHIC
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
                   <View style={styles.sectionMetaRow}>
                     <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
                       <Ionicons name="time-outline" size={13} color={breadcrumbColor} />
@@ -638,31 +689,42 @@ export default function StudyGuideReaderTablet({
 
                     {sec.quickChecks && sec.quickChecks.length > 0 && (
                       <TouchableOpacity
-                        style={[
-                          styles.skipToQcBtn,
-                          {
-                            backgroundColor: completedQuickChecks.has(sec.sectionNumber)
-                              ? (isDark ? '#143322' : '#DCFCE7')
-                              : (isDark ? '#1F3427' : '#F0FDF4'),
-                            borderColor: completedQuickChecks.has(sec.sectionNumber)
-                              ? '#16A34A'
-                              : (isDark ? '#2E4C3A' : '#BBF7D0'),
-                          },
-                        ]}
+                        style={{
+                          backgroundColor: isDark ? '#3D2A14' : '#FEF3C7',
+                          borderColor: isDark ? '#B45309' : '#FDE68A',
+                          borderWidth: 1,
+                          paddingVertical: 4,
+                          paddingHorizontal: 10,
+                          borderRadius: 6,
+                        }}
                         onPress={() => handleScrollToQuickCheck(idx)}
                         activeOpacity={0.75}
                       >
-                        <Ionicons
-                          name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle' : 'flash'}
-                          size={13}
-                          color="#16A34A"
-                        />
-                        <Text style={styles.skipToQcText}>
+                        <Text style={{ color: isDark ? '#FDE68A' : '#92400E', fontSize: 12, fontWeight: '700' }}>
                           {completedQuickChecks.has(sec.sectionNumber)
                             ? '✓ Quick Check Answered'
-                            : `⚡ ${sec.quickChecks.length} Quick Check${sec.quickChecks.length > 1 ? 's' : ''}`}
+                            : `${sec.quickChecks.length} quick check${sec.quickChecks.length > 1 ? 's' : ''}`}
                         </Text>
                       </TouchableOpacity>
+                    )}
+
+                    {sec.examBadge && (
+                      <View
+                        style={{
+                          backgroundColor: '#FFE4E6',
+                          paddingVertical: 4,
+                          paddingHorizontal: 9,
+                          borderRadius: 6,
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          gap: 5,
+                        }}
+                      >
+                        <Ionicons name="disc-outline" size={13} color="#BE123C" />
+                        <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '700' }}>
+                          {sec.examBadge}
+                        </Text>
+                      </View>
                     )}
                   </View>
                 </View>
@@ -730,6 +792,33 @@ export default function StudyGuideReaderTablet({
           </View>
         </View>
       </ScrollView>
+
+      {/* Floating Bottom-Right "Next: Section [N+1] →" Button */}
+      {activeSectionIndex + 1 < sections.length && (
+        <TouchableOpacity
+          style={{
+            position: 'absolute',
+            bottom: 28,
+            right: 28,
+            backgroundColor: '#D97706',
+            paddingHorizontal: 22,
+            paddingVertical: 13,
+            borderRadius: 999,
+            elevation: 6,
+            shadowColor: '#B45309',
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.35,
+            shadowRadius: 6,
+            zIndex: 99,
+          }}
+          onPress={() => handleScrollToSection(activeSectionIndex + 1)}
+          activeOpacity={0.88}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.2 }}>
+            Next: Section {activeSectionIndex + 2} →
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Floating Read Aloud / Voice Over Bar */}
       {showReadAloudBar && (

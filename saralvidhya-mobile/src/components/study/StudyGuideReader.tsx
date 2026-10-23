@@ -387,15 +387,19 @@ export default function StudyGuideReader({
       : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
 
   const sections = useMemo(() => {
-    return parseMarkdownSections(activeRawContent, quickCheckQuestions);
-  }, [activeRawContent, quickCheckQuestions]);
+    return parseMarkdownSections(activeRawContent, quickCheckQuestions, chapterNumber);
+  }, [activeRawContent, quickCheckQuestions, chapterNumber]);
 
   const totalSections = sections.length;
+  const totalReadingMinutes = useMemo(() => {
+    return sections.reduce((acc, s) => acc + s.readTimeMinutes, 0) || 10;
+  }, [sections]);
   const chapterProgressPercent = Math.min(
     100,
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
   );
 
+  const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(true);
   const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
 
   const handleScrollToSection = (targetIndex: number) => {
@@ -509,155 +513,73 @@ export default function StudyGuideReader({
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        onScroll={(e) => {
+          const scrollY = e.nativeEvent.contentOffset.y;
+          let currentIdx = 0;
+          for (let i = 0; i < sections.length; i++) {
+            const layoutY = sectionLayouts[i];
+            if (typeof layoutY === 'number' && scrollY >= layoutY - 140) {
+              currentIdx = i;
+            }
+          }
+          if (currentIdx !== activeSectionIndex) {
+            setActiveSectionIndex(currentIdx);
+          }
+        }}
+        scrollEventThrottle={32}
       >
-        {/* 1. CHAPTER HEADING ROW WITH SAVE BUTTON */}
-        <View style={styles.guideIntroduction}>
-          <View style={styles.guideTitleRow}>
-            <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={[styles.chapterBadgePill, { backgroundColor: toggleBg, borderColor: cardBorder }]}>
-                <Text style={[styles.chapterBadgeText, { color: emeraldPrimary }]}>
-                  Ch {chapterNumber}
-                </Text>
-              </View>
-              <Text style={[styles.guideTitle, { color: textColor, flex: 1 }]} numberOfLines={1}>
-                {effectiveChapterTitle}
-              </Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-              onPress={handleToggleBookmark}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              activeOpacity={0.75}
-              accessibilityLabel="Save chapter"
-            >
-              <Ionicons
-                name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-                size={19}
-                color={isBookmarked ? emeraldPrimary : textColor}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 2. COMPACT READING DEPTH SELECTOR + READ ALOUD (BESIDE TOGGLE) */}
-        <View style={styles.readingDepthRow}>
-          <View style={[styles.depthSelector, { backgroundColor: toggleBg }]}>
-            {/* Essentials Pill */}
-            <TouchableOpacity
-              style={[
-                styles.depthPill,
-                studyMode === 'essentials' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
-              ]}
-              onPress={() => {
-                if (studyMode !== 'essentials') {
-                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
-                  setStudyMode('essentials');
-                }
-              }}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-              activeOpacity={0.75}
-            >
-              <Ionicons
-                name="flash"
-                size={13}
-                color={studyMode === 'essentials' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
-              />
-              <Text
-                style={[
-                  styles.depthPillText,
-                  { color: studyMode === 'essentials' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
-                  studyMode === 'essentials' && styles.depthPillTextActive,
-                ]}
+        {/* 1. BREADCRUMB HEADER (Matching Web App Screenshot) */}
+        <View style={styles.breadcrumbBar}>
+          <View style={styles.breadcrumbLeft}>
+            {onBackPress && (
+              <TouchableOpacity
+                onPress={onBackPress}
+                style={styles.backBtn}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               >
-                Essentials
-              </Text>
-            </TouchableOpacity>
-
-            {/* In-depth Pill */}
-            <TouchableOpacity
-              style={[
-                styles.depthPill,
-                studyMode === 'in_depth' && [styles.depthPillActive, { backgroundColor: activeToggleBg }],
-              ]}
-              onPress={() => {
-                if (studyMode !== 'in_depth') {
-                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
-                  setStudyMode('in_depth');
-                }
-              }}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-              activeOpacity={0.75}
-            >
-              <Ionicons
-                name="add-circle-outline"
-                size={13}
-                color={studyMode === 'in_depth' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36'}
-              />
-              <Text
-                style={[
-                  styles.depthPillText,
-                  { color: studyMode === 'in_depth' ? '#FEFEFE' : isDark ? '#A6C5B3' : '#2D3E36' },
-                  studyMode === 'in_depth' && styles.depthPillTextActive,
-                ]}
-              >
-                In-depth
-              </Text>
-            </TouchableOpacity>
+                <Ionicons name="arrow-back" size={18} color={textColor} />
+              </TouchableOpacity>
+            )}
+            <Text style={[styles.breadcrumbText, { color: subtextColor }]} numberOfLines={1}>
+              {subjectName || 'Fundamentals of Entomology'} › Chapter {chapterNumber}: {effectiveChapterTitle}
+            </Text>
           </View>
-
-          {/* Read Aloud Beside Toggle (Icon and Time) */}
           <TouchableOpacity
-            style={[
-              styles.compactAudioPill,
-              {
-                backgroundColor: isPlayingAudio
-                  ? (isDark ? '#147A43' : '#2D3E36')
-                  : audioBarBg,
-                borderColor: isPlayingAudio
-                  ? (isDark ? '#4ADE80' : '#2D3E36')
-                  : audioBorder,
-              },
-            ]}
-            onPress={handleToggleAudio}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
+            onPress={handleToggleBookmark}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             activeOpacity={0.75}
-            accessibilityLabel="Read aloud"
+            accessibilityLabel="Save chapter"
           >
             <Ionicons
-              name={isPlayingAudio ? 'pause' : 'headset-outline'}
-              size={14}
-              color={isPlayingAudio ? '#FFFFFF' : emeraldPrimary}
+              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+              size={18}
+              color={isBookmarked ? emeraldPrimary : textColor}
             />
-            <Text
-              style={[
-                styles.compactAudioTime,
-                { color: isPlayingAudio ? '#FFFFFF' : emeraldPrimary },
-              ]}
-            >
-              {isPlayingAudio
-                ? 'Playing'
-                : studyMode === 'in_depth'
-                ? '31:22'
-                : '6:28'}
-            </Text>
           </TouchableOpacity>
         </View>
 
-        {/* 3. PERSONA LOGO BADGES (Logos only - Beginner, Intermediate, Advanced) */}
-        <View style={styles.personaRowContainer}>
-          <View style={styles.personaBadgesRow}>
+        {/* 2. TOP CONTROLS BAR: PERSONA SELECTOR + DEPTH TOGGLE + AUDIO BUTTON */}
+        <View style={styles.topControlsRow}>
+          {/* Persona Selector Tabs (Beginner, Intermediate, Advanced) */}
+          <View style={styles.personaTabsWrap}>
             {(['beginner', 'intermediate', 'advanced'] as PersonaType[]).map((lvl) => {
               const isActive = persona === lvl;
+              const label = lvl.charAt(0).toUpperCase() + lvl.slice(1);
               return (
                 <TouchableOpacity
                   key={lvl}
                   style={[
-                    styles.personaBadgeBtn,
+                    styles.personaTabBtn,
                     {
-                      backgroundColor: isActive ? (isDark ? '#1E3B2C' : '#E8F5EE') : cardBg,
-                      borderColor: isActive ? emeraldPrimary : cardBorder,
+                      backgroundColor: isActive
+                        ? (isDark ? '#2D2210' : '#FFFBEB')
+                        : (isDark ? '#17241D' : '#FEFEFE'),
+                      borderColor: isActive
+                        ? '#D97706'
+                        : (isDark ? '#2E4438' : '#E2E8F0'),
                     },
-                    isActive && styles.personaBadgeBtnActive,
+                    isActive && styles.personaTabBtnActive,
                   ]}
                   onPress={() => {
                     if (persona !== lvl) {
@@ -665,121 +587,271 @@ export default function StudyGuideReader({
                       updatePersona(lvl);
                     }
                   }}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   activeOpacity={0.75}
-                  accessibilityLabel={`Persona: ${lvl}`}
                 >
                   <Image
                     source={PERSONA_ICONS[lvl]}
-                    style={styles.personaBadgeIcon}
+                    style={styles.personaTabIcon}
                     resizeMode="contain"
                   />
+                  <Text
+                    style={[
+                      styles.personaTabText,
+                      { color: isActive ? (isDark ? '#FDE68A' : '#92400E') : subtextColor },
+                      isActive && styles.personaTabTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
+
+          {/* Reading Depth Tabs (Essentials / In-depth) */}
+          <View style={[styles.depthToggleCapsule, { backgroundColor: toggleBg }]}>
+            <TouchableOpacity
+              style={[
+                styles.depthCapsuleBtn,
+                studyMode === 'essentials' && [
+                  styles.depthCapsuleBtnActive,
+                  { backgroundColor: activeToggleBg },
+                ],
+              ]}
+              onPress={() => {
+                if (studyMode !== 'essentials') {
+                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
+                  setStudyMode('essentials');
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="flash"
+                size={12}
+                color={studyMode === 'essentials' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569'}
+              />
+              <Text
+                style={[
+                  styles.depthCapsuleText,
+                  { color: studyMode === 'essentials' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569' },
+                  studyMode === 'essentials' && styles.depthCapsuleTextActive,
+                ]}
+              >
+                Essentials
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.depthCapsuleBtn,
+                studyMode === 'in_depth' && [
+                  styles.depthCapsuleBtnActive,
+                  { backgroundColor: activeToggleBg },
+                ],
+              ]}
+              onPress={() => {
+                if (studyMode !== 'in_depth') {
+                  try { Haptics.selectionAsync().catch(() => {}); } catch {}
+                  setStudyMode('in_depth');
+                }
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="book-outline"
+                size={12}
+                color={studyMode === 'in_depth' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569'}
+              />
+              <Text
+                style={[
+                  styles.depthCapsuleText,
+                  { color: studyMode === 'in_depth' ? '#FFFFFF' : isDark ? '#A6C5B3' : '#475569' },
+                  studyMode === 'in_depth' && styles.depthCapsuleTextActive,
+                ]}
+              >
+                In-depth
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Audio Circle Button (Green Outline Speaker) */}
+          <TouchableOpacity
+            style={[
+              styles.audioCircleBtn,
+              isPlayingAudio && styles.audioCircleBtnActive,
+            ]}
+            onPress={handleToggleAudio}
+            activeOpacity={0.8}
+            accessibilityLabel="Toggle read aloud"
+          >
+            <Ionicons
+              name={isPlayingAudio ? 'pause' : 'volume-high'}
+              size={17}
+              color={isPlayingAudio ? '#FFFFFF' : '#16A34A'}
+            />
+          </TouchableOpacity>
         </View>
 
-        {/* 4. "IN THIS CHAPTER" READING GUIDE (Matching Web App Screenshot Drawer) */}
-        {sections.length > 1 && (
-          <View style={styles.readingGuideContainer}>
-            <View style={styles.readingGuideHeader}>
-              <View style={styles.readingGuideTitleRow}>
-                <Ionicons name="compass-outline" size={14} color={emeraldPrimary} />
-                <Text style={[styles.readingGuideLabel, { color: subtextColor }]}>
-                  IN THIS CHAPTER
-                </Text>
-              </View>
-              <Text style={[styles.chapterProgressLabel, { color: emeraldPrimary }]}>
-                {chapterProgressPercent}% Done
-              </Text>
-            </View>
+        {/* 3. READING GUIDE PILL BUTTON */}
+        <View style={styles.readingGuideTriggerWrap}>
+          <TouchableOpacity
+            style={styles.readingGuidePillBtn}
+            onPress={() => {
+              try { Haptics.selectionAsync().catch(() => {}); } catch {}
+              setIsReadingGuideOpen((prev) => !prev);
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.readingGuidePillText}>Reading Guide</Text>
+            <Ionicons
+              name={isReadingGuideOpen ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color="rgba(255, 255, 255, 0.85)"
+            />
+          </TouchableOpacity>
+        </View>
 
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.sectionPillsScroll}
-            >
+        {/* 4. "IN THIS CHAPTER" CARD (Matching Web App Screenshot Drawer) */}
+        {isReadingGuideOpen && sections.length > 0 && (
+          <View style={[styles.inThisChapterCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+            <Text style={[styles.inThisChapterHeading, { color: subtextColor }]}>
+              IN THIS CHAPTER
+            </Text>
+
+            <View style={styles.guideItemsList}>
               {sections.map((sec, sIdx) => {
-                const isQcDone = completedQuickChecks.has(sec.sectionNumber);
                 const isCurrent = activeSectionIndex === sIdx;
+                const isQcDone = completedQuickChecks.has(sec.sectionNumber);
 
                 return (
-                  <TouchableOpacity
-                    key={`${sec.id}-${sIdx}`}
-                    style={[
-                      styles.sectionNavPill,
-                      {
-                        backgroundColor: isCurrent
-                          ? (isDark ? '#1C3A2B' : '#E8F5EE')
-                          : (isDark ? '#17241D' : '#FEFEFE'),
-                        borderColor: isCurrent ? emeraldPrimary : cardBorder,
-                      },
-                    ]}
-                    onPress={() => handleScrollToSection(sIdx)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={styles.sectionNavPillTop}>
-                      <View
-                        style={[
-                          styles.sectionDot,
+                  <View key={`guide-sec-${sec.id}-${sIdx}`} style={styles.guideItemContainer}>
+                    {/* Main Section Navigation Row */}
+                    <TouchableOpacity
+                      style={[
+                        styles.guideSectionRow,
+                        isCurrent && [
+                          styles.guideSectionRowActive,
                           {
-                            backgroundColor: isQcDone
-                              ? '#16A34A'
-                              : isCurrent
-                              ? emeraldPrimary
-                              : subtextColor,
+                            backgroundColor: isDark ? '#2D2415' : '#FFFDF7',
+                            borderColor: isDark ? '#D97706' : '#FDE68A',
                           },
-                        ]}
-                      />
+                        ],
+                      ]}
+                      onPress={() => handleScrollToSection(sIdx)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.guideBulletWrap}>
+                        {isCurrent ? (
+                          <View style={styles.guideBulletActiveRing}>
+                            <View style={styles.guideBulletActiveDot} />
+                          </View>
+                        ) : isQcDone ? (
+                          <Ionicons name="checkmark-circle" size={16} color="#16A34A" />
+                        ) : (
+                          <View
+                            style={[
+                              styles.guideBulletHollow,
+                              { borderColor: isDark ? '#4B5563' : '#CBD5E1' },
+                            ]}
+                          />
+                        )}
+                      </View>
+
                       <Text
                         style={[
-                          styles.sectionPillTitle,
-                          {
-                            color: isCurrent ? (isDark ? '#FFFFFF' : '#147A43') : textColor,
-                            fontWeight: isCurrent ? '700' : '600',
-                          },
+                          styles.guideSectionTitle,
+                          { color: isCurrent ? (isDark ? '#FDE68A' : '#92400E') : textColor },
+                          isCurrent && { fontWeight: '700' },
                         ]}
                         numberOfLines={1}
                       >
-                        {sec.shortTitle}
+                        {sec.title}
                       </Text>
-                    </View>
 
-                    <TouchableOpacity
-                      style={[
-                        styles.qcStatusBadge,
-                        {
-                          backgroundColor: isQcDone
-                            ? (isDark ? '#143322' : '#DCFCE7')
-                            : (isDark ? '#202E26' : '#F1F5F9'),
-                        },
-                      ]}
-                      onPress={() => handleScrollToQuickCheck(sIdx)}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name={isQcDone ? 'checkmark-circle' : 'flash'}
-                        size={10.5}
-                        color={isQcDone ? '#16A34A' : subtextColor}
-                      />
-                      <Text
-                        style={[
-                          styles.qcStatusText,
-                          { color: isQcDone ? '#16A34A' : subtextColor },
-                        ]}
-                      >
-                        {isQcDone ? 'Quick Check Done' : 'Quick Check'}
-                      </Text>
+                      {isCurrent && (
+                        <View style={styles.youAreHereBadge}>
+                          <Text style={styles.youAreHereText}>YOU ARE HERE</Text>
+                        </View>
+                      )}
                     </TouchableOpacity>
-                  </TouchableOpacity>
+
+                    {/* Mini Sub-bullet: Quick Check */}
+                    {sec.quickChecks && sec.quickChecks.length > 0 && (
+                      <TouchableOpacity
+                        style={styles.guideSubBulletRow}
+                        onPress={() => handleScrollToQuickCheck(sIdx)}
+                        activeOpacity={0.75}
+                      >
+                        <View
+                          style={[
+                            styles.guideSubHollowDot,
+                            { borderColor: isQcDone ? '#16A34A' : subtextColor },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.guideSubText,
+                            { color: isQcDone ? '#16A34A' : subtextColor },
+                            isQcDone && { fontWeight: '600' },
+                          ]}
+                        >
+                          {isQcDone ? '✓ Quick Check Done' : 'Quick Check'}
+                        </Text>
+
+                        {sec.subBulletBadge && (
+                          <View style={styles.subPyqBadge}>
+                            <Text style={styles.subPyqBadgeText}>{sec.subBulletBadge}</Text>
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 );
               })}
-            </ScrollView>
+            </View>
+
+            {/* Chapter Progress Bar Footer */}
+            <View style={[styles.guideProgressFooter, { borderTopColor: isDark ? '#2D3E36' : '#F1F5F9' }]}>
+              <View style={styles.guideProgressLabels}>
+                <Text style={[styles.guideProgressCaption, { color: subtextColor }]}>
+                  Chapter progress
+                </Text>
+                <Text style={[styles.guideProgressPercentText, { color: textColor }]}>
+                  {chapterProgressPercent}%
+                </Text>
+              </View>
+              <View style={[styles.guideProgressBarTrack, { backgroundColor: isDark ? '#26382E' : '#F1F5F9' }]}>
+                <View
+                  style={[
+                    styles.guideProgressBarFill,
+                    {
+                      width: `${chapterProgressPercent}%`,
+                      backgroundColor: emeraldPrimary,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
           </View>
         )}
 
-        {/* 5. SECTIONIZED READING MATTER + FORMATIVE QUICK CHECKS */}
+        {/* 5. CHAPTER OVERVIEW META LINE (Matches Web App Screenshot) */}
+        <View style={styles.overviewMetaRow}>
+          <View style={styles.totalReadBadge}>
+            <Ionicons name="time-outline" size={13} color="#92400E" />
+            <Text style={styles.totalReadText}>
+              {totalReadingMinutes} min total read
+            </Text>
+          </View>
+          <View style={styles.totalSectionsBadge}>
+            <Text style={styles.totalSectionsText}>
+              {totalSections} Sections
+            </Text>
+          </View>
+        </View>
+
+        {/* 6. SECTIONIZED READING STREAM + MASTER HERO INFOGRAPHIC */}
         <View style={styles.sectionsContainer}>
           {sections.map((sec, idx) => (
             <View
@@ -790,17 +862,80 @@ export default function StudyGuideReader({
               }}
               style={styles.sectionBlock}
             >
-              {/* If In-depth and Section 1 (index 0), render the Architectural Blueprint Infographic Card */}
-              {studyMode === 'in_depth' && idx === 0 && (
-                <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              {/* Section Header Banner matching Web App Screenshot */}
+              <View style={styles.sectionHeaderBanner}>
+                <View style={styles.sectionMetaTop}>
+                  <Text style={[styles.sectionOrderLabel, { color: isDark ? '#F59E0B' : '#B45309' }]}>
+                    SECTION {sec.sectionNumber} OF {sections.length}
+                  </Text>
+                </View>
+
+                <View style={styles.sectionHeadingWrap}>
+                  <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
+                    {sec.title}
+                  </Text>
+                  {sec.hasInfographic && (
+                    <View style={styles.infographicTagBadge}>
+                      <Text style={styles.infographicTagText}>INFOGRAPHIC</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.sectionMetaRow}>
+                  <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
+                    <Ionicons name="time-outline" size={12} color={subtextColor} />
+                    <Text style={[styles.readTimeText, { color: textColor }]}>
+                      {sec.readTimeMinutes} min read
+                    </Text>
+                  </View>
+
+                  {sec.quickChecks && sec.quickChecks.length > 0 && (
+                    <TouchableOpacity
+                      style={[
+                        styles.quickChecksPill,
+                        {
+                          backgroundColor: isDark ? '#3D2A14' : '#FEF3C7',
+                          borderColor: isDark ? '#B45309' : '#FDE68A',
+                        },
+                      ]}
+                      onPress={() => handleScrollToQuickCheck(idx)}
+                      activeOpacity={0.75}
+                    >
+                      <Text style={[styles.quickChecksPillText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+                        {completedQuickChecks.has(sec.sectionNumber)
+                          ? '✓ Quick Check Answered'
+                          : `${sec.quickChecks.length} quick check${sec.quickChecks.length > 1 ? 's' : ''}`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {sec.examBadge && (
+                    <View style={styles.examBadgePill}>
+                      <Ionicons name="disc-outline" size={12} color="#BE123C" />
+                      <Text style={styles.examBadgeText}>{sec.examBadge}</Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+
+              {/* Section Markdown Reading Content */}
+              <MarkdownReader
+                title={sec.title}
+                chapterNumber={chapterNumber}
+                content={sec.content}
+              />
+
+              {/* Hero Infographic Card for Section 1 (always displayed in Section 1 as in web app) */}
+              {idx === 0 && (
+                <View style={[styles.scientificDiagram, { backgroundColor: cardBg, borderColor: cardBorder, marginTop: 16 }]}>
                   <View style={styles.figureTools}>
                     <Text style={[styles.figureLabel, { color: subtextColor }]}>
-                      {activeInfographic.badgeLabel} • IN-DEPTH
+                      {activeInfographic.badgeLabel} • INFOGRAPHIC
                     </Text>
                     <TouchableOpacity
                       style={styles.expandDiagram}
                       onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
                         setIsDiagramZoomed(true);
                       }}
                       activeOpacity={0.8}
@@ -841,62 +976,6 @@ export default function StudyGuideReader({
                   </View>
                 </View>
               )}
-
-              {/* Section Header Banner with Direct Quick Check Button */}
-              <View style={styles.sectionHeaderBanner}>
-                <View style={styles.sectionMetaTop}>
-                  <Text style={[styles.sectionOrderLabel, { color: emeraldPrimary }]}>
-                    SECTION {sec.sectionNumber} OF {sections.length}
-                  </Text>
-                </View>
-                <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
-                  {sec.title}
-                </Text>
-                <View style={styles.sectionMetaRow}>
-                  <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
-                    <Ionicons name="time-outline" size={12} color={subtextColor} />
-                    <Text style={[styles.readTimeText, { color: textColor }]}>
-                      {sec.readTimeMinutes} min read
-                    </Text>
-                  </View>
-
-                  {sec.quickChecks && sec.quickChecks.length > 0 && (
-                    <TouchableOpacity
-                      style={[
-                        styles.skipToQcBtn,
-                        {
-                          backgroundColor: completedQuickChecks.has(sec.sectionNumber)
-                            ? (isDark ? '#143322' : '#DCFCE7')
-                            : (isDark ? '#1F3427' : '#F0FDF4'),
-                          borderColor: completedQuickChecks.has(sec.sectionNumber)
-                            ? '#16A34A'
-                            : (isDark ? '#2E4C3A' : '#BBF7D0'),
-                        },
-                      ]}
-                      onPress={() => handleScrollToQuickCheck(idx)}
-                      activeOpacity={0.75}
-                    >
-                      <Ionicons
-                        name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle' : 'flash'}
-                        size={12}
-                        color="#16A34A"
-                      />
-                      <Text style={styles.skipToQcText}>
-                        {completedQuickChecks.has(sec.sectionNumber)
-                          ? '✓ Quick Check Answered'
-                          : `⚡ ${sec.quickChecks.length} Quick Check${sec.quickChecks.length > 1 ? 's' : ''}`}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-
-              {/* Section Markdown Reading Content */}
-              <MarkdownReader
-                title={sec.title}
-                chapterNumber={chapterNumber}
-                content={sec.content}
-              />
 
               {/* Formative Quick Check Card at the end of this Section */}
               {sec.quickChecks && sec.quickChecks.length > 0 && (
@@ -960,6 +1039,18 @@ export default function StudyGuideReader({
         </TouchableOpacity>
       </ScrollView>
 
+      {/* Floating Bottom-Right "Next: Section [N+1] →" Button (Matching Web App Screenshot) */}
+      {activeSectionIndex + 1 < sections.length && (
+        <TouchableOpacity
+          style={styles.floatingNextBtn}
+          onPress={() => handleScrollToSection(activeSectionIndex + 1)}
+          activeOpacity={0.88}
+        >
+          <Text style={styles.floatingNextBtnText}>
+            Next: Section {activeSectionIndex + 2} →
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* 6. FULL-SCREEN INTERACTIVE DIAGRAM MODAL (Never mounted in background) */}
       {isDiagramZoomed && (
@@ -1579,86 +1670,333 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  /* Reading Guide & Section Navigation Styles */
-  readingGuideContainer: {
-    marginTop: 6,
-    marginBottom: 16,
-    gap: 8,
-  },
-  readingGuideHeader: {
+  /* Breadcrumb Header */
+  breadcrumbBar: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 2,
+    gap: 8,
   },
-  readingGuideTitleRow: {
+  breadcrumbLeft: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-  },
-  readingGuideLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  chapterProgressLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  sectionPillsScroll: {
     gap: 8,
-    paddingVertical: 2,
   },
-  sectionNavPill: {
+  backBtn: {
+    padding: 2,
+  },
+  breadcrumbText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    flex: 1,
+  },
+  /* Top Controls Bar: Persona + Depth + Audio */
+  topControlsRow: {
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    gap: 4,
-    minWidth: 140,
-    maxWidth: 200,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+    flexWrap: 'wrap',
   },
-  sectionNavPillTop: {
+  personaTabsWrap: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  sectionDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-  },
-  sectionPillTitle: {
-    fontSize: 12.5,
-    flex: 1,
-  },
-  qcStatusBadge: {
-    flexDirection: 'row',
+  personaTabBtn: {
     alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 6,
-    gap: 4,
-    marginTop: 2,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    minWidth: 56,
   },
-  qcStatusText: {
-    fontSize: 10,
+  personaTabBtnActive: {
+    elevation: 2,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  personaTabIcon: {
+    width: 22,
+    height: 22,
+    marginBottom: 2,
+  },
+  personaTabText: {
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
+  personaTabTextActive: {
     fontWeight: '700',
   },
+  depthToggleCapsule: {
+    flexDirection: 'row',
+    borderRadius: 100,
+    padding: 3,
+    gap: 3,
+    alignItems: 'center',
+  },
+  depthCapsuleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 100,
+    gap: 4,
+  },
+  depthCapsuleBtnActive: {
+    elevation: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+  },
+  depthCapsuleText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  depthCapsuleTextActive: {
+    fontWeight: '700',
+  },
+  audioCircleBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1.5,
+    borderColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(22, 163, 74, 0.08)',
+  },
+  audioCircleBtnActive: {
+    backgroundColor: '#16A34A',
+  },
+  /* Reading Guide Pill */
+  readingGuideTriggerWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+  readingGuidePillBtn: {
+    backgroundColor: '#24332C',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 100,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+  },
+  readingGuidePillText: {
+    color: '#FFFFFF',
+    fontSize: 12.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
+  },
+  /* In This Chapter Card */
+  inThisChapterCard: {
+    marginHorizontal: 16,
+    marginBottom: 14,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+  },
+  inThisChapterHeading: {
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  guideItemsList: {
+    gap: 6,
+  },
+  guideItemContainer: {
+    gap: 3,
+  },
+  guideSectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    gap: 8,
+  },
+  guideSectionRowActive: {
+    borderWidth: 1.5,
+  },
+  guideBulletWrap: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guideBulletActiveRing: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#D97706',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guideBulletActiveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#D97706',
+  },
+  guideBulletHollow: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    borderWidth: 1.5,
+  },
+  guideSectionTitle: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    flex: 1,
+  },
+  youAreHereBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  youAreHereText: {
+    color: '#B45309',
+    fontSize: 9.5,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+  },
+  guideSubBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingLeft: 36,
+    paddingVertical: 3,
+    gap: 6,
+  },
+  guideSubHollowDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    borderWidth: 1.2,
+  },
+  guideSubText: {
+    fontSize: 11,
+    fontWeight: '500',
+  },
+  subPyqBadge: {
+    backgroundColor: '#FFE4E6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  subPyqBadgeText: {
+    color: '#BE123C',
+    fontSize: 9.5,
+    fontWeight: '700',
+  },
+  guideProgressFooter: {
+    paddingTop: 10,
+    borderTopWidth: 1,
+    gap: 6,
+  },
+  guideProgressLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  guideProgressCaption: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  guideProgressPercentText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  guideProgressBarTrack: {
+    height: 5,
+    width: '100%',
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+  guideProgressBarFill: {
+    height: '100%',
+    borderRadius: 10,
+  },
+  /* Overview Meta Row */
+  overviewMetaRow: {
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  totalReadBadge: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  totalReadText: {
+    color: '#92400E',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  totalSectionsBadge: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+  },
+  totalSectionsText: {
+    color: '#475569',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  /* Section Header Banner */
   sectionsContainer: {
     gap: 12,
+    paddingHorizontal: 16,
   },
   sectionBlock: {
     marginBottom: 6,
   },
   sectionHeaderBanner: {
-    paddingTop: 16,
+    paddingTop: 12,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(150, 150, 150, 0.15)',
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 6,
   },
   sectionMetaTop: {
@@ -1671,11 +2009,31 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
+  sectionHeadingWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
   sectionHeadingTitle: {
     fontSize: 20,
     fontWeight: '800',
     lineHeight: 26,
     marginTop: 2,
+    flex: 1,
+  },
+  infographicTagBadge: {
+    backgroundColor: '#FFEDD5',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  infographicTagText: {
+    color: '#C2410C',
+    fontSize: 10.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
   },
   sectionMetaRow: {
     flexDirection: 'row',
@@ -1696,18 +2054,50 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '600',
   },
-  skipToQcBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  quickChecksPill: {
     paddingVertical: 4,
     paddingHorizontal: 9,
     borderRadius: 6,
     borderWidth: 1,
-    gap: 5,
   },
-  skipToQcText: {
+  quickChecksPillText: {
     fontSize: 11.5,
     fontWeight: '700',
-    color: '#16A34A',
+  },
+  examBadgePill: {
+    backgroundColor: '#FFE4E6',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  examBadgeText: {
+    color: '#BE123C',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  /* Floating Next Section Button */
+  floatingNextBtn: {
+    position: 'absolute',
+    bottom: 24,
+    right: 20,
+    backgroundColor: '#D97706',
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 999,
+    elevation: 6,
+    shadowColor: '#B45309',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 6,
+    zIndex: 99,
+  },
+  floatingNextBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
 });
