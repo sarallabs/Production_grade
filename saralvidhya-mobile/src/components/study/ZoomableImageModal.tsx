@@ -16,14 +16,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Unrestricted deep zoom so users can see tiny microscopic diagram labels
+// Unrestricted deep zoom so users can inspect tiny microscopic diagram labels
 const MIN_SCALE = 1.0;
 const MAX_SCALE = 12.0;
 const DOUBLE_TAP_SCALE = 3.5;
 
 export interface ZoomableImageModalProps {
   visible: boolean;
-  imageSource: any; // Can be require(...) or { uri: string }
+  imageSource: any; // require(...) or { uri: string }
   title?: string;
   subtitle?: string;
   onClose: () => void;
@@ -45,12 +45,16 @@ export default function ZoomableImageModal({
   const panRef = useRef({ x: 0, y: 0 });
 
   // Multi-touch tracking
+  const prevTouchCountRef = useRef(0);
   const initialDistanceRef = useRef(0);
   const initialScaleRef = useRef(1);
   const lastTouchTimeRef = useRef(0);
-  const lastPanPosRef = useRef({ x: 0, y: 0 });
+  const lastTouchXRef = useRef(0);
+  const lastTouchYRef = useRef(0);
+  const lastPanXRef = useRef(0);
+  const lastPanYRef = useRef(0);
 
-  // Update numerical tracker
+  // Update numerical trackers
   useEffect(() => {
     const scaleListener = scale.addListener(({ value }) => {
       scaleRef.current = value;
@@ -65,7 +69,7 @@ export default function ZoomableImageModal({
     };
   }, [scale, pan]);
 
-  // Reset transforms smoothly whenever modal opens or resets
+  // Reset transforms smoothly
   const resetZoom = useCallback((animated = true) => {
     if (animated) {
       Animated.parallel([
@@ -91,17 +95,19 @@ export default function ZoomableImageModal({
   useEffect(() => {
     if (visible) {
       resetZoom(false);
+      prevTouchCountRef.current = 0;
+      initialDistanceRef.current = 0;
     }
   }, [visible, resetZoom]);
 
-  // Double tap handler
+  // Double-tap handler
   const handleDoubleTap = (centerX: number, centerY: number) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
     if (scaleRef.current > 1.2) {
-      // Zoom out to normal
+      // Zoom out to 1x
       resetZoom(true);
     } else {
-      // Zoom in deeply centered towards tap point
+      // Zoom in deeply towards tap point
       const targetScale = DOUBLE_TAP_SCALE;
       const offsetX = (SCREEN_WIDTH / 2 - centerX) * 0.9;
       const offsetY = (SCREEN_HEIGHT / 2 - centerY) * 0.9;
@@ -123,75 +129,99 @@ export default function ZoomableImageModal({
     }
   };
 
-  // PanResponder to handle natural touch gestures:
-  // 1. Pinch to zoom in/out with 2 fingers freely up to 12x
-  // 2. Drag to pan around with 1 finger when zoomed in
-  // 3. Double-tap to quickly zoom in / zoom back out
+  // Robust PanResponder with automatic multi-touch transition detection
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return (
-          gestureState.numberActiveTouches > 1 ||
-          Math.abs(gestureState.dx) > 3 ||
-          Math.abs(gestureState.dy) > 3
-        );
-      },
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+
       onPanResponderGrant: (evt) => {
         const touches = evt.nativeEvent.touches;
         const now = Date.now();
 
-        // Detect double tap (within 300ms)
-        if (touches.length === 1 && now - lastTouchTimeRef.current < 300) {
+        // Detect double tap (within 350ms)
+        if (touches.length === 1 && now - lastTouchTimeRef.current < 350) {
           handleDoubleTap(touches[0].pageX, touches[0].pageY);
           lastTouchTimeRef.current = 0;
           return;
         }
         lastTouchTimeRef.current = now;
 
-        if (touches.length === 2) {
-          // Pinch start
+        prevTouchCountRef.current = touches.length;
+
+        if (touches.length >= 2) {
           const dx = touches[0].pageX - touches[1].pageX;
           const dy = touches[0].pageY - touches[1].pageY;
           initialDistanceRef.current = Math.hypot(dx, dy);
           initialScaleRef.current = scaleRef.current;
         } else if (touches.length === 1) {
-          // Pan start
-          lastPanPosRef.current = { x: panRef.current.x, y: panRef.current.y };
+          lastTouchXRef.current = touches[0].pageX;
+          lastTouchYRef.current = touches[0].pageY;
+          lastPanXRef.current = panRef.current.x;
+          lastPanYRef.current = panRef.current.y;
         }
       },
-      onPanResponderMove: (evt, gestureState) => {
+
+      onPanResponderMove: (evt) => {
         const touches = evt.nativeEvent.touches;
 
-        if (touches.length === 2) {
-          // Pinch zooming (smooth scaling with natural touch distance, unconstrained up to 12x)
+        if (touches.length >= 2) {
           const dx = touches[0].pageX - touches[1].pageX;
           const dy = touches[0].pageY - touches[1].pageY;
           const currentDistance = Math.hypot(dx, dy);
 
-          if (initialDistanceRef.current > 0) {
-            const rawScale =
-              (currentDistance / initialDistanceRef.current) * initialScaleRef.current;
-            const boundedScale = Math.min(MAX_SCALE + 0.5, Math.max(0.8, rawScale));
-            scale.setValue(boundedScale);
+          // If second finger just touched during move, initialize distance smoothly!
+          if (prevTouchCountRef.current !== 2 || initialDistanceRef.current <= 0) {
+            prevTouchCountRef.current = 2;
+            initialDistanceRef.current = currentDistance;
+            initialScaleRef.current = scaleRef.current;
+            return;
           }
-        } else if (touches.length === 1 && scaleRef.current > 1.05) {
-          // Panning when zoomed in
-          const currentScale = scaleRef.current;
-          const maxPanX = (SCREEN_WIDTH * (currentScale - 1)) / 2 + 100;
-          const maxPanY = (SCREEN_HEIGHT * (currentScale - 1)) / 2 + 100;
 
-          const newX = lastPanPosRef.current.x + gestureState.dx;
-          const newY = lastPanPosRef.current.y + gestureState.dy;
+          if (initialDistanceRef.current > 0) {
+            const factor = currentDistance / initialDistanceRef.current;
+            const newScale = initialScaleRef.current * factor;
+            const clampedScale = Math.min(MAX_SCALE + 0.5, Math.max(0.75, newScale));
+            scale.setValue(clampedScale);
+          }
+        } else if (touches.length === 1) {
+          // If transitioning from 2 fingers down to 1 finger, re-anchor coordinate baseline
+          if (prevTouchCountRef.current !== 1) {
+            prevTouchCountRef.current = 1;
+            lastTouchXRef.current = touches[0].pageX;
+            lastTouchYRef.current = touches[0].pageY;
+            lastPanXRef.current = panRef.current.x;
+            lastPanYRef.current = panRef.current.y;
+            initialDistanceRef.current = 0;
+            return;
+          }
 
-          const clampedX = Math.min(maxPanX, Math.max(-maxPanX, newX));
-          const clampedY = Math.min(maxPanY, Math.max(-maxPanY, newY));
+          // If zoomed in (> 1.05), pan smoothly across the diagram
+          if (scaleRef.current > 1.05) {
+            const deltaX = touches[0].pageX - lastTouchXRef.current;
+            const deltaY = touches[0].pageY - lastTouchYRef.current;
 
-          pan.setValue({ x: clampedX, y: clampedY });
+            const currentScale = scaleRef.current;
+            const maxPanX = (SCREEN_WIDTH * (currentScale - 1)) / 2 + 100;
+            const maxPanY = (SCREEN_HEIGHT * (currentScale - 1)) / 2 + 100;
+
+            const newX = lastPanXRef.current + deltaX;
+            const newY = lastPanYRef.current + deltaY;
+
+            const clampedX = Math.min(maxPanX, Math.max(-maxPanX, newX));
+            const clampedY = Math.min(maxPanY, Math.max(-maxPanY, newY));
+
+            pan.setValue({ x: clampedX, y: clampedY });
+          }
         }
       },
+
       onPanResponderRelease: () => {
-        // If pinched below 1.05, snap smoothly back to normal 1x
+        prevTouchCountRef.current = 0;
+        initialDistanceRef.current = 0;
+
         if (scaleRef.current <= 1.05) {
           resetZoom(true);
         } else if (scaleRef.current > MAX_SCALE) {
@@ -202,10 +232,18 @@ export default function ZoomableImageModal({
           }).start();
         }
       },
+
+      onPanResponderTerminate: () => {
+        prevTouchCountRef.current = 0;
+        initialDistanceRef.current = 0;
+        if (scaleRef.current <= 1.05) {
+          resetZoom(true);
+        }
+      },
     })
   ).current;
 
-  if (!visible) return null;
+  if (!visible || !imageSource) return null;
 
   return (
     <Modal
@@ -218,7 +256,7 @@ export default function ZoomableImageModal({
       <View style={styles.backdrop}>
         <StatusBar barStyle="light-content" backgroundColor="#000000" />
 
-        {/* Minimal Floating Close Button Only (No text, no clutter) */}
+        {/* Minimal Floating Close Button */}
         <TouchableOpacity
           style={[styles.floatingCloseBtn, { top: Math.max(insets.top + 10, 24) }]}
           onPress={() => {
@@ -235,6 +273,7 @@ export default function ZoomableImageModal({
         {/* Fullscreen Interactive Viewport Area */}
         <View style={styles.viewport} {...panResponder.panHandlers}>
           <Animated.View
+            pointerEvents="none"
             style={[
               styles.imageContainer,
               {
@@ -252,6 +291,7 @@ export default function ZoomableImageModal({
               contentFit="contain"
               cachePolicy="memory-disk"
               priority="high"
+              pointerEvents="none"
               transition={150}
             />
           </Animated.View>
@@ -264,18 +304,19 @@ export default function ZoomableImageModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: '#000000', // Solid pitch-black so background reading text never bleeds through
+    backgroundColor: '#000000', // Solid pitch-black so reading text underneath never bleeds through
     justifyContent: 'center',
     alignItems: 'center',
   },
   floatingCloseBtn: {
     position: 'absolute',
     right: 18,
-    zIndex: 99,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    zIndex: 999,
+    elevation: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
     alignItems: 'center',
     justifyContent: 'center',
   },
