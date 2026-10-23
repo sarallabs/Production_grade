@@ -706,7 +706,7 @@ export default function StudyGuideReader({
 
                 return (
                   <TouchableOpacity
-                    key={sec.id}
+                    key={`${sec.id}-${sIdx}`}
                     style={[
                       styles.sectionNavPill,
                       {
@@ -783,7 +783,7 @@ export default function StudyGuideReader({
         <View style={styles.sectionsContainer}>
           {sections.map((sec, idx) => (
             <View
-              key={sec.id}
+              key={`${sec.id}-${idx}`}
               onLayout={(e) => {
                 const layoutY = e.nativeEvent.layout.y;
                 setSectionLayouts((prev) => ({ ...prev, [idx]: layoutY }));

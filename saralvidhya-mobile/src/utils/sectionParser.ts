@@ -101,9 +101,11 @@ export function parseMarkdownSections(
     const cleanTitle = cleanHeadingText(rawHeading);
     const shortTitle = getShortTitle(rawHeading);
 
+    const seqIndex = sections.length + 1;
     // Extract module number (e.g. '1' from '1. Master System' or 'Module 2:')
     const modMatch = cleanTitle.match(/(?:Module\s*|Topic\s*|^)(\d+)/i);
-    const secNum = modMatch ? parseInt(modMatch[1], 10) : sections.length + 1;
+    const extractedNum = modMatch ? parseInt(modMatch[1], 10) : seqIndex;
+    const secNum = !isNaN(extractedNum) && extractedNum > 0 ? extractedNum : seqIndex;
     const modKey = `M${secNum}`;
 
     let matchedQuestions = qcByModule[modKey] || [];
@@ -123,10 +125,10 @@ export function parseMarkdownSections(
     }
 
     sections.push({
-      id: `sec-${secNum}`,
+      id: `sec-${seqIndex}-${secNum}`,
       sectionNumber: secNum,
       title: cleanTitle,
-      shortTitle: shortTitle || `Section ${secNum}`,
+      shortTitle: shortTitle || `Section ${seqIndex}`,
       content: sectionBody,
       readTimeMinutes: estimateReadingTime(sectionBody),
       quickChecks: matchedQuestions,
