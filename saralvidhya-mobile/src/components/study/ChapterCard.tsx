@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Chapter, manifestService } from '@/api/manifestService';
+import { getChapterThumbnailUrl } from '@/services/contentService';
 
 export interface ChapterCardProps {
   chapter: Chapter;
@@ -28,6 +29,8 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
   isDark,
   onPress,
 }) => {
+  const [imageError, setImageError] = React.useState(false);
+
   // Chapter completion calculation for visual progress line
   const progressInfo = manifestService.calculateChapterProgress(chapter);
 
@@ -42,9 +45,16 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
   const chevronBg = isDark ? 'rgba(45, 62, 54, 0.08)' : 'rgba(255, 255, 255, 0.12)';
   const chevronColor = isDark ? '#1C2E24' : '#FFFFFF';
 
-  const thumbSource = isDark
-    ? require('@/assets/images/card_thumb_light.png')
-    : require('@/assets/images/card_thumb_dark.png');
+  // Dedicated topic fallback if offline or failed to fetch from GCP cloud database
+  const fallbackSource = chapter.number === 3
+    ? require('@/assets/images/weathering_thumb.png')
+    : isDark
+      ? require('@/assets/images/card_thumb_light.png')
+      : require('@/assets/images/card_thumb_dark.png');
+
+  // Dynamic GCP Cloud Database URL for the chapter
+  const cloudThumbUri = getChapterThumbnailUrl(chapter.number, subjectCode || subjectName);
+  const imageSource = imageError || !cloudThumbUri ? fallbackSource : { uri: cloudThumbUri };
 
   const handleCardPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -65,12 +75,17 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
         activeOpacity={0.92}
       >
         <View style={styles.contentRow}>
-          {/* Left Book Illustration Box in squircle */}
-          <View style={styles.thumbnailBox}>
+          {/* Left Topic Illustration Box from Cloud GCS */}
+          <View style={[styles.thumbnailBox, { backgroundColor: isDark ? '#709180' : '#41594D' }]}>
             <Image
-              source={thumbSource}
+              source={imageSource}
+              placeholder={fallbackSource}
+              placeholderContentFit="cover"
               style={styles.bookIllustration}
               contentFit="cover"
+              transition={250}
+              cachePolicy="memory-disk"
+              onError={() => setImageError(true)}
             />
           </View>
 

@@ -9,6 +9,7 @@ import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { Subject, manifestService } from '@/api/manifestService';
+import { getChapterThumbnailUrl } from '@/services/contentService';
 
 export interface SubjectUnitCardProps {
   subject: Subject;
@@ -26,6 +27,8 @@ export const SubjectUnitCard: React.FC<SubjectUnitCardProps> = ({
   isDark,
   onPress,
 }) => {
+  const [imageError, setImageError] = React.useState(false);
+
   // Title: Subject name (e.g. Entomology)
   const title = subject.name || subject.code;
   // Subtitle: Course degree (e.g. B.Sc Agriculture) - NO numbers present
@@ -47,9 +50,13 @@ export const SubjectUnitCard: React.FC<SubjectUnitCardProps> = ({
   const chevronColor = isDark ? '#1C2E24' : '#FFFFFF';
 
   // Clean cropped book illustration matching user's PNG reference (NO cockroach)
-  const thumbSource = isDark
+  const fallbackSource = isDark
     ? require('@/assets/images/card_thumb_light.png')
     : require('@/assets/images/card_thumb_dark.png');
+
+  // Load subject thumbnail from cloud database
+  const cloudThumbUri = getChapterThumbnailUrl(1, subject.code || subject.name || 'entomology');
+  const imageSource = imageError || !cloudThumbUri ? fallbackSource : { uri: cloudThumbUri };
 
   const handleCardPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -70,12 +77,17 @@ export const SubjectUnitCard: React.FC<SubjectUnitCardProps> = ({
         activeOpacity={0.92}
       >
         <View style={styles.contentRow}>
-          {/* Left Book Illustration Box in squircle */}
-          <View style={styles.thumbnailBox}>
+          {/* Left Book/Subject Illustration Box in squircle */}
+          <View style={[styles.thumbnailBox, { backgroundColor: isDark ? '#709180' : '#41594D' }]}>
             <Image
-              source={thumbSource}
+              source={imageSource}
+              placeholder={fallbackSource}
+              placeholderContentFit="cover"
               style={styles.bookIllustration}
               contentFit="cover"
+              transition={250}
+              cachePolicy="memory-disk"
+              onError={() => setImageError(true)}
             />
           </View>
 
