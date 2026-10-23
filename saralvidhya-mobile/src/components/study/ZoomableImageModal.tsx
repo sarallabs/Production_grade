@@ -8,7 +8,6 @@ import {
   Dimensions,
   PanResponder,
   Animated,
-  Platform,
   StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -47,6 +46,7 @@ export default function ZoomableImageModal({
   const scaleRef = useRef(1);
   const panRef = useRef({ x: 0, y: 0 });
   const [currentZoomDisplay, setCurrentZoomDisplay] = useState('1.0x');
+  const [isZoomed, setIsZoomed] = useState(false);
 
   // Multi-touch tracking
   const initialDistanceRef = useRef(0);
@@ -59,6 +59,7 @@ export default function ZoomableImageModal({
     const scaleListener = scale.addListener(({ value }) => {
       scaleRef.current = value;
       setCurrentZoomDisplay(`${value.toFixed(1)}x`);
+      setIsZoomed(value > 1.08);
     });
     const panListener = pan.addListener((value) => {
       panRef.current = value;
@@ -70,7 +71,7 @@ export default function ZoomableImageModal({
     };
   }, [scale, pan]);
 
-  // Reset transforms whenever modal opens/closes
+  // Reset transforms smoothly whenever modal opens or resets
   const resetZoom = useCallback((animated = true) => {
     if (animated) {
       Animated.parallel([
@@ -99,46 +100,10 @@ export default function ZoomableImageModal({
     }
   }, [visible, resetZoom]);
 
-  // Zoom In button handler
-  const handleZoomIn = () => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
-    const newScale = Math.min(MAX_SCALE, Math.round((scaleRef.current + 0.8) * 10) / 10);
-    Animated.spring(scale, {
-      toValue: newScale,
-      useNativeDriver: true,
-      bounciness: 4,
-      speed: 16,
-    }).start();
-  };
-
-  // Zoom Out button handler
-  const handleZoomOut = () => {
-    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
-    const newScale = Math.max(MIN_SCALE, Math.round((scaleRef.current - 0.8) * 10) / 10);
-    Animated.parallel([
-      Animated.spring(scale, {
-        toValue: newScale,
-        useNativeDriver: true,
-        bounciness: 4,
-        speed: 16,
-      }),
-      ...(newScale === 1
-        ? [
-            Animated.spring(pan, {
-              toValue: { x: 0, y: 0 },
-              useNativeDriver: true,
-              bounciness: 4,
-              speed: 16,
-            }),
-          ]
-        : []),
-    ]).start();
-  };
-
   // Double tap handler
   const handleDoubleTap = (centerX: number, centerY: number) => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
-    if (scaleRef.current > 1.2) {
+    if (scaleRef.current > 1.15) {
       // Zoom out to normal
       resetZoom(true);
     } else {
@@ -164,7 +129,10 @@ export default function ZoomableImageModal({
     }
   };
 
-  // PanResponder to handle 1-finger panning, double-tap, and 2-finger pinch
+  // PanResponder to handle natural touch gestures:
+  // 1. Pinch to zoom in/out with 2 fingers
+  // 2. Drag to pan around with 1 finger when zoomed in
+  // 3. Double-tap to quickly zoom in / zoom back out
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -202,7 +170,7 @@ export default function ZoomableImageModal({
         const touches = evt.nativeEvent.touches;
 
         if (touches.length === 2) {
-          // Pinch zooming
+          // Pinch zooming (smooth scaling with natural touch distance)
           const dx = touches[0].pageX - touches[1].pageX;
           const dy = touches[0].pageY - touches[1].pageY;
           const currentDistance = Math.hypot(dx, dy);
@@ -210,7 +178,7 @@ export default function ZoomableImageModal({
           if (initialDistanceRef.current > 0) {
             const rawScale =
               (currentDistance / initialDistanceRef.current) * initialScaleRef.current;
-            const boundedScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, rawScale));
+            const boundedScale = Math.min(MAX_SCALE + 0.3, Math.max(0.85, rawScale));
             scale.setValue(boundedScale);
           }
         } else if (touches.length === 1 && scaleRef.current > 1.05) {
@@ -229,13 +197,14 @@ export default function ZoomableImageModal({
         }
       },
       onPanResponderRelease: () => {
-        // If scale fell below 1, snap back to 1
-        if (scaleRef.current < 1) {
+        // If pinched below 1.05, snap smoothly back to normal
+        if (scaleRef.current <= 1.05) {
           resetZoom(true);
         } else if (scaleRef.current > MAX_SCALE) {
           Animated.spring(scale, {
             toValue: MAX_SCALE,
             useNativeDriver: true,
+            bounciness: 4,
           }).start();
         }
       },
@@ -269,10 +238,12 @@ export default function ZoomableImageModal({
           </View>
 
           <View style={styles.headerRightControls}>
-            {/* Live Zoom Level Indicator */}
-            <View style={styles.zoomPill}>
-              <Text style={styles.zoomPillText}>{currentZoomDisplay}</Text>
-            </View>
+            {/* Live Zoom Level Indicator (Visible when zoomed) */}
+            {isZoomed && (
+              <View style={styles.zoomPill}>
+                <Text style={styles.zoomPillText}>{currentZoomDisplay}</Text>
+              </View>
+            )}
 
             {/* Close Button */}
             <TouchableOpacity
@@ -290,7 +261,7 @@ export default function ZoomableImageModal({
           </View>
         </View>
 
-        {/* Interactive Viewport Area with Gestures */}
+        {/* Interactive Viewport Area with Pure Touch Gestures */}
         <View style={styles.viewport} {...panResponder.panHandlers}>
           <Animated.View
             style={[
@@ -315,61 +286,20 @@ export default function ZoomableImageModal({
           </Animated.View>
         </View>
 
-        {/* Bottom Floating Control Bar */}
-        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom + 12, 24) }]}>
-          <View style={styles.toolbarCard}>
-            {/* Zoom Out Button */}
-            <TouchableOpacity
-              style={[styles.toolBtn, scaleRef.current <= 1.05 && styles.toolBtnDisabled]}
-              onPress={handleZoomOut}
-              disabled={scaleRef.current <= 1.0}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons
-                name="remove"
-                size={20}
-                color={scaleRef.current <= 1.05 ? 'rgba(255,255,255,0.35)' : '#FFFFFF'}
-              />
-            </TouchableOpacity>
-
-            <View style={styles.toolDivider} />
-
-            {/* Reset 1x Button */}
-            <TouchableOpacity
-              style={styles.resetBtn}
-              onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}); } catch {}
-                resetZoom(true);
-              }}
-              activeOpacity={0.75}
-            >
-              <Ionicons name="refresh-outline" size={15} color="#10B981" />
-              <Text style={styles.resetBtnText}>1x Reset</Text>
-            </TouchableOpacity>
-
-            <View style={styles.toolDivider} />
-
-            {/* Zoom In Button */}
-            <TouchableOpacity
-              style={[styles.toolBtn, scaleRef.current >= MAX_SCALE && styles.toolBtnDisabled]}
-              onPress={handleZoomIn}
-              disabled={scaleRef.current >= MAX_SCALE}
-              activeOpacity={0.7}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Ionicons
-                name="add"
-                size={20}
-                color={scaleRef.current >= MAX_SCALE ? 'rgba(255,255,255,0.35)' : '#FFFFFF'}
-              />
-            </TouchableOpacity>
+        {/* Bottom Floating Clean Touch Hint Pill (No intrusive buttons) */}
+        <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom + 14, 24) }]}>
+          <View style={styles.gestureHintPill}>
+            <Ionicons
+              name={isZoomed ? 'move-outline' : 'finger-print-outline'}
+              size={13}
+              color="rgba(255, 255, 255, 0.75)"
+            />
+            <Text style={styles.gestureHintText}>
+              {isZoomed
+                ? `${currentZoomDisplay} • Drag to pan • Double-tap to reset`
+                : 'Pinch with two fingers or double-tap to zoom in'}
+            </Text>
           </View>
-
-          {/* Hint Label */}
-          <Text style={styles.hintText}>
-            Pinch to zoom in/out • Double-tap to focus • Drag to pan details
-          </Text>
         </View>
       </View>
     </Modal>
@@ -402,7 +332,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   headerSubtitle: {
-    color: '#A6C5B3',
+    color: 'rgba(255, 255, 255, 0.65)',
     fontSize: 12,
     marginTop: 2,
   },
@@ -412,37 +342,38 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   zoomPill: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(16, 185, 129, 0.22)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.55)',
     paddingHorizontal: 9,
     paddingVertical: 4,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
+    borderRadius: 12,
   },
   zoomPillText: {
-    color: '#10B981',
-    fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
+    color: '#34D399',
+    fontSize: 12,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.16)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   viewport: {
     flex: 1,
     width: '100%',
+    height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   imageContainer: {
     width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT * 0.72,
+    height: SCREEN_HEIGHT * 0.76,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -454,58 +385,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     zIndex: 20,
-    gap: 8,
   },
-  toolbarCard: {
+  gestureHintPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(26, 43, 33, 0.92)',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: 'rgba(45, 69, 56, 0.8)',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
     gap: 6,
-  },
-  toolBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toolBtnDisabled: {
-    opacity: 0.4,
-  },
-  toolDivider: {
-    width: 1,
-    height: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
-  },
-  resetBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
+    backgroundColor: 'rgba(26, 43, 33, 0.9)',
+    borderWidth: 1,
+    borderColor: 'rgba(45, 69, 56, 0.75)',
+    paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 100,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    gap: 5,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
-  resetBtnText: {
-    color: '#10B981',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 0.2,
-  },
-  hintText: {
-    color: 'rgba(255, 255, 255, 0.55)',
-    fontSize: 11,
-    fontWeight: '500',
-    textAlign: 'center',
+  gestureHintText: {
+    color: 'rgba(255, 255, 255, 0.85)',
+    fontSize: 11.5,
+    fontWeight: '600',
   },
 });
