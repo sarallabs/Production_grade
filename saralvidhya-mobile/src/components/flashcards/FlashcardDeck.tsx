@@ -280,40 +280,38 @@ export default function FlashcardDeck({
 
   return (
     <View style={styles.screenWrapper}>
-      {/* 3-Part Persona Switcher Bar: [ 📗 | 📚 | 🌟 ] (Logos only) */}
-      <View
-        style={[
-          styles.personaBar,
-          {
-            width: cardWidth,
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.28)' : 'rgba(255, 255, 255, 0.65)',
-            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(45, 62, 54, 0.12)',
-          },
-        ]}
-      >
+      {/* Persona Selector (3 Individual Boxes, Top & Centered matching Read Screen) */}
+      <View style={styles.personaCenterRow}>
         {PERSONA_CONFIG.map((item) => {
           const isActive = currentPersona === item.id;
           return (
             <TouchableOpacity
               key={item.id}
               style={[
-                styles.personaPill,
-                isActive && [
-                  styles.personaPillActive,
-                  {
-                    backgroundColor: isDark ? '#147A43' : '#FFFFFF',
-                    borderColor: isDark ? '#3D8E5F' : '#2D3E36',
-                  },
-                ],
+                styles.personaLogoBtn,
+                {
+                  backgroundColor: isActive
+                    ? (isDark ? '#2D2210' : '#FFFBEB')
+                    : (isDark ? '#17241D' : '#FEFEFE'),
+                  borderColor: isActive
+                    ? '#D97706'
+                    : (isDark ? '#2E4438' : '#E2E8F0'),
+                },
+                isActive && styles.personaLogoBtnActive,
               ]}
-              onPress={() => handlePersonaSelect(item.id)}
-              activeOpacity={0.8}
+              onPress={() => {
+                if (currentPersona !== item.id) {
+                  handlePersonaSelect(item.id);
+                }
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.75}
               accessibilityRole="button"
-              accessibilityLabel={item.label}
+              accessibilityLabel={`Persona: ${item.label}`}
             >
               <Image
                 source={PERSONA_ICONS[item.id]}
-                style={styles.personaBookImg}
+                style={styles.personaLogoIcon}
                 resizeMode="contain"
               />
             </TouchableOpacity>
@@ -596,35 +594,43 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 10,
   },
-  /* 3-Part Persona Bar */
-  personaBar: {
+  /* Persona Selector (Centered, 3 Individual Boxes matching Read Screen) */
+  personaCenterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    height: 44,
-    borderRadius: 22,
-    padding: 3,
-    borderWidth: 1,
-    marginBottom: 14,
+    justifyContent: 'center',
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingTop: 4,
+    paddingBottom: 4,
+    marginBottom: 16,
   },
-  personaPill: {
-    flex: 1,
-    height: 36,
-    borderRadius: 18,
+  personaLogoBtn: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  personaPillActive: {
-    borderWidth: 1,
-    elevation: 3,
+    elevation: 1,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.16,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
-  personaBookImg: {
-    width: 24,
-    height: 24,
+  personaLogoBtnActive: {
+    borderWidth: 2,
+    borderColor: '#D97706',
+    elevation: 3,
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    transform: [{ scale: 1.05 }],
+  },
+  personaLogoIcon: {
+    width: 32,
+    height: 32,
   },
   imageLoadingOverlay: {
     ...StyleSheet.absoluteFill,
