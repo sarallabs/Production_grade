@@ -6,7 +6,18 @@ export interface StudySection {
   title: string;
   shortTitle: string;
   content: string;
+  readTimeMinutes: number;
   quickChecks: QuickCheckQuestion[];
+}
+
+function estimateReadingTime(text: string): number {
+  const words = text
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#*`_\[\]()!]/g, ' ')
+    .trim()
+    .split(/\s+/).length;
+  const minutes = Math.ceil(words / 160);
+  return Math.max(1, Math.min(12, minutes));
 }
 
 function cleanHeadingText(text: string): string {
@@ -69,6 +80,7 @@ export function parseMarkdownSections(
         title: 'Chapter Study Notes',
         shortTitle: 'All Topics',
         content: rawMarkdown,
+        readTimeMinutes: estimateReadingTime(rawMarkdown),
         quickChecks: quickChecks.length > 0 ? quickChecks : [],
       },
     ];
@@ -116,6 +128,7 @@ export function parseMarkdownSections(
       title: cleanTitle,
       shortTitle: shortTitle || `Section ${secNum}`,
       content: sectionBody,
+      readTimeMinutes: estimateReadingTime(sectionBody),
       quickChecks: matchedQuestions,
     });
   }

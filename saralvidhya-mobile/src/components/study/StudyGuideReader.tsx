@@ -396,6 +396,8 @@ export default function StudyGuideReader({
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
   );
 
+  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
+
   const handleScrollToSection = (targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < sections.length) {
       try {
@@ -405,6 +407,19 @@ export default function StudyGuideReader({
       const targetY = sectionLayouts[targetIndex];
       if (typeof targetY === 'number') {
         scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 15), animated: true });
+      }
+    }
+  };
+
+  const handleScrollToQuickCheck = (secIdx: number) => {
+    if (secIdx >= 0 && secIdx < sections.length) {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch {}
+      setActiveSectionIndex(secIdx);
+      const targetY = quickCheckLayouts[secIdx] ?? sectionLayouts[secIdx];
+      if (typeof targetY === 'number') {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 40), animated: true });
       }
     }
   };
@@ -731,7 +746,7 @@ export default function StudyGuideReader({
                       </Text>
                     </View>
 
-                    <View
+                    <TouchableOpacity
                       style={[
                         styles.qcStatusBadge,
                         {
@@ -740,6 +755,8 @@ export default function StudyGuideReader({
                             : (isDark ? '#202E26' : '#F1F5F9'),
                         },
                       ]}
+                      onPress={() => handleScrollToQuickCheck(sIdx)}
+                      activeOpacity={0.7}
                     >
                       <Ionicons
                         name={isQcDone ? 'checkmark-circle' : 'flash'}
@@ -754,7 +771,7 @@ export default function StudyGuideReader({
                       >
                         {isQcDone ? 'Quick Check Done' : 'Quick Check'}
                       </Text>
-                    </View>
+                    </TouchableOpacity>
                   </TouchableOpacity>
                 );
               })}
@@ -825,6 +842,55 @@ export default function StudyGuideReader({
                 </View>
               )}
 
+              {/* Section Header Banner with Direct Quick Check Button */}
+              <View style={styles.sectionHeaderBanner}>
+                <View style={styles.sectionMetaTop}>
+                  <Text style={[styles.sectionOrderLabel, { color: emeraldPrimary }]}>
+                    SECTION {sec.sectionNumber} OF {sections.length}
+                  </Text>
+                </View>
+                <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
+                  {sec.title}
+                </Text>
+                <View style={styles.sectionMetaRow}>
+                  <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
+                    <Ionicons name="time-outline" size={12} color={subtextColor} />
+                    <Text style={[styles.readTimeText, { color: textColor }]}>
+                      {sec.readTimeMinutes} min read
+                    </Text>
+                  </View>
+
+                  {sec.quickChecks && sec.quickChecks.length > 0 && (
+                    <TouchableOpacity
+                      style={[
+                        styles.skipToQcBtn,
+                        {
+                          backgroundColor: completedQuickChecks.has(sec.sectionNumber)
+                            ? (isDark ? '#143322' : '#DCFCE7')
+                            : (isDark ? '#1F3427' : '#F0FDF4'),
+                          borderColor: completedQuickChecks.has(sec.sectionNumber)
+                            ? '#16A34A'
+                            : (isDark ? '#2E4C3A' : '#BBF7D0'),
+                        },
+                      ]}
+                      onPress={() => handleScrollToQuickCheck(idx)}
+                      activeOpacity={0.75}
+                    >
+                      <Ionicons
+                        name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle' : 'flash'}
+                        size={12}
+                        color="#16A34A"
+                      />
+                      <Text style={styles.skipToQcText}>
+                        {completedQuickChecks.has(sec.sectionNumber)
+                          ? '✓ Quick Check Answered'
+                          : `⚡ ${sec.quickChecks.length} Quick Check${sec.quickChecks.length > 1 ? 's' : ''}`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+
               {/* Section Markdown Reading Content */}
               <MarkdownReader
                 title={sec.title}
@@ -834,21 +900,29 @@ export default function StudyGuideReader({
 
               {/* Formative Quick Check Card at the end of this Section */}
               {sec.quickChecks && sec.quickChecks.length > 0 && (
-                <QuickCheckCard
-                  questions={sec.quickChecks}
-                  sectionNumber={sec.sectionNumber}
-                  totalSections={sections.length}
-                  sectionTitle={sec.shortTitle}
-                  nextSectionTitle={sections[idx + 1]?.shortTitle}
-                  onNextSection={
-                    idx + 1 < sections.length
-                      ? () => handleScrollToSection(idx + 1)
-                      : undefined
-                  }
-                  onAnswerSubmitted={(isCorrect) => {
-                    handleQcAnswer(sec.sectionNumber, isCorrect);
+                <View
+                  onLayout={(e) => {
+                    const blockY = sectionLayouts[idx] || 0;
+                    const cardRelativeY = e.nativeEvent.layout.y;
+                    setQuickCheckLayouts((prev) => ({ ...prev, [idx]: blockY + cardRelativeY }));
                   }}
-                />
+                >
+                  <QuickCheckCard
+                    questions={sec.quickChecks}
+                    sectionNumber={sec.sectionNumber}
+                    totalSections={sections.length}
+                    sectionTitle={sec.shortTitle}
+                    nextSectionTitle={sections[idx + 1]?.shortTitle}
+                    onNextSection={
+                      idx + 1 < sections.length
+                        ? () => handleScrollToSection(idx + 1)
+                        : undefined
+                    }
+                    onAnswerSubmitted={(isCorrect) => {
+                      handleQcAnswer(sec.sectionNumber, isCorrect);
+                    }}
+                  />
+                </View>
               )}
             </View>
           ))}
@@ -1578,5 +1652,62 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     marginBottom: 6,
+  },
+  sectionHeaderBanner: {
+    paddingTop: 16,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.15)',
+    marginBottom: 12,
+    gap: 6,
+  },
+  sectionMetaTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionOrderLabel: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  sectionHeadingTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    lineHeight: 26,
+    marginTop: 2,
+  },
+  sectionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    flexWrap: 'wrap',
+  },
+  readTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    gap: 4,
+  },
+  readTimeText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+  },
+  skipToQcBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 6,
+    borderWidth: 1,
+    gap: 5,
+  },
+  skipToQcText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#16A34A',
   },
 });

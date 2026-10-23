@@ -190,6 +190,8 @@ export default function StudyGuideReaderTablet({
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
   );
 
+  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
+
   const handleScrollToSection = (targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < sections.length) {
       try {
@@ -199,6 +201,19 @@ export default function StudyGuideReaderTablet({
       const targetY = sectionLayouts[targetIndex];
       if (typeof targetY === 'number') {
         scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 20), animated: true });
+      }
+    }
+  };
+
+  const handleScrollToQuickCheck = (secIdx: number) => {
+    if (secIdx >= 0 && secIdx < sections.length) {
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch {}
+      setActiveSectionIndex(secIdx);
+      const targetY = quickCheckLayouts[secIdx] ?? sectionLayouts[secIdx];
+      if (typeof targetY === 'number') {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 40), animated: true });
       }
     }
   };
@@ -551,7 +566,7 @@ export default function StudyGuideReaderTablet({
                         </Text>
                       </View>
 
-                      <View
+                      <TouchableOpacity
                         style={[
                           styles.qcStatusBadge,
                           {
@@ -560,6 +575,8 @@ export default function StudyGuideReaderTablet({
                               : (isDark ? '#202E26' : '#F1F5F9'),
                           },
                         ]}
+                        onPress={() => handleScrollToQuickCheck(sIdx)}
+                        activeOpacity={0.7}
                       >
                         <Ionicons
                           name={isQcDone ? 'checkmark-circle' : 'flash'}
@@ -574,7 +591,7 @@ export default function StudyGuideReaderTablet({
                         >
                           {isQcDone ? 'Quick Check Done' : 'Quick Check'}
                         </Text>
-                      </View>
+                      </TouchableOpacity>
                     </TouchableOpacity>
                   );
                 })}
@@ -601,6 +618,55 @@ export default function StudyGuideReaderTablet({
                 }}
                 style={styles.sectionBlock}
               >
+                {/* Tablet Section Header Banner with Quick Check shortcut button */}
+                <View style={styles.sectionHeaderBanner}>
+                  <View style={styles.sectionMetaTop}>
+                    <Text style={[styles.sectionOrderLabel, { color: pillOutlineColor }]}>
+                      SECTION {sec.sectionNumber} OF {sections.length}
+                    </Text>
+                  </View>
+                  <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
+                    {sec.title}
+                  </Text>
+                  <View style={styles.sectionMetaRow}>
+                    <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
+                      <Ionicons name="time-outline" size={13} color={breadcrumbColor} />
+                      <Text style={[styles.readTimeText, { color: textColor }]}>
+                        {sec.readTimeMinutes} min read
+                      </Text>
+                    </View>
+
+                    {sec.quickChecks && sec.quickChecks.length > 0 && (
+                      <TouchableOpacity
+                        style={[
+                          styles.skipToQcBtn,
+                          {
+                            backgroundColor: completedQuickChecks.has(sec.sectionNumber)
+                              ? (isDark ? '#143322' : '#DCFCE7')
+                              : (isDark ? '#1F3427' : '#F0FDF4'),
+                            borderColor: completedQuickChecks.has(sec.sectionNumber)
+                              ? '#16A34A'
+                              : (isDark ? '#2E4C3A' : '#BBF7D0'),
+                          },
+                        ]}
+                        onPress={() => handleScrollToQuickCheck(idx)}
+                        activeOpacity={0.75}
+                      >
+                        <Ionicons
+                          name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle' : 'flash'}
+                          size={13}
+                          color="#16A34A"
+                        />
+                        <Text style={styles.skipToQcText}>
+                          {completedQuickChecks.has(sec.sectionNumber)
+                            ? '✓ Quick Check Answered'
+                            : `⚡ ${sec.quickChecks.length} Quick Check${sec.quickChecks.length > 1 ? 's' : ''}`}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+
                 <MarkdownReader
                   title={sec.title}
                   chapterNumber={chapterNumber}
@@ -608,21 +674,29 @@ export default function StudyGuideReaderTablet({
                 />
 
                 {sec.quickChecks && sec.quickChecks.length > 0 && (
-                  <QuickCheckCard
-                    questions={sec.quickChecks}
-                    sectionNumber={sec.sectionNumber}
-                    totalSections={sections.length}
-                    sectionTitle={sec.shortTitle}
-                    nextSectionTitle={sections[idx + 1]?.shortTitle}
-                    onNextSection={
-                      idx + 1 < sections.length
-                        ? () => handleScrollToSection(idx + 1)
-                        : undefined
-                    }
-                    onAnswerSubmitted={(isCorrect) => {
-                      handleQcAnswer(sec.sectionNumber, isCorrect);
+                  <View
+                    onLayout={(e) => {
+                      const blockY = sectionLayouts[idx] || 0;
+                      const cardRelativeY = e.nativeEvent.layout.y;
+                      setQuickCheckLayouts((prev) => ({ ...prev, [idx]: blockY + cardRelativeY }));
                     }}
-                  />
+                  >
+                    <QuickCheckCard
+                      questions={sec.quickChecks}
+                      sectionNumber={sec.sectionNumber}
+                      totalSections={sections.length}
+                      sectionTitle={sec.shortTitle}
+                      nextSectionTitle={sections[idx + 1]?.shortTitle}
+                      onNextSection={
+                        idx + 1 < sections.length
+                          ? () => handleScrollToSection(idx + 1)
+                          : undefined
+                      }
+                      onAnswerSubmitted={(isCorrect) => {
+                        handleQcAnswer(sec.sectionNumber, isCorrect);
+                      }}
+                    />
+                  </View>
                 )}
               </View>
             ))}
@@ -909,5 +983,62 @@ const styles = StyleSheet.create({
   },
   sectionBlock: {
     marginBottom: 16,
+  },
+  sectionHeaderBanner: {
+    paddingTop: 18,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(150, 150, 150, 0.15)',
+    marginBottom: 14,
+    gap: 6,
+  },
+  sectionMetaTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sectionOrderLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+  sectionHeadingTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    lineHeight: 28,
+    marginTop: 2,
+  },
+  sectionMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+    flexWrap: 'wrap',
+  },
+  readTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 7,
+    gap: 5,
+  },
+  readTimeText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  skipToQcBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 11,
+    borderRadius: 7,
+    borderWidth: 1,
+    gap: 6,
+  },
+  skipToQcText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#16A34A',
   },
 });
