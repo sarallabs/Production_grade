@@ -12,11 +12,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
+import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import { SAMPLE_PODCASTS, PodcastParagraph } from '@/data/samplePodcasts';
+import { getPodcastAudioUrl } from '@/services/podcastAudioService';
 import ListenScreenTablet from './ListenScreen.tablet';
 
 const { width } = Dimensions.get('window');
@@ -301,15 +303,14 @@ export default function ListenScreen({
     return formatSeconds(totalDurationSec);
   }, [totalDurationSec]);
 
-  const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const wordTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioPlayerRef = useRef<AudioPlayer | null>(null);
+  const currentUrlRef = useRef<string>('');
   const isPlayingRef = useRef<boolean>(isPlaying);
   const speedRef = useRef<number>(SPEED_OPTIONS[speedIndex]);
   const tokenizedRef = useRef<TokenizedParagraphItem[]>(tokenizedParagraphs);
-  const startTimeRef = useRef<number>(0);
-  const lastBoundaryTimeRef = useRef<number>(0);
-  const hasNativeBoundaryRef = useRef<boolean>(false);
-  const utteranceIdRef = useRef<number>(0);
+  const modeRef = useRef<ListenMode>(mode);
+  const microcastIdRef = useRef<number>(selectedMicrocastId);
+  const totalDurationRef = useRef<number>(totalDurationSec);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -324,287 +325,181 @@ export default function ListenScreen({
   }, [speedIndex]);
 
   useEffect(() => {
+    modeRef.current = mode;
+  }, [mode]);
+
+  useEffect(() => {
+    microcastIdRef.current = selectedMicrocastId;
+  }, [selectedMicrocastId]);
+
+  useEffect(() => {
+    totalDurationRef.current = totalDurationSec;
+  }, [totalDurationSec]);
+
+  // Configure audio session on mount
+  useEffect(() => {
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+    }).catch(() => {});
+
     return () => {
-      try {
-        Speech.stop().catch(() => {});
-      } catch {}
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      if (audioPlayerRef.current) {
+        try {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current.remove();
+        } catch {}
+        audioPlayerRef.current = null;
+        currentUrlRef.current = '';
+      }
     };
   }, []);
 
-  // Reset playback if chapter changes
-  useEffect(() => {
+  // Sync active paragraph and word with current playback second
+  const syncTranscriptProgress = (timeSec: number) => {
+    const paras = tokenizedRef.current;
+    if (!paras || paras.length === 0) return;
+
+    let pIdx = 0;
+    for (let i = 0; i < paras.length; i++) {
+      if (paras[i].startSec <= timeSec) {
+        pIdx = i;
+      } else {
+        break;
+      }
+    }
+    setActiveParagraphIndex(pIdx);
+
+    const para = paras[pIdx];
+    if (para && para.words.length > 0) {
+      const nextPara = paras[pIdx + 1];
+      const start = para.startSec;
+      const end = nextPara ? nextPara.startSec : (totalDurationRef.current || start + 30);
+      const span = Math.max(1, end - start);
+      const elapsed = Math.max(0, timeSec - start);
+      const fraction = Math.min(0.99, elapsed / span);
+      const wIdx = Math.min(para.words.length - 1, Math.floor(fraction * para.words.length));
+      setActiveWordIndex(wIdx);
+    }
+  };
+
+  /**
+   * Loads and attaches listeners to an AudioPlayer from the cloud database audio URL.
+   */
+  const loadAndPlayTrack = (
+    url: string,
+    autoPlay: boolean = false,
+    startAtSec: number = 0
+  ) => {
+    // If the player already holds this exact audio URL:
+    if (audioPlayerRef.current && currentUrlRef.current === url) {
+      if (startAtSec > 0) {
+        audioPlayerRef.current.seekTo(startAtSec).catch(() => {});
+      }
+      if (autoPlay) {
+        audioPlayerRef.current.play();
+        setIsPlaying(true);
+      }
+      return;
+    }
+
+    // Clean up existing player
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+      } catch {}
+      audioPlayerRef.current = null;
+    }
+
+    currentUrlRef.current = url;
+
     try {
-      Speech.stop().catch(() => {});
-    } catch {}
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      const player = createAudioPlayer(url, { updateInterval: 200 });
+      audioPlayerRef.current = player;
+      player.setPlaybackRate(speedRef.current);
+
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (!status) return;
+
+        if (typeof status.playing === 'boolean') {
+          setIsPlaying(status.playing);
+        }
+
+        if (typeof status.currentTime === 'number') {
+          const sec = Math.floor(status.currentTime);
+          setCurrentSec(sec);
+          syncTranscriptProgress(status.currentTime);
+        }
+
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          setCurrentSec(0);
+          setActiveParagraphIndex(0);
+          setActiveWordIndex(-1);
+        }
+      });
+
+      if (startAtSec > 0) {
+        player.seekTo(startAtSec).catch(() => {});
+      }
+
+      if (autoPlay) {
+        player.play();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.warn('Failed to load cloud podcast audio:', err);
+    }
+  };
+
+  // Reset player whenever chapter changes
+  useEffect(() => {
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+      } catch {}
+      audioPlayerRef.current = null;
+      currentUrlRef.current = '';
+    }
     setIsPlaying(false);
-    isPlayingRef.current = false;
     setCurrentSec(0);
     setActiveParagraphIndex(0);
     setActiveWordIndex(-1);
   }, [chapterNumber]);
 
-  const startTicker = () => {
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    tickerRef.current = setInterval(() => {
-      setCurrentSec((prev) => {
-        const next = prev + 1;
-        if (next >= totalDurationSec) {
-          setIsPlaying(false);
-          isPlayingRef.current = false;
-          Speech.stop();
-          if (tickerRef.current) clearInterval(tickerRef.current);
-          if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-          return 0;
-        }
-        return next;
-      });
-    }, 1000 / speedRef.current);
-  };
-
-  const speakFromWord = (paraIdx: number, wordIdx: number = 0) => {
-    const paras = tokenizedRef.current;
-    if (paraIdx >= paras.length) {
-      setIsPlaying(false);
-      isPlayingRef.current = false;
-      setActiveParagraphIndex(0);
-      setActiveWordIndex(-1);
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-      return;
-    }
-
-    const currentUtteranceId = ++utteranceIdRef.current;
-    hasNativeBoundaryRef.current = false;
-
-    setActiveParagraphIndex(paraIdx);
-    setActiveWordIndex(wordIdx);
-    setIsPlaying(true);
-    isPlayingRef.current = true;
-
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-
-    const paraItem = paras[paraIdx];
-    if (wordIdx === 0 && paraItem) {
-      setCurrentSec(paraItem.startSec);
-    }
-    const paraWords = paraItem.words;
-    const wordsToSpeak = paraWords.slice(wordIdx);
-    const textToSpeak = wordsToSpeak.map((w) => w.raw).join(' ');
-
-    Speech.stop();
-
-    // Precompute character boundary offsets for wordsToSpeak:
-    const wordCharOffsets: number[] = [];
-    let accChar = 0;
-    for (let i = 0; i < wordsToSpeak.length; i++) {
-      wordCharOffsets.push(accChar);
-      accChar += wordsToSpeak[i].raw.length + 1;
-    }
-
-    // Calculate target paragraph duration if known from timestamps:
-    const nextParaItem = paras[paraIdx + 1];
-    const targetParaDurationSec =
-      (nextParaItem ? nextParaItem.startSec : totalDurationSec) - paraItem.startSec;
-
-    // Precompute raw word timing offsets:
-    const rawDurations = wordsToSpeak.map((w) => getWordDurationMs(w.raw, 1.0));
-    const rawTotalMs = rawDurations.reduce((sum, d) => sum + d, 0);
-
-    // If we have a reliable target duration for the full paragraph (> 0 and < 300s):
-    let scale = 1.0;
-    if (targetParaDurationSec > 0 && targetParaDurationSec < 300 && rawTotalMs > 0) {
-      const allParaDurations = paraWords.map((w) => getWordDurationMs(w.raw, 1.0));
-      const totalAllMs = allParaDurations.reduce((sum, d) => sum + d, 0);
-      const remainingFraction = totalAllMs > 0 ? rawTotalMs / totalAllMs : 1.0;
-      const expectedRemainingMs = targetParaDurationSec * 1000 * remainingFraction;
-      const ratio = expectedRemainingMs / rawTotalMs;
-      // Clamp scale ratio between 0.80 and 1.20 to prevent any distortion
-      scale = Math.max(0.80, Math.min(1.20, ratio));
-    }
-
-    const wordStartTimesMs: number[] = [];
-    let accMs = 0;
-    for (let i = 0; i < wordsToSpeak.length; i++) {
-      wordStartTimesMs.push(accMs);
-      const scaledDuration = Math.round((rawDurations[i] * scale) / speedRef.current);
-      accMs += Math.max(80, scaledDuration);
-    }
-
-    let isAudioStarted = false;
-    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
-    startTimeRef.current = 0;
-
-    wordTickerRef.current = setInterval(() => {
-      if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) {
-        if (wordTickerRef.current) {
-          clearInterval(wordTickerRef.current);
-          wordTickerRef.current = null;
-        }
-        return;
-      }
-
-      // If native boundaries are active, do NOT run the fallback ticker
-      if (hasNativeBoundaryRef.current) {
-        if (wordTickerRef.current) {
-          clearInterval(wordTickerRef.current);
-          wordTickerRef.current = null;
-        }
-        return;
-      }
-
-      // Wait until audio has actually started emitting sound
-      if (!isAudioStarted || !startTimeRef.current) {
-        return;
-      }
-
-      const elapsedMs = Date.now() - startTimeRef.current;
-
-      let foundIdx = 0;
-      for (let i = 0; i < wordStartTimesMs.length; i++) {
-        if (elapsedMs >= wordStartTimesMs[i]) {
-          foundIdx = i;
-        } else {
-          break;
-        }
-      }
-
-      const nextWordIdx = wordIdx + foundIdx;
-      if (nextWordIdx < paraWords.length) {
-        // MONOTONIC: strictly forward only, never bounces backward!
-        setActiveWordIndex((prev) => (nextWordIdx > prev ? nextWordIdx : prev));
-      }
-    }, 30);
-
-    Speech.speak(textToSpeak, {
-      rate: speedRef.current,
-      pitch: 1.0,
-      onStart: () => {
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
-        isAudioStarted = true;
-        startTimeRef.current = Date.now();
-        lastBoundaryTimeRef.current = Date.now();
-      },
-      onBoundary: (ev: any) => {
-        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
-        const charIdx = ev && typeof ev.charIndex === 'number' ? ev.charIndex : -1;
-        if (charIdx >= 0) {
-          hasNativeBoundaryRef.current = true;
-          // Immediately destroy fallback ticker so it NEVER fights with native boundary events!
-          if (wordTickerRef.current) {
-            clearInterval(wordTickerRef.current);
-            wordTickerRef.current = null;
-          }
-
-          let matchedOffset = -1;
-          for (let i = 0; i < wordCharOffsets.length; i++) {
-            const nextOffset = i + 1 < wordCharOffsets.length ? wordCharOffsets[i + 1] : Infinity;
-            if (charIdx >= wordCharOffsets[i] && charIdx < nextOffset) {
-              matchedOffset = i;
-              break;
-            }
-          }
-
-          if (matchedOffset >= 0) {
-            const nextWordIdx = wordIdx + matchedOffset;
-            // MONOTONIC: Highlight strictly moves forward, preventing any jitter or bouncing backward!
-            setActiveWordIndex((prev) => (nextWordIdx > prev ? nextWordIdx : prev));
-          }
-        }
-      },
-      onDone: () => {
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-        if (!isPlayingRef.current || utteranceIdRef.current !== currentUtteranceId) return;
-        if (wordTickerRef.current) {
-          clearInterval(wordTickerRef.current);
-          wordTickerRef.current = null;
-        }
-
-        // Highlight the final word of the paragraph briefly
-        if (paraWords.length > 0) {
-          setActiveWordIndex(paraWords.length - 1);
-        }
-
-        if (paraIdx + 1 < paras.length) {
-          setTimeout(() => {
-            if (isPlayingRef.current && utteranceIdRef.current === currentUtteranceId) {
-              speakFromWord(paraIdx + 1, 0);
-            }
-          }, 120);
-        } else {
-          setIsPlaying(false);
-          isPlayingRef.current = false;
-          setActiveParagraphIndex(0);
-          setActiveWordIndex(-1);
-          setCurrentSec(totalDurationSec);
-          if (tickerRef.current) clearInterval(tickerRef.current);
-        }
-      },
-      onError: () => {
-        if (fallbackTimer) clearTimeout(fallbackTimer);
-        if (utteranceIdRef.current !== currentUtteranceId) return;
-        setIsPlaying(false);
-        isPlayingRef.current = false;
-        if (tickerRef.current) clearInterval(tickerRef.current);
-        if (wordTickerRef.current) {
-          clearInterval(wordTickerRef.current);
-          wordTickerRef.current = null;
-        }
-      },
-    });
-
-    // Fallback: If onStart does not trigger within 200ms (e.g. web or certain TTS engines), start ticker
-    fallbackTimer = setTimeout(() => {
-      if (!isAudioStarted && isPlayingRef.current && utteranceIdRef.current === currentUtteranceId) {
-        isAudioStarted = true;
-        startTimeRef.current = Date.now();
-        lastBoundaryTimeRef.current = Date.now();
-      }
-    }, 200);
-  };
-
+  /**
+   * Card tap handler for Microcasts view:
+   * Plays inline directly on the selected microcast card using BD cloud voice.
+   */
   const handleSelectAndPlayMicrocast = (epId: number) => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch {}
 
-    // If the tapped card is ALREADY the selected microcast:
+    const url = getPodcastAudioUrl(chapterNumber, 'microcasts', epId);
+
+    // If tapping the already selected microcast card:
     if (selectedMicrocastId === epId) {
-      if (isPlaying) {
-        if (tickerRef.current) clearInterval(tickerRef.current);
-        if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-        Speech.stop();
-        setIsPlaying(false);
-        isPlayingRef.current = false;
-      } else {
-        const pIdx =
-          activeParagraphIndex < tokenizedParagraphs.length ? activeParagraphIndex : 0;
-        const wIdx =
-          activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.words.length || 0)
-            ? activeWordIndex
-            : 0;
-        speakFromWord(pIdx, wIdx);
-        startTicker();
+      if (audioPlayerRef.current && currentUrlRef.current === url) {
+        if (isPlaying) {
+          audioPlayerRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          audioPlayerRef.current.play();
+          setIsPlaying(true);
+        }
+        return;
       }
-      return;
     }
 
-    // A DIFFERENT microcast card was tapped:
-    // 1. Immediately halt current audio & tickers
-    Speech.stop();
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-    setIsPlaying(false);
-    isPlayingRef.current = false;
+    // A different microcast card was tapped:
+    setSelectedMicrocastId(epId);
     setCurrentSec(0);
     setActiveParagraphIndex(0);
     setActiveWordIndex(-1);
 
-    // 2. Resolve the new microcast's paragraphs immediately
     const targetMicro =
       currentBundle.microcasts.find((m) => m.id === epId) || currentBundle.microcasts[0];
     const targetTokenized: TokenizedParagraphItem[] = (targetMicro?.paragraphs || []).map((p) => ({
@@ -612,25 +507,28 @@ export default function ListenScreen({
       startSec: p.startSec,
       words: tokenizeParagraph(p.text),
     }));
-
     tokenizedRef.current = targetTokenized;
-    setSelectedMicrocastId(epId);
 
-    // 3. Start playback immediately on the new card!
-    setTimeout(() => {
-      speakFromWord(0, 0);
-      startTicker();
-    }, 60);
+    // Stream and play the cloud audio immediately on the card
+    loadAndPlayTrack(url, true, 0);
   };
 
   const handleSelectMode = (newMode: ListenMode) => {
     if (newMode === mode) return;
-    Haptics.selectionAsync();
-    Speech.stop();
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+    try {
+      Haptics.selectionAsync().catch(() => {});
+    } catch {}
+
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+      } catch {}
+      audioPlayerRef.current = null;
+      currentUrlRef.current = '';
+    }
+
     setIsPlaying(false);
-    isPlayingRef.current = false;
     setCurrentSec(0);
     setActiveParagraphIndex(0);
     setActiveWordIndex(-1);
@@ -638,36 +536,55 @@ export default function ListenScreen({
   };
 
   const handleTogglePlay = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    } catch {}
+
+    const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+
+    if (!audioPlayerRef.current || currentUrlRef.current !== url) {
+      loadAndPlayTrack(url, true, currentSec);
+      return;
+    }
+
     if (isPlaying) {
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-      Speech.stop();
+      audioPlayerRef.current.pause();
       setIsPlaying(false);
-      isPlayingRef.current = false;
     } else {
-      const pIdx =
-        activeParagraphIndex < tokenizedParagraphs.length ? activeParagraphIndex : 0;
-      const wIdx =
-        activeWordIndex >= 0 && activeWordIndex < (tokenizedParagraphs[pIdx]?.words.length || 0)
-          ? activeWordIndex
-          : 0;
-      speakFromWord(pIdx, wIdx);
-      startTicker();
+      audioPlayerRef.current.play();
+      setIsPlaying(true);
     }
   };
 
   const handleSeekToParagraph = (pIdx: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+
     const targetPara = tokenizedParagraphs[pIdx];
     if (!targetPara) return;
-    setCurrentSec(targetPara.startSec);
-    speakFromWord(pIdx, 0);
-    startTicker();
+    const targetSec = targetPara.startSec;
+    setCurrentSec(targetSec);
+    setActiveParagraphIndex(pIdx);
+    setActiveWordIndex(0);
+
+    const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+    if (audioPlayerRef.current && currentUrlRef.current === url) {
+      audioPlayerRef.current.seekTo(targetSec).catch(() => {});
+      if (!isPlaying) {
+        audioPlayerRef.current.play();
+        setIsPlaying(true);
+      }
+    } else {
+      loadAndPlayTrack(url, true, targetSec);
+    }
   };
 
   const handleWordPress = (pIdx: number, w: TokenizedWord) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+
     if (w.isGlossary && w.glossaryKey) {
       setActiveTooltip({
         term: w.glossaryKey,
@@ -685,49 +602,50 @@ export default function ListenScreen({
       Math.floor(paraStartSec + wordProgress * paraDuration)
     );
     setCurrentSec(targetSec);
+    setActiveParagraphIndex(pIdx);
+    setActiveWordIndex(w.index);
 
-    speakFromWord(pIdx, w.index);
-    startTicker();
+    const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+    if (audioPlayerRef.current && currentUrlRef.current === url) {
+      audioPlayerRef.current.seekTo(targetSec).catch(() => {});
+      if (!isPlaying) {
+        audioPlayerRef.current.play();
+        setIsPlaying(true);
+      }
+    } else {
+      loadAndPlayTrack(url, true, targetSec);
+    }
   };
 
   const handleSkip = (deltaSeconds: number) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+
     const newSec = Math.max(0, Math.min(totalDurationSec, currentSec + deltaSeconds));
     setCurrentSec(newSec);
+    syncTranscriptProgress(newSec);
 
-    let targetPIdx = 0;
-    for (let i = 0; i < tokenizedParagraphs.length; i++) {
-      if (tokenizedParagraphs[i].startSec <= newSec) {
-        targetPIdx = i;
-      } else {
-        break;
-      }
-    }
-
-    const currentParaStart = tokenizedParagraphs[targetPIdx]?.startSec || 0;
-    const nextParaStart = tokenizedParagraphs[targetPIdx + 1]?.startSec || totalDurationSec;
-    const paraDuration = Math.max(1, nextParaStart - currentParaStart);
-    const paraWordCount = tokenizedParagraphs[targetPIdx]?.words.length || 1;
-    const progressInPara = Math.max(0, Math.min(0.95, (newSec - currentParaStart) / paraDuration));
-    const targetWIdx = Math.floor(progressInPara * paraWordCount);
-
-    if (isPlaying) {
-      speakFromWord(targetPIdx, targetWIdx);
-      startTicker();
+    const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+    if (audioPlayerRef.current && currentUrlRef.current === url) {
+      audioPlayerRef.current.seekTo(newSec).catch(() => {});
     } else {
-      setActiveParagraphIndex(targetPIdx);
-      setActiveWordIndex(targetWIdx);
+      loadAndPlayTrack(url, isPlaying, newSec);
     }
   };
 
   const handleCycleSpeed = () => {
-    Haptics.selectionAsync();
+    try {
+      Haptics.selectionAsync().catch(() => {});
+    } catch {}
+
     const nextIdx = (speedIndex + 1) % SPEED_OPTIONS.length;
     setSpeedIndex(nextIdx);
-    speedRef.current = SPEED_OPTIONS[nextIdx];
-    if (isPlaying) {
-      speakFromWord(activeParagraphIndex, activeWordIndex >= 0 ? activeWordIndex : 0);
-      startTicker();
+    const newRate = SPEED_OPTIONS[nextIdx];
+    speedRef.current = newRate;
+
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.setPlaybackRate(newRate);
     }
   };
 

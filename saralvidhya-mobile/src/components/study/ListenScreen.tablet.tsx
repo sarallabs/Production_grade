@@ -12,9 +12,11 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as Speech from 'expo-speech';
+import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { SAMPLE_PODCASTS, MicrocastItemData, ChapterPodcastBundle } from '@/data/samplePodcasts';
+import { getPodcastAudioUrl } from '@/services/podcastAudioService';
 import {
   fetchPodcastMetadata,
   fetchMicrocastTranscript,
@@ -113,7 +115,9 @@ export default function ListenScreenTablet({
   const [cloudTranscript, setCloudTranscript] = useState<string | null>(null);
   const [isCloudLoading, setIsCloudLoading] = useState<boolean>(false);
 
-  // Playback timers
+  // Playback audio player ref
+  const audioPlayerRef = useRef<AudioPlayer | null>(null);
+  const currentUrlRef = useRef<string>('');
   const tickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wordTickerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -239,26 +243,37 @@ export default function ListenScreenTablet({
 
   // Stop audio on unmount
   useEffect(() => {
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+    }).catch(() => {});
+
     return () => {
-      try {
-        Speech.stop().catch(() => {});
-      } catch {}
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+      if (audioPlayerRef.current) {
+        try {
+          audioPlayerRef.current.pause();
+          audioPlayerRef.current.remove();
+        } catch {}
+        audioPlayerRef.current = null;
+        currentUrlRef.current = '';
+      }
     };
   }, []);
 
   // When track or mode changes, reset playback
   useEffect(() => {
-    try {
-      Speech.stop().catch(() => {});
-    } catch {}
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+      } catch {}
+      audioPlayerRef.current = null;
+      currentUrlRef.current = '';
+    }
     setIsPlaying(false);
     setCurrentSec(0);
     setActiveWordIndex(-1);
-  }, [mode, selectedMicrocastId]);
+  }, [mode, selectedMicrocastId, chapterNumber]);
 
   // Default transcript text based on mode (matches reference PNG)
   const defaultTranscript = useMemo(() => {
@@ -281,64 +296,90 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
 
   const rawTranscript = cloudTranscript || defaultTranscript;
 
+  const loadAndPlayTrack = (url: string, autoPlay: boolean = false, startAtSec: number = 0) => {
+    if (audioPlayerRef.current && currentUrlRef.current === url) {
+      if (startAtSec > 0) {
+        audioPlayerRef.current.seekTo(startAtSec).catch(() => {});
+      }
+      if (autoPlay) {
+        audioPlayerRef.current.play();
+        setIsPlaying(true);
+      }
+      return;
+    }
+
+    if (audioPlayerRef.current) {
+      try {
+        audioPlayerRef.current.pause();
+        audioPlayerRef.current.remove();
+      } catch {}
+      audioPlayerRef.current = null;
+    }
+
+    currentUrlRef.current = url;
+
+    try {
+      const player = createAudioPlayer(url, { updateInterval: 200 });
+      audioPlayerRef.current = player;
+      player.setPlaybackRate(currentSpeed);
+
+      player.addListener('playbackStatusUpdate', (status) => {
+        if (!status) return;
+
+        if (typeof status.playing === 'boolean') {
+          setIsPlaying(status.playing);
+        }
+
+        if (typeof status.currentTime === 'number') {
+          const sec = Math.floor(status.currentTime);
+          setCurrentSec(sec);
+
+          const words = rawTranscript.split(/\s+/).filter(Boolean);
+          if (words.length > 0 && totalDurationSec > 0) {
+            const fraction = Math.min(0.99, status.currentTime / totalDurationSec);
+            setActiveWordIndex(Math.floor(fraction * words.length));
+          }
+        }
+
+        if (status.didJustFinish) {
+          setIsPlaying(false);
+          setCurrentSec(0);
+          setActiveWordIndex(-1);
+        }
+      });
+
+      if (startAtSec > 0) {
+        player.seekTo(startAtSec).catch(() => {});
+      }
+
+      if (autoPlay) {
+        player.play();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.warn('Failed to load cloud podcast audio in tablet:', err);
+    }
+  };
+
   // Audio Play / Pause handler
   const handleTogglePlay = async () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch {}
 
+    const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+
+    if (!audioPlayerRef.current || currentUrlRef.current !== url) {
+      loadAndPlayTrack(url, true, currentSec);
+      return;
+    }
+
     if (isPlaying) {
+      audioPlayerRef.current.pause();
       setIsPlaying(false);
-      try {
-        await Speech.stop();
-      } catch {}
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     } else {
+      audioPlayerRef.current.play();
       setIsPlaying(true);
-      const textToSpeak = rawTranscript;
-      const words = textToSpeak.split(/\s+/).filter(Boolean);
-      let wordIdx = 0;
-
-      if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-      wordTickerRef.current = setInterval(() => {
-        if (wordIdx < words.length) {
-          setActiveWordIndex(wordIdx++);
-        } else {
-          setActiveWordIndex(-1);
-          if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-        }
-      }, Math.max(160, Math.round(320 / currentSpeed)));
-
-      if (tickerRef.current) clearInterval(tickerRef.current);
-      tickerRef.current = setInterval(() => {
-        setCurrentSec((prev) => {
-          const next = prev + 1;
-          if (next >= totalDurationSec) {
-            setIsPlaying(false);
-            if (tickerRef.current) clearInterval(tickerRef.current);
-            if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-            return 0;
-          }
-          return next;
-        });
-      }, 1000 / currentSpeed);
-
-      Speech.speak(textToSpeak, {
-        rate: currentSpeed,
-        language: 'en-IN',
-        onDone: () => {
-          setIsPlaying(false);
-          setActiveWordIndex(-1);
-          if (tickerRef.current) clearInterval(tickerRef.current);
-          if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-        },
-        onError: () => {
-          setIsPlaying(false);
-          if (tickerRef.current) clearInterval(tickerRef.current);
-          if (wordTickerRef.current) clearInterval(wordTickerRef.current);
-        },
-      });
     }
   };
 
@@ -347,7 +388,11 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch {}
-    setCurrentSec((prev) => Math.max(0, prev - 15));
+    const newSec = Math.max(0, currentSec - 15);
+    setCurrentSec(newSec);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.seekTo(newSec).catch(() => {});
+    }
   };
 
   // Forward 15 seconds
@@ -355,7 +400,11 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     } catch {}
-    setCurrentSec((prev) => Math.min(totalDurationSec, prev + 15));
+    const newSec = Math.min(totalDurationSec, currentSec + 15);
+    setCurrentSec(newSec);
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.seekTo(newSec).catch(() => {});
+    }
   };
 
   // Cycle playback speed
@@ -365,6 +414,10 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
     } catch {}
     const nextIdx = (speedIndex + 1) % SPEED_OPTIONS.length;
     setSpeedIndex(nextIdx);
+    const newRate = SPEED_OPTIONS[nextIdx];
+    if (audioPlayerRef.current) {
+      audioPlayerRef.current.setPlaybackRate(newRate);
+    }
   };
 
   // Select a microcast card & play inline directly
@@ -373,25 +426,27 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch {}
 
+    const url = getPodcastAudioUrl(chapterNumber, 'microcasts', mId);
+
     if (selectedMicrocastId === mId) {
-      handleTogglePlay();
-      return;
+      if (audioPlayerRef.current && currentUrlRef.current === url) {
+        if (isPlaying) {
+          audioPlayerRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          audioPlayerRef.current.play();
+          setIsPlaying(true);
+        }
+        return;
+      }
     }
 
-    try {
-      Speech.stop().catch(() => {});
-    } catch {}
-    if (tickerRef.current) clearInterval(tickerRef.current);
-    if (wordTickerRef.current) clearInterval(wordTickerRef.current);
     setIsPlaying(false);
     setCurrentSec(0);
     setActiveWordIndex(-1);
-
     setSelectedMicrocastId(mId);
 
-    setTimeout(() => {
-      handleTogglePlay();
-    }, 60);
+    loadAndPlayTrack(url, true, 0);
   };
 
   // Select module M1-M6
