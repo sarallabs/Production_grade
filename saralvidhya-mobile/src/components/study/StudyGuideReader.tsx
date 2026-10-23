@@ -399,7 +399,7 @@ export default function StudyGuideReader({
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
   );
 
-  const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(true);
+  const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(false);
   const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
 
   const handleScrollToSection = (targetIndex: number) => {
@@ -690,13 +690,17 @@ export default function StudyGuideReader({
         {/* 3. READING GUIDE PILL BUTTON */}
         <View style={styles.readingGuideTriggerWrap}>
           <TouchableOpacity
-            style={styles.readingGuidePillBtn}
+            style={[
+              styles.readingGuidePillBtn,
+              isReadingGuideOpen && { backgroundColor: isDark ? '#147A43' : '#2D3E36' },
+            ]}
             onPress={() => {
               try { Haptics.selectionAsync().catch(() => {}); } catch {}
               setIsReadingGuideOpen((prev) => !prev);
             }}
             activeOpacity={0.85}
           >
+            <Ionicons name="compass-outline" size={15} color="#FFFFFF" />
             <Text style={styles.readingGuidePillText}>Reading Guide</Text>
             <Ionicons
               name={isReadingGuideOpen ? 'chevron-up' : 'chevron-down'}
