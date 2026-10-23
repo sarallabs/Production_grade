@@ -15,6 +15,7 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
 import MarkdownReader from './MarkdownReader';
+import ReadAloudBar from './ReadAloudBar';
 import {
   fetchQuickStudyGuide,
   fetchDetailedNotes,
@@ -146,10 +147,15 @@ export default function StudyGuideReaderTablet({
     };
   }, [chapterNumber, subjectId, activePersona, studyMode]);
 
+  const [showReadAloudBar, setShowReadAloudBar] = useState(false);
+
   // Speech subscription
   useEffect(() => {
     const unsub = speechService.subscribe((speaking) => {
       setIsPlayingAudio(speaking);
+      if (speaking) {
+        setShowReadAloudBar(true);
+      }
     });
     return () => {
       unsub();
@@ -162,19 +168,19 @@ export default function StudyGuideReaderTablet({
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     } catch {}
 
-    if (onOpenListen) {
-      onOpenListen(studyMode === 'essentials' ? 'quick' : 'detailed');
-      return;
-    }
-
     if (isPlayingAudio) {
       await speechService.stop();
+      setShowReadAloudBar(false);
     } else {
+      setShowReadAloudBar(true);
       const rawText = studyMode === 'essentials' ? quickContent : detailedContent;
-      const cleanText = rawText
-        ? rawText.replace(/[#*`_>\[\]]/g, '').slice(0, 350)
-        : `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
-      await speechService.speak(cleanText, 1.0);
+      const effectiveText =
+        rawText ||
+        (studyMode === 'essentials'
+          ? SAMPLE_STUDY_CONTENT[chapterNumber]?.summary
+          : SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed) ||
+        `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
+      await speechService.speak(effectiveText, 1.0);
     }
   };
 
@@ -461,6 +467,24 @@ export default function StudyGuideReaderTablet({
           </View>
         </View>
       </ScrollView>
+
+      {/* Floating Read Aloud / Voice Over Bar */}
+      {showReadAloudBar && (
+        <View style={{ position: 'absolute', bottom: insets.bottom + 12, left: 24, right: 24, zIndex: 100 }}>
+          <ReadAloudBar
+            title={`Ch ${chapterNumber} · ${studyMode === 'essentials' ? 'Essentials' : 'In-depth'}`}
+            content={
+              studyMode === 'essentials'
+                ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
+                : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+            }
+            onClose={() => {
+              setShowReadAloudBar(false);
+              speechService.stop();
+            }}
+          />
+        </View>
+      )}
     </View>
   );
 }

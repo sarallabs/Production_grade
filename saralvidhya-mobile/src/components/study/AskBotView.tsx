@@ -14,6 +14,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { askGemini } from '@/services/askService';
+import { speechService } from '@/services/speechService';
 
 interface ChatMessage {
   id: string;
@@ -100,16 +102,33 @@ export default function AskBotView({
     );
   };
 
-  const handleSend = (textToSend?: string) => {
-    const query = textToSend || input;
-    if (!query.trim()) return;
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+
+  const handleToggleSpeak = async (msg: ChatMessage) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    if (speakingMsgId === msg.id) {
+      await speechService.stop();
+      setSpeakingMsgId(null);
+    } else {
+      setSpeakingMsgId(msg.id);
+      await speechService.speak(msg.text, 1.0, () => {
+        setSpeakingMsgId(null);
+      });
+    }
+  };
+
+  const handleSend = async (textToSend?: string) => {
+    const query = (textToSend || input).trim();
+    if (!query || isLoading) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     const userMsg: ChatMessage = {
       id: `user_${Date.now()}`,
       sender: 'user',
-      text: query.trim(),
+      text: query,
       timestamp: 'Just now',
     };
 
@@ -117,7 +136,25 @@ export default function AskBotView({
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await askGemini(
+        query,
+        'ento101',
+        chapterName,
+        chapterNumber,
+        persona,
+      );
+
+      const botMsg: ChatMessage = {
+        id: `bot_${Date.now()}`,
+        sender: 'bot',
+        text: res.answer,
+        timestamp: 'Just now',
+      };
+      setMessages((prev) => [...prev, botMsg]);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (err) {
+      console.warn('[AskBotView] askGemini call error:', err);
       const botResponseText = getKnowledgeResponse(query);
       const botMsg: ChatMessage = {
         id: `bot_${Date.now()}`,
@@ -126,9 +163,9 @@ export default function AskBotView({
         timestamp: 'Just now',
       };
       setMessages((prev) => [...prev, botMsg]);
+    } finally {
       setIsLoading(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 800);
+    }
   };
 
   return (
@@ -216,6 +253,44 @@ export default function AskBotView({
                 >
                   {msg.text}
                 </Text>
+
+                {!isUser && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                    <TouchableOpacity
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 5,
+                        paddingVertical: 4,
+                        paddingHorizontal: 8,
+                        borderRadius: 8,
+                        backgroundColor:
+                          speakingMsgId === msg.id
+                            ? (isDark ? '#147A43' : '#E8F5ED')
+                            : (isDark ? '#2D3E36' : '#F1F5F2'),
+                        borderWidth: 1,
+                        borderColor: speakingMsgId === msg.id ? '#22c55e' : (isDark ? '#3D5449' : '#E5DDD8'),
+                      }}
+                      onPress={() => handleToggleSpeak(msg)}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons
+                        name={speakingMsgId === msg.id ? 'pause-circle' : 'volume-high-outline'}
+                        size={14}
+                        color={speakingMsgId === msg.id ? '#22c55e' : (isDark ? '#94a3b8' : '#64748b')}
+                      />
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          fontWeight: '600',
+                          color: speakingMsgId === msg.id ? '#22c55e' : (isDark ? '#94a3b8' : '#64748b'),
+                        }}
+                      >
+                        {speakingMsgId === msg.id ? 'Playing Voice Over...' : 'Voice Over'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             </View>
           );

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,15 +13,21 @@ import {
   Dimensions,
   Animated,
   PanResponder,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth } from '@/context/AuthContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
-import AskMeHistoryView, { HistoryItem } from './AskMeHistoryView';
+import AskMeHistoryView from './AskMeHistoryView';
+import VoiceInputModal from './VoiceInputModal';
+import { askGemini } from '@/services/askService';
+import { speechService } from '@/services/speechService';
+import { chatHistoryService, HistoryConversation } from '@/services/chatHistoryService';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
 
@@ -94,7 +100,49 @@ export default function AskMeWelcomeView({
   const [selectedConversationId, setSelectedConversationId] = useState<string>('conv_2');
   const [inputQuestion, setInputQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversations, setConversations] = useState<HistoryConversation[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Load chat history from SQLite / AsyncStorage & ANGRAU curriculum DB records
+  useEffect(() => {
+    chatHistoryService.getConversations('ento101', chapterNumber).then((data) => {
+      setConversations(data);
+    });
+  }, [chapterNumber]);
+
+  // Auto-scroll and keep input bar lifted above Android/iOS keyboard
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 60);
+    });
+
+    const hideSub = Keyboard.addListener(hideEvent, () => {
+      setKeyboardHeight(0);
+    });
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
+  // Auto scroll to latest bot answer
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length, isGenerating]);
 
   // Left slide drawer state and animation
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -292,16 +340,44 @@ export default function AskMeWelcomeView({
     );
   };
 
-  const handleSendQuery = (textToSend?: string) => {
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null);
+
+  // Subscribe to speechService updates to guarantee sync across all state changes
+  useEffect(() => {
+    const unsubscribe = speechService.subscribe(
+      (isSpeaking, _isPaused, _cur, _tot, activeMsgId) => {
+        setSpeakingMsgId(isSpeaking ? activeMsgId || null : null);
+      },
+    );
+    return () => {
+      unsubscribe();
+      speechService.stop();
+    };
+  }, []);
+
+  const handleToggleSpeakMessage = async (msg: ChatMessage) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
+    if (speakingMsgId === msg.id) {
+      await speechService.stop();
+    } else {
+      await speechService.speakMessage(msg.id, msg.text, 1.0);
+    }
+  };
+
+  const handleSendQuery = async (textToSend?: string, autoSpeak: boolean = false) => {
+    Keyboard.dismiss();
+    speechService.stop();
     const query = (textToSend || inputQuestion).trim();
-    if (!query) return;
+    if (!query || isGenerating) return;
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setViewMode('chat');
     setInputQuestion('');
 
     const userMsg: ChatMessage = {
-      id: Date.now().toString(),
+      id: `user_${Date.now()}`,
       sender: 'user',
       text: query,
       timestamp: 'Just now',
@@ -310,53 +386,105 @@ export default function AskMeWelcomeView({
     setMessages((prev) => [...prev, userMsg]);
     setIsGenerating(true);
 
-    setTimeout(() => {
-      const responseText = getKnowledgeResponse(query);
+    try {
+      const res = await askGemini(
+        query,
+        'ento101',
+        chapterName,
+        chapterNumber,
+        persona,
+      );
+
       const botMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
+        id: `bot_${Date.now()}`,
         sender: 'bot',
-        text: responseText,
+        text: res.answer,
         timestamp: 'Just now',
       };
       setMessages((prev) => [...prev, botMsg]);
-      setIsGenerating(false);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, 700);
+
+      // Record to persistent History like Web App and update History Drawer
+      chatHistoryService.recordConversation('ento101', chapterNumber, query, res.answer, persona).then((recorded) => {
+        setConversations((prev) => [recorded, ...prev.filter((c) => c.title !== recorded.title)]);
+      });
+
+      // Live TTS: Automatically speak the answer aloud when requested via voice/mic
+      if (autoSpeak) {
+        setTimeout(() => {
+          speechService.speakMessage(botMsg.id, res.answer, 1.0);
+        }, 300);
+      }
+    } catch (err) {
+      console.warn('[AskMeWelcomeView] askGemini call error:', err);
+      const fallbackText = getKnowledgeResponse(query);
+      const botMsg: ChatMessage = {
+        id: `bot_${Date.now()}`,
+        sender: 'bot',
+        text: fallbackText,
+        timestamp: 'Just now',
+      };
+      setMessages((prev) => [...prev, botMsg]);
+
+      // Record fallback knowledge answer to History
+      chatHistoryService.recordConversation('ento101', chapterNumber, query, fallbackText, persona).then((recorded) => {
+        setConversations((prev) => [recorded, ...prev.filter((c) => c.title !== recorded.title)]);
+      });
+
+      if (autoSpeak) {
+        setTimeout(() => {
+          speechService.speakMessage(botMsg.id, fallbackText, 1.0);
+        }, 300);
+      }
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const handleSelectHistoryConversation = (item: HistoryItem) => {
+  const handleSelectHistoryConversation = (item: HistoryConversation) => {
     setSelectedConversationId(item.id);
-    const detail = HISTORY_DETAILS[item.id];
-    if (detail) {
-      setMessages([
-        {
-          id: `${item.id}_user`,
-          sender: 'user',
-          text: detail.user,
-          timestamp: item.timestamp,
-        },
-        {
-          id: `${item.id}_bot`,
-          sender: 'bot',
-          text: detail.bot,
-          timestamp: item.timestamp,
-        },
-      ]);
+    if (item.messages && item.messages.length > 0) {
+      setMessages(
+        item.messages.map((m) => ({
+          id: m.id,
+          sender: m.sender,
+          text: m.text,
+          timestamp: m.timestamp,
+        }))
+      );
     } else {
-      setMessages([
-        {
-          id: `${item.id}_user`,
-          sender: 'user',
-          text: item.title,
-          timestamp: item.timestamp,
-        },
-        {
-          id: `${item.id}_bot`,
-          sender: 'bot',
-          text: getKnowledgeResponse(item.title),
-          timestamp: item.timestamp,
-        },
-      ]);
+      const detail = HISTORY_DETAILS[item.id];
+      if (detail) {
+        setMessages([
+          {
+            id: `${item.id}_user`,
+            sender: 'user',
+            text: detail.user,
+            timestamp: item.timestamp,
+          },
+          {
+            id: `${item.id}_bot`,
+            sender: 'bot',
+            text: detail.bot,
+            timestamp: item.timestamp,
+          },
+        ]);
+      } else {
+        setMessages([
+          {
+            id: `${item.id}_user`,
+            sender: 'user',
+            text: item.title,
+            timestamp: item.timestamp,
+          },
+          {
+            id: `${item.id}_bot`,
+            sender: 'bot',
+            text: getKnowledgeResponse(item.title),
+            timestamp: item.timestamp,
+          },
+        ]);
+      }
     }
     setViewMode('chat');
   };
@@ -433,6 +561,7 @@ export default function AskMeWelcomeView({
 
       {/* Main Scroll Content */}
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
@@ -584,9 +713,102 @@ export default function AskMeWelcomeView({
                           ],
                     ]}
                   >
-                    <Text style={[styles.messageText, { color: colors.primaryText }]}>
-                      {msg.text}
-                    </Text>
+                    {isUser ? (
+                      <Text style={[styles.messageText, { color: colors.primaryText }]}>
+                        {msg.text}
+                      </Text>
+                    ) : (
+                      <Markdown
+                        style={{
+                          body: {
+                            color: colors.primaryText,
+                            fontSize: 14.5,
+                            lineHeight: 22,
+                          },
+                          paragraph: {
+                            marginTop: 2,
+                            marginBottom: 8,
+                          },
+                          strong: {
+                            fontWeight: '700',
+                            color: isDark ? '#FFFFFF' : '#1C2E24',
+                          },
+                          em: {
+                            fontStyle: 'italic',
+                            color: colors.primaryText,
+                          },
+                          bullet_list: {
+                            marginTop: 4,
+                            marginBottom: 8,
+                          },
+                          ordered_list: {
+                            marginTop: 4,
+                            marginBottom: 8,
+                          },
+                          list_item: {
+                            marginVertical: 2,
+                          },
+                          heading1: {
+                            fontSize: 17,
+                            fontWeight: '800',
+                            color: isDark ? '#4ADE80' : '#147A43',
+                            marginVertical: 6,
+                          },
+                          heading2: {
+                            fontSize: 16,
+                            fontWeight: '700',
+                            color: isDark ? '#4ADE80' : '#147A43',
+                            marginVertical: 4,
+                          },
+                          heading3: {
+                            fontSize: 15,
+                            fontWeight: '700',
+                            color: isDark ? '#4ADE80' : '#147A43',
+                            marginVertical: 4,
+                          },
+                        }}
+                      >
+                        {msg.text}
+                      </Markdown>
+                    )}
+
+                    {!isUser && (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, gap: 8 }}>
+                        <TouchableOpacity
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 6,
+                            paddingVertical: 6,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                            backgroundColor:
+                              speakingMsgId === msg.id
+                                ? (isDark ? '#147A43' : '#E8F5ED')
+                                : (isDark ? '#2D3E36' : '#F1F5F2'),
+                            borderWidth: 1,
+                            borderColor: speakingMsgId === msg.id ? '#22c55e' : colors.cardBorder,
+                          }}
+                          onPress={() => handleToggleSpeakMessage(msg)}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons
+                            name={speakingMsgId === msg.id ? 'pause-circle' : 'volume-high-outline'}
+                            size={15}
+                            color={speakingMsgId === msg.id ? '#22c55e' : colors.subText}
+                          />
+                          <Text
+                            style={{
+                              fontSize: 11.5,
+                              fontWeight: '700',
+                              color: speakingMsgId === msg.id ? '#22c55e' : colors.subText,
+                            }}
+                          >
+                            {speakingMsgId === msg.id ? 'Playing Voice Over • Tap to Stop' : 'Voice Over'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 </View>
               );
@@ -627,7 +849,8 @@ export default function AskMeWelcomeView({
           {
             backgroundColor: colors.headerBg,
             borderTopColor: colors.divider,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
+            paddingBottom: keyboardHeight > 0 ? 8 : (insets.bottom > 0 ? insets.bottom : 12),
+            marginBottom: Platform.OS === 'android' ? keyboardHeight : 0,
           },
         ]}
       >
@@ -662,7 +885,8 @@ export default function AskMeWelcomeView({
             activeOpacity={0.7}
             onPress={() => {
               Haptics.selectionAsync();
-              handleSendQuery('Tell me the key definitions for exam viva');
+              Keyboard.dismiss();
+              setIsVoiceModalOpen(true);
             }}
           >
             <Ionicons name="mic-outline" size={18} color={colors.micColor} />
@@ -717,6 +941,9 @@ export default function AskMeWelcomeView({
         <View style={styles.drawerInner}>
           <AskMeHistoryView
             selectedId={selectedConversationId}
+            chapterNumber={chapterNumber}
+            subjectId="ento101"
+            conversations={conversations}
             onSelectConversation={(item) => {
               closeDrawer();
               handleSelectHistoryConversation(item);
@@ -729,6 +956,9 @@ export default function AskMeWelcomeView({
             onSendNewQuery={(query) => {
               closeDrawer();
               handleSendQuery(query);
+            }}
+            onDeleteConversation={(convId) => {
+              setConversations((prev) => prev.filter((c) => c.id !== convId));
             }}
           />
         </View>
@@ -755,6 +985,18 @@ export default function AskMeWelcomeView({
           />
         </View>
       </Animated.View>
+
+      {/* Voice Recognition Modal */}
+      <VoiceInputModal
+        visible={isVoiceModalOpen}
+        chapterNumber={chapterNumber}
+        chapterName={chapterName}
+        onClose={() => setIsVoiceModalOpen(false)}
+        onTranscript={(spokenText) => {
+          setIsVoiceModalOpen(false);
+          handleSendQuery(spokenText, true /* Live TTS enabled */);
+        }}
+      />
     </KeyboardAvoidingView>
   );
 }

@@ -30,6 +30,7 @@ export default function TabsLayout() {
       screenOptions={{
         ...(isTablet ? { tabBarPosition: 'left' as const } : {}),
         headerShown: false,
+        tabBarHideOnKeyboard: true,
         tabBarActiveTintColor: activeTint,
         tabBarInactiveTintColor: inactiveTint,
         tabBarStyle: {

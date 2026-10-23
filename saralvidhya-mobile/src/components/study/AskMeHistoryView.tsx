@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import {
+  chatHistoryService,
+  HistoryConversation,
+} from '@/services/chatHistoryService';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
 
@@ -25,50 +29,16 @@ export interface HistoryItem {
   timestamp: string;
 }
 
-export const MOCK_HISTORY_CONVERSATIONS: HistoryItem[] = [
-  {
-    id: 'conv_1',
-    title: 'How to kill cockroach?',
-    timestamp: 'Today · 9:42 AM',
-  },
-  {
-    id: 'conv_2',
-    title: 'How long can a cockroach live?',
-    timestamp: 'Today · 9:18 AM',
-  },
-  {
-    id: 'conv_3',
-    title: 'What is the life cycle of a cockroach?',
-    timestamp: 'Yesterday',
-  },
-  {
-    id: 'conv_4',
-    title: 'Explain respiratory system of insects',
-    timestamp: 'Yesterday',
-  },
-  {
-    id: 'conv_5',
-    title: 'How do cockroaches breathe?',
-    timestamp: 'Oct 14',
-  },
-  {
-    id: 'conv_6',
-    title: 'What are the mouthparts of insects?',
-    timestamp: 'Oct 13',
-  },
-  {
-    id: 'conv_7',
-    title: 'Economic importance of insects',
-    timestamp: 'Oct 12',
-  },
-];
-
 interface AskMeHistoryViewProps {
-  onSelectConversation: (item: HistoryItem) => void;
+  onSelectConversation: (item: HistoryConversation) => void;
   onNewConversation: () => void;
   onNavigateBack?: () => void;
   onSendNewQuery: (query: string) => void;
   selectedId?: string;
+  chapterNumber?: number;
+  subjectId?: string;
+  conversations?: HistoryConversation[];
+  onDeleteConversation?: (convId: string) => void;
 }
 
 export default function AskMeHistoryView({
@@ -76,7 +46,11 @@ export default function AskMeHistoryView({
   onNewConversation,
   onNavigateBack,
   onSendNewQuery,
-  selectedId = 'conv_2',
+  selectedId = '',
+  chapterNumber = 1,
+  subjectId = 'ento101',
+  conversations: propConversations,
+  onDeleteConversation,
 }: AskMeHistoryViewProps) {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
@@ -85,6 +59,22 @@ export default function AskMeHistoryView({
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSelectedId, setActiveSelectedId] = useState(selectedId);
   const [inputQuestion, setInputQuestion] = useState('');
+  const [localConversations, setLocalConversations] = useState<HistoryConversation[]>([]);
+
+  // Load conversations from service if not provided via props
+  useEffect(() => {
+    if (propConversations && propConversations.length > 0) {
+      setLocalConversations(propConversations);
+    } else {
+      chatHistoryService.getConversations(subjectId, chapterNumber).then((data) => {
+        setLocalConversations(data);
+      });
+    }
+  }, [propConversations, chapterNumber, subjectId]);
+
+  useEffect(() => {
+    setActiveSelectedId(selectedId);
+  }, [selectedId]);
 
   const colors = isDark
     ? {
@@ -158,20 +148,34 @@ export default function AskMeHistoryView({
         sendIconColor: '#ffffff',
       };
 
-  const filteredHistory = MOCK_HISTORY_CONVERSATIONS.filter((item) =>
+  const filteredHistory = localConversations.filter((item) =>
     item.title.toLowerCase().includes(searchQuery.trim().toLowerCase())
   );
 
-  const handleSelectItem = (item: HistoryItem) => {
+  const handleSelectItem = (item: HistoryConversation) => {
     Haptics.selectionAsync();
     setActiveSelectedId(item.id);
     onSelectConversation(item);
   };
 
+  const handleDeleteItem = async (e: any, item: HistoryConversation) => {
+    e.stopPropagation?.();
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+    const updated = await chatHistoryService.deleteConversation(subjectId, chapterNumber, item.id);
+    setLocalConversations(updated);
+    if (onDeleteConversation) {
+      onDeleteConversation(item.id);
+    }
+  };
+
   const handleSend = () => {
     const query = inputQuestion.trim();
     if (!query) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {}
     setInputQuestion('');
     onSendNewQuery(query);
   };
@@ -209,9 +213,9 @@ export default function AskMeHistoryView({
           </View>
 
           <View style={styles.headerTitleWrap}>
-            <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Ask Me</Text>
+            <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Ask Me History</Text>
             <Text style={[styles.headerSub, { color: colors.subText }]}>
-              Saral Vidhya assistant
+              {localConversations.length} recorded discussions
             </Text>
           </View>
         </View>
@@ -226,9 +230,9 @@ export default function AskMeHistoryView({
           ]}
           onPress={onNewConversation}
           activeOpacity={0.75}
-          accessibilityLabel="Options or New conversation"
+          accessibilityLabel="Start New conversation"
         >
-          <Text style={[styles.optionsDots, { color: colors.primaryText }]}>⋯</Text>
+          <Ionicons name="add" size={20} color={colors.primaryText} />
         </TouchableOpacity>
       </View>
 
@@ -274,10 +278,10 @@ export default function AskMeHistoryView({
             },
           ]}
         >
-          <Text style={[styles.searchIcon, { color: colors.searchPlaceholder }]}>⌕</Text>
+          <Ionicons name="search" size={16} color={colors.searchPlaceholder} />
           <TextInput
             style={[styles.searchInput, { color: colors.primaryText }]}
-            placeholder="Search your questions"
+            placeholder="Search your questions..."
             placeholderTextColor={colors.searchPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -292,45 +296,63 @@ export default function AskMeHistoryView({
 
         {/* Conversations List */}
         <View style={styles.conversationsList}>
-          {filteredHistory.map((item) => {
-            const isActive = item.id === activeSelectedId;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[
-                  styles.conversationCard,
-                  {
-                    backgroundColor: isActive ? colors.cardActiveBg : colors.cardDefaultBg,
-                    borderColor: isActive ? colors.cardActiveBorder : colors.cardDefaultBorder,
-                  },
-                ]}
-                onPress={() => handleSelectItem(item)}
-                activeOpacity={0.75}
-              >
-                <View style={[styles.sparkleCircle, { backgroundColor: colors.circleBg }]}>
-                  <Text style={[styles.sparkleIcon, { color: colors.sparkleColor }]}>✦</Text>
-                </View>
+          {filteredHistory.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="chatbubbles-outline" size={36} color={colors.subText} />
+              <Text style={[styles.emptyText, { color: colors.subText }]}>
+                {searchQuery ? 'No matching conversations' : 'No chat history recorded yet'}
+              </Text>
+            </View>
+          ) : (
+            filteredHistory.map((item) => {
+              const isActive = item.id === activeSelectedId;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.conversationCard,
+                    {
+                      backgroundColor: isActive ? colors.cardActiveBg : colors.cardDefaultBg,
+                      borderColor: isActive ? colors.cardActiveBorder : colors.cardDefaultBorder,
+                    },
+                  ]}
+                  onPress={() => handleSelectItem(item)}
+                  activeOpacity={0.75}
+                >
+                  <View style={[styles.sparkleCircle, { backgroundColor: colors.circleBg }]}>
+                    <Ionicons name="chatbubble-ellipses" size={15} color={colors.sparkleColor} />
+                  </View>
 
-                <View style={styles.cardContentWrap}>
-                  <Text
-                    style={[styles.cardTitle, { color: colors.primaryText }]}
-                    numberOfLines={1}
+                  <View style={styles.cardContentWrap}>
+                    <Text
+                      style={[styles.cardTitle, { color: colors.primaryText }]}
+                      numberOfLines={1}
+                    >
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.cardTimestamp, { color: colors.timestampColor }]}>
+                      {item.timestamp}
+                    </Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.deleteBtn}
+                    onPress={(e) => handleDeleteItem(e, item)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    activeOpacity={0.7}
                   >
-                    {item.title}
-                  </Text>
-                  <Text style={[styles.cardTimestamp, { color: colors.timestampColor }]}>
-                    {item.timestamp}
-                  </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                    <Ionicons name="trash-outline" size={16} color={colors.subText} />
+                  </TouchableOpacity>
+                </TouchableOpacity>
+              );
+            })
+          )}
         </View>
       </ScrollView>
 
       {/* AI Grounding Disclaimer */}
       <Text style={[styles.disclaimerText, { color: colors.disclaimerColor }]}>
-        AI answers are based on your learning material
+        AI answers are based on ANGRAU learning materials
       </Text>
 
       {/* Bottom Sticky Input Bar */}
@@ -361,25 +383,13 @@ export default function AskMeHistoryView({
           {/* Text Input */}
           <TextInput
             style={[styles.chatInput, { color: colors.inputText }]}
-            placeholder="Type your question..."
+            placeholder="Ask a new question..."
             placeholderTextColor={colors.inputPlaceholder}
             value={inputQuestion}
             onChangeText={setInputQuestion}
             onSubmitEditing={handleSend}
             returnKeyType="send"
           />
-
-          {/* Voice Mic Button */}
-          <TouchableOpacity
-            style={[styles.micButton, { backgroundColor: colors.micBg }]}
-            activeOpacity={0.7}
-            onPress={() => {
-              Haptics.selectionAsync();
-              onSendNewQuery('Explain the respiratory system of insects');
-            }}
-          >
-            <Ionicons name="mic-outline" size={18} color={colors.micColor} />
-          </TouchableOpacity>
 
           {/* Send Button */}
           <TouchableOpacity
@@ -437,21 +447,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   headerSub: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '500',
   },
   optionsButton: {
-    width: 50,
-    height: 32,
-    borderRadius: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  optionsDots: {
-    fontSize: 20,
-    fontWeight: '700',
-    lineHeight: 20,
   },
   scrollView: {
     flex: 1,
@@ -498,10 +503,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 14,
   },
-  searchIcon: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   searchInput: {
     flex: 1,
     fontSize: 12,
@@ -510,27 +511,34 @@ const styles = StyleSheet.create({
   },
   conversationsList: {
     flexDirection: 'column',
-    gap: 11,
+    gap: 10,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 10,
+  },
+  emptyText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
   conversationCard: {
-    height: 64,
-    borderRadius: 12,
+    minHeight: 64,
+    borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 12,
+    paddingVertical: 10,
     gap: 12,
   },
   sparkleCircle: {
-    width: 31,
-    height: 31,
-    borderRadius: 15.5,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sparkleIcon: {
-    fontSize: 14,
-    fontWeight: '700',
   },
   cardContentWrap: {
     flex: 1,
@@ -538,15 +546,20 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   cardTitle: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
+    lineHeight: 18,
   },
   cardTimestamp: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '500',
   },
+  deleteBtn: {
+    padding: 6,
+    borderRadius: 8,
+  },
   disclaimerText: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: '500',
     textAlign: 'center',
     marginBottom: 6,
@@ -557,8 +570,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   inputPill: {
-    height: 62,
-    borderRadius: 18,
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -566,39 +579,32 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   inputSparkleCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputSparkleText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '800',
+  },
+  chatInput: {
+    flex: 1,
+    fontSize: 12.5,
+    fontWeight: '500',
+    paddingHorizontal: 6,
+  },
+  sendButton: {
     width: 34,
     height: 34,
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  inputSparkleText: {
-    fontSize: 15,
-    color: '#ffffff',
-    fontWeight: '800',
-  },
-  chatInput: {
-    flex: 1,
-    fontSize: 12,
-    fontWeight: '500',
-    paddingHorizontal: 6,
-  },
-  micButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   sendIcon: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
   },
 });

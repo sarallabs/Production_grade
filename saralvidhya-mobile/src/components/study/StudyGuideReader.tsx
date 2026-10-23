@@ -20,6 +20,7 @@ import { useAuth, PersonaType } from '@/context/AuthContext';
 import { speechService } from '@/services/speechService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import MarkdownReader from './MarkdownReader';
+import ReadAloudBar from './ReadAloudBar';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import StudyGuideReaderTablet from './StudyGuideReader.tablet';
@@ -352,9 +353,14 @@ export default function StudyGuideReader({
     };
   }, [chapterNumber, subjectId, persona, studyMode]);
 
+  const [showReadAloudBar, setShowReadAloudBar] = useState(false);
+
   useEffect(() => {
     const unsub = speechService.subscribe((speaking) => {
       setIsPlayingAudio(speaking);
+      if (speaking) {
+        setShowReadAloudBar(true);
+      }
     });
     return () => {
       unsub();
@@ -370,18 +376,19 @@ export default function StudyGuideReader({
 
   const handleToggleAudio = async () => {
     try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
-    if (onOpenListen) {
-      onOpenListen(studyMode === 'essentials' ? 'quick' : 'detailed');
-      return;
-    }
     if (isPlayingAudio) {
       await speechService.stop();
+      setShowReadAloudBar(false);
     } else {
+      setShowReadAloudBar(true);
       const rawText = studyMode === 'essentials' ? quickContent : detailedContent;
-      const cleanText = rawText
-        ? rawText.replace(/[#*`_>\[\]]/g, '').slice(0, 300)
-        : `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
-      await speechService.speak(cleanText, 1.0);
+      const effectiveText =
+        rawText ||
+        (studyMode === 'essentials'
+          ? SAMPLE_STUDY_CONTENT[chapterNumber]?.summary
+          : SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed) ||
+        `Reading Chapter ${chapterNumber}: ${effectiveChapterTitle}`;
+      await speechService.speak(effectiveText, 1.0);
     }
   };
 
@@ -794,6 +801,24 @@ export default function StudyGuideReader({
             </View>
           </TouchableOpacity>
         </Modal>
+      )}
+
+      {/* 8. FLOATING READ ALOUD / VOICE OVER BAR */}
+      {showReadAloudBar && (
+        <View style={{ position: 'absolute', bottom: insets.bottom + 8, left: 0, right: 0, zIndex: 100 }}>
+          <ReadAloudBar
+            title={`Ch ${chapterNumber} · ${studyMode === 'essentials' ? 'Essentials' : 'In-depth'}`}
+            content={
+              studyMode === 'essentials'
+                ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
+                : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+            }
+            onClose={() => {
+              setShowReadAloudBar(false);
+              speechService.stop();
+            }}
+          />
+        </View>
       )}
     </View>
   );
