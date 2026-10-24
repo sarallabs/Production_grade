@@ -32,6 +32,22 @@ function Login() {
     ).toLowerCase();
     const activeId = (tenantId || queryTenant || "").toLowerCase();
 
+    const customLogo =
+      tenant?.logoUrl ||
+      tenant?.branding?.logoUrl ||
+      (tenant as any)?.assets?.logoUrl;
+    if (customLogo) {
+      const resolvedId = (tenant?.id || activeId || "college").toLowerCase();
+      return {
+        id: resolvedId,
+        src: customLogo,
+        fallbackSrc: boardLogos[resolvedId]
+          ? `${import.meta.env.BASE_URL}${boardLogos[resolvedId]}`
+          : `${import.meta.env.BASE_URL}${defaultLogoFile}`,
+        alt: tenant?.name || tenant?.shortName || resolvedId.toUpperCase(),
+      };
+    }
+
     for (const [boardKey, logoFile] of Object.entries(boardLogos)) {
       const keyLower = boardKey.toLowerCase();
       if (
@@ -42,23 +58,15 @@ function Login() {
         return {
           id: keyLower,
           src: `${import.meta.env.BASE_URL}${logoFile}`,
+          fallbackSrc: `${import.meta.env.BASE_URL}${logoFile}`,
           alt: tenant?.name || tenant?.shortName || keyLower.toUpperCase(),
         };
       }
     }
-
-    const customLogo = tenant?.logoUrl || tenant?.branding?.logoUrl;
-    if (customLogo) {
-      return {
-        id: activeId || "college",
-        src: customLogo,
-        alt: tenant?.name || tenant?.shortName || "College Logo",
-      };
-    }
-
     return {
       id: "default",
       src: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
+      fallbackSrc: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
       alt: tenant?.name || tenant?.shortName || "College Logo",
     };
   })();
@@ -228,6 +236,12 @@ function Login() {
                 src={resolvedCollege.src}
                 alt={resolvedCollege.alt}
                 className={`sv-college-logo-img sv-college-logo-img--${resolvedCollege.id}`}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (resolvedCollege.fallbackSrc && target.src !== resolvedCollege.fallbackSrc) {
+                    target.src = resolvedCollege.fallbackSrc;
+                  }
+                }}
               />
             </div>
 
