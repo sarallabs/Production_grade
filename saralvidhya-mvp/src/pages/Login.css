@@ -1,217 +1,307 @@
-/* Login.css — Custom Saral Vidhya Login Screen matching reference design */
+/* Login.css — Saral Vidhya Login Screen */
 
 .sv-login-page {
   min-height: 100vh;
   width: 100vw;
-  background: linear-gradient(135deg, #FFF4EE 0%, #E4E6DD 25%, #C9D8CD 50%, #94BCAC 75%, #7AA694 100%);
+  background:
+    radial-gradient(circle at 18% 22%, #F5F2EB 0%, rgba(245, 242, 235, 0.85) 32%, transparent 65%),
+    linear-gradient(125deg, #F5F2EB 0%, #E7EEE9 38%, #C9DDD3 72%, #A6C3B5 100%);
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 32px 0;
+  padding: 32px 24px;
   box-sizing: border-box;
   overflow-x: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
   position: relative;
 }
 
 .sv-login-wrapper {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
+  justify-content: center;
+  gap: clamp(40px, 6vw, 96px);
   width: 100%;
-  padding: 0 24px;
+  max-width: 1320px;
+  margin: 0 auto;
   box-sizing: border-box;
 }
 
-/* Left Brand Section */
+/* Left Brand Section (703px production lockup) */
 .sv-login-brand {
-  flex: 0 0 auto;
+  flex: 0 1 703px;
+  width: 703px;
+  max-width: 52vw;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 760px;
-  max-height: 85vh;
 }
 
 .sv-brand-logo-img {
-  height: 100%;
-  max-height: 760px;
-  width: auto;
-  max-width: 100%;
+  width: 100%;
+  max-width: 703px;
+  height: auto;
+  max-height: 82vh;
   object-fit: contain;
   display: block;
   user-select: none;
-  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.04));
-  transition: transform 0.3s ease;
+  filter: drop-shadow(0 16px 36px rgba(46, 59, 51, 0.05));
 }
 
-.sv-brand-logo-img:hover {
-  transform: translateY(-2px);
-}
-
-/* Right Card Section */
-.sv-login-card {
-  flex: 0 0 460px;
-  width: 460px;
+/* Right Column: Card + Floating Logo + Bottom Pills */
+.sv-login-right {
+  flex: 0 0 400px;
+  width: 400px;
   max-width: 100%;
-  height: 380px;
-  background: #3A584C;
-  border-radius: 30px;
-  padding: 52px 48px 44px;
-  box-sizing: border-box;
-  box-shadow: 0 20px 48px rgba(35, 54, 46, 0.22);
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  align-items: center;
 }
 
-.sv-login-card:hover {
-  box-shadow: 0 24px 56px rgba(35, 54, 46, 0.28);
+.sv-login-card-shell {
+  position: relative;
+  width: 100%;
+  padding-top: 44px;
+}
+
+/* Floating College Logo Medallion upside the password card */
+.sv-college-logo-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    0 10px 26px rgba(20, 30, 25, 0.25),
+    0 0 0 4px rgba(255, 255, 255, 0.14);
+  z-index: 2;
+  overflow: hidden;
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.sv-college-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+}
+
+.sv-college-logo-img--mlrit {
+  transform: scale(1);
+}
+
+.sv-college-logo-img--angrau {
+  transform: scale(1.04);
+}
+
+/* Pine Deep Card (#2E3B33) */
+.sv-login-card {
+  width: 100%;
+  background: #2E3B33;
+  border-radius: 24px;
+  padding: 60px 34px 34px;
+  box-sizing: border-box;
+  box-shadow:
+    0 24px 54px rgba(26, 38, 31, 0.28),
+    0 4px 14px rgba(26, 38, 31, 0.14);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .sv-login-title {
-  color: #ffffff;
-  font-size: 36px;
+  color: #F5F2EB;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 34px 0;
-  line-height: 1.15;
+  margin: 0 0 10px 0;
+  line-height: 1.25;
   letter-spacing: -0.3px;
-  text-align: left;
+  text-align: center;
+}
+
+.sv-login-subtitle {
+  color: #A8B09B;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: center;
+  margin: 0 0 26px 0;
+  max-width: 310px;
+}
+
+.sv-login-subtitle-highlight {
+  color: #D9A55C;
+  font-weight: 600;
 }
 
 .sv-login-form {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
   width: 100%;
+}
+
+.sv-input-label {
+  color: #A8B09B;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.15px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  text-align: left;
+  display: block;
 }
 
 .sv-input-container {
   position: relative;
   width: 100%;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .sv-password-input {
   width: 100%;
-  height: 48px;
-  padding: 0 52px 0 22px;
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.38);
-  border-radius: 9999px;
-  color: #ffffff;
+  height: 46px;
+  padding: 0 44px 0 16px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(168, 176, 155, 0.28);
+  border-radius: 10px;
+  color: #F5F2EB;
   font-size: 15px;
   outline: none;
   box-sizing: border-box;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.4px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .sv-password-input::placeholder {
-  color: #7A9B8F;
-  opacity: 1;
+  color: rgba(168, 176, 155, 0.55);
 }
 
 .sv-password-input:focus {
-  border-color: rgba(255, 255, 255, 0.85);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(217, 165, 92, 0.75);
+  box-shadow: 0 0 0 3px rgba(217, 165, 92, 0.16);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sv-password-toggle-btn {
   position: absolute;
-  right: 16px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   padding: 6px;
   cursor: pointer;
-  color: rgba(255, 255, 255, 0.8);
+  color: #A8B09B;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: color 0.2s ease, transform 0.15s ease;
+  transition: color 0.2s ease;
   line-height: 1;
 }
 
 .sv-password-toggle-btn:hover {
-  color: #ffffff;
-  transform: translateY(-50%) scale(1.1);
+  color: #F5F2EB;
 }
 
+/* Primary Action Button — Amber (#D9A55C) */
 .sv-login-button {
-  width: 160px;
-  height: 40px;
-  background: transparent;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
-  border-radius: 9999px;
-  color: #ffffff;
+  width: 100%;
+  height: 46px;
+  background: #D9A55C;
+  border: none;
+  border-radius: 10px;
+  color: #1F2A24;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 6px auto 0 auto;
-  transition: background 0.25s ease, border-color 0.25s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 14px rgba(217, 165, 92, 0.25);
 }
 
 .sv-login-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.85);
+  background: #E0B06B;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 18px rgba(217, 165, 92, 0.34);
 }
 
 .sv-login-button:active:not(:disabled) {
   transform: translateY(0);
-  background: rgba(255, 255, 255, 0.18);
+  background: #CE9A50;
 }
 
 .sv-login-button:disabled {
-  opacity: 0.6;
+  opacity: 0.65;
   cursor: not-allowed;
 }
 
 .sv-login-error {
-  color: #FFB3BA;
-  font-size: 13.5px;
-  margin: 14px 0 0 0;
+  color: #FCA5A5;
+  font-size: 13px;
+  margin: 12px 0 0 0;
   text-align: center;
   font-weight: 500;
 }
 
+/* Bottom Feature Pills (Learn · Practice · Prepare) */
+.sv-login-pills {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.sv-login-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 9999px;
+  background: rgba(245, 242, 235, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 6px 16px rgba(34, 48, 40, 0.08);
+  color: #2E3B33;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  backdrop-filter: blur(8px);
+  user-select: none;
+}
+
 /* Responsive adjustments */
-@media (max-width: 860px) {
+@media (max-width: 960px) {
   .sv-login-wrapper {
     flex-direction: column;
-    gap: 36px;
+    gap: 28px;
   }
 
   .sv-login-brand {
     flex: 0 1 auto;
-    max-width: 320px;
-    height: auto;
+    width: 100%;
+    max-width: 420px;
   }
 
   .sv-brand-logo-img {
-    height: auto;
-    max-height: 280px;
-    width: 100%;
+    max-height: 300px;
   }
 
-  .sv-login-card {
+  .sv-login-right {
     flex: 0 1 auto;
+    width: 100%;
     max-width: 400px;
-    padding: 44px 36px 38px;
-    height: auto;
-    min-height: auto;
-  }
-
-  .sv-login-title {
-    font-size: 30px;
-    margin-bottom: 26px;
   }
 }
