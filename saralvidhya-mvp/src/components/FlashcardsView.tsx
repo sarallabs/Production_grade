@@ -374,22 +374,13 @@ export default function FlashcardsView({
                 }}
               >
                 <style>{`
-                  .flashcard-question-text,
-                  .flashcard-question-text .markdown-body,
-                  .flashcard-question-text .markdown-view,
-                  .flashcard-question-text p,
-                  .flashcard-question-text span,
-                  .flashcard-question-text strong,
-                  .flashcard-question-text em,
-                  .flashcard-question-text h1,
-                  .flashcard-question-text h2,
-                  .flashcard-question-text h3 {
+                  .flashcard-question-text * {
                     margin: 0 !important;
                     text-align: center !important;
                     font-size: inherit !important;
                     line-height: inherit !important;
+                    font-weight: inherit !important;
                   }
-                  .flashcard-answer-text p,
                   .flashcard-answer-text div,
                   .flashcard-answer-text span {
                     text-align: center !important;
