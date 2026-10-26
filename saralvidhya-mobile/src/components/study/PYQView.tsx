@@ -501,15 +501,15 @@ export default function PYQView({
 
   // Theme tokens matching PyqDark.module.css and PyqLight.module.css
   const bg = isDark ? '#263830' : '#F0F7F2';
-  const topAccentColor = isDark ? '#A6EDBA' : '#145E3B';
+  const topAccentColor = '#BE7E57';
   const titleColor = isDark ? '#F0F7F0' : '#1F2E26';
   const subtextColor = isDark ? '#B8CFBF' : '#5E7066';
 
   // Filter track
   const trackBg = isDark ? '#30453B' : '#FFFFFF';
   const trackBorder = isDark ? '#577361' : '#D1E0D6';
-  const activePillBg = isDark ? '#FFF6F1' : '#2D3E36';
-  const activePillText = isDark ? '#2D3E36' : '#FFFFFF';
+  const activePillBg = '#BE7E57';
+  const activePillText = '#FFFFFF';
   const inactivePillBg = isDark ? '#30453B' : '#FFFFFF';
   const inactivePillBorder = isDark ? '#577361' : '#D1E0D6';
   const inactivePillText = isDark ? '#B8CFBF' : '#5E7066';
@@ -521,25 +521,25 @@ export default function PYQView({
   const questionPromptColor = isDark ? '#F0F7F0' : '#1F2E26';
 
   // Tags
-  const chapterTagBg = isDark ? '#29523B' : '#EBFAF0';
-  const chapterTagText = isDark ? '#A6EDBA' : '#145E3B';
+  const chapterTagBg = isDark ? '#4A2E20' : '#FAF1EB';
+  const chapterTagText = '#BE7E57';
   const yearTagBg = '#FFE8B2';
   const yearTagText = '#664A0F';
-  const marksTagBg = isDark ? '#3B5245' : '#E8F2EB';
-  const marksTagText = isDark ? '#F0F7F0' : '#1F2E26';
+  const marksTagBg = isDark ? '#4A2E20' : '#FAF1EB';
+  const marksTagText = isDark ? '#F5E4DB' : '#8C4F2B';
 
   // Action buttons
   const completeBtnBg = isDark ? '#30453B' : '#FFFFFF';
   const completeBtnBorder = isDark ? '#577361' : '#D1E0D6';
   const completeBtnText = isDark ? '#B8CFBF' : '#5E7066';
-  const completedActiveBg = isDark ? '#29523B' : '#EBFAF0';
-  const completedActiveText = isDark ? '#A6EDBA' : '#145E3B';
+  const completedActiveBg = isDark ? '#4A2E20' : '#FAF1EB';
+  const completedActiveText = '#BE7E57';
 
   // Answer Panel
-  const answerPanelBg = isDark ? '#29523B' : '#EBFAF0';
-  const answerPanelBorder = '#A8E8BF';
-  const answerAccent = isDark ? '#47D97A' : '#14A64F';
-  const answerHeadingColor = isDark ? '#A6EDBA' : '#145E3B';
+  const answerPanelBg = isDark ? '#3B2A20' : '#FAF1EB';
+  const answerPanelBorder = '#E8D0C3';
+  const answerAccent = '#BE7E57';
+  const answerHeadingColor = '#BE7E57';
   const answerTextColor = isDark ? '#F0F7F0' : '#1F2E26';
 
   const filteredQuestions = useMemo(() => {

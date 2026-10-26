@@ -700,8 +700,8 @@ export default function ListenScreen({
   const brandColor = isDark ? '#4ADE80' : '#265945';
   const textDark = isDark ? '#FFFFFF' : '#172933';
   const textMuted = isDark ? '#A6C5B3' : '#576B6E';
-  const emeraldPrimary = '#05996B';
-  const mintPillBg = isDark ? 'rgba(5, 153, 107, 0.15)' : '#E8F5ED';
+  const emeraldPrimary = '#A4C6B5';
+  const mintPillBg = isDark ? 'rgba(164, 198, 181, 0.15)' : '#EAF3EE';
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>

@@ -104,6 +104,7 @@ export default function PrepareScreen() {
         <TopNavBar
           segments={PREPARE_SEGMENTS}
           activeSegment={activeSegment}
+          pillar="prepare"
           onSegmentChange={(segId) => {
             setActiveSegment(segId);
             if (segId === 'prep_exam') {

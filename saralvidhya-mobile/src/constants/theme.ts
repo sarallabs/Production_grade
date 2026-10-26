@@ -64,6 +64,46 @@ export const Colors: { light: ThemePalette; dark: ThemePalette } = {
 export type ThemeMode = 'light' | 'dark' | 'focus';
 export type ThemeColor = keyof ThemePalette;
 
+/**
+ * Tool section colors directly from user design specifications:
+ * - LEARN: Mint #A4C6B5
+ * - PRACTICE: Amber #D9A55C
+ * - PREPARE: Terra #BE7E57
+ * - RESOURCES: Terra #BE7E57
+ */
+export const ToolPillarColors = {
+  learn: {
+    primary: '#A4C6B5', // Mint
+    dark: '#2D4B3D',
+    light: '#EAF3EE',
+    border: '#A4C6B5',
+    text: '#172A21',
+  },
+  practice: {
+    primary: '#D9A55C', // Amber
+    dark: '#B07B30',
+    light: '#FDF6EC',
+    border: '#D9A55C',
+    text: '#FFFFFF',
+  },
+  prepare: {
+    primary: '#BE7E57', // Terra
+    dark: '#8C4F2B',
+    light: '#FAF1EB',
+    border: '#BE7E57',
+    text: '#FFFFFF',
+  },
+  resources: {
+    primary: '#BE7E57', // Terra
+    dark: '#8C4F2B',
+    light: '#FAF1EB',
+    border: '#BE7E57',
+    text: '#FFFFFF',
+  },
+} as const;
+
+export type PillarName = keyof typeof ToolPillarColors;
+
 export const Typography = {
   display: { fontSize: 28, fontWeight: '700' as const, lineHeight: 34 },
   title: { fontSize: 22, fontWeight: '700' as const, lineHeight: 28 },

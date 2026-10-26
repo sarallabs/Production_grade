@@ -289,8 +289,8 @@ export default function TeacherQuestionBankView({
   const subtitleColor = isDark ? '#BAD1BF' : '#4F7D66';
   const cardBg = isDark ? '#21362B' : '#FEFEFE';
   const cardBorder = isDark ? '#4D6E57' : '#D1E0D6';
-  const activeBorder = isDark ? '#59B87A' : '#2D3E36';
-  const numberColor = isDark ? '#B2E0C2' : '#2B634A';
+  const activeBorder = '#D9A55C';
+  const numberColor = '#D9A55C';
   const questionTextColor = isDark ? '#F0F7F0' : '#1A2924';
   const assignedByColor = isDark ? '#A6C5B3' : '#5E7066';
   const answerBg = isDark ? '#18271F' : '#F4FAF6';
@@ -387,8 +387,8 @@ export default function TeacherQuestionBankView({
                         Assigned by: {item.assignedBy}
                       </Text>
                       {item.bloomLevel ? (
-                        <View style={{ backgroundColor: isDark ? '#193B2B' : '#E0F2E9', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#86EFAC' : '#1B6B40' }}>
+                        <View style={{ backgroundColor: isDark ? '#3D2F1B' : '#FDF6EC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#E5B978' : '#B07B30' }}>
                             {item.bloomLevel}
                           </Text>
                         </View>
@@ -419,10 +419,10 @@ export default function TeacherQuestionBankView({
                               styles.markChip,
                               {
                                 backgroundColor: isMarkActive
-                                  ? (isDark ? '#2D3E36' : '#2D3E36')
+                                  ? '#D9A55C'
                                   : (isDark ? '#263B30' : '#FFFFFF'),
                                 borderColor: isMarkActive
-                                  ? (isDark ? '#4ADE80' : '#2D3E36')
+                                  ? '#D9A55C'
                                   : cardBorder,
                               },
                             ]}

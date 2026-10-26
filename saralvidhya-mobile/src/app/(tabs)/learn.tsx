@@ -119,6 +119,7 @@ export default function LearnScreen() {
           segments={LEARN_SEGMENTS}
           activeSegment={activeSegment}
           onSegmentChange={(segId) => setActiveSegment(segId as any)}
+          pillar="learn"
           onBackPress={() => {
             if (router.canGoBack()) {
               router.back();

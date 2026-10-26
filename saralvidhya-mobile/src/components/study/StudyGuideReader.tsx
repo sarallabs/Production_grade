@@ -479,10 +479,10 @@ export default function StudyGuideReader({
   const textColor = isDark ? '#FFFFFF' : '#2D3E36';
   const inDepthTextColor = isDark ? '#E2E8F0' : '#172136';
   const subtextColor = isDark ? '#A6C5B3' : '#617269';
-  const emeraldPrimary = '#147A43';
-  const activeToggleBg = isDark ? '#147A43' : '#2D3E36';
-  const toggleBg = isDark ? '#1E2B24' : '#E3EFE8';
-  const audioBarBg = isDark ? 'rgba(20, 122, 67, 0.15)' : '#E3EFE8';
+  const emeraldPrimary = '#A4C6B5';
+  const activeToggleBg = isDark ? '#2E4B3D' : '#A4C6B5';
+  const toggleBg = isDark ? '#1E2B24' : '#EAF3EE';
+  const audioBarBg = isDark ? 'rgba(164, 198, 181, 0.15)' : '#EAF3EE';
   const audioBorder = isDark ? '#2D4538' : '#CFDFD5';
 
   return (

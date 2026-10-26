@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
-import { BorderRadius } from '@/constants/theme';
+import { BorderRadius, ToolPillarColors, PillarName } from '@/constants/theme';
 
 export interface NavSegment {
   id: string;
@@ -33,6 +33,7 @@ interface TopNavBarProps {
   chapterTitle?: string;
   onChapterPress?: () => void;
   title?: string;
+  pillar?: PillarName;
 }
 
 export default function TopNavBar({
@@ -45,6 +46,7 @@ export default function TopNavBar({
   chapterTitle,
   onChapterPress,
   title,
+  pillar,
 }: TopNavBarProps) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -81,7 +83,7 @@ export default function TopNavBar({
   const pillActiveBg = isDark ? '#2E4438' : '#FFFFFF';
   const textInactive = isDark ? '#B2C7BC' : '#4D6256';
   const textActive = isDark ? '#FFFFFF' : '#1C2E24';
-  const activeBorder = isDark ? '#4ade80' : '#203328';
+  const activeBorder = (pillar && ToolPillarColors[pillar]?.primary) || (isDark ? '#4ade80' : '#203328');
   const avatarBorder = isDark ? 'rgba(255, 255, 255, 0.5)' : '#4D6256';
 
   const renderPill = (seg: NavSegment) => {

@@ -76,6 +76,7 @@ export default function ResourcesScreen() {
       <TopNavBar
         segments={RESOURCE_SEGMENTS}
         activeSegment={activeSegment}
+        pillar="resources"
         onSegmentChange={setActiveSegment}
         onBackPress={() => {
           if (router.canGoBack()) {

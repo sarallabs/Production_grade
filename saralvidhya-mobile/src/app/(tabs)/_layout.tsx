@@ -61,46 +61,50 @@ export default function TabsLayout() {
         }}
       />
 
-      {/* 2. Learn (Matches media_1791971037380.png) */}
+      {/* 2. Learn (Matches Mint #A4C6B5) */}
       <Tabs.Screen
         name="learn"
         options={{
           title: 'Learn',
-          tabBarIcon: ({ color, focused }) => (
-            <LearnIcon color={color} size={22} focused={focused} />
+          tabBarActiveTintColor: isDark ? '#A4C6B5' : '#3C7359',
+          tabBarIcon: ({ focused }) => (
+            <LearnIcon color={focused ? '#A4C6B5' : inactiveTint} size={22} focused={focused} />
           ),
         }}
       />
 
-      {/* 3. Practice (Matches media_1791971032338.png) */}
+      {/* 3. Practice (Matches Amber #D9A55C) */}
       <Tabs.Screen
         name="practice"
         options={{
           title: 'Practice',
+          tabBarActiveTintColor: '#D9A55C',
           tabBarIcon: ({ color, focused }) => (
-            <PracticeIcon color={color} size={22} focused={focused} />
+            <PracticeIcon color={focused ? '#D9A55C' : color} size={22} focused={focused} />
           ),
         }}
       />
 
-      {/* 4. Prepare */}
+      {/* 4. Prepare (Matches Terra #BE7E57) */}
       <Tabs.Screen
         name="prepare"
         options={{
           title: 'Prepare',
+          tabBarActiveTintColor: '#BE7E57',
           tabBarIcon: ({ color, focused }) => (
-            <PrepareIcon color={color} size={22} focused={focused} />
+            <PrepareIcon color={focused ? '#BE7E57' : color} size={22} focused={focused} />
           ),
         }}
       />
 
-      {/* 5. Resources */}
+      {/* 5. Resources (Matches Terra #BE7E57) */}
       <Tabs.Screen
         name="resources"
         options={{
           title: 'Resources',
+          tabBarActiveTintColor: '#BE7E57',
           tabBarIcon: ({ color, focused }) => (
-            <ResourcesIcon color={color} size={22} focused={focused} />
+            <ResourcesIcon color={focused ? '#BE7E57' : color} size={22} focused={focused} />
           ),
         }}
       />

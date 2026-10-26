@@ -407,9 +407,9 @@ export default function AssessmentView({
               letterBorder = isDark ? '#F04A45' : '#D33C30';
               letterColor = isDark ? '#FFB8B0' : '#1F2E29';
             } else if (isSelected) {
-              cardBorderColor = isDark ? '#59B87A' : '#337A52';
-              radioBorderColor = isDark ? '#59B87A' : '#337A52';
-              radioInnerColor = isDark ? '#59B87A' : '#337A52';
+              cardBorderColor = '#D9A55C';
+              radioBorderColor = '#D9A55C';
+              radioInnerColor = '#D9A55C';
             }
 
             return (
@@ -610,14 +610,10 @@ export default function AssessmentView({
                 backgroundColor: !isEvaluated
                   ? selectedOptions.length === 0
                     ? isDark
-                      ? '#1E2D25'
-                      : '#C0D5C7'
-                    : isDark
-                    ? '#B2E0C2'
-                    : '#2B634A'
-                  : isDark
-                  ? '#B2E0C2'
-                  : '#2B634A',
+                      ? '#2A2318'
+                      : '#E8DFD3'
+                    : '#D9A55C'
+                  : '#D9A55C',
               },
             ]}
             onPress={handleActionButton}
@@ -629,10 +625,8 @@ export default function AssessmentView({
                 {
                   color: !isEvaluated && selectedOptions.length === 0
                     ? isDark
-                      ? '#4D6E57'
-                      : '#6B8777'
-                    : isDark
-                    ? '#1A2921'
+                      ? '#7A6B56'
+                      : '#94836D'
                     : '#FFFFFF',
                 },
               ]}

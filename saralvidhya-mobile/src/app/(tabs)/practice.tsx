@@ -111,6 +111,7 @@ export default function PracticeScreen() {
         segments={PRACTICE_PARTS}
         activeSegment={activePart}
         onSegmentChange={(segId) => setActivePart(segId as any)}
+        pillar="practice"
         onBackPress={() => {
           if (router.canGoBack()) {
             router.back();
