@@ -5058,9 +5058,9 @@ export default function StudyTable() {
                       {/* LEFT: inline breadcrumb — "Entomology › Chapter 4: Pollination" */}
                       <div className="sv-hdr-card">
                         <span className="sv-hdr-crumb">
-                          <span className="crumb-subject">{subjectName}</span>
-                          <span className="crumb-sep">›</span>
-                          <span className="crumb-chapter">{getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}</span>
+                          <span className="crumb-subject" title={chapterName}>{chapterName}</span>
+
+
                         </span>
                       </div>
 
@@ -5175,7 +5175,7 @@ export default function StudyTable() {
                             !isMoocMode && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
                                 <span className="st-page-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', fontWeight: 500 }}>
-                                  {getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}
+                                  {chapterName}
                                 </span>
                               </div>
                             )
