@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loadCredentials, type Credential } from '@/utils/credentialsStore';
 import { cloudStorage } from '@/context/CloudStateContext';
+import { useTenant } from '@/tenant/TenantProvider';
 
 export default function UserMenu() {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const { tenantId, logout: tenantLogout } = useTenant();
   const [creds, setCreds] = useState<Credential[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -29,18 +30,20 @@ export default function UserMenu() {
   const logout = () => {
     cloudStorage.removeItem('app_authenticated');
     cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('username');
     cloudStorage.removeItem('questionnaire_completed');
     cloudStorage.removeItem('sv_video_open_counts');
+    tenantLogout();
     navigate('/login', { replace: true });
   };
 
   const switchTo = (cred: Credential) => {
-    // Log out current user then redirect to login pre-filled isn't possible,
-    // so just log out and let them sign in fresh.
     cloudStorage.removeItem('app_authenticated');
     cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('username');
     cloudStorage.removeItem('questionnaire_completed');
     cloudStorage.removeItem('sv_video_open_counts');
+    tenantLogout();
     navigate('/login', { replace: true, state: { prefill: cred.username } });
   };
 

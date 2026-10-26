@@ -61,7 +61,46 @@ function cleanLabel(s: string) {
 export interface TNode { id: string; label: string; children: TNode[] }
 
 export function buildTree(raw: string): TNode | null {
-  const lines = stripFences(raw).split('\n');
+  const trimmedRaw = stripFences(raw);
+  if (trimmedRaw.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmedRaw);
+      let id = 0;
+      const mk = (label: string): TNode => ({ id: String(id++), label, children: [] });
+      if (Array.isArray(parsed?.branches)) {
+        const rootLabel = String(
+          parsed?.chapter_meta?.unit_title || parsed?.chapter_title || parsed?.title || 'Chapter Overview'
+        )
+          .replace(/^(?:[A-Z0-9_]+\s+)?UNIT\s*[-–—]?\s*[IVX0-9]+\s*:\s*/i, '')
+          .trim();
+        const root = mk(rootLabel);
+        for (const b of parsed.branches) {
+          const bLabel = String(b?.title || b?.label || b?.name || 'Topic').replace(/^\d+\.\s*/, '').trim();
+          root.children.push(mk(bLabel));
+        }
+        return root;
+      }
+      const hierarchyRoot = parsed?.hierarchy ?? parsed;
+      if (hierarchyRoot && typeof hierarchyRoot === 'object') {
+        const rootLabel = String(
+          hierarchyRoot?.name ?? hierarchyRoot?.label ?? hierarchyRoot?.title ?? parsed?.chapter_title ?? 'Overview'
+        )
+          .replace(/^(?:[A-Z0-9_]+\s+)?UNIT\s*[-–—]?\s*[IVX0-9]+\s*:\s*/i, '')
+          .trim();
+        const root = mk(rootLabel);
+        for (const child of hierarchyRoot?.children ?? []) {
+          const cLabel = String(child?.name ?? child?.label ?? child?.title ?? 'Topic')
+            .replace(/^\d+\.\s*/, '')
+            .trim();
+          root.children.push(mk(cLabel));
+        }
+        return root;
+      }
+    } catch {
+      // fall through
+    }
+  }
+  const lines = trimmedRaw.split('\n');
   const flat: { depth: number; label: string }[] = [];
   for (const line of lines) {
     const t = line.trim();

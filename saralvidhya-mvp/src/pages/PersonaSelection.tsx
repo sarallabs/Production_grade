@@ -79,18 +79,6 @@ export default function PersonaSelection() {
                 height={132}
               />
             </div>
-            <div className="sv-breadcrumb">
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={handleBackToClass}>{className}</span>
-              {semesterName && (
-                <>
-                  <span className="sv-bc-sep">/</span>
-                  <span className="sv-bc-link">{semesterName}</span>
-                </>
-              )}
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={() => navigate('/')}>{subjectName}</span>
-            </div>
           </div>
           <div className="sv-topbar-right">
             <button className="sv-logout-btn" onClick={logout}>

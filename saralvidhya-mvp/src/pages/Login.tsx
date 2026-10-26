@@ -1,10 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
-import { useTenant, API_BASE } from "@/tenant/TenantProvider";
-import { cloudStorage, setCloudAuthContext } from "@/context/CloudStateContext";
-import universityConfig from "@/config/university_config.json";
-const logoClean = `${import.meta.env.BASE_URL}logo-clean.png`;
+import {
+  useTenant,
+  API_BASE,
+  getCloudPublicImageUrl,
+  getCloudBoardLogoUrl,
+  getCloudUiCopy,
+} from '@/tenant/TenantProvider';
+import { cloudStorage, setCloudAuthContext } from '@/context/CloudStateContext';
+import { trackAuthEvent } from '@/utils/analytics';
+import universityConfig from '@/config/university_config.json';
 import "./Login.css";
 
 function Login() {
@@ -19,6 +25,8 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const uiCopy = getCloudUiCopy();
+  const logoClean = getCloudPublicImageUrl('/logo-clean.png');
   const resolvedCollege = (() => {
     const boardLogos = ((universityConfig as any).boardLogos || {}) as Record<string, string>;
     const defaultLogoFile = ((universityConfig as any).defaultBoardLogo || "logo-angrau.png") as string;
@@ -32,10 +40,12 @@ function Login() {
     ).toLowerCase();
     const activeId = (tenantId || queryTenant || "").toLowerCase();
 
+    const cloudBoardLogo = activeId ? getCloudBoardLogoUrl(activeId) : undefined;
     const customLogo =
       tenant?.logoUrl ||
       tenant?.branding?.logoUrl ||
-      (tenant as any)?.assets?.logoUrl;
+      (tenant as any)?.assets?.logoUrl ||
+      cloudBoardLogo;
     if (customLogo) {
       const resolvedId = (tenant?.id || activeId || "college").toLowerCase();
       return {
@@ -81,6 +91,7 @@ function Login() {
       cloudStorage.removeItem("username");
     }
   }, []);
+    trackAuthEvent('auth.login_view', { tenantId: tenantId || 'root' }, 'started');
 
   // LOGIN FUNCTION
   const handleStudentLogin = async (e: React.FormEvent) => {
@@ -93,6 +104,7 @@ function Login() {
     }
 
     setLoading(true);
+    trackAuthEvent('auth.login_attempt', { tenantId: tenantId || 'root' }, 'started');
 
     // If a tenant is active, authenticate against v2 registry backend
     if (tenantId) {
@@ -100,6 +112,7 @@ function Login() {
         const ok = await tenantLogin(studentPassword);
         if (ok) {
           cloudStorage.removeItem("sv_video_open_counts");
+          trackAuthEvent('auth.login_success', { tenantId }, 'success');
           cloudStorage.setItem("app_authenticated", "true");
           cloudStorage.setItem("app_role", "student");
           const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
@@ -123,11 +136,13 @@ function Login() {
           });
           return;
         } else {
+          trackAuthEvent('auth.login_failure', { tenantId, reason: 'Incorrect password' }, 'failure');
           setStudentError("Incorrect password");
           setLoading(false);
           return;
         }
       } catch (err: any) {
+        trackAuthEvent('auth.login_failure', { tenantId, reason: err.message || 'Error' }, 'failure');
         setStudentError(err.message || "Incorrect password");
         setLoading(false);
         return;
@@ -265,6 +280,9 @@ function Login() {
                     placeholder=""
                     className="sv-password-input"
                     value={studentPassword}
+                    onFocus={() =>
+                      trackAuthEvent('auth.password_focus', { tenantId: tenantId || 'root' }, 'started')
+                    }
                     onChange={(e) => {
                       setStudentPassword(e.target.value);
                       setStudentError("");
@@ -298,7 +316,9 @@ function Login() {
                   className="sv-login-button"
                   disabled={loading}
                 >
-                  {loading ? "Entering..." : "Enter"}
+                  {loading
+                    ? uiCopy.signingInButton || 'Entering...'
+                    : uiCopy.signInButton || 'Enter'}
                 </button>
 
                 {studentError && (

@@ -154,10 +154,18 @@ firebase-service-account.json
 # ProjectBrain (local dev only)
 .projectbrain*
 *.projectbrain*
+.projectbrain.json
+.projectbrain_graph.json
+.projectbrain_dossier.md
+.projectbrain_patch.diff
+.projectbrain_ledger.json
 test_projectbrain.json
 project_brain.py
+.mcp.json
 .agents/
-
+AGENTS.md
+CLAUDE.md
+.claude/settings.json
 # CSV / Excel files
 *.csv
 *.xls

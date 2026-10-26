@@ -76,8 +76,20 @@ Thumbs.db
 # ProjectBrain
 .projectbrain*
 *.projectbrain*
+**/.projectbrain*
 project_brain.py
+**/project_brain.py
 test_projectbrain.json
-
+**/test_projectbrain.json
+.mcp.json
+**/.mcp.json
+.agents/
+**/.agents/
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+.claude/settings.json
+**/.claude/settings.json
 # Scratch directories
 **/scratch_*

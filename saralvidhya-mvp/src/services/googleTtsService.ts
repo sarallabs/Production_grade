@@ -15,7 +15,7 @@ import {
   CLOUD_API_BASE,
   getCloudAuthHeaders,
 } from '@/context/CloudStateContext';
-
+import { detectTenantId } from '@/tenant/TenantProvider';
 const GOOGLE_API_KEY: string =
   (import.meta as any).env?.VITE_GOOGLE_API_KEY ??
   (import.meta as any).env?.VITE_GEMINI_API_KEY ??
@@ -156,43 +156,15 @@ async function synthesizeChunk(
   const gender = voice.ssmlGender ?? 'FEMALE';
   const selectedVoiceName = voice.name ?? getVoiceNameForGender(voice, gender === 'MALE');
 
-  // 1. Try Cloud Run /v2/t/:tenant/ai/tts endpoint (with GCS caching)
-  const activeTenantId = cloudStorage.getItem('current_tenant_id');
-  if (activeTenantId) {
-    try {
-      const controller = new AbortController();
-      inflightControllers.add(controller);
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`, {
-        method: 'POST',
-        headers: getCloudAuthHeaders(activeTenantId),
-        body: JSON.stringify({
-          text,
-          languageCode: voice.languageCode,
-          voiceGender: gender === 'MALE' ? 'male' : 'female',
-        }),
-        signal: controller.signal,
-      }).finally(() => {
-        clearTimeout(timeout);
-        inflightControllers.delete(controller);
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.audioContent) {
-          const binary = atob(data.audioContent);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const blob = new Blob([bytes], { type: 'audio/mp3' });
-          return { blobUrl: URL.createObjectURL(blob), wordTimings: [] };
-        }
-        if (data.audioUrl) {
-          return { blobUrl: data.audioUrl, wordTimings: [] };
-        }
-      }
-    } catch {
-      // fall through to direct TTS or browser speechSynthesis
-    }
-  }
+  const activeTenantId = detectTenantId() || cloudStorage.getItem('current_tenant_id');
+
+  const escapeXml = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
 
   // Build SSML with <mark> tags before each word for timepoint tracking
   const words = text.split(/(\s+)/);
@@ -204,7 +176,7 @@ async function synthesizeChunk(
     if (part.trim()) {
       const markName = `w${charCursor}`;
       markMap[markName] = charCursor;
-      ssmlParts += `<mark name="${markName}"/>${part}`;
+      ssmlParts += `<mark name="${markName}"/>${escapeXml(part)}`;
     } else {
       ssmlParts += part;
     }
@@ -227,43 +199,62 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
-  const targetEndpoint = activeTenantId
-    ? `${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`
-    : TTS_ENDPOINT;
+  let res: Response | null = null;
 
-  const requestHeaders: Record<string, string> = activeTenantId
-    ? getCloudAuthHeaders(activeTenantId)
-    : { 'Content-Type': 'application/json' };
-
-  const requestPayload = activeTenantId
-    ? {
-        ssml: ssmlParts,
-        languageCode: voice.languageCode,
-        voiceName: selectedVoiceName,
-        ssmlGender: gender,
-        speakingRate: 1.0,
-        enableTimePointing: true,
+  // 1. Primary: Cloud Run server-side TTS proxy (/v2/t/:tenant/ai/tts) with GCS caching + SSML timepoints
+  if (activeTenantId) {
+    try {
+      const controller = new AbortController();
+      inflightControllers.add(controller);
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      const cloudRes = await fetch(`${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`, {
+        method: 'POST',
+        headers: getCloudAuthHeaders(activeTenantId),
+        credentials: 'include',
+        body: JSON.stringify({
+          ssml: ssmlParts,
+          languageCode: voice.languageCode,
+          voiceName: selectedVoiceName,
+          ssmlGender: gender,
+          speakingRate: 1.0,
+          enableTimePointing: true,
+        }),
+        signal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timeout);
+        inflightControllers.delete(controller);
+      });
+      if (cloudRes.ok) {
+        res = cloudRes;
       }
-    : body;
+    } catch {
+      // fall through to direct TTS if key configured
+    }
+  }
 
-  const controller = new AbortController();
-  inflightControllers.add(controller);
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch(targetEndpoint, {
-    method: 'POST',
-    headers: requestHeaders,
-    body: JSON.stringify(requestPayload),
-    signal: controller.signal,
-  }).finally(() => {
-    clearTimeout(timeout);
-    inflightControllers.delete(controller);
-  });
+  // 2. Fallback: Direct Google Cloud TTS REST endpoint if VITE_GOOGLE_API_KEY is present
+  if (!res) {
+    if (!GOOGLE_API_KEY) {
+      throw new Error('Cloud Run TTS unavailable and no local VITE_GOOGLE_API_KEY configured');
+    }
+    const controller = new AbortController();
+    inflightControllers.add(controller);
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    res = await fetch(TTS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    }).finally(() => {
+      clearTimeout(timeout);
+      inflightControllers.delete(controller);
+    });
+  }
 
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Cloud TTS error ${res.status}: ${err}`);
   }
-
   const data = await res.json();
   const base64Audio: string = data.audioContent;
   if (!base64Audio) throw new Error('No audioContent in response');
@@ -726,9 +717,8 @@ export function googleTtsSpeak(
   };
 
   const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy') || GOOGLE_API_KEY.trim().startsWith('AQ.');
-  const hasCloudTenant = Boolean(cloudStorage.getItem('current_tenant_id'));
-  if ((!isGcpKey && !hasCloudTenant) || opts?.raw) {
-    isStopped = false;
+  const hasCloudTenant = Boolean(detectTenantId() || cloudStorage.getItem('current_tenant_id'));
+  if (!isGcpKey && !hasCloudTenant) {
     isPlaying = true;
     onDoneCallback = null;
     onProgressCallback = null;

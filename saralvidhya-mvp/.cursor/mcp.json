@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "projectbrain": {
+      "command": "projectbrain-mcp",
+      "args": [
+        "D:\\SV-Medha_ production_grade\\saralvidhya-mvp"
+      ]
+    }
+  }
+}

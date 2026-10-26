@@ -15,6 +15,9 @@ import {
   ANU_PHYSICS_MOCKED_QUESTIONS,
   ANU_CHARACTERIZATION_MOCKED_QUESTIONS,
 } from "@/pages/PreviousYearQuestions";
+import { getFallbackTenantId } from '@/tenant/TenantProvider';
+import { registryClient } from '@/data/registryClient';
+import { trackCloudEvent } from '@/utils/analytics';
 
 export interface MockQuestion {
   id: string;
@@ -368,16 +371,30 @@ export function getTemporaryHardcodedQuestions(subjectId: string, unitNumbers: n
   return result.slice(0, 50);
 }
 
+interface ScannedPageItem {
+  id: string;
+  label: string;
+  dataUrl?: string;
+  timestamp: string;
+}
+
+const DEFAULT_SCANNED_PAGES: ScannedPageItem[] = [];
+
 /**
  * DescriptiveQuestionCard Component
- * Renders short-answer, explanatory, and essay questions with uniform Forest/Sage green theme,
- * pre-filled model answer for demo, live word counter, keyword matching, and grading rubric.
+ * Renders short-answer, explanatory, and essay questions with the warm cream and terracotta
+ * academic theme matching the Exam Prep mockup.
  */
 function DescriptiveQuestionCard({
   question,
   qIdx,
   textAnswer,
   onAnswerChange,
+  onClearAnswer,
+  onNextQuestion,
+  onPrevQuestion,
+  hasPrev,
+  isLastQuestion,
   isSubmitted,
   expandedRubric,
   onToggleRubric,
@@ -386,24 +403,23 @@ function DescriptiveQuestionCard({
   qIdx: number;
   textAnswer: string;
   onAnswerChange: (text: string) => void;
+  onClearAnswer?: () => void;
+  onNextQuestion?: () => void;
+  onPrevQuestion?: () => void;
+  hasPrev?: boolean;
+  isLastQuestion?: boolean;
   isSubmitted: boolean;
   expandedRubric: boolean;
   onToggleRubric: () => void;
 }) {
-  const sectionColors = {
-    part_a: { label: "Part A • Short Answer", bg: "#ECFDF5", text: "#065F46", border: "#A7F3D0" },
-    part_b: { label: "Part B • Analytical & Explanatory", bg: "#F0FDF4", text: "#166534", border: "#BBF7D0" },
-    part_c: { label: "Part C • Comprehensive Essay", bg: "#F4F8F6", text: "#2D3E36", border: "#C6DFD4" },
-  };
-
-  const sec = (question.section?.toLowerCase().includes("part_a") || question.sectionName?.toLowerCase().includes("part a"))
-    ? sectionColors.part_a
-    : (question.section?.toLowerCase().includes("part_b") || question.sectionName?.toLowerCase().includes("part b"))
-      ? sectionColors.part_b
-      : sectionColors.part_c;
+  const [inputMode, setInputMode] = useState<"type" | "scan" | "draw" | "image">("type");
+  const [scannedPages, setScannedPages] = useState<ScannedPageItem[]>(DEFAULT_SCANNED_PAGES);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const wordCount = textAnswer.trim() ? textAnswer.trim().split(/\s+/).length : 0;
-  const charCount = textAnswer.length;
+  const marks = question.marks || 2;
+  const targetWordRange =
+    marks <= 2 ? "40–60" : marks <= 5 ? "120–180" : "250–350";
 
   const matchedKeywords = useMemo(() => {
     if (!question.keywords || question.keywords.length === 0) return [];
@@ -414,142 +430,524 @@ function DescriptiveQuestionCard({
     }));
   }, [question.keywords, textAnswer]);
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file, idx) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        setScannedPages((prev) => [
+          ...prev,
+          {
+            id: `scan-${Date.now()}-${idx}`,
+            label: file.name || `Page ${prev.length + 1}`,
+            dataUrl: typeof reader.result === "string" ? reader.result : undefined,
+            timestamp: "just now",
+          },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = "";
+  };
+
+  const handleAddSimulatedOrFilePage = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      setScannedPages((prev) => [
+        ...prev,
+        {
+          id: `scan-${Date.now()}`,
+          label: `Page ${prev.length + 1}`,
+          timestamp: "just now",
+        },
+      ]);
+    }
+  };
+
+  const handleRemovePage = (id: string) => {
+    setScannedPages((prev) => prev.filter((p) => p.id !== id));
+  };
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-      {/* Question Metadata Header */}
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "10px" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
-          {/* Section Pill */}
-          <span
-            style={{
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
-              padding: "4px 10px",
-              borderRadius: "6px",
-              background: sec.bg,
-              color: sec.text,
-              border: `1px solid ${sec.border}`,
-            }}
-          >
-            {question.sectionName || sec.label}
-          </span>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        style={{ display: "none" }}
+        onChange={handleFileUpload}
+      />
 
-          {/* Marks Pill */}
-          <span
-            style={{
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              padding: "4px 10px",
-              borderRadius: "6px",
-              background: "#2D3E36",
-              color: "#FFFFFF",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "4px",
-            }}
-          >
-            <span>★</span> {question.marks} {question.marks === 1 ? "Mark" : "Marks"}
-          </span>
-        </div>
-      </div>
-
-      {/* Question Text */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-        <span
-          aria-label="Question"
-          style={{
-            flexShrink: 0,
-            width: "30px",
-            height: "30px",
-            borderRadius: "8px",
-            background: "#2D3E36",
-            color: "#FFFFFF",
-            fontWeight: 800,
-            fontSize: "0.95rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: "12px",
-          }}
-        >
-          Q
-        </span>
+      {/* Question Header Row: Q Badge + Question Text + Marks on Right */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "16px",
+        }}
+      >
         <div
           style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "12px",
             flex: 1,
             minWidth: 0,
-            fontSize: "1.08rem",
-            fontWeight: 600,
-            color: "#1E2923",
-            lineHeight: "1.65",
-            background: "#FAFDFB",
-            padding: "16px 20px",
-            borderRadius: "12px",
-            border: "1px solid #E0EDE5",
           }}
         >
-          <MarkdownView content={question.text} />
+          <span
+            aria-label={`Question ${qIdx + 1}`}
+            style={{
+              flexShrink: 0,
+              width: "30px",
+              height: "30px",
+              borderRadius: "8px",
+              background: "#BD7D52",
+              color: "#FFFFFF",
+              fontWeight: 800,
+              fontSize: "12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              marginTop: "1px",
+            }}
+          >
+            Q{qIdx + 1}
+          </span>
+          <div
+            style={{
+              flex: 1,
+              minWidth: 0,
+              fontSize: "16px",
+              fontWeight: 700,
+              color: "#1E2822",
+              lineHeight: 1.45,
+            }}
+          >
+            <MarkdownView content={question.text} />
+          </div>
         </div>
-      </div>
 
-      {/* Student Answer Box */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
         <span
-          aria-label="Answer"
           style={{
             flexShrink: 0,
-            width: "30px",
-            height: "30px",
-            borderRadius: "8px",
-            background: "#467360",
-            color: "#FFFFFF",
-            fontWeight: 800,
-            fontSize: "0.95rem",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: "12px",
+            fontSize: "12px",
+            fontWeight: 600,
+            color: "#7A807A",
+            marginTop: "4px",
+            whiteSpace: "nowrap",
           }}
         >
-          A
+          {marks} {marks === 1 ? "mark" : "marks"}
         </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
+      </div>
 
-        {/* Textarea */}
+      {/* 4 Answer Mode Pill Tabs */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          flexWrap: "wrap",
+          marginTop: "2px",
+        }}
+      >
+        {([
+          { id: "type", label: "Type", icon: "⌨" },
+          { id: "scan", label: "Scan written answer", icon: "📷" },
+          { id: "draw", label: "Draw", icon: "✏️" },
+          { id: "image", label: "Image", icon: "🖼️" },
+        ] as const).map((tab) => {
+          const isActive = inputMode === tab.id;
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => {
+                setInputMode(tab.id);
+                if (tab.id === "scan" || tab.id === "image") {
+                  fileInputRef.current?.click();
+                }
+              }}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                background: isActive ? "#FAF2E9" : "#FFFFFF",
+                border: isActive ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                color: isActive ? "#A86334" : "#38423B",
+                fontSize: "12px",
+                fontWeight: isActive ? 700 : 600,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span style={{ fontSize: "12px", lineHeight: 1 }}>{tab.icon}</span>
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Textarea Input */}
+      <div>
         <textarea
           value={textAnswer}
           onChange={(e) => onAnswerChange(e.target.value)}
-          placeholder="Type or format your descriptive answer here..."
-          rows={question.marks > 5 ? 12 : question.marks > 2 ? 8 : 5}
+          disabled={isSubmitted}
+          placeholder="Type your answer here..."
+          rows={marks > 5 ? 6 : marks > 2 ? 4 : 3}
           style={{
             width: "100%",
             boxSizing: "border-box",
             borderRadius: "12px",
-            border: "1.5px solid #C6DFD4",
+            border: "1px solid #DFD9CE",
             background: "#FFFFFF",
-            padding: "16px 18px",
-            fontSize: "0.95rem",
-            lineHeight: "1.65",
-            color: "#1E2923",
+            padding: "14px 16px",
+            fontSize: "13.5px",
+            lineHeight: 1.6,
+            color: "#1E2822",
             fontFamily: "inherit",
             resize: "vertical",
             outline: "none",
-            transition: "border 0.2s ease, box-shadow 0.2s ease",
-            boxShadow: "inset 0 1px 3px rgba(0, 0, 0, 0.02)",
+            transition: "border-color 0.18s ease, box-shadow 0.18s ease",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#467360";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(70, 115, 96, 0.12)";
+            e.currentTarget.style.borderColor = "#C88A5A";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(200, 138, 90, 0.12)";
           }}
           onBlur={(e) => {
-            e.currentTarget.style.borderColor = "#C6DFD4";
-            e.currentTarget.style.boxShadow = "inset 0 1px 3px rgba(0, 0, 0, 0.02)";
+            e.currentTarget.style.borderColor = "#DFD9CE";
+            e.currentTarget.style.boxShadow = "none";
           }}
         />
+      </div>
+
+      {/* Handwritten / Scanned Pages Strip */}
+      <div>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginTop: "2px",
+          }}
+        >
+          {scannedPages.map((page) => (
+            <div
+              key={page.id}
+              onClick={() => !isSubmitted && handleRemovePage(page.id)}
+              title="Tap to remove or re-take page"
+              style={{
+                width: "76px",
+                height: "96px",
+                borderRadius: "10px",
+                border: "1px solid #E2DDD3",
+                background: "#FCFBF9",
+                position: "relative",
+                cursor: isSubmitted ? "default" : "pointer",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                padding: "10px 8px",
+                boxSizing: "border-box",
+                boxShadow: "0 1px 3px rgba(30, 40, 34, 0.04)",
+              }}
+            >
+              {!isSubmitted && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-6px",
+                    right: "-6px",
+                    width: "18px",
+                    height: "18px",
+                    borderRadius: "50%",
+                    background: "#1E2822",
+                    color: "#FFFFFF",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+                  }}
+                >
+                  ✕
+                </span>
+              )}
+              {page.dataUrl ? (
+                <img
+                  src={page.dataUrl}
+                  alt={page.label}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "6px",
+                  }}
+                />
+              ) : (
+                <svg
+                  width="100%"
+                  height="100%"
+                  viewBox="0 0 60 76"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <line x1="4" y1="12" x2="56" y2="12" stroke="#ECE7DF" strokeWidth="1" />
+                  <line x1="4" y1="24" x2="56" y2="24" stroke="#ECE7DF" strokeWidth="1" />
+                  <line x1="4" y1="36" x2="56" y2="36" stroke="#ECE7DF" strokeWidth="1" />
+                  <line x1="4" y1="48" x2="56" y2="48" stroke="#ECE7DF" strokeWidth="1" />
+                  <line x1="4" y1="60" x2="56" y2="60" stroke="#ECE7DF" strokeWidth="1" />
+                  <path
+                    d="M6 10 Q 11 7, 16 10 T 26 10 T 36 10 T 48 10"
+                    stroke="#8C96AA"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 21 Q 12 18, 18 21 T 30 21 T 44 21"
+                    stroke="#8C96AA"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 33 Q 10 30, 15 33 T 25 33 T 38 33 T 50 33"
+                    stroke="#8C96AA"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 45 Q 11 42, 16 45 T 28 45 T 40 45"
+                    stroke="#8C96AA"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  <path
+                    d="M6 57 Q 11 54, 16 57 T 26 57 T 35 57"
+                    stroke="#8C96AA"
+                    strokeWidth="1.4"
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              )}
+            </div>
+          ))}
+
+          {!isSubmitted && (
+            <button
+              type="button"
+              onClick={handleAddSimulatedOrFilePage}
+              style={{
+                width: "76px",
+                height: "96px",
+                borderRadius: "10px",
+                border: "1.5px dashed #C8C1B4",
+                background: "#F7F4EE",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
+                cursor: "pointer",
+                color: "#6E766E",
+                fontSize: "11px",
+                fontWeight: 600,
+                padding: "6px",
+                boxSizing: "border-box",
+              }}
+            >
+              <span style={{ fontSize: "18px", lineHeight: 1, color: "#7A807A" }}>+</span>
+              <span>Add page</span>
+            </button>
+          )}
+        </div>
+
+        {/* Status & Word Count Helper Lines */}
+        <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "3px" }}>
+          {scannedPages.length > 0 && (
+            <div style={{ fontSize: "12px", color: "#6E766E" }}>
+              <strong style={{ color: "#A86334", fontWeight: 700 }}>
+                {scannedPages.length} handwritten{" "}
+                {scannedPages.length === 1 ? "page" : "pages"}
+              </strong>{" "}
+              scanned with your device camera · just now · tap a page to re-take or remove
+            </div>
+          )}
+          <div style={{ fontSize: "12px", color: "#6E766E" }}>
+            <strong style={{ color: "#A86334", fontWeight: 700 }}>
+              {wordCount} {wordCount === 1 ? "word" : "words"}
+            </strong>{" "}
+            · aim {targetWordRange} words for a {marks}-mark answer
+          </div>
         </div>
       </div>
+
+      {/* Submitted Model Answer & Rubric Collapsible */}
+      {isSubmitted && (question.modelAnswer || (question.rubric && question.rubric.length > 0)) && (
+        <div
+          style={{
+            marginTop: "6px",
+            background: "#FAF6F0",
+            border: "1px solid #E5C8AF",
+            borderRadius: "12px",
+            padding: "14px 18px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: expandedRubric ? "10px" : 0,
+            }}
+          >
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#9A542A" }}>
+              {"Official Model Answer & Evaluation Rubric"}
+            </span>
+            <button
+              type="button"
+              onClick={onToggleRubric}
+              style={{
+                background: "none",
+                border: "none",
+                color: "#B46530",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              {expandedRubric ? "Hide Rubric ▲" : "View Model Answer ▼"}
+            </button>
+          </div>
+          {expandedRubric && (
+            <div style={{ fontSize: "13px", color: "#1E2822", lineHeight: 1.6 }}>
+              {question.modelAnswer && <MarkdownView content={question.modelAnswer} />}
+              {matchedKeywords.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
+                  {matchedKeywords.map((k, idx) => (
+                    <span
+                      key={idx}
+                      style={{
+                        fontSize: "11px",
+                        fontWeight: 600,
+                        padding: "3px 8px",
+                        borderRadius: "6px",
+                        background: k.matched ? "#E6F4EA" : "#F3EFE8",
+                        color: k.matched ? "#1E6F43" : "#6E766E",
+                      }}
+                    >
+                      {k.matched ? "✓ " : ""}
+                      {k.keyword}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Card Footer Row: Clear Answer (left) + Draft saved & Next (right) */}
+      {onNextQuestion && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingTop: "6px",
+            marginTop: "2px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClearAnswer?.();
+            }}
+            style={{
+              padding: "7px 16px",
+              borderRadius: "999px",
+              border: "1px solid #DFD9CE",
+              background: "#FFFFFF",
+              color: "#38423B",
+              fontSize: "12px",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Clear Answer
+          </button>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#6E766E",
+              }}
+            >
+              ✓ Draft saved
+            </span>
+
+            {hasPrev && onPrevQuestion && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onPrevQuestion();
+                }}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "999px",
+                  border: "1px solid #DFD9CE",
+                  background: "#FAF8F4",
+                  color: "#38423B",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                ← Prev
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onNextQuestion();
+              }}
+              style={{
+                padding: "8px 22px",
+                borderRadius: "999px",
+                border: "none",
+                background: "#BD7D52",
+                color: "#FFFFFF",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+                boxShadow: "0 2px 8px rgba(189, 125, 82, 0.25)",
+              }}
+            >
+              {isLastQuestion ? "Submit →" : "Next →"}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -616,9 +1014,10 @@ export default function MockTestView({
   }, [completedUnitNumbers]);
 
   const [selectedUnitNumbers, setSelectedUnitNumbers] = useState<number[]>(() => {
-    return isPrepExam ? [chapterNumber] : (completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1]);
+    return isPrepExam ? [chapterNumber || 1] : (completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1]);
   });
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number>(10);
+  const [isTimedMode, setIsTimedMode] = useState<boolean>(true);
   const numSelectedUnits = selectedUnitNumbers.length;
   const option1Count = 10;
   const option2Count = 20;
@@ -755,7 +1154,7 @@ export default function MockTestView({
   const handleStartExam = async () => {
     setLoading(true);
 
-    const unitsToFetch = selectedUnitNumbers.length > 0 ? selectedUnitNumbers : [1];
+    const unitsToFetch = isPrepExam ? [chapterNumber || 1] : (selectedUnitNumbers.length > 0 ? selectedUnitNumbers : [1]);
     let combined: MockQuestion[] = [];
 
     try {
@@ -839,7 +1238,7 @@ export default function MockTestView({
               sectionName: q.section_name || q.sectionName,
               bloomLevel: q.bloom_level || q.bloomLevel,
               mindmapPath: q.mindmap_path || q.mindmapPath,
-              modelAnswer: q.model_answer || q.modelAnswer,
+              modelAnswer: isPrepExam ? "" : (q.model_answer || q.modelAnswer),
               rubric: q.rubric,
               keywords: q.keywords,
               hasAsciiDiagram: q.has_ascii_diagram || q.hasAsciiDiagram,
@@ -851,14 +1250,44 @@ export default function MockTestView({
           }
 
           if (isPrepExam || isPreFinalTest) {
-            // Descriptive-only: no question bank MCQs, descriptive questions first.
             const descriptive = mergedExam.filter(
               (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
             );
             const others = mergedExam.filter(
               (q) => !q.modelAnswer && q.type !== "short_answer" && q.type !== "long_answer" && q.type !== "descriptive"
             );
-            combined = [...combined, ...descriptive, ...others];
+            let unitPool = [...descriptive, ...others];
+            if (unitPool.length === 0) {
+              try {
+                const markdown = await getResourceContent(subjectId, unitNum, "question_bank.md", persona as any);
+                if (markdown && markdown.trim().length > 0 && !markdown.includes("Content not available")) {
+                  const qbEntries = parseQuestionBankMarkdown(markdown, subjectId, subjectName, unitNum, chapterName);
+                  unitPool = qbEntries.map((q, idx) => {
+                    const marks = idx < 4 ? 2 : idx < 8 ? 5 : 10;
+                    const secName =
+                      marks <= 2
+                        ? "PART A · SHORT ANSWER QUESTIONS"
+                        : marks <= 5
+                        ? "PART B · ANALYTICAL QUESTIONS"
+                        : "PART C · LONG ANSWER QUESTIONS";
+                    return {
+                      id: `prep-qb-${unitNum}-${idx}`,
+                      text: q.question,
+                      type: marks <= 2 ? "short_answer" : "long_answer",
+                      marks,
+                      section: secName,
+                      sectionName: secName,
+                      modelAnswer: "",
+                      chapter: q.chapterName || chapterName,
+                      unitNumber: unitNum,
+                    } as MockQuestion;
+                  });
+                }
+              } catch (err) {
+                console.error(`Failed to load fallback question bank for unit ${unitNum}`, err);
+              }
+            }
+            combined = [...combined, ...unitPool];
           } else {
             let parsedQBank: MockQuestion[] = [];
             try {
@@ -895,33 +1324,97 @@ export default function MockTestView({
           if (validDbQuestions.length > 0) {
             combined = padToCount(validDbQuestions, subjectId, targetCount);
           } else {
-            const temp = getTemporaryHardcodedQuestions(subjectId, unitsToFetch, chapterName);
+            let cloudGenerated: MockQuestion[] = [];
+            try {
+              const bank = await registryClient.getPracticeFallback(
+                getFallbackTenantId(),
+                subjectId
+              );
+              const tplMap = bank?.mockTestTemplates || {};
+              const normSub = (subjectId || '').toLowerCase();
+              const catKey =
+                normSub.includes('physics') || normSub.includes('characterization')
+                  ? 'physics'
+                  : normSub.includes('management')
+                  ? 'management'
+                  : 'default';
+              const catObj = tplMap[catKey] || tplMap.default || {};
+              let qIdx = 1;
+              for (const uNum of unitsToFetch) {
+                const uList = catObj[String(uNum)] || catObj['1'] || [];
+                for (let i = 0; i < uList.length; i++) {
+                  const t = uList[i];
+                  cloudGenerated.push({
+                    id: `cloud-mt-${uNum}-${qIdx++}`,
+                    text: t.text,
+                    options: t.options || [],
+                    correctAnswers: t.correctAnswers || [0],
+                    type: t.type === 'msq' ? 'msq' : 'mcq',
+                    explanation: t.explanation || '',
+                    marks: t.marks || 1,
+                    section: `Unit ${uNum} · ${t.type === 'msq' ? 'MSQ' : 'MCQ'}`,
+                    chapter: `Unit ${uNum} Content`,
+                    unitNumber: uNum,
+                  });
+                }
+              }
+            } catch {
+              // fallback below if offline
+            }
+            const temp =
+              cloudGenerated.length > 0
+                ? cloudGenerated
+                : getTemporaryHardcodedQuestions(subjectId, unitsToFetch, chapterName);
             combined = padToCount(temp, subjectId, targetCount);
           }
         }
       }
 
-      const finalQuestions = combined.map((q) => ({
+      const slicedQuestions = isPrepExam
+        ? combined.slice(0, selectedQuestionCount)
+        : combined;
+
+      const finalQuestions = slicedQuestions.map((q) => ({
         ...q,
         section: q.section || examTitle,
       }));
 
       setQuestions(finalQuestions);
-
-      // Student answer boxes start empty; the official model answer is shown
-      // separately in the rubric / model-answer section.
       setTextAnswers({});
 
       const hasDescriptive = finalQuestions.some(
         (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
       );
-      const totalSeconds = hasDescriptive
-        ? 120 * 60 // 2 hours for standard university examination
+      const prepSeconds =
+        selectedQuestionCount <= 10
+          ? 25 * 60
+          : selectedQuestionCount <= 12
+          ? 40 * 60
+          : 60 * 60;
+      const totalSeconds = isPrepExam
+        ? prepSeconds
+        : hasDescriptive
+        ? 120 * 60
         : (isPreFinalTest ? 3600 : Math.max(15 * 60, selectedQuestionCount * 120));
       setDurationSeconds(totalSeconds);
       setSecondsLeft(totalSeconds);
       setCurrentQuestionIdx(0);
-      setTimerRunning(true);
+      setTimerRunning(isPrepExam ? isTimedMode : true);
+      trackCloudEvent(
+        'mock_test.start',
+        {
+          category: 'assessment',
+          subjectId,
+          chapterId: `chapter_${String(chapterNumber || 1).padStart(2, '0')}`,
+          chapterNumber,
+          toolId: isPreFinalTest ? 'certification_exam' : isPrepExam ? 'prep_exam' : 'mock_test',
+          persona,
+          total: finalQuestions.length,
+          status: 'started',
+          label: examTitle,
+        },
+        true
+      );
     } catch (err) {
       console.error("Error starting exam:", err);
       const temp = getTemporaryHardcodedQuestions(subjectId, unitsToFetch, chapterName);
@@ -932,6 +1425,12 @@ export default function MockTestView({
     }
   };
 
+  useEffect(() => {
+    if (isPrepExam) {
+      setSelectedUnitNumbers([chapterNumber || 1]);
+      setShowSetupScreen(true);
+    }
+  }, [isPrepExam, subjectId, chapterNumber]);
   useEffect(() => {
     if (!timerRunning || secondsLeft <= 0) return;
     const interval = setInterval(() => {
@@ -1011,8 +1510,18 @@ export default function MockTestView({
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh", background: "#faf8fb" }}>
-        <p style={{ color: isGreenTheme ? "#16a34a" : "#c026d3", fontWeight: 600, fontSize: "1.1rem" }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100%",
+          height: "100%",
+          background: "#F8F5EE",
+          fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+        }}
+      >
+        <p style={{ color: "#9A542A", fontWeight: 700, fontSize: "1rem" }}>
           Preparing {examTitle} questions...
         </p>
       </div>
@@ -1021,404 +1530,528 @@ export default function MockTestView({
 
   if (showSetupScreen) {
     if (isPrepExam) {
+      const prepCountOptions = [
+        { count: 10, timeLabel: "≈ 25 min" },
+        { count: 12, timeLabel: "≈ 40 min" },
+        { count: 20, timeLabel: "≈ 60 min" },
+      ];
+
       return (
         <div
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
             width: "100%",
             height: "100%",
             minHeight: 0,
-            background: "#ffffff",
-            padding: "16px 24px 28px",
-            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+            background: "#F8F5EE",
+            fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif",
             boxSizing: "border-box",
             overflowY: "auto",
+            color: "#1E2822",
           }}
         >
-          {/* Back to Study Table */}
-          <div style={{ width: "100%", maxWidth: "1020px", marginBottom: "12px" }}>
-            <button
-              onClick={onQuit}
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                background: "transparent",
-                border: "none",
-                color: "#64748b",
-                fontWeight: 600,
-                fontSize: "0.95rem",
-                cursor: "pointer",
-                padding: "4px 0",
-                transition: "color 0.2s ease",
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.color = "#1e293b")}
-              onMouseOut={(e) => (e.currentTarget.style.color = "#64748b")}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              Back to Study Table
-            </button>
+          {/* Top Sub-Header Bar: "{Subject Name} › Exam Prep" */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "10px 26px",
+              background: "#FFFFFF",
+              borderBottom: "1px solid #E6E0D4",
+              flexShrink: 0,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px" }}>
+              <span style={{ fontWeight: 800, color: "#1E2822" }}>
+                {subjectName || "Subject"}
+              </span>
+              <span style={{ color: "#949A94" }}>›</span>
+              <span style={{ color: "#6E766E", fontWeight: 500 }}>Exam Prep</span>
+            </div>
           </div>
 
-          {/* Main Card Container with Sage Background matching reference */}
+          {/* Centered Main Container */}
+          {/* Centered Main Container — wider & single-screen fit */}
           <div
             style={{
               width: "100%",
-              maxWidth: "1020px",
-              background: "#cedcd3",
-              border: "1.5px solid rgba(79, 123, 100, 0.28)",
-              borderRadius: "24px",
-              boxShadow: "0 12px 36px rgba(45, 62, 54, 0.08)",
-              padding: "28px 32px 34px",
+              maxWidth: "1060px",
+              margin: "10px auto 14px",
+              padding: "0 24px",
               boxSizing: "border-box",
             }}
           >
-            {/* Header: Icon, Title & All the best! Badge */}
             <div
               style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "26px",
-              }}
-            >
-              {/* Icon & Title */}
-              <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-                <div
-                  style={{
-                    width: "48px",
-                    height: "48px",
-                    background: "#dfece4",
-                    border: "1.5px solid #a3c5b5",
-                    borderRadius: "14px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    boxShadow: "0 2px 6px rgba(45, 62, 54, 0.06)",
-                  }}
-                >
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#2D473B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <circle cx="14.5" cy="14.5" r="4.2" fill="#dfece4" stroke="#2D473B" strokeWidth="1.8" />
-                    <path d="m13 14.5 1.2 1.2 2.2-2.2" stroke="#2D473B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </div>
-                <h1 style={{ margin: 0, fontSize: "1.85rem", fontWeight: 700, color: "#1e293b", letterSpacing: "-0.015em" }}>
-                  Preparation Exam
-                </h1>
-              </div>
-
-              {/* All the best! Pill */}
-              <div
-                style={{
-                  background: "rgba(255, 255, 255, 0.78)",
-                  border: "1.5px solid rgba(79, 123, 100, 0.3)",
-                  color: "#2D473B",
-                  borderRadius: "10px",
-                  padding: "6px 14px",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
-                  backdropFilter: "blur(4px)",
-                }}
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2D473B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  <path d="m9 12 2 2 4-4" />
-                </svg>
-                <span>All the best!</span>
-              </div>
-            </div>
-
-            {/* Two-Column Layout: Left (2x2 Units Grid) + Right (Center-Right Options) */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "24px",
                 width: "100%",
+                background: "#EFECE4",
+                border: "1px solid #E2DDD3",
+                borderRadius: "18px",
+                padding: "16px 24px 18px",
+                boxSizing: "border-box",
               }}
             >
-              {/* Left: 2x2 Grid of Unit Cards */}
+              {/* Header: Icon + "Exam Prep" & "All the best!" Pill */}
               <div
                 style={{
-                  flex: 1,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(2, 1fr)",
-                  gap: "18px",
-                }}
-              >
-                {allUnits.map((unit) => {
-                  const isSelected = selectedUnitNumbers.includes(unit.number);
-
-                  const unitName = (() => {
-                    const raw = (unit.name || unit.title || "").trim();
-                    if (!raw || /^unit\s*[-:_]?\s*\d+$/i.test(raw)) {
-                      const defaults: Record<number, string> = {
-                        1: "Nature and Scope of Marketing",
-                        2: "Marketing Environment & Buyer Behavior",
-                        3: "Product & Price Decisions",
-                        4: "Place & Promotion Decisions",
-                        5: "Emerging Trends in Marketing",
-                      };
-                      return defaults[unit.number] || `Unit ${unit.number} Concepts`;
-                    }
-                    return raw;
-                  })();
-
-                  return (
-                    <div
-                      key={unit.number}
-                      onClick={() => toggleUnitSelection(unit.number)}
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        padding: "24px 18px 28px 18px",
-                        minHeight: "155px",
-                        borderRadius: "18px",
-                        position: "relative",
-                        cursor: "pointer",
-                        userSelect: "none",
-                        boxSizing: "border-box",
-                        transition: "all 0.22s cubic-bezier(0.16, 1, 0.3, 1)",
-                        // Subtle, refined card styling per request
-                        background: isSelected
-                          ? "linear-gradient(165deg, rgba(255, 255, 255, 0.96) 0%, rgba(235, 245, 239, 0.92) 100%)"
-                          : "linear-gradient(165deg, rgba(255, 255, 255, 0.82) 0%, rgba(242, 248, 244, 0.68) 100%)",
-                        border: isSelected
-                          ? "2px solid #4F7B64"
-                          : "1.5px solid rgba(79, 123, 100, 0.22)",
-                        boxShadow: isSelected
-                          ? "0 8px 24px rgba(79, 123, 100, 0.12)"
-                          : "0 2px 10px rgba(45, 62, 54, 0.04)",
-                        backdropFilter: "blur(6px)",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "translateY(-3px)";
-                        e.currentTarget.style.boxShadow = "0 10px 24px rgba(45, 62, 54, 0.10)";
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.4)";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "translateY(0)";
-                        e.currentTarget.style.boxShadow = isSelected
-                          ? "0 8px 24px rgba(79, 123, 100, 0.12)"
-                          : "0 2px 10px rgba(45, 62, 54, 0.04)";
-                        if (!isSelected) {
-                          e.currentTarget.style.borderColor = "rgba(79, 123, 100, 0.22)";
-                        }
-                      }}
-                    >
-                      {/* Unit Title */}
-                      <div
-                        style={{
-                          fontSize: "1.65rem",
-                          fontWeight: 700,
-                          color: "#1e293b",
-                          lineHeight: 1.2,
-                          marginBottom: "8px",
-                        }}
-                      >
-                        Unit {unit.number}
-                      </div>
-
-                      {/* Unit Subtitle */}
-                      <div
-                        style={{
-                          fontSize: "0.9rem",
-                          fontWeight: 500,
-                          color: "#475569",
-                          textAlign: "center",
-                          maxWidth: "88%",
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {unitName}
-                      </div>
-
-                      {/* Bottom-Right Checkbox */}
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "14px",
-                          right: "14px",
-                          width: "22px",
-                          height: "22px",
-                          borderRadius: "5px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          transition: "all 0.15s ease",
-                          border: isSelected ? "2px solid #467360" : "1.8px solid #94a3b8",
-                          background: isSelected ? "#467360" : "#ffffff",
-                        }}
-                      >
-                        {isSelected && (
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Right Side: Center-Right Options (No. of questions & Start Button) */}
-              <div
-                style={{
-                  width: "290px",
-                  flexShrink: 0,
                   display: "flex",
-                  flexDirection: "column",
+                  justifyContent: "space-between",
                   alignItems: "center",
-                  justifyContent: "center",
-                  gap: "18px",
+                  marginBottom: "12px",
                 }}
               >
-                {/* Green Config Box */}
-                <div
-                  style={{
-                    width: "100%",
-                    background: "#467360",
-                    borderRadius: "14px",
-                    padding: "13px 18px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "14px",
-                    boxShadow: "0 6px 18px rgba(70, 115, 96, 0.22)",
-                    boxSizing: "border-box",
-                  }}
-                >
-                  {/* Clipboard Icon */}
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                   <div
                     style={{
-                      width: "38px",
-                      height: "38px",
-                      borderRadius: "10px",
-                      background: "rgba(255, 255, 255, 0.16)",
+                      width: "34px",
+                      height: "34px",
+                      background: "#FFFFFF",
+                      border: "1px solid #E2DDD3",
+                      borderRadius: "9px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       flexShrink: 0,
+                      boxShadow: "0 1px 3px rgba(30, 40, 34, 0.04)",
                     }}
                   >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                      <path d="M9 12h6" />
-                      <path d="M9 16h6" />
-                      <circle cx="9" cy="12" r="0.5" fill="#ffffff" />
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                      <rect x="4" y="4" width="16" height="16" rx="3" fill="#FFFFFF" stroke="#B46530" strokeWidth="1.8" />
+                      <path d="M4 8.5H20" stroke="#B46530" strokeWidth="1.8" />
+                      <line x1="8" y1="13" x2="16" y2="13" stroke="#6E766E" strokeWidth="1.6" strokeLinecap="round" />
+                      <line x1="8" y1="16.5" x2="13" y2="16.5" stroke="#6E766E" strokeWidth="1.6" strokeLinecap="round" />
                     </svg>
                   </div>
+                  <h1
+                    style={{
+                      margin: 0,
+                      fontSize: "19.5px",
+                      fontWeight: 800,
+                      color: "#1E2822",
+                      letterSpacing: "-0.015em",
+                    }}
+                  >
+                    Exam Prep
+                  </h1>
+                </div>
 
-                  {/* Question count radio options */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1 }}>
-                    <span style={{ fontSize: "0.8rem", color: "rgba(255, 255, 255, 0.92)", fontWeight: 600 }}>
-                      No. of questions
-                    </span>
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E2DDD3",
+                    color: "#1E2822",
+                    borderRadius: "999px",
+                    padding: "5px 13px",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 1px 2px rgba(30, 40, 34, 0.03)",
+                  }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#C85A48" stroke="#C85A48" strokeWidth="1.8">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  </svg>
+                  <span>All the best!</span>
+                </div>
+              </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                      {[option1Count, option2Count].map((count) => {
-                        const isChosen = selectedQuestionCount === count;
-                        return (
-                          <div
-                            key={count}
-                            onClick={() => setSelectedQuestionCount(count)}
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "6px",
-                              cursor: "pointer",
-                            }}
-                          >
+              {/* Two-Column Grid: Left (Unit Card) + Right (Config Cards + Start Button) */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.08fr 1fr",
+                  gap: "16px",
+                  alignItems: "stretch",
+                }}
+              >
+                {/* Left Column: Selectable Unit Card(s) */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  {allUnits.map((unit) => {
+                    const isSelected = selectedUnitNumbers.includes(unit.number);
+                    const rawTitle = (unit.name || unit.title || "").trim();
+                    const cleanUnitTitle =
+                      !rawTitle || /^unit\s*[-:_]?\s*\d+$/i.test(rawTitle)
+                        ? chapterName && unit.number === chapterNumber
+                          ? chapterName
+                          : `Unit ${unit.number} Concepts`
+                        : rawTitle.replace(/^unit\s*\d+\s*[-:—:]\s*/i, "");
+
+                    return (
+                      <div
+                        key={unit.number}
+                        onClick={() => toggleUnitSelection(unit.number)}
+                        style={{
+                          flex: allUnits.length === 1 ? 1 : undefined,
+                          background: "#FFFFFF",
+                          border: isSelected ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                          borderRadius: "14px",
+                          padding: "20px 22px",
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "flex-start",
+                          boxSizing: "border-box",
+                          transition: "all 0.18s ease",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            gap: "12px",
+                          }}
+                        >
+                          <div>
                             <div
                               style={{
-                                width: "14px",
-                                height: "14px",
-                                borderRadius: "50%",
-                                border: isChosen ? "2px solid #ffffff" : "1.8px solid rgba(255, 255, 255, 0.65)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
+                                fontSize: "17px",
+                                fontWeight: 800,
+                                color: "#1E2822",
+                                lineHeight: 1.25,
                               }}
                             >
-                              {isChosen && (
-                                <div style={{ width: "5px", height: "5px", borderRadius: "50%", background: "#ffffff" }} />
-                              )}
+                              Unit {unit.number}
                             </div>
                             <div
                               style={{
-                                minWidth: "42px",
-                                height: "23px",
-                                padding: "0 8px",
-                                borderRadius: "6px",
-                                border: isChosen ? "1.5px solid #ffffff" : "1.5px solid rgba(255, 255, 255, 0.45)",
-                                background: isChosen ? "rgba(255, 255, 255, 0.22)" : "rgba(255, 255, 255, 0.08)",
-                                color: "#ffffff",
-                                fontSize: "0.82rem",
-                                fontWeight: 700,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                transition: "all 0.15s ease",
+                                fontSize: "12.5px",
+                                fontWeight: 500,
+                                color: "#5A625C",
+                                marginTop: "5px",
+                                lineHeight: 1.4,
                               }}
                             >
-                              {count}
+                              {cleanUnitTitle}
                             </div>
                           </div>
+
+                          <div
+                            style={{
+                              width: "22px",
+                              height: "22px",
+                              borderRadius: "50%",
+                              background: isSelected ? "#C27D4E" : "#FFFFFF",
+                              border: isSelected ? "1.5px solid #C27D4E" : "1.5px solid #C8C1B4",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {isSelected && (
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{
+                            height: "1px",
+                            background: "#EFECE6",
+                            margin: "14px 0 12px",
+                            width: "100%",
+                          }}
+                        />
+
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: "#49524C",
+                          }}
+                        >
+                          Syllabus · {allUnits.length} {allUnits.length === 1 ? "chapter" : "chapters"} · {selectedQuestionCount} PYQs mapped
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Right Column: Configuration Cards + Start Button */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  {/* 1. NO. OF QUESTIONS Card */}
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2DDD3",
+                      borderRadius: "13px",
+                      padding: "11px 15px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        color: "#6E766E",
+                        textTransform: "uppercase",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      NO. OF QUESTIONS
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(3, 1fr)",
+                        gap: "8px",
+                      }}
+                    >
+                      {prepCountOptions.map((opt) => {
+                        const isChosen = selectedQuestionCount === opt.count;
+                        return (
+                          <button
+                            key={opt.count}
+                            type="button"
+                            onClick={() => setSelectedQuestionCount(opt.count)}
+                            style={{
+                              padding: "6px 6px",
+                              borderRadius: "9px",
+                              border: isChosen ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                              background: isChosen ? "#FAF2E9" : "#FFFFFF",
+                              cursor: "pointer",
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "1px",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: "13px",
+                                fontWeight: 800,
+                                color: isChosen ? "#A86334" : "#1E2822",
+                              }}
+                            >
+                              {opt.count}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: "10px",
+                                fontWeight: 600,
+                                color: isChosen ? "#A86334" : "#6E766E",
+                              }}
+                            >
+                              {opt.timeLabel}
+                            </span>
+                          </button>
                         );
                       })}
                     </div>
-                  </div>
-                </div>
 
-                {/* Start Button */}
-                <button
-                  onClick={handleStartExam}
-                  style={{
-                    background: "#467360",
-                    color: "#ffffff",
-                    border: "none",
-                    borderRadius: "12px",
-                    padding: "13px 48px",
-                    fontSize: "1.05rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    boxShadow: "0 4px 16px rgba(70, 115, 96, 0.3)",
-                    transition: "all 0.2s ease",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#3c6453";
-                    e.currentTarget.style.transform = "translateY(-1px)";
-                    e.currentTarget.style.boxShadow = "0 6px 20px rgba(70, 115, 96, 0.38)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#467360";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "0 4px 16px rgba(70, 115, 96, 0.3)";
-                  }}
-                >
-                  <span>Start</span>
-                  <span style={{ fontSize: "1.15rem", lineHeight: 1 }}>→</span>
-                </button>
+                    <div
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 600,
+                        color: "#49524C",
+                        marginTop: "7px",
+                      }}
+                    >
+                      University pattern · 2M × 6 · 5M × 4 · 10M × 2
+                    </div>
+                  </div>
+
+                  {/* 2. MODE Card */}
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2DDD3",
+                      borderRadius: "13px",
+                      padding: "11px 15px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        color: "#6E766E",
+                        textTransform: "uppercase",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      MODE
+                    </div>
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(2, 1fr)",
+                        gap: "8px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setIsTimedMode(true)}
+                        style={{
+                          padding: "7px 8px",
+                          borderRadius: "9px",
+                          border: isTimedMode ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                          background: isTimedMode ? "#FAF2E9" : "#FFFFFF",
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "1px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            color: isTimedMode ? "#A86334" : "#1E2822",
+                          }}
+                        >
+                          ◷ Timed
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 500,
+                            color: isTimedMode ? "#A86334" : "#6E766E",
+                          }}
+                        >
+                          clock runs — trains pacing
+                        </span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setIsTimedMode(false)}
+                        style={{
+                          padding: "7px 8px",
+                          borderRadius: "9px",
+                          border: !isTimedMode ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                          background: !isTimedMode ? "#FAF2E9" : "#FFFFFF",
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "1px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: 800,
+                            color: !isTimedMode ? "#A86334" : "#1E2822",
+                          }}
+                        >
+                          Untimed
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "10px",
+                            fontWeight: 500,
+                            color: !isTimedMode ? "#A86334" : "#6E766E",
+                          }}
+                        >
+                          practice at your pace
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3. ANSWER IN ANY FORMAT Card */}
+                  <div
+                    style={{
+                      background: "#FFFFFF",
+                      border: "1px solid #E2DDD3",
+                      borderRadius: "13px",
+                      padding: "11px 15px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        color: "#6E766E",
+                        textTransform: "uppercase",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      ANSWER IN ANY FORMAT
+                    </div>
+
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                      {[
+                        { label: "Type", icon: "⌨", highlight: false },
+                        { label: "Scan written answer", icon: "📷", highlight: true },
+                        { label: "Draw", icon: "✏️", highlight: false },
+                        { label: "Image", icon: "🖼️", highlight: false },
+                      ].map((fmt) => (
+                        <span
+                          key={fmt.label}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "4px 10px",
+                            borderRadius: "999px",
+                            fontSize: "10.5px",
+                            fontWeight: 700,
+                            background: fmt.highlight ? "#FAF2E9" : "#FFFFFF",
+                            border: fmt.highlight ? "1px solid #E5C8AF" : "1px solid #E2DDD3",
+                            color: fmt.highlight ? "#A86334" : "#38423B",
+                          }}
+                        >
+                          <span style={{ fontSize: "10.5px" }}>{fmt.icon}</span>
+                          <span>{fmt.label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 4. Start Button */}
+                  <button
+                    type="button"
+                    onClick={handleStartExam}
+                    style={{
+                      width: "100%",
+                      background: "#BD7D52",
+                      color: "#FFFFFF",
+                      border: "none",
+                      borderRadius: "11px",
+                      padding: "11px 22px",
+                      fontSize: "14px",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      boxShadow: "0 3px 10px rgba(189, 125, 82, 0.25)",
+                      transition: "background 0.15s ease",
+                    }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#A8683F")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "#BD7D52")}
+                  >
+                    <span>Start →</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1759,7 +2392,7 @@ export default function MockTestView({
                     </div>
                     <div>
                       <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>Questions Type</div>
-                      <div style={{ fontSize: "1.05rem", color: "#0f172a", fontWeight: 700 }}>MCQ's & MSQ's</div>
+                      <div style={{ fontSize: "1.05rem", color: "#0f172a", fontWeight: 700 }}>{"MCQ's & MSQ's"}</div>
                     </div>
                   </div>
 
@@ -1834,7 +2467,7 @@ export default function MockTestView({
                     </div>
                     <div>
                       <div style={{ fontSize: "0.78rem", color: "#64748b", fontWeight: 600 }}>Questions Type</div>
-                      <div style={{ fontSize: "1.05rem", color: "#0f172a", fontWeight: 700 }}>MCQ's & MSQ's</div>
+                      <div style={{ fontSize: "1.05rem", color: "#0f172a", fontWeight: 700 }}>{"MCQ's & MSQ's"}</div>
                     </div>
                   </div>
 
@@ -1949,319 +2582,414 @@ export default function MockTestView({
     const currentQ = questions[currentQuestionIdx] || questions[0];
     const userSelected = currentQ ? (answers[currentQ.id] || []) : [];
     const correct = currentQ ? (currentQ.correctAnswers || []) : [];
-    const isQCorrect = isSubmitted && currentQ && isCorrect(currentQ);
+
+    const unitLabel =
+      selectedUnitNumbers.length === 1
+        ? `Unit ${selectedUnitNumbers[0]}`
+        : `Units ${selectedUnitNumbers.join(", ")}`;
+
+    const currentMarks = currentQ?.marks || 2;
+    const rawSectionText = (currentQ?.sectionName || currentQ?.section || "").trim();
+    const formattedPartLabel = (() => {
+      const upper = rawSectionText.toUpperCase();
+      if (upper.includes("PART A") || upper.includes("SHORT")) {
+        return "PART A · SHORT ANSWER QUESTIONS";
+      }
+      if (upper.includes("PART B") || upper.includes("ANALYTICAL") || upper.includes("EXPLANATORY")) {
+        return "PART B · ANALYTICAL QUESTIONS";
+      }
+      if (upper.includes("PART C") || upper.includes("ESSAY") || upper.includes("LONG")) {
+        return "PART C · LONG ANSWER QUESTIONS";
+      }
+      if (currentMarks <= 2) return "PART A · SHORT ANSWER QUESTIONS";
+      if (currentMarks <= 5) return "PART B · ANALYTICAL QUESTIONS";
+      return "PART C · LONG ANSWER QUESTIONS";
+    })();
+
+    const isDescriptive = !!(
+      currentQ &&
+      (currentQ.modelAnswer ||
+        currentQ.type === "short_answer" ||
+        currentQ.type === "long_answer" ||
+        currentQ.type === "descriptive" ||
+        !currentQ.options ||
+        currentQ.options.length === 0)
+    );
 
     return (
-      <div className="mock-test-container" style={{ display: "flex", flexDirection: "column", minHeight: "100vh", background: "#f4f6f5", position: "relative", overflowX: "hidden" }}>
-        {/* Top Header Bar */}
+      <div
+        className="mock-test-container"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100%",
+          height: "100%",
+          background: "#F8F5EE",
+          position: "relative",
+          overflowX: "hidden",
+          overflowY: "auto",
+          fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+          color: "#1E2822",
+        }}
+      >
+        {/* Top Sub-Header Bar matching Mockup: "Exam Prep › Unit 1 · Timed · 12 questions" + Dark Pill Timer */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "14px 28px",
-            background: "#ffffff",
-            borderBottom: "1.5px solid #d5dfd9",
-            boxShadow: "0 2px 8px rgba(45, 62, 54, 0.04)",
+            padding: "10px 26px",
+            background: "#FFFFFF",
+            borderBottom: "1px solid #E6E0D4",
+            flexShrink: 0,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px" }}>
+            <span style={{ fontWeight: 800, color: "#1E2822" }}>
+              {isPreFinalTest ? "Certification Exam" : "Exam Prep"}
+            </span>
+            <span style={{ color: "#949A94" }}>›</span>
+            <span style={{ color: "#6E766E", fontWeight: 500 }}>
+              {unitLabel} · {isPrepExam && !isTimedMode ? "Untimed" : "Timed"} · {questions.length} questions
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            {/* Dark Forest Pill Timer */}
             <div
               style={{
                 background: "#2D3E36",
-                color: "#ffffff",
-                padding: "8px 16px",
-                borderRadius: "10px",
+                color: "#FFFFFF",
+                padding: "5px 14px",
+                borderRadius: "999px",
                 fontWeight: 700,
-                fontSize: "1rem",
-                display: "flex",
+                fontSize: "12.5px",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                boxShadow: "0 2px 6px rgba(45, 62, 54, 0.25)",
+                gap: "6px",
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
                 <polyline points="12 6 12 12 16 14" />
               </svg>
-              <span>{isSubmitted ? "00:00" : `${formatTime(secondsLeft)} left`}</span>
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <div
-                style={{
-                  width: "38px",
-                  height: "38px",
-                  background: "#edf5f1",
-                  border: "1.5px solid #c6dfd4",
-                  borderRadius: "10px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#467360" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <polyline points="9 15 11 17 15 13" />
-                </svg>
-              </div>
-              <div>
-                <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#1e293b" }}>
-                  {examTitle}
-                </h2>
-                <div style={{ fontSize: "0.82rem", color: "#467360", fontWeight: 600 }}>
-                  {unitHeaderSubtitle}
-                </div>
-              </div>
+              <span>
+                {isSubmitted
+                  ? "00:00"
+                  : isPrepExam && !isTimedMode
+                  ? "Untimed"
+                  : formatTime(secondsLeft)}
+              </span>
             </div>
           </div>
-
-          <button
-            onClick={handleQuit}
-            title="Quit Exam"
-            style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "#fff1f2",
-              border: "1px solid #fecdd3",
-              color: "#e11d48",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
-          </button>
         </div>
 
-        {/* Exam Body (Full Width Layout with Right Screen Edge GPU Hover Navigator) */}
+        {/* Main Centered Content Area */}
         <div
+          ref={questionsScrollRef}
           style={{
             flex: 1,
-            padding: "24px 24px",
+            width: "100%",
+            maxWidth: "880px",
+            margin: "0 auto",
+            padding: "24px 24px 56px",
+            boxSizing: "border-box",
             display: "flex",
             flexDirection: "column",
-            alignItems: "center",
-            width: "100%",
-            maxWidth: "100%",
-            boxSizing: "border-box",
-            height: "calc(100vh - 80px)",
-            overflow: "hidden",
-            position: "relative",
           }}
         >
-          {/* Scrollable Questions Column */}
-          <div
-            ref={questionsScrollRef}
-            style={{
-              width: isNavigatorOpen ? "calc(100% - 310px)" : "100%",
-              maxWidth: "100%",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
-              height: "100%",
-              overflowY: "auto",
-              scrollBehavior: "smooth",
-              paddingRight: "8px",
-              paddingBottom: "120px",
-              boxSizing: "border-box",
-              transition: "width 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-              willChange: "width",
-              transform: "translateZ(0)",
-            }}
-          >
-            {questions.map((q, qIdx) => {
-              const userSelected = answers[q.id] || [];
-              const correct = q.correctAnswers || [];
-              const isActive = qIdx === currentQuestionIdx;
-              const isDescriptive = !!(
-                q.modelAnswer ||
-                q.type === "short_answer" ||
-                q.type === "long_answer" ||
-                q.type === "descriptive" ||
-                (!q.options || q.options.length === 0)
-              );
+          {/* Submitted Summary Banner */}
+          {isSubmitted && (
+            <div
+              style={{
+                background: "#FAF3EB",
+                border: "1.5px solid #C88A5A",
+                borderRadius: "14px",
+                padding: "14px 20px",
+                marginBottom: "18px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "14px", fontWeight: 800, color: "#9A542A" }}>
+                  ✓ Exam Submitted — Review Your Answers
+                </div>
+                <div style={{ fontSize: "12px", color: "#6E766E", marginTop: "2px" }}>
+                  You answered {answeredCount} of {questions.length} questions. Inspect model answers below or finish.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onComplete}
+                style={{
+                  background: "#BD7D52",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "999px",
+                  padding: "8px 20px",
+                  fontSize: "12.5px",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {"Finish & Continue →"}
+              </button>
+            </div>
+          )}
 
-              return (
-                <div
-                  key={q.id}
-                  id={`prep-q-${qIdx}`}
-                  data-qidx={qIdx}
-                  onClick={() => {
-                    if (!isActive) scrollToQuestion(qIdx);
-                  }}
+          {/* Section / Part Pill above the Card */}
+          {currentQ && (
+            <div style={{ marginBottom: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  background: "#FAF2E9",
+                  border: "1px solid #E5C8AF",
+                  borderRadius: "10px",
+                  padding: "6px 12px",
+                }}
+              >
+                <span
                   style={{
-                    width: "100%",
-                    background: "#ffffff",
-                    borderRadius: "20px",
-                    border: isActive ? "2px solid #7BA88B" : "1.5px solid #d5dfd9",
-                    boxShadow: isActive ? "0 10px 32px rgba(45, 62, 54, 0.08)" : "0 2px 8px rgba(0, 0, 0, 0.02)",
-                    padding: "32px 40px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "24px",
-                    opacity: isActive ? 1 : 0.7,
-                    transform: isActive ? "translate3d(0, 0, 0) scale(1)" : "translate3d(0, 0, 0) scale(0.99)",
-                    willChange: "transform, opacity",
-                    transition: "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, border 0.3s ease, box-shadow 0.3s ease",
-                    cursor: isActive ? "default" : "pointer",
-                    scrollMarginTop: "20px",
-                    boxSizing: "border-box",
+                    fontSize: "11px",
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                    color: "#A86334",
+                    textTransform: "uppercase",
                   }}
                 >
-                  {isDescriptive ? (
-                    <DescriptiveQuestionCard
-                      question={q}
-                      qIdx={qIdx}
-                      textAnswer={textAnswers[q.id] || ""}
-                      onAnswerChange={(val) => handleTextAnswerChange(q.id, val)}
-                      isSubmitted={isSubmitted}
-                      expandedRubric={!!expandedRubrics[q.id]}
-                      onToggleRubric={() => toggleRubric(q.id)}
-                    />
-                  ) : (
-                    <>
-                      <div style={{ fontSize: "1.18rem", fontWeight: 700, color: "#0f172a", lineHeight: "1.55", display: "flex", gap: "8px" }}>
-                        <span style={{ whiteSpace: "nowrap" }}>{qIdx + 1}.</span>
-                        <MarkdownView content={q.text} />
+                  {formattedPartLabel}
+                </span>
+                <span
+                  style={{
+                    background: "#BD7D52",
+                    color: "#FFFFFF",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  {currentMarks} {currentMarks === 1 ? "mark" : "marks"}
+                </span>
+              </div>
+
+              {/* Subtle Question Dots / Quick Switcher */}
+              {questions.length > 1 && (
+                <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+                  {questions.map((qItem, idx) => {
+                    const isCurr = idx === currentQuestionIdx;
+                    const hasAns =
+                      qItem.options && qItem.options.length > 0
+                        ? (answers[qItem.id] || []).length > 0
+                        : !!(textAnswers[qItem.id] && textAnswers[qItem.id].trim().length > 0);
+                    return (
+                      <button
+                        key={qItem.id}
+                        type="button"
+                        onClick={() => setCurrentQuestionIdx(idx)}
+                        style={{
+                          width: "26px",
+                          height: "26px",
+                          borderRadius: "7px",
+                          border: isCurr
+                            ? "1.5px solid #BD7D52"
+                            : hasAns
+                            ? "1px solid #C88A5A"
+                            : "1px solid #E2DDD3",
+                          background: isCurr
+                            ? "#BD7D52"
+                            : hasAns
+                            ? "#FAF2E9"
+                            : "#FFFFFF",
+                          color: isCurr
+                            ? "#FFFFFF"
+                            : hasAns
+                            ? "#A86334"
+                            : "#6E766E",
+                          fontSize: "11px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        {idx + 1}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Active Question Card */}
+          {currentQ && (
+            <div
+              key={currentQ.id}
+              id={`prep-q-${currentQuestionIdx}`}
+              style={{
+                width: "100%",
+                background: "#FFFFFF",
+                borderRadius: "18px",
+                border: "1px solid #E6E0D4",
+                boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+                padding: "26px 30px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+                boxSizing: "border-box",
+              }}
+            >
+              {isDescriptive ? (
+                <DescriptiveQuestionCard
+                  question={currentQ}
+                  qIdx={currentQuestionIdx}
+                  textAnswer={textAnswers[currentQ.id] || ""}
+                  onAnswerChange={(val) => handleTextAnswerChange(currentQ.id, val)}
+                  onClearAnswer={() => handleClearSelection(currentQ.id)}
+                  hasPrev={currentQuestionIdx > 0}
+                  onPrevQuestion={() => {
+                    if (currentQuestionIdx > 0) {
+                      setCurrentQuestionIdx((prev) => prev - 1);
+                    }
+                  }}
+                  isLastQuestion={currentQuestionIdx === questions.length - 1}
+                  onNextQuestion={() => {
+                    if (currentQuestionIdx < questions.length - 1) {
+                      setCurrentQuestionIdx((prev) => prev + 1);
+                    } else {
+                      setTimerRunning(false);
+                      setIsSubmitted(true);
+                    }
+                  }}
+                  isSubmitted={isSubmitted}
+                  expandedRubric={!!expandedRubrics[currentQ.id]}
+                  onToggleRubric={() => toggleRubric(currentQ.id)}
+                />
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      justifyContent: "space-between",
+                      gap: "16px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", flex: 1 }}>
+                      <span
+                        style={{
+                          flexShrink: 0,
+                          width: "30px",
+                          height: "30px",
+                          borderRadius: "8px",
+                          background: "#BD7D52",
+                          color: "#FFFFFF",
+                          fontWeight: 800,
+                          fontSize: "12px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        Q{currentQuestionIdx + 1}
+                      </span>
+                      <div style={{ fontSize: "16px", fontWeight: 700, color: "#1E2822", lineHeight: 1.45 }}>
+                        <MarkdownView content={currentQ.text} />
                       </div>
+                    </div>
+                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#7A807A", whiteSpace: "nowrap" }}>
+                      {currentMarks} {currentMarks === 1 ? "mark" : "marks"}
+                    </span>
+                  </div>
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {(q.options || []).map((opt, optIdx) => {
-                          const isSelected = userSelected.includes(optIdx);
-                          const isOptCorrect = correct.includes(optIdx);
-                          const isEven = optIdx % 2 === 0;
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {(currentQ.options || []).map((opt, optIdx) => {
+                      const isSelected = userSelected.includes(optIdx);
+                      const isOptCorrect = correct.includes(optIdx);
 
-                          // Alternating lighter (#ffffff) and darker (#f1f6f3) shades:
-                          let optBg = isEven ? "#ffffff" : "#f1f6f3";
-                          let optBorder = isEven ? "1.5px solid #e2e8f0" : "1.5px solid #cad9cf";
-                          let optColor = "#1e293b";
-                          let radioBorder = isSelected ? "#467360" : (isEven ? "#cbd5e1" : "#94a3b8");
-                          let radioBg = isSelected ? "#467360" : "#ffffff";
-                          let badgeBg = isEven ? "#f1f5f9" : "#dbe8df";
-                          let badgeColor = "#334155";
+                      let optBg = isSelected ? "#FAF2E9" : "#FFFFFF";
+                      let optBorder = isSelected ? "1.5px solid #C88A5A" : "1px solid #E6E0D4";
+                      let optColor = "#1E2822";
+                      let badgeBg = isSelected ? "#BD7D52" : "#F3EFE8";
+                      let badgeColor = isSelected ? "#FFFFFF" : "#49524C";
 
-                          if (isSubmitted) {
-                            if (isOptCorrect) {
-                              optBg = "#ECFDF5";
-                              optBorder = "2px solid #10B981";
-                              optColor = "#065F46";
-                              radioBorder = "#10B981";
-                              radioBg = "#10B981";
-                              badgeBg = "#10B981";
-                              badgeColor = "#ffffff";
-                            } else if (isSelected) {
-                              optBg = "#FEF2F2";
-                              optBorder = "2px solid #EF4444";
-                              optColor = "#991B1B";
-                              radioBorder = "#EF4444";
-                              radioBg = "#EF4444";
-                              badgeBg = "#EF4444";
-                              badgeColor = "#ffffff";
-                            }
-                          } else if (isSelected) {
-                            optBg = "#f0fdf4";
-                            optBorder = "2px solid #467360";
-                            optColor = "#14532d";
-                            badgeBg = "#467360";
-                            badgeColor = "#ffffff";
-                          }
+                      if (isSubmitted) {
+                        if (isOptCorrect) {
+                          optBg = "#ECFDF5";
+                          optBorder = "1.5px solid #10B981";
+                          optColor = "#065F46";
+                          badgeBg = "#10B981";
+                          badgeColor = "#FFFFFF";
+                        } else if (isSelected) {
+                          optBg = "#FEF2F2";
+                          optBorder = "1.5px solid #EF4444";
+                          optColor = "#991B1B";
+                          badgeBg = "#EF4444";
+                          badgeColor = "#FFFFFF";
+                        }
+                      }
 
-                          return (
-                            <div
-                              key={optIdx}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOptionClick(q.id, optIdx, q.type === "msq" ? "msq" : "mcq");
-                              }}
-                              style={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: "14px",
-                                padding: "14px 20px",
-                                borderRadius: "12px",
-                                background: optBg,
-                                border: optBorder,
-                                color: optColor,
-                                fontSize: "0.98rem",
-                                cursor: isSubmitted ? "default" : "pointer",
-                                transition: "all 0.15s ease",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  width: "34px",
-                                  height: "34px",
-                                  borderRadius: q.type === "msq" ? "7px" : "50%",
-                                  border: `2.5px solid ${radioBorder}`,
-                                  background: radioBg,
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {isSelected && (
-                                  q.type === "msq" ? (
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  ) : (
-                                    <div style={{ width: "12px", height: "12px", borderRadius: "50%", background: "#ffffff" }} />
-                                  )
-                                )}
-                              </div>
+                      return (
+                        <div
+                          key={optIdx}
+                          onClick={() => handleOptionClick(currentQ.id, optIdx, currentQ.type === "msq" ? "msq" : "mcq")}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "12px",
+                            padding: "12px 16px",
+                            borderRadius: "12px",
+                            background: optBg,
+                            border: optBorder,
+                            color: optColor,
+                            fontSize: "13.5px",
+                            cursor: isSubmitted ? "default" : "pointer",
+                            transition: "all 0.15s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "26px",
+                              height: "26px",
+                              borderRadius: "7px",
+                              background: badgeBg,
+                              color: badgeColor,
+                              fontWeight: 700,
+                              fontSize: "12px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {String.fromCharCode(65 + optIdx)}
+                          </div>
+                          <div style={{ flex: 1, fontWeight: 500 }}>
+                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, "\\f").replace(/♠rac/g, "\\frac").replace(/♠/g, "\\f")} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
 
-                              <div
-                                style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  borderRadius: "6px",
-                                  background: badgeBg,
-                                  color: badgeColor,
-                                  fontWeight: "700",
-                                  fontSize: "13px",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  flexShrink: 0,
-                                }}
-                              >
-                                {String.fromCharCode(65 + optIdx)}
-                              </div>
-
-                              <div style={{ flex: 1, fontWeight: 500 }}>
-                                <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-
-                  {/* Bottom Action Controls */}
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "8px" }}>
                     <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleClearSelection(q.id);
-                      }}
+                      type="button"
+                      onClick={() => handleClearSelection(currentQ.id)}
                       style={{
-                        padding: "8px 18px",
-                        borderRadius: "10px",
-                        border: "1.1px solid #cbd5e1",
-                        background: "#ffffff",
-                        color: "#64748b",
-                        fontSize: "0.88rem",
+                        padding: "7px 16px",
+                        borderRadius: "999px",
+                        border: "1px solid #DFD9CE",
+                        background: "#FFFFFF",
+                        color: "#38423B",
+                        fontSize: "12px",
                         fontWeight: 600,
                         cursor: "pointer",
                       }}
@@ -2270,276 +2998,57 @@ export default function MockTestView({
                     </button>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: 600, color: "#6E766E" }}>
+                        ✓ Draft saved
+                      </span>
+                      {currentQuestionIdx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentQuestionIdx((prev) => prev - 1)}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "999px",
+                            border: "1px solid #DFD9CE",
+                            background: "#FAF8F4",
+                            color: "#38423B",
+                            fontSize: "12.5px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          ← Prev
+                        </button>
+                      )}
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (qIdx < questions.length - 1) {
-                            scrollToQuestion(qIdx + 1);
+                        type="button"
+                        onClick={() => {
+                          if (currentQuestionIdx < questions.length - 1) {
+                            setCurrentQuestionIdx((prev) => prev + 1);
                           } else {
                             setTimerRunning(false);
                             setIsSubmitted(true);
                           }
                         }}
                         style={{
-                          padding: "8px 24px",
-                          borderRadius: "10px",
+                          padding: "8px 22px",
+                          borderRadius: "999px",
                           border: "none",
-                          background: "#2D3E36",
-                          color: "#ffffff",
-                          fontSize: "0.9rem",
+                          background: "#BD7D52",
+                          color: "#FFFFFF",
+                          fontSize: "13px",
                           fontWeight: 700,
                           cursor: "pointer",
-                          boxShadow: "0 4px 12px rgba(45, 62, 54, 0.25)",
+                          boxShadow: "0 2px 8px rgba(189, 125, 82, 0.25)",
                         }}
                       >
-                        {qIdx === questions.length - 1 ? "Submit →" : "Next →"}
+                        {currentQuestionIdx === questions.length - 1 ? "Submit →" : "Next →"}
                       </button>
                     </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Right Edge Fixed Question Navigator Drawer (GPU Hardware Accelerated 60fps) */}
-          <div
-            onMouseEnter={() => setIsNavigatorOpen(true)}
-            onMouseLeave={() => setIsNavigatorOpen(false)}
-            style={{
-              position: "fixed",
-              right: "0px",
-              top: "100px",
-              zIndex: 100,
-              display: "flex",
-              alignItems: "center",
-              transform: isNavigatorOpen ? "translate3d(0, 0, 0)" : "translate3d(calc(100% - 8px), 0, 0)",
-              transition: "transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
-              willChange: "transform",
-              backfaceVisibility: "hidden",
-              WebkitBackfaceVisibility: "hidden",
-            }}
-          >
-            {/* Green Vertical Hover Bar Handle (GPU Edge Trigger, disappears when hovered open) */}
-            <div
-              style={{
-                width: "8px",
-                height: "160px",
-                background: "#467360",
-                borderRadius: "4px 0 0 4px",
-                boxShadow: "-2px 0 10px rgba(70, 115, 96, 0.4)",
-                flexShrink: 0,
-                opacity: isNavigatorOpen ? 0 : 1,
-                pointerEvents: isNavigatorOpen ? "none" : "auto",
-                transition: "opacity 0.2s ease",
-                cursor: "pointer",
-              }}
-              title="Hover to view Question Navigator"
-            />
-
-            {/* Question Navigator Card */}
-            <div
-              style={{
-                width: "290px",
-                background: "#ffffff",
-                border: "1.5px solid #d5dfd9",
-                borderRight: "none",
-                borderRadius: "18px 0 0 18px",
-                boxShadow: "-8px 12px 36px rgba(45, 62, 54, 0.15)",
-                padding: "20px 22px",
-                boxSizing: "border-box",
-                display: "flex",
-                flexDirection: "column",
-                gap: "16px",
-                willChange: "transform",
-                maxHeight: "82vh",
-                overflowY: "auto",
-              }}
-            >
-              <div style={{ fontSize: "1.05rem", fontWeight: 700, color: "#2D3E36" }}>
-                Question Navigator
-              </div>
-
-              {/* Legend */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", fontSize: "0.76rem", color: "#475569" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#e2e8f0" }} />
-                  Not Answered
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#467360" }} />
-                  Answered
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <div style={{ width: "9px", height: "9px", borderRadius: "50%", background: "#2D3E36" }} />
-                  Current
-                </div>
-              </div>
-
-              {/* Questions Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "8px" }}>
-                {questions.map((q, idx) => {
-                  const isCurrent = idx === currentQuestionIdx;
-                  const isAns = (q.options && q.options.length > 0)
-                    ? (answers[q.id] || []).length > 0
-                    : !!(textAnswers[q.id] && textAnswers[q.id].trim().length > 0);
-
-                  let btnBg = "#f8fafc";
-                  let btnColor = "#334155";
-                  let btnBorder = "1.5px solid #e2e8f0";
-
-                  if (isCurrent) {
-                    btnBg = "#2D3E36";
-                    btnColor = "#ffffff";
-                    btnBorder = "1.5px solid #1E2923";
-                  } else if (isAns) {
-                    btnBg = "#467360";
-                    btnColor = "#ffffff";
-                    btnBorder = "1.5px solid #2D3E36";
-                  }
-
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => scrollToQuestion(idx)}
-                      style={{
-                        height: "36px",
-                        borderRadius: "8px",
-                        background: btnBg,
-                        color: btnColor,
-                        border: btnBorder,
-                        fontWeight: 700,
-                        fontSize: "0.85rem",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {idx + 1}
-                    </button>
-                  );
-                })}
-              </div>
-
-              <button
-                onClick={() => {
-                  setTimerRunning(false);
-                  setIsSubmitted(true);
-                }}
-                style={{
-                  marginTop: "auto",
-                  width: "100%",
-                  padding: "10px 14px",
-                  borderRadius: "10px",
-                  border: "1.5px solid #2D3E36",
-                  background: "#2D3E36",
-                  color: "#ffffff",
-                  fontWeight: 700,
-                  fontSize: "0.88rem",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 8px rgba(45, 62, 54, 0.2)",
-                }}
-              >
-                <span>Submit & Review</span>
-                <span>→</span>
-              </button>
+                </>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Floating Bottom Action Bar */}
-        <div
-          style={{
-            position: "fixed",
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: "#ffffff",
-            borderTop: "1.5px solid #d5dfd9",
-            padding: "12px 32px",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            boxShadow: "0 -4px 16px rgba(45, 62, 54, 0.06)",
-            zIndex: 90,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {isSubmitted ? (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#166534", fontWeight: 700, fontSize: "0.95rem" }}>
-                <span>✓ Exam Completed</span>
-              </div>
-            ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#2D3E36", fontWeight: 600, fontSize: "0.9rem" }}>
-                <span
-                  style={{
-                    background: "#edf5f1",
-                    color: "#2D3E36",
-                    padding: "4px 12px",
-                    borderRadius: "6px",
-                    fontWeight: 700,
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  {answeredCount} of {questions.length} Answered
-                </span>
-                <span style={{ color: "#64748B", fontSize: "0.82rem" }}>
-                  (Click any question in Navigator or scroll to inspect)
-                </span>
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {isSubmitted ? (
-              <button
-                onClick={onComplete}
-                style={{
-                  background: "linear-gradient(135deg, #4F7B64 0%, #2D3E36 100%)",
-                  color: "#ffffff",
-                  padding: "10px 24px",
-                  borderRadius: "10px",
-                  border: "none",
-                  fontWeight: 700,
-                  fontSize: "0.92rem",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 4px 14px rgba(45, 62, 54, 0.25)",
-                }}
-              >
-                <span>Finish & Continue</span>
-                <span>→</span>
-              </button>
-            ) : (
-              <button
-                onClick={() => {
-                  setTimerRunning(false);
-                  setIsSubmitted(true);
-                }}
-                style={{
-                  background: "linear-gradient(135deg, #4F7B64 0%, #2D3E36 100%)",
-                  color: "#ffffff",
-                  padding: "10px 24px",
-                  borderRadius: "10px",
-                  border: "none",
-                  fontWeight: 700,
-                  fontSize: "0.92rem",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 4px 14px rgba(45, 62, 54, 0.25)",
-                }}
-              >
-                <span>Submit {examTitle}</span>
-                <span>✓</span>
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
     );
@@ -2858,7 +3367,7 @@ export default function MockTestView({
                 boxShadow: activeBtnShadow,
               }}
             >
-              Finish & Continue →
+              {"Finish & Continue →"}
             </button>
           ) : (
             <button

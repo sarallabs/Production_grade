@@ -1,6 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
-import { getManifest, getChapters, getSubject, type Chapter } from '@/data/contentRepository';
+import {
+  getManifest,
+  getChapters,
+  getSubject,
+  resolveCloudImageSrc,
+  resolveChapterHeroFromRegistry,
+  type Chapter,
+} from '@/data/contentRepository';
 import { getAnalytics } from '@/utils/analytics';
 import { getCompletedTools, isChapterComplete, snapToQuarter } from '@/utils/guidedFlow';
 import { useTenant } from '@/tenant/TenantProvider';
@@ -44,7 +51,9 @@ export default function ChapterList() {
 
   useEffect(() => {
     if (!sId) return;
+    let cancelled = false;
     getManifest().then((m) => {
+      if (cancelled) return;
       const subject = getSubject(m, sId);
       const chList = getChapters(m, sId);
       setChapters(chList);
@@ -59,7 +68,31 @@ export default function ChapterList() {
           setFlipIndex(idx);
         }
       }
+
+      // Enrich chapter hero images and metadata from Google Cloud Registry
+      Promise.all(
+        chList.map(async (ch) => {
+          const regMeta = await resolveChapterHeroFromRegistry(sId, ch.number);
+          if (!regMeta) return ch;
+          return {
+            ...ch,
+            name: regMeta.title || ch.name,
+            title: regMeta.title || ch.title || ch.name,
+            heroImageUrl: regMeta.heroImageUrl || ch.heroImageUrl,
+            thumbnailUrl: regMeta.thumbnailUrl || ch.thumbnailUrl,
+            description: regMeta.description || ch.description,
+            topics: regMeta.topics && regMeta.topics.length > 0 ? regMeta.topics : ch.topics,
+          };
+        })
+      ).then((enrichedList) => {
+        if (!cancelled) {
+          setChapters(enrichedList);
+        }
+      });
     });
+    return () => {
+      cancelled = true;
+    };
   }, [sId, searchParams]);
 
   useEffect(() => {
@@ -140,12 +173,6 @@ export default function ChapterList() {
                 width={220}
                 height={132}
               />
-            </div>
-            <div className="sv-breadcrumb">
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={() => navigate(tenantPath('/'))}>{className || 'Class'}</span>
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-current">{resolvedSubjectName || 'Subject'}</span>
             </div>
           </div>
           <div className="sv-topbar-right">
@@ -270,12 +297,10 @@ export default function ChapterList() {
                   ? 'chapter-pollination-hero.png'
                   : 'chapter-entomology-hero.png';
 
-                const rawHero = flipCh.heroImageUrl || fallbackHero;
+                const rawHero = flipCh.heroImageUrl || flipCh.thumbnailUrl || fallbackHero;
+                const fallbackHeroSrc = `${import.meta.env.BASE_URL}${fallbackHero.replace(/^\//, '')}`;
                 const heroImgSrc =
-                  rawHero.startsWith('http://') || rawHero.startsWith('https://') || rawHero.startsWith('data:')
-                    ? rawHero
-                    : `${import.meta.env.BASE_URL}${rawHero.replace(/^\//, '')}`;
-
+                  resolveCloudImageSrc(rawHero, sId, flipCh.number) || fallbackHeroSrc;
                 return (
                   <div className="flip-mode-stack fade-in">
                     <div className="chapter-hero-nav-wrapper">
@@ -310,6 +335,13 @@ export default function ChapterList() {
                             src={heroImgSrc}
                             alt="Chapter Hero"
                             className="chapter-hero-img"
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              if (!img.dataset.fallbackApplied && img.src !== window.location.origin + fallbackHeroSrc) {
+                                img.dataset.fallbackApplied = 'true';
+                                img.src = fallbackHeroSrc;
+                              }
+                            }}
                           />
                         </div>
 

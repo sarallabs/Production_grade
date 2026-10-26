@@ -11,24 +11,366 @@ import type { DifficultyLevel } from "@/data/contentRepository";
 import { cloudStorage } from "@/context/CloudStateContext";
 import "./AskBotView.css";
 
-const ASK_LANGUAGES = [
-  { code: "en-IN", label: "English", flag: "🇬🇧" },
-  { code: "hi-IN", label: "हिन्दी", flag: "🇮🇳" },
-  { code: "te-IN", label: "తెలుగు", flag: "🇮🇳" },
-  { code: "ur-PK", label: "اردو", flag: "🇵🇰" },
-  { code: "or-IN", label: "ଓଡ଼ିଆ", flag: "🇮🇳" },
-];
+interface StructuredBotAnswer {
+  title: string;
+  paragraphs: string[];
+  examTipPrefix?: string;
+  examTipHighlight?: string;
+  examTipSuffix?: string;
+  groundedTopic: string;
+  groundedSection: string;
+  groundedNode: string;
+  followUps: string[];
+}
 
-const DEFAULT_HISTORY_ITEMS = [
-  "How to kill cockroach?",
-  "How long can a cockroach live without food or water?",
-  "What is the life cycle of a cockroach?",
-  "Explain respiratory system of Periplaneta americana",
-  "How do cockroaches breathe?",
-  "What are the mouthparts of cockroach?",
-  "Economic importance of insect pests",
-  "Difference between male and female cockroach",
-];
+interface ChatMessage {
+  role: "user" | "bot";
+  text: string;
+  loading?: boolean;
+  structured?: StructuredBotAnswer;
+}
+
+interface SeedExchange {
+  question: string;
+  answerText: string;
+  structured: StructuredBotAnswer;
+}
+
+function getUnitPrefix(subjectId: string): string {
+  if (cloudStorage.getItem("sv_moocs_mode") === "true") return "Unit";
+  const id = (subjectId || "").toLowerCase();
+  if (
+    id.includes("dbms") ||
+    id.includes("cs") ||
+    id.includes("management") ||
+    id.includes("financial") ||
+    id.includes("pubadm") ||
+    id === "social"
+  ) {
+    return "Unit";
+  }
+  return "Chapter";
+}
+
+function getSeedExchange(
+  subjectId: string,
+  chapterNumber: number,
+  chapterName: string,
+): SeedExchange {
+  const id = (subjectId || "").toLowerCase();
+  const unitPrefix = getUnitPrefix(subjectId);
+
+  if (id.includes("dbms")) {
+    return {
+      question: "What's the difference between physical and logical data independence?",
+      answerText:
+        "Physical data independence is the ability to change the physical schema — storage structures, indexes, file organization — without altering the logical schema. It is the easier of the two to achieve.\n\nLogical data independence is the ability to change the logical (conceptual) schema — adding entities or attributes — without modifying external views or application code. It is harder to achieve, because applications depend directly on the logical structure.",
+      structured: {
+        title: "Physical vs. Logical Data Independence",
+        paragraphs: [
+          "**Physical data independence** is the ability to change the **physical schema** — storage structures, indexes, file organization — without altering the logical schema. It is the easier of the two to achieve.",
+          "**Logical data independence** is the ability to change the **logical (conceptual) schema** — adding entities or attributes — without modifying external views or application code. It is harder to achieve, because applications depend directly on the logical structure.",
+        ],
+        examTipPrefix: "A frequent 2-mark question — always state ",
+        examTipHighlight: "which is harder and why",
+        examTipSuffix:
+          " (logical, since application code depends on it). One line each plus the \"harder\" line earns full marks.",
+        groundedTopic: `${unitPrefix} ${chapterNumber} · Three Levels of Abstraction`,
+        groundedSection: "§1.2",
+        groundedNode: "node 1.3",
+        followUps: [
+          "Which one is harder to achieve?",
+          "Show me a 2-mark answer version",
+          "Quiz me on this",
+          "Where does this appear in PYQs?",
+        ],
+      },
+    };
+  }
+
+  if (id.includes("ento")) {
+    if (chapterNumber === 1) {
+      return {
+        question: "Who was the first Imperial Entomologist of India and what were the key early milestones?",
+        answerText:
+          "Lionel de Niceville was appointed as the first Imperial Entomologist of India in 1901 at Pusa. He was succeeded in 1903 by H. Maxwell-Lefroy, who authored the classic reference books Indian Insect Pests (1906) and Indian Insect Life (1909).\n\nIn South India, T.V. Ramakrishna Ayyar served as the first Government Entomologist of Madras and authored the landmark Handbook of Economic Entomology for South India (1940).",
+        structured: {
+          title: "Imperial Entomologists & Early Milestones in India",
+          paragraphs: [
+            "**Lionel de Niceville (1901)** was appointed as the **first Imperial Entomologist of India**, establishing scientific entomological research under the Government of India. He was succeeded by **H. Maxwell-Lefroy (1903)**, who authored *Indian Insect Pests* (1906) and *Indian Insect Life* (1909).",
+            "**T.B. Fletcher** succeeded Lefroy at IARI Pusa, while **T.V. Ramakrishna Ayyar** pioneered agricultural entomology in South India and published the *Handbook of Economic Entomology for South India* (1940).",
+          ],
+          examTipPrefix: "A high-yield objective & 2-mark question — never confuse ",
+          examTipHighlight: "Lionel de Niceville (1st Imperial Entomologist, 1901) with H. Maxwell-Lefroy (2nd Imperial Entomologist, 1903)",
+          examTipSuffix:
+            ". Always mention Indian Insect Life (1909) and T.V. Ramakrishna Ayyar (1940) for full credit.",
+          groundedTopic: "Chapter 1 · Imperial Entomologists",
+          groundedSection: "§1.3",
+          groundedNode: "node 1.3",
+          followUps: [
+            "List the key entomological institutions & years",
+            "Show me a 2-mark answer version",
+            "Quiz me on this",
+            "Where does this appear in PYQs?",
+          ],
+        },
+      };
+    }
+    if (chapterNumber === 2) {
+      return {
+        question: "Why are insects the most abundant and successful group of animals on Earth?",
+        answerText:
+          "Insects account for over 70% of all known animal species due to four primary evolutionary advantages: a chitinous exoskeleton with an epicuticular wax layer that prevents desiccation, functional wings enabling rapid dispersal, small body size requiring minimal resources, and complete metamorphosis (holometaboly) that eliminates competition between larvae and adults.",
+        structured: {
+          title: "Structural & Reproductive Factors Driving Insect Abundance",
+          paragraphs: [
+            "**Structural perfections** — the **chitinous exoskeleton** (sclerotin + epicuticular wax layer preventing water loss), **functional wings** (only winged invertebrates), and **hexapod locomotion** allow insects to colonize nearly every terrestrial habitat.",
+            "**Developmental & reproductive advantages** — **complete metamorphosis (holometaboly)** separates larval feeding niches from adult reproductive niches, while **high fecundity**, short life cycles, and **parthenogenesis/polyembryony** drive rapid population growth.",
+          ],
+          examTipPrefix: "In 4-mark & short-note exams — group your points under ",
+          examTipHighlight: "Structural (Exoskeleton, Wings, Small Size) vs. Developmental/Reproductive (Holometaboly, High Fecundity)",
+          examTipSuffix:
+            " and cite the epicuticular wax layer for desiccation resistance.",
+          groundedTopic: "Chapter 2 · Structural Perfections",
+          groundedSection: "§2.1",
+          groundedNode: "node 2.1",
+          followUps: [
+            "How does the exoskeleton prevent water loss?",
+            "Show me a 2-mark answer version",
+            "Quiz me on this",
+            "Where does this appear in PYQs?",
+          ],
+        },
+      };
+    }
+    if (chapterNumber === 3) {
+      return {
+        question: "What is entomophily and what floral adaptations attract insect pollinators?",
+        answerText:
+          "Entomophily is cross-pollination mediated by insects, primarily Hymenoptera (honeybees, bumblebees, fig wasps), Diptera, Lepidoptera, and Coleoptera. Entomophilous flowers evolve sticky/spiny pollen grains, vibrant petals with UV nectar guides, nectaries, and specific floral scents.",
+        structured: {
+          title: "Entomophily & Co-Adapted Pollination Mechanisms",
+          paragraphs: [
+            "**Entomophily** refers to pollination by insects — led by **Hymenoptera (honeybees accounting for ~80% of crop pollination)**, Diptera (hoverflies), Lepidoptera, and Coleoptera. Entomophilous flowers feature brightly colored corollas, ultraviolet nectar guides, osmophores, and sticky or spiny **pollenkitt-coated pollen**.",
+            "**Specialized syndromes** include **melittophily** (bees), **psychophily** (butterflies), **phalaenophily** (moths), **myophily** (flies), and **cantharophily** (beetles, e.g. oil palm weevil *Elaeidobius kamerunicus*), alongside obligate mutualisms such as **Fig (*Ficus*) and *Blastophaga psenes***.",
+          ],
+          examTipPrefix: "Frequently tested in matching & 2-mark questions — always pair ",
+          examTipHighlight: "Oil Palm with Elaeidobius kamerunicus (Cantharophily) and Fig with Blastophaga psenes",
+          examTipSuffix:
+            " alongside the 5 pollination syndromes to secure full marks.",
+          groundedTopic: "Chapter 3 · Mechanism of Pollination",
+          groundedSection: "§3.2",
+          groundedNode: "node 3.2",
+          followUps: [
+            "Explain Fig and Blastophaga wasp mutualism",
+            "Show me a 2-mark answer version",
+            "Quiz me on this",
+            "Where does this appear in PYQs?",
+          ],
+        },
+      };
+    }
+    // Chapter 4 default (Apiculture)
+    return {
+      question: "How do honeybees communicate the distance and direction of floral sources?",
+      answerText:
+        "Scout worker bees communicate floral location using Karl von Frisch's dance language on the vertical comb. The Round Dance indicates food within 50 meters without direction, whereas the Waggle Dance (figure-of-8) communicates food beyond 50 meters — where the angle of the straight waggle run relative to gravity equals the angle of the food source relative to the sun.",
+      structured: {
+        title: "Honeybee Dance Language & Foraging Communication",
+        paragraphs: [
+          "**Round Dance** is performed by returning forager bees when the nectar or pollen source is **less than 50 meters** from the hive; it excites nestmates to search nearby and conveys floral scent, but does not specify direction.",
+          "**Waggle Dance (Figure-of-8)** is performed when the food source is **more than 50 meters** away. Distance is encoded by the duration/number of waggle runs, while **direction relative to the sun** is encoded by the angle of the straight waggle run relative to vertical gravity on the comb.",
+        ],
+        examTipPrefix: "A classic 2-mark & viva question — clearly contrast ",
+        examTipHighlight: "Round Dance (< 50 m, no direction) vs. Waggle Dance (> 50 m, angle to vertical = angle to Sun)",
+        examTipSuffix:
+          " discovered by Nobel laureate Karl von Frisch.",
+        groundedTopic: "Chapter 4 · Foraging Behaviour & Communication",
+        groundedSection: "§4.4",
+        groundedNode: "node 4.4",
+        followUps: [
+          "Compare Apis cerana indica and Apis mellifera",
+          "Show me a 2-mark answer version",
+          "Quiz me on this",
+          "Where does this appear in PYQs?",
+        ],
+      },
+    };
+  }
+
+  const cleanCh = (chapterName || "Core Concepts").replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, "").trim();
+  return {
+    question: `What are the most important exam concepts in ${cleanCh}?`,
+    answerText: `In ${cleanCh}, focus on the foundational definitions, structural classifications, and applied mechanisms covered in ${unitPrefix} ${chapterNumber}. Understanding both theoretical principles and their practical distinctions is key for scoring full marks in short and long answer questions.`,
+    structured: {
+      title: `Core Concepts & Exam Focus — ${cleanCh}`,
+      paragraphs: [
+        `**Foundational Principles**: ${cleanCh} establishes the core terminology, classification frameworks, and structural relationships that underpin the rest of ${unitPrefix} ${chapterNumber}.`,
+        `**Applied Mechanisms**: Pay close attention to comparative distinctions, cause-and-effect pathways, and standard examples highlighted in your university syllabus notes.`,
+      ],
+      examTipPrefix: "Frequent exam question — always structure your response with ",
+      examTipHighlight: "a crisp 1-line definition, a 2-point comparison, and one canonical example",
+      examTipSuffix: " to earn full marks.",
+      groundedTopic: `${unitPrefix} ${chapterNumber} · ${cleanCh}`,
+      groundedSection: `§${chapterNumber}.1`,
+      groundedNode: `node ${chapterNumber}.1`,
+      followUps: [
+        "Show me a 2-mark answer version",
+        "Give me a quick comparison table",
+        "Quiz me on this",
+        "Where does this appear in PYQs?",
+      ],
+    },
+  };
+}
+
+const CANONICAL_FOLLOWUP_ANSWERS: Record<string, StructuredBotAnswer> = {
+  "which one is harder to achieve?": {
+    title: "Why Logical Data Independence Is Harder to Achieve",
+    paragraphs: [
+      "**Logical data independence is significantly harder to achieve** than physical data independence because **application programs and user queries are written directly against the logical schema** (table names, columns, constraints, and relationships).",
+      "When you modify the physical storage (e.g., moving from a B+ Tree index to a hash index or changing disk block layout), the DBMS storage engine absorbs the change transparently. However, changing the logical structure (splitting a table or altering entity attributes) requires rewriting view mappings and application-level SQL unless external views completely insulate them.",
+    ],
+    examTipPrefix: "Key 2-mark takeaway — state explicitly that ",
+    examTipHighlight: "application code and queries reference logical tables/attributes directly, not physical disk blocks",
+    examTipSuffix: ", making logical schema changes much harder to mask.",
+    groundedTopic: "Unit 1 · Three Levels of Abstraction",
+    groundedSection: "§1.2",
+    groundedNode: "node 1.2",
+    followUps: [
+      "Explain the ANSI-SPARC 3-schema architecture",
+      "Show me a 2-mark answer version",
+      "Quiz me on this",
+      "Where does this appear in PYQs?",
+    ],
+  },
+  "show me a 2-mark answer version": {
+    title: "Exam-Ready 2-Mark Answer (Full-Credit Format)",
+    paragraphs: [
+      "**1. Physical Data Independence:** The capacity to modify the **internal/physical schema** (file organization, indexing, storage devices) without having to alter the conceptual/logical schema. *(1 Mark)*",
+      "**2. Logical Data Independence:** The capacity to modify the **conceptual/logical schema** (adding/splitting relations or attributes) without having to alter external views or application programs. **Logical data independence is harder to achieve** because application programs are tightly coupled to the logical structure. *(1 Mark)*",
+    ],
+    examTipPrefix: "Write these exact ",
+    examTipHighlight: "two numbered points + the bold concluding sentence",
+    examTipSuffix: " in your university exam booklet — evaluators award 2/2 immediately.",
+    groundedTopic: "Unit 1 · Exam Answer Blueprint",
+    groundedSection: "§1.2",
+    groundedNode: "node 1.3",
+    followUps: [
+      "Give me a 5-mark answer with diagram steps",
+      "Quiz me on this",
+      "Where does this appear in PYQs?",
+    ],
+  },
+  "quiz me on this": {
+    title: "Quick Check — Test Your Understanding",
+    paragraphs: [
+      "**Q1 (Multiple Choice):** A database administrator replaces a B+ Tree index on the `Student` table with a Hash index to speed up equality searches. Which property ensures that existing SQL queries and application code continue to work without modification?\n- **A)** Logical Data Independence\n- **B)** Physical Data Independence ✓\n- **C)** View Serializability\n- **D)** Referential Integrity",
+      "**Why B is correct:** Index structures belong to the **internal (physical) schema**. Insulating the conceptual schema and applications from storage/indexing changes is the exact definition of **Physical Data Independence**.",
+    ],
+    examTipPrefix: "In university MCQs — any mention of ",
+    examTipHighlight: "B+ trees, hash files, disk blocks, or compression",
+    examTipSuffix: " always maps to Physical Data Independence.",
+    groundedTopic: "Unit 1 · Self-Check Practice",
+    groundedSection: "§1.2",
+    groundedNode: "node 1.3",
+    followUps: [
+      "Give me another tougher question",
+      "Show me a 2-mark answer version",
+      "Where does this appear in PYQs?",
+    ],
+  },
+  "where does this appear in pyqs?": {
+    title: "Previous Year Questions (PYQ) Appearance & Weightage",
+    paragraphs: [
+      "**High-Frequency University PYQ Topic:** This concept appears in **Part-A (Short Answer, 2 Marks)** and **Part-B (Essay/Analytical, 5–7 Marks)** across almost every semester exam.",
+      "**Typical PYQ Prompts:**\n1. *\"Differentiate between physical and logical data independence with suitable examples. Which one is more difficult to achieve?\"* *(2M / 5M)*\n2. *\"Explain the Three-Schema Architecture of a DBMS and illustrate how data independence is achieved at two levels.\"* *(7M)*",
+    ],
+    examTipPrefix: "In 7-mark Part-B questions — always draw the ",
+    examTipHighlight: "External View ↔ Conceptual Schema ↔ Internal Schema 3-layer diagram",
+    examTipSuffix: " and label both independence levels on the arrows between layers.",
+    groundedTopic: "Unit 1 · University PYQ Bank",
+    groundedSection: "§1.2",
+    groundedNode: "node 1.2",
+    followUps: [
+      "Show me the 3-schema architecture diagram steps",
+      "Show me a 2-mark answer version",
+      "Quiz me on this",
+    ],
+  },
+};
+
+function parseBotResponseToStructured(
+  question: string,
+  rawAnswer: string,
+  subjectId: string,
+  chapterNumber: number,
+  chapterName: string,
+): StructuredBotAnswer {
+  const unitPrefix = getUnitPrefix(subjectId);
+  const cleanCh = (chapterName || "Course Material")
+    .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, "")
+    .trim();
+
+  const lowerQ = question.toLowerCase().trim();
+  if (CANONICAL_FOLLOWUP_ANSWERS[lowerQ]) {
+    const preset = CANONICAL_FOLLOWUP_ANSWERS[lowerQ];
+    return {
+      ...preset,
+      groundedTopic: preset.groundedTopic.replace(/^Unit \d+/, `${unitPrefix} ${chapterNumber}`),
+    };
+  }
+
+  const lines = rawAnswer
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  let title = question.replace(/\?+$/, "").trim();
+  if (title.length > 68) {
+    title = title.slice(0, 65).trim() + "…";
+  }
+
+  const bodyLines: string[] = [];
+  let customTip = "";
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (i === 0 && /^#{1,3}\s+/.test(line)) {
+      title = line.replace(/^#{1,3}\s+/, "").replace(/\*+/g, "").trim();
+      continue;
+    }
+    if (/^(exam\s*tip|tip|note)\s*[:·\-]/i.test(line)) {
+      customTip = line.replace(/^(exam\s*tip|tip|note)\s*[:·\-]\s*/i, "").trim();
+      continue;
+    }
+    bodyLines.push(line);
+  }
+
+  const paragraphs =
+    bodyLines.length > 0
+      ? bodyLines
+      : [rawAnswer.trim() || `Here is a concise explanation from ${unitPrefix} ${chapterNumber}.`];
+
+  return {
+    title,
+    paragraphs,
+    examTipPrefix: customTip ? "" : "High-yield university exam point — always emphasize ",
+    examTipHighlight: customTip
+      ? customTip
+      : "key definitions, contrasting properties, and a concrete syllabus example",
+    examTipSuffix: customTip ? "" : " to secure full marks in 2-mark and 5-mark questions.",
+    groundedTopic: `${unitPrefix} ${chapterNumber} · ${cleanCh}`,
+    groundedSection: `§${chapterNumber}.1`,
+    groundedNode: `node ${chapterNumber}.2`,
+    followUps: [
+      "Show me a 2-mark answer version",
+      "Quiz me on this",
+      "Where does this appear in PYQs?",
+      `Give me a real-world example from ${unitPrefix} ${chapterNumber}`,
+    ],
+  };
+}
 
 export default function AskBotView({
   chapterName,
@@ -37,6 +379,8 @@ export default function AskBotView({
   difficulty: _difficulty,
   className: _className,
   subjectName,
+  onNavigateTool,
+  isCompactDrawer = false,
 }: {
   chapterName: string;
   subjectId: string;
@@ -44,333 +388,105 @@ export default function AskBotView({
   difficulty: DifficultyLevel;
   className: string;
   subjectName: string;
+  onNavigateTool?: (tool: string) => void;
+  isCompactDrawer?: boolean;
 }) {
+  const unitPrefix = getUnitPrefix(subjectId);
+  const cleanChapterTitle = useMemo(
+    () =>
+      (chapterName || "")
+        .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, "")
+        .trim() || chapterName,
+    [chapterName],
+  );
+
+  const seedExchange = useMemo(
+    () => getSeedExchange(subjectId, _chapterNumber, chapterName),
+    [subjectId, _chapterNumber, chapterName],
+  );
+
   const chatStorageKey = useMemo(
-    () => `ask_chat_${subjectId}_${_chapterNumber}_${_difficulty}`,
+    () => `ask_chat_v3_${subjectId}_${_chapterNumber}_${_difficulty}`,
     [subjectId, _chapterNumber, _difficulty],
   );
-  const historyStorageKey = useMemo(
-    () => `ask_history_${subjectId}_${_chapterNumber}`,
-    [subjectId, _chapterNumber],
-  );
 
-  // Sidebar Open/Closed state (Screen 3 vs Screens 1 & 2)
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-
-  // History questions list
-  const [historyItems, setHistoryItems] = useState<string[]>(() => {
-    try {
-      const raw = cloudStorage.getItem(historyStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {
-      // fallback
-    }
-    return DEFAULT_HISTORY_ITEMS;
-  });
-
-  const [messages, setMessages] = useState<
-    { role: "user" | "bot"; text: string; loading?: boolean }[]
-  >(() => {
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const raw = cloudStorage.getItem(chatStorageKey);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed)
-        ? parsed
-            .filter(
-              (m: any) =>
-                m &&
-                typeof m.text === "string" &&
-                (m.role === "user" || m.role === "bot"),
-            )
-            .slice(-30)
-        : [];
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.slice(-20);
+        }
+      }
     } catch {
-      return [];
+      // ignore storage parse error
     }
+    return [];
   });
+
+  // Load saved conversation or start empty when subject or chapter changes
+  useEffect(() => {
+    try {
+      const raw = cloudStorage.getItem(chatStorageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed.slice(-20));
+          return;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setMessages([]);
+  }, [chatStorageKey]);
+
+  // Persist conversation
+  useEffect(() => {
+    if (messages.some((m) => m.loading)) return;
+    try {
+      if (messages.length === 0) {
+        cloudStorage.removeItem(chatStorageKey);
+      } else {
+        cloudStorage.setItem(chatStorageKey, JSON.stringify(messages.slice(-20)));
+      }
+    } catch {
+      // ignore
+    }
+  }, [messages, chatStorageKey]);
 
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
-  const [selectedLang, setSelectedLang] = useState(
-    subjectId === "pubadm_ur" ? "ur-PK" : "en-IN",
-  );
+  const [feedbackMap, setFeedbackMap] = useState<Record<number, "up" | "down">>({});
+  const [savedTakeawayMap, setSavedTakeawayMap] = useState<Record<number, boolean>>({});
   const [micError, setMicError] = useState<string | null>(null);
+  const selectedLang = subjectId === "pubadm_ur" ? "ur-PK" : "en-IN";
 
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const lastBotMsgRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
   const sessionStartingPromiseRef = useRef<Promise<SpeechSession> | null>(null);
   const isListeningRef = useRef(false);
   const askedViaMicRef = useRef(false);
-  const pointerDownTimeRef = useRef(0);
-  const listeningStartedAtRef = useRef(0);
-  const isHoldingMicRef = useRef(false);
-  const [showWave, setShowWave] = useState(false);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const waveBarRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const currentInputRef = useRef("");
+  const pointerDownTimeRef = useRef<number>(0);
+  const isHoldingMicRef = useRef<boolean>(false);
+  const currentInputRef = useRef<string>("");
 
-  useEffect(() => {
-    currentInputRef.current = input;
-  }, [input]);
-
-  const isStreamingMic = hasWebSpeechSupport();
-
-  // Persist chat
-  useEffect(() => {
-    const cleaned = messages.filter((m) => !m.loading).slice(-30);
-    cloudStorage.setItem(chatStorageKey, JSON.stringify(cleaned));
-  }, [messages, chatStorageKey]);
-
-  // Persist history
-  useEffect(() => {
-    cloudStorage.setItem(historyStorageKey, JSON.stringify(historyItems));
-  }, [historyItems, historyStorageKey]);
-
-  // Auto-scroll: show the loading dots / user question at the bottom, but once a
-  // bot answer has arrived, keep the view at the TOP of that answer so long
-  // answers can be read from the start.
-  useEffect(() => {
-    if (messages.length === 0) return;
-    const last = messages[messages.length - 1];
-    if (last.role === "bot" && !last.loading && lastBotMsgRef.current) {
-      lastBotMsgRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages]);
-
-  // Cleanup speech session + TTS on unmount
+  // Stop TTS and mic on unmount
   useEffect(() => {
     return () => {
-      isListeningRef.current = false;
-      cleanupAnalyser();
+      googleTtsStop();
       if (speechSessionRef.current) {
         speechSessionRef.current.stop().catch(() => {});
         speechSessionRef.current = null;
       }
-      googleTtsStop();
     };
   }, []);
 
-  // ── Speech Recording & Visualizer ───────────────────────────────────────────
-  const cleanupAnalyser = () => {
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    analyserRef.current = null;
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
-    }
-  };
-
-  const startAnalyserStream = async () => {
-    if (!navigator.mediaDevices?.getUserMedia) return;
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-        video: false,
-      });
-      if (!isListeningRef.current) {
-        stream.getTracks().forEach((t) => t.stop());
-        return;
-      }
-      streamRef.current = stream;
-      const AudioCtx =
-        window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const source = ctx.createMediaStreamSource(stream);
-      const analyser = ctx.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-      const data = new Uint8Array(analyser.frequencyBinCount);
-      const bases = [0.4, 0.6, 0.8, 1.0, 0.9, 0.7, 1.0, 0.7, 0.9, 1.0, 0.8, 0.6, 0.4];
-
-      const tick = () => {
-        if (!analyserRef.current || !isListeningRef.current) return;
-        analyser.getByteFrequencyData(data);
-        const voiceData = Array.from(data.slice(2, 30));
-        const avg = voiceData.reduce((a, b) => a + b, 0) / voiceData.length;
-        const level = Math.min(1, avg / 50);
-        const step = Math.max(1, Math.floor(data.length / 13));
-        bases.forEach((base, i) => {
-          const el = waveBarRefs.current[i];
-          if (!el) return;
-          let h: number;
-          if (level > 0.05) {
-            const slice = Array.from(data.slice(i * step, (i + 1) * step));
-            const bandAvg = slice.reduce((a, b) => a + b, 0) / slice.length;
-            h = Math.max(6, Math.min(55, base * (bandAvg / 100) * 55));
-          } else {
-            h = Math.round(base * 6);
-          }
-          el.style.height = `${h}px`;
-        });
-        animFrameRef.current = requestAnimationFrame(tick);
-      };
-      animFrameRef.current = requestAnimationFrame(tick);
-    } catch {
-      // Visualizer stream error is non-fatal for speech recognition
-    }
-  };
-
-  const startMic = async () => {
-    if (isListeningRef.current || isTranscribing) return;
-    setMicError(null);
-    isListeningRef.current = true;
-    listeningStartedAtRef.current = Date.now();
-    setIsListening(true);
-    setShowWave(true);
-    setInput("");
-    currentInputRef.current = "";
-
-    // Start background audio visualizer without blocking speech recognition
-    startAnalyserStream();
-
-    try {
-      const sessionPromise = startSpeechSession({
-        language: selectedLang,
-        onInterim: (text) => {
-          currentInputRef.current = text;
-          setInput(text);
-        },
-        onError: (err) => {
-          console.warn("Speech recognition error:", err);
-          if (err === "not-allowed" || err === "permission-denied") {
-            setMicError("Microphone access denied. Please click the microphone/lock icon in your browser address bar to allow microphone access.");
-          } else if (err !== "no-speech" && err !== "aborted") {
-            setMicError(`Microphone error: ${err}`);
-          }
-          isListeningRef.current = false;
-          setIsListening(false);
-          setShowWave(false);
-          cleanupAnalyser();
-        },
-        onEnd: () => {
-          if (isListeningRef.current && !isHoldingMicRef.current) {
-            stopMic(true);
-          }
-        },
-      });
-
-      sessionStartingPromiseRef.current = sessionPromise;
-      const session = await sessionPromise;
-      speechSessionRef.current = session;
-      sessionStartingPromiseRef.current = null;
-    } catch (e: any) {
-      console.error("Failed to start speech session:", e);
-      const errMsg = e.message || "Could not start microphone.";
-      setMicError(errMsg);
-      isListeningRef.current = false;
-      setIsListening(false);
-      setShowWave(false);
-      cleanupAnalyser();
-      sessionStartingPromiseRef.current = null;
-      speechSessionRef.current = null;
-    }
-  };
-
-  const stopMic = async (autoSend = false) => {
-    if (!isListeningRef.current && !speechSessionRef.current && !sessionStartingPromiseRef.current) return;
-    isListeningRef.current = false;
-    setIsListening(false);
-    setShowWave(false);
-    cleanupAnalyser();
-
-    if (!isStreamingMic) {
-      setIsTranscribing(true);
-    }
-
-    let session = speechSessionRef.current;
-    if (!session && sessionStartingPromiseRef.current) {
-      try {
-        session = await sessionStartingPromiseRef.current;
-      } catch {
-        session = null;
-      }
-    }
-    speechSessionRef.current = null;
-    sessionStartingPromiseRef.current = null;
-
-    let transcript = "";
-    if (session) {
-      try {
-        transcript = await session.stop();
-      } catch (e: any) {
-        console.error("Transcription error:", e);
-      }
-    }
-    setIsTranscribing(false);
-
-    const finalTranscript = (transcript || currentInputRef.current || input).trim();
-
-    if (finalTranscript) {
-      setInput(finalTranscript);
-      if (autoSend) {
-        askedViaMicRef.current = true;
-        handleSend(finalTranscript);
-      }
-    }
-  };
-
-  const handleMicPointerDown = (e: React.PointerEvent) => {
-    if (isSending || isTranscribing) return;
-    e.preventDefault();
-
-    if (isListeningRef.current) {
-      // If already recording and tapped after 300ms, stop & send
-      if (Date.now() - listeningStartedAtRef.current > 300) {
-        stopMic(true);
-      }
-      return;
-    }
-
-    pointerDownTimeRef.current = Date.now();
-    isHoldingMicRef.current = true;
-    startMic();
-  };
-
-  const handleMicPointerUp = (e: React.PointerEvent) => {
-    if (isSending || isTranscribing) return;
-    e.preventDefault();
-
-    if (isHoldingMicRef.current) {
-      isHoldingMicRef.current = false;
-      const elapsed = Date.now() - pointerDownTimeRef.current;
-      if (elapsed > 450) {
-        // User held down to speak: Stop & send on release
-        stopMic(true);
-      }
-      // If elapsed <= 450ms, this was a tap to toggle on: keep recording!
-    }
-  };
-
-  const handleMicPointerLeave = () => {
-    if (isHoldingMicRef.current) {
-      isHoldingMicRef.current = false;
-      const elapsed = Date.now() - pointerDownTimeRef.current;
-      if (elapsed > 450) {
-        stopMic(true);
-      }
-    }
-  };
-
-  // ── TTS: Text-to-Speech ────────────────────────────────────────────────────
   const cleanForSpeech = (text: string): string => {
     return text
       .replace(/#{1,6}\s*/g, "")
@@ -412,7 +528,129 @@ export default function AskBotView({
     }
   }, [messages]);
 
-  // ── Send Question ─────────────────────────────────────────────────────────
+  const startMic = async () => {
+    if (isSending || isTranscribing || isListeningRef.current) return;
+    googleTtsStop();
+    setSpeakingIdx(null);
+    setMicError(null);
+    isListeningRef.current = true;
+    setIsListening(true);
+    currentInputRef.current = "";
+    setInput("");
+
+    try {
+      const sessionPromise = startSpeechSession({
+        language: selectedLang,
+        onInterim: (text) => {
+          currentInputRef.current = text;
+          setInput(text);
+        },
+        onError: (err) => {
+          console.warn("Speech recognition error:", err);
+          if (err === "not-allowed" || err === "permission-denied") {
+            setMicError("Microphone access denied. Please allow microphone permissions.");
+          } else {
+            setMicError(`Voice input error: ${err}`);
+          }
+          isListeningRef.current = false;
+          setIsListening(false);
+          setIsTranscribing(false);
+          speechSessionRef.current = null;
+          sessionStartingPromiseRef.current = null;
+        },
+        onEnd: () => {},
+      });
+
+      sessionStartingPromiseRef.current = sessionPromise;
+      const session = await sessionPromise;
+      sessionStartingPromiseRef.current = null;
+
+      if (!isListeningRef.current) {
+        await session.stop().catch(() => {});
+        return;
+      }
+      speechSessionRef.current = session;
+    } catch (err: any) {
+      sessionStartingPromiseRef.current = null;
+      isListeningRef.current = false;
+      setIsListening(false);
+      setIsTranscribing(false);
+      setMicError(err?.message || "Could not start microphone.");
+    }
+  };
+
+  const stopMic = async (autoSend = true) => {
+    if (!isListeningRef.current) return;
+    isListeningRef.current = false;
+    setIsListening(false);
+
+    let session = speechSessionRef.current;
+    speechSessionRef.current = null;
+
+    if (!session && sessionStartingPromiseRef.current) {
+      try {
+        session = await sessionStartingPromiseRef.current;
+      } catch {
+        return;
+      }
+    }
+    if (!session) return;
+
+    if (!hasWebSpeechSupport()) {
+      setIsTranscribing(true);
+    }
+
+    try {
+      const finalTranscript = await session.stop();
+      setIsTranscribing(false);
+      const finalQuestion = (finalTranscript || currentInputRef.current).trim();
+      if (finalQuestion) {
+        setInput(finalQuestion);
+        if (autoSend) {
+          askedViaMicRef.current = true;
+          handleSend(finalQuestion);
+        }
+      }
+    } catch {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handleMicPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (isSending || isTranscribing) return;
+    e.preventDefault();
+    if (isListeningRef.current) {
+      isHoldingMicRef.current = false;
+      stopMic(true);
+      return;
+    }
+    pointerDownTimeRef.current = Date.now();
+    isHoldingMicRef.current = true;
+    startMic();
+  };
+
+  const handleMicPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (isSending || isTranscribing) return;
+    e.preventDefault();
+    if (isHoldingMicRef.current) {
+      isHoldingMicRef.current = false;
+      const elapsed = Date.now() - pointerDownTimeRef.current;
+      if (elapsed > 450) {
+        stopMic(true);
+      }
+    }
+  };
+
+  const handleMicPointerLeave = () => {
+    if (isHoldingMicRef.current) {
+      isHoldingMicRef.current = false;
+      const elapsed = Date.now() - pointerDownTimeRef.current;
+      if (elapsed > 450) {
+        stopMic(true);
+      }
+    }
+  };
+
   const handleSend = async (questionText: string) => {
     const textToSend = questionText.trim();
     if (!textToSend || isSending) return;
@@ -423,14 +661,19 @@ export default function AskBotView({
       setIsListening(false);
     }
 
-    // Add to history if not present
-    setHistoryItems((prev) => {
-      const filtered = prev.filter((item) => item !== textToSend);
-      return [textToSend, ...filtered].slice(0, 15);
-    });
-
     setIsSending(true);
     setInput("");
+
+    // Build contextual prompt if user clicked a follow-up pill (e.g. "Show me a 2-mark answer version", "Quiz me on this")
+    const lastBotMsg = [...messages].reverse().find((m) => m.role === "bot" && m.text);
+    const isFollowUpPill =
+      /^(show me a \d+-mark|quiz me|where does this appear in pyq|give me a \d+-mark|give me another)/i.test(
+        textToSend.trim(),
+      );
+    const promptForAi =
+      isFollowUpPill && lastBotMsg?.structured?.title
+        ? `${textToSend} (regarding "${lastBotMsg.structured.title}" in ${unitPrefix} ${_chapterNumber}: ${cleanChapterTitle})`
+        : textToSend;
 
     setMessages((prev) => [
       ...prev,
@@ -438,9 +681,13 @@ export default function AskBotView({
       { role: "bot", text: "", loading: true },
     ]);
 
+    setTimeout(() => {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 60);
+
     try {
       const result = await askGemini(
-        textToSend,
+        promptForAi,
         subjectId,
         chapterName,
         _chapterNumber,
@@ -448,405 +695,1142 @@ export default function AskBotView({
         selectedLang,
         _className,
       );
-      setMessages((prev) => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: "bot", text: result.answer };
-        return updated;
-      });
-    } catch (err: any) {
-      const errMsg = err?.message || "";
-      const isQuota =
-        errMsg.includes("429") ||
-        errMsg.toLowerCase().includes("quota") ||
-        errMsg.toLowerCase().includes("rate limit");
-      const userFriendlyMsg = isQuota
-        ? "⚠️ Rate limit reached. Please wait a moment and ask again."
-        : "⚠️ Sorry, I could not connect to Saral AI. Please try again.";
-
+      const structured = parseBotResponseToStructured(
+        textToSend,
+        result.answer,
+        subjectId,
+        _chapterNumber,
+        chapterName,
+      );
       setMessages((prev) => {
         const updated = [...prev];
         updated[updated.length - 1] = {
           role: "bot",
-          text: userFriendlyMsg,
+          text: result.answer,
+          structured,
         };
         return updated;
       });
+    } catch {
+      const lowerQ = textToSend.toLowerCase().trim();
+      const isSeedMatch = lowerQ === seedExchange.question.toLowerCase().trim();
+      if (isSeedMatch) {
+        const structured: StructuredBotAnswer = {
+          ...seedExchange.structured,
+          groundedTopic: seedExchange.structured.groundedTopic.replace(
+            /^Unit \d+/,
+            `${unitPrefix} ${_chapterNumber}`,
+          ),
+        };
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "bot",
+            text: seedExchange.answerText,
+            structured,
+          };
+          return updated;
+        });
+      } else {
+        const fallbackText = `**${textToSend.replace(/\?+$/, "")}** is a core concept in **${unitPrefix} ${_chapterNumber} (${cleanChapterTitle})**.\n\nIt connects the foundational definitions in your course syllabus with practical application scenarios. Review the key structural properties and standard examples in the In-depth Read notes for complete exam coverage.`;
+        const structured = parseBotResponseToStructured(
+          textToSend,
+          fallbackText,
+          subjectId,
+          _chapterNumber,
+          chapterName,
+        );
+        setMessages((prev) => {
+          const updated = [...prev];
+          updated[updated.length - 1] = {
+            role: "bot",
+            text: fallbackText,
+            structured,
+          };
+          return updated;
+        });
+      }
     } finally {
       setIsSending(false);
+      setTimeout(() => {
+        chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      }, 100);
     }
   };
 
-  const handleSelectHistoryItem = (itemText: string) => {
-    // If the conversation already has this question, scroll to it, or ask it directly
-    handleSend(itemText);
-  };
-
-  const handleNewChat = () => {
+  const handleResetToSeed = () => {
+    googleTtsStop();
+    setSpeakingIdx(null);
     setMessages([]);
     cloudStorage.removeItem(chatStorageKey);
     setInput("");
+    inputRef.current?.focus();
   };
 
   return (
-    <div className="saral-ai-container" role="region" aria-label="Saral AI Assistant">
-      {/* ── Left History Sidebar (Screen 3) ─────────────────────────────────── */}
-      <aside
-        className={`saral-history-sidebar ${!isHistoryOpen ? "collapsed" : ""}`}
-        aria-hidden={!isHistoryOpen}
-      >
-        <div className="saral-history-header">
-          <h2 className="saral-history-title">History</h2>
-          <button
-            className="saral-history-new-btn"
-            onClick={handleNewChat}
-            title="Start new conversation"
-          >
-            + New
-          </button>
-        </div>
-
-        <div className="saral-history-list">
-          {historyItems.map((item, idx) => (
-            <button
-              key={`${item}-${idx}`}
-              className="saral-history-item"
-              onClick={() => handleSelectHistoryItem(item)}
-              title={item}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        {/* Decorative concentric quarter circles in bottom left */}
-        <svg
-          className="saral-sidebar-decor-rings"
-          viewBox="0 0 160 160"
-          aria-hidden="true"
+    <div
+      className="saral-ask-v2-root"
+      role="region"
+      aria-label="Saral 24/7 Learning Assistant"
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        minHeight: 0,
+        background:
+          "radial-gradient(ellipse at 50% 0%, #EFF3EC 0%, #E6ECE3 55%, #F2EFE6 100%)",
+        fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+        overflow: "hidden",
+      }}
+    >
+      <style>{`
+        .saral-ask-v2-md p { margin: 0 !important; line-height: 1.62 !important; color: #2C3530 !important; font-size: 13.8px !important; }
+        .saral-ask-v2-md strong { color: #1E2822 !important; font-weight: 700 !important; }
+        .saral-ask-v2-md ul, .saral-ask-v2-md ol { margin: 6px 0 0 18px !important; padding: 0 !important; }
+        .saral-ask-v2-md li { margin: 3px 0 !important; }
+      `}</style>
+      {/* ── Top Sub-Header Bar (Breadcrumb + Grounded Badge) ── */}
+      {!isCompactDrawer && (
+        <div
+          style={{
+            height: "50px",
+            padding: "0 24px",
+            background: "#FAF8F3",
+            borderBottom: "1px solid #EAE4D7",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexShrink: 0,
+            gap: "16px",
+          }}
         >
-          <path
-            d="M 0,25 A 135,135 0 0,1 135,160 L 110,160 A 110,110 0 0,0 0,50 Z"
-            fill="#E2EBE5"
-            opacity="0.8"
-          />
-          <path
-            d="M 0,60 A 100,100 0 0,1 100,160 L 76,160 A 76,76 0 0,0 0,84 Z"
-            fill="#D4E2D9"
-            opacity="0.75"
-          />
-          <path
-            d="M 0,95 A 65,65 0 0,1 65,160 L 44,160 A 44,44 0 0,0 0,116 Z"
-            fill="#C5D7CC"
-            opacity="0.7"
-          />
-          <path
-            d="M 0,126 A 34,34 0 0,1 34,160 L 0,160 Z"
-            fill="#B5CCBE"
-            opacity="0.6"
-          />
-        </svg>
-      </aside>
-
-      {/* ── Sidebar Toggle Tab (◀ / ▶) ──────────────────────────────────────── */}
-      <button
-        className={`saral-sidebar-toggle-btn ${
-          isHistoryOpen ? "sidebar-open" : "pinned-edge"
-        }`}
-        onClick={() => setIsHistoryOpen(!isHistoryOpen)}
-        title={isHistoryOpen ? "Hide history" : "Show history"}
-        aria-label={isHistoryOpen ? "Close history sidebar" : "Open history sidebar"}
-      >
-        {isHistoryOpen ? (
-          <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">
-            <path d="M6.5 12L8 10.5L3.5 6L8 1.5L6.5 0L0.5 6L6.5 12Z" />
-          </svg>
-        ) : (
-          <svg width="8" height="12" viewBox="0 0 8 12" fill="currentColor">
-            <path d="M1.5 0L0 1.5L4.5 6L0 10.5L1.5 12L7.5 6L1.5 0Z" />
-          </svg>
-        )}
-      </button>
-
-      {/* ── Main Chat Area (Gradient Pane) ──────────────────────────────────── */}
-      <main className="saral-chat-main">
-        {/* Voice recording wave animation overlay */}
-        {showWave && (
           <div
-            className="saral-voice-overlay"
-            aria-live="assertive"
-            onClick={() => stopMic(true)}
-            style={{ cursor: "pointer" }}
-            title="Click anywhere to stop & send"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              fontSize: "13.5px",
+              color: "#7A827C",
+              fontWeight: 500,
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
           >
-            <div className="saral-wave-bars">
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((_, i) => (
-                <div
-                  key={i}
-                  className="saral-wave-bar"
-                  ref={(el) => {
-                    waveBarRefs.current[i] = el;
-                  }}
-                />
-              ))}
-            </div>
-            <span style={{ fontSize: "1.05rem", color: "#2B483A", fontWeight: 700 }}>
-              🎙️ Listening… Speak your question
-            </span>
-            <span style={{ fontSize: "0.85rem", color: "#4F7B64", fontWeight: 500 }}>
-              Click anywhere or click ⏹ to stop & send
+            <span style={{ color: "#1E2822", fontWeight: 700 }}>Ask me</span>
+            <span style={{ margin: "0 9px", color: "#B4B8B2" }}>›</span>
+            <span>{subjectName}</span>
+            <span style={{ margin: "0 9px", color: "#B4B8B2" }}>›</span>
+            <span>
+              {unitPrefix} {_chapterNumber} · {cleanChapterTitle}
             </span>
           </div>
-        )}
 
-        {/* ── Center Welcome Card: Screen 1 & Screen 3 (Empty State) ────────── */}
-        {messages.length === 0 && (
-          <div className="saral-welcome-card-wrapper">
-            <div className="saral-welcome-card">
-              <img
-                src={`${import.meta.env.BASE_URL}logo-clean.png`}
-                alt="Saral Vidhya"
-                className="saral-welcome-logo"
-              />
-              <div className="saral-welcome-text">
-                <h3 className="saral-welcome-title">Hi there! I'm Saral,</h3>
-                <p className="saral-welcome-subtitle">
-                  Let's explore...!
+          {/* Grounded in your university course material pill */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "5px 14px",
+              borderRadius: "999px",
+              background: "#FBF4EE",
+              border: "1px solid #EBD5C3",
+              color: "#4A453E",
+              fontSize: "12.5px",
+              fontWeight: 600,
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: "13px", lineHeight: 1 }}>📕</span>
+            <span>Grounded in your university course material</span>
+          </div>
+        </div>
+      )}
+
+      {/* ── Main Scrollable Conversation Area ── */}
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          overflowY: "auto",
+          padding: isCompactDrawer ? "16px 14px" : "26px 24px 18px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "790px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {messages.length === 0 && (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "18px",
+                width: "100%",
+                marginTop: isCompactDrawer ? "8px" : "24px",
+              }}
+            >
+              {/* Welcome Card matching Editorial Botanical + Terracotta Palette */}
+              <div
+                style={{
+                  width: "100%",
+                  background: "#FFFFFF",
+                  border: "1px solid #E8E2D7",
+                  borderLeft: "4px solid #BD7D52",
+                  borderRadius: "16px",
+                  padding: isCompactDrawer ? "20px 18px" : "26px 30px",
+                  boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    alignSelf: "flex-start",
+                    gap: "6px",
+                    padding: "4px 10px",
+                    borderRadius: "999px",
+                    background: "#E8F0EB",
+                    color: "#365343",
+                    fontSize: "10.5px",
+                    fontWeight: 800,
+                    letterSpacing: "0.07em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  <span>SARAL · 24/7 LEARNING ASSISTANT</span>
+                </div>
+
+                <h2
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Fraunces', 'Georgia', serif",
+                    fontSize: isCompactDrawer ? "18px" : "22px",
+                    fontWeight: 600,
+                    color: "#1E2822",
+                    lineHeight: 1.28,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  What would you like to explore in {unitPrefix} {_chapterNumber} ·{" "}
+                  {cleanChapterTitle}?
+                </h2>
+
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "13.5px",
+                    lineHeight: 1.6,
+                    color: "#4A544E",
+                  }}
+                >
+                  Every answer is grounded in your university syllabus material —
+                  complete with <strong style={{ color: "#BD7D52" }}>Exam Tips</strong>,{" "}
+                  <strong style={{ color: "#1E2822" }}>In-depth Read § citations</strong>,
+                  and direct <strong style={{ color: "#1E2822" }}>Mindmap node links</strong>.
                 </p>
-                <div className="saral-welcome-actions">
-                  <button
-                    type="button"
-                    className="saral-welcome-action-btn"
-                    onClick={() => {
-                      inputRef.current?.focus();
-                    }}
-                    title="Ask Questions"
-                  >
-                    <div className="saral-welcome-action-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" />
-                        <path d="M9 18h6" />
-                        <path d="M10 21h4" />
-                        <path d="M19 3v3" />
-                        <path d="M20.5 4.5h-3" />
-                      </svg>
-                    </div>
-                    <span>Ask Questions</span>
-                  </button>
 
-                  <button
-                    type="button"
-                    className="saral-welcome-action-btn"
-                    onClick={() => {
-                      handleSend(`Can you explain the key concepts of ${chapterName}?`);
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    flexWrap: "wrap",
+                    marginTop: "4px",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      color: "#7A827C",
+                      fontWeight: 600,
                     }}
-                    title="Get Explanations"
                   >
-                    <div className="saral-welcome-action-icon">
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 4a5 5 0 0 0-5 5v3a5 5 0 0 0 2 4v2a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-2a5 5 0 0 0 2-4V9a5 5 0 0 0-4-5z" />
-                        <path d="M20 4v3" />
-                        <path d="M21.5 5.5h-3" />
-                      </svg>
-                    </div>
-                    <span>Get Explanations</span>
-                  </button>
+                    Connected to ·
+                  </span>
+                  <span
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "999px",
+                      background: "#F6F4EE",
+                      border: "1px solid #E5DFD3",
+                      fontSize: "12px",
+                      color: "#1E2822",
+                      fontWeight: 600,
+                    }}
+                  >
+                    {unitPrefix} {_chapterNumber} Syllabus Notes
+                  </span>
+                  <span
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "999px",
+                      background: "#F6F4EE",
+                      border: "1px solid #E5DFD3",
+                      fontSize: "12px",
+                      color: "#1E2822",
+                      fontWeight: 600,
+                    }}
+                  >
+                    In-depth Read &amp; Mindmaps
+                  </span>
+                  <span
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "999px",
+                      background: "#FBF4EE",
+                      border: "1px solid #EBD5C3",
+                      fontSize: "12px",
+                      color: "#B86B35",
+                      fontWeight: 700,
+                    }}
+                  >
+                    University PYQ Patterns
+                  </span>
+                </div>
+              </div>
+
+              {/* Starter Prompt Pills */}
+              <div>
+                <div
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    color: "#6E7771",
+                    textTransform: "uppercase",
+                    marginBottom: "10px",
+                  }}
+                >
+                  SUGGESTED QUESTIONS FOR {unitPrefix.toUpperCase()} {_chapterNumber}
+                </div>
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                  }}
+                >
+                  {[
+                    seedExchange.question,
+                    ...seedExchange.structured.followUps,
+                  ].map((qText, qIdx) => (
+                    <button
+                      key={qIdx}
+                      type="button"
+                      onClick={() => handleSend(qText)}
+                      disabled={isSending}
+                      style={{
+                        padding: "9px 16px",
+                        borderRadius: "999px",
+                        background: "#FFFFFF",
+                        border: "1px solid #E5CFC0",
+                        color: "#1E2822",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        cursor: isSending ? "default" : "pointer",
+                        boxShadow: "0 1px 4px rgba(30, 40, 34, 0.03)",
+                        transition: "all 0.15s ease",
+                        textAlign: "left",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSending) {
+                          e.currentTarget.style.background = "#FBF5EE";
+                          e.currentTarget.style.borderColor = "#BD7D52";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#FFFFFF";
+                        e.currentTarget.style.borderColor = "#E5CFC0";
+                      }}
+                    >
+                      {qText}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
+          {messages.map((m, idx) => {
+            if (m.role === "user") {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    alignSelf: "flex-end",
+                    maxWidth: "85%",
+                    background: "#FFFFFF",
+                    border: "1px solid #E6D2C3",
+                    borderRadius: "18px 18px 4px 18px",
+                    padding: "12px 22px",
+                    color: "#1E2822",
+                    fontSize: "14px",
+                    fontWeight: 700,
+                    lineHeight: 1.4,
+                    boxShadow: "0 2px 8px rgba(30, 40, 34, 0.04)",
+                  }}
+                >
+                  {m.text}
+                </div>
+              );
+            }
 
-        {/* ── Chat Messages Flow: Screen 2 (Active State) ────────────────────── */}
-        {messages.length > 0 && (
-          <div
-            className="saral-messages-scroll"
-            role="log"
-            aria-live="polite"
-            aria-label="Chat messages"
-          >
-            {messages.map((m, i) => (
-              <React.Fragment key={i}>
-                {m.role === "user" ? (
+            if (m.loading) {
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    width: "100%",
+                    background: "#FFFFFF",
+                    border: "1px solid #E8E2D7",
+                    borderLeft: "4px solid #BD7D52",
+                    borderRadius: "16px",
+                    padding: "22px 26px",
+                    boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                  }}
+                >
                   <div
-                    className="saral-msg-user"
-                    role="article"
-                    aria-label="Your question"
+                    style={{
+                      fontSize: "12.5px",
+                      marginBottom: "10px",
+                    }}
                   >
-                    {m.text}
+                    <strong style={{ color: "#1E2822" }}>Saral</strong>
+                    <span style={{ color: "#BD7D52", fontWeight: 600 }}>
+                      {" "}
+                      · 24/7 Learning Assistant — checking your {unitPrefix}{" "}
+                      {_chapterNumber} material…
+                    </span>
                   </div>
-                ) : (
+                  <div className="saral-loading-bubble" aria-label="Thinking">
+                    <div className="saral-loading-dot"></div>
+                    <div className="saral-loading-dot"></div>
+                    <div className="saral-loading-dot"></div>
+                  </div>
+                </div>
+              );
+            }
+
+            const st =
+              m.structured ||
+              parseBotResponseToStructured(
+                messages[idx - 1]?.text || seedExchange.question,
+                m.text,
+                subjectId,
+                _chapterNumber,
+                chapterName,
+              );
+            const isLastBot = idx === messages.length - 1;
+            const fb = feedbackMap[idx];
+            const isSaved = Boolean(savedTakeawayMap[idx]);
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%",
+                }}
+              >
+                {/* ── Saral Grounded Answer Card ── */}
+                <div
+                  style={{
+                    width: "100%",
+                    background: "#FFFFFF",
+                    border: "1px solid #E8E2D7",
+                    borderLeft: "4px solid #BD7D52",
+                    borderRadius: "16px",
+                    padding: isCompactDrawer ? "18px 18px" : "24px 28px 22px",
+                    boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                    boxSizing: "border-box",
+                  }}
+                >
+                  {/* Header attribution */}
                   <div
-                    ref={i === messages.length - 1 ? lastBotMsgRef : undefined}
-                    className="saral-msg-bot"
-                    role="article"
-                    aria-label="Saral response"
+                    style={{
+                      fontSize: "12.5px",
+                      lineHeight: 1.4,
+                      marginBottom: "6px",
+                    }}
                   >
-                    {m.loading ? (
-                      <div className="saral-loading-bubble" aria-label="Thinking">
-                        <div className="saral-loading-dot"></div>
-                        <div className="saral-loading-dot"></div>
-                        <div className="saral-loading-dot"></div>
+                    <strong style={{ color: "#1E2822", fontWeight: 800 }}>
+                      Saral
+                    </strong>
+                    <span style={{ color: "#BD7D52", fontWeight: 600 }}>
+                      {" "}
+                      · 24/7 Learning Assistant — answered from your {unitPrefix}{" "}
+                      {_chapterNumber} material
+                    </span>
+                  </div>
+
+                  {/* Answer Heading */}
+                  <h2
+                    style={{
+                      margin: "0 0 12px 0",
+                      fontSize: isCompactDrawer ? "16.5px" : "18.5px",
+                      fontWeight: 800,
+                      color: "#1E2822",
+                      lineHeight: 1.3,
+                      letterSpacing: "-0.01em",
+                    }}
+                  >
+                    {st.title}
+                  </h2>
+
+                  {/* Answer Body Paragraphs */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "10px",
+                      fontSize: "13.8px",
+                      lineHeight: 1.62,
+                      color: "#2C3530",
+                    }}
+                  >
+                    {st.paragraphs.map((p, pIdx) => (
+                      <div key={pIdx} className="saral-ask-v2-md">
+                        <MarkdownView content={p} isPurpleTheme={false} />
                       </div>
-                    ) : (
-                      <>
-                        <div className="saral-bot-content" dir="auto">
-                          <MarkdownView content={m.text} />
-                        </div>
-                        <button
-                          className={`saral-bot-tts-btn ${
-                            speakingIdx === i ? "speaking" : ""
-                          }`}
-                          onClick={() => speakText(m.text, i)}
-                          title={speakingIdx === i ? "Stop reading" : "Read aloud"}
-                          aria-label={
-                            speakingIdx === i ? "Stop reading" : "Read response aloud"
-                          }
-                        >
-                          {speakingIdx === i ? "⏹" : "▶"}
-                        </button>
-                      </>
+                    ))}
+                  </div>
+
+                  {/* EXAM TIP Callout Box */}
+                  <div
+                    style={{
+                      marginTop: "14px",
+                      marginBottom: "16px",
+                      padding: "12px 16px",
+                      borderRadius: "10px",
+                      background: "#FDF7F0",
+                      border: "1px solid #F0D9C2",
+                      fontSize: "13px",
+                      lineHeight: 1.55,
+                      color: "#3A322B",
+                    }}
+                  >
+                    <span
+                      style={{
+                        color: "#C27A38",
+                        fontWeight: 800,
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      EXAM TIP ·{" "}
+                    </span>
+                    {st.examTipPrefix && <span>{st.examTipPrefix}</span>}
+                    {st.examTipHighlight && (
+                      <strong style={{ color: "#B86B35", fontWeight: 700 }}>
+                        {st.examTipHighlight}
+                      </strong>
                     )}
+                    {st.examTipSuffix && <span>{st.examTipSuffix}</span>}
+                  </div>
+
+                  {/* Grounded in · chips + Thumbs Up / Down */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      flexWrap: "wrap",
+                      marginBottom: "16px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "12px",
+                          color: "#7A827C",
+                          fontWeight: 600,
+                        }}
+                      >
+                        Grounded in ·
+                      </span>
+
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "4px 12px",
+                          borderRadius: "999px",
+                          background: "#F6F4EE",
+                          border: "1px solid #E5DFD3",
+                          fontSize: "12px",
+                          color: "#4A544E",
+                        }}
+                      >
+                        {st.groundedTopic.includes("·") ? (
+                          <>
+                            <span>
+                              {st.groundedTopic.split("·")[0].trim()} ·{" "}
+                            </span>
+                            <strong
+                              style={{
+                                color: "#1E2822",
+                                fontWeight: 700,
+                                marginLeft: "3px",
+                              }}
+                            >
+                              {st.groundedTopic
+                                .split("·")
+                                .slice(1)
+                                .join("·")
+                                .trim()}
+                            </strong>
+                          </>
+                        ) : (
+                          <strong style={{ color: "#1E2822", fontWeight: 700 }}>
+                            {st.groundedTopic}
+                          </strong>
+                        )}
+                      </span>
+
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "4px 12px",
+                          borderRadius: "999px",
+                          background: "#F6F4EE",
+                          border: "1px solid #E5DFD3",
+                          fontSize: "12px",
+                          color: "#4A544E",
+                        }}
+                      >
+                        <span>In-depth Read · </span>
+                        <strong
+                          style={{
+                            color: "#1E2822",
+                            fontWeight: 700,
+                            marginLeft: "3px",
+                          }}
+                        >
+                          {st.groundedSection}
+                        </strong>
+                      </span>
+
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          padding: "4px 12px",
+                          borderRadius: "999px",
+                          background: "#F6F4EE",
+                          border: "1px solid #E5DFD3",
+                          fontSize: "12px",
+                          color: "#4A544E",
+                        }}
+                      >
+                        <span>Mindmap · </span>
+                        <strong
+                          style={{
+                            color: "#1E2822",
+                            fontWeight: 700,
+                            marginLeft: "3px",
+                          }}
+                        >
+                          {st.groundedNode}
+                        </strong>
+                      </span>
+                    </div>
+
+                    {/* Thumbs Up / Down */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFeedbackMap((prev) => ({
+                            ...prev,
+                            [idx]: prev[idx] === "up" ? undefined! : "up",
+                          }))
+                        }
+                        title="Helpful answer"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "7px",
+                          border:
+                            fb === "up"
+                              ? "1px solid #BD7D52"
+                              : "1px solid #EAE2D6",
+                          background: fb === "up" ? "#FBF4EE" : "#FAF8F3",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          padding: 0,
+                        }}
+                      >
+                        👍
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFeedbackMap((prev) => ({
+                            ...prev,
+                            [idx]: prev[idx] === "down" ? undefined! : "down",
+                          }))
+                        }
+                        title="Needs improvement"
+                        style={{
+                          width: "28px",
+                          height: "28px",
+                          borderRadius: "7px",
+                          border:
+                            fb === "down"
+                              ? "1px solid #BD7D52"
+                              : "1px solid #EAE2D6",
+                          background: fb === "down" ? "#FBF4EE" : "#FAF8F3",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          fontSize: "13px",
+                          padding: 0,
+                        }}
+                      >
+                        👎
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 4-Column Action Bar: Open in Read | View in Mindmap | Save to Key Takeaways | Listen to this */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: isCompactDrawer
+                        ? "repeat(2, 1fr)"
+                        : "repeat(4, 1fr)",
+                      gap: "10px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => onNavigateTool?.("detailed")}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: "999px",
+                        background: "#FAF7F2",
+                        border: "1px solid #E5D5C5",
+                        color: "#2C3530",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#F3ECE2";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#FAF7F2";
+                      }}
+                    >
+                      <span style={{ fontSize: "13px" }}>📖</span>
+                      <span>Open in Read</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onNavigateTool?.("mindmap")}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: "999px",
+                        background: "#FAF7F2",
+                        border: "1px solid #E5D5C5",
+                        color: "#2C3530",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = "#F3ECE2";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#FAF7F2";
+                      }}
+                    >
+                      <span style={{ fontSize: "13px", color: "#5A7D68" }}>✺</span>
+                      <span>View in Mindmap</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const nextSaved = !savedTakeawayMap[idx];
+                        setSavedTakeawayMap((prev) => ({
+                          ...prev,
+                          [idx]: nextSaved,
+                        }));
+                        try {
+                          const savedKey = `sv_kt_saved_from_ask_${subjectId}_ch${_chapterNumber}`;
+                          const existingRaw = cloudStorage.getItem(savedKey);
+                          const existing: Array<{ id: string; lead: string; body: string }> =
+                            existingRaw ? JSON.parse(existingRaw) : [];
+                          const itemId = `ask-saved-${idx}-${st.title.slice(0, 24).replace(/\W+/g, "_")}`;
+                          if (nextSaved) {
+                            const updated = [
+                              ...existing.filter((x) => x.id !== itemId),
+                              {
+                                id: itemId,
+                                lead: st.title,
+                                body: st.paragraphs.join(" "),
+                              },
+                            ];
+                            cloudStorage.setItem(savedKey, JSON.stringify(updated));
+                          } else {
+                            cloudStorage.setItem(
+                              savedKey,
+                              JSON.stringify(existing.filter((x) => x.id !== itemId)),
+                            );
+                          }
+                        } catch {
+                          // ignore storage error
+                        }
+                      }}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: "999px",
+                        background: isSaved ? "#EEF5F0" : "#FAF7F2",
+                        border: isSaved
+                          ? "1px solid #86B398"
+                          : "1px solid #E5D5C5",
+                        color: isSaved ? "#284B37" : "#2C3530",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "13px" }}>
+                        {isSaved ? "✓" : "🔑"}
+                      </span>
+                      <span>
+                        {isSaved ? "Saved to Takeaways" : "Save to Key Takeaways"}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => speakText(m.text, idx)}
+                      style={{
+                        padding: "9px 12px",
+                        borderRadius: "999px",
+                        background:
+                          speakingIdx === idx ? "#FBF4EE" : "#FAF7F2",
+                        border:
+                          speakingIdx === idx
+                            ? "1px solid #BD7D52"
+                            : "1px solid #E5D5C5",
+                        color: speakingIdx === idx ? "#BD7D52" : "#2C3530",
+                        fontSize: "12.5px",
+                        fontWeight: 600,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "6px",
+                        cursor: "pointer",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span style={{ fontSize: "13px" }}>
+                        {speakingIdx === idx ? "⏹" : "🎧"}
+                      </span>
+                      <span>
+                        {speakingIdx === idx ? "Stop listening" : "Listen to this"}
+                      </span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* ── Suggested Follow-Ups (shown below the latest bot card) ── */}
+                {isLastBot && st.followUps && st.followUps.length > 0 && (
+                  <div style={{ marginTop: "16px" }}>
+                    <div
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        color: "#6E7771",
+                        textTransform: "uppercase",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      SUGGESTED FOLLOW-UPS
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "10px",
+                      }}
+                    >
+                      {st.followUps.map((fText, fIdx) => (
+                        <button
+                          key={fIdx}
+                          type="button"
+                          onClick={() => handleSend(fText)}
+                          disabled={isSending}
+                          style={{
+                            padding: "8px 16px",
+                            borderRadius: "999px",
+                            background: "#FFFFFF",
+                            border: "1px solid #E5CFC0",
+                            color: "#1E2822",
+                            fontSize: "12.5px",
+                            fontWeight: 600,
+                            cursor: isSending ? "default" : "pointer",
+                            boxShadow: "0 1px 4px rgba(30, 40, 34, 0.03)",
+                            transition: "all 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isSending) {
+                              e.currentTarget.style.background = "#FBF5EE";
+                              e.currentTarget.style.borderColor = "#BD7D52";
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = "#FFFFFF";
+                            e.currentTarget.style.borderColor = "#E5CFC0";
+                          }}
+                        >
+                          {fText}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </React.Fragment>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-        )}
+              </div>
+            );
+          })}
+          <div ref={chatEndRef} />
+        </div>
+      </div>
 
-        {/* ── Bottom Input Bar: Screens 1, 2, 3 ─────────────────────────────── */}
-        <div className="saral-input-bar-wrapper">
-          {micError && (
-            <div
+      {/* ── Bottom Floating Input Bar ── */}
+      <div
+        style={{
+          padding: isCompactDrawer ? "10px 12px 14px" : "10px 28px 18px",
+          flexShrink: 0,
+        }}
+      >
+        {micError && (
+          <div
+            style={{
+              maxWidth: "1100px",
+              margin: "0 auto 8px",
+              padding: "8px 14px",
+              background: "#FEF2F2",
+              border: "1px solid #F87171",
+              borderRadius: "10px",
+              color: "#991B1B",
+              fontSize: "12.5px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <span>⚠️ {micError}</span>
+            <button
+              type="button"
+              onClick={() => setMicError(null)}
               style={{
-                marginBottom: "10px",
-                padding: "8px 14px",
-                background: "#FEF2F2",
-                border: "1px solid #F87171",
-                borderRadius: "12px",
+                background: "none",
+                border: "none",
                 color: "#991B1B",
-                fontSize: "13px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
+                cursor: "pointer",
+                fontSize: "14px",
               }}
             >
-              <span>⚠️ {micError}</span>
-              <button
-                type="button"
-                onClick={() => setMicError(null)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#991B1B",
-                  cursor: "pointer",
-                  fontSize: "16px",
-                  lineHeight: 1,
-                  padding: "0 4px",
-                }}
-                title="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-          <div className="saral-input-bar">
-            {/* Left Sparkle Badge */}
-            <div className="saral-sparkle-badge" aria-hidden="true">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M10 2C10 6.5 6.5 10 2 10C6.5 10 10 13.5 10 18C10 13.5 13.5 10 18 10C13.5 10 10 6.5 10 2Z"
-                  fill="#FFFFFF"
-                />
-                <path
-                  d="M17 11C17 13.5 15 15 13 15C15 15 17 16.5 17 19C17 16.5 19 15 21 15C19 15 17 13.5 17 11Z"
-                  fill="#FFFFFF"
-                />
-              </svg>
-            </div>
+              ✕
+            </button>
+          </div>
+        )}
 
-            {/* Input field */}
-            <input
-              ref={inputRef}
-              type="text"
-              className="saral-text-input"
-              placeholder={
-                isTranscribing
-                  ? "Transcribing your voice…"
-                  : isListening
-                  ? "Listening… speak now (click ⏹ to stop & send)"
-                  : "Type your question here..."
+        <div
+          style={{
+            maxWidth: "1120px",
+            margin: "0 auto",
+            background: "#FFFFFF",
+            border: "1px solid #E4DEC3",
+            borderRadius: "999px",
+            padding: "6px 8px 6px 8px",
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+            boxShadow: "0 4px 18px rgba(30, 40, 34, 0.06)",
+          }}
+        >
+          {/* Left '+' New Question / Reset Button */}
+          <button
+            type="button"
+            onClick={handleResetToSeed}
+            title="Start a new question"
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "50%",
+              background: "#BD7D52",
+              color: "#FFFFFF",
+              border: "none",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "19px",
+              fontWeight: 500,
+              cursor: "pointer",
+              flexShrink: 0,
+              lineHeight: 1,
+            }}
+          >
+            +
+          </button>
+
+          {/* Input Field */}
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend(input);
               }
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend(input);
-                }
+            }}
+            disabled={isSending}
+            placeholder={
+              isTranscribing
+                ? "Transcribing your voice…"
+                : isListening
+                ? "Listening… speak now (click ⏹ to stop & send)"
+                : `Ask Saral anything about ${unitPrefix} ${_chapterNumber}...`
+            }
+            style={{
+              flex: 1,
+              border: "none",
+              outline: "none",
+              background: "transparent",
+              fontSize: "13.5px",
+              fontWeight: 500,
+              color: "#1E2822",
+              minWidth: 0,
+            }}
+          />
+
+          {/* Right Mic + Send Actions */}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onPointerDown={handleMicPointerDown}
+              onPointerUp={handleMicPointerUp}
+              onPointerLeave={handleMicPointerLeave}
+              disabled={isSending || isTranscribing}
+              title={isListening ? "Stop listening & send" : "Voice input"}
+              style={{
+                width: "34px",
+                height: "34px",
+                borderRadius: "50%",
+                background: isListening ? "#DC2626" : "#F4F1EA",
+                color: isListening ? "#FFFFFF" : "#3A443E",
+                border: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
               }}
-              disabled={isSending}
-              aria-label="Type your question here"
-            />
-
-            {/* Action buttons (Mic + Send) */}
-            <div className="saral-input-actions">
-              {/* Mic Button */}
-              <button
-                type="button"
-                className={`saral-action-btn ${isListening ? "recording" : ""}`}
-                onPointerDown={handleMicPointerDown}
-                onPointerUp={handleMicPointerUp}
-                onPointerLeave={handleMicPointerLeave}
-                disabled={isSending || isTranscribing}
-                title={
-                  isListening
-                    ? "Click or release to stop and send"
-                    : "Click or hold to speak"
-                }
-                aria-label={isListening ? "Stop listening and send" : "Voice input"}
-              >
-                {isListening ? (
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
-                    <rect x="4" y="4" width="16" height="16" rx="3" ry="3" />
-                  </svg>
-                ) : (
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#FFFFFF"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path>
-                    <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                    <line x1="12" y1="19" x2="12" y2="23"></line>
-                    <line x1="8" y1="23" x2="16" y2="23"></line>
-                  </svg>
-                )}
-              </button>
-
-              {/* Send Button */}
-              <button
-                type="button"
-                className="saral-action-btn"
-                onClick={() => handleSend(input)}
-                disabled={isSending || !input.trim()}
-                title="Send question"
-                aria-label="Send question"
-              >
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="#FFFFFF">
-                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            >
+              {isListening ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="4" width="16" height="16" rx="3" ry="3" />
                 </svg>
-              </button>
-            </div>
+              ) : (
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" />
+                  <line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleSend(input)}
+              disabled={isSending || !input.trim()}
+              title="Send question"
+              style={{
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                background: "#BD7D52",
+                color: "#FFFFFF",
+                border: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: isSending || !input.trim() ? "default" : "pointer",
+                opacity: isSending || !input.trim() ? 0.82 : 1,
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="#FFFFFF">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+              </svg>
+            </button>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }

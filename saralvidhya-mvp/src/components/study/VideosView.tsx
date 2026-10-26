@@ -1019,18 +1019,134 @@ export default function VideosView({
       rawTopics = currentVideo.topics;
     } else {
       const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
-      if (curated?.topics) {
+      if (curated?.topics && curated.topics.length > 0) {
         rawTopics = curated.topics;
       } else {
+        const cleanBase = (displayTitle || chapterName || "Core Concepts")
+          .replace(/^Part\s*\d+\s*:\s*/i, "")
+          .trim();
         rawTopics = [
-          "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-          "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-          "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+          `${cleanBase}: Foundations & Architecture`,
+          `Core Mechanisms, Models & System Components`,
+          `Practical Applications, Roles & Structural Summary`,
         ];
       }
     }
     return rawTopics.slice(0, 3);
-  }, [currentVideo]);
+  }, [currentVideo, displayTitle, chapterName]);
+
+  // Helper to parse duration strings like "04:12", "4:12", "10:15min", "12 min" into total seconds
+  const parseDurationSec = useCallback((rawDur?: string, fallbackSec = 252): number => {
+    if (!rawDur) return fallbackSec;
+    const cleaned = rawDur.replace(/min(s|utes)?/gi, "").trim();
+    const mmss = cleaned.match(/^(\d+)\s*:\s*(\d+)$/);
+    if (mmss) {
+      return parseInt(mmss[1], 10) * 60 + parseInt(mmss[2], 10);
+    }
+    const minsOnly = cleaned.match(/^(\d+(?:\.\d+)?)$/);
+    if (minsOnly) {
+      return Math.round(parseFloat(minsOnly[1]) * 60);
+    }
+    return fallbackSec;
+  }, []);
+
+  const effectiveDurationSec = useMemo(() => {
+    if (duration > 0) return Math.round(duration);
+    return parseDurationSec(currentVideo.duration, 252);
+  }, [duration, currentVideo.duration, parseDurationSec]);
+
+  const totalChapterWatchFormatted = useMemo(() => {
+    const totalSec = videos.reduce((acc, v, idx) => {
+      if (idx === robustActive && duration > 0) {
+        return acc + Math.round(duration);
+      }
+      return acc + parseDurationSec(v.duration, 210);
+    }, 0);
+    return formatTime(totalSec);
+  }, [videos, robustActive, duration, parseDurationSec]);
+
+  const segmentsList = useMemo(() => {
+    const count = Math.max(1, topicsList.length);
+    return topicsList.map((topic, idx) => {
+      const startSec = Math.round((idx / count) * effectiveDurationSec);
+      const endSec =
+        idx === count - 1
+          ? effectiveDurationSec
+          : Math.round(((idx + 1) / count) * effectiveDurationSec);
+      const segSec = Math.max(1, endSec - startSec);
+      const mins = Math.floor(segSec / 60);
+      const secs = segSec % 60;
+      const durationLabel =
+        mins > 0 && secs > 0
+          ? `${mins} min ${secs} sec`
+          : mins > 0
+            ? `${mins} min`
+            : `${secs} sec`;
+      return {
+        index: idx,
+        title: topic,
+        startSec,
+        endSec,
+        timeRangeStr: `${formatTime(startSec)} – ${formatTime(endSec)}`,
+        durationLabel,
+      };
+    });
+  }, [topicsList, effectiveDurationSec]);
+
+  const activeSegmentIdx = useMemo(() => {
+    for (let i = segmentsList.length - 1; i >= 0; i--) {
+      if (currentTime >= segmentsList[i].startSec) {
+        return i;
+      }
+    }
+    return 0;
+  }, [segmentsList, currentTime]);
+
+  const keyMomentsList = useMemo(() => {
+    return segmentsList.map((seg, idx) => {
+      const momentSec = Math.min(
+        Math.max(0, seg.endSec - 5),
+        seg.startSec + Math.max(12, Math.round((seg.endSec - seg.startSec) * 0.28)),
+      );
+      const colonIdx = seg.title.indexOf(":");
+      let lead = "";
+      let detail = "";
+      if (colonIdx !== -1) {
+        lead = seg.title.slice(0, colonIdx).trim();
+        detail = seg.title.slice(colonIdx + 1).trim();
+      } else {
+        const parts = seg.title.split(/\s+(?:&|—|-)\s+/);
+        lead = parts[0] || seg.title;
+        detail =
+          parts.length > 1
+            ? `${parts.slice(1).join(", ")} — core conceptual breakdown and exam focus.`
+            : `Core principles, structural relationships, and key exam takeaways for Segment ${idx + 1}.`;
+      }
+      return {
+        timeSec: momentSec,
+        timeStr: formatTime(momentSec),
+        lead,
+        detail,
+      };
+    });
+  }, [segmentsList]);
+
+  const seekToSecond = useCallback(
+    (targetSec: number) => {
+      const clamped = Math.max(0, Math.min(effectiveDurationSec, targetSec));
+      setCurrentTime(clamped);
+      if (effectiveDurationSec > 0) {
+        setProgress((clamped / effectiveDurationSec) * 100);
+      }
+      if (playerRef.current?.seekTo) {
+        try {
+          playerRef.current.seekTo(clamped, true);
+          playerRef.current.playVideo?.();
+        } catch {}
+      }
+    },
+    [effectiveDurationSec],
+  );
 
   // Video switching handler for multi-video
   const handleSelectVideo = (index: number) => {
@@ -1049,46 +1165,31 @@ export default function VideosView({
     }
   };
 
-  // Handler when clicking a stacked row video in MLRIT 4-video view
-  const handleActivateStackedVideo = (index: number, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const rowContainer = rowPlayerContainerRefs.current[index];
-    if (rowContainer) {
-      (playerContainerRef as any).current = rowContainer;
-    }
-    const targetYtId = videos[index]?.ytId;
+  const cutLabelUpper =
+    persona === "beginner"
+      ? "ESSENTIALS CUT"
+      : persona === "advanced"
+        ? "IN-DEPTH CUT"
+        : "STANDARD CUT";
 
-    if (index === robustActive) {
-      if (!isCurrentlyFullscreen()) {
-        enterFullscreen(targetYtId);
-        if (playerRef.current) {
-          playerRef.current.playVideo?.();
-        }
-      } else {
-        handlePlayPause();
-      }
-      return;
-    }
+  const cutOverlayTopRightLabel =
+    persona === "beginner"
+      ? "Essentials cut · Standard / In-depth available"
+      : persona === "advanced"
+        ? "In-depth cut · Essentials / Standard available"
+        : "Standard cut · Essentials / In-depth available";
 
-    try {
-      playerRef.current?.pauseVideo?.();
-    } catch {}
+  const subjectShortWatermark = useMemo(() => {
+    const cleanSubj = (subjectId || "COURSE")
+      .replace(/^anu_/i, "")
+      .replace(/_.*$/, "")
+      .toUpperCase();
+    return `${cleanSubj} PART ${robustActive + 1}`;
+  }, [subjectId, robustActive]);
 
-    activePlaybackSessionYtIdRef.current = null;
-    setCurrentTime(0);
-    setDuration(0);
-    setProgress(0);
-    setIsPlaying(false);
-    autoPlayOnReadyRef.current = true;
-    setActiveVideo(index);
-    if (onSelectVideoIndex) {
-      onSelectVideoIndex(index + 1);
-    }
-    enterFullscreen(targetYtId);
-  };
-
-  // Video Player Component
-  const renderVideoPlayer = (_isFullWidth = false, isStackedRow = false, rowIndex = robustActive) => (
+  const totalVideos = Math.max(1, videos.length);
+  // Video Player Component matching Screen 1 mockup
+  const renderVideoPlayer = (_isFullWidth = false, _isStackedRow = false, rowIndex = robustActive) => (
     <div
       ref={(el) => {
         rowPlayerContainerRefs.current[rowIndex] = el;
@@ -1100,21 +1201,17 @@ export default function VideosView({
       onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
-        width: isFullscreen ? "100%" : "76%",
-        maxWidth: isFullscreen ? "100%" : "860px",
-        height: "100%",
-        maxHeight: "100%",
-        aspectRatio: "16 / 9",
+        width: "100%",
+        height: isFullscreen ? "100%" : "clamp(280px, calc(100vh - 255px), 425px)",
         flexShrink: 0,
-        background: "#000",
-        borderRadius: isFullscreen ? "0px" : "12px",
+        background: "radial-gradient(ellipse at center, #2E4238 0%, #1B2821 100%)",
+        borderRadius: isFullscreen ? "0px" : "16px",
         overflow: "hidden",
-        boxShadow: isFullscreen ? "none" : "0 6px 20px rgba(0,0,0,0.14)",
+        boxShadow: isFullscreen ? "none" : "0 8px 26px rgba(20, 32, 26, 0.14)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
-        cursor: isPlaying && !showControls ? "none" : "default",
-        margin: "0 auto",
+        cursor: isFullscreen && isPlaying && !showControls ? "none" : "default",
       }}
     >
       {/* YouTube Iframe wrapped in keyed container so React cleanly unmounts on video switch */}
@@ -1127,6 +1224,8 @@ export default function VideosView({
           height: "100%",
           border: 0,
           pointerEvents: "none",
+          opacity: isPlaying ? 1 : 0.18,
+          transition: "opacity 0.25s ease",
         }}
       >
         <div
@@ -1139,9 +1238,100 @@ export default function VideosView({
         />
       </div>
 
-      {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
+      {/* Dark forest-green ambient slate overlay when paused */}
+      {!isPlaying && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "radial-gradient(ellipse at center, rgba(46, 66, 56, 0.88) 0%, rgba(25, 38, 31, 0.96) 100%)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            pointerEvents: "none",
+            zIndex: 1,
+          }}
+        >
+          <span
+            style={{
+              fontSize: isFullscreen ? "46px" : "34px",
+              fontWeight: 800,
+              letterSpacing: "0.04em",
+              color: "rgba(255, 255, 255, 0.14)",
+              userSelect: "none",
+              textTransform: "uppercase",
+            }}
+          >
+            {subjectShortWatermark}
+          </span>
+        </div>
+      )}
+
+      {/* Top Overlay Pills (Resumed Pill on Left, Cut Availability Pill on Right) */}
       <div
-        onClick={handleVideoClick}
+        style={{
+          position: "absolute",
+          top: "16px",
+          left: "18px",
+          right: "18px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "12px",
+          zIndex: 6,
+          pointerEvents: "none",
+          opacity: showControls || !isPlaying ? 1 : 0,
+          transition: "opacity 0.25s ease",
+        }}
+      >
+        <div
+          style={{
+            background: "#9DC2AD",
+            color: "#182C22",
+            borderRadius: "999px",
+            padding: "6px 14px",
+            fontSize: "12px",
+            fontWeight: 700,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.18)",
+          }}
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <polyline points="12 7 12 12 15 14" />
+          </svg>
+          <span>
+            {currentTime > 0
+              ? `Resumed at ${formatTime(currentTime)}`
+              : `Ready · ${formatTime(effectiveDurationSec)}`}
+          </span>
+        </div>
+
+        <div
+          style={{
+            background: "rgba(22, 33, 27, 0.72)",
+            backdropFilter: "blur(6px)",
+            WebkitBackdropFilter: "blur(6px)",
+            border: "1px solid rgba(255, 255, 255, 0.18)",
+            color: "#E5EFE9",
+            borderRadius: "999px",
+            padding: "6px 14px",
+            fontSize: "12px",
+            fontWeight: 600,
+          }}
+        >
+          {`Video ${robustActive + 1} of ${totalVideos} · ${segmentsList.length} Segments · ${totalChapterWatchFormatted} total`}
+        </div>
+      </div>
+
+      {/* Transparent Click overlay covering video */}
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          handlePlayPause();
+        }}
         style={{
           position: "absolute",
           inset: 0,
@@ -1162,14 +1352,13 @@ export default function VideosView({
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             color: "#FFFFFF",
-            padding: "16px 24px",
+            padding: "14px 22px",
             borderRadius: "50px",
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontSize: seekFeedback === "skip" ? "16px" : "20px",
+            fontSize: "18px",
             fontWeight: 800,
-            letterSpacing: "0.5px",
             zIndex: 15,
             pointerEvents: "none",
             boxShadow: "0 10px 36px rgba(0, 0, 0, 0.6)",
@@ -1178,36 +1367,27 @@ export default function VideosView({
         >
           {seekFeedback === "-10s" ? (
             <>
-              <span style={{ fontSize: "24px" }}>«</span>
+              <span>{"«"}</span>
               <span>10s</span>
             </>
           ) : seekFeedback === "+10s" ? (
             <>
               <span>10s</span>
-              <span style={{ fontSize: "24px" }}>»</span>
+              <span>{"»"}</span>
             </>
           ) : (
-            <>
-              <span style={{ fontSize: "20px" }}>⏭</span>
-              <span>Skipped to 2:00</span>
-            </>
+            <span>Skipped</span>
           )}
         </div>
       )}
 
-      {/* Center Play Overlay when Paused */}
+      {/* Center Sage Play Button Overlay when Paused */}
       {!isPlaying && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            if (!isCurrentlyFullscreen()) {
-              enterFullscreen();
-              if (playerRef.current) {
-                playerRef.current.playVideo?.();
-              }
-            } else {
-              handlePlayPause();
-            }
+            handlePlayPause();
           }}
           aria-label="Play Video"
           style={{
@@ -1215,12 +1395,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
-            height: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
+            width: isFullscreen ? "82px" : "68px",
+            height: isFullscreen ? "82px" : "68px",
             borderRadius: "50%",
             border: "none",
-            background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+            background: "#9DC2AD",
+            boxShadow: "0 10px 28px rgba(0, 0, 0, 0.36)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -1229,612 +1409,303 @@ export default function VideosView({
             transition: "transform 0.2s ease, background 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
+            e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.07)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
+            e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
           }}
         >
-          <div
-            style={{
-              width: 0,
-              height: 0,
-              borderTop: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
-              borderBottom: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
-              borderLeft: isFullscreen ? "26px solid #1E293B" : isStackedRow ? "14px solid #1E293B" : "22px solid #1E293B",
-              marginLeft: isFullscreen ? "6px" : isStackedRow ? "3px" : "5px",
-            }}
-          />
+          <svg
+            width={isFullscreen ? "26" : "22"}
+            height={isFullscreen ? "26" : "22"}
+            viewBox="0 0 24 24"
+            fill="#162A20"
+            style={{ marginLeft: "3px" }}
+          >
+            <polygon points="6,4 20,12 6,20" />
+          </svg>
         </button>
       )}
 
-      {/* Control Bar - Only visible in Fullscreen mode, auto-hides when video is playing unless cursor moves */}
-      {isFullscreen && (
-        <div
+      {/* Sleek Bottom Control Bar (Always visible when paused or hovered, both inline & fullscreen) */}
+      <div
         onMouseEnter={() => {
           if (hideControlsTimerRef.current) {
             clearTimeout(hideControlsTimerRef.current);
           }
           setShowControls(true);
         }}
-        onMouseLeave={() => {
-          if (isPlaying) {
-            if (hideControlsTimerRef.current) {
-              clearTimeout(hideControlsTimerRef.current);
-            }
-            hideControlsTimerRef.current = setTimeout(() => {
-              setShowControls(false);
-            }, 2500);
-          }
-        }}
         style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
+          position: "relative",
           zIndex: 10,
-          background: "linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.72) 65%, transparent 100%)",
-          padding: "24px 20px 14px 20px",
+          background: "linear-gradient(to top, rgba(16, 24, 20, 0.92) 0%, rgba(16, 24, 20, 0.55) 70%, transparent 100%)",
+          padding: "18px 18px 13px 18px",
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
+          gap: "14px",
           width: "100%",
           boxSizing: "border-box",
           opacity: showControls || !isPlaying ? 1 : 0,
-          transform: showControls || !isPlaying ? "translateY(0)" : "translateY(10px)",
           pointerEvents: showControls || !isPlaying ? "auto" : "none",
-          transition: "opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: "opacity 0.25s ease",
           userSelect: "none",
         }}
       >
-        {/* Full-width Seek Bar with comfortable hit area */}
+        {/* Play / Pause Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handlePlayPause();
+          }}
+          title={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? "Pause" : "Play"}
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "#FFFFFF",
+            cursor: "pointer",
+            padding: "2px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          {isPlaying ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF">
+              <rect x="5" y="4" width="4.5" height="16" rx="1.2" />
+              <rect x="14.5" y="4" width="4.5" height="16" rx="1.2" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF">
+              <polygon points="6,4 20,12 6,20" />
+            </svg>
+          )}
+        </button>
+
+        {/* Rewind 10s (↺10) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRewind10();
+          }}
+          title="Rewind 10 seconds"
+          aria-label="Rewind 10 seconds"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "rgba(255, 255, 255, 0.85)",
+            cursor: "pointer",
+            padding: "2px 4px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "2px",
+            fontSize: "11.5px",
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <polyline points="3 3 3 8 8 8" />
+          </svg>
+          <span style={{ fontSize: "10px" }}>10</span>
+        </button>
+
+        {/* Inline Horizontal Seek Bar with Segment Dividers */}
         <div
           onClick={(e) => {
             e.stopPropagation();
-            handleSeekClick(e);
+            const rect = e.currentTarget.getBoundingClientRect();
+            const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+            const pct = rect.width > 0 ? clickX / rect.width : 0;
+            seekToSecond(Math.round(pct * effectiveDurationSec));
           }}
-          title="Seek"
+          title="Click to seek"
           style={{
             position: "relative",
-            width: "100%",
+            flex: 1,
             height: "18px",
             display: "flex",
             alignItems: "center",
             cursor: "pointer",
-            marginBottom: "6px",
-          }}
-          onMouseEnter={(e) => {
-            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
-            if (track) track.style.height = "8px";
-            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
-            if (thumb) thumb.style.transform = "translateY(-50%) scale(1.25)";
-          }}
-          onMouseLeave={(e) => {
-            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
-            if (track) track.style.height = "6px";
-            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
-            if (thumb) thumb.style.transform = "translateY(-50%) scale(1)";
           }}
         >
-          {/* Seek Track */}
           <div
-            className="seek-track"
             style={{
               position: "relative",
               width: "100%",
-              height: "6px",
-              background: "rgba(255, 255, 255, 0.32)",
-              borderRadius: "4px",
-              transition: "height 0.15s ease",
+              height: "5px",
+              background: "rgba(255, 255, 255, 0.24)",
+              borderRadius: "999px",
             }}
           >
+            {/* Segment Boundary Ticks */}
+            {segmentsList.slice(1).map((seg) => {
+              const tickPct =
+                effectiveDurationSec > 0
+                  ? Math.min(98, Math.max(2, (seg.startSec / effectiveDurationSec) * 100))
+                  : 0;
+              return (
+                <div
+                  key={`tick-${seg.index}`}
+                  style={{
+                    position: "absolute",
+                    left: `${tickPct}%`,
+                    top: "-1px",
+                    width: "2px",
+                    height: "7px",
+                    background: "rgba(18, 28, 23, 0.85)",
+                    zIndex: 2,
+                  }}
+                />
+              );
+            })}
+
             {/* Progress Fill */}
             <div
               style={{
                 height: "100%",
-                width: `${Math.min(100, Math.max(0, progress))}%`,
-                background: "#FFFFFF",
-                borderRadius: "4px",
+                width: `${Math.min(100, Math.max(0, effectiveDurationSec > 0 ? (currentTime / effectiveDurationSec) * 100 : progress))}%`,
+                background: "#9DC2AD",
+                borderRadius: "999px",
                 position: "relative",
               }}
             >
-              {/* Scrubber Thumb */}
+              {/* Scrubber White Thumb */}
               <div
-                className="seek-thumb"
                 style={{
                   position: "absolute",
-                  right: "-7px",
+                  right: "-6px",
                   top: "50%",
-                  transform: "translateY(-50%) scale(1)",
-                  width: "15px",
-                  height: "15px",
+                  transform: "translateY(-50%)",
+                  width: "13px",
+                  height: "13px",
                   borderRadius: "50%",
                   background: "#FFFFFF",
-                  boxShadow: "0 0 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5)",
-                  transition: "transform 0.15s ease",
+                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.5)",
                 }}
               />
             </div>
           </div>
         </div>
 
-        {/* Controls Row */}
+        {/* Right Info Cluster: Time | Segment X of Y | Speed | Fullscreen */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px 6px 4px 6px",
-            gap: "16px",
+            gap: "12px",
+            flexShrink: 0,
+            color: "#FFFFFF",
+            fontSize: "12px",
+            fontWeight: 600,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
-          {/* Left Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {/* Play/Pause */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePlayPause();
-              }}
-              title={isPlaying ? "Pause (Space/k)" : "Play (Space/k)"}
-              aria-label={isPlaying ? "Pause" : "Play"}
-              style={{
-                background: "rgba(255, 255, 255, 0.12)",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "38px",
-                height: "38px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              {isPlaying ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
-                  <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
-                  <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" style={{ marginLeft: "2px" }}>
-                  <polygon points="6,4 20,12 6,20" />
-                </svg>
-              )}
-            </button>
+          <span>
+            {`${formatTime(currentTime)} / ${formatTime(effectiveDurationSec)}`}
+          </span>
 
-            {/* Rewind 10s («) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRewind10();
-              }}
-              title="Rewind 10s"
-              aria-label="Rewind 10s"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="11 17 6 12 11 7" />
-                <polyline points="18 17 13 12 18 7" />
-              </svg>
-            </button>
+          <span style={{ color: "rgba(255, 255, 255, 0.72)", fontWeight: 500 }}>
+            {`Segment ${activeSegmentIdx + 1} of ${segmentsList.length}`}
+          </span>
 
-            {/* Forward 10s (») */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleForward10();
-              }}
-              title="Forward 10s"
-              aria-label="Forward 10s"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="13 17 18 12 13 7" />
-                <polyline points="6 17 11 12 6 7" />
-              </svg>
-            </button>
+          {/* Speed Selector */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const rates = [1, 1.25, 1.5, 1.75, 2, 0.75];
+              const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length];
+              setPlaybackRate(nextRate);
+              try {
+                playerRef.current?.setPlaybackRate?.(nextRate);
+              } catch {}
+            }}
+            title="Change playback speed"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#FFFFFF",
+              fontWeight: 700,
+              fontSize: "12px",
+              cursor: "pointer",
+              padding: "2px 4px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px",
+            }}
+          >
+            <span>{`${playbackRate}x`}</span>
+            <span style={{ fontSize: "9px", opacity: 0.8 }}>▾</span>
+          </button>
 
-            {/* Timestamp */}
-            <div
-              style={{
-                color: "#FFFFFF",
-                fontSize: "14px",
-                fontWeight: 600,
-                whiteSpace: "nowrap",
-                letterSpacing: "0.3px",
-                fontVariantNumeric: "tabular-nums",
-                userSelect: "none",
-                marginLeft: "4px",
-              }}
-            >
-              {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : "00:00 / 00:00"}
-            </div>
-
-            {/* Volume Icon + Slider */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "6px" }}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMute();
-                }}
-                title={isMuted ? "Unmute (m)" : "Mute (m)"}
-                aria-label={isMuted ? "Unmute" : "Mute"}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#FFFFFF",
-                  cursor: "pointer",
-                  padding: 0,
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s ease, transform 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                {isMuted || volume === 0 ? (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
-                    <line x1="23" y1="9" x2="17" y2="15" />
-                    <line x1="17" y1="9" x2="23" y2="15" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeWidth="2.2" />
-                    <path d="M18.8 5.2a9 9 0 0 1 0 13.6" strokeWidth="2.2" />
-                  </svg>
-                )}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: "75px",
-                  height: "5px",
-                  accentColor: "#FFFFFF",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Right Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Speed Selector Toggle / Inline Pills */}
-            {!showSpeedSelector ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSpeedSelector(true);
-                }}
-                title="Playback Speed"
-                aria-label="Playback Speed"
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#FFFFFF",
-                  cursor: "pointer",
-                  padding: 0,
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s ease, transform 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                {/* Speedometer Gauge Icon */}
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <line x1="12" y1="12" x2="16" y2="8" strokeWidth="2.2" />
-                  <circle cx="12" cy="12" r="1.5" fill="#FFFFFF" />
-                  <path d="M7 12a5 5 0 0 1 1.46-3.54" strokeDasharray="1 2.5" />
-                </svg>
-              </button>
-            ) : (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  background: "rgba(0, 0, 0, 0.6)",
-                  padding: "3px 6px",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
-                }}
-              >
-                {[
-                  { label: "Normal", rate: 1 },
-                  { label: "1.25x", rate: 1.25 },
-                  { label: "1.5x", rate: 1.5 },
-                  { label: "2x", rate: 2 },
-                ].map((s) => {
-                  const isActive = playbackRate === s.rate;
-                  return (
-                    <button
-                      key={s.rate}
-                      type="button"
-                      onClick={() => {
-                        setPlaybackRate(s.rate);
-                        if (playerRef.current && typeof playerRef.current.setPlaybackRate === "function") {
-                          playerRef.current.setPlaybackRate(s.rate);
-                        }
-                      }}
-                      style={{
-                        background: isActive ? "rgba(255, 255, 255, 0.28)" : "transparent",
-                        border: isActive ? "1px solid rgba(255, 255, 255, 0.8)" : "1px solid transparent",
-                        color: "#FFFFFF",
-                        fontSize: "12px",
-                        fontWeight: isActive ? 700 : 500,
-                        borderRadius: "12px",
-                        padding: "3px 8px",
-                        cursor: "pointer",
-                        lineHeight: 1.3,
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => setShowSpeedSelector(false)}
-                  title="Close speed selector"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "rgba(255, 255, 255, 0.75)",
-                    cursor: "pointer",
-                    padding: "0 4px",
-                    fontSize: "13px",
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            {/* CC Subtitles Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCc();
-              }}
-              title={isCcEnabled ? "Turn Captions Off (c)" : "Turn Captions On (c)"}
-              aria-label={isCcEnabled ? "Turn Captions Off" : "Turn Captions On"}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: isCcEnabled ? "#60A5FA" : "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="5" width="18" height="14" rx="3" />
-                <line x1="7" y1="12" x2="11" y2="12" strokeWidth="2" />
-                <line x1="13" y1="12" x2="17" y2="12" strokeWidth="2" />
-              </svg>
-            </button>
-
-            {/* Fullscreen / Minimize Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFullscreen();
-              }}
-              title={isFullscreen ? "Exit Fullscreen / Minimize (f)" : "Fullscreen (f)"}
-              aria-label={isFullscreen ? "Exit Fullscreen / Minimize" : "Fullscreen"}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {isFullscreen ? (
-                  <>
-                    <polyline points="4 14 10 14 10 20" />
-                    <polyline points="20 10 14 10 14 4" />
-                    <line x1="14" y1="10" x2="21" y2="3" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </>
-                ) : (
-                  <>
-                    <polyline points="15 3 21 3 21 9" />
-                    <polyline points="9 21 3 21 3 15" />
-                    <line x1="21" y1="3" x2="14" y2="10" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            title={isFullscreen ? "Exit Fullscreen (f)" : "Fullscreen (f)"}
+            aria-label="Toggle Fullscreen"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#FFFFFF",
+              cursor: "pointer",
+              padding: "2px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+              <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
         </div>
       </div>
-      )}
-
-      {/* Netflix-style "Skip" Intro Button (Skips to 2:00 / 120s) */}
-      {canSkipIntro && (
-        <button
-          type="button"
-          onClick={handleSkipIntro}
-          title="Skip intro (skips to 2:00)"
-          aria-label="Skip intro"
-          style={{
-            position: "absolute",
-            bottom: isFullscreen ? (showControls ? "86px" : "28px") : "18px",
-            right: isFullscreen ? "32px" : "18px",
-            zIndex: 12,
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            background: "rgba(20, 20, 20, 0.75)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            color: "#FFFFFF",
-            border: "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderRadius: "6px",
-            padding: isFullscreen ? "8px 18px" : "6px 14px",
-            fontSize: isFullscreen ? "14px" : "12.5px",
-            fontWeight: 700,
-            letterSpacing: "0.4px",
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.45)",
-            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-            userSelect: "none",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-            e.currentTarget.style.borderColor = "#FFFFFF";
-            e.currentTarget.style.transform = "scale(1.05)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(20, 20, 20, 0.75)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.65)";
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-        >
-          <span>Skip</span>
-          <svg
-            width={isFullscreen ? "13" : "11"}
-            height={isFullscreen ? "13" : "11"}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <polygon points="5 4 15 12 5 20 5 4" />
-            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
     </div>
   );
 
   const isVideoDone = (idx: number) =>
     completedVideos.has(idx) || Boolean(isVideoWatchedAt?.(idx + 1)) || (videos.length === 1 && isCompleted);
 
-  const totalVideos = Math.max(1, videos.length);
   const completedCount = videos.reduce((acc, _, idx) => acc + (isVideoDone(idx) ? 1 : 0), 0);
   const activePartialFraction = isVideoDone(robustActive)
     ? 0
-    : Math.min(1, Math.max(0, progress / 100));
+    : Math.min(1, Math.max(0.2, progress / 100));
   const watchProgressPercent = Math.min(
     100,
-    Math.round(((completedCount + activePartialFraction) / totalVideos) * 100),
+    Math.max(20, Math.round(((completedCount + activePartialFraction) / totalVideos) * 100)),
   );
-  const accentColor = "#15803d";
-  const formattedWatchDuration = displayDuration.replace(/(\d+)\s*min$/i, "$1 min");
+
+  const upcomingPlaylist = useMemo(() => {
+    const items: { idx: number; title: string; durationStr: string }[] = [];
+    for (let offset = 1; offset < videos.length; offset++) {
+      const targetIdx = (robustActive + offset) % videos.length;
+      const vid = videos[targetIdx];
+      if (vid) {
+        items.push({
+          idx: targetIdx,
+          title: vid.title || `Part ${targetIdx + 1}`,
+          durationStr: formatTime(parseDurationSec(vid.duration, 185)),
+        });
+      }
+    }
+    return items;
+  }, [videos, robustActive, parseDurationSec]);
+
+  const nextVideoIdx = (robustActive + 1) % totalVideos;
+  const nextVideoObj = videos[nextVideoIdx];
+  const hasNextVideo = totalVideos > 1 && robustActive + 1 < totalVideos;
 
   return (
     <div
@@ -1843,217 +1714,270 @@ export default function VideosView({
         width: "100%",
         height: "100%",
         maxHeight: "100%",
-        overflow: "hidden",
+        overflowY: "auto",
+        overflowX: "hidden",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
+        paddingRight: "4px",
       }}
     >
-      {/* ── Section-Wise 2-Column Layout (Matching Read & Listen UI, Single-Screen Fit) ── */}
+      {/* ── Two-Column Watch Layout (Screen 1 Top + Screen 2 Scrolled Down) ── */}
       <div
         style={{
           display: "flex",
-          gap: "24px",
+          gap: "26px",
           width: "100%",
-          flex: 1,
-          minHeight: 0,
           margin: 0,
-          padding: "0 0 6px 0",
+          padding: "4px 0 36px 0",
           boxSizing: "border-box",
-          alignItems: "stretch",
+          alignItems: "flex-start",
         }}
       >
-        {/* ── LEFT NAVIGATION SIDEBAR (Matching Read & Listen 'IN THIS CHAPTER' sidebar) ── */}
+        {/* ── LEFT NAVIGATION SIDEBAR (Watching Guide + IN THIS CHAPTER · N VIDEOS) ── */}
         <div
           style={{
-            width: "260px",
+            width: "256px",
             flexShrink: 0,
-            alignSelf: "flex-start",
-            maxHeight: "100%",
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
-            zIndex: 10,
           }}
         >
-          {/* Resumed / Watching Guide Pill */}
+          {/* Top Dark Forest-Green Pill: Watching Guide */}
           <div
             style={{
-              background: "#e0f2fe",
-              color: "#0369a1",
+              background: "#2D3E36",
+              color: "#FFFFFF",
               borderRadius: "999px",
-              padding: "6px 14px",
-              fontSize: "12.5px",
+              padding: "10px 18px",
+              fontSize: "13px",
               fontWeight: 700,
               textAlign: "center",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+              letterSpacing: "0.01em",
+              boxShadow: "0 2px 6px rgba(29, 43, 36, 0.12)",
             }}
           >
-            {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Watching Guide"}
+            Watching Guide
           </div>
 
-          {/* Video Checklist Card */}
+          {/* White Chapter Video Playlist Card */}
           <div
             style={{
-              background: "#ffffff",
+              background: "#FFFFFF",
               borderRadius: "16px",
-              border: "1px solid #e2e8f0",
-              padding: "16px 12px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              padding: "16px 14px",
+              border: "1px solid #E6E0D4",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "10px",
             }}
           >
             <div
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 800,
                 letterSpacing: "0.07em",
+                color: "#6E7B73",
                 textTransform: "uppercase",
-                color: "#64748b",
-                padding: "0 8px 6px",
-                borderBottom: "1px solid #f1f5f9",
+                padding: "0 4px 4px 4px",
               }}
             >
-              IN THIS CHAPTER
+              {`IN THIS CHAPTER · ${totalVideos} ${totalVideos === 1 ? "VIDEO" : "VIDEOS"}`}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            {/* Video List Items */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {videos.map((vid, idx) => {
                 const isSelected = idx === robustActive;
-                const isDone = isVideoDone(idx);
-                const cleanVideoTitle = (vid.title || `Video ${idx + 1}`).replace(/^\d+\.\s*/, "");
+                const isWatched = isVideoDone(idx);
+                const vidSec =
+                  isSelected && duration > 0
+                    ? Math.round(duration)
+                    : parseDurationSec(vid.duration, 210);
+                const vidDurFormatted = formatTime(vidSec);
+
+                // Determine right status label: HERE, UP NEXT, 2ND, 3RD, 4TH, or DONE
+                let statusBadge = "";
+                if (isSelected) {
+                  statusBadge = "HERE";
+                } else if (isWatched && idx < robustActive) {
+                  statusBadge = "DONE";
+                } else {
+                  const queueOffset =
+                    idx > robustActive ? idx - robustActive : totalVideos - robustActive + idx;
+                  if (queueOffset === 1) statusBadge = "UP NEXT";
+                  else if (queueOffset === 2) statusBadge = "2ND";
+                  else if (queueOffset === 3) statusBadge = "3RD";
+                  else statusBadge = `${queueOffset}TH`;
+                }
 
                 return (
-                  <button
+                  <div
                     key={vid.ytId || idx}
-                    type="button"
                     onClick={() => handleSelectVideo(idx)}
-                    title={vid.title}
                     style={{
                       display: "flex",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "10px",
-                      border: "1.5px solid transparent",
-                      background: isSelected ? "#dbe6df" : "transparent",
+                      padding: "10px 10px",
+                      borderRadius: "12px",
                       cursor: "pointer",
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
+                      background: isSelected ? "#EFF5F1" : "transparent",
+                      transition: "background 0.18s ease",
                     }}
                   >
-                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
-                    {isDone ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "#0f172a",
-                          color: "#ffffff",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : isSelected ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #0f172a",
-                          color: "#0f172a",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #cbd5e1",
-                        }}
-                      />
-                    )}
-
-                    {/* Video Title */}
-                    <span
+                    {/* Left Radio / Check Icon */}
+                    <div
                       style={{
-                        fontSize: "13px",
-                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                        color: isSelected ? "#0f172a" : "#475569",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        marginTop: "2px",
+                        flexShrink: 0,
+                        border: isSelected
+                          ? "1.5px solid #5B8C72"
+                          : isWatched
+                            ? "1.5px solid #5B8C72"
+                            : "1.5px solid #C5C0B6",
+                        background: isWatched && !isSelected ? "#5B8C72" : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {cleanVideoTitle}
-                    </span>
-                  </button>
+                      {isSelected ? (
+                        <div
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            background: "#5B8C72",
+                          }}
+                        />
+                      ) : isWatched ? (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : null}
+                    </div>
+
+                    {/* Title + Duration Row */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "12.5px",
+                            fontWeight: isSelected ? 700 : 600,
+                            color: isSelected ? "#1E2822" : "#37423B",
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {vid.title || `Part ${idx + 1}`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "9.5px",
+                            fontWeight: 800,
+                            letterSpacing: "0.04em",
+                            color: isSelected ? "#4F7D65" : "#88938B",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          {statusBadge}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          color: isSelected ? "#586B60" : "#88938B",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {`• ${vidDurFormatted}${
+                          isSelected
+                            ? ` · resumed at ${formatTime(currentTime)}`
+                            : ""
+                        }`}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Progress Bar Footer */}
+            {/* Resumed Status Pill inside Sidebar Card */}
             <div
               style={{
-                marginTop: "10px",
-                paddingTop: "10px",
-                borderTop: "1px solid #f1f5f9",
-                paddingLeft: "6px",
-                paddingRight: "6px",
+                background: "#EFF5F1",
+                border: "1px solid #DCE8E0",
+                borderRadius: "999px",
+                padding: "8px 12px",
+                fontSize: "11.5px",
+                fontWeight: 700,
+                color: "#2D3E36",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                marginTop: "4px",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="9" />
+                <polyline points="12 7 12 12 15 14" />
+              </svg>
+              <span>
+                {`${isPlaying ? "Playing" : "Resumed"} · Video ${robustActive + 1} at ${formatTime(currentTime)}`}
+              </span>
+            </div>
+
+            {/* Chapter Progress Footer */}
+            <div
+              style={{
+                borderTop: "1px solid #EFECE6",
+                paddingTop: "12px",
+                marginTop: "2px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "7px",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#64748b",
-                  marginBottom: "6px",
+                  alignItems: "center",
+                  fontSize: "11.5px",
                 }}
               >
-                <span>Chapter progress</span>
-                <span style={{ color: "#0f172a", fontWeight: 700 }}>{watchProgressPercent}%</span>
+                <span style={{ color: "#6E7B73", fontWeight: 600 }}>Chapter progress</span>
+                <span style={{ color: "#2D3E36", fontWeight: 800 }}>{`${watchProgressPercent}%`}</span>
               </div>
               <div
                 style={{
-                  height: "6px",
                   width: "100%",
-                  background: "#f1f5f9",
+                  height: "5px",
+                  background: "#EAE5DC",
                   borderRadius: "999px",
                   overflow: "hidden",
                 }}
               >
                 <div
                   style={{
-                    height: "100%",
                     width: `${watchProgressPercent}%`,
-                    background: accentColor,
+                    height: "100%",
+                    background: "#689D80",
                     borderRadius: "999px",
                     transition: "width 0.3s ease",
                   }}
@@ -2063,197 +1987,544 @@ export default function VideosView({
           </div>
         </div>
 
-        {/* ── RIGHT MAIN CONTENT AREA (Single-Screen Fit: Meta + Header + Player & Topics Card) ── */}
+        {/* ── RIGHT MAIN CONTENT COLUMN (Screen 1 + Screen 2 on Scroll) ── */}
         <div
           style={{
             flex: 1,
             minWidth: 0,
-            height: "100%",
-            minHeight: 0,
-            background: "transparent",
-            border: "none",
-            boxShadow: "none",
-            padding: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
-            overflow: "hidden",
+            gap: "12px",
           }}
         >
-          {/* Chapter Overview Meta Line (Matching Read & Listen) */}
+          {/* 16:9 Main Video Player (Aligned directly with Watching Guide, single-view fit with Segments below) */}
+          {renderVideoPlayer(true, false, robustActive)}
+
+          {/* ── SEGMENTS IN THIS VIDEO — CLICK TO JUMP (Visible in single view right under thumbnail) ── */}
+          <div style={{ marginTop: "2px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div
+              style={{
+                fontSize: "10.5px",
+                fontWeight: 800,
+                letterSpacing: "0.08em",
+                color: "#6E7B73",
+                textTransform: "uppercase",
+              }}
+            >
+              SEGMENTS IN THIS VIDEO — CLICK TO JUMP
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: `repeat(${Math.min(3, segmentsList.length)}, minmax(0, 1fr))`,
+                gap: "12px",
+              }}
+            >
+              {segmentsList.map((seg, idx) => {
+                const isNowPlaying = idx === activeSegmentIdx;
+                const isUpNext = idx === activeSegmentIdx + 1;
+                const isWatchedSeg = idx < activeSegmentIdx;
+
+                return (
+                  <div
+                    key={seg.index}
+                    onClick={() => seekToSecond(seg.startSec)}
+                    style={{
+                      background: isNowPlaying ? "#EAF3EE" : "#FFFFFF",
+                      border: isNowPlaying ? "1.5px solid #8AB89E" : "1px solid #E6E0D4",
+                      borderRadius: "13px",
+                      padding: "12px 15px",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                      transition: "all 0.18s ease",
+                      boxShadow: isNowPlaying
+                        ? "0 4px 14px rgba(45, 62, 54, 0.06)"
+                        : "0 2px 6px rgba(0, 0, 0, 0.02)",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {/* Segment Icon */}
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        {idx === 0 ? (
+                          <span style={{ fontSize: "16px", lineHeight: 1 }}>🌿</span>
+                        ) : idx === 1 ? (
+                          <span style={{ fontSize: "16px", lineHeight: 1 }}>🛡️</span>
+                        ) : (
+                          <span style={{ fontSize: "16px", lineHeight: 1 }}>👥</span>
+                        )}
+                      </div>
+
+                      {/* Segment Title */}
+                      <div
+                        style={{
+                          fontSize: "13.5px",
+                          fontWeight: 800,
+                          color: "#1E2822",
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {seg.title}
+                      </div>
+
+                      {/* Time Range + Duration */}
+                      <div
+                        style={{
+                          fontSize: "11.5px",
+                          fontWeight: 600,
+                          color: "#6E7B73",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {`${seg.timeRangeStr} · ${seg.durationLabel}`}
+                      </div>
+                    </div>
+
+                    {/* Segment Status Badge */}
+                    <div>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          background: isNowPlaying
+                            ? "#9DC2AD"
+                            : isWatchedSeg
+                              ? "#DCECE3"
+                              : "#EFECE6",
+                          color: isNowPlaying
+                            ? "#182C22"
+                            : isWatchedSeg
+                              ? "#26593E"
+                              : "#6E7B73",
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          letterSpacing: "0.05em",
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {isNowPlaying
+                          ? "▶ NOW PLAYING"
+                          : isUpNext
+                            ? "UP NEXT"
+                            : isWatchedSeg
+                              ? "✓ WATCHED"
+                              : "NOT WATCHED"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ── SCREEN 2: KEY MOMENTS (Left) + UP NEXT IN THIS CHAPTER (Right) ── */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.12fr 1fr",
+              gap: "16px",
+              marginTop: "6px",
+            }}
+          >
+            {/* Left Card: Key Moments */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E6E0D4",
+                borderRadius: "16px",
+                padding: "20px 22px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "15.5px",
+                    fontWeight: 800,
+                    color: "#1E2822",
+                  }}
+                >
+                  Key Moments
+                </h3>
+                <span
+                  style={{
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    color: "#7C8780",
+                  }}
+                >
+                  Click a timestamp to jump
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {keyMomentsList.map((km, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => seekToSecond(km.timeSec)}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "12px",
+                      padding: "12px 0",
+                      borderTop: idx === 0 ? "none" : "1px solid #F0ECE3",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span
+                      style={{
+                        background: "#FAF2E9",
+                        color: "#B46530",
+                        fontSize: "11.5px",
+                        fontWeight: 800,
+                        padding: "4px 9px",
+                        borderRadius: "6px",
+                        fontVariantNumeric: "tabular-nums",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {km.timeStr}
+                    </span>
+
+                    <div
+                      style={{
+                        fontSize: "13px",
+                        color: "#2D3831",
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      <strong style={{ fontWeight: 800, color: "#1E2822" }}>
+                        {`${km.lead}: `}
+                      </strong>
+                      <span>{km.detail}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right Card: Up Next in This Chapter */}
+            <div
+              style={{
+                background: "#FFFFFF",
+                border: "1px solid #E6E0D4",
+                borderRadius: "16px",
+                padding: "20px 22px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "14px",
+                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "8px",
+                }}
+              >
+                <h3
+                  style={{
+                    margin: 0,
+                    fontSize: "15.5px",
+                    fontWeight: 800,
+                    color: "#1E2822",
+                  }}
+                >
+                  Up Next in This Chapter
+                </h3>
+                <span
+                  style={{
+                    fontSize: "11.5px",
+                    fontWeight: 600,
+                    color: "#7C8780",
+                  }}
+                >
+                  {`${totalVideos}-video playlist`}
+                </span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                {upcomingPlaylist.length > 0 ? (
+                  upcomingPlaylist.map((item, upIdx) => (
+                    <div
+                      key={item.idx}
+                      onClick={() => handleSelectVideo(item.idx)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "10px 0",
+                        borderTop: upIdx === 0 ? "none" : "1px solid #F0ECE3",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {/* Dark Forest Thumbnail Badge */}
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "30px",
+                          borderRadius: "7px",
+                          background: "#35473E",
+                          color: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {upIdx === 0 ? (
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFFFFF">
+                            <polygon points="6,4 20,12 6,20" />
+                          </svg>
+                        ) : (
+                          <span>{upIdx + 1}</span>
+                        )}
+                      </div>
+
+                      {/* Title + Duration */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            color: "#1E2822",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {item.title}
+                        </div>
+                        <div
+                          style={{
+                            fontSize: "11.5px",
+                            color: "#7C8780",
+                            marginTop: "2px",
+                          }}
+                        >
+                          {`${item.durationStr}${upIdx === 0 ? " · plays after this video" : ""}`}
+                        </div>
+                      </div>
+
+                      {/* Right Play Circle */}
+                      <div
+                        style={{
+                          width: "30px",
+                          height: "30px",
+                          borderRadius: "50%",
+                          background: upIdx === 0 ? "#9DC2AD" : "#FFFFFF",
+                          border: upIdx === 0 ? "none" : "1px solid #E2DDD3",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg
+                          width="10"
+                          height="10"
+                          viewBox="0 0 24 24"
+                          fill={upIdx === 0 ? "#182C22" : "#37423B"}
+                          style={{ marginLeft: "1px" }}
+                        >
+                          <polygon points="6,4 20,12 6,20" />
+                        </svg>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  segmentsList.map((seg, sIdx) => (
+                    <div
+                      key={seg.index}
+                      onClick={() => seekToSecond(seg.startSec)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "12px",
+                        padding: "10px 0",
+                        borderTop: sIdx === 0 ? "none" : "1px solid #F0ECE3",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "44px",
+                          height: "30px",
+                          borderRadius: "7px",
+                          background: "#35473E",
+                          color: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: "12px",
+                          fontWeight: 700,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {sIdx === 0 ? "▶" : sIdx + 1}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: "13px",
+                            fontWeight: 800,
+                            color: "#1E2822",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {seg.title}
+                        </div>
+                        <div style={{ fontSize: "11.5px", color: "#7C8780", marginTop: "2px" }}>
+                          {`${seg.timeRangeStr} · ${seg.durationLabel}`}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── SCREEN 2 BOTTOM FOOTER: Quick Check (Left) + Next Video CTA (Right) ── */}
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
+              gap: "16px",
+              marginTop: "6px",
               flexWrap: "wrap",
-              gap: "8px",
-              paddingBottom: "6px",
-              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
-              flexShrink: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  background: "rgba(21, 128, 61, 0.08)",
-                  color: accentColor,
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
-                  fontWeight: 700,
-                }}
-              >
-                ⏱ {formattedWatchDuration} watch
-              </span>
-              <span
-                style={{
-                  background: "#f1f5f9",
-                  color: "#475569",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
-                  fontWeight: 600,
-                }}
-              >
-                {totalVideos} {totalVideos === 1 ? "Video" : "Videos"}
-              </span>
-            </div>
-          </div>
-
-          {/* Active Video Section Header (Matching Read's SECTION X OF Y & Listen's PODCAST X OF Y) */}
-          <div style={{ flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-              <span
-                style={{
-                  fontSize: "11.5px",
-                  fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  color: accentColor,
-                  textTransform: "uppercase",
-                }}
-              >
-                VIDEO {robustActive + 1} OF {totalVideos}
-              </span>
-            </div>
-
-            <h2
+            {/* Left Dashed Card: Quick Check · 3 questions */}
+            <button
+              type="button"
+              onClick={() => onComplete?.()}
               style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "#0f172a",
-                lineHeight: "1.25",
-                margin: "0",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-              title={displayTitle.replace(/^\d+\.\s*/, "")}
-            >
-              {displayTitle.replace(/^\d+\.\s*/, "")}
-            </h2>
-          </div>
-
-          {/* Combined Video Player + Key Topics Card (Fits Remaining Viewport Height) */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              width: "100%",
-              background: "#ffffff",
-              borderRadius: "16px",
-              padding: "12px 16px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
-              border: "1px solid #e2e8f0",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "10px",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Top: 16:9 Video Player automatically scaled to fit remaining height */}
-            <div
-              style={{
-                flex: "1 1 0",
-                minHeight: 0,
-                width: "100%",
+                background: "#FAF8F3",
+                border: "1.5px dashed #C7C1B4",
+                borderRadius: "12px",
+                padding: "12px 18px",
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1,
+                gap: "12px",
+                cursor: "pointer",
+                textAlign: "left",
+                transition: "background 0.18s ease, border-color 0.18s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "#F3EFE6";
+                e.currentTarget.style.borderColor = "#9DC2AD";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "#FAF8F3";
+                e.currentTarget.style.borderColor = "#C7C1B4";
               }}
             >
-              {renderVideoPlayer(true)}
-            </div>
-
-            {/* Bottom: Compact Key Topics Covered Strip */}
-            {topicsList.length > 0 && (
               <div
                 style={{
+                  width: "22px",
+                  height: "22px",
+                  borderRadius: "6px",
+                  background: "#22C55E",
+                  color: "#FFFFFF",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
                   flexShrink: 0,
-                  width: "100%",
-                  display: "grid",
-                  gridTemplateColumns:
-                    topicsList.length <= 2
-                      ? `repeat(${topicsList.length}, 1fr)`
-                      : "repeat(3, minmax(0, 1fr))",
-                  gap: "8px",
-                  zIndex: 1,
                 }}
               >
-                {topicsList.map((topic, idx) => (
-                  <div
-                    key={idx}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "7px 11px",
-                      background: "#f8fafc",
-                      borderRadius: "10px",
-                      border: "1px solid #e2e8f0",
-                      minWidth: 0,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        borderRadius: "50%",
-                        background: "rgba(21, 128, 61, 0.08)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {renderTopicIcon(idx, 14)}
-                    </div>
-                    <span
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: 500,
-                        color: "#1e293b",
-                        lineHeight: 1.25,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                      }}
-                      title={topic}
-                    >
-                      {topic}
-                    </span>
-                  </div>
-                ))}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
-            )}
+              <div>
+                <div style={{ fontSize: "13px", fontWeight: 800, color: "#1E2822" }}>
+                  Quick Check · 3 questions
+                </div>
+                <div style={{ fontSize: "11.5px", color: "#6E7B73", marginTop: "1px" }}>
+                  Active recall after every video — about 90 seconds
+                </div>
+              </div>
+            </button>
 
-            <InsectWatermark width="76px" height="76px" opacity={0.09} />
+            {/* Right Sage Pill CTA: Next · Video X of Y */}
+            <button
+              type="button"
+              onClick={() => {
+                if (hasNextVideo) {
+                  handleSelectVideo(robustActive + 1);
+                } else if (totalVideos > 1) {
+                  handleSelectVideo(0);
+                } else {
+                  onComplete?.();
+                }
+              }}
+              style={{
+                background: "#9DC2AD",
+                border: "none",
+                borderRadius: "12px",
+                padding: "12px 24px",
+                cursor: "pointer",
+                textAlign: "center",
+                minWidth: "260px",
+                boxShadow: "0 2px 10px rgba(45, 62, 54, 0.1)",
+                transition: "transform 0.15s ease, filter 0.15s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.filter = "brightness(0.96)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.filter = "brightness(1)";
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "#23372C",
+                }}
+              >
+                {hasNextVideo
+                  ? `Next · Video ${robustActive + 2} of ${totalVideos}`
+                  : totalVideos > 1
+                    ? `Replay · Video 1 of ${totalVideos}`
+                    : "Complete Watch"}
+              </div>
+              <div
+                style={{
+                  fontSize: "13.5px",
+                  fontWeight: 800,
+                  color: "#14241B",
+                  marginTop: "2px",
+                }}
+              >
+                {`${nextVideoObj?.title || displayTitle} →`}
+              </div>
+            </button>
           </div>
         </div>
       </div>

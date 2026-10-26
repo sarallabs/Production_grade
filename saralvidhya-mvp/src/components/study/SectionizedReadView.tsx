@@ -354,7 +354,10 @@ function SectionizedReadViewInner({
   };
 
   const completedCount = useMemo(() => {
-    return sections.filter((s, i) => (s.quickCheck ? completedQuickChecks.has(i) : completedSections.has(i))).length;
+    return sections.filter((s, i) => {
+      const hasQc = Boolean((s.quickChecks && s.quickChecks.length > 0) || s.quickCheck);
+      return hasQc ? completedQuickChecks.has(i) : completedSections.has(i);
+    }).length;
   }, [sections, completedQuickChecks, completedSections]);
 
   const progressPercent = totalSections > 0
@@ -365,10 +368,45 @@ function SectionizedReadViewInner({
     return sections.reduce((acc, s) => acc + (s.readTimeMinutes || 3), 0);
   }, [sections]);
 
-  const accentColor = isPurpleTheme ? '#7c3aed' : '#15803d';
-  const activeBg = isPurpleTheme ? '#f3e8ff' : '#dcfce7';
-  const activeBorder = isPurpleTheme ? '#d8b4fe' : '#86efac';
+  // Brand-true colors: Pine-deep (#2E3B33), Amber (#D9A55C), Terra (#BE7E57 / #A85D34)
+  const pineDeep = '#2E3B33';
+  const amberAccent = '#D9A55C';
+  const amberHeading = '#B87D2B';
+  const terraText = '#A85D34';
+  const terraBg = '#F9EBE2';
+  const terraBorder = '#EED3C2';
 
+  const getSectionExamSignal = (title: string, idx: number): { mainTag: string; sidebarQcTag: string } => {
+    const lower = (title || '').toLowerCase();
+    if (idx === 1 || lower.includes('foregut') || lower.includes('stomodaeum')) {
+      return {
+        mainTag: '🎯 Asked in 2023 & 2024 · 8 marks',
+        sidebarQcTag: "asked '23 '24 · 8 marks",
+      };
+    }
+    if (idx === 0 || lower.includes('alimentary') || lower.includes('overview') || lower.includes('digestive')) {
+      return {
+        mainTag: '🎯 Asked in 2023 & 2024 · 8 marks',
+        sidebarQcTag: "asked '23 '24 · 8 marks",
+      };
+    }
+    if (idx === 2 || lower.includes('midgut') || lower.includes('ventriculus') || lower.includes('mesenteron')) {
+      return {
+        mainTag: '🎯 Asked in 2022 & 2024 · 4 marks',
+        sidebarQcTag: "asked '22 '24 · 4 marks",
+      };
+    }
+    if (idx === 3 || lower.includes('hindgut') || lower.includes('proctodaeum')) {
+      return {
+        mainTag: '🎯 Asked in 2023 · 4 marks',
+        sidebarQcTag: "asked '23 · 4 marks",
+      };
+    }
+    return {
+      mainTag: '🎯 Asked in 2022 & 2023 · 6 marks',
+      sidebarQcTag: "asked '22 '23 · 6 marks",
+    };
+  };
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '360px', color: '#64748b' }}>
@@ -413,17 +451,18 @@ function SectionizedReadViewInner({
           zIndex: 10,
         }}
       >
-        {/* Resumed / Reading Guide Pill */}
+        {/* Reading Guide Header Pill — Pine-deep (#2E3B33) */}
         <div
           style={{
-            background: isPurpleTheme ? '#f3e8ff' : '#e0f2fe',
-            color: isPurpleTheme ? '#6d28d9' : '#0369a1',
+            background: pineDeep,
+            color: '#FFFFFF',
             borderRadius: '999px',
-            padding: '6px 14px',
-            fontSize: '12.5px',
+            padding: '8px 16px',
+            fontSize: '13px',
             fontWeight: 700,
             textAlign: 'center',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+            letterSpacing: '0.01em',
+            boxShadow: '0 2px 6px rgba(46, 59, 51, 0.16)',
           }}
         >
           {completedCount > 0 ? 'Resumed where you left off' : 'Reading Guide'}
@@ -432,11 +471,11 @@ function SectionizedReadViewInner({
         {/* Section Checklist Card */}
         <div
           style={{
-            background: '#ffffff',
+            background: '#FFFFFF',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #E6E1D6',
             padding: '16px 12px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+            boxShadow: '0 4px 16px rgba(30, 40, 34, 0.04)',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
@@ -450,19 +489,20 @@ function SectionizedReadViewInner({
               textTransform: 'uppercase',
               color: '#64748b',
               padding: '0 8px 6px',
-              borderBottom: '1px solid #f1f5f9',
+              borderBottom: '1px solid #F1EFEA',
             }}
           >
             IN THIS CHAPTER
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {sections.map((sec, idx) => {
               const isSelected = idx === activeVisibleIndex;
               const isQcActive = activeQcIndex === idx;
               const hasQc = Boolean((sec.quickChecks && sec.quickChecks.length > 0) || sec.quickCheck);
               const isQcDone = completedQuickChecks.has(idx);
               const isDone = hasQc ? isQcDone : completedSections.has(idx);
+              const examSignal = getSectionExamSignal(sec.title || sec.shortTitle, idx);
 
               return (
                 <div key={sec.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
@@ -474,16 +514,19 @@ function SectionizedReadViewInner({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '10px',
-                      padding: '8px 12px',
+                      padding: '8px 10px',
                       borderRadius: '10px',
-                      border: '1.5px solid transparent',
-                      background: isSelected && !isQcActive ? '#dbe6df' : 'transparent',
+                      border: isSelected && !isQcActive ? '1px solid #F3DEC0' : '1px solid transparent',
+                      background: isSelected && !isQcActive ? '#FDF6EC' : 'transparent',
                       cursor: 'pointer',
                       textAlign: 'left',
                       transition: 'all 0.15s ease',
                     }}
                   >
-                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
+                    {/* Status Indicator Icon:
+                        - ✓ is strictly reserved for genuinely completed sections (isDone === true)
+                        - Current/active section (isSelected && !isDone) shows a filled amber dot inside an amber ring
+                        - Unvisited/incomplete section shows an open circle */}
                     {isDone ? (
                       <span
                         style={{
@@ -494,7 +537,7 @@ function SectionizedReadViewInner({
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          background: '#0f172a',
+                          background: pineDeep,
                           color: '#ffffff',
                           fontSize: '11px',
                           fontWeight: 800,
@@ -512,14 +555,20 @@ function SectionizedReadViewInner({
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
-                          background: 'transparent',
-                          border: '1.5px solid #0f172a',
-                          color: '#0f172a',
-                          fontSize: '11px',
-                          fontWeight: 800,
+                          background: '#FFFDF9',
+                          border: `1.8px solid ${amberAccent}`,
+                          boxSizing: 'border-box',
                         }}
                       >
-                        ✓
+                        <span
+                          style={{
+                            width: '7px',
+                            height: '7px',
+                            borderRadius: '50%',
+                            background: amberAccent,
+                            display: 'block',
+                          }}
+                        />
                       </span>
                     ) : (
                       <span
@@ -533,6 +582,7 @@ function SectionizedReadViewInner({
                           flexShrink: 0,
                           background: 'transparent',
                           border: '1.5px solid #cbd5e1',
+                          boxSizing: 'border-box',
                         }}
                       />
                     )}
@@ -540,16 +590,47 @@ function SectionizedReadViewInner({
                     {/* Section Title */}
                     <span
                       style={{
-                        fontSize: '13px',
+                        fontSize: '12.5px',
                         fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                        color: isSelected ? '#0f172a' : '#475569',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        color: isSelected ? '#1E2822' : '#475569',
+                        lineHeight: 1.3,
+                        flex: 1,
+                        minWidth: 0,
+                        ...(isSelected
+                          ? {
+                              whiteSpace: 'normal',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical' as const,
+                              overflow: 'hidden',
+                            }
+                          : {
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                            }),
                       }}
                     >
                       {sec.shortTitle}
                     </span>
+
+                    {/* "YOU ARE HERE" tag on active incomplete section */}
+                    {isSelected && !isDone && (
+                      <span
+                        style={{
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          letterSpacing: '0.05em',
+                          color: '#BE7E57',
+                          textTransform: 'uppercase',
+                          flexShrink: 0,
+                          marginLeft: '4px',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        YOU ARE HERE
+                      </span>
+                    )}
                   </button>
 
                   {/* Mini sub-bullet point under the section bullet to skip directly to Quick Check */}
@@ -561,12 +642,12 @@ function SectionizedReadViewInner({
                       style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginLeft: '26px',
-                        padding: '4px 10px',
+                        gap: '7px',
+                        marginLeft: '24px',
+                        padding: '4px 8px',
                         borderRadius: '8px',
-                        border: 'none',
-                        background: isQcActive ? '#dbe6df' : 'transparent',
+                        border: isQcActive ? '1px solid #F3DEC0' : 'none',
+                        background: isQcActive ? '#FDF6EC' : 'transparent',
                         cursor: 'pointer',
                         textAlign: 'left',
                         transition: 'all 0.15s ease',
@@ -574,19 +655,19 @@ function SectionizedReadViewInner({
                     >
                       <span
                         style={{
-                          width: '8px',
-                          height: '8px',
+                          width: '7px',
+                          height: '7px',
                           borderRadius: '50%',
                           flexShrink: 0,
                           background: isQcDone
-                            ? '#15803d'
+                            ? pineDeep
                             : isQcActive
-                            ? '#0f172a'
+                            ? amberAccent
                             : 'transparent',
                           border: isQcDone
-                            ? '1.5px solid #15803d'
+                            ? `1.5px solid ${pineDeep}`
                             : isQcActive
-                            ? '1.5px solid #0f172a'
+                            ? `1.5px solid ${amberAccent}`
                             : '1.5px solid #94a3b8',
                         }}
                       />
@@ -594,14 +675,30 @@ function SectionizedReadViewInner({
                         style={{
                           fontSize: '11.5px',
                           fontWeight: isQcActive ? 700 : isQcDone ? 600 : 500,
-                          color: isQcActive ? '#0f172a' : isQcDone ? '#15803d' : '#64748b',
+                          color: isQcActive ? '#1E2822' : isQcDone ? pineDeep : '#64748b',
                           whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
                         }}
                       >
                         Quick Check
                       </span>
+                      {isSelected && examSignal.sidebarQcTag && (
+                        <span
+                          style={{
+                            marginLeft: 'auto',
+                            background: terraBg,
+                            color: terraText,
+                            border: `1px solid ${terraBorder}`,
+                            borderRadius: '999px',
+                            padding: '1px 6px',
+                            fontSize: '9.5px',
+                            fontWeight: 700,
+                            whiteSpace: 'nowrap',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {examSignal.sidebarQcTag}
+                        </span>
+                      )}
                     </button>
                   )}
                 </div>
@@ -614,7 +711,7 @@ function SectionizedReadViewInner({
             style={{
               marginTop: '10px',
               paddingTop: '10px',
-              borderTop: '1px solid #f1f5f9',
+              borderTop: '1px solid #F1EFEA',
               paddingLeft: '6px',
               paddingRight: '6px',
             }}
@@ -630,13 +727,13 @@ function SectionizedReadViewInner({
               }}
             >
               <span>Chapter progress</span>
-              <span style={{ color: '#0f172a', fontWeight: 700 }}>{progressPercent}%</span>
+              <span style={{ color: '#1E2822', fontWeight: 700 }}>{progressPercent}%</span>
             </div>
             <div
               style={{
                 height: '6px',
                 width: '100%',
-                background: '#f1f5f9',
+                background: '#EFECE4',
                 borderRadius: '999px',
                 overflow: 'hidden',
               }}
@@ -645,7 +742,7 @@ function SectionizedReadViewInner({
                 style={{
                   height: '100%',
                   width: `${progressPercent}%`,
-                  background: accentColor,
+                  background: amberAccent,
                   borderRadius: '999px',
                   transition: 'width 0.3s ease',
                 }}
@@ -670,12 +767,13 @@ function SectionizedReadViewInner({
         }}
       >
         {/* Chapter Overview Meta Line */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(226, 232, 240, 0.6)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingBottom: '8px', borderBottom: '1px solid #E6E1D6' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
               style={{
-                background: isPurpleTheme ? 'rgba(124, 58, 237, 0.08)' : 'rgba(21, 128, 61, 0.08)',
-                color: accentColor,
+                background: '#FDF6EC',
+                color: '#9A651F',
+                border: '1px solid #F3DEC0',
                 borderRadius: '6px',
                 padding: '4px 10px',
                 fontSize: '12.5px',
@@ -686,7 +784,7 @@ function SectionizedReadViewInner({
             </span>
             <span
               style={{
-                background: '#f1f5f9',
+                background: '#F1EFEA',
                 color: '#475569',
                 borderRadius: '6px',
                 padding: '4px 10px',
@@ -715,6 +813,10 @@ function SectionizedReadViewInner({
             if (val) secSelectedKeys[qIdx] = val;
           }
           const answeredInSec = Object.keys(secSelectedKeys).length;
+          const hasInfographic = Boolean(
+            sec.content && (/!\[.*?\]\(.*?\)/.test(sec.content) || /<img\b/i.test(sec.content))
+          );
+          const examSignal = getSectionExamSignal(sec.title || sec.shortTitle, idx);
 
           return (
             <div
@@ -726,7 +828,7 @@ function SectionizedReadViewInner({
               style={{
                 position: 'relative',
                 paddingBottom: '36px',
-                borderBottom: idx < sections.length - 1 ? '1px solid #e2e8f0' : 'none',
+                borderBottom: idx < sections.length - 1 ? '1px solid #E6E1D6' : 'none',
               }}
             >
               <div
@@ -744,7 +846,7 @@ function SectionizedReadViewInner({
                         fontSize: '12px',
                         fontWeight: 800,
                         letterSpacing: '0.06em',
-                        color: accentColor,
+                        color: amberHeading,
                         textTransform: 'uppercase',
                       }}
                     >
@@ -752,17 +854,37 @@ function SectionizedReadViewInner({
                     </span>
                   </div>
 
-                  <h2
-                    style={{
-                      fontSize: '24px',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                      lineHeight: '1.3',
-                      margin: '0 0 6px',
-                    }}
-                  >
-                    {sec.title}
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', margin: '0 0 6px' }}>
+                    <h2
+                      style={{
+                        fontSize: '24px',
+                        fontWeight: 800,
+                        color: '#1E2822',
+                        lineHeight: '1.3',
+                        margin: 0,
+                      }}
+                    >
+                      {sec.title}
+                    </h2>
+                    {hasInfographic && (
+                      <span
+                        style={{
+                          background: terraBg,
+                          color: terraText,
+                          border: `1px solid ${terraBorder}`,
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          letterSpacing: '0.06em',
+                          textTransform: 'uppercase',
+                          flexShrink: 0,
+                        }}
+                      >
+                        INFOGRAPHIC
+                      </span>
+                    )}
+                  </div>
 
                   {sec.subtitle && (
                     <p
@@ -777,14 +899,14 @@ function SectionizedReadViewInner({
                     </p>
                   )}
 
-                  {/* Section Badge Row */}
+                  {/* Section Facts & Exam Signal Row */}
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
                     <span
                       style={{
-                        background: '#f1f5f9',
+                        background: '#F1EFEA',
                         color: '#334155',
                         borderRadius: '6px',
-                        padding: '3px 9px',
+                        padding: '3px 10px',
                         fontSize: '12px',
                         fontWeight: 600,
                         display: 'flex',
@@ -801,11 +923,11 @@ function SectionizedReadViewInner({
                         onClick={() => handleScrollToQuickCheck(idx)}
                         title="Skip to Quick Check"
                         style={{
-                          background: isQcDone ? '#dcfce7' : '#f0fdf4',
-                          color: '#15803d',
-                          border: '1px solid #bbf7d0',
+                          background: isQcDone ? '#EBF3EE' : '#FDF6EC',
+                          color: isQcDone ? pineDeep : '#8C5A19',
+                          border: isQcDone ? '1px solid #C5D9CD' : '1px solid #F3DEC0',
                           borderRadius: '6px',
-                          padding: '3px 9px',
+                          padding: '3px 10px',
                           fontSize: '12px',
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -814,10 +936,28 @@ function SectionizedReadViewInner({
                         {isQcDone
                           ? `✓ ${qcCount} quick check${qcCount > 1 ? 's' : ''} answered`
                           : answeredInSec > 0
-                          ? `✔ ${answeredInSec}/${qcCount} quick checks`
-                          : `✔ ${qcCount} quick check${qcCount > 1 ? 's' : ''}`}
+                          ? `${answeredInSec}/${qcCount} quick checks`
+                          : `${qcCount} quick check${qcCount > 1 ? 's' : ''}`}
                       </button>
                     )}
+
+                    {/* Quiet Terra Exam Signal Tag */}
+                    <span
+                      style={{
+                        background: terraBg,
+                        color: terraText,
+                        border: `1px solid ${terraBorder}`,
+                        borderRadius: '6px',
+                        padding: '3px 10px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                      }}
+                    >
+                      {examSignal.mainTag}
+                    </span>
                   </div>
                 </div>
 
@@ -837,7 +977,7 @@ function SectionizedReadViewInner({
                         active={Boolean(readingHighlight?.active)}
                         startWord={readingHighlight?.startWord ?? -1}
                         endWord={readingHighlight?.endWord ?? -1}
-                        isPurpleTheme={isPurpleTheme}
+                        isPurpleTheme={false}
                       />
                     </div>
 
@@ -882,7 +1022,7 @@ function SectionizedReadViewInner({
                     style={{
                       minHeight: '280px',
                       borderRadius: '12px',
-                      background: 'rgba(241, 245, 249, 0.5)',
+                      background: 'rgba(241, 239, 234, 0.6)',
                     }}
                   />
                 )}
@@ -890,6 +1030,64 @@ function SectionizedReadViewInner({
             </div>
           );
         })}
+
+        {/* Compact Floating Next-Section Button anchored bottom-right for every section */}
+        {activeVisibleIndex + 1 < totalSections && (
+          <div
+            style={{
+              position: 'sticky',
+              bottom: '16px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              pointerEvents: 'none',
+              zIndex: 15,
+              marginTop: '-16px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                const currentSec = sections[activeVisibleIndex];
+                const hasQc = Boolean(
+                  (currentSec?.quickChecks && currentSec.quickChecks.length > 0) || currentSec?.quickCheck
+                );
+                if (!hasQc) {
+                  setCompletedSections((prev) => {
+                    const updated = new Set(prev);
+                    updated.add(activeVisibleIndex);
+                    try {
+                      cloudStorage.setItem(storageKey, JSON.stringify(Array.from(updated)));
+                    } catch {
+                      // ignore storage error
+                    }
+                    return updated;
+                  });
+                }
+                handleNextSectionInline(activeVisibleIndex);
+              }}
+              title={sections[activeVisibleIndex + 1]?.title || `Section ${activeVisibleIndex + 2}`}
+              style={{
+                pointerEvents: 'auto',
+                background: amberAccent,
+                color: '#1E2822',
+                border: '1px solid #C89246',
+                borderRadius: '999px',
+                padding: '8px 16px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 4px 12px rgba(30, 40, 34, 0.14)',
+                transition: 'all 0.16s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>Next: Section {activeVisibleIndex + 2} →</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

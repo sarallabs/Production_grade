@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback, Suspense } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import MarkdownView from "@/components/MarkdownView";
+import { buildTree } from "@/components/MermaidView";
 import SectionizedReadView from "@/components/study/SectionizedReadView";
+import QuickCheckModal from "@/components/study/QuickCheckModal";
 import type { ToolId } from "@/components/ToolsMenu";
 import {
   getResourceContent,
@@ -24,8 +26,13 @@ import {
   type Chapter,
   type ChapterVideo,
 } from "@/data/contentRepository";
-import { getSectionizedReadData } from "@/data/sectionizedReadService";
-import { truncateMindmapToLevels } from "@/data/markdownService";
+import {
+  getSectionizedReadData,
+  estimateReadingTime,
+  generateQuickCheckQuestionsFromMarkdown,
+  type QuickCheckQuestion,
+} from "@/data/sectionizedReadService";
+import { truncateMindmapToLevels, mindmapJsonToMermaid } from '@/data/markdownService';
 import { toTitleCase } from "@/pages/ChapterList";
 import { askGemini } from "@/services/askService";
 import {
@@ -80,9 +87,9 @@ import { useFocusMode } from "@/context/FocusModeContext";
 import ReadAloudBar, { preprocessSummaryText } from "@/components/study/ReadAloudBar";
 import ReadingHighlightView from "@/components/study/ReadingHighlightView";
 import { getRegistryTenantId } from "@/data/manifestService";
+import { useTenant } from "@/tenant/TenantProvider";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
 import { cloudStorage } from "@/context/CloudStateContext";
-
 const MindMapView = React.lazy(() => import("@/components/MindMapView"));
 const FlashcardsView = React.lazy(() => import("@/components/FlashcardsView"));
 const QuestionBankView = React.lazy(() => import("@/components/QuestionBankView"));
@@ -307,8 +314,17 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
   },
 };
 
-// ── In-memory cache for Mindmap Topic Markdown content ───────────────────────
-const topicNotesCache = new Map<string, { quick: string; detailed?: string }>();
+// ── In-memory cache for Mindmap Topic Markdown content & Quick Checks ────────
+const topicNotesCache = new Map<
+  string,
+  {
+    quick: string;
+    detailed?: string;
+    quickQc?: QuickCheckQuestion[];
+    detailedQc?: QuickCheckQuestion[];
+    QuickQcLoaded?: boolean;
+  }
+>();
 
 export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label: string }>): string {
   if (!chapterTitle && (!topics || topics.length === 0)) return '';
@@ -336,6 +352,10 @@ export default function StudyTable() {
   const [mindmapTopicTitle, setMindmapTopicTitle] = useState<string | null>(null);
   const [mindmapTopicContent, setMindmapTopicContent] = useState<string | null>(null);
   const [mindmapDetailedContent, setMindmapDetailedContent] = useState<string | null>(null);
+  const [mindmapQuickChecks, setMindmapQuickChecks] = useState<{
+    quick: QuickCheckQuestion[];
+    detailed: QuickCheckQuestion[];
+  }>({ quick: [], detailed: [] });
   const [mindmapInlineTab, setMindmapInlineTab] = useState<'quick' | 'detailed'>('quick');
   const [mindmapTopicOpen, setMindmapTopicOpen] = useState(false);
   const [mindmapTopicLoading, setMindmapTopicLoading] = useState(false);
@@ -345,7 +365,71 @@ export default function StudyTable() {
   const [mindmapMicrocastIdx, setMindmapMicrocastIdx] = useState<number>(0);
   const [foundationMindmapContent, setFoundationMindmapContent] = useState<string>('');
   const [foundationLoading, setFoundationLoading] = useState(false);
+  const mindmapQcRef = useRef<HTMLDivElement | null>(null);
+  const mmConceptQcRef = useRef<HTMLDivElement | null>(null);
+  const [mmCompletedQuickChecks, setMmCompletedQuickChecks] = useState<Set<string>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_qc_done');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  const [mmQcAnswers, setMmQcAnswers] = useState<Record<string, string>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_qc_answers');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [mmSelectedBranch, setMmSelectedBranch] = useState<string | null>(null);
+  const [mmStudiedBranches, setMmStudiedBranches] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_studied_v2');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return {};
+  });
+  const markMmQuickCheckCompleted = useCallback(
+    (
+      artifactKey: string,
+      selectedKey?: string,
+      questionIndex: number = 0,
+      markComplete: boolean = true
+    ) => {
+      if (markComplete) {
+        setMmCompletedQuickChecks((prev) => {
+          const updated = new Set(prev);
+          updated.add(artifactKey);
+          try {
+            cloudStorage.setItem('sv_mm_qc_done', JSON.stringify(Array.from(updated)));
+          } catch {}
+          return updated;
+        });
+      }
+      if (selectedKey) {
+        setMmQcAnswers((prev) => {
+          const updated = {
+            ...prev,
+            [`${artifactKey}_${questionIndex}`]: selectedKey,
+            ...(questionIndex === 0 ? { [artifactKey]: selectedKey } : {}),
+          };
+          try {
+            cloudStorage.setItem('sv_mm_qc_answers', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    },
+    []
+  );
   const navigate = useNavigate();
+  const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
   const [searchParams, setSearchParams] = useSearchParams();
   // Remember the course params of the last valid URL so a link that lost its
   // subject (back/forward, bookmark, stripped query) doesn't fall back to "english".
@@ -415,8 +499,13 @@ export default function StudyTable() {
   });
   const chapterNumber = chapterNumberState;
   const setChapterNumber = (num: number) => setChapterNumberState(num);
+  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
+  const dbChapterObj = subjectChapters.find((c) => c.number === chapterNumber);
   const chapterName =
-    searchParams.get("chapterName") || `Chapter ${chapterNumber}`;
+    dbChapterObj?.title ||
+    dbChapterObj?.name ||
+    searchParams.get("chapterName") ||
+    `Chapter ${chapterNumber}`;
 
   const location = useLocation();
   const navState = location.state as any;
@@ -449,8 +538,6 @@ export default function StudyTable() {
       cancelled = true;
     };
   }, [subjectId, chapterNumber]);
-
-  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
 
   useEffect(() => {
     if (!subjectId) return;
@@ -1096,23 +1183,41 @@ export default function StudyTable() {
   const [miniMessages, setMiniMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [miniIsLoading, setMiniIsLoading] = useState(false);
 
-  const handleSendMiniAsk = () => {
+  const handleSendMiniAsk = async () => {
     if (!miniAskInput.trim() || miniIsLoading) return;
     const userQ = miniAskInput.trim();
     setMiniAskInput("");
     setMiniMessages((prev) => [...prev, { role: 'user', content: userQ }]);
     setMiniIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await askGemini(
+        userQ,
+        subjectId,
+        chapterName || `Chapter ${chapterNumber}`,
+        chapterNumber,
+        persona,
+        'en-IN',
+        className
+      );
       setMiniMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}! Feel free to ask more or review the lesson materials.`
-        }
+          content: res.answer || `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}.`,
+        },
       ]);
+    } catch {
+      setMiniMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}! Feel free to ask more or review the lesson materials.`,
+        },
+      ]);
+    } finally {
       setMiniIsLoading(false);
-    }, 600);
+    }
   };
 
   const handleAuthClick = () => {
@@ -1123,13 +1228,12 @@ export default function StudyTable() {
     cloudStorage.removeItem("questionnaire_completed");
     cloudStorage.removeItem("sv_video_open_counts");
     setIsAuthenticated(false);
-    const activeTenant = getRegistryTenantId();
+    tenantLogout();
+    const activeTenant = contextTenantId || getRegistryTenantId();
     if (activeTenant) {
       cloudStorage.removeItem(`sv_session_${activeTenant}`);
-      navigate(`/${activeTenant}/login`, { replace: true });
-    } else {
-      navigate("/login", { replace: true });
     }
+    navigate("/login", { replace: true });
   };
 
   const { startFocusMode, isFocusModeActive } = useFocusMode();
@@ -1223,21 +1327,40 @@ export default function StudyTable() {
       } else {
         apply("Deep Dive not available for this chapter.");
       }
-    } else if (activeTool === "flashcards") {
-      getFlashcards(internalSubId, chapterNumber, persona, activeVideoDir)
-        .then(apply)
-        .catch(() => apply([]));
-    } else if (activeTool === "revision_flashcards") {
+    } else if (activeTool === "flashcards" || activeTool === "revision_flashcards") {
       getFlashcards(internalSubId, chapterNumber, persona, activeVideoDir)
         .then((cards) => {
-          const taggedCards = (cards || []).map(c => ({ ...c, level: persona }));
+          let weakCards: any[] = [];
+          try {
+            const rawWeak = cloudStorage.getItem(`sv_weak_cards_${subjectId}_${chapterNumber}`);
+            const parsedWeak = rawWeak ? JSON.parse(rawWeak) : [];
+            if (Array.isArray(parsedWeak)) {
+              weakCards = parsedWeak
+                .filter((w: any) => w && w.question && w.answer)
+                .map((w: any, idx: number) => ({
+                  id: w.id || `weak-${idx}`,
+                  question: w.question,
+                  answer: w.answer,
+                  topic: w.topic ? `Weak Card · ${w.topic}` : "Weak Card · From Assessment",
+                  level: persona,
+                }));
+            }
+          } catch {}
 
-          // Random shuffle for Revision Flashcards
-          for (let i = taggedCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [taggedCards[i], taggedCards[j]] = [taggedCards[j], taggedCards[i]];
+          const baseCards = Array.isArray(cards) ? cards : [];
+          const existingQs = new Set(baseCards.map((c: any) => (c.question || "").trim().toLowerCase()));
+          const uniqueWeak = weakCards.filter((w) => !existingQs.has((w.question || "").trim().toLowerCase()));
+
+          if (activeTool === "revision_flashcards") {
+            const taggedCards = [...uniqueWeak, ...baseCards.map((c) => ({ ...c, level: persona }))];
+            for (let i = taggedCards.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [taggedCards[i], taggedCards[j]] = [taggedCards[j], taggedCards[i]];
+            }
+            apply(taggedCards);
+          } else {
+            apply([...uniqueWeak, ...baseCards]);
           }
-          apply(taggedCards);
         })
         .catch(() => apply([]));
     } else if (activeTool === "mindmap" || activeTool === "foundation") {
@@ -1459,6 +1582,8 @@ export default function StudyTable() {
             chapterNumber={chapterNumber}
             chapterName={chapterName}
             isPurpleTheme={false}
+            persona={uiPersona}
+            onChangePersona={(p) => setPersona(p)}
             onSwitchTool={(tool) => setActiveTool(tool)}
           />
         );
@@ -1508,6 +1633,22 @@ export default function StudyTable() {
               mmConceptSection === 'detailed' ? sections.detailed :
                 mmDeepDiveRaw;
           const mmCards = mmConceptSection === 'flashcards' ? parseMmFlashcards(sections.flashcards) : [];
+          const mmConceptTitle = activeNodeTitle || mmActiveNodeId.replace(/_/g, ' ');
+          const mmConceptQcKey = `mm_master_${subjectId}_${chapterNumber}_${mmActiveNodeId}_${persona}_${mmConceptSection}`;
+          const mmConceptQcList =
+            mmConceptSection !== 'flashcards' && sectionContent
+              ? generateQuickCheckQuestionsFromMarkdown(mmConceptTitle, sectionContent, `M_${conceptN}`)
+              : [];
+          const mmConceptQcDone = mmCompletedQuickChecks.has(mmConceptQcKey);
+          const mmConceptSelectedKeys: Record<number, string> = {};
+          for (let qIdx = 0; qIdx < mmConceptQcList.length; qIdx++) {
+            const val =
+              mmQcAnswers[`${mmConceptQcKey}_${qIdx}`] ||
+              (qIdx === 0 ? mmQcAnswers[mmConceptQcKey] : undefined);
+            if (val) mmConceptSelectedKeys[qIdx] = val;
+          }
+          const mmConceptAnsweredCount = Object.keys(mmConceptSelectedKeys).length;
+          const mmConceptReadMins = estimateReadingTime(sectionContent || '');
 
           return (
             <div className="mm-concept-view">
@@ -1653,7 +1794,87 @@ export default function StudyTable() {
                     <MarkdownView content={sections.flashcards} />
                   )
                 ) : (
-                  <MarkdownView content={sectionContent} />
+                  <div style={{ maxWidth: '1040px', margin: '0 auto', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      <span
+                        style={{
+                          background: '#f1f5f9',
+                          color: '#334155',
+                          borderRadius: '6px',
+                          padding: '3px 9px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        ⏱ {mmConceptReadMins} min read
+                      </span>
+
+                      {mmConceptQcList.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => mmConceptQcRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                          title="Skip to Quick Check"
+                          style={{
+                            background: mmConceptQcDone ? '#dcfce7' : '#f0fdf4',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '6px',
+                            padding: '3px 9px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {mmConceptQcDone
+                            ? `✓ ${mmConceptQcList.length} quick check${mmConceptQcList.length > 1 ? 's' : ''} answered`
+                            : mmConceptAnsweredCount > 0
+                            ? `✔ ${mmConceptAnsweredCount}/${mmConceptQcList.length} quick checks`
+                            : `✔ ${mmConceptQcList.length} quick check${mmConceptQcList.length > 1 ? 's' : ''}`}
+                        </button>
+                      )}
+                    </div>
+
+                    <MarkdownView content={sectionContent} />
+
+                    {mmConceptQcList.length > 0 && (
+                      <div ref={mmConceptQcRef} style={{ scrollMarginTop: '20px', marginTop: '28px' }}>
+                        <QuickCheckModal
+                          key={`mm-concept-qc-${mmConceptQcKey}`}
+                          isOpen={true}
+                          question={mmConceptQcList[0]}
+                          questions={mmConceptQcList}
+                          currentSectionNumber={1}
+                          totalSections={1}
+                          sectionTitle={mmConceptTitle}
+                          nextSectionTitle={nextTopicLink?.name}
+                          isPurpleTheme={false}
+                          initialSelectedKey={mmConceptSelectedKeys[0] || null}
+                          initialSelectedKeys={mmConceptSelectedKeys}
+                          isCompleted={mmConceptQcDone}
+                          onNextSection={
+                            nextTopicLink
+                              ? () => {
+                                  markMmQuickCheckCompleted(mmConceptQcKey);
+                                  setMmActiveNodeId(nextTopicLink.id);
+                                  setMmConceptSection('summary');
+                                }
+                              : undefined
+                          }
+                          onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                            markMmQuickCheckCompleted(
+                              mmConceptQcKey,
+                              selectedKey,
+                              questionIndex,
+                              allAnswered || mmConceptQcList.length === 1
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -1686,6 +1907,9 @@ export default function StudyTable() {
 
         // Extract only the mermaid block — strips any markdown title/frontmatter/blockquotes outside the fence
         function extractMermaidBlock(raw: string): string {
+          if (raw.trim().startsWith('{')) {
+            raw = mindmapJsonToMermaid(raw);
+          }
           const match = raw.match(/```mermaid([\s\S]*?)```/);
           if (match) return '```mermaid' + match[1] + '```';
           // Already raw mermaid (no fences)
@@ -1785,17 +2009,48 @@ export default function StudyTable() {
         const curCh = subjectChapters.find((c) => c.number === chapterNumber);
         const dynamicTopicCfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
 
-        const dynamicMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
-        if (dynamicTopicCfg) {
-          for (const t of dynamicTopicCfg.topics) {
-            dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
-            dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
-          }
+        // Compute the final mermaid content:
+        const mermaidContent = dynamicTopicCfg
+          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
+          : truncateMindmapToLevels(rawMermaid, 2);
+
+        // Always parse mermaid tree so we can map Level-2 child nodes to their Level-1 parent branch
+        const parsedMermaidTree = mermaidContent ? buildTree(mermaidContent) : null;
+        const rawMermaidTree = rawMermaid ? buildTree(truncateMindmapToLevels(rawMermaid, 2)) : null;
+        const treeForHierarchy = rawMermaidTree || parsedMermaidTree;
+        const childToParentBranch: Record<string, string> = {};
+        const dynamicTreeSubtopics: Record<string, { code: string; title: string; duration: string; mins: number }[]> = {};
+        if (treeForHierarchy?.children) {
+          treeForHierarchy.children.forEach((branchNode, bIdx) => {
+            const bClean = branchNode.label.trim();
+            childToParentBranch[bClean.toLowerCase()] = bClean;
+            if (branchNode.children && branchNode.children.length > 0) {
+              dynamicTreeSubtopics[bClean.toLowerCase()] = branchNode.children.map((subNode, sIdx) => {
+                childToParentBranch[subNode.label.trim().toLowerCase()] = bClean;
+                return {
+                  code: `${bIdx + 1}.${sIdx + 1}`,
+                  title: subNode.label.trim(),
+                  duration: '8m',
+                  mins: 8,
+                };
+              });
+            }
+          });
         }
 
-        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = dynamicTopicCfg
-          ? dynamicMmIcons
-          : isNebBiologyChap6 ? {
+        const effectiveTopics: MindmapTopic[] = dynamicTopicCfg
+          ? dynamicTopicCfg.topics
+          : parsedMermaidTree?.children?.map((c, idx) => ({
+              label: c.label,
+              topicNum: idx + 1,
+            })) || [];
+        const dynamicMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
+        for (const t of effectiveTopics) {
+          dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
+          dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+        }
+
+        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isNebBiologyChap6 ? {
           'ANIMAL TISSUE': { hasRead: true },
           'History': { hasRead: true },
           'Epithelial Tissue': { hasRead: true },
@@ -1818,7 +2073,7 @@ export default function StudyTable() {
           'Cardiac / Heart muscle': { hasRead: true },
           'Neuroglia': { hasRead: true },
           'Neurone': { hasRead: true }
-        } : {};
+        } : dynamicMmIcons;
 
         for (const key of Object.keys(mmIcons)) {
           const mapped = MEDIA_MAPPING[key.toLowerCase().trim()];
@@ -1828,32 +2083,44 @@ export default function StudyTable() {
           }
         }
 
-        // Compute the final mermaid content:
-        const mermaidContent = dynamicTopicCfg
-          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
-          : truncateMindmapToLevels(rawMermaid, 2);
-
-        const handleTopicClick = async (label: string, action?: 'read' | 'podcast' | 'video') => {
+        const loadMindmapTopicForPersona = async (
+          label: string,
+          targetPersona: DifficultyLevel,
+          action?: 'read' | 'podcast' | 'video',
+          preserveTab = false
+        ) => {
           setMindmapTopicTitle(label);
           const lowerLabel = label.toLowerCase().trim();
 
-          // ── Dynamic topic path (Works for all subjects with topics) ───────
-          if (dynamicTopicCfg) {
-            const match = dynamicTopicCfg.topics.find((t: any) => t.label.toLowerCase() === lowerLabel);
-            if (!match) return; // root node or unmapped — ignore
+          // ── NEB Biology Chapter 6 path ────────────────────────────────────────
+          if (isNebBiologyChap6) {
+            const mappedMedia = MEDIA_MAPPING[lowerLabel];
+            const mapped = MINDMAP_MAPPING[lowerLabel];
 
-            if (action === 'video') {
+            if (action === 'video' && mappedMedia?.ytId) {
               setMindmapInlineType('video');
-              const mappedMedia = MEDIA_MAPPING[lowerLabel];
-              const ytId = mappedMedia?.ytId || 'EQl-5nKXme0';
-              setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
+              setMindmapMediaUrl(`https://www.youtube.com/embed/${mappedMedia.ytId}?autoplay=1`);
               setMindmapTopicOpen(true);
               return;
             }
 
             if (action === 'podcast') {
-              const mcIdx = dynamicTopicCfg.topics.indexOf(match);
-              const targetIdx = mcIdx >= 0 ? mcIdx : 0;
+              const nebMcNames = [
+                'MC1_Histology_pioneers_and_the_first_tissues',
+                'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
+                'MC3_Simple_Epithelium_Types_and_Functions',
+                'MC4_Body_armor_and_shape_shifting_bladders',
+                'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
+                'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
+                'MC7_Why_tendons_anchor_and_ligaments_stretch',
+                'MC8_Four_unique_types_of_body_cartilage',
+                'MC9_The_microscopic_plumbing_of_mammalian_bones',
+                'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
+                'MC11_Why_Some_Muscles_Never_Get_Tired',
+                'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
+              ];
+              const nebIdx = mappedMedia?.audio ? nebMcNames.indexOf(mappedMedia.audio) : -1;
+              const targetIdx = nebIdx >= 0 ? nebIdx : 0;
               setMindmapTopicOpen(false);
               setPodcastTargetTrack('mc');
               setPodcastTargetMcIndex(targetIdx);
@@ -1863,107 +2130,101 @@ export default function StudyTable() {
               return;
             }
 
-            // Default: read (quick + detailed)
             setMindmapInlineType('text');
-            setMindmapInlineTab('quick');
+            if (!preserveTab) setMindmapInlineTab('quick');
             setMindmapTopicOpen(true);
 
-            const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
-            const topicNum = (match as any).topicNum ?? (dynamicTopicCfg.topics.indexOf(match) + 1);
-            const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
-            const cached = topicNotesCache.get(cacheKey);
+            if (mapped) {
+              const cacheKey = `neb_${mapped.type}_${mapped.id}`;
+              const cached = topicNotesCache.get(cacheKey);
 
-            if (cached && cached.quick) {
-              setMindmapTopicContent(cached.quick);
-              setMindmapDetailedContent(cached.detailed || '');
-              setMindmapTopicLoading(false);
-              return;
-            }
-
-            setMindmapTopicLoading(true);
-            setMindmapTopicContent(null);
-            setMindmapDetailedContent(null);
-
-            try {
-              const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
-              const subBase = getSubjectBaseUrl(subjectId);
-
-              const fetchSafeMd = async (url: string) => {
-                try {
-                  const res = await fetch(url);
-                  const ct = res.headers.get('content-type') || '';
-                  if (!res.ok || ct.includes('text/html')) return '';
-                  const txt = await res.text();
-                  if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
-                  return txt;
-                } catch { return ''; }
-              };
-
-              const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
-                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
-              const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
-                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
-
-              let quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
-              if (!quickText) {
-                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
-              }
-              if (!quickText) {
-                const secQuick = await getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel);
-                const foundSec = secQuick?.sections.find((s) => s.sectionNumber === topicNum) || secQuick?.sections[topicNum];
-                if (foundSec?.content) quickText = foundSec.content;
-              }
-              let detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
-              if (!detailedText) {
-                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
-              }
-              if (!detailedText) {
-                const secDetailed = await getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel);
-                const foundDet = secDetailed?.sections.find((s) => s.sectionNumber === topicNum) || secDetailed?.sections[topicNum];
-                if (foundDet?.content) detailedText = foundDet.content;
+              if (cached && cached.quick) {
+                setMindmapTopicContent(cached.quick);
+                setMindmapDetailedContent(cached.detailed || '');
+                setMindmapQuickChecks({
+                  quick: cached.quickQc || generateQuickCheckQuestionsFromMarkdown(label, cached.quick, `M_${mapped.id}`),
+                  detailed: cached.detailedQc || generateQuickCheckQuestionsFromMarkdown(label, cached.detailed || cached.quick, `M_${mapped.id}`),
+                });
+                setMindmapTopicLoading(false);
+                return;
               }
 
-              setMindmapTopicContent(quickText || `Summary content for ${match.label}`);
-              setMindmapDetailedContent(detailedText || quickText || `Detailed notes for ${match.label}`);
-              topicNotesCache.set(cacheKey, { quick: quickText, detailed: detailedText || quickText });
-            } catch (e) {
-              console.error('Dynamic mindmap topic fetch error', e);
-              setMindmapTopicContent(`Content for ${match.label}`);
-            } finally {
-              setMindmapTopicLoading(false);
+              setMindmapTopicLoading(true);
+              setMindmapTopicContent(null);
+              setMindmapDetailedContent(null);
+
+              try {
+                const basePathDetailed = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
+                const basePathQuick = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
+
+                const detailedFilename = mapped.type === 'topic' ? `detailed_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
+                const quickFilename = mapped.type === 'topic' ? `quick_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
+
+                fetch(basePathQuick + quickFilename)
+                  .then(r => (r.ok ? r.text() : "Quick content not found for this topic."))
+                  .then(quickText => {
+                    quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
+                    quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
+                    const quickQc = generateQuickCheckQuestionsFromMarkdown(label, quickText, `M_${mapped.id}`);
+                    setMindmapTopicContent(quickText);
+                    setMindmapQuickChecks(prev => ({ ...prev, quick: quickQc }));
+                    setMindmapTopicLoading(false);
+                    const entry = topicNotesCache.get(cacheKey) || { quick: quickText };
+                    entry.quick = quickText;
+                    entry.quickQc = quickQc;
+                    topicNotesCache.set(cacheKey, entry);
+                  })
+                  .catch(e => {
+                    console.error(e);
+                    setMindmapTopicLoading(false);
+                  });
+
+                fetch(basePathDetailed + detailedFilename)
+                  .then(r => (r.ok ? r.text() : "Detailed content not found for this topic."))
+                  .then(detailedText => {
+                    detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
+                    detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
+                    const detailedQc = generateQuickCheckQuestionsFromMarkdown(label, detailedText, `M_${mapped.id}`);
+                    setMindmapDetailedContent(detailedText);
+                    setMindmapQuickChecks(prev => ({ ...prev, detailed: detailedQc }));
+                    const entry = topicNotesCache.get(cacheKey) || { quick: '' };
+                    entry.detailed = detailedText;
+                    entry.detailedQc = detailedQc;
+                    topicNotesCache.set(cacheKey, entry);
+                  })
+                  .catch(console.error);
+              } catch (e) {
+                console.error(e);
+                setMindmapTopicLoading(false);
+              }
             }
             return;
           }
 
-          // ── NEB Biology path ─────────────────────────────────────────────────
-          if (!isNebBiologyChap6) return;
-          const mappedMedia = MEDIA_MAPPING[lowerLabel];
-          const mapped = MINDMAP_MAPPING[lowerLabel];
+          // ── Dynamic / Multi-Tenant topic path (Works for all subjects) ───────
+          const match =
+            effectiveTopics.find((t: any) => t.label.toLowerCase() === lowerLabel) ||
+            ({ label, topicNum: Math.max(1, effectiveTopics.findIndex((t) => t.label.toLowerCase().includes(lowerLabel)) + 1) } as MindmapTopic);
 
-          if (action === 'video' && mappedMedia?.ytId) {
+          if (action === 'video') {
             setMindmapInlineType('video');
-            setMindmapMediaUrl(`https://www.youtube.com/embed/${mappedMedia.ytId}?autoplay=1`);
+            const mappedMedia = MEDIA_MAPPING[lowerLabel];
+            const angrauYtMap: Record<number, string> = {
+              1: 'Ioa25iYy53g',
+              2: '7TyeiuOEVBo',
+              3: 'UMJFfCFFF4M',
+              4: 'elWWuKv5b9Q',
+            };
+            const isAngrauEnto = subjectId.includes('ento');
+            const ytId = mappedMedia?.ytId || (isAngrauEnto ? angrauYtMap[chapterNumber] : undefined) || 'EQl-5nKXme0';
+            setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
             setMindmapTopicOpen(true);
             return;
           }
 
           if (action === 'podcast') {
-            const nebMcNames = [
-              'MC1_Histology_pioneers_and_the_first_tissues',
-              'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
-              'MC3_Simple_Epithelium_Types_and_Functions',
-              'MC4_Body_armor_and_shape_shifting_bladders',
-              'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
-              'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
-              'MC7_Why_tendons_anchor_and_ligaments_stretch',
-              'MC8_Four_unique_types_of_body_cartilage',
-              'MC9_The_microscopic_plumbing_of_mammalian_bones',
-              'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
-              'MC11_Why_Some_Muscles_Never_Get_Tired',
-              'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
-            ];
-            const nebIdx = mappedMedia?.audio ? nebMcNames.indexOf(mappedMedia.audio) : -1;
-            const targetIdx = nebIdx >= 0 ? nebIdx : 0;
+            const mcIdx = effectiveTopics.indexOf(match);
+            const targetIdx = mcIdx >= 0 ? mcIdx : 0;
             setMindmapTopicOpen(false);
             setPodcastTargetTrack('mc');
             setPodcastTargetMcIndex(targetIdx);
@@ -1973,94 +2234,991 @@ export default function StudyTable() {
             return;
           }
 
+          // Default: read (quick + detailed + quick checks)
           setMindmapInlineType('text');
-          setMindmapInlineTab('quick');
+          if (!preserveTab) setMindmapInlineTab('quick');
           setMindmapTopicOpen(true);
 
-          if (mapped) {
-            const cacheKey = `neb_${mapped.type}_${mapped.id}`;
-            const cached = topicNotesCache.get(cacheKey);
+          const normLevel = ['beginner', 'intermediate', 'advanced'].includes(targetPersona)
+            ? targetPersona
+            : 'intermediate';
+          const topicNum = (match as any).topicNum ?? (effectiveTopics.indexOf(match) + 1);
+          const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+          const cached = topicNotesCache.get(cacheKey);
 
-            if (cached && cached.quick) {
-              setMindmapTopicContent(cached.quick);
-              setMindmapDetailedContent(cached.detailed || '');
-              setMindmapTopicLoading(false);
-              return;
-            }
-
-            setMindmapTopicLoading(true);
-            setMindmapTopicContent(null);
-            setMindmapDetailedContent(null);
-
-            try {
-              const basePathDetailed = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
-              const basePathQuick = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
-
-              const detailedFilename = mapped.type === 'topic' ? `detailed_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
-              const quickFilename = mapped.type === 'topic' ? `quick_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
-
-              fetch(basePathQuick + quickFilename)
-                .then(r => (r.ok ? r.text() : "Quick content not found for this topic."))
-                .then(quickText => {
-                  quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
-                  quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
-                  setMindmapTopicContent(quickText);
-                  setMindmapTopicLoading(false);
-                  const entry = topicNotesCache.get(cacheKey) || { quick: quickText };
-                  entry.quick = quickText;
-                  topicNotesCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error(e);
-                  setMindmapTopicLoading(false);
-                });
-
-              fetch(basePathDetailed + detailedFilename)
-                .then(r => (r.ok ? r.text() : "Detailed content not found for this topic."))
-                .then(detailedText => {
-                  detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
-                  detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
-                  setMindmapDetailedContent(detailedText);
-                  const entry = topicNotesCache.get(cacheKey) || { quick: '' };
-                  entry.detailed = detailedText;
-                  topicNotesCache.set(cacheKey, entry);
-                })
-                .catch(console.error);
-            } catch (e) {
-              console.error(e);
-              setMindmapTopicLoading(false);
-            }
+          if (cached && cached.quick && cached.quickQc && cached.QuickQcLoaded) {
+            setMindmapTopicContent(cached.quick);
+            setMindmapDetailedContent(cached.detailed || cached.quick);
+            setMindmapQuickChecks({
+              quick: cached.quickQc,
+              detailed: cached.detailedQc || cached.quickQc,
+            });
+            setMindmapTopicLoading(false);
+            return;
           }
 
-          if ((action as any) === 'podcast') {
-            setMindmapTopicOpen(false);
-            setPodcastTargetTrack('mc');
-            setPodcastTargetMcIndex(0);
-            setPodcastAutoPlay(true);
-            setPodcastPlayTrigger(Date.now());
-            setActiveTool('podcasts');
-            return;
+          setMindmapTopicLoading(true);
+          if (!preserveTab) {
+            setMindmapTopicContent(null);
+            setMindmapDetailedContent(null);
+          }
+
+          try {
+            const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+            const subBase = getSubjectBaseUrl(subjectId);
+
+            const fetchSafeMd = async (url: string) => {
+              try {
+                const res = await fetch(url);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || ct.includes('text/html')) return '';
+                const txt = await res.text();
+                if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
+                return txt;
+              } catch { return ''; }
+            };
+
+            const [secQuick, secDetailed] = await Promise.all([
+              getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel),
+              getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel),
+            ]);
+
+            const foundSec =
+              secQuick?.sections.find((s) => s.sectionNumber === topicNum) ||
+              secQuick?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+              secQuick?.sections[topicNum - 1];
+            const foundDet =
+              secDetailed?.sections.find((s) => s.sectionNumber === topicNum) ||
+              secDetailed?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+              secDetailed?.sections[topicNum - 1];
+
+            let quickText = foundSec?.content || '';
+            if (!quickText) {
+              const quickSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
+              quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+              if (!quickText) {
+                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+              }
+            }
+
+            let detailedText = foundDet?.content || '';
+            if (!detailedText) {
+              const detailedSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
+              detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+              if (!detailedText) {
+                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+              }
+            }
+
+            const finalQuick = quickText || `Summary content for ${match.label}`;
+            const finalDetailed = detailedText || finalQuick || `Detailed notes for ${match.label}`;
+
+            const quickQc =
+              foundSec?.quickChecks && foundSec.quickChecks.length > 0
+                ? foundSec.quickChecks
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalQuick, `M${topicNum}`);
+            const detailedQc =
+              foundDet?.quickChecks && foundDet.quickChecks.length > 0
+                ? foundDet.quickChecks
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalDetailed, `M${topicNum}`);
+
+            setMindmapTopicContent(finalQuick);
+            setMindmapDetailedContent(finalDetailed);
+            setMindmapQuickChecks({ quick: quickQc, detailed: detailedQc });
+            topicNotesCache.set(cacheKey, {
+              quick: finalQuick,
+              detailed: finalDetailed,
+              quickQc,
+              detailedQc,
+              ...({ QuickQcLoaded: true } as any),
+            });
+          } catch (e) {
+            console.error('Dynamic mindmap topic fetch error', e);
+            const fallbackMd = `Content for ${match.label}`;
+            setMindmapTopicContent(fallbackMd);
+            setMindmapQuickChecks({
+              quick: generateQuickCheckQuestionsFromMarkdown(match.label, fallbackMd, `M${topicNum}`),
+              detailed: generateQuickCheckQuestionsFromMarkdown(match.label, fallbackMd, `M${topicNum}`),
+            });
+          } finally {
+            setMindmapTopicLoading(false);
           }
         };
 
+        const chStudyKey = `${subjectId}_${chapterNumber}`;
+        const markMmBranchStudied = (branchLabel: string) => {
+          if (!branchLabel) return;
+          setMmStudiedBranches((prev) => {
+            const existing = prev[chStudyKey] || [];
+            if (existing.some((x) => x.toLowerCase() === branchLabel.toLowerCase())) return prev;
+            const next = { ...prev, [chStudyKey]: [...existing, branchLabel] };
+            try {
+              cloudStorage.setItem('sv_mm_studied_v2', JSON.stringify(next));
+            } catch {
+              // ignore storage errors
+            }
+            return next;
+          });
+        };
+
+        const handleTopicClick = (label: string, action?: 'read' | 'podcast' | 'video') => {
+          setMmSelectedBranch(label);
+          markMmBranchStudied(label);
+          return loadMindmapTopicForPersona(label, persona, action, false);
+        };
 
         // Compute next/prev topic for inline navigation (Multi-Tenant)
-        const allTopicLabels: string[] = dynamicTopicCfg
-          ? dynamicTopicCfg.topics.map(t => t.label)
-          : [];
-        const currentTopicIdx = allTopicLabels.indexOf(mindmapTopicTitle ?? '');
+        const allTopicLabels: string[] = isNebBiologyChap6
+          ? Object.keys(mmIcons).filter((k) => k !== 'ANIMAL TISSUE')
+          : effectiveTopics.map((t) => t.label);
+        const currentTopicIdx = allTopicLabels.findIndex(
+          (l) => l.toLowerCase() === (mindmapTopicTitle ?? '').toLowerCase()
+        );
         const prevTopicLabel = currentTopicIdx > 0 ? allTopicLabels[currentTopicIdx - 1] : null;
         const nextTopicLabel = currentTopicIdx >= 0 && currentTopicIdx < allTopicLabels.length - 1
           ? allTopicLabels[currentTopicIdx + 1]
           : null;
 
-        return (
-          <div className="mindmap-container" style={{ display: 'flex', flexDirection: 'column', gap: mindmapTopicOpen ? '0px' : '16px', height: '100%' }}>
-            {/* Map — hidden while a topic is open so only content fills the view */}
-            {!mindmapTopicOpen && (
-              <MindMapView content={mermaidContent} onTopicClick={handleTopicClick} nodeIcons={mmIcons} />
-            )}
+        const activeMmMarkdown = (
+          (mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || ''
+        ).replace(/^#\s+[^\n]+(\r?\n)+/, '');
+        const activeMmReadMins = estimateReadingTime(activeMmMarkdown);
+        const rawMmQcList =
+          mindmapInlineTab === 'quick' ? mindmapQuickChecks.quick : mindmapQuickChecks.detailed;
+        const activeMmQcList =
+          rawMmQcList && rawMmQcList.length > 0
+            ? rawMmQcList
+            : activeMmMarkdown
+            ? generateQuickCheckQuestionsFromMarkdown(
+                mindmapTopicTitle || 'Topic Overview',
+                activeMmMarkdown,
+                `M${currentTopicIdx >= 0 ? currentTopicIdx + 1 : 1}`
+              )
+            : [];
+        const mmArtifactKey = `mm_topic_${subjectId}_${chapterNumber}_${mindmapTopicTitle || 'topic'}_${persona}_${mindmapInlineTab}`;
+        const isMmQcDone = mmCompletedQuickChecks.has(mmArtifactKey);
+        const mmSelectedKeys: Record<number, string> = {};
+        for (let qIdx = 0; qIdx < activeMmQcList.length; qIdx++) {
+          const val =
+            mmQcAnswers[`${mmArtifactKey}_${qIdx}`] ||
+            (qIdx === 0 ? mmQcAnswers[mmArtifactKey] : undefined);
+          if (val) mmSelectedKeys[qIdx] = val;
+        }
+        const answeredInMmTopic = Object.keys(mmSelectedKeys).length;
 
+        // ── Contextual Branch Inspector metadata for MLRIT & ANGRAU ──
+        const MM_BRANCH_SUBTOPICS: Record<
+          string,
+          { podcastMins: number; subTopics: { code: string; title: string; duration: string; mins: number }[] }
+        > = {
+          // MLRIT — DBMS Unit 1 (6 branches)
+          'database fundamentals & engine architecture': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'File-System vs DBMS & ACID Motivation', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'ANSI-SPARC Three-Schema Architecture & Data Independence', duration: '12m', mins: 12 },
+              { code: '1.3', title: 'Storage Manager, Query Processor & Transaction Engine', duration: '6m', mins: 6 },
+            ],
+          },
+          'conceptual database design & er modeling': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Entities, Attributes (Simple, Composite, Derived) & Domains', duration: '7m', mins: 7 },
+              { code: '2.2', title: 'Relationships, Degree, Role Names & Recursive Links', duration: '9m', mins: 9 },
+              { code: '2.3', title: 'Mapping Cardinalities (1:1, 1:N, M:N) & Participation Constraints', duration: '8m', mins: 8 },
+            ],
+          },
+          'advanced er & extended er (eer) mechanisms': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '3.1', title: 'Weak Entities, Identifying Relationships & Partial Keys', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Specialization, Generalization & Attribute Inheritance', duration: '10m', mins: 10 },
+              { code: '3.3', title: 'Disjoint/Overlapping Constraints & Aggregation', duration: '7m', mins: 7 },
+            ],
+          },
+          'relational model foundations & integrity constraints': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Relations, Tuples, Domains & Mathematical Set Semantics', duration: '7m', mins: 7 },
+              { code: '4.2', title: 'Superkeys, Candidate Keys, Primary & Foreign Keys', duration: '9m', mins: 9 },
+              { code: '4.3', title: 'Domain, Entity & Referential Integrity Rules', duration: '8m', mins: 8 },
+            ],
+          },
+          'logical database design (er-to-relational translation)': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '5.1', title: 'Strong & Weak Entity Translation to Relational Schemas', duration: '8m', mins: 8 },
+              { code: '5.2', title: '1:1, 1:N & M:N Relationship Mapping Strategies', duration: '10m', mins: 10 },
+              { code: '5.3', title: 'Multivalued Attributes & EER Hierarchy Translation', duration: '8m', mins: 8 },
+            ],
+          },
+          'relational querying, views & schema evolution': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '6.1', title: 'Relational Algebra (σ, π, ∪, −, ×, ⋈, ÷) & Calculus', duration: '11m', mins: 11 },
+              { code: '6.2', title: 'SQL DDL, Constraints & Schema Modification', duration: '8m', mins: 8 },
+              { code: '6.3', title: 'Virtual Views, Updatability & Logical Security', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 1: History of Entomology in India
+          'ancient references & etymology': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '1.1', title: 'Etymology of Entomon & Logos and Arthropoda Roots', duration: '6m', mins: 6 },
+              { code: '1.2', title: 'Vedic, Ramayana & Mahabharata References to Insects', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Ancient Classification (Ushma-ja, Anda-ja) & Early Silkworm/Bee Lore', duration: '7m', mins: 7 },
+            ],
+          },
+          'early entomology in india': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: '18th Century Pioneers: Koenig, Fabricius & Linnaeus (1758)', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Medical & Natural History Contributions (Ronald Ross, Kerr, Roxburgh)', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Indian Museum (1875), BNHS (1883) & Fauna of British India', duration: '7m', mins: 7 },
+            ],
+          },
+          'imperial entomologists': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Lionel de Niceville (1901) & H. Maxwell-Lefroy (Indian Insect Life)', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'T.B. Fletcher & Early Pusa Research Milestones', duration: '7m', mins: 7 },
+              { code: '3.3', title: 'H.S. Pruthi, Hem Singh & Post-Independence Transition', duration: '7m', mins: 7 },
+            ],
+          },
+          'first government entomologists': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'T.V. Ramakrishna Ayyar & Handbook of Economic Entomology', duration: '8m', mins: 8 },
+              { code: '4.2', title: 'State Entomologists of Madras, Punjab, Mysore & Coimbatore', duration: '7m', mins: 7 },
+              { code: '4.3', title: '1914 Destructive Insects and Pests Act & Early Quarantine', duration: '6m', mins: 6 },
+            ],
+          },
+          'major institutions & milestones': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '5.1', title: 'IARI Pusa (1905), FRI Dehradun, ZSI (1916) & ILRI Ranchi', duration: '8m', mins: 8 },
+              { code: '5.2', title: 'ESI (1938), LWO (1939), DPPQS (1946) & NBAIR Bengaluru', duration: '9m', mins: 9 },
+              { code: '5.3', title: 'NCIPM, Insecticides Act (1968) & Modern Agricultural Universities', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 2: Factors for Insect Abundance
+          'structural perfections': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'Chitinous Exoskeleton, Cuticular Wax Layer & Desiccation Resistance', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'Functional Wings, Hexapod Locomotion & Dispersal Advantage', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Small Body Size, Tracheal Respiration & Compound Eyes', duration: '7m', mins: 7 },
+            ],
+          },
+          'mechanism of reproduction': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'High Fecundity (Queen Termite & Honeybee) & Short Life Cycle', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Parthenogenesis, Viviparity, Paedogenesis & Polyembryony', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Sperm Storage (Spermatheca) & Controlled Fertilization', duration: '6m', mins: 6 },
+            ],
+          },
+          'developmental characteristics': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '3.1', title: 'Complete Metamorphosis (Holometaboly) & Niche Partitioning', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Larval Feeding Stage vs Adult Reproductive/Dispersal Stage', duration: '7m', mins: 7 },
+              { code: '3.3', title: 'Diapause, Quiescence & Arrested Development in Harsh Seasons', duration: '7m', mins: 7 },
+            ],
+          },
+          'protective adaptations & specificity': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Crypsis, Camouflage, Batesian & Müllerian Mimicry', duration: '8m', mins: 8 },
+              { code: '4.2', title: 'Aposematism, Chemical Defenses & Reflex Bleeding', duration: '7m', mins: 7 },
+              { code: '4.3', title: 'Host-Plant Specificity & Co-Evolutionary Adaptations', duration: '7m', mins: 7 },
+            ],
+          },
+          'numbers & ecological dominance': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '5.1', title: 'Global Species Share (>70% of All Known Animal Species)', duration: '6m', mins: 6 },
+              { code: '5.2', title: 'Dominant Orders: Coleoptera, Lepidoptera, Diptera & Hymenoptera', duration: '8m', mins: 8 },
+              { code: '5.3', title: 'Ecosystem Services vs Agricultural Pest Impact', duration: '6m', mins: 6 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 3: Role of Insects in Pollination
+          'importance & types': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '1.1', title: 'Self-Pollination (Autogamy/Geitonogamy) vs Cross-Pollination (Xenogamy)', duration: '7m', mins: 7 },
+              { code: '1.2', title: 'Entomophily vs Anemophily & Hydrophily', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Economic Value of Insect Pollination in Crop Yield & Quality', duration: '7m', mins: 7 },
+            ],
+          },
+          'mechanism of pollination': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Floral Rewards (Nectar, Pollen, Oils) & Visual/Olfactory Cues', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Pollen Adhesion, Scopa/Corbicula & Stigma Transfer Mechanics', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Floral Constancy & Co-adapted Flower-Pollinator Morphology', duration: '7m', mins: 7 },
+            ],
+          },
+          'insect orders involved': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Hymenoptera: Honeybees, Bumblebees, Solitary Bees & Fig Wasps', duration: '9m', mins: 9 },
+              { code: '3.2', title: 'Diptera (Syrphid Hoverflies, Midges) & Lepidoptera (Butterflies, Moths)', duration: '8m', mins: 8 },
+              { code: '3.3', title: 'Coleoptera (Cantharophily — Oil Palm Weevil) & Thysanoptera', duration: '7m', mins: 7 },
+            ],
+          },
+          'adaptations & crop examples': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Melittophily, Psychophily, Phalaenophily, Myophily & Cantharophily', duration: '9m', mins: 9 },
+              { code: '4.2', title: 'Obligate Mutualisms: Fig–Blastophaga & Yucca–Tegeticula', duration: '8m', mins: 8 },
+              { code: '4.3', title: 'Managed Bee Colonies per Hectare in Horticultural & Oilseed Crops', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 4: Apiculture (Bee Keeping)
+          'honeybee species': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'Rock Bee (Apis dorsata) & Little Bee (Apis florea) — Wild Open-Nesting', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'Indian Hive Bee (Apis cerana indica) & Italian Bee (Apis mellifera)', duration: '8m', mins: 8 },
+              { code: '1.3', title: 'Stingless/Dammer Bee (Tetragonula iridipennis) & Species Comparison', duration: '7m', mins: 7 },
+            ],
+          },
+          'castes & structural adaptations': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Queen, Worker & Drone Castes: Diploid vs Haploid Development', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Age-Related Polyethism (Nurse, Builder, Guard & Forager Roles)', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Pollen Basket (Corbicula), Proboscis, Wax Glands & Barbed Sting', duration: '8m', mins: 8 },
+            ],
+          },
+          'beehive & appliances': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Langstroth, Newton & ISI Movable-Frame Hive Architecture', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Brood Chamber, Super Chamber, Queen Excluder & Bee Space Principle', duration: '8m', mins: 8 },
+              { code: '3.3', title: 'Comb Foundation Sheet, Smoker, Hive Tool & Centrifugal Extractor', duration: '7m', mins: 7 },
+            ],
+          },
+          'foraging behaviour & communication': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Nectar, Pollen, Propolis & Water Foraging Range & Flight Activity', duration: '7m', mins: 7 },
+              { code: '4.2', title: 'Karl von Frisch Dance Language: Round Dance (<50m) & Waggle Dance', duration: '9m', mins: 9 },
+              { code: '4.3', title: 'Queen Substance (9-ODA) & Alarm Pheromone Regulation', duration: '7m', mins: 7 },
+            ],
+          },
+          'seasonal management': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '5.1', title: 'Spring & Honey-Flow Management (Supering & Swarm Prevention)', duration: '8m', mins: 8 },
+              { code: '5.2', title: 'Dearth-Period Sugar Feeding, Monsoon & Winter Insulation', duration: '7m', mins: 7 },
+              { code: '5.3', title: 'Robbing, Absconding Control & Uniting Weak Colonies', duration: '7m', mins: 7 },
+            ],
+          },
+          'enemies, diseases & bee products': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '6.1', title: 'Greater/Lesser Wax Moth, Varroa/Tracheal Mites, Wasps & Bee-Eaters', duration: '8m', mins: 8 },
+              { code: '6.2', title: 'American/European Foulbrood, Thai Sacbrood Virus & Nosema', duration: '8m', mins: 8 },
+              { code: '6.3', title: 'Honey Composition, Beeswax, Royal Jelly, Propolis & Bee Venom', duration: '8m', mins: 8 },
+            ],
+          },
+        };
+
+        const resolvedSelectedCandidate = mmSelectedBranch
+          ? childToParentBranch[mmSelectedBranch.toLowerCase().trim()] || mmSelectedBranch
+          : null;
+        const matchedTopicFromList = resolvedSelectedCandidate
+          ? allTopicLabels.find(
+              (l) =>
+                l.toLowerCase().trim() === resolvedSelectedCandidate.toLowerCase().trim() ||
+                l.toLowerCase().includes(resolvedSelectedCandidate.toLowerCase().trim()) ||
+                resolvedSelectedCandidate.toLowerCase().includes(l.toLowerCase().trim())
+            )
+          : null;
+        const activeSelectedBranch =
+          matchedTopicFromList || resolvedSelectedCandidate || allTopicLabels[0] || 'Overview';
+        const selectedBranchIdx = Math.max(
+          0,
+          allTopicLabels.findIndex((l) => l.toLowerCase() === activeSelectedBranch.toLowerCase())
+        );
+        const branchMeta =
+          MM_BRANCH_SUBTOPICS[activeSelectedBranch.toLowerCase().trim()] ||
+          (dynamicTreeSubtopics[activeSelectedBranch.toLowerCase().trim()]
+            ? {
+                podcastMins: 6,
+                subTopics: dynamicTreeSubtopics[activeSelectedBranch.toLowerCase().trim()],
+              }
+            : {
+                podcastMins: 6,
+                subTopics: [
+                  {
+                    code: `${selectedBranchIdx + 1}.1`,
+                    title: `Core Concepts & Foundations of ${activeSelectedBranch}`,
+                    duration: '8m',
+                    mins: 8,
+                  },
+                  {
+                    code: `${selectedBranchIdx + 1}.2`,
+                    title: `Mechanisms, Classification & Structural Principles`,
+                    duration: '10m',
+                    mins: 10,
+                  },
+                  {
+                    code: `${selectedBranchIdx + 1}.3`,
+                    title: `Applied Examples & Exam-Focused Synthesis`,
+                    duration: '7m',
+                    mins: 7,
+                  },
+                ],
+              });
+        const totalBranchMins = branchMeta.subTopics.reduce((acc, st) => acc + st.mins, 0);
+        const chapterStudiedList = mmStudiedBranches[chStudyKey] || [];
+        const chapterStudiedCount = allTopicLabels.filter((lbl) =>
+          chapterStudiedList.some((s) => s.toLowerCase() === lbl.toLowerCase())
+        ).length;
+        const cleanChapterLabel = (chapterName || '')
+          .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, '')
+          .trim();
+
+        return (
+          <div
+            className="mindmap-container"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0px',
+              height: '100%',
+              width: '100%',
+              background: mindmapTopicOpen ? 'transparent' : '#FAF8F3',
+            }}
+          >
+            {/* Map + Inspector Split View — hidden while a topic is open so only content fills the view */}
+            {!mindmapTopicOpen && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  width: '100%',
+                  minHeight: 0,
+                  background: '#FAF8F3',
+                }}
+              >
+                {/* ── Top Sub-Header Bar ── */}
+                <div
+                  style={{
+                    height: '50px',
+                    padding: '0 24px',
+                    background: '#FAF8F3',
+                    borderBottom: '1px solid #EAE4D7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                    gap: '16px',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '13.5px',
+                      color: '#7A827C',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span>Mindmaps</span>
+                    <span style={{ margin: '0 9px', color: '#B4B8B2' }}>›</span>
+                    <span>{subjectName}</span>
+                    <span style={{ margin: '0 9px', color: '#B4B8B2' }}>›</span>
+                    <span style={{ color: '#1E2822', fontWeight: 700 }}>
+                      {getChapterPrefix(subjectId)} {chapterNumber} · {cleanChapterLabel}
+                    </span>
+                  </div>
+
+                  {/* Studied progress pill */}
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      padding: '5px 13px',
+                      borderRadius: '999px',
+                      background: '#FBF4EE',
+                      border: '1px solid #EBD5C3',
+                      color: '#B67346',
+                      fontSize: '12.5px',
+                      fontWeight: 600,
+                      flexShrink: 0,
+                    }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#BD7D52" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="4" />
+                      <path d="M12 2v2" />
+                      <path d="M12 20v2" />
+                      <path d="m4.93 4.93 1.41 1.41" />
+                      <path d="m17.66 17.66 1.41 1.41" />
+                      <path d="M2 12h2" />
+                      <path d="M20 12h2" />
+                      <path d="m6.34 17.66-1.41 1.41" />
+                      <path d="m19.07 4.93-1.41 1.41" />
+                    </svg>
+                    <span>
+                      {chapterStudiedCount} of {allTopicLabels.length || 1} branches studied
+                    </span>
+                  </div>
+                </div>
+
+                {/* ── Main Split Area: Left MindMap Canvas + Right Branch Inspector ── */}
+                <div
+                  style={{
+                    flex: 1,
+                    minHeight: 0,
+                    display: 'flex',
+                    gap: '16px',
+                    padding: '14px 20px 18px 20px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {/* Left: MindMap Canvas */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <MindMapView
+                      content={mermaidContent}
+                      onTopicClick={handleTopicClick}
+                      nodeIcons={mmIcons}
+                      selectedTopic={null}
+                      studiedTopics={[]}
+                      onSelectTopic={(lbl, depth, parentLbl) => {
+                        if (isNebBiologyChap6 && MINDMAP_MAPPING[lbl.toLowerCase().trim()]) {
+                          handleTopicClick(lbl, 'read');
+                          return;
+                        }
+                        const candidate =
+                          (parentLbl && depth && depth >= 2 ? parentLbl : null) ||
+                          childToParentBranch[lbl.toLowerCase().trim()] ||
+                          lbl;
+                        const canonical =
+                          allTopicLabels.find(
+                            (l) =>
+                              l.toLowerCase().trim() === candidate.toLowerCase().trim() ||
+                              l.toLowerCase().includes(candidate.toLowerCase().trim()) ||
+                              candidate.toLowerCase().includes(l.toLowerCase().trim())
+                          ) || candidate;
+                        handleTopicClick(canonical, 'read');
+                      }}
+                    />
+                  </div>
+
+                  {/* Right: Contextual Branch Inspector Card */}
+                  <aside
+                    style={{
+                      width: '375px',
+                      flexShrink: 0,
+                      height: '100%',
+                      background: '#FFFFFF',
+                      border: '1px solid #E6E0D4',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                      overflowY: 'auto',
+                      boxShadow: '0 2px 10px rgba(30, 40, 34, 0.03)',
+                    }}
+                  >
+                    {/* Pill badge */}
+                    <div
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        alignSelf: 'flex-start',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        background: '#E8F0EB',
+                        color: '#365343',
+                        fontSize: '10.5px',
+                        fontWeight: 800,
+                        letterSpacing: '0.07em',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      BRANCH · {getChapterPrefix(subjectId).toUpperCase()} {chapterNumber}
+                    </div>
+
+                    {/* Branch Title */}
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Fraunces', 'Georgia', serif",
+                        fontSize: '20px',
+                        fontWeight: 600,
+                        color: '#1E2822',
+                        lineHeight: 1.26,
+                        letterSpacing: '-0.01em',
+                      }}
+                    >
+                      {activeSelectedBranch}
+                    </h2>
+
+                    {/* Subtitle */}
+                    <div
+                      style={{
+                        fontSize: '12.5px',
+                        color: '#7A827C',
+                        fontWeight: 500,
+                        marginTop: '-6px',
+                      }}
+                    >
+                      {branchMeta.subTopics.length} sub-topics · ~{totalBranchMins} min of study material
+                    </div>
+
+                    {/* Sub-Topics List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px' }}>
+                      <div
+                        style={{
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          color: '#848C86',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        SUB-TOPICS
+                      </div>
+
+                      {branchMeta.subTopics.map((st) => (
+                        <button
+                          key={st.code}
+                          type="button"
+                          onClick={() => handleTopicClick(activeSelectedBranch, 'read')}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '11px 12px',
+                            borderRadius: '11px',
+                            background: '#F6F3EC',
+                            border: '1px solid #EAE4D7',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.15s ease',
+                            width: '100%',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#EFECE2';
+                            e.currentTarget.style.borderColor = '#DCD4C4';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#F6F3EC';
+                            e.currentTarget.style.borderColor = '#EAE4D7';
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '8px',
+                              background: '#FFFFFF',
+                              border: '1px solid #E5DFD2',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#5C6660',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {st.code}
+                          </span>
+                          <span
+                            style={{
+                              flex: 1,
+                              fontSize: '13px',
+                              fontWeight: 600,
+                              color: '#1E2822',
+                              lineHeight: 1.35,
+                            }}
+                          >
+                            {st.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              color: '#848C86',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {st.duration}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* 4-Column Multi-Modal Action Grid */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(4, 1fr)',
+                        gap: '8px',
+                        marginTop: '2px',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleTopicClick(activeSelectedBranch, 'read')}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '11px 6px',
+                          borderRadius: '11px',
+                          background: '#FFFFFF',
+                          border: '1px solid #E5DFD2',
+                          cursor: 'pointer',
+                          color: '#1E2822',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F6F3EC';
+                          e.currentTarget.style.borderColor = '#D5CEC0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.borderColor = '#E5DFD2';
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg>
+                        <span>Read</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTopicClick(activeSelectedBranch, 'podcast')}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '11px 6px',
+                          borderRadius: '11px',
+                          background: '#FFFFFF',
+                          border: '1px solid #E5DFD2',
+                          cursor: 'pointer',
+                          color: '#1E2822',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F6F3EC';
+                          e.currentTarget.style.borderColor = '#D5CEC0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.borderColor = '#E5DFD2';
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                        </svg>
+                        <span>Listen</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTopicClick(activeSelectedBranch, 'video')}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '11px 6px',
+                          borderRadius: '11px',
+                          background: '#FFFFFF',
+                          border: '1px solid #E5DFD2',
+                          cursor: 'pointer',
+                          color: '#1E2822',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F6F3EC';
+                          e.currentTarget.style.borderColor = '#D5CEC0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.borderColor = '#E5DFD2';
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        <span>Watch</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          markMmBranchStudied(activeSelectedBranch);
+                          setIsAskOpen(true);
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          padding: '11px 6px',
+                          borderRadius: '11px',
+                          background: '#FFFFFF',
+                          border: '1px solid #E5DFD2',
+                          cursor: 'pointer',
+                          color: '#1E2822',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#F6F3EC';
+                          e.currentTarget.style.borderColor = '#D5CEC0';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FFFFFF';
+                          e.currentTarget.style.borderColor = '#E5DFD2';
+                        }}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Ask me</span>
+                      </button>
+                    </div>
+
+                    {/* Context Podcast Card */}
+                    <div
+                      style={{
+                        marginTop: 'auto',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '12px 14px',
+                        borderRadius: '13px',
+                        background: '#FBF5EE',
+                        border: '1px solid #EBD5C3',
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '50%',
+                          background: '#FFFFFF',
+                          border: '1px solid #EBD5C3',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BD7D52" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                        </svg>
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div
+                          style={{
+                            fontSize: '13px',
+                            fontWeight: 700,
+                            color: '#1E2822',
+                            lineHeight: 1.25,
+                          }}
+                        >
+                          Context podcast
+                        </div>
+                        <div
+                          style={{
+                            fontSize: '11.5px',
+                            color: '#7D766D',
+                            lineHeight: 1.35,
+                            marginTop: '2px',
+                          }}
+                        >
+                          This branch explained on the go · {branchMeta.podcastMins} min
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleTopicClick(activeSelectedBranch, 'podcast')}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '8px 14px',
+                          borderRadius: '999px',
+                          background: '#BD7D52',
+                          color: '#FFFFFF',
+                          border: 'none',
+                          fontSize: '12.5px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          boxShadow: '0 2px 6px rgba(189, 125, 82, 0.25)',
+                          transition: 'background 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#A96B42';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#BD7D52';
+                        }}
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFFFFF" stroke="none">
+                          <polygon points="5 3 19 12 5 21 5 3" />
+                        </svg>
+                        <span>Play</span>
+                      </button>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            )}
             {/* Inline topic panel — shown below the map, no popup */}
             {mindmapTopicOpen && (
               <div className="mm-concept-view" style={{ marginTop: 0 }}>
@@ -2160,7 +3318,12 @@ export default function StudyTable() {
                             id={`mm-studybar-level-${lvl}`}
                             type="button"
                             className={`sv-hdr-level-btn lvl-${lvl}${isSelected ? " active-lvl" : ""}`}
-                            onClick={() => setPersona(lvl)}
+                            onClick={() => {
+                              setPersona(lvl);
+                              if (mindmapTopicTitle) {
+                                loadMindmapTopicForPersona(mindmapTopicTitle, lvl, 'read', true);
+                              }
+                            }}
                             title={lvl.charAt(0).toUpperCase() + lvl.slice(1)}
                             style={{
                               width: '54px',
@@ -2306,12 +3469,101 @@ export default function StudyTable() {
                           boxSizing: 'border-box',
                         }}
                       >
-                        <MarkdownView
-                          content={
-                            ((mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || '')
-                              .replace(/^#\s+[^\n]+(\r?\n)+/, '')
-                          }
-                        />
+                        {/* Mindmap Artifact Meta & Quick Check Badge Row (same properties as Read sections) */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            gap: '8px',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            marginBottom: '16px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              background: '#f1f5f9',
+                              color: '#334155',
+                              borderRadius: '6px',
+                              padding: '3px 9px',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                            }}
+                          >
+                            ⏱ {activeMmReadMins} min read
+                          </span>
+
+                          {activeMmQcList.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                mindmapQcRef.current?.scrollIntoView({
+                                  behavior: 'smooth',
+                                  block: 'start',
+                                })
+                              }
+                              title="Skip to Quick Check"
+                              style={{
+                                background: isMmQcDone ? '#dcfce7' : '#f0fdf4',
+                                color: '#15803d',
+                                border: '1px solid #bbf7d0',
+                                borderRadius: '6px',
+                                padding: '3px 9px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {isMmQcDone
+                                ? `✓ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''} answered`
+                                : answeredInMmTopic > 0
+                                ? `✔ ${answeredInMmTopic}/${activeMmQcList.length} quick checks`
+                                : `✔ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''}`}
+                            </button>
+                          )}
+                        </div>
+
+                        <MarkdownView content={activeMmMarkdown} />
+
+                        {activeMmQcList.length > 0 && (
+                          <div
+                            ref={mindmapQcRef}
+                            style={{ scrollMarginTop: '20px', marginTop: '28px' }}
+                          >
+                            <QuickCheckModal
+                              key={`mm-inline-qc-${mmArtifactKey}`}
+                              isOpen={true}
+                              question={activeMmQcList[0]}
+                              questions={activeMmQcList}
+                              currentSectionNumber={currentTopicIdx >= 0 ? currentTopicIdx + 1 : 1}
+                              totalSections={allTopicLabels.length > 0 ? allTopicLabels.length : 1}
+                              sectionTitle={mindmapTopicTitle || 'Topic Overview'}
+                              nextSectionTitle={nextTopicLabel || undefined}
+                              isPurpleTheme={false}
+                              initialSelectedKey={mmSelectedKeys[0] || null}
+                              initialSelectedKeys={mmSelectedKeys}
+                              isCompleted={isMmQcDone}
+                              onNextSection={
+                                nextTopicLabel
+                                  ? () => {
+                                      markMmQuickCheckCompleted(mmArtifactKey);
+                                      handleTopicClick(nextTopicLabel, 'read');
+                                    }
+                                  : undefined
+                              }
+                              onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                                markMmQuickCheckCompleted(
+                                  mmArtifactKey,
+                                  selectedKey,
+                                  questionIndex,
+                                  allAnswered || activeMmQcList.length === 1
+                                );
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     )
                   )}
@@ -2421,6 +3673,7 @@ export default function StudyTable() {
             difficulty={persona}
             className={className}
             subjectName={subjectName}
+            onNavigateTool={(tool) => setActiveTool(tool as any)}
           />
         );
       case "podcasts":
@@ -2428,6 +3681,7 @@ export default function StudyTable() {
           <PodcastsView
             key={`podcasts-${subjectId}-${chapterNumber}-${podcastTargetTrack ?? 'default'}-${podcastTargetMcIndex ?? 0}`}
             chapterName={chapterName}
+            subjectName={subjectName}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             persona={persona}
@@ -2495,6 +3749,7 @@ export default function StudyTable() {
             markdownContent={typeof content === "string" ? content : ""}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
+            chapterName={chapterName}
             persona={persona}
             videoDir={activeVideoDir}
             onQuit={() => {
@@ -2711,7 +3966,7 @@ export default function StudyTable() {
               {/* Permanent Content Drawer */}
               <div
                 style={{
-                  padding: "4px 16px",
+                  padding: "2px 14px",
                   background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
                   transition: "background 0.25s ease",
                 }}
@@ -2722,41 +3977,40 @@ export default function StudyTable() {
                   // a chapter-wide mix.
                   const unitCompleted = completedTools;
                     const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    // Learn (#159A5B)
+                    // Learn (#159A5B toolbar grade; warm paper #FAF8F4 canvas for Read)
                     videos: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    summary: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    quick_study: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    detailed: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    summary: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
+                    quick_study: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
+                    detailed: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
                     podcasts: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
 
-                    // Practice (#8658EC)
-                    flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    master_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    revision_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    revise: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    assessment: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    qbank: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    // Practice - Amber (#F59E0B)
+                    flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    master_flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    revision_flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    revise: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    assessment: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    qbank: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
 
-                    // Prepare (#FF2476)
-                    study_plan: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    pyq: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    prep_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    prep_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    mocktest: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    pre_final_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    certification_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    // Prepare - Terra (#E07640)
+                    study_plan: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    pyq: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    prep_exam: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    prep_test: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    mocktest: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    pre_final_test: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    certification_exam: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
 
-                    // Resources (#3886D7)
-                    mindmap: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    foundation: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    key_takeaways: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    ask: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    swot: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    deep_dive: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    // Resources - Sage (#7BA88B)
+                    mindmap: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    foundation: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    key_takeaways: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    ask: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    swot: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    deep_dive: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
                   };
 
-                  // In Dark Theme (#2D3E36): Use the vibrant section colors (#159A5B, #8658EC, #FF2476, #3886D7)
-                  // matching the bright theme for the active icon and active group card.
+                  // In Dark Theme (#2D3E36): Use the vibrant section colors (Mint #159A5B, Amber #F59E0B, Terra #E07640, Sage #7BA88B)
                   // All other (idle) icons and text are crisp white (#FFFFFF) in dark mode / #18221D in bright mode.
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
@@ -2847,7 +4101,7 @@ export default function StudyTable() {
                       case "mindmap": {
                         return (
                           <img
-                            src="/mindmap_brain_blue.png"
+                            src="/mindmap_brain.png"
                             alt="Mindmaps"
                             style={{
                               width: "34px",
@@ -2855,7 +4109,7 @@ export default function StudyTable() {
                               objectFit: "contain",
                               display: "block",
                               filter: active
-                                ? "brightness(1.1) drop-shadow(0 0 6px rgba(56, 134, 215, 0.6))"
+                                ? "brightness(1.1) drop-shadow(0 0 6px rgba(123, 168, 139, 0.6))"
                                 : "grayscale(100%) brightness(1.7) opacity(0.7)",
                             }}
                           />
@@ -3083,8 +4337,8 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '4px 2px',
-                          borderRadius: '10px',
+                          padding: '2px 2px',
+                          borderRadius: '9px',
                           background: active ? (isDarkToolbar ? `${themeColor}26` : '#ffffff') : 'transparent',
                           border: active ? `1.8px solid ${activeBorderColor}` : '1.8px solid transparent',
                           boxShadow: active
@@ -3096,19 +4350,19 @@ export default function StudyTable() {
                           opacity: 1,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           position: 'relative',
-                          gap: '2px',
+                          gap: '1px',
                           flex: '1 1 0',
                           minWidth: 0,
                           width: '100%',
-                          height: '70px',
-                          minHeight: '70px',
-                          maxHeight: '70px',
+                          height: '56px',
+                          minHeight: '56px',
+                          maxHeight: '56px',
                           boxSizing: 'border-box',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.04)';
-                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = 'transparent';
@@ -3119,10 +4373,10 @@ export default function StudyTable() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          height: '32px',
-                          width: '34px',
+                          height: '26px',
+                          width: '28px',
                           transition: 'transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease',
-                          transform: active ? 'scale(1.08)' : 'scale(1)',
+                          transform: active ? 'scale(0.95)' : 'scale(0.88)',
                           filter: active ? `drop-shadow(0 2px 8px ${themeColor}90)` : 'none',
                           opacity: active ? 1 : 0.72,
                           flexShrink: 0
@@ -3130,20 +4384,20 @@ export default function StudyTable() {
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
-                          fontSize: '11px',
+                          fontSize: '10.5px',
                           fontWeight: active ? 700 : 500,
                           color: active ? activeThemeColor : (isDarkToolbar ? 'rgba(255, 255, 255, 0.75)' : '#64748B'),
                           textAlign: 'center',
-                          lineHeight: '1.15',
+                          lineHeight: '1.1',
                           letterSpacing: '-0.2px',
                           transition: 'color 0.18s ease',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          height: '26px',
-                          minHeight: '26px',
-                          maxHeight: '26px',
+                          height: '22px',
+                          minHeight: '22px',
+                          maxHeight: '22px',
                           width: '100%',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
@@ -3173,8 +4427,8 @@ export default function StudyTable() {
                         justifyContent: 'space-between',
                         width: '100%',
                         overflowX: 'auto',
-                        padding: '6px 20px',
-                        gap: '20px',
+                        padding: '3px 16px',
+                        gap: '16px',
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -3190,9 +4444,9 @@ export default function StudyTable() {
                             src={treeLogoSrc}
                             alt="Saral Vidhya"
                             style={{
-                              height: '76px',
+                              height: '56px',
                               width: 'auto',
-                              minWidth: '72px',
+                              minWidth: '54px',
                               objectFit: 'contain',
                               display: 'block',
                               transition: 'transform 0.2s ease',
@@ -3218,8 +4472,8 @@ export default function StudyTable() {
                           border: isActive
                             ? `1.8px solid ${groupColor}`
                             : (isDarkToolbar ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid #D5E2D9'),
-                          borderRadius: '16px',
-                          padding: '6px 8px 8px',
+                          borderRadius: '13px',
+                          padding: '3px 7px 5px',
                           background: isActive
                             ? (isDarkToolbar ? `${groupColor}14` : `${groupColor}0a`)
                             : (isDarkToolbar ? 'rgba(0, 0, 0, 0.20)' : '#FFFFFF'),
@@ -3228,14 +4482,14 @@ export default function StudyTable() {
                                 ? `0 2px 10px ${groupColor}2a, 0 2px 8px rgba(0, 0, 0, 0.28)`
                                 : `0 3px 12px ${groupColor}33, 0 1px 3px rgba(0, 0, 0, 0.2)`)
                             : (isDarkToolbar ? '0 1px 4px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'),
-                          width: '236px',
-                          minWidth: '236px',
-                          maxWidth: '236px',
-                          height: '112px',
-                          minHeight: '112px',
-                          maxHeight: '112px',
+                          width: '232px',
+                          minWidth: '232px',
+                          maxWidth: '232px',
+                          height: '84px',
+                          minHeight: '84px',
+                          maxHeight: '84px',
                           boxSizing: 'border-box',
-                          flex: '0 0 236px',
+                          flex: '0 0 232px',
                           transition: 'all 0.25s ease',
                         });
 
@@ -3245,8 +4499,8 @@ export default function StudyTable() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              gap: '12px',
-                              padding: '4px 8px',
+                              gap: '10px',
+                              padding: '2px 6px',
                               background: 'transparent',
                               margin: '0 auto',
                               flexShrink: 0,
@@ -3255,25 +4509,25 @@ export default function StudyTable() {
                             {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - #159A5B */}
                             <div style={groupCardStyle(isLearnActive, "#159A5B")}>
                               <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
+                                height: '16px',
+                                minHeight: '16px',
+                                maxHeight: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
                                 color: isLearnActive ? '#159A5B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
+                                fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
-                                lineHeight: '20px',
+                                lineHeight: '16px',
                                 width: '100%',
                               }}>
                                 <span>Learn</span>
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
-                                    style={{ background: '#159A5B', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
+                                    style={{ background: '#159A5B', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
                                   >
                                     Video {videoIndex}/{chapterVideos.length}
                                   </span>
@@ -3286,78 +4540,78 @@ export default function StudyTable() {
                               </div>
                             </div>
 
-                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - #8658EC */}
-                            <div style={groupCardStyle(isPracticeActive, "#8658EC")}>
+                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber (#F59E0B) */}
+                            <div style={groupCardStyle(isPracticeActive, "#F59E0B")}>
                               <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
+                                height: '16px',
+                                minHeight: '16px',
+                                maxHeight: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPracticeActive ? '#8658EC' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
+                                color: isPracticeActive ? '#F59E0B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
-                                lineHeight: '20px',
+                                lineHeight: '16px',
                                 width: '100%',
                               }}>
                                 Practice
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("revision_flashcards", "Revise", "#8658EC")}
-                                {renderNode("assessment", "Assessment", "#8658EC")}
-                                {renderNode("qbank", "Question Bank", "#8658EC")}
+                                {renderNode("revision_flashcards", "Revise", "#F59E0B")}
+                                {renderNode("assessment", "Assessment", "#F59E0B")}
+                                {renderNode("qbank", "Question Bank", "#F59E0B")}
                               </div>
                             </div>
 
-                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - #FF2476 */}
-                            <div style={groupCardStyle(isPrepareActive, "#FF2476")}>
+                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Terra (#E07640) */}
+                            <div style={groupCardStyle(isPrepareActive, "#E07640")}>
                               <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
+                                height: '16px',
+                                minHeight: '16px',
+                                maxHeight: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPrepareActive ? '#FF2476' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
+                                color: isPrepareActive ? '#E07640' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
-                                lineHeight: '20px',
+                                lineHeight: '16px',
                                 width: '100%',
                               }}>
                                 Prepare
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("pyq", "PYQs", "#FF2476")}
-                                {renderNode("prep_exam", "Preparation Exam", "#FF2476")}
-                                {renderNode("study_plan", "Study Plan", "#FF2476")}
+                                {renderNode("pyq", "PYQs", "#E07640")}
+                                {renderNode("prep_exam", "Preparation Exam", "#E07640")}
+                                {renderNode("study_plan", "Study Plan", "#E07640")}
                               </div>
                             </div>
 
-                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - #3886D7 */}
-                            <div style={groupCardStyle(isResourcesActive, "#3886D7")}>
+                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Sage (#7BA88B) */}
+                            <div style={groupCardStyle(isResourcesActive, "#7BA88B")}>
                               <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
+                                height: '16px',
+                                minHeight: '16px',
+                                maxHeight: '16px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isResourcesActive ? '#3886D7' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
+                                color: isResourcesActive ? '#7BA88B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
-                                lineHeight: '20px',
+                                lineHeight: '16px',
                                 width: '100%',
                               }}>
                                 Resources
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("mindmap", "Mindmaps", "#3886D7")}
-                                {renderNode("key_takeaways", "Key Takeaways", "#3886D7")}
-                                {renderNode("ask", "Ask me", "#3886D7")}
+                                {renderNode("mindmap", "Mindmaps", "#7BA88B")}
+                                {renderNode("key_takeaways", "Key Takeaways", "#7BA88B")}
+                                {renderNode("ask", "Ask me", "#7BA88B")}
                               </div>
                             </div>
                           </div>
@@ -3562,17 +4816,17 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam" || activeTool === "assessment" || activeTool === "videos"
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "prep_exam" || activeTool === "assessment" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
+                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
                   ? "0px"
                   : activeTool === "assessment"
                   ? "4px 16px 0 16px"
                   : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                   ? "2px 16px 8px 16px"
-                  : "16px 16px 0 16px",
+                  : activeTool === "podcasts" ? "10px 20px 32px 20px" : "16px 16px 0 16px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
@@ -3582,22 +4836,22 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "videos" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
               <div
                 style={{
-                  display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
+                  display: (activeTool === "mindmap" || activeTool === "qbank" || activeTool === "videos") ? "none" : "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   position: "relative",
                   gap: "20px",
                   marginTop: 0,
                   paddingTop: 0,
-                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "4px" : "12px",
+                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "4px" : "12px",
                   flexShrink: 0,
                 }}
               >
                 {/* ── MVP STUDY HEADER: pixel-perfect reference match ── */}
-                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment") ? (
+                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "videos") ? (
                   <>
                     <style>{`
                       @keyframes sv-hdr-in {
@@ -3610,56 +4864,70 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
-                        min-height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "64px"};
-                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0 0 2px 0" : "4px 0 8px 0"};
+                        min-height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "46px" : "56px"};
+                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0 0 2px 0" : "2px 0 6px 0"};
                         overflow: visible;
                       }
                       /* LEFT breadcrumb — single line, no card box */
                       .sv-hdr-card {
                         display: flex; align-items: center; gap: 0;
                         min-width: 0; flex-shrink: 0;
-                        max-width: 380px;
+                        max-width: 420px;
                         position: relative; z-index: 1;
                       }
                       .sv-hdr-crumb {
-                        font-size: 0.82rem; font-weight: 500; color: #64748b;
+                        font-size: 0.84rem; font-weight: 500; color: #64748b;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                         line-height: 1.4;
                       }
-                      .sv-hdr-crumb .crumb-subject { color: #2563eb; font-weight: 700; }
-                      .sv-hdr-crumb .crumb-sep { color: #94a3b8; margin: 0 5px; font-weight: 400; }
-                      .sv-hdr-crumb .crumb-chapter { color: #4f46e5; font-weight: 700; }
+                      .sv-hdr-crumb .crumb-subject { color: #1E2822; font-weight: 700; }
+                      .sv-hdr-crumb .crumb-sep { color: #94a3b8; margin: 0 7px; font-weight: 400; }
+                      .sv-hdr-crumb .crumb-chapter { color: #64748B; font-weight: 500; }
                       /* MIDDLE levels — absolutely centered to the full bar */
                       .sv-hdr-levels {
                         position: absolute;
                         left: 50%;
                         top: 50%;
                         transform: translate(-50%, -50%);
-                        display: flex; gap: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "10px" : "12px"}; align-items: center; justify-content: center;
+                        display: flex; gap: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "10px" : "16px"}; align-items: center; justify-content: center;
                         z-index: 10;
                       }
                       .sv-hdr-level-btn {
-                        width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
-                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
-                        border-radius: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "12px" : "14px"};
-                        padding: 0; border: 2.5px solid transparent;
+                        min-width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "48px" : "60px"};
+                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "48px" : "54px"};
+                        border-radius: 11px;
+                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0" : "3px 8px 4px"};
+                        border: 2px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         overflow: visible; flex-shrink: 0;
-                        display: flex; align-items: center; justify-content: center;
+                        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
                         box-sizing: border-box;
                       }
                       .sv-hdr-level-btn img {
-                        width: 100%; height: 100%; object-fit: contain;
-                        border-radius: 10px;
-                        padding: 3px;
+                        width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "100%" : "34px"};
+                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "100%" : "34px"};
+                        object-fit: contain;
+                        border-radius: 8px;
+                        padding: 0;
                         box-sizing: border-box;
-                        filter: grayscale(0.2) opacity(0.75);
+                        filter: grayscale(0.15) opacity(0.78);
                         transition: filter 0.2s ease, transform 0.2s ease;
+                      }
+                      .sv-hdr-level-label {
+                        font-size: 10.5px;
+                        font-weight: 600;
+                        color: #64748B;
+                        line-height: 1.1;
+                        letter-spacing: 0.01em;
+                        white-space: nowrap;
                       }
                       .sv-hdr-level-btn:hover img {
                         filter: grayscale(0) opacity(1);
-                        transform: scale(1.08);
+                        transform: scale(1.06);
+                      }
+                      .sv-hdr-level-btn:hover .sv-hdr-level-label {
+                        color: #1E2822;
                       }
                       /* Inactive — NO box for unselected ones */
                       .sv-hdr-level-btn.lvl-beginner,
@@ -3669,25 +4937,23 @@ export default function StudyTable() {
                         background: transparent !important;
                         box-shadow: none !important;
                       }
-                      /* Active — box shown ONLY for the selected one */
-                      .sv-hdr-level-btn.active-lvl {
-                        border: 2.5px solid #2D473B !important;
-                        background: #FFFFFF !important;
-                        box-shadow: 0 3px 12px rgba(45, 71, 59, 0.2) !important;
-                        border-radius: 14px !important;
-                      }
-                      .sv-hdr-level-btn.lvl-beginner.active-lvl {
-                        border-color: #4F7B64 !important;
-                      }
-                      .sv-hdr-level-btn.lvl-intermediate.active-lvl {
-                        border-color: #2D473B !important;
-                      }
+                      /* Active — warm Amber border shown ONLY for the selected one */
+                      .sv-hdr-level-btn.active-lvl,
+                      .sv-hdr-level-btn.lvl-beginner.active-lvl,
+                      .sv-hdr-level-btn.lvl-intermediate.active-lvl,
                       .sv-hdr-level-btn.lvl-advanced.active-lvl {
-                        border-color: #1E293B !important;
+                        border: 2px solid #D9A55C !important;
+                        background: #FFFDF9 !important;
+                        box-shadow: 0 3px 10px rgba(217, 165, 92, 0.18) !important;
+                        border-radius: 12px !important;
                       }
                       .sv-hdr-level-btn.active-lvl img {
                         filter: grayscale(0) opacity(1) !important;
-                        transform: scale(1.04);
+                        transform: scale(1.03);
+                      }
+                      .sv-hdr-level-btn.active-lvl .sv-hdr-level-label {
+                        color: #1E2822 !important;
+                        font-weight: 700 !important;
                       }
                       /* RIGHT controls */
                       .sv-hdr-controls {
@@ -3695,16 +4961,16 @@ export default function StudyTable() {
                       }
                       /* Mode row: Quick | Detailed */
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
-                      /* Reading Depth Segmented Toggle */
+                      /* Reading Depth Segmented Toggle (2 modes: Essentials | In-depth) */
                       .sv-hdr-segmented-toggle {
                         position: relative;
                         display: inline-flex;
                         align-items: center;
-                        background: #f1f5f9;
-                        border: 1.5px solid #cbd5e1;
+                        background: #FFFFFF;
+                        border: 1px solid #E2DDD3;
                         border-radius: 9999px;
                         padding: 3px;
-                        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+                        box-shadow: 0 1px 3px rgba(30, 40, 34, 0.05);
                         user-select: none;
                         gap: 0;
                         box-sizing: border-box;
@@ -3715,9 +4981,9 @@ export default function StudyTable() {
                         bottom: 3px;
                         left: 3px;
                         width: calc(50% - 3px);
-                        background: #15803d;
+                        background: #2E3B33;
                         border-radius: 9999px;
-                        box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
+                        box-shadow: 0 2px 6px rgba(46, 59, 51, 0.25);
                         transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
                         pointer-events: none;
                         z-index: 1;
@@ -3740,11 +5006,11 @@ export default function StudyTable() {
                         align-items: center;
                         justify-content: center;
                         gap: 6px;
-                        padding: 7px 22px;
+                        padding: 7px 20px;
                         border-radius: 9999px;
                         border: none;
                         background: transparent;
-                        font-size: 0.84rem;
+                        font-size: 0.82rem;
                         font-weight: 600;
                         cursor: pointer;
                         white-space: nowrap;
@@ -3754,7 +5020,7 @@ export default function StudyTable() {
                         flex: 1;
                       }
                       .sv-hdr-toggle-btn:hover {
-                        color: #0f172a;
+                        color: #1E2822;
                       }
                       .sv-hdr-toggle-btn.active {
                         color: #ffffff;
@@ -3764,28 +5030,28 @@ export default function StudyTable() {
                         transition: transform 0.18s ease;
                       }
                       .sv-hdr-toggle-btn:hover svg {
-                        transform: scale(1.1);
+                        transform: scale(1.08);
                       }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
                         padding: 8px 22px; border-radius: 20px;
                         font-size: 0.84rem; font-weight: 600; cursor: pointer;
-                        border: 1.5px solid #cbd5e1;
+                        border: 1.5px solid #E2DDD3;
                         background: #ffffff; color: #475569;
                         transition: all 0.18s ease; white-space: nowrap;
                         line-height: 1;
                       }
-                      .sv-hdr-mode-btn:hover { border-color: #15803d; color: #15803d; background: rgba(21, 128, 61, 0.05); }
-                      .sv-hdr-mode-btn.active-quick    { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
-                      .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
+                      .sv-hdr-mode-btn:hover { border-color: #2E3B33; color: #2E3B33; background: rgba(46, 59, 51, 0.05); }
+                      .sv-hdr-mode-btn.active-quick    { background: #2E3B33; border-color: #2E3B33; color: #ffffff; box-shadow: 0 2px 8px rgba(46,59,51,0.28); }
+                      .sv-hdr-mode-btn.active-detailed { background: #2E3B33; border-color: #2E3B33; color: #ffffff; box-shadow: 0 2px 8px rgba(46,59,51,0.28); }
                     `}</style>
 
                     <div className="sv-hdr">
-                      {/* LEFT: inline breadcrumb — "Entomology · Chapter 4: Pollination" */}
+                      {/* LEFT: inline breadcrumb — "Entomology › Chapter 4: Pollination" */}
                       <div className="sv-hdr-card">
                         <span className="sv-hdr-crumb">
                           <span className="crumb-subject">{subjectName}</span>
-                          <span className="crumb-sep">·</span>
+                          <span className="crumb-sep">›</span>
                           <span className="crumb-chapter">{getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}</span>
                         </span>
                       </div>
@@ -3797,18 +5063,27 @@ export default function StudyTable() {
                           onClick={() => setPersona("beginner")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
+                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
+                            <span className="sv-hdr-level-label">Beginner</span>
+                          )}
                         </button>
                         <button id="studybar-level-intermediate" type="button"
                           className={`sv-hdr-level-btn lvl-intermediate${uiPersona === "intermediate" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("intermediate")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
+                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
+                            <span className="sv-hdr-level-label">Intermediate</span>
+                          )}
                         </button>
                         <button id="studybar-level-advanced" type="button"
                           className={`sv-hdr-level-btn lvl-advanced${uiPersona === "advanced" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("advanced")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
+                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
+                            <span className="sv-hdr-level-label">Advanced</span>
+                          )}
                         </button>
                       </div>
 
@@ -3849,7 +5124,7 @@ export default function StudyTable() {
                               </button>
                             </div>
                             {/* Read Aloud — inline, right of mode buttons */}
-                            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
+                            <div style={{ width: '1px', height: '20px', background: '#E2DDD3', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
                             <ReadAloudBar
                               key={`${persona}-${activeTool}`}
                               text={readAloudProcessedText}
@@ -3863,7 +5138,7 @@ export default function StudyTable() {
                               onHighlightChange={handleHighlightChange}
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
-                              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}
+                              isPurpleTheme={false}
                             />
                           </div>
                         )}
@@ -3909,7 +5184,7 @@ export default function StudyTable() {
 
 
             <div
-              className={`st-mainview ${activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" ? "st-mainview--flashcards" : ""}`}
+              className={`st-mainview ${activeTool === "flashcards" || activeTool === "revision_flashcards" ? "st-mainview--flashcards" : ""}`}
               style={{
                 flex: 1,
                 minHeight: 0,
@@ -3917,11 +5192,11 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
-                    activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam"
+                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" ||
+                    activeTool === "videos" || activeTool === "ask" || activeTool === "mindmap" || activeTool === "prep_exam"
                     ? "transparent"
                     : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "0px" : "6px",
+                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || (activeTool === "mindmap" && !mindmapTopicOpen)) ? "0px" : "6px",
                 position: "relative",
                 border:
                   activeTool === "mocktest" ||
@@ -3934,17 +5209,21 @@ export default function StudyTable() {
                     activeTool === "ask" ||
                     activeTool === "key_takeaways" ||
                     activeTool === "study_plan" ||
+                    activeTool === "qbank" ||
+                    (activeTool === "mindmap" && !mindmapTopicOpen) ||
                     ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || (activeTool === "mindmap" && mindmapTopicOpen)
-                        ? "1px solid #22c55e4D"
-                        : "1px solid #E2E8F0",
+                      : activeTool === "summary" || activeTool === "detailed"
+                        ? "1px solid #E6E1D6"
+                        : (activeTool === "mindmap" && mindmapTopicOpen)
+                          ? "1px solid #22c55e4D"
+                          : "1px solid #E2E8F0",
                 overflowX: "hidden",
                 overflowY:
                   activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask" || activeTool === "prep_exam" || activeTool === "videos"
+                    activeTool === "ask" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
                     ? "hidden"
                     : "auto",
                 paddingTop:
@@ -3953,19 +5232,19 @@ export default function StudyTable() {
                     : (activeTool === "flashcards" || activeTool === "revision_flashcards")
                       ? "0px"
                       : activeTool === "assessment"
-                        ? "12px"
+                        ? "0px"
                         : activeTool === "videos"
                           ? "4px"
                           : activeTool === "podcasts"
                             ? "16px"
                             : activeTool === "deep_dive"
                               ? "8px"
-                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
+                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "mindmap"
                                 ? "0px"
                                 : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : activeTool === "videos" ? "8px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
+                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "prep_exam" || activeTool === "mindmap" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
+                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "mindmap" || activeTool === "prep_exam") ? "0px" : activeTool === "videos" ? "8px" : "16px",
+                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "prep_exam" || activeTool === "mindmap" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
@@ -3980,15 +5259,15 @@ export default function StudyTable() {
         <aside
           className="ask-sidebar-drawer"
           style={{
-            width: "380px",
-            minWidth: "320px",
-            borderLeft: "1px solid var(--border, #E2E8F0)",
-            background: "var(--background, #fff)",
+            width: "410px",
+            minWidth: "340px",
+            borderLeft: "1px solid #EAE4D7",
+            background: "#FAF8F3",
             display: "flex",
             flexDirection: "column",
             height: "100%",
             zIndex: 50,
-            boxShadow: "-4px 0 16px rgba(0,0,0,0.06)",
+            boxShadow: "-6px 0 24px rgba(30, 40, 34, 0.08)",
             animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
@@ -4003,37 +5282,54 @@ export default function StudyTable() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--border, #E2E8F0)",
-              background: "var(--surface, #fafafa)",
+              padding: "14px 18px",
+              borderBottom: "1px solid #EAE4D7",
+              background: "#FAF8F3",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.3rem" }}>🤖</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "#FBF4EE",
+                  border: "1px solid #EBD5C3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#BD7D52",
+                  fontSize: "14px",
+                  flexShrink: 0,
+                }}
+              >
+                ✦
+              </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 600, color: "var(--text, #333)" }}>
-                  AI Study Tutor
+                <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1E2822" }}>
+                  Saral · 24/7 Learning Assistant
                 </h3>
-                <span style={{ fontSize: "0.75rem", color: "#666" }}>
-                  Ask questions about this chapter
+                <span style={{ fontSize: "11.5px", color: "#BD7D52", fontWeight: 600 }}>
+                  Grounded in your {getChapterPrefix(subjectId)} {chapterNumber} material
                 </span>
               </div>
             </div>
             <button
               onClick={() => setIsAskOpen(false)}
               style={{
-                background: "none",
-                border: "none",
+                background: "#FFFFFF",
+                border: "1px solid #E5DFD2",
                 cursor: "pointer",
-                fontSize: "1.2rem",
-                color: "#666",
-                padding: "4px 8px",
-                borderRadius: "4px",
+                fontSize: "13px",
+                color: "#5C6660",
+                width: "28px",
+                height: "28px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              title="Close Tutor"
+              title="Close Saral Assistant"
             >
               ✕
             </button>
@@ -4047,6 +5343,11 @@ export default function StudyTable() {
                 difficulty={persona}
                 className={className}
                 subjectName={subjectName}
+                isCompactDrawer={true}
+                onNavigateTool={(tool) => {
+                  setIsAskOpen(false);
+                  setActiveTool(tool as any);
+                }}
               />
             </Suspense>
           </div>

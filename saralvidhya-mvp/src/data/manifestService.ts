@@ -1,8 +1,8 @@
 import universityConfig from '@/config/university_config.json';
 import { registryClient, type ChapterResponse } from './registryClient';
-import { detectTenantId } from '../tenant/TenantProvider';
+import { detectTenantId, getFallbackTenantId, getCloudPublicImageUrl } from '../tenant/TenantProvider';
 import { cloudStorage } from '../context/CloudStateContext';
-
+import { registerCloudGlossaryTerms } from './glossaryTerms';
 export const BASE = '/generated_resources';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/assets`
@@ -282,6 +282,35 @@ function buildOverlay(
       classes.set(classId, { id: classId, name: className, subjects: [] });
     }
 
+    const resolveRawDbUrl = (raw?: string, chId?: string): string | undefined => {
+      if (!raw || typeof raw !== 'string') return undefined;
+      const trimmed = raw.trim();
+      if (!trimmed) return undefined;
+      if (
+        trimmed.startsWith('http://') ||
+        trimmed.startsWith('https://') ||
+        trimmed.startsWith('data:')
+      ) {
+        return trimmed;
+      }
+      if (trimmed.startsWith('/api/')) {
+        return `${GCS_API_BASE}${trimmed}`;
+      }
+      if (trimmed.startsWith('gs://')) {
+        const withoutGs = trimmed.replace(/^gs:\/\/[^\/]+\//, '');
+        return `${GCS_API_BASE}/api/content/${withoutGs}`;
+      }
+      if (trimmed.startsWith(`${tenantId}/`)) {
+        return `${GCS_API_BASE}/api/content/${trimmed}`;
+      }
+      if (trimmed.includes('/') && !trimmed.startsWith('/')) {
+        return chId
+          ? `${GCS_API_BASE}/api/content/${path}/${chId}/${trimmed}`
+          : `${GCS_API_BASE}/api/content/${path}/${trimmed}`;
+      }
+      return trimmed;
+    };
+
     const chapters: Chapter[] = ((s.chapters || []) as any[]).map((c) => ({
       number: c.number,
       name: c.title,
@@ -289,9 +318,23 @@ function buildOverlay(
       shortTitle: c.shortTitle,
       description: c.description,
       estimatedMinutes: c.estimatedMinutes,
-      heroImageUrl: c.heroImageUrl || c.assets?.heroImageUrl,
-      thumbnailUrl: c.thumbnailUrl || c.assets?.thumbnailUrl,
-      mindmapImageUrl: c.mindmapImageUrl || c.assets?.mindmapImageUrl,
+      heroImageUrl: resolveRawDbUrl(
+        c.heroImageUrl ||
+          c.assets?.heroImageUrl ||
+          c.assets?.heroImage ||
+          c.thumbnailUrl ||
+          c.assets?.thumbnailUrl ||
+          c.assets?.thumbnail,
+        c.id
+      ),
+      thumbnailUrl: resolveRawDbUrl(
+        c.thumbnailUrl || c.assets?.thumbnailUrl || c.assets?.thumbnail,
+        c.id
+      ),
+      mindmapImageUrl: resolveRawDbUrl(
+        c.mindmapImageUrl || c.assets?.mindmapImageUrl || c.assets?.mindmapImage,
+        c.id
+      ),
       dir: c.id,
       completed: c.tools ? Object.keys(c.tools) : [],
       resourceCount: c.tools ? Object.keys(c.tools).length : 7,
@@ -299,6 +342,25 @@ function buildOverlay(
       videos: c.videos,
       tools: c.tools,
     }));
+
+    const resolvedIconUrl = resolveRawDbUrl(
+      s.iconUrl ||
+        s.assets?.iconUrl ||
+        s.assets?.icon ||
+        s.iconBlob ||
+        s.thumbnailUrl ||
+        s.assets?.thumbnailUrl ||
+        s.assets?.thumbnail ||
+        s.bannerUrl ||
+        s.assets?.bannerUrl ||
+        s.assets?.banner
+    );
+    const resolvedBannerUrl = resolveRawDbUrl(
+      s.bannerUrl || s.assets?.bannerUrl || s.assets?.banner
+    );
+    const resolvedThumbUrl = resolveRawDbUrl(
+      s.thumbnailUrl || s.assets?.thumbnailUrl || s.assets?.thumbnail
+    );
 
     classes.get(classId)!.subjects.push({
       id: s.id,
@@ -308,9 +370,9 @@ function buildOverlay(
       programLabel: s.programLabel || s.subtitle || className,
       description: s.description,
       credits: s.credits,
-      iconUrl: s.iconUrl || s.assets?.iconUrl,
-      bannerUrl: s.bannerUrl || s.assets?.bannerUrl,
-      thumbnailUrl: s.thumbnailUrl || s.assets?.thumbnailUrl,
+      iconUrl: resolvedIconUrl,
+      bannerUrl: resolvedBannerUrl,
+      thumbnailUrl: resolvedThumbUrl,
       cardStyle: s.cardStyle,
       path,
       chapterNumbers: chapters.map((c) => c.number),
@@ -324,9 +386,9 @@ function buildOverlay(
       programLabel: s.programLabel || s.subtitle || className,
       description: s.description,
       credits: s.credits,
-      iconUrl: s.iconUrl || s.assets?.iconUrl,
-      bannerUrl: s.bannerUrl || s.assets?.bannerUrl,
-      thumbnailUrl: s.thumbnailUrl || s.assets?.thumbnailUrl,
+      iconUrl: resolvedIconUrl,
+      bannerUrl: resolvedBannerUrl,
+      thumbnailUrl: resolvedThumbUrl,
       cardStyle: s.cardStyle,
       path,
       boardId: tenantId,
@@ -394,6 +456,22 @@ export async function getRegistryChapterData(
       .getChapter(tenantId, normSub, chDir)
       .then((res) => {
         resolvedChapterDataCache[key] = res;
+        if (res?.chapter) {
+          const chAny = res.chapter as any;
+          if (chAny.definitions) registerCloudGlossaryTerms(chAny.definitions);
+          if (chAny.glossary) registerCloudGlossaryTerms(chAny.glossary);
+        }
+        const defUrl = res?.files?.['definitions.json'] || res?.files?.['glossary.json'];
+        if (defUrl) {
+          fetch(defUrl)
+            .then((r) => (r.ok ? r.json() : null))
+            .then((json) => {
+              if (json) {
+                registerCloudGlossaryTerms(json.definitions || json.terms || json);
+              }
+            })
+            .catch(() => {});
+        }
         return res;
       })
       .catch(() => {
@@ -427,25 +505,155 @@ export function resolveAssetUrl(
   return cached.files?.[cleanRel] || null;
 }
 
+/**
+ * Resolves any image/asset URL (from Registry DB, catalog.json, manifest.json, or local public fallback)
+ * into a browser-loadable URL, prioritizing Google Cloud signed URLs and Cloud Run /api/content routes.
+ */
+export function resolveCloudImageSrc(
+  rawUrl: string | undefined,
+  subjectId?: string,
+  chapterNumber?: number
+): string | undefined {
+  if (!rawUrl || typeof rawUrl !== 'string') return undefined;
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return undefined;
+
+  if (
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:')
+  ) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith('/api/')) {
+    return `${GCS_API_BASE}${trimmed}`;
+  }
+
+  if (trimmed.startsWith('gs://')) {
+    const withoutGs = trimmed.replace(/^gs:\/\/[^\/]+\//, '');
+    return `${GCS_API_BASE}/api/content/${withoutGs}`;
+  }
+
+  const globalPublicSigned = getCloudPublicImageUrl(trimmed);
+  if (globalPublicSigned && globalPublicSigned !== trimmed && globalPublicSigned.startsWith('http')) {
+    return globalPublicSigned;
+  }
+  if (subjectId && typeof chapterNumber === 'number') {
+    const signed = resolveAssetUrl(subjectId, chapterNumber, trimmed);
+    if (signed) return signed;
+  }
+
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base}${trimmed.replace(/^\//, '')}`;
+}
+
+/**
+ * Queries the v2 Chapter Registry endpoint for a chapter's DB-driven hero/thumbnail image and metadata.
+ */
+export async function resolveChapterHeroFromRegistry(
+  subjectId: string,
+  chapterNumber: number
+): Promise<{
+  title?: string;
+  heroImageUrl?: string;
+  thumbnailUrl?: string;
+  description?: string;
+  topics?: any[];
+} | null> {
+  try {
+    const reg = await getRegistryChapterData(subjectId, chapterNumber);
+    if (!reg) return null;
+    const ch = reg.chapter;
+    const files = reg.files || {};
+
+    const candidateFileKeys = [
+      'hero.png',
+      'hero.jpg',
+      'hero.webp',
+      'cover.png',
+      'cover.jpg',
+      'cover.webp',
+      'thumbnail.png',
+      'thumbnail.jpg',
+      'banner.png',
+      'assets/hero.png',
+      'assets/cover.png',
+      'assets/thumbnail.png',
+      'images/hero.png',
+      'images/cover.png',
+    ];
+    let signedHeroFromFiles: string | undefined;
+    for (const k of candidateFileKeys) {
+      if (files[k]) {
+        signedHeroFromFiles = files[k];
+        break;
+      }
+    }
+    if (!signedHeroFromFiles) {
+      const matchedKey = Object.keys(files).find((k) =>
+        /(?:^|\/)(?:hero|cover|banner|chapter_hero|thumbnail)\.(?:png|jpe?g|webp|svg)$/i.test(k)
+      );
+      if (matchedKey) {
+        signedHeroFromFiles = files[matchedKey];
+      }
+    }
+
+    const rawHero =
+      ch?.heroImageUrl ||
+      ch?.assets?.heroImageUrl ||
+      ch?.assets?.heroImage ||
+      signedHeroFromFiles ||
+      ch?.thumbnailUrl ||
+      ch?.assets?.thumbnailUrl ||
+      ch?.assets?.thumbnail;
+
+    const rawThumb =
+      ch?.thumbnailUrl ||
+      ch?.assets?.thumbnailUrl ||
+      ch?.assets?.thumbnail ||
+      signedHeroFromFiles;
+
+    return {
+      title: ch?.title || (ch as any)?.name,
+      heroImageUrl: resolveCloudImageSrc(rawHero, subjectId, chapterNumber),
+      thumbnailUrl: resolveCloudImageSrc(rawThumb, subjectId, chapterNumber),
+      description: ch?.description,
+      topics: ch?.topics,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function getCatalog(): Promise<Catalog> {
-  let base: Catalog = { version: 1, boards: [] };
-  if (cachedCatalog) {
-    base = cachedCatalog;
-  } else {
+  const regTenant = getRegistryTenantId();
+  const overlay = await loadRegistryOverlay();
+
+  let base: Catalog = cachedCatalog || { version: 1, boards: [] };
+  if (!cachedCatalog) {
     try {
-      const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
-      const ct = res.headers.get('content-type') || '';
-      if (res.ok && !ct.includes('text/html')) {
-        base = (await res.json()) as Catalog;
+      const cloudMan = await registryClient.getCloudManifest(regTenant || getFallbackTenantId());
+      if (cloudMan?.catalog?.boards) {
+        base = cloudMan.catalog as Catalog;
         cachedCatalog = base;
       }
+      if (cloudMan?.manifest?.subjects && !cachedManifest) {
+        cachedManifest = cloudMan.manifest as Manifest;
+      }
     } catch {
-      // fall through
+      try {
+        const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && !ct.includes('text/html')) {
+          base = (await res.json()) as Catalog;
+          cachedCatalog = base;
+        }
+      } catch {
+        // Cloud-native mode works without local /generated_resources/catalog.json
+      }
     }
   }
-  const overlay = await loadRegistryOverlay();
-  const regTenant = getRegistryTenantId();
-
   // Helper to enrich an overlay board with missing subject/board metadata from base catalog.json
   const enrichOverlayBoard = (ovBoard: CatalogBoard): CatalogBoard => {
     const baseBoard = base.boards.find(
@@ -456,6 +664,9 @@ export async function getCatalog(): Promise<Catalog> {
     for (const cls of baseBoard.classes) {
       for (const sub of cls.subjects) {
         baseSubjectsById.set(sub.id.toLowerCase(), sub);
+        if (sub.name) {
+          baseSubjectsById.set(sub.name.toLowerCase().trim(), sub);
+        }
         if (sub.code) {
           baseSubjectsById.set(sub.code.toLowerCase().replace(/[^a-z0-9]+/g, '_'), sub);
         }
@@ -470,9 +681,11 @@ export async function getCatalog(): Promise<Catalog> {
         ...cls,
         subjects: cls.subjects.map((sub) => {
           const codeKey = sub.code ? sub.code.toLowerCase().replace(/[^a-z0-9]+/g, '_') : '';
+          const nameKey = sub.name ? sub.name.toLowerCase().trim() : '';
           const match =
             baseSubjectsById.get(sub.id.toLowerCase()) ||
-            (codeKey ? baseSubjectsById.get(codeKey) : undefined);
+            (codeKey ? baseSubjectsById.get(codeKey) : undefined) ||
+            (nameKey ? baseSubjectsById.get(nameKey) : undefined);
           if (!match) return sub;
           return {
             ...match,
@@ -480,8 +693,8 @@ export async function getCatalog(): Promise<Catalog> {
             iconUrl: sub.iconUrl || match.iconUrl,
             bannerUrl: sub.bannerUrl || match.bannerUrl,
             thumbnailUrl: sub.thumbnailUrl || match.thumbnailUrl,
-            subtitle: match.subtitle || sub.subtitle,
-            programLabel: match.programLabel || sub.programLabel,
+            subtitle: sub.subtitle || match.subtitle,
+            programLabel: sub.programLabel || match.programLabel,
             description: sub.description || match.description,
             cardStyle: sub.cardStyle || match.cardStyle,
           };
@@ -516,24 +729,33 @@ export async function getCatalog(): Promise<Catalog> {
 }
 
 export async function getManifest(): Promise<Manifest> {
-  let base: Manifest = { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
-  if (cachedManifest) {
-    base = cachedManifest;
-  } else {
+  const regTenant = getRegistryTenantId();
+  const overlay = await loadRegistryOverlay();
+
+  let base: Manifest = cachedManifest || { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
+  if (!cachedManifest) {
     try {
-      const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
-      const ct = res.headers.get('content-type') || '';
-      if (res.ok && !ct.includes('text/html')) {
-        base = (await res.json()) as Manifest;
+      const cloudMan = await registryClient.getCloudManifest(regTenant || getFallbackTenantId());
+      if (cloudMan?.manifest?.subjects) {
+        base = cloudMan.manifest as Manifest;
         cachedManifest = base;
       }
+      if (cloudMan?.catalog?.boards && !cachedCatalog) {
+        cachedCatalog = cloudMan.catalog as Catalog;
+      }
     } catch {
-      // fall through
+      try {
+        const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+        const ct = res.headers.get('content-type') || '';
+        if (res.ok && !ct.includes('text/html')) {
+          base = (await res.json()) as Manifest;
+          cachedManifest = base;
+        }
+      } catch {
+        // Cloud-native mode works without local /generated_resources/manifest.json
+      }
     }
   }
-  const overlay = await loadRegistryOverlay();
-  const regTenant = getRegistryTenantId();
-
   // Enrich overlay subjects & chapters with fallback metadata from base manifest.json
   const enrichOverlaySubjects = (ovSubjects: Subject[]): Subject[] => {
     return ovSubjects.map((ovSub) => {
@@ -552,7 +774,7 @@ export async function getManifest(): Promise<Manifest> {
         return {
           ...baseCh,
           ...ovCh,
-          shortTitle: baseCh.shortTitle || ovCh.shortTitle,
+          shortTitle: ovCh.shortTitle || baseCh.shortTitle,
           description: ovCh.description || baseCh.description,
           heroImageUrl: ovCh.heroImageUrl || baseCh.heroImageUrl,
           thumbnailUrl: ovCh.thumbnailUrl || baseCh.thumbnailUrl,
@@ -568,8 +790,8 @@ export async function getManifest(): Promise<Manifest> {
         iconUrl: ovSub.iconUrl || baseSub.iconUrl,
         bannerUrl: ovSub.bannerUrl || baseSub.bannerUrl,
         thumbnailUrl: ovSub.thumbnailUrl || baseSub.thumbnailUrl,
-        subtitle: baseSub.subtitle || ovSub.subtitle,
-        programLabel: baseSub.programLabel || ovSub.programLabel,
+        subtitle: ovSub.subtitle || baseSub.subtitle,
+        programLabel: ovSub.programLabel || baseSub.programLabel,
         description: ovSub.description || baseSub.description,
         cardStyle: ovSub.cardStyle || baseSub.cardStyle,
         chapters: enrichedChapters,
@@ -709,11 +931,33 @@ export async function getChapterVideos(
   const key = `${normSubject}_${chapterNumber}`;
   if (key in chapterVideosCache) return chapterVideosCache[key];
 
+  const regTenant = getRegistryTenantId();
+  if (regTenant && registryOverlays[regTenant]) {
+    const sub = registryOverlays[regTenant].subjects.find(
+      (s) => s.id === normSubject || s.id === subjectId
+    );
+    const ch = sub?.chapters.find((c) => c.number === chapterNumber);
+    if (ch?.videos && ch.videos.length > 0) {
+      const mapped = ch.videos.map((v, idx) => ({
+        index: v.order ?? idx + 1,
+        id: v.id || `video_${idx + 1}`,
+        title: v.title || `Video ${idx + 1}`,
+        ytId: v.videoId || '',
+        videoUrl: v.videoUrl || v.url,
+        thumbnailUrl: v.thumbnailUrl || v.thumbnail,
+        dir: v.id || `video_${idx + 1}`,
+        topics: v.topics,
+        duration: v.duration,
+      }));
+      chapterVideosCache[key] = mapped;
+      return mapped;
+    }
+  }
+
   if (GCS_BACKEND_SUBJECTS.has(subjectId) || GCS_BACKEND_SUBJECTS.has(normSubject)) {
     chapterVideosCache[key] = [];
     return [];
   }
-
   if (!cachedManifest) await getManifest();
   const url = `${getSubjectBaseUrl(subjectId)}/${getChapterDir(subjectId, chapterNumber)}/videos.json`;
 

@@ -17,6 +17,7 @@ import 'katex/dist/katex.min.css';
 interface Props {
   content: string;
   isPurpleTheme?: boolean;
+  disableGlossary?: boolean;
 }
 
 const REMARK_PLUGINS: any[] = [remarkGfm, remarkMath];
@@ -123,7 +124,7 @@ function extractRawText(node: any): string {
   return '';
 }
 
-function MarkdownViewInner({ content, isPurpleTheme = true }: Props) {
+function MarkdownViewInner({ content, isPurpleTheme = true, disableGlossary = false }: Props) {
   const processedContent = useMemo(() => preprocessMathContent(content), [content]);
 
   const accentDotted = isPurpleTheme ? '#7c3aed' : '#16a34a';
@@ -228,7 +229,7 @@ function MarkdownViewInner({ content, isPurpleTheme = true }: Props) {
       keyPrefix: string,
       seenTerms: Set<string>
     ): React.ReactNode => {
-      if (!text || typeof text !== 'string' || text.length < 4) return text;
+      if (disableGlossary || !text || typeof text !== 'string' || text.length < 4) return text;
       const parts = text.split(COMPILED_PHRASE_REGEX);
       if (parts.length <= 1) return text;
 
@@ -262,6 +263,7 @@ function MarkdownViewInner({ content, isPurpleTheme = true }: Props) {
 
     return {
       strong({ children, ...props }: any) {
+        if (disableGlossary) return <strong {...props}>{children}</strong>;
         const raw = extractRawText(children).trim();
         const def = raw.length >= 3 ? getTermDefinition(raw) : undefined;
         if (def) {
@@ -283,6 +285,7 @@ function MarkdownViewInner({ content, isPurpleTheme = true }: Props) {
         return <strong {...props}>{children}</strong>;
       },
       em({ children, ...props }: any) {
+        if (disableGlossary) return <em {...props}>{children}</em>;
         const raw = extractRawText(children).trim();
         const def = raw.length >= 3 ? getTermDefinition(raw) : undefined;
         if (def) {
@@ -435,7 +438,7 @@ function MarkdownViewInner({ content, isPurpleTheme = true }: Props) {
         );
       },
     };
-  }, [dottedStyle]);
+  }, [dottedStyle, disableGlossary]);
 
   return (
     <div

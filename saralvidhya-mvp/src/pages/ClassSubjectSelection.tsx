@@ -7,6 +7,8 @@ import {
   getChapters,
   getVisibleBoardIds,
   getRegistryTenantId,
+  resolveCloudImageSrc,
+  resolveChapterHeroFromRegistry,
   type Catalog,
   type CatalogBoard,
   type CatalogClass,
@@ -21,19 +23,64 @@ import { useTenant } from '@/tenant/TenantProvider';
 import { cloudStorage } from '@/context/CloudStateContext';
 import './ClassSubjectSelection.css';
 
+function getFallbackSubjectIconUrl(subject: CatalogSubject): string | undefined {
+  const lowerId = (subject.id || '').toLowerCase();
+  const lowerName = (subject.name || '').toLowerCase();
+  const lowerCode = (subject.code || '').toLowerCase();
+  if (lowerId.includes('dbms') || lowerName.includes('database') || lowerCode.includes('cs302')) {
+    return '/subject-dbms-icon.png';
+  }
+  if (lowerId.includes('ento') || lowerName.includes('entomology')) {
+    return '/subject-entomology-icon.png';
+  }
+  return undefined;
+}
+
+function resolveIconSrc(rawUrl: string, subjectId?: string): string {
+  return (
+    resolveCloudImageSrc(rawUrl, subjectId) ||
+    `${import.meta.env.BASE_URL}${rawUrl.replace(/^\//, '')}`
+  );
+}
+
 function SubjectIcon({ subject }: { subject: CatalogSubject }) {
-  if (subject.iconUrl) {
-    const src =
-      subject.iconUrl.startsWith('http://') ||
-      subject.iconUrl.startsWith('https://') ||
-      subject.iconUrl.startsWith('data:')
-        ? subject.iconUrl
-        : `${import.meta.env.BASE_URL}${subject.iconUrl.replace(/^\//, '')}`;
+  const [cloudIconUrl, setCloudIconUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!subject.iconUrl && !subject.thumbnailUrl && !subject.bannerUrl) {
+      const firstCh = subject.chapterNumbers?.[0] ?? 1;
+      resolveChapterHeroFromRegistry(subject.id, firstCh).then((res) => {
+        if (!cancelled && (res?.thumbnailUrl || res?.heroImageUrl)) {
+          setCloudIconUrl(res.thumbnailUrl || res.heroImageUrl);
+        }
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [subject.id, subject.iconUrl, subject.thumbnailUrl, subject.bannerUrl, subject.chapterNumbers]);
+
+  const fallbackUrl = getFallbackSubjectIconUrl(subject);
+  const dbIconUrl =
+    subject.iconUrl || subject.thumbnailUrl || subject.bannerUrl || cloudIconUrl;
+  const effectiveIconUrl = dbIconUrl || fallbackUrl;
+
+  if (effectiveIconUrl) {
+    const src = resolveIconSrc(effectiveIconUrl, subject.id);
+    const fallbackSrc = fallbackUrl ? resolveIconSrc(fallbackUrl, subject.id) : undefined;
     return (
       <img
         src={src}
         alt={subject.name}
-        className={`sv-card-book-img ${subject.iconUrl.includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
+        className={`sv-card-book-img ${effectiveIconUrl.includes('dbms') || subject.id.toLowerCase().includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
+        onError={(e) => {
+          const img = e.currentTarget;
+          if (fallbackSrc && img.src !== window.location.origin + fallbackSrc && !img.dataset.fallbackApplied) {
+            img.dataset.fallbackApplied = 'true';
+            img.src = fallbackSrc;
+          }
+        }}
       />
     );
   }
@@ -258,32 +305,6 @@ export default function ClassSubjectSelection() {
                 height={132}
               />
             </div>
-            {step > 0 && (
-              <div className="sv-breadcrumb">
-                <span className="sv-bc-sep">/</span>
-                {activeTenantId ? (
-                  <span className="sv-bc-current">{selectedBoard?.shortName || selectedBoard?.name}</span>
-                ) : (
-                  <span className="sv-bc-link" onClick={handleBackToBoard}>
-                    {selectedBoard?.shortName || selectedBoard?.name}
-                  </span>
-                )}
-                {step > 1 && (
-                  <>
-                    {!activeTenantId && (selectedBoard?.classes.length ?? 0) > 1 && (
-                      <>
-                        <span className="sv-bc-sep">/</span>
-                        <span className="sv-bc-link" onClick={handleBackToClass}>
-                          {selectedClass?.name}
-                        </span>
-                      </>
-                    )}
-                    <span className="sv-bc-sep">/</span>
-                    <span className="sv-bc-current">Subjects</span>
-                  </>
-                )}
-              </div>
-            )}
           </div>
           <div className="sv-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button

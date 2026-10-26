@@ -11,19 +11,23 @@ interface Props {
   content: string;
   onTopicClick?: (topicLabel: string, action?: 'read' | 'podcast' | 'video') => void;
   nodeIcons?: NodeIcons;
+  selectedTopic?: string | null;
+  studiedTopics?: Set<string> | string[];
+  onSelectTopic?: (topicLabel: string, depth?: number, parentLabel?: string | null) => void;
 }
 
-// Brand node levels palette
-const LEVEL_0_BG = '#2D3E36';
-const LEVEL_1_BG = '#4F7B64';
-const LEVEL_2_BG = '#7BA88B';
+// Brand node levels palette (matches Warm-Academic Mindmaps design)
+const LEVEL_0_BG = '#25352C';
+const LEVEL_1_BG = '#375545';
+const LEVEL_2_BG = '#6E957E';
+const STUDIED_BG = '#BD7D52';
 
 const ROOT_BG = LEVEL_0_BG;
-const H_GAP = 96;
-const V_GAP = 36;
-const UNIFORM_NODE_W = 236;
+const H_GAP = 165;
+const V_GAP = 64;
+const UNIFORM_NODE_W = 248;
 const UNIFORM_NODE_H = 56;
-const MAX_LABEL_W = 204;
+const MAX_LABEL_W = 216;
 const MIN_Z = 0.2, MAX_Z = 3;
 const FONT = "'Inter','SF Pro Display',system-ui,sans-serif";
 const ICON_W = 22;
@@ -45,9 +49,9 @@ function measure(text: string, font: string): number {
 }
 
 function styleFor(depth: number) {
-  if (depth === 0) return { font: `700 16px ${FONT}`, px: 24, py: 12, extra: 0 };
-  if (depth === 1) return { font: `600 13.5px ${FONT}`, px: 16, py: 8, extra: 0 };
-  return { font: `500 13px ${FONT}`, px: 14, py: 8, extra: 2 };
+  if (depth === 0) return { font: `700 13.5px ${FONT}`, px: 22, py: 14, extra: 0 };
+  if (depth === 1) return { font: `700 12.5px ${FONT}`, px: 16, py: 10, extra: 0 };
+  return { font: `500 12.5px ${FONT}`, px: 14, py: 8, extra: 2 };
 }
 
 function wrap(label: string, font: string, maxW: number): string[] {
@@ -87,14 +91,14 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
       color = LEVEL_2_BG;
     }
     const st = styleFor(depth);
-    const maxW = depth === 1 ? UNIFORM_NODE_W - st.px * 2 : MAX_LABEL_W;
+    const maxW = depth === 1 ? UNIFORM_NODE_W - st.px * 2 : depth === 0 ? 226 : MAX_LABEL_W;
     const lines = wrap(n.label, st.font, maxW);
     const textW = Math.max(...lines.map(s => measure(s, st.font)));
     const ic = icons[n.label] || icons[n.label.toLowerCase()] || {};
-    const hasVideo = depth > 0 && !!ic.hasVideo, hasPodcast = depth > 0 && !!ic.hasPodcast;
+    const hasVideo = depth > 0 && !!ic.hasVideo, hasPodcast = depth > 0 && (ic.hasPodcast !== undefined ? !!ic.hasPodcast : true);
     // For depth 1: uniform size! Icons sit outside the box so they do not add to w.
-    const w = depth === 1 ? UNIFORM_NODE_W : depth === 0 ? Math.max(190, Math.ceil(textW) + st.px * 2) : Math.ceil(textW) + st.px * 2;
-    const h = depth === 1 ? UNIFORM_NODE_H : Math.ceil(lines.length * (st.font.includes('16px') ? 22 : 18)) + st.py * 2 + st.extra;
+    const w = depth === 1 ? UNIFORM_NODE_W : depth === 0 ? Math.max(216, Math.ceil(textW) + st.px * 2) : Math.ceil(textW) + st.px * 2;
+    const h = depth === 1 ? UNIFORM_NODE_H : Math.ceil(lines.length * (depth === 0 ? 19 : 18)) + st.py * 2 + st.extra;
     const isCol = collapsed.has(n.id);
     map.set(n.id, {
       id: n.id, label: n.label, lines, depth, side, color, w, h, x: 0, y: 0, sub: 0, parentId,
@@ -140,12 +144,13 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
     const p = map.get(m.parentId!)!;
     const rt = m.side === 'r';
     const x1 = rt ? p.x + p.w : p.x;
-    const y1 = p.y + p.h / 2;
+    const dy = (m.y + m.h / 2) - (p.y + p.h / 2);
+    const y1 = p.y + p.h / 2 + Math.max(-14, Math.min(14, dy * 0.08));
     const x2 = rt ? m.x : m.x + m.w;
     const y2 = m.y + m.h / 2;
     const mx = (x1 + x2) / 2;
     return {
-      id: m.id, color: m.color, sw: m.depth === 1 ? 4 : 2.5,
+      id: m.id, color: '#8FA196', sw: 1.5,
       d: `M${x1} ${y1}C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}`,
     };
   });
@@ -158,14 +163,30 @@ const EyeSvg = () => (
   </svg>
 );
 const EarSvg = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M3 18v-6a9 9 0 0 1 18 0v6" /><path d="M21 19a2 2 0 0 1-2 2h-1v-6h3zM3 19a2 2 0 0 0 2 2h1v-6H3z" />
   </svg>
 );
 
-export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: Props) {
+export default function MindMapView({
+  content,
+  onTopicClick,
+  nodeIcons = {},
+  selectedTopic = null,
+  studiedTopics,
+  onSelectTopic,
+}: Props) {
   const isRealMermaid = !!content && /^(graph|flowchart|sequenceDiagram|gantt|classDiagram|stateDiagram|pie|journey|gitGraph)/i.test(content.trim());
   const tree = useMemo(() => (!content || isRealMermaid ? null : buildTree(content)), [content, isRealMermaid]);
+
+  const studiedSet = useMemo(() => {
+    const s = new Set<string>();
+    if (!studiedTopics) return s;
+    for (const item of Array.from(studiedTopics)) {
+      s.add(String(item).toLowerCase().trim());
+    }
+    return s;
+  }, [studiedTopics]);
 
   const boxRef = useRef<HTMLDivElement>(null);
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
@@ -183,20 +204,29 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
     if (!el || !layout) return;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     layout.nodes.forEach(m => {
-      const extraLeft = (!m.depth ? 0 : (m.side === 'l' && (m.hasVideo || m.hasPodcast) ? 44 : 0));
-      const extraRight = (!m.depth ? 0 : (m.side === 'r' && (m.hasVideo || m.hasPodcast) ? 44 : 0));
-      x0 = Math.min(x0, m.x - extraLeft); y0 = Math.min(y0, m.y);
-      x1 = Math.max(x1, m.x + m.w + extraRight); y1 = Math.max(y1, m.y + m.h);
+      const extraLeft = !m.depth ? 0 : 18;
+      const extraRight = !m.depth ? 0 : 18;
+      x0 = Math.min(x0, m.x - extraLeft); y0 = Math.min(y0, m.y - 12);
+      x1 = Math.max(x1, m.x + m.w + extraRight); y1 = Math.max(y1, m.y + m.h + 12);
     });
     const r = el.getBoundingClientRect();
-    const pad = 48;
-    const k = Math.max(MIN_Z, Math.min(1, (r.width - pad * 2) / (x1 - x0), (r.height - pad * 2) / (y1 - y0)));
+    if (!r.width || !r.height) return;
+    const padX = 48;
+    const padY = 54;
+    const k = Math.max(MIN_Z, Math.min(1, (r.width - padX * 2) / (x1 - x0), (r.height - padY * 2) / (y1 - y0)));
     setView({ k, x: r.width / 2 - ((x0 + x1) / 2) * k, y: r.height / 2 - ((y0 + y1) / 2) * k });
   }, [layout]);
 
-  // Fit when the tree itself changes (not on every collapse toggle)
+  // Fit when the tree itself changes or container resizes
   useLayoutEffect(() => { setCollapsed(new Set()); }, [tree]);
-  useLayoutEffect(() => { fit(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [tree]);
+  useLayoutEffect(() => {
+    fit();
+    const el = boxRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => fit());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [tree, fit]);
 
   const zoomBy = useCallback((f: number, cx?: number, cy?: number) => {
     const el = boxRef.current;
@@ -236,8 +266,12 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
   const onMove = (e: React.PointerEvent) => {
     const p = pan.current;
     if (!p) return;
-    p.moved = true;
-    setView(v => ({ ...v, x: p.vx + e.clientX - p.sx, y: p.vy + e.clientY - p.sy }));
+    if (Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > 5) {
+      p.moved = true;
+    }
+    if (p.moved) {
+      setView(v => ({ ...v, x: p.vx + e.clientX - p.sx, y: p.vy + e.clientY - p.sy }));
+    }
   };
   const onUp = () => { pan.current = null; setPanning(false); };
 
@@ -252,12 +286,12 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
   if (!tree || !layout) return <p style={{ padding: 24, color: '#94a3b8', fontSize: 13 }}>Diagram unavailable.</p>;
 
   const tbBtn: React.CSSProperties = {
-    minWidth: 28, height: 26, borderRadius: 6, border: '1px solid #E2D5CC', background: '#FFFFFF',
-    cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: '#45584E', fontFamily: 'inherit', padding: '0 8px',
+    minWidth: 28, height: 28, borderRadius: 7, border: 'none', background: 'transparent',
+    cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, color: '#45584E', fontFamily: 'inherit', padding: '0 8px',
   };
 
   return (
-    <div style={{ border: '1px solid #EFE4DC', borderRadius: 12, overflow: 'hidden', background: '#FFF6F1', fontFamily: FONT }}>
+    <div style={{ border: '1px solid #E4DFD3', borderRadius: 16, overflow: 'hidden', background: '#F3EFE6', fontFamily: FONT, flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div
         ref={boxRef}
         onPointerDown={onDown}
@@ -265,51 +299,111 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
         onPointerUp={onUp}
         onPointerCancel={onUp}
         style={{
-          position: 'relative', height: 'min(76vh, 720px)', minHeight: 480, overflow: 'hidden', touchAction: 'none',
+          position: 'relative', flex: 1, height: '100%', minHeight: 460, overflow: 'hidden', touchAction: 'none',
           userSelect: 'none', cursor: panning ? 'grabbing' : 'grab',
-          backgroundImage: 'radial-gradient(circle, #EBDDD4 1.2px, transparent 1.2px)',
-          backgroundSize: `${24 * view.k}px ${24 * view.k}px`,
-          backgroundPosition: `${view.x}px ${view.y}px`,
+          background: '#F3EFE6',
         }}
       >
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
+        {/* Top-right unified zoom control pill */}
+        <div
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            zIndex: 10,
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 2,
+            background: '#FFFFFF',
+            border: '1px solid #E4DFD3',
+            borderRadius: 10,
+            padding: '2px 4px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+          }}
+        >
           <button style={tbBtn} onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>
-          <button style={tbBtn} onClick={fit} aria-label="Fit to screen">{Math.round(view.k * 100)}% · Fit</button>
+          <button style={{ ...tbBtn, padding: '0 10px', fontWeight: 700, color: '#1E2822' }} onClick={fit} aria-label="Fit to screen">
+            {Math.round(view.k * 100)}% · Fit
+          </button>
           <button style={tbBtn} onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
+        </div>
+
+        {/* Bottom-left helper legend pill */}
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 16,
+            left: 16,
+            zIndex: 10,
+            background: '#FFFFFF',
+            border: '1px solid #E4DFD3',
+            borderRadius: 999,
+            padding: '6px 14px',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            fontSize: 11.5,
+            fontWeight: 500,
+            color: '#5A655E',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
+            pointerEvents: 'none',
+          }}
+        >
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <EarSvg /> context podcast — tap to listen
+          </span>
+          <span style={{ color: '#C5BFB3' }}>·</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <span style={{ fontSize: 12 }}>👆</span> tap any node to open topic
+          </span>
         </div>
 
         <div style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
           <svg width="1" height="1" style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}>
             {layout.edges.map(e => (
-              <path key={e.id} d={e.d} stroke={e.color} strokeWidth={e.sw} fill="none" strokeLinecap="round" opacity={0.85} />
+              <path key={e.id} d={e.d} stroke={e.color} strokeWidth={e.sw} fill="none" strokeLinecap="round" opacity={0.9} />
             ))}
           </svg>
 
           {layout.nodes.map(m => {
             const isRoot = m.depth === 0;
-            const clickable = !isRoot && !!onTopicClick;
+            const clickable = !isRoot && !!(onSelectTopic || onTopicClick);
             const st = styleFor(m.depth);
             const hov = hover === m.id && clickable;
+            const normLabel = m.label.toLowerCase().trim();
+            const parentNode = m.parentId ? layout.nodes.find(n => n.id === m.parentId) : null;
+            const parentLabel = parentNode && parentNode.depth >= 1 ? parentNode.label : null;
             const base: React.CSSProperties = {
               position: 'absolute', left: m.x, top: m.y, width: m.w, height: m.h, boxSizing: 'border-box',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              font: st.font, lineHeight: '18px',
-              cursor: clickable ? 'pointer' : 'default', transition: 'box-shadow .2s ease, filter .2s ease, transform .2s ease',
+              display: 'flex', alignItems: 'center', justifyContent: isRoot ? 'center' : 'flex-start',
+              font: st.font, lineHeight: '16.5px',
+              cursor: clickable ? 'pointer' : 'default',
+              transition: 'box-shadow .2s ease, filter .2s ease, transform .2s ease, border-color .2s ease',
             };
             if (isRoot) Object.assign(base, {
-              background: LEVEL_0_BG, color: '#fff', borderRadius: 16, padding: `0 ${st.px}px`,
-              boxShadow: '0 6px 16px rgba(45,62,54,.28)',
+              background: LEVEL_0_BG, color: '#fff', borderRadius: 12, padding: `0 ${st.px}px`,
+              boxShadow: '0 6px 18px rgba(37,53,44,.26)',
             });
             else if (m.depth === 1) Object.assign(base, {
-              background: LEVEL_1_BG, color: '#fff', borderRadius: 14, padding: `0 ${st.px}px`,
-              boxShadow: hov ? '0 8px 20px rgba(45,62,54,.32)' : '0 3px 10px rgba(45,62,54,.18)',
-              filter: hov ? 'brightness(.93)' : 'none',
+              background: LEVEL_1_BG,
+              color: '#fff',
+              borderRadius: 12,
+              padding: `0 ${st.px}px`,
+              border: '2px solid transparent',
+              boxShadow: hov
+                ? '0 8px 20px rgba(37,53,44,.28)'
+                : '0 3px 10px rgba(37,53,44,.14)',
+              filter: hov ? 'brightness(1.08)' : 'none',
               transform: hov ? 'scale(1.02)' : 'none',
             });
             else Object.assign(base, {
-              background: LEVEL_2_BG, color: '#fff', borderRadius: 10, padding: `0 ${st.px}px`,
-              boxShadow: hov ? '0 6px 16px rgba(45,62,54,.25)' : '0 2px 8px rgba(45,62,54,.14)',
-              filter: hov ? 'brightness(.95)' : 'none',
+              background: LEVEL_2_BG,
+              color: '#fff',
+              borderRadius: 10,
+              padding: `0 ${st.px}px`,
+              border: '1.5px solid transparent',
+              boxShadow: hov ? '0 6px 16px rgba(37,53,44,.24)' : '0 2px 8px rgba(37,53,44,.12)',
+              filter: hov ? 'brightness(1.08)' : 'none',
               transform: hov ? 'scale(1.02)' : 'none',
             });
 
@@ -322,67 +416,64 @@ export default function MindMapView({ content, onTopicClick, nodeIcons = {} }: P
                 style={base}
                 onMouseEnter={() => setHover(m.id)}
                 onMouseLeave={() => setHover(null)}
-                onClick={() => { if (clickable && !pan.current?.moved) onTopicClick?.(m.label, 'read'); }}
+                onClick={() => {
+                  if (clickable && !pan.current?.moved) {
+                    if (onSelectTopic) onSelectTopic(m.label, m.depth, parentLabel);
+                    else onTopicClick?.(m.label, 'read');
+                  }
+                }}
               >
+
                 <span
                   style={{
                     whiteSpace: 'pre-wrap',
                     wordBreak: 'break-word',
-                    textAlign: 'center',
+                    textAlign: isRoot ? 'center' : 'left',
                     width: '100%',
-                    lineHeight: '18px',
+                    lineHeight: isRoot ? '18px' : '16.5px',
                     userSelect: 'none',
                   }}
                 >
                   {m.lines.join('\n')}
                 </span>
 
-                {/* Action icon: earphone tab as seamless extension of the node */}
-                {m.hasPodcast && (
-                  <span
+                {/* Top-right context podcast headphone badge */}
+                {!isRoot && m.hasPodcast && (
+                  <button
+                    type="button"
+                    title="Context podcast — tap to listen"
+                    aria-label="Context podcast — tap to listen"
+                    onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'podcast'); }}
                     style={{
                       position: 'absolute',
-                      top: 4,
-                      [isRightSide ? 'right' : 'left']: -20,
-                      display: 'inline-flex',
-                      flexDirection: 'column',
+                      top: -9,
+                      right: -9,
+                      width: 24,
+                      height: 24,
+                      borderRadius: '50%',
+                      border: '1.5px solid #6E8578',
+                      background: '#FFFFFF',
+                      color: '#375545',
+                      display: 'flex',
                       alignItems: 'center',
-                      gap: 4,
-                      zIndex: 5,
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      padding: 0,
+                      zIndex: 6,
+                      boxShadow: '0 2px 5px rgba(0,0,0,.12)',
+                      transition: 'transform .18s ease, box-shadow .18s ease',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                      e.currentTarget.style.boxShadow = '0 3px 8px rgba(0,0,0,.18)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'none';
+                      e.currentTarget.style.boxShadow = '0 2px 5px rgba(0,0,0,.12)';
                     }}
                   >
-                    <button
-                      type="button"
-                      title="Listen to podcast"
-                      aria-label="Listen to podcast"
-                      onClick={(e) => { e.stopPropagation(); onTopicClick?.(m.label, 'podcast'); }}
-                      style={{
-                        width: 24,
-                        height: 24,
-                        borderRadius: isRightSide ? '0 12px 12px 0' : '12px 0 0 12px',
-                        border: 'none',
-                        background: m.color,
-                        color: '#FFFFFF',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        cursor: 'pointer',
-                        padding: 0,
-                        boxShadow: isRightSide ? '2px 2px 6px rgba(45,62,54,.25)' : '-2px 2px 6px rgba(45,62,54,.25)',
-                        transition: 'all .2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.filter = 'brightness(1.18)';
-                        e.currentTarget.style.transform = isRightSide ? 'translateX(2px)' : 'translateX(-2px)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.filter = 'none';
-                        e.currentTarget.style.transform = 'none';
-                      }}
-                    >
-                      <EarSvg />
-                    </button>
-                  </span>
+                    <EarSvg />
+                  </button>
                 )}
 
                 {!isRoot && m.hasKids && (

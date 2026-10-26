@@ -8,6 +8,103 @@ import {
   syncToolProgressToCloud,
   syncQuizScoreToCloud,
 } from '@/context/CloudStateContext';
+import { getFallbackTenantId } from '@/tenant/TenantProvider';
+import { registryClient } from '@/data/registryClient';
+
+const SESSION_ID = `sess_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+let eventBuffer: any[] = [];
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+export function flushAnalyticsEvents(): void {
+  if (flushTimer) {
+    clearTimeout(flushTimer);
+    flushTimer = null;
+  }
+  if (eventBuffer.length === 0) return;
+  const batchToSend = [...eventBuffer];
+  eventBuffer = [];
+  const tenantId = getFallbackTenantId();
+  const userId = cloudStorage.getItem('app_user_id') || undefined;
+  const displayName = cloudStorage.getItem('username') || undefined;
+  registryClient
+    .sendAnalyticsBatch(tenantId, {
+      events: batchToSend,
+      sessionId: SESSION_ID,
+      userId,
+      displayName,
+      path: typeof window !== 'undefined' ? window.location.pathname + window.location.search : undefined,
+    })
+    .catch(() => {});
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushAnalyticsEvents();
+    }
+  });
+  window.addEventListener('pagehide', () => {
+    flushAnalyticsEvents();
+  });
+}
+
+export function trackCloudEvent(
+  eventType: string,
+  payload: {
+    category?: string;
+    subjectId?: string;
+    chapterId?: string;
+    chapterNumber?: number;
+    toolId?: string;
+    persona?: string;
+    track?: string;
+    durationMs?: number;
+    score?: number;
+    total?: number;
+    scorePct?: number;
+    status?: string;
+    label?: string;
+    metadata?: Record<string, any>;
+  } = {},
+  flushImmediately = false
+): void {
+  eventBuffer.push({
+    eventId: `ev_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+    eventType,
+    ...payload,
+    clientTimestamp: new Date().toISOString(),
+  });
+  if (flushImmediately || eventBuffer.length >= 10) {
+    flushAnalyticsEvents();
+  } else if (!flushTimer) {
+    flushTimer = setTimeout(() => {
+      flushAnalyticsEvents();
+    }, 3500);
+  }
+}
+
+export function trackAuthEvent(
+  eventType:
+    | 'auth.login_view'
+    | 'auth.password_focus'
+    | 'auth.login_attempt'
+    | 'auth.login_success'
+    | 'auth.login_failure'
+    | 'auth.board_select',
+  metadata?: Record<string, any>,
+  status: 'started' | 'success' | 'failure' = 'success'
+): void {
+  trackCloudEvent(
+    eventType,
+    {
+      category: 'auth',
+      status,
+      label: eventType,
+      metadata,
+    },
+    true
+  );
+}
 
 export interface ChapterVisit {
   subjectId: string;
@@ -83,6 +180,18 @@ export function trackChapterVisit(visit: Omit<ChapterVisit, 'timestamp'>) {
     chapterId,
     visited: true,
   });
+  trackCloudEvent(
+    'chapter.select',
+    {
+      category: 'navigation',
+      subjectId: visit.subjectId,
+      chapterId,
+      chapterNumber: visit.chapterNumber,
+      label: visit.chapterName,
+      metadata: { subjectName: visit.subjectName },
+    },
+    true
+  );
 }
 
 export function trackToolUsage(event: Omit<ToolEvent, 'timestamp'>) {
@@ -96,6 +205,18 @@ export function trackToolUsage(event: Omit<ToolEvent, 'timestamp'>) {
     visited: true,
     completedTool: event.tool,
   });
+  trackCloudEvent(
+    'tool.open',
+    {
+      category: 'study_tool',
+      subjectId: event.subjectId,
+      chapterId,
+      chapterNumber: event.chapterNumber,
+      toolId: event.tool,
+      label: `${event.tool} in ${event.chapterName}`,
+    },
+    true
+  );
 }
 
 export function trackQuiz(record: Omit<QuizRecord, 'timestamp'>) {
@@ -109,6 +230,22 @@ export function trackQuiz(record: Omit<QuizRecord, 'timestamp'>) {
     score: record.score,
     total: record.total,
   });
+  trackCloudEvent(
+    'quiz.submit',
+    {
+      category: 'assessment',
+      subjectId: record.subjectId,
+      chapterId,
+      chapterNumber: record.chapterNumber,
+      toolId: 'quiz',
+      score: record.score,
+      total: record.total,
+      scorePct: record.total > 0 ? Math.round((record.score / record.total) * 100) : 0,
+      status: 'completed',
+      label: record.chapterName,
+    },
+    true
+  );
 }
 
 export function trackPersonaChange(from: string, to: string) {
@@ -116,6 +253,16 @@ export function trackPersonaChange(from: string, to: string) {
   const data = load();
   data.personaHistory.push({ from, to, timestamp: new Date().toISOString() });
   save(data);
+  trackCloudEvent(
+    'persona.switch',
+    {
+      category: 'study_tool',
+      persona: to,
+      label: `${from} -> ${to}`,
+      metadata: { from, to },
+    },
+    true
+  );
 }
 
 export function getAnalytics(): AnalyticsData {

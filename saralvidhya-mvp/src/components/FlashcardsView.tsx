@@ -67,20 +67,8 @@ export default function FlashcardsView({
   const [animationDirection, setAnimationDirection] = useState<'next' | 'prev' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isFlipped, setIsFlipped] = useState(false);
-  // 'out' = card turning edge-on, 'in' = turning back to face the user
-  const [flipPhase, setFlipPhase] = useState<'out' | 'in' | null>(null);
-  const flipTimers = useRef<number[]>([]);
   const flipCard = (target?: boolean) => {
-    if (flipPhase) return;
-    flipTimers.current.forEach((t) => window.clearTimeout(t));
-    setFlipPhase('out');
-    flipTimers.current = [
-      window.setTimeout(() => {
-        setIsFlipped((prev) => (typeof target === 'boolean' ? target : !prev));
-        setFlipPhase('in');
-      }, 170),
-      window.setTimeout(() => setFlipPhase(null), 360),
-    ];
+    setIsFlipped((prev) => (typeof target === 'boolean' ? target : !prev));
   };
   const [imgFailed, setImgFailed] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
@@ -305,6 +293,8 @@ export default function FlashcardsView({
         <div
           className={`flashcard-card-container ${animationDirection ? `flashcard-animate-slide-${animationDirection}` : ''}`}
           key={currentIndex}
+          onClick={() => flipCard()}
+          title={isFlipped ? "Click to slide answer down" : "Click to pull up answer & infographic"}
           style={{
             width: "100%",
             maxWidth: "min(96%, 1240px)",
@@ -313,36 +303,12 @@ export default function FlashcardsView({
             maxHeight: "100%",
             minHeight: 0,
             borderRadius: "20px",
-            border: isPurpleTheme
-              ? (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "2px solid #CB30E080"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "2px solid #CB30E0A0"
-                  : "1.5px solid #CB30E04D"
-              : (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "2px solid rgba(111, 154, 127, 0.70)"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "2px solid rgba(111, 154, 127, 0.95)"
-                  : "1.5px solid rgba(111, 154, 127, 0.45)",
-            background: isPurpleTheme
-              ? (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "#CB30E033"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "#CB30E04D"
-                  : "#CB30E01A"
-              : (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "rgba(111, 154, 127, 0.36)"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "rgba(111, 154, 127, 0.55)"
-                  : "rgba(111, 154, 127, 0.18)",
+            border: isPurpleTheme ? "1.5px solid #CB30E055" : "1.5px solid #D5DDD0",
+            background: isPurpleTheme ? "#F6ECF9" : "#ECF0E8",
             boxShadow: isPurpleTheme
-              ? "0 16px 44px rgba(203, 48, 224, 0.20)"
-              : (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "0 16px 44px rgba(45, 62, 54, 0.20)"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "0 16px 44px rgba(45, 62, 54, 0.28)"
-                  : "0 16px 44px rgba(45, 62, 54, 0.14)",
-            padding: "10px 18px 8px",
+              ? "0 12px 36px rgba(203, 48, 224, 0.14)"
+              : "0 10px 32px rgba(45, 62, 54, 0.08)",
+            padding: "8px 22px 10px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
@@ -350,59 +316,36 @@ export default function FlashcardsView({
             boxSizing: "border-box",
             position: "relative",
             overflow: "hidden",
+            cursor: "pointer",
+            userSelect: "none",
             transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease",
           }}
         >
-          {/* Top-Left Corner Floating Progress Badge (e.g. 3/20) */}
+          {/* Top-Left Corner Counter Pill (e.g. 1 / 10) */}
           <div
             style={{
               position: "absolute",
-              top: 0,
-              left: 0,
-              background: isPurpleTheme
-                ? "linear-gradient(135deg, #f5d0fe 0%, #e9d5ff 100%)"
-                : "linear-gradient(135deg, #dcf0e4 0%, #c1dfcd 100%)",
-              borderRight: isPurpleTheme ? "2px solid #c026d3" : "2px solid #6F9A7F",
-              borderBottom: isPurpleTheme ? "2px solid #c026d3" : "2px solid #6F9A7F",
-              borderTopLeftRadius: "18px",
-              borderBottomRightRadius: "12px",
-              color: isPurpleTheme ? "#0f172a" : "#2D3E36",
-              fontWeight: "800",
+              top: "10px",
+              left: "16px",
+              background: "#FFFDF9",
+              border: isPurpleTheme ? "1.5px solid #C026D3" : "1.5px solid #CE9B61",
+              borderRadius: "10px",
+              color: isPurpleTheme ? "#86198F" : "#9E6332",
+              fontWeight: 800,
               fontSize: "12.5px",
-              padding: "3px 12px",
-              zIndex: 10,
-              display: "flex",
+              padding: "4px 13px",
+              zIndex: 12,
+              display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              boxShadow: isPurpleTheme
-                ? "0 4px 12px rgba(192, 38, 211, 0.15)"
-                : "0 4px 12px rgba(45, 62, 54, 0.15)",
+              boxShadow: "0 2px 6px rgba(158, 99, 50, 0.08)",
               pointerEvents: "none",
+              fontVariantNumeric: "tabular-nums",
             }}
           >
-            {currentIndex + 1}/{totalCards}
+            {`${currentIndex + 1} / ${totalCards}`}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              flex: 1,
-              height: '100%',
-              maxHeight: '100%',
-              minHeight: 0,
-              overflow: 'hidden',
-              transformOrigin: 'center center',
-              transform: flipPhase === 'out' ? 'perspective(1400px) rotateY(90deg)' : 'perspective(1400px) rotateY(0deg)',
-              transition: flipPhase === 'out'
-                ? 'transform 0.17s cubic-bezier(0.55, 0, 0.9, 0.5)'
-                : flipPhase === 'in'
-                  ? 'transform 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)'
-                  : 'none',
-              ...(flipPhase === 'in' ? { animation: 'sv-fc-flip-in 0.19s cubic-bezier(0.1, 0.5, 0.45, 1)' } : {}),
-            }}
-          >
-          <style>{`@keyframes sv-fc-flip-in { from { transform: perspective(1400px) rotateY(-90deg); } to { transform: perspective(1400px) rotateY(0deg); } }`}</style>
           {(() => {
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
             if (finalUrl && !finalUrl.startsWith('http://') && !finalUrl.startsWith('https://') && !finalUrl.startsWith('data:')) {
@@ -416,160 +359,280 @@ export default function FlashcardsView({
             const hasValidImage = !!finalUrl && !imgFailed;
             const hasVisual = hasValidImage;
 
-            if (!isFlipped) {
-              // ── FRONT FACE: Question only ─────────────────────────────────
-              return (
+            // Extract dynamic topic pill from card metadata or bolded terms
+            const rawTopicTag =
+              (currentCard as any)?.topic ||
+              (currentCard as any)?.category ||
+              (currentCard as any)?.section ||
+              (() => {
+                const boldMatch = safeBack.match(/\*\*([^*]{3,28})\*\*/);
+                if (boldMatch) return boldMatch[1].trim();
+                const words = String(cleanTitle)
+                  .replace(/^(?:what|how|why|define|explain|list|state|describe|differentiate|compare)\s+(?:is|are|the|between|a|an)?\s*/i, '')
+                  .replace(/[?:.,!]/g, '')
+                  .trim()
+                  .split(/\s+/)
+                  .slice(0, 3)
+                  .join(' ');
+                return words ? words.replace(/\b\w/g, (c) => c.toUpperCase()) : '';
+              })();
+
+            const rawExamTag =
+              (currentCard as any)?.examTag ||
+              (currentCard as any)?.pyqTag ||
+              (currentCard as any)?.asked ||
+              ((currentCard as any)?.marks ? `${(currentCard as any).marks} marks` : '');
+
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  flex: 1,
+                  height: "100%",
+                  maxHeight: "100%",
+                  minHeight: 0,
+                  overflow: "hidden",
+                  position: "relative",
+                }}
+              >
+                <style>{`
+                  .flashcard-question-text p,
+                  .flashcard-question-text h1,
+                  .flashcard-question-text h2,
+                  .flashcard-question-text h3 {
+                    margin: 0 !important;
+                    text-align: center !important;
+                  }
+                  .flashcard-answer-text p,
+                  .flashcard-answer-text div,
+                  .flashcard-answer-text span {
+                    text-align: center !important;
+                    margin: 0 !important;
+                  }
+                  .flashcard-answer-text strong {
+                    font-weight: 800 !important;
+                    color: #1E2822 !important;
+                    border-bottom: 2px dotted #C89B62;
+                    padding-bottom: 1px;
+                  }
+                `}</style>
+
+                {/* ── GPU-Accelerated Question Header Block (Centered initially, slides up smoothly on click) ── */}
                 <div
-                  style={{ display: 'flex', flexDirection: 'column', flex: 1, height: '100%', minHeight: 0, justifyContent: 'center', alignItems: 'center', gap: '18px', cursor: 'pointer', overflow: 'hidden' }}
-                  onClick={() => flipCard(true)}
+                  style={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    flexShrink: 0,
+                    zIndex: 5,
+                    willChange: "transform",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: isFlipped
+                      ? "translate3d(0, 0px, 0) scale(1)"
+                      : "translate3d(0, calc(24vh - 20px), 0) scale(1.05)",
+                    transition: "transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
                 >
-                  <div style={{
-                    fontSize: '22px',
-                    fontWeight: '800',
-                    color: '#0f172a',
-                    lineHeight: '1.35',
-                    textAlign: 'center',
-                    maxWidth: '85%',
-                    maxHeight: '75%',
-                    overflowY: 'auto',
-                  }}>
+                  {/* Top Metadata Pills (Topic + optional Exam Tag) */}
+                  {(rawTopicTag || rawExamTag) && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                        marginBottom: isFlipped ? "4px" : "8px",
+                        flexWrap: "wrap",
+                        transition: "margin-bottom 0.35s ease",
+                      }}
+                    >
+                      {rawTopicTag && (
+                        <span
+                          style={{
+                            background: "#DCE2D9",
+                            color: "#435249",
+                            borderRadius: "999px",
+                            padding: "2px 11px",
+                            fontSize: "10.5px",
+                            fontWeight: 700,
+                            letterSpacing: "0.01em",
+                          }}
+                        >
+                          {rawTopicTag}
+                        </span>
+                      )}
+                      {rawExamTag && (
+                        <span
+                          style={{
+                            background: "#EFE2D4",
+                            color: "#9E5830",
+                            borderRadius: "999px",
+                            padding: "2px 11px",
+                            fontSize: "10.5px",
+                            fontWeight: 700,
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <span>🎯</span>
+                          <span>{rawExamTag}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Question Text */}
+                  <div
+                    className="flashcard-question-text"
+                    style={{
+                      fontSize: isFlipped ? (cleanTitle.length > 85 ? "16.5px" : "18px") : "21px",
+                      fontWeight: 800,
+                      color: "#16201A",
+                      lineHeight: 1.26,
+                      textAlign: "center",
+                      maxWidth: "90%",
+                      letterSpacing: "-0.015em",
+                      transition: "font-size 0.35s ease",
+                    }}
+                  >
                     <MarkdownView content={cleanTitle} />
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); flipCard(true); }}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      borderRadius: '999px',
-                      padding: '4px 12px',
-                      fontSize: '12.5px',
-                      fontWeight: 500,
-                      color: isPurpleTheme ? 'rgba(126, 34, 206, 0.65)' : 'rgba(45, 62, 54, 0.58)',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px',
-                      transition: 'opacity 0.18s ease, color 0.18s ease',
-                      flexShrink: 0,
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = isPurpleTheme ? 'rgba(126, 34, 206, 0.92)' : 'rgba(45, 62, 54, 0.9)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = isPurpleTheme ? 'rgba(126, 34, 206, 0.65)' : 'rgba(45, 62, 54, 0.58)';
-                    }}
-                  >
-                    <span>Click here</span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  </button>
-                </div>
-              );
-            }
-
-            // ── BACK FACE: Answer on Top (Centered) + Infographic Below (Centered) ──
-            return (
-              <div
-                title="Click to flip back to the question"
-                onClick={() => flipCard(false)}
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: hasVisual ? 'flex-start' : 'center',
-                  gap: hasVisual ? '4px' : '10px',
-                  flex: 1,
-                  height: '100%',
-                  maxHeight: '100%',
-                  minHeight: 0,
-                  overflow: 'hidden',
-                  cursor: 'pointer',
-                  paddingTop: hasVisual ? '2px' : '10px',
-                  boxSizing: 'border-box',
-                }}
-              >
-                {/* Answer text: Top center div (no "Answer." heading) */}
-                <div
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    fontSize: hasVisual ? '14.5px' : '17px',
-                    lineHeight: '1.4',
-                    color: '#1e293b',
-                    fontWeight: 500,
-                    padding: hasVisual ? '0 50px 2px' : '12px 30px',
-                    boxSizing: 'border-box',
-                    overflowY: 'auto',
-                    flexShrink: 0,
-                    maxHeight: hasVisual ? '36%' : '100%',
-                  }}
-                >
-                  <style>{`
-                    .flashcard-answer-text p, .flashcard-answer-text div, .flashcard-answer-text span {
-                      text-align: center !important;
-                      margin: 0 !important;
-                    }
-                  `}</style>
-                  <div className="flashcard-answer-text" style={{ maxWidth: '1080px', width: '100%', textAlign: 'center' }}>
-                    <MarkdownView content={safeBack} />
-                  </div>
-                </div>
-
-                {/* Infographic: Bottom center div */}
-                {hasVisual && (
+                  {/* Subtle "Click to pull up answer" hint — only visible before click */}
                   <div
                     style={{
-                      width: '100%',
-                      flex: 1,
-                      minHeight: 0,
-                      position: 'relative',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      padding: '2px 8px 4px',
-                      boxSizing: 'border-box',
-                      overflow: 'hidden',
+                      marginTop: isFlipped ? "0px" : "16px",
+                      height: isFlipped ? "0px" : "24px",
+                      opacity: isFlipped ? 0 : 0.75,
+                      overflow: "hidden",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      color: isPurpleTheme ? "#7E22CE" : "#4E6357",
+                      transition: "opacity 0.25s ease, height 0.35s ease, margin-top 0.35s ease",
+                      pointerEvents: "none",
                     }}
                   >
-                    <img
-                      src={finalUrl}
-                      alt="Infographic"
-                      onClick={(e) => { e.stopPropagation(); setIsZoomed(true); }}
-                      onError={() => setImgFailed(true)}
-                      title="Click to view full screen"
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        left: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        maxWidth: 'calc(100% - 16px)',
-                        maxHeight: 'calc(100% - 8px)',
-                        width: 'auto',
-                        height: 'auto',
-                        objectFit: 'contain',
-                        borderRadius: '12px',
-                        backgroundColor: '#ffffff',
-                        padding: '4px',
-                        border: '1px solid rgba(111, 154, 127, 0.35)',
-                        boxShadow: '0 4px 18px rgba(45, 62, 54, 0.10)',
-                        cursor: 'zoom-in',
-                        boxSizing: 'border-box',
-                        display: 'block',
-                      }}
-                    />
+                    <span>Click to reveal answer</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="18 15 12 9 6 15" />
+                    </svg>
                   </div>
-                )}
+                </div>
+
+                {/* ── GPU-Accelerated Answer + Infographic Section (Pulled up smoothly from below) ── */}
+                <div
+                  style={{
+                    width: "100%",
+                    flex: 1,
+                    minHeight: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: hasVisual ? "flex-start" : "center",
+                    gap: "6px",
+                    marginTop: "6px",
+                    willChange: "transform, opacity",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    transform: isFlipped
+                      ? "translate3d(0, 0px, 0)"
+                      : "translate3d(0, 42vh, 0)",
+                    opacity: isFlipped ? 1 : 0,
+                    pointerEvents: isFlipped ? "auto" : "none",
+                    transition:
+                      "transform 0.54s cubic-bezier(0.22, 1, 0.36, 1) 0.02s, opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.04s",
+                    overflow: "hidden",
+                  }}
+                >
+                  {/* Answer Paragraph — natural height with flex-start so top/bottom lines never clip */}
+                  <div
+                    style={{
+                      width: "100%",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "flex-start",
+                      textAlign: "center",
+                      fontSize: hasVisual
+                        ? safeBack.length > 280
+                          ? "12.8px"
+                          : safeBack.length > 200
+                          ? "13.4px"
+                          : "14px"
+                        : "16.5px",
+                      lineHeight: 1.44,
+                      color: "#2C3730",
+                      fontWeight: 500,
+                      padding: hasVisual ? "2px 24px 4px" : "12px 30px",
+                      boxSizing: "border-box",
+                      overflowY: "auto",
+                      flexShrink: 0,
+                      maxHeight: hasVisual ? "45%" : "100%",
+                    }}
+                  >
+                    <div
+                      className="flashcard-answer-text"
+                      style={{ maxWidth: "1020px", width: "100%", textAlign: "center" }}
+                    >
+                      <MarkdownView content={safeBack} />
+                    </div>
+                  </div>
+
+                  {/* Infographic Card Below Answer */}
+                  {hasVisual && (
+                    <div
+                      style={{
+                        width: "100%",
+                        flex: 1,
+                        minHeight: 0,
+                        position: "relative",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        padding: "0 12px 4px",
+                        boxSizing: "border-box",
+                        overflow: "hidden",
+                      }}
+                    >
+                      <img
+                        src={finalUrl}
+                        alt="Infographic"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsZoomed(true);
+                        }}
+                        onError={() => setImgFailed(true)}
+                        title="Click to view full screen"
+                        style={{
+                          maxWidth: "calc(100% - 16px)",
+                          maxHeight: "calc(100% - 4px)",
+                          width: "auto",
+                          height: "auto",
+                          objectFit: "contain",
+                          borderRadius: "14px",
+                          backgroundColor: "#FFFFFF",
+                          padding: "6px",
+                          border: "1px solid #DFDDD4",
+                          boxShadow: "0 6px 22px rgba(30, 40, 34, 0.08)",
+                          cursor: "zoom-in",
+                          boxSizing: "border-box",
+                          display: "block",
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })()}
-          </div>
         </div>
 
         {/* Right Navigation Button OR Action Icons on Last Card */}
