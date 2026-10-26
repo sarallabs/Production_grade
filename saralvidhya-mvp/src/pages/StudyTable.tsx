@@ -3841,7 +3841,7 @@ export default function StudyTable() {
     videos: "Videos",
     ask: "Ask Me",
     assessment: "Assessments",
-    qbank: "Question Bank",
+    qbank: "Q. Bank",
     swot: "SWOT Analysis",
     pyq: "PYQs",
     leaderboard: "Leaderboard",
@@ -4561,7 +4561,7 @@ export default function StudyTable() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
                                 {renderNode('revision_flashcards', 'Revise', '#E7B864')}
                                 {renderNode('assessment', 'Assessment', '#E7B864')}
-                                {renderNode('qbank', 'Question Bank', '#E7B864')}
+                                {renderNode('qbank', 'Q. Bank', '#E7B864')}
                               </div>
                             </div>
 
@@ -4585,7 +4585,7 @@ export default function StudyTable() {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
                                 {renderNode('pyq', 'PYQs', '#B5BA9B')}
-                                {renderNode('prep_exam', 'Preparation Exam', '#B5BA9B')}
+                                {renderNode('prep_exam', 'Exam Prep', '#B5BA9B')}
                                 {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
                               </div>
                             </div>
