@@ -173,6 +173,18 @@ export function getCloudUiCopy(): Record<string, any> {
   return {
     ...(activeCloudPlatformConfig?.uiCopy || {}),
     ...(activeCloudTenantConfig?.uiCopy || {}),
+    studyTools: {
+      ...(activeCloudPlatformConfig?.uiCopy?.studyTools || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.studyTools || {}),
+    },
+    toolbarLabels: {
+      ...(activeCloudPlatformConfig?.uiCopy?.toolbarLabels || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.toolbarLabels || {}),
+    },
+    toolbarSections: {
+      ...(activeCloudPlatformConfig?.uiCopy?.toolbarSections || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.toolbarSections || {}),
+    },
   };
 }
 

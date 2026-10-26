@@ -87,7 +87,7 @@ import { useFocusMode } from "@/context/FocusModeContext";
 import ReadAloudBar, { preprocessSummaryText } from "@/components/study/ReadAloudBar";
 import ReadingHighlightView from "@/components/study/ReadingHighlightView";
 import { getRegistryTenantId } from "@/data/manifestService";
-import { useTenant } from "@/tenant/TenantProvider";
+import { useTenant, getCloudUiCopy } from "@/tenant/TenantProvider";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
 import { cloudStorage } from "@/context/CloudStateContext";
 const MindMapView = React.lazy(() => import("@/components/MindMapView"));
@@ -458,7 +458,8 @@ export default function StudyTable() {
   const isMoocMode = cloudStorage.getItem('sv_moocs_mode') === 'true';
 
   const className = searchParams.get("className") || "Class";
-  const subjectName = searchParams.get("subjectName") || "Subject";
+  const [dbSubjectName, setDbSubjectName] = useState<string | null>(null);
+  const subjectName = dbSubjectName || searchParams.get("subjectName") || savedCourseParams.subjectName || "Subject";
   const semesterName = searchParams.get("semesterName") || "";
   const personaRaw = searchParams.get("persona") || "intermediate";
   const [persona, setPersonaState] = useState<DifficultyLevel>(
@@ -542,6 +543,8 @@ export default function StudyTable() {
   useEffect(() => {
     if (!subjectId) return;
     getManifest().then((m) => {
+      const subjObj = m.subjects.find((s) => s.id === subjectId);
+      if (subjObj?.name) setDbSubjectName(subjObj.name);
       const list = getChapters(m, subjectId);
       setSubjectChapters(list);
     });
@@ -4310,6 +4313,11 @@ export default function StudyTable() {
 
                   const renderNode = (toolId: ToolId, labelOverride?: string, colorOverride?: string) => {
                     const locked = false;
+                    const cloudUiCopy = getCloudUiCopy();
+                    labelOverride =
+                      cloudUiCopy?.toolbarLabels?.[toolId] ||
+                      cloudUiCopy?.studyTools?.[toolId] ||
+                      labelOverride;
                     const active = activeTool === toolId ||
                       (toolId === "summary" && activeTool === "detailed") ||
                       (toolId === "prep_exam" && ((activeTool as string) === "mocktest" || (activeTool as string) === "pre_final_test")) ||
@@ -4327,7 +4335,7 @@ export default function StudyTable() {
                           e.stopPropagation();
                           if (!locked) {
                             if (toolId === "mocktest" || toolId === "prep_exam") {
-                              setMockTestVariant(labelOverride === "Preparation Exam" ? "prep" : "mock");
+                              setMockTestVariant(toolId === "prep_exam" ? "prep" : "mock");
                             }
                             setActiveTool(toolId);
                           }
