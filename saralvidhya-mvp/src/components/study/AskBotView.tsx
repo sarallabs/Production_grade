@@ -30,6 +30,93 @@ interface ChatMessage {
   structured?: StructuredBotAnswer;
 }
 
+interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  chapterNumber: number;
+  chapterName: string;
+  difficulty: DifficultyLevel;
+  messages: ChatMessage[];
+}
+
+function formatSessionTime(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "Recent";
+    const diffMs = Date.now() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "Recent";
+  }
+}
+
+function loadChapterSessions(
+  sessionsKey: string,
+  subjectId: string,
+  chapterNumber: number,
+  chapterName: string,
+  currentDifficulty: DifficultyLevel,
+): ChatSession[] {
+  try {
+    const raw = cloudStorage.getItem(sessionsKey);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.filter((s) => s && typeof s.id === "string" && Array.isArray(s.messages) && s.messages.length > 0);
+      }
+    }
+  } catch {
+    // ignore parse error
+  }
+
+  // Migrate any legacy single-session keys for this chapter
+  const migrated: ChatSession[] = [];
+  const levels: DifficultyLevel[] = ["beginner", "intermediate", "advanced"];
+  const seenFirstUserText = new Set<string>();
+  for (const lvl of levels) {
+    try {
+      const legacyRaw = cloudStorage.getItem(`ask_chat_v3_${subjectId}_${chapterNumber}_${lvl}`);
+      if (legacyRaw) {
+        const parsedMsgs = JSON.parse(legacyRaw);
+        if (Array.isArray(parsedMsgs) && parsedMsgs.length > 0) {
+          const firstUser = parsedMsgs.find((m: ChatMessage) => m.role === "user" && m.text)?.text || `${chapterName || "Chapter"} Q&A`;
+          if (!seenFirstUserText.has(firstUser)) {
+            seenFirstUserText.add(firstUser);
+            const now = new Date().toISOString();
+            migrated.push({
+              id: `sess_migrated_${chapterNumber}_${lvl}`,
+              title: firstUser.length > 68 ? `${firstUser.slice(0, 65)}...` : firstUser,
+              createdAt: now,
+              updatedAt: now,
+              chapterNumber,
+              chapterName,
+              difficulty: lvl || currentDifficulty,
+              messages: parsedMsgs.slice(-30),
+            });
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+  if (migrated.length > 0) {
+    try {
+      cloudStorage.setItem(sessionsKey, JSON.stringify(migrated));
+    } catch {
+      // ignore
+    }
+  }
+  return migrated;
+}
+
 interface SeedExchange {
   question: string;
   answerText: string;
@@ -410,52 +497,106 @@ export default function AskBotView({
     [subjectId, _chapterNumber, _difficulty],
   );
 
+  const sessionsStorageKey = useMemo(
+    () => `ask_sessions_v1_${subjectId}_${_chapterNumber}`,
+    [subjectId, _chapterNumber],
+  );
+
+  const [sessions, setSessions] = useState<ChatSession[]>(() =>
+    loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty),
+  );
+
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
+    const initial = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
+    return initial[0]?.id || null;
+  });
+
+  const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
+
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    try {
-      const raw = cloudStorage.getItem(chatStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.slice(-20);
-        }
-      }
-    } catch {
-      // ignore storage parse error
+    const initial = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
+    if (initial.length > 0 && initial[0].messages.length > 0) {
+      return initial[0].messages.slice(-30);
     }
     return [];
   });
 
-  // Load saved conversation or start empty when subject or chapter changes
+  // Reload sessions when chapter/subject changes
   useEffect(() => {
-    try {
-      const raw = cloudStorage.getItem(chatStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setMessages(parsed.slice(-20));
-          return;
-        }
-      }
-    } catch {
-      // ignore
+    const loaded = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
+    setSessions(loaded);
+    if (loaded.length > 0) {
+      setActiveSessionId(loaded[0].id);
+      setMessages(loaded[0].messages.slice(-30));
+    } else {
+      setActiveSessionId(null);
+      setMessages([]);
     }
-    setMessages([]);
-  }, [chatStorageKey]);
+  }, [sessionsStorageKey, subjectId, _chapterNumber]);
 
-  // Persist conversation
+  // Hydrate sessions when CloudStateContext finishes syncing from Firestore
+  useEffect(() => {
+    return cloudStorage.subscribe(() => {
+      const loaded = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
+      setSessions((prev) => {
+        if (prev.length === 0 && loaded.length > 0) {
+          setActiveSessionId((currId) => currId || loaded[0].id);
+          setMessages((currMsgs) => (currMsgs.length === 0 ? loaded[0].messages.slice(-30) : currMsgs));
+          return loaded;
+        }
+        return prev;
+      });
+    });
+  }, [sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty]);
+
+  // Persist active conversation into multi-session history & cloudStorage
   useEffect(() => {
     if (messages.some((m) => m.loading)) return;
-    try {
-      if (messages.length === 0) {
-        cloudStorage.removeItem(chatStorageKey);
-      } else {
-        cloudStorage.setItem(chatStorageKey, JSON.stringify(messages.slice(-20)));
-      }
-    } catch {
-      // ignore
-    }
-  }, [messages, chatStorageKey]);
+    if (messages.length === 0) return;
 
+    const firstUserMsg = messages.find((m) => m.role === user && m.text)?.text || `${cleanChapterTitle} Session`;
+    const sessionTitle = firstUserMsg.length > 68 ? `${firstUserMsg.slice(0, 65)}...` : firstUserMsg;
+    const now = new Date().toISOString();
+    const targetId = activeSessionId || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+
+    if (!activeSessionId) {
+      setActiveSessionId(targetId);
+    }
+
+    setSessions((prev) => {
+      const existingIdx = prev.findIndex((s) => s.id === targetId);
+      let next: ChatSession[];
+      if (existingIdx >= 0) {
+        const updatedSession: ChatSession = {
+          ...prev[existingIdx],
+          title: prev[existingIdx].title || sessionTitle,
+          updatedAt: now,
+          difficulty: _difficulty,
+          messages: messages.slice(-30),
+        };
+        next = [updatedSession, ...prev.filter((_, i) => i !== existingIdx)].slice(0, 25);
+      } else {
+        const newSession: ChatSession = {
+          id: targetId,
+          title: sessionTitle,
+          createdAt: now,
+          updatedAt: now,
+          chapterNumber: _chapterNumber,
+          chapterName,
+          difficulty: _difficulty,
+          messages: messages.slice(-30),
+        };
+        next = [newSession, ...prev].slice(0, 25);
+      }
+      try {
+        cloudStorage.setItem(sessionsStorageKey, JSON.stringify(next));
+        cloudStorage.setItem(chatStorageKey, JSON.stringify(messages.slice(-20)));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  }, [messages, activeSessionId, sessionsStorageKey, chatStorageKey, _chapterNumber, chapterName, cleanChapterTitle, _difficulty]);
   const [input, setInput] = useState("");
   const [isSending, setIsSending] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -761,10 +902,47 @@ export default function AskBotView({
   const handleResetToSeed = () => {
     googleTtsStop();
     setSpeakingIdx(null);
+    setActiveSessionId(null);
     setMessages([]);
-    cloudStorage.removeItem(chatStorageKey);
     setInput("");
     inputRef.current?.focus();
+  };
+
+  const handleSelectSession = (session: ChatSession) => {
+    googleTtsStop();
+    setSpeakingIdx(null);
+    setActiveSessionId(session.id);
+    setMessages(session.messages.slice(-30));
+    if (isCompactDrawer) {
+      setIsHistoryOpen(false);
+    }
+  };
+
+  const handleDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSessions((prev) => {
+      const next = prev.filter((s) => s.id !== sessionId);
+      try {
+        if (next.length === 0) {
+          cloudStorage.removeItem(sessionsStorageKey);
+          cloudStorage.removeItem(chatStorageKey);
+        } else {
+          cloudStorage.setItem(sessionsStorageKey, JSON.stringify(next));
+        }
+      } catch {
+        // ignore
+      }
+      if (activeSessionId === sessionId) {
+        if (next.length > 0) {
+          setActiveSessionId(next[0].id);
+          setMessages(next[0].messages.slice(-30));
+        } else {
+          setActiveSessionId(null);
+          setMessages([]);
+        }
+      }
+      return next;
+    });
   };
 
   return (
@@ -789,43 +967,123 @@ export default function AskBotView({
         .saral-ask-v2-md ul, .saral-ask-v2-md ol { margin: 6px 0 0 18px !important; padding: 0 !important; }
         .saral-ask-v2-md li { margin: 3px 0 !important; }
       `}</style>
-      {/* ── Top Sub-Header Bar (Breadcrumb + Grounded Badge) ── */}
-      {!isCompactDrawer && (
+      {/* ── Top Sub-Header Bar (Breadcrumb + History + New Session + Grounded Badge) ── */}
+      <div
+        style={{
+          height: isCompactDrawer ? "42px" : "50px",
+          padding: isCompactDrawer ? "0 14px" : "0 24px",
+          background: "#FAF8F3",
+          borderBottom: "1px solid #EAE4D7",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+          gap: "12px",
+        }}
+      >
         <div
           style={{
-            height: "50px",
-            padding: "0 24px",
-            background: "#FAF8F3",
-            borderBottom: "1px solid #EAE4D7",
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            flexShrink: 0,
-            gap: "16px",
+            gap: "10px",
+            minWidth: 0,
+            overflow: "hidden",
           }}
         >
-          <div
+          {/* History Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsHistoryOpen((v) => !v)}
+            title="View past chat sessions"
             style={{
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              fontSize: "13.5px",
-              color: "#7A827C",
-              fontWeight: 500,
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
+              gap: "6px",
+              padding: "5px 11px",
+              borderRadius: "999px",
+              background: isHistoryOpen ? "#1E2822" : "#F3EFE6",
+              border: isHistoryOpen ? "1px solid #1E2822" : "1px solid #DED7C8",
+              color: isHistoryOpen ? "#FFFFFF" : "#2C3530",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
             }}
           >
-            <span style={{ color: "#1E2822", fontWeight: 700 }}>Ask me</span>
-            <span style={{ margin: "0 9px", color: "#B4B8B2" }}>›</span>
-            <span>{subjectName}</span>
-            <span style={{ margin: "0 9px", color: "#B4B8B2" }}>›</span>
-            <span>
-              {unitPrefix} {_chapterNumber} · {cleanChapterTitle}
-            </span>
-          </div>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+              <path d="M12 7v5l4 2" />
+            </svg>
+            <span>History</span>
+            {sessions.length > 0 && (
+              <span
+                style={{
+                  padding: "1px 6px",
+                  borderRadius: "999px",
+                  background: isHistoryOpen ? "#D9A382" : "#E5DFD2",
+                  color: "#1E2822",
+                  fontSize: "10.5px",
+                  fontWeight: 800,
+                }}
+              >
+                {sessions.length}
+              </span>
+            )}
+          </button>
 
-          {/* Grounded in your university course material pill */}
+          {/* + New Chat Button */}
+          <button
+            type="button"
+            onClick={handleResetToSeed}
+            title="Start a new chat session"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "5px 11px",
+              borderRadius: "999px",
+              background: messages.length === 0 ? "#F8F6F0" : "#FBF4EE",
+              border: "1px solid #E5CFC0",
+              color: "#9E582F",
+              fontSize: "12px",
+              fontWeight: 700,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+          >
+            <span style={{ fontSize: "14px", lineHeight: 1, fontWeight: 800 }}>+</span>
+            <span>New Chat</span>
+          </button>
+
+          {!isCompactDrawer && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                fontSize: "13px",
+                color: "#7A827C",
+                fontWeight: 500,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                marginLeft: "4px",
+              }}
+            >
+              <span style={{ color: "#1E2822", fontWeight: 700 }}>Ask me</span>
+              <span style={{ margin: "0 8px", color: "#B4B8B2" }}>›</span>
+              <span>{subjectName}</span>
+              <span style={{ margin: "0 8px", color: "#B4B8B2" }}>›</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                {unitPrefix} {_chapterNumber} · {cleanChapterTitle}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Grounded in your university course material pill */}
+        {!isCompactDrawer && (
           <div
             style={{
               display: "inline-flex",
@@ -844,21 +1102,221 @@ export default function AskBotView({
             <span style={{ fontSize: "13px", lineHeight: 1 }}>📕</span>
             <span>Grounded in your university course material</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* ── Main Scrollable Conversation Area ── */}
+      {/* ── Body Wrapper: Session History Sidebar + Main Scrollable Area ── */}
       <div
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: "auto",
-          padding: isCompactDrawer ? "16px 14px" : "26px 24px 18px",
           display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
+          flexDirection: "row",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* ── Collapsible Multi-Session History Sidebar ── */}
+        {isHistoryOpen && (
+          <aside
+            aria-label="Chat Session History"
+            style={{
+              width: isCompactDrawer ? "100%" : "290px",
+              position: isCompactDrawer ? "absolute" : "relative",
+              inset: isCompactDrawer ? 0 : undefined,
+              zIndex: 20,
+              background: "#FAF8F3",
+              borderRight: "1px solid #EAE4D7",
+              display: "flex",
+              flexDirection: "column",
+              height: "100%",
+              flexShrink: 0,
+              boxShadow: isCompactDrawer ? "0 8px 24px rgba(30,40,34,0.12)" : "none",
+            }}
+          >
+            <div
+              style={{
+                padding: "12px 14px",
+                borderBottom: "1px solid #EAE4D7",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "11px", fontWeight: 800, letterSpacing: "0.07em", color: "#6E7771", textTransform: "uppercase" }}>
+                  SESSION HISTORY
+                </div>
+                <div style={{ fontSize: "12px", color: "#1E2822", fontWeight: 600, marginTop: "2px" }}>
+                  {unitPrefix} {_chapterNumber} · {sessions.length} {sessions.length === 1 ? "session" : "sessions"}
+                </div>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleResetToSeed();
+                    if (isCompactDrawer) setIsHistoryOpen(false);
+                  }}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "999px",
+                    background: "#D9A382",
+                    color: "#18221D",
+                    border: "none",
+                    fontSize: "11.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  + New
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryOpen(false)}
+                  title="Close history"
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    borderRadius: "50%",
+                    background: "#EFECE4",
+                    border: "none",
+                    color: "#4A544E",
+                    fontSize: "13px",
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <div
+              style={{
+                flex: 1,
+                overflowY: "auto",
+                padding: "10px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              {sessions.length === 0 ? (
+                <div
+                  style={{
+                    padding: "24px 14px",
+                    textAlign: "center",
+                    color: "#7A827C",
+                    fontSize: "12.5px",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  No saved sessions for {unitPrefix} {_chapterNumber} yet. Ask any question below to start your first session.
+                </div>
+              ) : (
+                sessions.map((sess) => {
+                  const isActive = sess.id === activeSessionId && messages.length > 0;
+                  const qCount = sess.messages.filter((m) => m.role === "user").length;
+                  return (
+                    <div
+                      key={sess.id}
+                      onClick={() => handleSelectSession(sess)}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "12px",
+                        background: isActive ? "#FBF4EE" : "#FFFFFF",
+                        border: isActive ? "1.5px solid #BD7D52" : "1px solid #E6E0D4",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "5px",
+                        transition: "all 0.15s ease",
+                        position: "relative",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px" }}>
+                        <div
+                          style={{
+                            fontSize: "12.8px",
+                            fontWeight: isActive ? 700 : 600,
+                            color: "#1E2822",
+                            lineHeight: 1.35,
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                          }}
+                        >
+                          {sess.title}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteSession(sess.id, e)}
+                          title="Delete session"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#9A9F9A",
+                            fontSize: "14px",
+                            cursor: "pointer",
+                            padding: "0 2px",
+                            lineHeight: 1,
+                            flexShrink: 0,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          fontSize: "11px",
+                          color: "#7A827C",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>{formatSessionTime(sess.updatedAt)}</span>
+                        <span>·</span>
+                        <span>{qCount} {qCount === 1 ? "question" : "questions"}</span>
+                        {isActive && (
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              color: "#BD7D52",
+                              fontWeight: 800,
+                              fontSize: "10.5px",
+                            }}
+                          >
+                            Active
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+          </aside>
+        )}
+
+        {/* ── Main Scrollable Conversation Area ── */}
+        <div
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            padding: isCompactDrawer ? "16px 14px" : "26px 24px 18px",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
         <div
           style={{
             width: "100%",
@@ -1061,6 +1519,103 @@ export default function AskBotView({
                   ))}
                 </div>
               </div>
+
+              {/* Recent Sessions Strip on Welcome Screen */}
+              {sessions.length > 0 && (
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E8E2D7",
+                    borderRadius: "14px",
+                    padding: "14px 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 800,
+                        letterSpacing: "0.08em",
+                        color: "#6E7771",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      RECENT SESSIONS ({sessions.length})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsHistoryOpen(true)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#BD7D52",
+                        fontSize: "12px",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      View all history →
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+                    {sessions.slice(0, 3).map((sess) => {
+                      const qCount = sess.messages.filter((m) => m.role === "user").length;
+                      return (
+                        <button
+                          key={sess.id}
+                          type="button"
+                          onClick={() => handleSelectSession(sess)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "12px",
+                            padding: "9px 13px",
+                            borderRadius: "10px",
+                            background: "#FAF8F3",
+                            border: "1px solid #EAE4D7",
+                            cursor: "pointer",
+                            textAlign: "left",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "12.8px",
+                              fontWeight: 600,
+                              color: "#1E2822",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            🕒 {sess.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: "11.5px",
+                              color: "#7A827C",
+                              fontWeight: 600,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {qCount} Q&amp;A · {formatSessionTime(sess.updatedAt)}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
           {messages.map((m, idx) => {
@@ -1646,8 +2201,8 @@ export default function AskBotView({
           })}
           <div ref={chatEndRef} />
         </div>
+        </div>
       </div>
-
       {/* ── Bottom Floating Input Bar ── */}
       <div
         style={{
