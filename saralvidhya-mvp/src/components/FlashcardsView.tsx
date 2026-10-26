@@ -404,6 +404,8 @@ export default function FlashcardsView({
                   .flashcard-question-text h3 {
                     margin: 0 !important;
                     text-align: center !important;
+                    font-size: inherit !important;
+                    line-height: inherit !important;
                   }
                   .flashcard-answer-text p,
                   .flashcard-answer-text div,
@@ -419,47 +421,48 @@ export default function FlashcardsView({
                   }
                 `}</style>
 
-                {/* ── GPU-Accelerated Question Header Block (Centered initially, slides up smoothly on click) ── */}
+                {/* ── GPU-Accelerated Question Header Block (Centered & large initially, slides up & shrinks to original state on click) ── */}
                 <div
                   style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
                     flexShrink: 0,
                     zIndex: 5,
-                    willChange: "transform",
-                    backfaceVisibility: "hidden",
-                    WebkitBackfaceVisibility: "hidden",
+                    willChange: 'transform',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
                     transform: isFlipped
-                      ? "translate3d(0, 0px, 0) scale(1)"
-                      : "translate3d(0, calc(24vh - 20px), 0) scale(1.05)",
-                    transition: "transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)",
+                      ? 'translate3d(0, 0px, 0) scale(1)'
+                      : 'translate3d(0, calc(18vh - 16px), 0) scale(1)',
+                    transition: 'transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
                   {/* Top Metadata Pills (Topic + optional Exam Tag) */}
                   {(rawTopicTag || rawExamTag) && (
                     <div
                       style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "8px",
-                        marginBottom: isFlipped ? "4px" : "8px",
-                        flexWrap: "wrap",
-                        transition: "margin-bottom 0.35s ease",
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: isFlipped ? '8px' : '10px',
+                        marginBottom: isFlipped ? '4px' : '18px',
+                        flexWrap: 'wrap',
+                        transition: 'margin-bottom 0.45s cubic-bezier(0.22, 1, 0.36, 1), gap 0.45s ease',
                       }}
                     >
                       {rawTopicTag && (
                         <span
                           style={{
-                            background: "#DCE2D9",
-                            color: "#435249",
-                            borderRadius: "999px",
-                            padding: "2px 11px",
-                            fontSize: "10.5px",
+                            background: '#DCE2D9',
+                            color: '#435249',
+                            borderRadius: '999px',
+                            padding: isFlipped ? '2px 11px' : '6px 18px',
+                            fontSize: isFlipped ? '10.5px' : '14px',
                             fontWeight: 700,
-                            letterSpacing: "0.01em",
+                            letterSpacing: '0.01em',
+                            transition: 'font-size 0.45s cubic-bezier(0.22, 1, 0.36, 1), padding 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
                           }}
                         >
                           {rawTopicTag}
@@ -468,15 +471,16 @@ export default function FlashcardsView({
                       {rawExamTag && (
                         <span
                           style={{
-                            background: "#EFE2D4",
-                            color: "#9E5830",
-                            borderRadius: "999px",
-                            padding: "2px 11px",
-                            fontSize: "10.5px",
+                            background: '#EFE2D4',
+                            color: '#9E5830',
+                            borderRadius: '999px',
+                            padding: isFlipped ? '2px 11px' : '6px 18px',
+                            fontSize: isFlipped ? '10.5px' : '14px',
                             fontWeight: 700,
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'font-size 0.45s cubic-bezier(0.22, 1, 0.36, 1), padding 0.45s cubic-bezier(0.22, 1, 0.36, 1)',
                           }}
                         >
                           <span>🎯</span>
@@ -488,16 +492,23 @@ export default function FlashcardsView({
 
                   {/* Question Text */}
                   <div
-                    className="flashcard-question-text"
+                    className='flashcard-question-text'
                     style={{
-                      fontSize: isFlipped ? (cleanTitle.length > 85 ? "16.5px" : "18px") : "21px",
+                      fontSize: isFlipped
+                        ? (cleanTitle.length > 85 ? '16.5px' : '18px')
+                        : (cleanTitle.length > 120
+                            ? 'clamp(28px, 2.8vw, 36px)'
+                            : cleanTitle.length > 80
+                              ? 'clamp(32px, 3.2vw, 42px)'
+                              : 'clamp(36px, 3.8vw, 48px)'),
                       fontWeight: 800,
-                      color: "#16201A",
-                      lineHeight: 1.26,
-                      textAlign: "center",
-                      maxWidth: "90%",
-                      letterSpacing: "-0.015em",
-                      transition: "font-size 0.35s ease",
+                      color: '#16201A',
+                      lineHeight: isFlipped ? 1.26 : 1.32,
+                      textAlign: 'center',
+                      maxWidth: isFlipped ? '90%' : '86%',
+                      padding: isFlipped ? '0px' : '0 24px',
+                      letterSpacing: '-0.015em',
+                      transition: 'font-size 0.45s cubic-bezier(0.22, 1, 0.36, 1), line-height 0.45s ease, max-width 0.45s ease, padding 0.45s ease',
                     }}
                   >
                     <MarkdownView content={cleanTitle} />
