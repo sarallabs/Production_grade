@@ -7,6 +7,7 @@ import {
   applyHydratedCloudState,
   getCloudAuthHeaders,
 } from '@/context/CloudStateContext';
+import { registerCloudGlossaryTerms } from '@/data/glossaryTerms';
 
 export interface TenantConfig {
   id: string;
@@ -296,6 +297,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         if (isMounted && data.tenant) {
           if (data.platformConfig) {
             activeCloudPlatformConfig = data.platformConfig;
+            if (data.platformConfig.glossaryTerms) {
+              registerCloudGlossaryTerms(data.platformConfig.glossaryTerms);
+            }
+          }
+          if (data.tenant.glossaryTerms) {
+            registerCloudGlossaryTerms(data.tenant.glossaryTerms);
           }
           activeCloudTenantConfig = data.tenant;
           applyTenantBrandingToDom(data.tenant);

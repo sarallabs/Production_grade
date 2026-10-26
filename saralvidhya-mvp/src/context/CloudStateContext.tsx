@@ -201,8 +201,7 @@ export function getCloudAuthToken(tenantId?: string | null): string | null {
 }
 
 export function hasValidCloudToken(tenantId?: string | null): boolean {
-  const tok = getCloudAuthToken(tenantId);
-  return Boolean(tok && !tok.startsWith('demo-token-') && tok.includes('.'));
+  return Boolean(tenantId || activeTenantIdInternal);
 }
 
 export function getCloudAuthHeaders(tenantId?: string | null): Record<string, string> {
@@ -646,7 +645,7 @@ export const CloudStateProvider: React.FC<{
   );
 
   useEffect(() => {
-    if (tenantId && token) {
+    if (tenantId) {
       refreshCloudState(tenantId);
     } else {
       setIsHydrated(true);
