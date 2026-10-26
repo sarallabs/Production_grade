@@ -13,10 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
-import {
-  SAMPLE_ASSESSMENT_QUESTIONS,
-  AssessmentQuestion,
-} from '@/services/assessmentService';
+import { AssessmentQuestion } from '@/services/assessmentService';
 import { fetchMockTest } from '@/services/contentService';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
@@ -39,9 +36,7 @@ export default function AssessmentView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const [questions, setQuestions] = useState<AssessmentQuestion[]>(
-    SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []
-  );
+  const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
@@ -57,11 +52,7 @@ export default function AssessmentView({
     fetchMockTest(subjectId, chapterNumber, controller.signal)
       .then((data) => {
         if (isMounted) {
-          if (data && data.assessmentQuestions.length > 0) {
-            setQuestions(data.assessmentQuestions);
-          } else {
-            setQuestions(SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []);
-          }
+          setQuestions(data?.assessmentQuestions || []);
           setCurrentIndex(0);
           setSelectedOptions([]);
           setIsEvaluated(false);
@@ -75,7 +66,7 @@ export default function AssessmentView({
           console.warn('[AssessmentView] Error fetching mock test:', err);
         }
         if (isMounted) {
-          setQuestions(SAMPLE_ASSESSMENT_QUESTIONS[chapterNumber] || SAMPLE_ASSESSMENT_QUESTIONS[1] || []);
+          setQuestions([]);
           setIsLoading(false);
         }
       });
@@ -90,13 +81,49 @@ export default function AssessmentView({
   const questionNumberFormatted = currentIndex + 1 < 10 ? `0${currentIndex + 1}` : `${currentIndex + 1}`;
   const totalQuestions = questions.length;
 
+  const isMultiple = Boolean(
+    currentQ?.isMultipleSelect ||
+    (Array.isArray(currentQ?.correctAnswers) && currentQ.correctAnswers.length > 1)
+  );
+
   const handleSelectOption = (idx: number) => {
+    if (isEvaluated) return; // Do not allow changing answers after evaluation
     Haptics.selectionAsync();
-    const newSelected = [idx];
-    setSelectedOptions(newSelected);
+
+    if (isMultiple) {
+      // Toggle selection for Multiple Select (MSQ)
+      setSelectedOptions((prev) => {
+        if (prev.includes(idx)) {
+          return prev.filter((i) => i !== idx);
+        } else {
+          return [...prev, idx].sort((a, b) => a - b);
+        }
+      });
+    } else {
+      // Single Choice (MCQ): select single option
+      setSelectedOptions([idx]);
+    }
+  };
+
+  const handleSubmitAnswer = () => {
+    if (selectedOptions.length === 0) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      Alert.alert(
+        'Selection Required',
+        isMultiple
+          ? 'Please select at least one option before submitting.'
+          : 'Please select an option before checking.'
+      );
+      return;
+    }
+
     setIsEvaluated(true);
 
-    const isCorrect = currentQ.correctAnswers.includes(idx);
+    const isCorrect =
+      Array.isArray(currentQ.correctAnswers) &&
+      selectedOptions.length === currentQ.correctAnswers.length &&
+      selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
+
     if (isCorrect) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } else {
@@ -105,17 +132,11 @@ export default function AssessmentView({
 
     setUserAnswersRecord((prev) => ({
       ...prev,
-      [currentQ.id]: newSelected,
+      [currentQ.id]: selectedOptions,
     }));
   };
 
   const handleNext = () => {
-    if (!isEvaluated && selectedOptions.length === 0) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-      Alert.alert('Selection Required', 'Please select an option to proceed.');
-      return;
-    }
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (currentIndex < questions.length - 1) {
@@ -125,6 +146,14 @@ export default function AssessmentView({
     } else {
       setIsQuizComplete(true);
       onFinish?.();
+    }
+  };
+
+  const handleActionButton = () => {
+    if (!isEvaluated) {
+      handleSubmitAnswer();
+    } else {
+      handleNext();
     }
   };
 
@@ -164,16 +193,6 @@ export default function AssessmentView({
   const eyebrowColor = isDark ? '#B2E0C2' : '#2B634A';
   const footerTextColor = isDark ? '#BAD1BF' : '#576E61';
 
-  const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
-  const correctLetterString = currentQ.correctAnswers
-    .map((ansIdx) => OPTION_LETTERS[ansIdx] || `${ansIdx + 1}`)
-    .join(', ');
-
-  const isQuestionCorrect =
-    selectedOptions.length > 0 &&
-    selectedOptions.length === currentQ.correctAnswers.length &&
-    selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
-
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: bg, justifyContent: 'center', alignItems: 'center' }]}>
@@ -184,6 +203,39 @@ export default function AssessmentView({
       </View>
     );
   }
+
+  if (!currentQ || questions.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: bg, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Ionicons name="document-text-outline" size={48} color={isDark ? '#4ade80' : '#22c55e'} />
+        <Text style={{ marginTop: 16, color: textDark, fontSize: 16, fontWeight: '700', textAlign: 'center' }}>
+          No Assessment Questions Available
+        </Text>
+        <Text style={{ marginTop: 8, color: footerTextColor, fontSize: 13, textAlign: 'center' }}>
+          Assessment bank is being compiled for Chapter {chapterNumber}. Please check back soon or try another chapter.
+        </Text>
+        {onBackPress && (
+          <TouchableOpacity
+            style={{ marginTop: 20, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#22c55e', borderRadius: 12 }}
+            onPress={onBackPress}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Go Back</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  }
+
+  const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
+  const correctLetterString = Array.isArray(currentQ.correctAnswers)
+    ? currentQ.correctAnswers.map((ansIdx) => OPTION_LETTERS[ansIdx] || `${ansIdx + 1}`).join(', ')
+    : '';
+
+  const isQuestionCorrect =
+    selectedOptions.length > 0 &&
+    Array.isArray(currentQ.correctAnswers) &&
+    selectedOptions.length === currentQ.correctAnswers.length &&
+    selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
 
   if (isQuizComplete) {
     // Score calculation
@@ -276,9 +328,11 @@ export default function AssessmentView({
               },
             ]}
           >
-            <Text style={[styles.typeDotIcon, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>◉</Text>
+            <Text style={[styles.typeDotIcon, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>
+              {isMultiple ? '☑' : '◉'}
+            </Text>
             <Text style={[styles.typeLabelText, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>
-              {currentQ.isMultipleSelect ? 'Multiple Select' : 'Single Choice (MCQ)'}
+              {isMultiple ? 'Multiple Select' : 'Single Choice (MCQ)'}
             </Text>
           </View>
 
@@ -371,36 +425,81 @@ export default function AssessmentView({
                 onPress={() => handleSelectOption(idx)}
                 activeOpacity={0.85}
               >
-                {/* Circular Radio Indicator (.radioA, .radioB) */}
-                <View
-                  style={[
-                    styles.radioCircle,
-                    {
-                      borderColor: radioBorderColor,
-                      backgroundColor:
-                        showAsCorrect && isSelected
-                          ? isDark
-                            ? '#214730'
-                            : '#E5F7EB'
-                          : showAsWrong
-                          ? isDark
-                            ? '#4F2B2B'
-                            : '#FDF2F0'
-                          : isDark
-                          ? '#21362B'
-                          : '#FFFFFF',
-                    },
-                  ]}
-                >
-                  {radioInnerColor !== 'transparent' && (
-                    <View
-                      style={[
-                        styles.radioInnerDot,
-                        { backgroundColor: radioInnerColor },
-                      ]}
-                    />
-                  )}
-                </View>
+                {/* Option Selector: Checkbox for MSQ, Radio Circle for MCQ */}
+                {isMultiple ? (
+                  <View
+                    style={[
+                      styles.checkboxBox,
+                      {
+                        borderColor: radioBorderColor,
+                        backgroundColor:
+                          showAsCorrect && isSelected
+                            ? isDark
+                              ? '#214730'
+                              : '#E5F7EB'
+                            : showAsWrong
+                            ? isDark
+                              ? '#4F2B2B'
+                              : '#FDF2F0'
+                            : isSelected
+                            ? radioBorderColor
+                            : isDark
+                            ? '#21362B'
+                            : '#FFFFFF',
+                      },
+                    ]}
+                  >
+                    {isSelected && (
+                      <Ionicons
+                        name="checkmark"
+                        size={13}
+                        color={
+                          showAsCorrect
+                            ? isDark
+                              ? '#59B87A'
+                              : '#337A52'
+                            : showAsWrong
+                            ? isDark
+                              ? '#F04A45'
+                              : '#D33C30'
+                            : isDark
+                            ? '#1F2E29'
+                            : '#FFFFFF'
+                        }
+                      />
+                    )}
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.radioCircle,
+                      {
+                        borderColor: radioBorderColor,
+                        backgroundColor:
+                          showAsCorrect && isSelected
+                            ? isDark
+                              ? '#214730'
+                              : '#E5F7EB'
+                            : showAsWrong
+                            ? isDark
+                              ? '#4F2B2B'
+                              : '#FDF2F0'
+                            : isDark
+                            ? '#21362B'
+                            : '#FFFFFF',
+                      },
+                    ]}
+                  >
+                    {radioInnerColor !== 'transparent' && (
+                      <View
+                        style={[
+                          styles.radioInnerDot,
+                          { backgroundColor: radioInnerColor },
+                        ]}
+                      />
+                    )}
+                  </View>
+                )}
 
                 {/* Letter Box (.letterBadgeA, .letterBadgeB) */}
                 <View
@@ -502,23 +601,51 @@ export default function AssessmentView({
           </View>
         )}
 
-        {/* 6. NEXT BUTTON (.nextQuestionButton) */}
+        {/* 6. SUBMIT / NEXT BUTTON */}
         <View style={styles.nextBtnWrap}>
           <TouchableOpacity
             style={[
               styles.nextQuestionButton,
-              { backgroundColor: isDark ? '#B2E0C2' : '#2B634A' },
+              {
+                backgroundColor: !isEvaluated
+                  ? selectedOptions.length === 0
+                    ? isDark
+                      ? '#1E2D25'
+                      : '#C0D5C7'
+                    : isDark
+                    ? '#B2E0C2'
+                    : '#2B634A'
+                  : isDark
+                  ? '#B2E0C2'
+                  : '#2B634A',
+              },
             ]}
-            onPress={handleNext}
+            onPress={handleActionButton}
             activeOpacity={0.88}
           >
             <Text
               style={[
                 styles.nextQuestionLabel,
-                { color: isDark ? '#1A2921' : '#FFFFFF' },
+                {
+                  color: !isEvaluated && selectedOptions.length === 0
+                    ? isDark
+                      ? '#4D6E57'
+                      : '#6B8777'
+                    : isDark
+                    ? '#1A2921'
+                    : '#FFFFFF',
+                },
               ]}
             >
-              {currentIndex === questions.length - 1 ? 'Finish Assessment' : 'Next'}
+              {!isEvaluated
+                ? isMultiple
+                  ? selectedOptions.length > 0
+                    ? `Submit Answer (${selectedOptions.length} selected)`
+                    : 'Submit Answer'
+                  : 'Check Answer'
+                : currentIndex === questions.length - 1
+                ? 'Finish Assessment'
+                : 'Next'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -710,6 +837,15 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#336B54',
+  },
+  checkboxBox: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   letterBox: {
     width: 28,

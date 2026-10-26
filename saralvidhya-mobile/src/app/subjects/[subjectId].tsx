@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -137,16 +138,38 @@ export default function SubjectChaptersScreen() {
 
       {/* Top Header */}
       <View style={styles.navBar}>
-        <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: iconBtnBg }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            router.back();
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-back" size={20} color={headerTextColor} />
-        </TouchableOpacity>
+        <View style={styles.leftNavActions}>
+          <TouchableOpacity
+            style={[styles.navButton, { backgroundColor: iconBtnBg }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            activeOpacity={0.8}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="arrow-back" size={20} color={headerTextColor} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.treeButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.replace('/courses');
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Go to Courses"
+            accessibilityRole="button"
+          >
+            <Image
+              source={require('@/assets/images/saral-tree.png')}
+              style={styles.headerTreeImage}
+              contentFit="contain"
+            />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.navTitleContainer}>
           <Text style={[styles.navTitle, { color: headerTextColor }]} numberOfLines={1}>
@@ -156,8 +179,6 @@ export default function SubjectChaptersScreen() {
             {subject?.code} • {subject?.credits || '3 (2+1) Credits'} • {subject?.chapters.length || 0} Units
           </Text>
         </View>
-
-        <View style={{ width: 40, height: 40 }} />
       </View>
 
       <ScrollView
@@ -248,6 +269,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  leftNavActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  treeButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  headerTreeImage: {
+    width: 26,
+    height: 32,
   },
   navTitleContainer: {
     flex: 1,

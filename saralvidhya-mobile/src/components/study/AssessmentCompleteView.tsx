@@ -34,16 +34,19 @@ export default function AssessmentCompleteView({
 
   // Calculate score
   let correctCount = 0;
-  questions.forEach((q) => {
-    const selected = userAnswers[q.id] || [];
-    const expected = q.correctAnswers;
-    const isCorrect =
-      selected.length === expected.length &&
-      selected.every((idx) => expected.includes(idx));
-    if (isCorrect) correctCount++;
-  });
+  if (Array.isArray(questions) && questions.length > 0) {
+    questions.forEach((q) => {
+      const selected = userAnswers?.[q.id] || [];
+      const expected = Array.isArray(q.correctAnswers) ? q.correctAnswers : [];
+      const isCorrect =
+        selected.length > 0 &&
+        selected.length === expected.length &&
+        selected.every((idx) => expected.includes(idx));
+      if (isCorrect) correctCount++;
+    });
+  }
 
-  const totalQuestions = questions.length;
+  const totalQuestions = questions?.length || 1;
   const percentage = Math.round((correctCount / totalQuestions) * 100);
 
   const getTier = () => {

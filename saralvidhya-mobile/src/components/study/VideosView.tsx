@@ -366,6 +366,9 @@ export default function VideosView({
   const hideControlsTimerRef = useRef<any>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const playerRef = useRef<any>(null);
+  const playerFsRef = useRef<any>(null);
+  const currentTimeRef = useRef<number>(0);
+  const hasStartedRef = useRef<boolean>(false);
 
   // Orientation handling: Lock to landscape for fullscreen, restore portrait/default on exit
   const lockLandscape = useCallback(async () => {
@@ -392,13 +395,15 @@ export default function VideosView({
     }
   }, []);
 
-  // Sync orientation with isFullScreen state (only lock landscape when fullscreen is active)
+  // Sync orientation with isFullScreen state (lock landscape on enter, restore portrait on exit)
   useEffect(() => {
     if (Platform.OS === 'web') return;
     if (isFullScreen) {
       lockLandscape();
+    } else {
+      restoreOrientation();
     }
-  }, [isFullScreen, lockLandscape]);
+  }, [isFullScreen, lockLandscape, restoreOrientation]);
 
   // Cleanup: ensure portrait/default is restored if component unmounts while in fullscreen
   useEffect(() => {
@@ -467,6 +472,12 @@ export default function VideosView({
   }, [isPlayingVideo, resetHideTimer]);
 
   const toggleControls = useCallback(() => {
+    // When paused, keep controls visible so clean controls are always available
+    if (!isPlayingVideo) {
+      setControlsVisible(true);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start();
+      return;
+    }
     if (controlsVisible) {
       setControlsVisible(false);
       setShowVolumeSlider(false);
@@ -478,11 +489,12 @@ export default function VideosView({
     } else {
       resetHideTimer();
     }
-  }, [controlsVisible, fadeAnim, resetHideTimer]);
+  }, [isPlayingVideo, controlsVisible, fadeAnim, resetHideTimer]);
 
-  // Video Actions - Opens fullscreen in landscape and starts playback
+  // Video Actions - Opens fullscreen in landscape and starts playback immediately
   const handlePlayFullscreen = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    hasStartedRef.current = false;
     setIsPlayingVideo(true);
     setIsFullScreen(true);
     resetHideTimer();
@@ -491,10 +503,32 @@ export default function VideosView({
 
   const handleExitFullScreen = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    // Explicitly pause video before unmounting and capture current time
+    const cur = currentTimeRef.current || currentTime || 0;
+    try {
+      if (playerFsRef.current?.seekTo) {
+        (playerFsRef.current.seekTo as any)(
+          cur,
+          'true); try { player.pauseVideo(); } catch(e){} true; //'
+        );
+      }
+      if (playerFsRef.current?.pauseVideo) {
+        try { playerFsRef.current.pauseVideo(); } catch {}
+      }
+      if (playerFsRef.current?.getCurrentTime) {
+        const t = await playerFsRef.current.getCurrentTime();
+        if (typeof t === 'number' && !isNaN(t) && t >= 0) {
+          currentTimeRef.current = t;
+          setCurrentTime(Math.floor(t));
+        }
+      }
+    } catch {}
+    // Cleanly pause and exit fullscreen so device smoothly returns to portrait without dual-WebView glitch
+    setIsPlayingVideo(false);
     setIsFullScreen(false);
     resetHideTimer();
     await restoreOrientation();
-  }, [resetHideTimer, restoreOrientation]);
+  }, [currentTime, resetHideTimer, restoreOrientation]);
 
   const handleToggleFullScreen = useCallback(async () => {
     if (isFullScreen) {
@@ -507,6 +541,9 @@ export default function VideosView({
   const handlePlayLessonDirectly = useCallback(async (lessonId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSelectedLessonId(lessonId);
+    currentTimeRef.current = 0;
+    setCurrentTime(0);
+    hasStartedRef.current = false;
     setIsPlayingVideo(true);
     setIsFullScreen(true);
     resetHideTimer();
@@ -515,70 +552,117 @@ export default function VideosView({
 
   const handlePlayerStateChange = useCallback((state: string) => {
     if (state === 'playing') {
+      hasStartedRef.current = true;
       setIsPlayingVideo(true);
     } else if (state === 'paused') {
-      setIsPlayingVideo(false);
+      if (hasStartedRef.current) {
+        setIsPlayingVideo(false);
+      }
     } else if (state === 'ended') {
+      hasStartedRef.current = false;
       setIsPlayingVideo(false);
+      currentTimeRef.current = 0;
+      setCurrentTime(0);
     }
   }, []);
 
   const handlePlayerReady = useCallback(() => {
-    if (isPlayingVideo) {
-      setIsPlayingVideo(true);
+    hasStartedRef.current = true;
+    setIsPlayingVideo(true);
+    // Explicit seek forces YouTube iframe to buffer and start playing immediately
+    const startSec = currentTimeRef.current > 0 ? currentTimeRef.current : 0.1;
+    if (playerFsRef.current?.seekTo) {
+      try {
+        (playerFsRef.current.seekTo as any)(
+          startSec,
+          'true); try { player.playVideo(); } catch(e){} true; //'
+        );
+      } catch {}
     }
-  }, [isPlayingVideo]);
+  }, []);
 
   const handleTogglePlayPause = useCallback(() => {
     Haptics.selectionAsync();
+    if (!isFullScreen) {
+      handlePlayFullscreen();
+      return;
+    }
     setIsPlayingVideo((prev) => {
       const next = !prev;
+      const cur = currentTimeRef.current || currentTime || 0;
       if (!next) {
-        // Paused: keep controls visible
+        // Paused: explicitly command YouTube iframe to pause via reliable injection
+        if (playerFsRef.current?.seekTo) {
+          try {
+            (playerFsRef.current.seekTo as any)(
+              cur,
+              'true); try { player.pauseVideo(); } catch(e){} true; //'
+            );
+          } catch {}
+        }
+        if (playerFsRef.current?.pauseVideo) {
+          try { playerFsRef.current.pauseVideo(); } catch {}
+        }
+        // Keep controls visible
         setControlsVisible(true);
         Animated.timing(fadeAnim, { toValue: 1, duration: 150, useNativeDriver: true }).start();
         if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
       } else {
+        hasStartedRef.current = true;
+        // Playing: explicitly command YouTube iframe to play via reliable injection
+        if (playerFsRef.current?.seekTo) {
+          try {
+            (playerFsRef.current.seekTo as any)(
+              cur,
+              'true); try { player.playVideo(); } catch(e){} true; //'
+            );
+          } catch {}
+        }
+        if (playerFsRef.current?.playVideo) {
+          try { playerFsRef.current.playVideo(); } catch {}
+        }
         resetHideTimer();
       }
       return next;
     });
-  }, [fadeAnim, resetHideTimer]);
+  }, [isFullScreen, handlePlayFullscreen, currentTime, fadeAnim, resetHideTimer]);
 
   const handleSeekRewind = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    let cur = currentTime;
+    let cur = currentTimeRef.current || currentTime;
     try {
-      if (playerRef.current?.getCurrentTime) {
-        const t = await playerRef.current.getCurrentTime();
+      if (playerFsRef.current?.getCurrentTime) {
+        const t = await playerFsRef.current.getCurrentTime();
         if (typeof t === 'number' && !isNaN(t) && t >= 0) {
           cur = t;
         }
       }
     } catch {}
     const target = Math.max(0, cur - 10);
-    setCurrentTime(target);
-    if (playerRef.current?.seekTo) {
-      playerRef.current.seekTo(target, true);
+    currentTimeRef.current = target;
+    setCurrentTime(Math.floor(target));
+    if (playerFsRef.current?.seekTo) {
+      playerFsRef.current.seekTo(target, true);
     }
     resetHideTimer();
   }, [currentTime, resetHideTimer]);
 
   const handleSeekForward = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    let cur = currentTime;
+    let cur = currentTimeRef.current || currentTime;
     try {
-      if (playerRef.current?.getCurrentTime) {
-        const t = await playerRef.current.getCurrentTime();
+      if (playerFsRef.current?.getCurrentTime) {
+        const t = await playerFsRef.current.getCurrentTime();
         if (typeof t === 'number' && !isNaN(t) && t >= 0) {
           cur = t;
         }
       }
     } catch {}
     const target = Math.min(totalDurationSecs, cur + 10);
-    setCurrentTime(target);
-    if (playerRef.current?.seekTo) {
-      playerRef.current.seekTo(target, true);
+    currentTimeRef.current = target;
+    setCurrentTime(Math.floor(target));
+    if (playerFsRef.current?.seekTo) {
+      playerFsRef.current.seekTo(target, true);
     }
     resetHideTimer();
   }, [currentTime, totalDurationSecs, resetHideTimer]);
@@ -590,9 +674,10 @@ export default function VideosView({
       if (trackWidth <= 0) return;
       const ratio = Math.max(0, Math.min(1, locationX / trackWidth));
       const newSec = Math.round(ratio * totalDurationSecs);
+      currentTimeRef.current = newSec;
       setCurrentTime(newSec);
-      if (playerRef.current?.seekTo) {
-        playerRef.current.seekTo(newSec, true);
+      if (playerFsRef.current?.seekTo) {
+        playerFsRef.current.seekTo(newSec, true);
       }
       resetHideTimer();
     },
@@ -605,26 +690,58 @@ export default function VideosView({
     resetHideTimer();
   }, [resetHideTimer]);
 
-  const handleToggleFullScreenOld = handleToggleFullScreen;
-
-  // Progress ticker for simulated playback if iframe state doesn't sync
+  // Real-time synchronization interval to track playback and keep time synced in fullscreen
   useEffect(() => {
     let interval: any = null;
-    if (isPlayingVideo) {
-      interval = setInterval(() => {
+    if (isPlayingVideo && isFullScreen) {
+      interval = setInterval(async () => {
+        if (playerFsRef.current?.getCurrentTime) {
+          try {
+            const t = await playerFsRef.current.getCurrentTime();
+            if (typeof t === 'number' && !isNaN(t) && t >= 0) {
+              currentTimeRef.current = t;
+              setCurrentTime(Math.floor(t));
+              return;
+            }
+          } catch {}
+        }
+        // Fallback ticker if player is buffering or on web
         setCurrentTime((prev) => {
           if (prev >= totalDurationSecs) {
             setIsPlayingVideo(false);
             return totalDurationSecs;
           }
-          return prev + 1;
+          const next = prev + 1;
+          currentTimeRef.current = next;
+          return next;
         });
       }, 1000);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPlayingVideo, totalDurationSecs]);
+  }, [isPlayingVideo, isFullScreen, totalDurationSecs]);
+
+  // Guarantee playback starts when entering fullscreen
+  useEffect(() => {
+    let timer: any = null;
+    if (isFullScreen && isPlayingVideo) {
+      timer = setTimeout(() => {
+        const startSec = currentTimeRef.current > 0 ? currentTimeRef.current : 0.1;
+        if (playerFsRef.current?.seekTo) {
+          try {
+            (playerFsRef.current.seekTo as any)(
+              startSec,
+              'true); try { player.playVideo(); } catch(e){} true; //'
+            );
+          } catch {}
+        }
+      }, 400);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isFullScreen, isPlayingVideo]);
 
   // Statistics for multi-video view
   const totalVideos = currentChapterLessons.length;
@@ -690,6 +807,12 @@ export default function VideosView({
     playerFsHeight = fsScreenHeight;
     playerFsWidth = Math.round((fsScreenHeight * 16) / 9);
   }
+
+  // Crop bleed: bleed the YouTube player 46px on top and bottom to eliminate YouTube's watermark, title bar, and share button
+  const cropBleedY = 46;
+  const cropBleedX = Math.round((cropBleedY * 16) / 9); // ~82px
+  const renderedFsWidth = playerFsWidth + cropBleedX * 2;
+  const renderedFsHeight = playerFsHeight + cropBleedY * 2;
 
   // Shared Bottom Controls Bar Component (Matching User's PNG + Clean No-Overlap Spacing)
   const renderControlsBar = (isFull: boolean) => {
@@ -1116,77 +1239,30 @@ export default function VideosView({
                 { backgroundColor: '#000000', borderColor: isDark ? '#223547' : '#E2E8F0' },
               ]}
             >
-              {/* Video Play Area */}
-              {isPlayingVideo && !isFullScreen ? (
-                <View style={[styles.inlinePlayerContainer, { height: playerHeight }]}>
-                  {Platform.OS === 'web' ? (
-                    React.createElement('iframe', {
-                      key: currentLesson.ytId,
-                      src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0`,
-                      width: '100%',
-                      height: '100%',
-                      style: { border: 0, display: 'block' },
-                      allow:
-                        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen',
-                      allowFullScreen: true,
-                      title: currentLesson.title,
-                    })
-                  ) : (
-                    <YoutubePlayer
-                      ref={playerRef}
-                      height={playerHeight}
-                      width={containerWidth || windowWidth - 32}
-                      videoId={currentLesson.ytId}
-                      play={isPlayingVideo}
-                      mute={isMuted}
-                      volume={isMuted ? 0 : volumeLevel}
-                      playbackRate={playbackSpeed}
-                      forceAndroidAutoplay={true}
-                      webViewProps={{
-                        allowsInlineMediaPlayback: true,
-                        mediaPlaybackRequiresUserAction: false,
-                        androidLayerType: 'hardware',
-                      }}
-                      initialPlayerParams={{ rel: false, modestbranding: true, controls: false }}
-                      onChangeState={handlePlayerStateChange}
-                      onReady={handlePlayerReady}
-                    />
-                  )}
+              {/* Poster View (Real Video Thumbnail + Red Play Button + Controls) */}
+              <TouchableOpacity
+                style={[styles.posterContainer, { height: playerHeight }]}
+                onPress={handlePlayFullscreen}
+                activeOpacity={0.92}
+              >
+                {/* Real Video Thumbnail Image */}
+                <Image
+                  source={currentLesson.thumbSource || { uri: getYoutubeThumb(currentLesson.ytId) }}
+                  style={styles.posterImage}
+                  resizeMode="cover"
+                />
 
-                  {/* Touch overlay to toggle controls */}
-                  <TouchableWithoutFeedback onPress={toggleControls}>
-                    <View style={styles.inlineTouchSurface} />
-                  </TouchableWithoutFeedback>
+                {/* Subtle darkening tint for contrast */}
+                <View style={styles.posterTintOverlay} />
 
-                  {/* Inline Controls Bar */}
-                  {renderControlsBar(false)}
+                {/* Center Large White Play Button with Red Triangle */}
+                <View style={styles.centerPlayCircle}>
+                  <Ionicons name="play" size={32} color="#EF4444" style={{ marginLeft: 4 }} />
                 </View>
-              ) : (
-                /* Poster View (Real Video Thumbnail + Red Play Button + Controls) */
-                <TouchableOpacity
-                  style={[styles.posterContainer, { height: playerHeight }]}
-                  onPress={handlePlayFullscreen}
-                  activeOpacity={0.92}
-                >
-                  {/* Real Video Thumbnail Image */}
-                  <Image
-                    source={currentLesson.thumbSource || { uri: getYoutubeThumb(currentLesson.ytId) }}
-                    style={styles.posterImage}
-                    resizeMode="cover"
-                  />
 
-                  {/* Subtle darkening tint for contrast */}
-                  <View style={styles.posterTintOverlay} />
-
-                  {/* Center Large White Play Button with Red Triangle */}
-                  <View style={styles.centerPlayCircle}>
-                    <Ionicons name="play" size={32} color="#EF4444" style={{ marginLeft: 4 }} />
-                  </View>
-
-                  {/* Controls Bar at bottom of poster */}
-                  {renderControlsBar(false)}
-                </TouchableOpacity>
-              )}
+                {/* Controls Bar at bottom of poster */}
+                {renderControlsBar(false)}
+              </TouchableOpacity>
             </View>
 
             {/* 3. WHAT YOU'LL LEARN HEADING & BULLET POINTS (Directly below video card) */}
@@ -1238,6 +1314,7 @@ export default function VideosView({
         visible={isFullScreen}
         animationType="fade"
         statusBarTranslucent
+        supportedOrientations={['landscape', 'landscape-left', 'landscape-right']}
         onRequestClose={handleExitFullScreen}
       >
         <StatusBar hidden={isFullScreen} />
@@ -1247,7 +1324,7 @@ export default function VideosView({
             {Platform.OS === 'web' ? (
               React.createElement('iframe', {
                 key: `fs-${currentLesson.ytId}`,
-                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0`,
+                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0&start=${Math.floor(currentTimeRef.current || 0)}`,
                 width: '100%',
                 height: '100%',
                 style: { border: 0, display: 'block', backgroundColor: '#000000' },
@@ -1258,11 +1335,11 @@ export default function VideosView({
               })
             ) : (
               <YoutubePlayer
-                ref={playerRef}
-                height={playerFsHeight}
-                width={playerFsWidth}
+                ref={playerFsRef}
+                height={renderedFsHeight}
+                width={renderedFsWidth}
                 videoId={currentLesson.ytId}
-                play={isPlayingVideo}
+                play={isPlayingVideo && isFullScreen}
                 mute={isMuted}
                 volume={isMuted ? 0 : volumeLevel}
                 playbackRate={playbackSpeed}
@@ -1278,6 +1355,8 @@ export default function VideosView({
                   controls: false,
                   preventFullScreen: true,
                   showClosedCaptions: showCaptions,
+                  iv_load_policy: 3,
+                  start: Math.floor(currentTimeRef.current || 0),
                 }}
                 onChangeState={handlePlayerStateChange}
                 onReady={handlePlayerReady}
@@ -1295,7 +1374,10 @@ export default function VideosView({
             style={[
               StyleSheet.absoluteFill,
               styles.fullScreenControlsOverlay,
-              { opacity: fadeAnim },
+              {
+                opacity: fadeAnim,
+                backgroundColor: isPlayingVideo ? 'transparent' : 'rgba(0, 0, 0, 0.45)',
+              },
             ]}
             pointerEvents={controlsVisible ? 'box-none' : 'none'}
           >

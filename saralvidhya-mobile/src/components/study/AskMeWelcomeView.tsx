@@ -30,6 +30,7 @@ import { speechService } from '@/services/speechService';
 import { chatHistoryService, HistoryConversation } from '@/services/chatHistoryService';
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
+const SARAL_TREE_LOGO = require('@/assets/images/saral-tree.png');
 
 export interface ChatMessage {
   id: string;
@@ -527,9 +528,6 @@ export default function AskMeWelcomeView({
             </TouchableOpacity>
           )}
 
-          <View style={[styles.logoBox, { backgroundColor: colors.logoBoxBg }]}>
-            <Image source={PLANT_BADGE} style={styles.logoImage} resizeMode="contain" />
-          </View>
 
           <View style={styles.headerTitleWrap}>
             <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Ask Me</Text>
@@ -585,7 +583,11 @@ export default function AskMeWelcomeView({
             >
               <View style={styles.avatarRow}>
                 <View style={[styles.avatarCircle, { backgroundColor: colors.avatarBg }]}>
-                  <Text style={[styles.avatarLetter, { color: colors.avatarText }]}>S</Text>
+                  <Image
+                    source={SARAL_TREE_LOGO}
+                    style={styles.avatarTreeLogo}
+                    resizeMode="contain"
+                  />
                 </View>
 
                 <View style={styles.greetingWrap}>
@@ -696,7 +698,11 @@ export default function AskMeWelcomeView({
                 >
                   {!isUser && (
                     <View style={[styles.botAvatarMini, { backgroundColor: colors.avatarBg }]}>
-                      <Text style={[styles.botAvatarMiniText, { color: colors.avatarText }]}>S</Text>
+                      <Image
+                        source={SARAL_TREE_LOGO}
+                        style={styles.botAvatarTreeMini}
+                        resizeMode="contain"
+                      />
                     </View>
                   )}
                   <View
@@ -1095,6 +1101,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarTreeLogo: {
+    width: 36,
+    height: 36,
+  },
   avatarLetter: {
     fontSize: 24,
     fontWeight: '800',
@@ -1282,6 +1292,10 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  botAvatarTreeMini: {
+    width: 18,
+    height: 18,
   },
   botAvatarMiniText: {
     fontSize: 13,

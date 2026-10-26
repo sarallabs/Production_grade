@@ -168,9 +168,14 @@ export default function PrepareScreen() {
         <StudyPlanView
           subjectId={activeSubject.id}
           chapterNumber={currentChapter.number}
-          unitCode={`${activeSubject.code} · UNIT ${currentChapter.number}`}
+          chapterTitle={currentChapter.name}
           unitName={currentChapter.name}
           subjectName={activeSubject.name}
+          totalChapters={activeSubject.chapters?.length || 4}
+          completedResources={currentChapter.completed || []}
+          onMarkModuleCompleted={() => {
+            markResourceCompleted(activeSubject.id, currentChapter.number, 'study_plan');
+          }}
           onOpenTask={(task) => {
             if (task.type === 'video') {
               router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: currentChapter.number.toString() } });

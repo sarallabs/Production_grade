@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
+import Svg, { Circle } from 'react-native-svg';
 import * as Haptics from 'expo-haptics';
 import { Subject, manifestService } from '@/api/manifestService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
@@ -29,10 +30,10 @@ export interface EntomologyMenuCardProps {
 }
 
 const DEFAULT_CHAPTERS: ChapterProgressItem[] = [
-  { chapter: 1, name: 'Digestive System', percentage: 100, statusColor: '#22c55e' },
-  { chapter: 2, name: 'Metamorphosis', percentage: 100, statusColor: '#22c55e' },
-  { chapter: 3, name: 'Weathering', percentage: 25, statusColor: '#3b82f6' },
-  { chapter: 4, name: 'Pollination', percentage: 0, statusColor: '#f97316' },
+  { chapter: 1, name: 'Digestive System', percentage: 0, statusColor: '#9CA3AF' },
+  { chapter: 2, name: 'Metamorphosis', percentage: 0, statusColor: '#9CA3AF' },
+  { chapter: 3, name: 'Weathering', percentage: 0, statusColor: '#9CA3AF' },
+  { chapter: 4, name: 'Pollination', percentage: 0, statusColor: '#9CA3AF' },
 ];
 
 export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
@@ -50,7 +51,7 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
 
   const overallProgress = subject
     ? manifestService.calculateSubjectProgress(subject)
-    : 50;
+    : 0;
 
   const dynamicChapters: ChapterProgressItem[] = chapters || (subject?.chapters || []).slice(0, 4).map((ch) => {
     const info = manifestService.calculateChapterProgress(ch);
@@ -70,12 +71,19 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
   const subtitleColor = isDark ? '#557A65' : '#D4A88E';
 
   const ringTrackColor = isDark ? '#E5DDD8' : '#3D5449';
-  const ringActiveColor = isDark ? '#2D3E36' : '#FFFFFF';
+  const ringActiveColor = isDark ? '#2D3E36' : '#22c55e';
   const ringTextColor = isDark ? '#1C2E24' : '#FFFFFF';
 
   const circleBg = isDark ? '#F1EBE5' : '#3E5247';
   const circleTextColor = isDark ? '#1C2E24' : '#FFFFFF';
   const statPercentColor = isDark ? '#3D5246' : '#E0ECE4';
+
+  const ringSize = isTablet ? 56 : 48;
+  const strokeWidth = isTablet ? 4.5 : 3.8;
+  const radius = (ringSize - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const safeProgress = Math.max(0, Math.min(100, Math.round(overallProgress)));
+  const strokeDashoffset = circumference - (circumference * safeProgress) / 100;
 
   const thumbSource = isDark
     ? require('@/assets/images/card_thumb_light.png')
@@ -139,22 +147,41 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
           </Text>
         </View>
 
+        {/* Dynamic SVG Progress Ring */}
         <View style={styles.progressContainer}>
-          <View
-            style={[
-              styles.progressCircleTrack,
-              {
-                borderColor: ringTrackColor,
-                borderTopColor: ringActiveColor,
-                borderRightColor: ringActiveColor,
-              },
-              isTablet && { width: 56, height: 56, borderRadius: 28, borderWidth: 4.5 },
-            ]}
-          >
+          <View style={{ width: ringSize, height: ringSize, justifyContent: 'center', alignItems: 'center' }}>
+            <Svg width={ringSize} height={ringSize} style={{ position: 'absolute' }}>
+              <Circle
+                cx={ringSize / 2}
+                cy={ringSize / 2}
+                r={radius}
+                stroke={ringTrackColor}
+                strokeWidth={strokeWidth}
+                fill="none"
+              />
+              {safeProgress > 0 && (
+                <Circle
+                  cx={ringSize / 2}
+                  cy={ringSize / 2}
+                  r={radius}
+                  stroke={ringActiveColor}
+                  strokeWidth={strokeWidth}
+                  fill="none"
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  strokeDashoffset={strokeDashoffset}
+                  strokeLinecap="round"
+                  transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`}
+                />
+              )}
+            </Svg>
             <Text
-              style={[styles.progressNumber, { color: ringTextColor }, isTablet && { fontSize: 14 }]}
+              style={[
+                styles.progressNumber,
+                { color: ringTextColor },
+                isTablet && { fontSize: 14 },
+              ]}
             >
-              {overallProgress}%
+              {safeProgress}%
             </Text>
           </View>
         </View>
@@ -173,6 +200,14 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
               style={[
                 styles.numberCircle,
                 { backgroundColor: circleBg },
+                item.percentage === 100 && {
+                  borderWidth: 1.5,
+                  borderColor: '#22c55e',
+                },
+                item.percentage > 0 && item.percentage < 100 && {
+                  borderWidth: 1.5,
+                  borderColor: '#3b82f6',
+                },
                 isTablet && { width: 48, height: 48, borderRadius: 24, marginBottom: 8 },
               ]}
             >
@@ -185,16 +220,29 @@ export const EntomologyMenuCard: React.FC<EntomologyMenuCardProps> = ({
 
             <View style={styles.percentRow}>
               <Text
-                style={[styles.percentLabel, { color: statPercentColor }, isTablet && { fontSize: 13 }]}
+                style={[
+                  styles.percentLabel,
+                  { color: item.percentage === 100 ? '#22c55e' : item.percentage > 0 ? '#3b82f6' : statPercentColor },
+                  isTablet && { fontSize: 13 },
+                ]}
               >
                 {item.percentage}%
               </Text>
-              <Ionicons
-                name="checkmark"
-                size={isTablet ? 14 : 11}
-                color={item.statusColor}
-                style={styles.checkIcon}
-              />
+              {item.percentage === 100 ? (
+                <Ionicons
+                  name="checkmark"
+                  size={isTablet ? 14 : 11}
+                  color="#22c55e"
+                  style={styles.checkIcon}
+                />
+              ) : item.percentage > 0 ? (
+                <Ionicons
+                  name="time-outline"
+                  size={isTablet ? 13 : 10}
+                  color="#3b82f6"
+                  style={styles.checkIcon}
+                />
+              ) : null}
             </View>
           </TouchableOpacity>
         ))}

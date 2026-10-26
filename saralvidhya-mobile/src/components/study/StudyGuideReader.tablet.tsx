@@ -20,14 +20,12 @@ import QuickCheckCard from './QuickCheckCard';
 import {
   fetchQuickCheckQuestions,
   QuickCheckQuestion,
-  FALLBACK_QUICK_CHECK_BANK,
 } from '@/data/quickCheckData';
 import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import {
   fetchQuickStudyGuide,
   fetchDetailedNotes,
 } from '@/services/contentService';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 
 interface StudyGuideReaderTabletProps {
   chapterNumber?: number;
@@ -104,29 +102,18 @@ export default function StudyGuideReaderTablet({
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [isCloudLoading, setIsCloudLoading] = useState(false);
 
-  // Synchronous initial fallback content
-  const [quickContent, setQuickContent] = useState<string>(
-    SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-  );
-  const [detailedContent, setDetailedContent] = useState<string>(
-    SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
-  );
+  // State for content loaded purely from API
+  const [quickContent, setQuickContent] = useState<string>('');
+  const [detailedContent, setDetailedContent] = useState<string>('');
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
-  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>(() =>
-    FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
-  );
+  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>([]);
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [sectionLayouts, setSectionLayouts] = useState<Record<number, number>>({});
 
-  // Sync state whenever chapter changes
+  // Reset state whenever chapter changes
   useEffect(() => {
-    setQuickContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '');
-    setDetailedContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '');
-    setQuickCheckQuestions(
-      FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
-    );
     setCompletedQuickChecks(new Set());
   }, [chapterNumber]);
 
@@ -177,8 +164,8 @@ export default function StudyGuideReaderTablet({
 
   const activeRawContent =
     studyMode === 'in_depth'
-      ? detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
-      : quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '';
+      ? detailedContent || ''
+      : quickContent || '';
 
   const sections = useMemo(() => {
     return parseMarkdownSections(activeRawContent, quickCheckQuestions, chapterNumber);
@@ -259,11 +246,7 @@ export default function StudyGuideReaderTablet({
       setShowReadAloudBar(true);
       const rawText = studyMode === 'essentials' ? quickContent : detailedContent;
       const effectiveText =
-        rawText ||
-        (studyMode === 'essentials'
-          ? SAMPLE_STUDY_CONTENT[chapterNumber]?.summary
-          : SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed) ||
-        `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
+        rawText || `Reading Chapter ${chapterNumber}: ${chapterTitle}`;
       await speechService.speak(effectiveText, 1.0);
     }
   };
@@ -827,8 +810,8 @@ export default function StudyGuideReaderTablet({
             title={`Ch ${chapterNumber} · ${studyMode === 'essentials' ? 'Essentials' : 'In-depth'}`}
             content={
               studyMode === 'essentials'
-                ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-                : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+                ? quickContent || ''
+                : detailedContent || ''
             }
             onClose={() => {
               setShowReadAloudBar(false);

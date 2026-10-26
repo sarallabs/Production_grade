@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -139,16 +140,36 @@ export default function TopNavBar({
         {/* Left Slot: Go Back Arrow Button */}
         <View style={styles.sideSlot}>
           {showBack ? (
-            <TouchableOpacity
-              style={[styles.backButton, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
-              onPress={handleBackPress}
-              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-            >
-              <Ionicons name="arrow-back" size={17} color={textActive} />
-            </TouchableOpacity>
+            <View style={styles.leftNavRow}>
+              <TouchableOpacity
+                style={[styles.backButton, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
+                onPress={handleBackPress}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+              >
+                <Ionicons name="arrow-back" size={17} color={textActive} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.treeNavButton}
+                onPress={() => {
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); } catch {}
+                  router.replace('/courses');
+                }}
+                hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Go to Courses"
+              >
+                <Image
+                  source={require('@/assets/images/saral-tree.png')}
+                  style={styles.treeNavImage}
+                  contentFit="contain"
+                />
+              </TouchableOpacity>
+            </View>
           ) : chapterTitle ? (
             <TouchableOpacity
               style={[styles.chapterPill, { backgroundColor: pillInactiveBg, borderColor: pillBorder }]}
@@ -317,5 +338,20 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: 0.3,
+  },
+  leftNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  treeNavButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  treeNavImage: {
+    width: 24,
+    height: 30,
   },
 });

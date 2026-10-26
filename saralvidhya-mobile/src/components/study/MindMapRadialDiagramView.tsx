@@ -250,7 +250,6 @@ export default function MindMapRadialDiagramView({
   const { isTablet } = useDeviceLayout();
 
   const [activeNode, setActiveNode] = useState<MindMapNodeInfo | null>(null);
-  const [zoomScale, setZoomScale] = useState<number>(1.0);
 
   // Exact color values derived directly from the provided PNGs
   const colors = useMemo(
@@ -344,20 +343,6 @@ export default function MindMapRadialDiagramView({
     });
   };
 
-  const handleZoomIn = () => {
-    Haptics.selectionAsync();
-    setZoomScale((prev) => Math.min(1.25, parseFloat((prev + 0.1).toFixed(1))));
-  };
-
-  const handleZoomOut = () => {
-    Haptics.selectionAsync();
-    setZoomScale((prev) => Math.max(0.75, parseFloat((prev - 0.1).toFixed(1))));
-  };
-
-  const handleFit = () => {
-    Haptics.selectionAsync();
-    setZoomScale(1.0);
-  };
 
   // Dimensions for geometry
   const cardWidth = Math.min(SCREEN_WIDTH - 24, 440);
@@ -460,31 +445,7 @@ export default function MindMapRadialDiagramView({
         </>
       )}
 
-      {/* 3. PILL CONTROL BAR: ✦ Explore the connections  ·  - Fit + */}
-      <View style={styles.pillBarWrap}>
-        <View style={[styles.pillBarContainer, { backgroundColor: colors.pillBarBg, borderColor: colors.pillBarBorder }]}>
-          <View style={styles.pillBarLeft}>
-            <Text style={[styles.sparkleIcon, { color: colors.pillBarText }]}>✦</Text>
-            <Text style={[styles.pillBarLeftText, { color: colors.pillBarText }]}>
-              Explore the connections
-            </Text>
-          </View>
 
-          <View style={styles.zoomControlsRow}>
-            <TouchableOpacity onPress={handleZoomOut} hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }} activeOpacity={0.6}>
-              <Text style={[styles.zoomBtnText, { color: colors.pillBarControls }]}>−</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleFit} activeOpacity={0.6}>
-              <Text style={[styles.fitBtnText, { color: colors.pillBarControls }]}>Fit</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleZoomIn} hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }} activeOpacity={0.6}>
-              <Text style={[styles.zoomBtnText, { color: colors.pillBarControls }]}>+</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
 
       {/* 4. MAIN SCROLLABLE DIAGRAM CONTAINER */}
       <ScrollView
@@ -527,7 +488,6 @@ export default function MindMapRadialDiagramView({
               {
                 width: canvasWidth,
                 height: canvasHeight,
-                transform: [{ scale: zoomScale }],
               },
             ]}
           >

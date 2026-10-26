@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 
@@ -534,21 +535,12 @@ export default function PYQView({
   const completedActiveBg = isDark ? '#29523B' : '#EBFAF0';
   const completedActiveText = isDark ? '#A6EDBA' : '#145E3B';
 
-  const sosBtnBg = isDark ? '#593333' : '#FFF0ED';
-  const sosBtnBorder = isDark ? '#FF6361' : '#E83B3D';
-  const sosBtnText = isDark ? '#FF6361' : '#E83B3D';
-
   // Answer Panel
   const answerPanelBg = isDark ? '#29523B' : '#EBFAF0';
   const answerPanelBorder = '#A8E8BF';
   const answerAccent = isDark ? '#47D97A' : '#14A64F';
   const answerHeadingColor = isDark ? '#A6EDBA' : '#145E3B';
   const answerTextColor = isDark ? '#F0F7F0' : '#1F2E26';
-
-  // Short/Long pill
-  const shortLongPillBg = isDark ? '#30453B' : '#FFFFFF';
-  const shortLongPillBorder = isDark ? '#577361' : '#D1E0D6';
-  const shortLongPillText = isDark ? '#A6EDBA' : '#145E3B';
 
   const filteredQuestions = useMemo(() => {
     if (selectedYear === 'All Years') return PYQ_DATA;
@@ -560,17 +552,12 @@ export default function PYQView({
     setCompletedMap((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const toggleAnswerMode = (id: number) => {
+  const setAnswerMode = (id: number, mode: AnswerMode) => {
     Haptics.selectionAsync();
     setAnswerModeMap((prev) => ({
       ...prev,
-      [id]: prev[id] === 'long' ? 'short' : 'long',
+      [id]: mode,
     }));
-  };
-
-  const showSOSTip = (item: PYQItem) => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    Alert.alert(`SOS Recall · Q${item.questionNumber}`, item.sosTip, [{ text: 'Got it' }]);
   };
 
   return (
@@ -688,38 +675,37 @@ export default function PYQView({
                     </View>
                   </View>
 
-                  {/* Action Buttons: Mark Completed & SOS Button */}
+                  {/* Action Row: Mark as Read (placed in place of SOS) */}
                   <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={[
-                        styles.completeButton,
+                        styles.markAsReadButton,
                         {
                           backgroundColor: isCompleted ? completedActiveBg : completeBtnBg,
-                          borderColor: isCompleted ? chapterTagText : completeBtnBorder,
+                          borderColor: isCompleted
+                            ? isDark
+                              ? '#4ADE80'
+                              : '#22C55E'
+                            : completeBtnBorder,
                         },
                       ]}
                       onPress={() => toggleComplete(item.id)}
-                      activeOpacity={0.8}
+                      activeOpacity={0.75}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
+                      <Ionicons
+                        name={isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'}
+                        size={15}
+                        color={isCompleted ? completedActiveText : completeBtnText}
+                      />
                       <Text
                         style={[
-                          styles.completeText,
+                          styles.markAsReadText,
                           { color: isCompleted ? completedActiveText : completeBtnText },
                         ]}
                       >
-                        {isCompleted ? '☑ Completed' : '□ Mark completed'}
+                        {isCompleted ? 'Marked as read' : 'Mark as read'}
                       </Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={[
-                        styles.sosButton,
-                        { backgroundColor: sosBtnBg, borderColor: sosBtnBorder },
-                      ]}
-                      onPress={() => showSOSTip(item)}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={[styles.sosText, { color: sosBtnText }]}>SOS</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -734,53 +720,92 @@ export default function PYQView({
                     <View style={[styles.answerAccent, { backgroundColor: answerAccent }]} />
 
                     <View style={styles.answerPanelContent}>
-                      {/* Header with ANSWER and Short/Long Pill */}
+                      {/* Header with ANSWER and Bigger Short / Long Toggle */}
                       <View style={styles.answerHeaderRow}>
                         <Text style={[styles.answerHeading, { color: answerHeadingColor }]}>
                           ANSWER
                         </Text>
 
-                        <TouchableOpacity
+                        {/* Bigger, easy-to-tap Short / Long segmented toggle */}
+                        <View
                           style={[
-                            styles.shortLongPill,
+                            styles.shortLongToggleTrack,
                             {
-                              backgroundColor: shortLongPillBg,
-                              borderColor: shortLongPillBorder,
+                              backgroundColor: isDark ? '#1C3125' : '#DDEFE3',
+                              borderColor: isDark ? '#436B51' : '#BBDBC5',
                             },
                           ]}
-                          onPress={() => toggleAnswerMode(item.id)}
-                          activeOpacity={0.8}
                         >
-                          <Text
+                          <TouchableOpacity
                             style={[
-                              styles.shortLongText,
-                              {
-                                color:
-                                  answerMode === 'short'
-                                    ? shortLongPillText
-                                    : subtextColor,
-                                fontWeight: answerMode === 'short' ? '700' : '400',
-                              },
+                              styles.shortLongSegment,
+                              answerMode === 'short' && [
+                                styles.shortLongSegmentActive,
+                                {
+                                  backgroundColor: isDark ? '#2E4F3B' : '#FFFFFF',
+                                  borderColor: isDark ? '#59B87A' : '#72B68E',
+                                },
+                              ],
                             ]}
+                            onPress={() => setAnswerMode(item.id, 'short')}
+                            activeOpacity={0.75}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                           >
-                            Short
-                          </Text>
-                          <Text style={[styles.shortLongDivider, { color: subtextColor }]}>·</Text>
-                          <Text
+                            <Text
+                              style={[
+                                styles.shortLongText,
+                                {
+                                  color:
+                                    answerMode === 'short'
+                                      ? isDark
+                                        ? '#A6EDBA'
+                                        : '#145E3B'
+                                      : isDark
+                                      ? '#8BA896'
+                                      : '#5C7A68',
+                                  fontWeight: answerMode === 'short' ? '700' : '500',
+                                },
+                              ]}
+                            >
+                              Short
+                            </Text>
+                          </TouchableOpacity>
+
+                          <TouchableOpacity
                             style={[
-                              styles.shortLongText,
-                              {
-                                color:
-                                  answerMode === 'long'
-                                    ? shortLongPillText
-                                    : subtextColor,
-                                fontWeight: answerMode === 'long' ? '700' : '400',
-                              },
+                              styles.shortLongSegment,
+                              answerMode === 'long' && [
+                                styles.shortLongSegmentActive,
+                                {
+                                  backgroundColor: isDark ? '#2E4F3B' : '#FFFFFF',
+                                  borderColor: isDark ? '#59B87A' : '#72B68E',
+                                },
+                              ],
                             ]}
+                            onPress={() => setAnswerMode(item.id, 'long')}
+                            activeOpacity={0.75}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                           >
-                            Long
-                          </Text>
-                        </TouchableOpacity>
+                            <Text
+                              style={[
+                                styles.shortLongText,
+                                {
+                                  color:
+                                    answerMode === 'long'
+                                      ? isDark
+                                        ? '#A6EDBA'
+                                        : '#145E3B'
+                                      : isDark
+                                      ? '#8BA896'
+                                      : '#5C7A68',
+                                  fontWeight: answerMode === 'long' ? '700' : '500',
+                                },
+                              ]}
+                            >
+                              Long
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
                       </View>
 
                       {/* Answer Lines (.answerLine) */}
@@ -952,29 +977,21 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginBottom: 10,
   },
-  completeButton: {
-    borderRadius: 7,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  completeText: {
-    fontSize: 9.5,
-    fontWeight: '500',
-  },
-  sosButton: {
-    borderRadius: 7,
+  markAsReadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingVertical: 6,
   },
-  sosText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-    letterSpacing: 0.5,
+  markAsReadText: {
+    fontSize: 11,
+    fontWeight: '600',
   },
   answerPanel: {
     borderRadius: 9,
@@ -1001,27 +1018,41 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   answerHeading: {
-    fontSize: 10.5,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  shortLongPill: {
-    borderRadius: 9,
-    borderWidth: 1,
+  shortLongToggleTrack: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    gap: 4,
+    borderRadius: 9,
+    borderWidth: 1,
+    padding: 2.5,
+    gap: 3,
+  },
+  shortLongSegment: {
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 50,
+    minHeight: 28,
+  },
+  shortLongSegmentActive: {
+    borderWidth: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 2,
   },
   shortLongText: {
-    fontSize: 8.5,
-  },
-  shortLongDivider: {
-    fontSize: 8.5,
+    fontSize: 12,
+    letterSpacing: 0.2,
   },
   answerLinesWrap: {
     gap: 4,

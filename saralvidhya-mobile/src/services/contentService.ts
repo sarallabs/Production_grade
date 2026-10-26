@@ -1,8 +1,15 @@
 import { storage } from '@/utils/storage';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
-import { SAMPLE_FLASHCARDS, Flashcard } from '@/data/sampleFlashcards';
 
 export const GCS_API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+
+export interface Flashcard {
+  id: string;
+  front: string;
+  back: string;
+  category: string;
+  hint?: string;
+  infographicUrl?: string;
+}
 
 export interface MindmapNode {
   id: string;
@@ -27,7 +34,6 @@ export interface MindmapData {
 export function formatChapterDir(chNum: number): string {
   return `chapter_${chNum < 10 ? '0' : ''}${chNum}`;
 }
-
 
 const DEFAULT_TIMEOUT_MS = 15000;
 
@@ -76,7 +82,7 @@ function isAbortError(err: any, signal?: AbortSignal): boolean {
 }
 
 /**
- * Fetches Quick Study Guide markdown with cache & fallback
+ * Fetches Quick Study Guide markdown purely from API with local cache
  */
 export async function fetchQuickStudyGuide(
   subjectId: string,
@@ -104,20 +110,15 @@ export async function fetchQuickStudyGuide(
     }
   }
 
-  // Fallback to local cache
+  // Pure API fallback: previously cached response from storage
   const cached = await storage.getItem<string>(cacheKey);
   if (cached) return cached;
 
-  // Fallback to embedded sample
-  return (
-    SAMPLE_STUDY_CONTENT[chapterNum]?.summary ||
-    SAMPLE_STUDY_CONTENT[1]?.summary ||
-    '# Quick Study Guide\n\nContent is being generated for this chapter.'
-  );
+  return '# Quick Study Guide\n\nNo content received from server yet. Please check your internet connection and pull down to refresh.';
 }
 
 /**
- * Fetches Detailed Notes markdown with cache & fallback
+ * Fetches Detailed Notes markdown purely from API with local cache
  */
 export async function fetchDetailedNotes(
   subjectId: string,
@@ -145,20 +146,15 @@ export async function fetchDetailedNotes(
     }
   }
 
-  // Fallback to local cache
+  // Pure API fallback: previously cached response from storage
   const cached = await storage.getItem<string>(cacheKey);
   if (cached) return cached;
 
-  // Fallback to embedded sample
-  return (
-    SAMPLE_STUDY_CONTENT[chapterNum]?.detailed ||
-    SAMPLE_STUDY_CONTENT[1]?.detailed ||
-    '# Detailed Notes\n\nFull syllabus coverage being compiled for this chapter.'
-  );
+  return '# Detailed Notes\n\nNo detailed notes received from server yet. Please check your internet connection and pull down to refresh.';
 }
 
 /**
- * Fetches real ANGRAU Flashcards with questions, answers, and infographics
+ * Fetches real ANGRAU Flashcards purely from API with local cache
  */
 export async function fetchFlashcards(
   subjectId: string,
@@ -182,7 +178,6 @@ export async function fetchFlashcards(
           let img = c.infographicUrl || c.infographic || c.image;
           if (img && !img.startsWith('data:')) {
             if (img.startsWith('http')) {
-              // Self-heal corrupted cached or relative root URLs
               if (img.includes('/images/card_') && !img.includes('/api/content/')) {
                 const filename = img.split('/images/').pop();
                 img = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}/practice/flashcards/images/${filename}`;
@@ -215,7 +210,7 @@ export async function fetchFlashcards(
     }
   }
 
-  // Fallback to local cache with URL self-repair
+  // Pure API fallback: previously cached cards from storage
   const cached = await storage.getItem<Flashcard[]>(cacheKey);
   if (cached && cached.length > 0) {
     const sanitized = cached.map((c) => {
@@ -229,8 +224,8 @@ export async function fetchFlashcards(
     return sanitized;
   }
 
-  // Fallback to sample flashcards
-  return SAMPLE_FLASHCARDS[chapterNum] || SAMPLE_FLASHCARDS[1] || [];
+  // Pure API: return empty array if not on server or in cache
+  return [];
 }
 
 /**
@@ -546,55 +541,6 @@ const DEFAULT_TOPICS = [
   'Synthesis of key takeaways and summary points',
 ];
 
-/** Curated videos (mirrors the web VideosView) used as an offline/last-resort fallback. */
-const CURATED_VIDEOS: Record<number, ChapterVideo[]> = {
-  1: [
-    {
-      index: 1,
-      title: 'Insects Digestive System',
-      ytId: 'Ioa25iYy53g',
-      duration: '10:15 min',
-      topics: [
-        'Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut',
-        'Stomodaeal Specializations: Pharynx, Crop, and Proventriculus (Gizzard)',
-        'Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane',
-        'Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption',
-        'Enzymatic Digestion & Nutritional Adaptations in Insects',
-      ],
-    },
-  ],
-  3: [
-    {
-      index: 1,
-      title: 'Weathering of Rocks and Minerals',
-      ytId: 'UMJFfCFFF4M',
-      duration: '11:45 min',
-      topics: [
-        'Foundations of Weathering & Regolith-Saprolite Boundary Dynamics',
-        'Physical Weathering: Hydraulic Forces, Frost Wedging & Exfoliation',
-        'Chemical Weathering: Hydrolysis, Hydration, Carbonation, Oxidation & Reduction',
-        'Biological Agents: Pioneer Lichens, Microbial Geochemistry & Root Wedging',
-        "Goldich Mineral Weathering Stability Series vs Bowen's Reaction Series",
-      ],
-    },
-  ],
-  4: [
-    {
-      index: 1,
-      title: 'Pollination, Pollinizers & Parthenocarpy in Fruit Crops',
-      ytId: 'elWWuKv5b9Q',
-      duration: '14:20 min',
-      topics: [
-        'Floral Biology Architecture & Angiosperm Double Fertilization',
-        'Self-Pollination (Autogamy): Homogamy, Cleistogamy & Chasmogamy',
-        'Cross-Pollination (Allogamy) & Self-Incompatibility (GSI vs SSI)',
-        'Pollinizer Cultivar Proportion & Orchard Planting Geometry',
-        'Parthenocarpy: Vegetative, Stimulative & Stenospermocarpy Mechanisms',
-      ],
-    },
-  ],
-};
-
 const YT_ID_REGEX = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
 
 /** Extracts unique YouTube IDs from arbitrary markdown/text. */
@@ -609,8 +555,8 @@ export function extractYouTubeIds(text: string): string[] {
 }
 
 /**
- * Fetches the list of videos for a chapter.
- * Order: videos.json (API) → youtube_links.md (API) → local cache → curated fallback.
+ * Fetches the list of videos for a chapter purely from API.
+ * Order: videos.json (API) → youtube_links.md (API) → local cache.
  */
 export async function fetchChapterVideos(
   subjectId: string,
@@ -620,7 +566,6 @@ export async function fetchChapterVideos(
   const cacheKey = `study_videos_${subjectId}_${chapterNum}`;
   const chDir = formatChapterDir(chapterNum);
   const base = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}`;
-  const curated = CURATED_VIDEOS[chapterNum] ?? [];
 
   // 1. videos.json registry
   try {
@@ -657,16 +602,13 @@ export async function fetchChapterVideos(
     if (res.ok) {
       const ids = extractYouTubeIds(await res.text());
       if (ids.length > 0) {
-        const list: ChapterVideo[] = ids.map((id, i) => {
-          const known = Object.values(CURATED_VIDEOS).flat().find((v) => v.ytId === id);
-          return {
-            index: i + 1,
-            title: known?.title || `Video Lecture Part ${i + 1}`,
-            ytId: id,
-            topics: known?.topics || DEFAULT_TOPICS,
-            duration: known?.duration,
-          };
-        });
+        const list: ChapterVideo[] = ids.map((id, i) => ({
+          index: i + 1,
+          title: `Chapter ${chapterNum} Video Lecture Part ${i + 1}`,
+          ytId: id,
+          topics: DEFAULT_TOPICS,
+          duration: '12:00 min',
+        }));
         await storage.setItem(cacheKey, list);
         return list;
       }
@@ -677,12 +619,180 @@ export async function fetchChapterVideos(
     }
   }
 
-  // 3. Local cache
+  // 3. Pure API Local cache
   const cached = await storage.getItem<ChapterVideo[]>(cacheKey);
   if (cached && cached.length > 0) return cached;
 
-  // 4. Curated fallback (default to chapter 1 video so the screen is never empty)
-  return curated.length > 0 ? curated : CURATED_VIDEOS[1];
+  return [];
+}
+
+export interface PodcastParagraph {
+  timestamp: string;      // e.g. "00:00:00"
+  startSec: number;       // e.g. 0
+  text: string;           // Dialogue text
+}
+
+export interface PodcastTrackData {
+  title: string;
+  durationSec: number;
+  durationFormatted: string; // e.g. "00:20:24"
+  durationLabel: string;     // e.g. "20 min listen"
+  paragraphs: PodcastParagraph[];
+}
+
+export interface MicrocastItemData {
+  id: number;
+  title: string;
+  recap: string;
+  durationSec: number;
+  durationFormatted: string;
+  durationLabel: string;
+  paragraphs: PodcastParagraph[];
+}
+
+export interface ChapterPodcastBundle {
+  chapterNumber: number;
+  quick: PodcastTrackData;
+  detailed: PodcastTrackData;
+  microcasts: MicrocastItemData[];
+}
+
+function parseTextToParagraphs(rawText: string): { paragraphs: PodcastParagraph[]; totalSec: number } {
+  const rawParas = rawText.split(/\r?\n+/).map((p) => p.trim()).filter((p) => p.length > 0);
+  const paragraphs: PodcastParagraph[] = [];
+  let currentSec = 0;
+
+  for (const text of rawParas) {
+    const startSec = currentSec;
+    const m = Math.floor(startSec / 60);
+    const s = Math.floor(startSec % 60);
+    const h = Math.floor(m / 60);
+    const remM = m % 60;
+    const timestamp = `${h < 10 ? '0' : ''}${h}:${remM < 10 ? '0' : ''}${remM}:${s < 10 ? '0' : ''}${s}`;
+    paragraphs.push({
+      timestamp,
+      startSec,
+      text,
+    });
+    const words = text.split(/\s+/).filter(Boolean).length;
+    const duration = Math.max(3, Math.round((words / 150) * 60));
+    currentSec += duration;
+  }
+
+  return { paragraphs, totalSec: Math.max(currentSec, 60) };
+}
+
+function formatDurationSec(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  const h = Math.floor(m / 60);
+  const remM = m % 60;
+  return `${h < 10 ? '0' : ''}${h}:${remM < 10 ? '0' : ''}${remM}:${s < 10 ? '0' : ''}${s}`;
+}
+
+/**
+ * Fetches podcast bundle (Quick, Detailed, Microcasts) purely from API with local cache
+ */
+export async function fetchPodcastBundle(
+  subjectId: string,
+  chapterNum: number,
+  signal?: AbortSignal
+): Promise<ChapterPodcastBundle> {
+  const cacheKey = `podcast_bundle_${subjectId}_${chapterNum}`;
+  const chDir = formatChapterDir(chapterNum);
+  const base = `${GCS_API_BASE}/api/content/angrau/entomology/${chDir}`;
+
+  try {
+    const [metaRes, shortRes, longRes] = await Promise.all([
+      fetchWithTimeout(`${base}/metadata`, 10000, signal).catch(() => null),
+      fetchWithTimeout(`${base}/podcasts/short_podcast.md`, 10000, signal).catch(() => null),
+      fetchWithTimeout(`${base}/podcasts/long_podcast.md`, 10000, signal).catch(() => null),
+    ]);
+
+    const meta = metaRes && metaRes.ok ? await metaRes.json() : {};
+    const shortText = shortRes && shortRes.ok ? await shortRes.text() : '';
+    const longText = longRes && longRes.ok ? await longRes.text() : '';
+
+    const quickParsed = parseTextToParagraphs(shortText || `Chapter ${chapterNum} Quick Podcast Study Audio.`);
+    const detailedParsed = parseTextToParagraphs(longText || `Chapter ${chapterNum} Comprehensive Audio Lecture.`);
+
+    const microTitles: string[] = Array.isArray(meta?.microcast_titles)
+      ? meta.microcast_titles
+      : [];
+    const microCount = microTitles.length || meta?.microcast_count || 4;
+
+    const microcasts: MicrocastItemData[] = [];
+    for (let i = 1; i <= microCount; i++) {
+      const pad = String(i).padStart(2, '0');
+      let microText = '';
+      try {
+        const mRes = await fetchWithTimeout(`${base}/podcasts/microcast_${pad}.md`, 5000, signal);
+        if (mRes.ok) microText = await mRes.text();
+      } catch {}
+
+      const title = microTitles[i - 1] || `Microcast Topic ${i}`;
+      const parsedMicro = parseTextToParagraphs(microText || `Audio overview of ${title}.`);
+      microcasts.push({
+        id: i,
+        title,
+        recap: `Focused ${Math.round(parsedMicro.totalSec / 60)} min audio module on ${title}`,
+        durationSec: parsedMicro.totalSec,
+        durationFormatted: formatDurationSec(parsedMicro.totalSec),
+        durationLabel: `${Math.round(parsedMicro.totalSec / 60)} min listen`,
+        paragraphs: parsedMicro.paragraphs,
+      });
+    }
+
+    const bundle: ChapterPodcastBundle = {
+      chapterNumber: chapterNum,
+      quick: {
+        title: `${meta.chapter_name || `Chapter ${chapterNum}`} Quick Recap`,
+        durationSec: quickParsed.totalSec,
+        durationFormatted: formatDurationSec(quickParsed.totalSec),
+        durationLabel: `${Math.round(quickParsed.totalSec / 60)} min listen`,
+        paragraphs: quickParsed.paragraphs,
+      },
+      detailed: {
+        title: `${meta.chapter_name || `Chapter ${chapterNum}`} Comprehensive Lecture`,
+        durationSec: detailedParsed.totalSec,
+        durationFormatted: formatDurationSec(detailedParsed.totalSec),
+        durationLabel: `${Math.round(detailedParsed.totalSec / 60)} min listen`,
+        paragraphs: detailedParsed.paragraphs,
+      },
+      microcasts,
+    };
+
+    if (quickParsed.paragraphs.length > 0 || detailedParsed.paragraphs.length > 0) {
+      await storage.setItem(cacheKey, bundle);
+      return bundle;
+    }
+  } catch (err: any) {
+    if (!isAbortError(err, signal)) {
+      console.warn(`[ContentService] Podcast API fetch failed: ${err?.message || err}`);
+    }
+  }
+
+  const cached = await storage.getItem<ChapterPodcastBundle>(cacheKey);
+  if (cached) return cached;
+
+  return {
+    chapterNumber: chapterNum,
+    quick: {
+      title: `Chapter ${chapterNum} Quick Recap`,
+      durationSec: 300,
+      durationFormatted: '00:05:00',
+      durationLabel: '5 min listen',
+      paragraphs: [],
+    },
+    detailed: {
+      title: `Chapter ${chapterNum} Comprehensive Lecture`,
+      durationSec: 600,
+      durationFormatted: '00:10:00',
+      durationLabel: '10 min listen',
+      paragraphs: [],
+    },
+    microcasts: [],
+  };
 }
 
 /** Watched-video persistence (local only). */

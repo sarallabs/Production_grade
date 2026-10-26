@@ -25,11 +25,9 @@ import QuickCheckCard from './QuickCheckCard';
 import {
   fetchQuickCheckQuestions,
   QuickCheckQuestion,
-  FALLBACK_QUICK_CHECK_BANK,
 } from '@/data/quickCheckData';
 import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import StudyGuideReaderTablet from './StudyGuideReader.tablet';
 import ZoomableImageModal from './ZoomableImageModal';
 
@@ -322,29 +320,18 @@ export default function StudyGuideReader({
       ? { uri: activeInfographic.remoteUri }
       : activeInfographic.imageSource;
 
-  // Dynamic Content for the selected chapter
-  const [quickContent, setQuickContent] = useState<string>(
-    SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-  );
-  const [detailedContent, setDetailedContent] = useState<string>(
-    SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
-  );
+  // Dynamic Content for the selected chapter from pure API
+  const [quickContent, setQuickContent] = useState<string>('');
+  const [detailedContent, setDetailedContent] = useState<string>('');
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
-  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>(() =>
-    FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
-  );
+  const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>([]);
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
   const [sectionLayouts, setSectionLayouts] = useState<Record<number, number>>({});
 
-  // Sync instant fallback content synchronously whenever chapterNumber changes
+  // Reset state whenever chapter changes
   useEffect(() => {
-    setQuickContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || '');
-    setDetailedContent(SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '');
-    setQuickCheckQuestions(
-      FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
-    );
     setCompletedQuickChecks(new Set());
   }, [chapterNumber]);
 
@@ -384,8 +371,8 @@ export default function StudyGuideReader({
 
   const activeRawContent =
     studyMode === 'essentials'
-      ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-      : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || '';
+      ? quickContent || ''
+      : detailedContent || '';
 
   const sections = useMemo(() => {
     return parseMarkdownSections(activeRawContent, quickCheckQuestions, chapterNumber);
@@ -469,11 +456,7 @@ export default function StudyGuideReader({
       setShowReadAloudBar(true);
       const rawText = studyMode === 'essentials' ? quickContent : detailedContent;
       const effectiveText =
-        rawText ||
-        (studyMode === 'essentials'
-          ? SAMPLE_STUDY_CONTENT[chapterNumber]?.summary
-          : SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed) ||
-        `Reading Chapter ${chapterNumber}: ${effectiveChapterTitle}`;
+        rawText || `Reading Chapter ${chapterNumber}: ${effectiveChapterTitle}`;
       await speechService.speak(effectiveText, 1.0);
     }
   };
@@ -545,19 +528,6 @@ export default function StudyGuideReader({
               {subjectName || 'Fundamentals of Entomology'} › Chapter {chapterNumber}: {effectiveChapterTitle}
             </Text>
           </View>
-          <TouchableOpacity
-            style={[styles.saveBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}
-            onPress={handleToggleBookmark}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            activeOpacity={0.75}
-            accessibilityLabel="Save chapter"
-          >
-            <Ionicons
-              name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-              size={18}
-              color={isBookmarked ? emeraldPrimary : textColor}
-            />
-          </TouchableOpacity>
         </View>
 
         {/* 2. PERSONA SELECTOR: ONLY LOGOS & CENTERED */}
@@ -1065,8 +1035,8 @@ export default function StudyGuideReader({
             title={`Ch ${chapterNumber} · ${studyMode === 'essentials' ? 'Essentials' : 'In-depth'}`}
             content={
               studyMode === 'essentials'
-                ? quickContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.summary || ''
-                : detailedContent || SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
+                ? quickContent || ''
+                : detailedContent || ''
             }
             onClose={() => {
               setShowReadAloudBar(false);

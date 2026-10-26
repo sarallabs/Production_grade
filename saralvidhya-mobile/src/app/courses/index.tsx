@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
   StatusBar,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
@@ -22,7 +22,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 
 export default function CourseSelectionScreen() {
   const router = useRouter();
-  const { user, persona } = useAuth();
+  const { user } = useAuth();
   const { isDark, setThemeMode } = useAppTheme();
   const { isTablet } = useDeviceLayout();
   const { selectSubject, selectChapter } = useCourseContext();
@@ -31,22 +31,28 @@ export default function CourseSelectionScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [entomologySubject, setEntomologySubject] = useState<Subject | null>(null);
 
-  useEffect(() => {
-    loadEntomologyData();
-  }, []);
-
-  const loadEntomologyData = async () => {
-    setLoading(true);
+  const loadEntomologyData = useCallback(async () => {
     try {
       const allSubjs = await manifestService.getSubjects();
       const ento = allSubjs.find((s) => s.id === 'ento_131') || allSubjs[0];
-      setEntomologySubject(ento);
+      setEntomologySubject(ento ? { ...ento } : null);
     } catch (e) {
       console.warn('Failed to load entomology subject', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadEntomologyData();
+  }, [loadEntomologyData]);
+
+  // Re-fetch dynamic progress whenever the student returns to this screen
+  useFocusEffect(
+    useCallback(() => {
+      loadEntomologyData();
+    }, [loadEntomologyData])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -127,13 +133,6 @@ export default function CourseSelectionScreen() {
             </View>
 
             <View style={styles.headerActions}>
-              <View style={[styles.personaPill, { backgroundColor: badgeBg }]}>
-                <Ionicons name="sparkles" size={13} color={isDark ? '#4ade80' : '#22c55e'} />
-                <Text style={[styles.personaText, { color: isDark ? '#4ade80' : '#22c55e' }]}>
-                  {persona.toUpperCase()}
-                </Text>
-              </View>
-
               <TouchableOpacity
                 style={[styles.themePill, { backgroundColor: badgeBg }]}
                 onPress={() => {
@@ -228,18 +227,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-  },
-  personaPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 5,
-  },
-  personaText: {
-    fontSize: 11,
-    fontWeight: '800',
   },
   themePill: {
     width: 36,

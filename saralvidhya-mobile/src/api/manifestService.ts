@@ -9,6 +9,7 @@ export interface Chapter {
   shortTitle?: string;
   dir: string;
   completed?: string[];
+  availableResources?: string[];
   resourceCount?: number;
   description?: string;
   topicCount?: number;
@@ -48,7 +49,7 @@ export interface CourseOverviewData {
   subjects: CourseSubjectProgress[];
 }
 
-export const ANGRAU_SUBJECTS: Subject[] = [
+export let ANGRAU_SUBJECTS: Subject[] = [
   {
     id: 'ento_131',
     code: 'ENTO 131',
@@ -56,140 +57,179 @@ export const ANGRAU_SUBJECTS: Subject[] = [
     credits: '3 (2+1)',
     semester: 'Semester 3',
     university: 'Acharya N.G. Ranga Agricultural University',
-    progressPercent: 50,
-    chapters: [
-      {
-        number: 1,
-        name: 'Digestive System',
-        title: 'Insect Digestive System',
-        dir: 'chapter_01',
-        description: 'Alimentary canal, foregut, midgut, hindgut, digestive enzymes and nutrient absorption in insects.',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz'],
-        resourceCount: 4,
-        topicCount: 4,
-        estimatedTime: '45min',
-        estimatedMinutes: 45,
-        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/media/hero.png`,
-        topics: [
-          'Three Primary Gut Regions',
-          'Salivary Glands & Specialised Secretions',
-          'Specialized Physiological Adaptations',
-          'Excretory Integration & Gut Renewal',
-        ],
-      },
-      {
-        number: 2,
-        name: 'Metamorphosis',
-        title: 'Metamorphosis & Diapause',
-        dir: 'chapter_02',
-        description: 'Ametabolous, hemimetabolous and holometabolous life cycles, ecdysis and hormonal regulation.',
-        completed: ['summary', 'detailed_view', 'flashcards', 'quiz'],
-        resourceCount: 4,
-        topicCount: 6,
-        estimatedTime: '50min',
-        estimatedMinutes: 50,
-        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/media/hero.png`,
-        topics: [
-          'Morphogenesis Framework',
-          'Types of Metamorphosis',
-          'Immature & Pupal Classifications',
-          'Hypermetamorphosis',
-          'Endocrine Regulation',
-          'Diapause & Dormancy',
-        ],
-      },
-      {
-        number: 3,
-        name: 'Weathering',
-        title: 'Weathering of Rocks and Minerals',
-        dir: 'chapter_03',
-        description: 'Abiotic environmental factors, temperature, humidity and photoperiod influence on insect population.',
-        completed: ['summary'],
-        resourceCount: 4,
-        topicCount: 4,
-        estimatedTime: '45min',
-        estimatedMinutes: 45,
-        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
-        topics: [
-          'Fundamentals & Regolith Genesis',
-          'Physical Weathering (Mechanical Agents)',
-          'Biological Weathering (Living Agents)',
-          'Synthesis & Quantitative Summary',
-        ],
-      },
-      {
-        number: 4,
-        name: 'Pollination',
-        title: 'Pollination, Pollinizers & Parthenocarpy',
-        dir: 'chapter_04',
-        description: 'Floral biology, insect pollinators, apiculture, honey bees and crop pollination mechanisms.',
-        completed: [],
-        resourceCount: 4,
-        topicCount: 6,
-        estimatedTime: '55min',
-        estimatedMinutes: 55,
-        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
-        topics: [
-          'Fundamentals of Floral Biology & Pollination Anatomy',
-          'Self-Pollination (Autogamy) & Inbreeding Mechanisms',
-          'Cross-Pollination (Allogamy / Xenogamy) & Outcrossing',
-          'Pollinators & Pollination Vectors (Abiotic & Biotic)',
-          'Pollinizers & Orchard Layout Management',
-          'Parthenocarpy (Seedless Fruit Development)',
-        ],
-      },
-    ],
+    progressPercent: 0,
+    chapters: [],
   },
 ];
 
-export const manifestService = {
-  async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_cached_subjects_v12_topics_hero_images';
-    const cached = await storage.getItem<Subject[]>(cacheKey);
-    if (cached && cached.length === ANGRAU_SUBJECTS.length && cached[0].chapters?.length === 4) {
-      return cached;
-    }
+const USER_PROGRESS_KEY = 'saral_student_progress_v2';
 
+export async function getStudentChapterProgress(): Promise<Record<string, string[]>> {
+  try {
+    const saved = await storage.getItem<Record<string, string[]>>(USER_PROGRESS_KEY);
+    return saved || {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveStudentChapterProgress(progress: Record<string, string[]>): Promise<void> {
+  try {
+    await storage.setItem(USER_PROGRESS_KEY, progress);
+  } catch (e) {
+    console.warn('[ManifestService] Failed to save student progress:', e);
+  }
+}
+
+async function fetchLiveChapters(): Promise<Chapter[]> {
+  const chapters: Chapter[] = [];
+  const userProgress = await getStudentChapterProgress();
+
+  for (let ch = 1; ch <= 4; ch++) {
+    const chPad = String(ch).padStart(2, '0');
     try {
-      const res = await fetch(`${GCS_API_BASE}/api/content/angrau/entomology/manifest`, {
-        headers: { 'Accept': 'application/json' },
+      const res = await fetch(`${GCS_API_BASE}/api/content/angrau/entomology/chapter_${chPad}/metadata`, {
+        headers: { Accept: 'application/json' },
       });
       if (res.ok) {
-        const liveData = await res.json();
-        if (liveData && liveData.chapters) {
-          ANGRAU_SUBJECTS[0].chapters = liveData.chapters;
-        }
+        const meta = await res.json();
+        const topicList: string[] = Array.isArray(meta.microcast_titles) ? meta.microcast_titles : [];
+        const count = topicList.length || meta.microcast_count || 4;
+        const estMin = count * 10;
+        const progressKey = `ento_131_chapter_${chPad}`;
+        const userCompleted = userProgress[progressKey] || [];
+
+        chapters.push({
+          number: meta.chapter_number || ch,
+          name: meta.chapter_name || `Chapter ${ch}`,
+          title: meta.chapter_name || `Chapter ${ch}`,
+          dir: `chapter_${chPad}`,
+          description: `Authoritative course content for ${meta.chapter_name || `Chapter ${ch}`} from ANGRAU Cloud Repository.`,
+          completed: userCompleted,
+          availableResources: Array.isArray(meta.completed) ? meta.completed : [],
+          resourceCount: 4,
+          topicCount: count,
+          topics: topicList,
+          estimatedMinutes: estMin,
+          estimatedTime: `${estMin}min`,
+          heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_${chPad}/media/hero.png`,
+          heroImageUrl: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_${chPad}/media/hero.png`,
+        });
       }
-    } catch {
-      // Fallback to local ANGRAU syllabus
+    } catch (e) {
+      console.warn(`[ManifestService] Error fetching live metadata for chapter_${chPad}:`, e);
+    }
+  }
+  return chapters;
+}
+
+export const manifestService = {
+  async getSubjects(): Promise<Subject[]> {
+    const cacheKey = 'saral_pure_api_cached_subjects_v2';
+    const userProgress = await getStudentChapterProgress();
+
+    const syncWithUserProgress = (subjects: Subject[]): Subject[] => {
+      return subjects.map((subj) => {
+        if (!subj.chapters) return subj;
+        const chaptersWithProgress = subj.chapters.map((ch) => {
+          const chPad = String(ch.number).padStart(2, '0');
+          const key = `${subj.id}_chapter_${chPad}`;
+          const completedPillars = userProgress[key] || ch.completed || [];
+          return {
+            ...ch,
+            completed: completedPillars,
+          };
+        });
+        const updatedSubj: Subject = {
+          ...subj,
+          chapters: chaptersWithProgress,
+          progressPercent: 0,
+        };
+        updatedSubj.progressPercent = manifestService.calculateSubjectProgress(updatedSubj);
+        return updatedSubj;
+      });
+    };
+
+    try {
+      const liveChapters = await fetchLiveChapters();
+      if (liveChapters.length > 0) {
+        const liveSubject: Subject = {
+          id: 'ento_131',
+          code: 'ENTO 131',
+          name: 'Entomology',
+          credits: '3 (2+1)',
+          semester: 'Semester 3',
+          university: 'Acharya N.G. Ranga Agricultural University',
+          chapters: liveChapters,
+          progressPercent: 0,
+        };
+        const result = syncWithUserProgress([liveSubject]);
+        ANGRAU_SUBJECTS = result;
+        await storage.setItem(cacheKey, result);
+        return result;
+      }
+    } catch (err) {
+      console.warn('[ManifestService] Failed live fetch, checking local cache:', err);
     }
 
-    await storage.setItem(cacheKey, ANGRAU_SUBJECTS);
-    return ANGRAU_SUBJECTS;
+    const cached = await storage.getItem<Subject[]>(cacheKey);
+    if (cached && cached.length > 0) {
+      const synced = syncWithUserProgress(cached);
+      ANGRAU_SUBJECTS = synced;
+      return synced;
+    }
+
+    const fallbackSynced = syncWithUserProgress(ANGRAU_SUBJECTS);
+    ANGRAU_SUBJECTS = fallbackSynced;
+    return fallbackSynced;
   },
 
   calculateChapterProgress(chapter: Chapter): { percentage: number; statusColor: string } {
-    const total = chapter.resourceCount || 4;
-    const completedCount = chapter.completed?.length || 0;
-    const pct = total > 0 ? Math.min(100, Math.round((completedCount / total) * 100)) : 0;
-    const statusColor = pct === 100 ? '#22c55e' : pct > 0 ? '#3b82f6' : '#f97316';
+    if (!chapter.completed || chapter.completed.length === 0) {
+      return { percentage: 0, statusColor: '#9CA3AF' };
+    }
+
+    // Map any recorded resource types into the 4 primary learning pillars
+    const pillars = new Set<string>();
+    for (const item of chapter.completed) {
+      const lower = item.toLowerCase();
+      if (lower === 'read' || lower === 'summary' || lower === 'detailed' || lower === 'notes') {
+        pillars.add('read');
+      } else if (lower === 'videos' || lower === 'watch' || lower === 'video') {
+        pillars.add('videos');
+      } else if (lower === 'audio' || lower === 'listen' || lower === 'podcast' || lower === 'microcast') {
+        pillars.add('audio');
+      } else if (lower === 'practice' || lower === 'flashcards' || lower === 'quiz' || lower === 'assessment') {
+        pillars.add('practice');
+      } else {
+        pillars.add(lower);
+      }
+    }
+
+    const total = 4;
+    const completedCount = pillars.size;
+    const pct = Math.min(100, Math.round((completedCount / total) * 100));
+    const statusColor = pct === 100 ? '#22c55e' : pct > 0 ? '#3b82f6' : '#9CA3AF';
     return { percentage: pct, statusColor };
   },
 
   calculateSubjectProgress(subject: Subject): number {
     if (!subject.chapters || subject.chapters.length === 0) return 0;
-    const totalPossible = subject.chapters.reduce((sum, ch) => sum + (ch.resourceCount || 4), 0);
-    const totalDone = subject.chapters.reduce((sum, ch) => sum + (ch.completed?.length || 0), 0);
-    return totalPossible > 0 ? Math.round((totalDone / totalPossible) * 100) : 0;
+    const totalChapters = subject.chapters.length;
+    const totalPercentage = subject.chapters.reduce((sum, ch) => {
+      const prog = manifestService.calculateChapterProgress(ch);
+      return sum + prog.percentage;
+    }, 0);
+    return Math.round(totalPercentage / totalChapters);
   },
 
   async getCourseOverview(courseName: string = 'Entomology'): Promise<CourseOverviewData> {
-    const subjects = await this.getSubjects();
+    const subjects = await manifestService.getSubjects();
     const ento = subjects[0];
     
     // The dynamic units of Entomology (Digestive System, Metamorphosis, Weathering, Pollination) from database
     const unitProgressList: CourseSubjectProgress[] = (ento?.chapters || []).map((ch) => {
-      const chProgress = this.calculateChapterProgress(ch);
+      const chProgress = manifestService.calculateChapterProgress(ch);
       return {
         index: ch.number,
         id: `unit_${ch.number}`,
@@ -200,7 +240,7 @@ export const manifestService = {
       };
     });
 
-    const overallProgress = ento ? this.calculateSubjectProgress(ento) : 50;
+    const overallProgress = ento ? manifestService.calculateSubjectProgress(ento) : 50;
 
     return {
       courseId: 'ento_131',
@@ -212,34 +252,58 @@ export const manifestService = {
     };
   },
 
-  async toggleChapterResource(
+  async markChapterResource(
     subjectId: string,
     chapterNumber: number,
-    resourceType: string
+    resourceType: string,
+    completed: boolean = true
   ): Promise<Subject[]> {
-    const subjects = await this.getSubjects();
+    const chPad = String(chapterNumber).padStart(2, '0');
+    const chKey = `${subjectId}_chapter_${chPad}`;
+    const userProgress = await getStudentChapterProgress();
+    let current = userProgress[chKey] ? [...userProgress[chKey]] : [];
+
+    if (completed) {
+      if (!current.includes(resourceType)) {
+        current.push(resourceType);
+      }
+    } else {
+      current = current.filter((r) => r !== resourceType);
+    }
+
+    userProgress[chKey] = current;
+    await saveStudentChapterProgress(userProgress);
+
+    const subjects = await manifestService.getSubjects();
     const subject = subjects.find(
       (s) => s.id === subjectId || s.code.toLowerCase().replace(/\s+/g, '_') === subjectId
     );
     if (subject && subject.chapters) {
       const chapter = subject.chapters.find((c) => c.number === chapterNumber);
       if (chapter) {
-        if (!chapter.completed) chapter.completed = [];
-        const exists = chapter.completed.includes(resourceType);
-        if (exists) {
-          chapter.completed = chapter.completed.filter((r) => r !== resourceType);
-        } else {
-          chapter.completed.push(resourceType);
-        }
-        subject.progressPercent = this.calculateSubjectProgress(subject);
-        await storage.setItem('saral_cached_subjects_v8_strict_webapp', subjects);
+        chapter.completed = current;
       }
+      subject.progressPercent = manifestService.calculateSubjectProgress(subject);
+      await storage.setItem('saral_pure_api_cached_subjects_v2', subjects);
     }
     return subjects;
   },
 
+  async toggleChapterResource(
+    subjectId: string,
+    chapterNumber: number,
+    resourceType: string
+  ): Promise<Subject[]> {
+    const chPad = String(chapterNumber).padStart(2, '0');
+    const chKey = `${subjectId}_chapter_${chPad}`;
+    const userProgress = await getStudentChapterProgress();
+    const current = userProgress[chKey] ? [...userProgress[chKey]] : [];
+    const exists = current.includes(resourceType);
+    return manifestService.markChapterResource(subjectId, chapterNumber, resourceType, !exists);
+  },
+
   async getSubject(subjectId: string): Promise<Subject | undefined> {
-    const subjects = await this.getSubjects();
+    const subjects = await manifestService.getSubjects();
     return subjects.find((s) => s.id === subjectId || s.code.toLowerCase().replace(/\s+/g, '_') === subjectId);
   },
 

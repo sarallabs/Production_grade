@@ -15,9 +15,12 @@ import * as Speech from 'expo-speech';
 import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
-import { SAMPLE_PODCASTS, MicrocastItemData, ChapterPodcastBundle } from '@/data/samplePodcasts';
 import { getPodcastAudioUrl } from '@/services/podcastAudioService';
 import {
+  ChapterPodcastBundle,
+  MicrocastItemData,
+  PodcastParagraph,
+  fetchPodcastBundle,
   fetchPodcastMetadata,
   fetchMicrocastTranscript,
   fetchPodcastTranscript,
@@ -187,9 +190,41 @@ export default function ListenScreenTablet({
     };
   }, [chapterNumber, mode, selectedMicrocastId]);
 
-  // Data bundle
-  const currentBundle: ChapterPodcastBundle = useMemo(() => {
-    return SAMPLE_PODCASTS[chapterNumber] || SAMPLE_PODCASTS[1];
+  // Pure API-driven podcast data bundle
+  const [currentBundle, setCurrentBundle] = useState<ChapterPodcastBundle>({
+    chapterNumber,
+    quick: {
+      title: `Chapter ${chapterNumber} Quick Recap`,
+      durationSec: 300,
+      durationFormatted: '00:05:00',
+      durationLabel: '5 min listen',
+      paragraphs: [],
+    },
+    detailed: {
+      title: `Chapter ${chapterNumber} Comprehensive Lecture`,
+      durationSec: 600,
+      durationFormatted: '00:10:00',
+      durationLabel: '10 min listen',
+      paragraphs: [],
+    },
+    microcasts: [],
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    fetchPodcastBundle('entomology', chapterNumber, controller.signal)
+      .then((bundle) => {
+        if (isMounted && bundle) {
+          setCurrentBundle(bundle);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, [chapterNumber]);
 
   // Microcast list for Chapter (live titles from DB with fallback)

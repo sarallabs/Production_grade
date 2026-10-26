@@ -10,9 +10,12 @@ import {
   Alert,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Image,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as ImagePicker from 'expo-image-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
@@ -255,7 +258,7 @@ interface PreparationExamViewProps {
   selectedUnits?: number[];
   questionCount?: number;
   onBack?: () => void;
-  onSubmit?: (answers: Record<number, string>) => void;
+  onSubmit?: (answers: Record<number, string>, photos?: Record<number, string[]>) => void;
 }
 
 export default function PreparationExamView({
@@ -279,6 +282,8 @@ export default function PreparationExamView({
   const [isLoading, setIsLoading] = useState<boolean>(!questions || questions.length === 0);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [answerPhotos, setAnswerPhotos] = useState<Record<number, string[]>>({});
+  const [previewPhotoUri, setPreviewPhotoUri] = useState<string | null>(null);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(7185); // 119:45
 
   useEffect(() => {
@@ -344,14 +349,19 @@ export default function PreparationExamView({
   const totalQuestions = examQuestions.length;
   const currentQ = examQuestions[currentIndex] || examQuestions[0];
   const currentAnswer = currentQ ? answers[currentQ.id] || '' : '';
+  const currentPhotos = currentQ ? answerPhotos[currentQ.id] || [] : [];
 
   // Word count calculation
   const wordCount = currentAnswer.trim()
     ? currentAnswer.trim().split(/\s+/).filter(Boolean).length
     : 0;
 
-  // Answered progress count
-  const answeredCount = Object.values(answers).filter((val) => val.trim().length > 0).length;
+  // Answered progress count (text or photo)
+  const answeredCount = examQuestions.filter(
+    (q) =>
+      (answers[q.id] && answers[q.id].trim().length > 0) ||
+      (answerPhotos[q.id] && answerPhotos[q.id].length > 0)
+  ).length;
   const percentComplete = Math.round(((currentIndex + 1) / totalQuestions) * 100);
 
   // Exact color scheme matching the provided exam mockups 1:1
@@ -446,11 +456,92 @@ export default function PreparationExamView({
     }));
   };
 
+  const attachPhoto = (uri: string) => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    setAnswerPhotos((prev) => ({
+      ...prev,
+      [currentQ.id]: [...(prev[currentQ.id] || []), uri],
+    }));
+  };
+
+  const removePhoto = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setAnswerPhotos((prev) => ({
+      ...prev,
+      [currentQ.id]: (prev[currentQ.id] || []).filter((_, i) => i !== index),
+    }));
+  };
+
+  const takePhoto = async () => {
+    try {
+      const permission = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Camera Permission Needed',
+          'Camera access is required to take a photo of your handwritten answer or diagram.'
+        );
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        attachPhoto(result.assets[0].uri);
+      }
+    } catch (e) {
+      console.warn('[PreparationExamView] Error taking photo:', e);
+      Alert.alert('Camera Error', 'Could not open camera.');
+    }
+  };
+
+  const pickImageFromGallery = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Gallery Permission Needed',
+          'Photo library access is required to upload your answer photo.'
+        );
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        attachPhoto(result.assets[0].uri);
+      }
+    } catch (e) {
+      console.warn('[PreparationExamView] Error selecting photo:', e);
+      Alert.alert('Gallery Error', 'Could not select photo.');
+    }
+  };
+
+  const handleCameraPress = () => {
+    Haptics.selectionAsync();
+    Alert.alert(
+      'Attach Answer Photo',
+      'Take a photo of your handwritten answer or diagram, or select from gallery:',
+      [
+        { text: '📷 Take Photo', onPress: takePhoto },
+        { text: '🖼️ Choose from Gallery', onPress: pickImageFromGallery },
+        { text: 'Cancel', style: 'cancel' },
+      ]
+    );
+  };
+
   const handleClearAnswer = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     setAnswers((prev) => ({
       ...prev,
       [currentQ.id]: '',
+    }));
+    setAnswerPhotos((prev) => ({
+      ...prev,
+      [currentQ.id]: [],
     }));
   };
 
@@ -473,7 +564,7 @@ export default function PreparationExamView({
   const handleSubmitExam = () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     if (onSubmit) {
-      onSubmit(answers);
+      onSubmit(answers, answerPhotos);
     } else {
       Alert.alert('Exam Submitted', `Successfully recorded ${answeredCount} answers.`, [
         { text: 'OK', onPress: onBack },
@@ -667,16 +758,74 @@ export default function PreparationExamView({
             onChangeText={handleAnswerChange}
           />
 
+          {/* Attached Photos Preview inside the Answer Box if any */}
+          {currentPhotos.length > 0 && (
+            <View style={styles.attachedPhotosContainer}>
+              <Text style={[styles.attachedPhotosLabel, { color: colors.subText }]}>
+                Attached Pages / Diagrams ({currentPhotos.length}):
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.attachedPhotosRow}
+              >
+                {currentPhotos.map((uri, idx) => (
+                  <View key={`${uri}-${idx}`} style={styles.photoThumbnailWrap}>
+                    <TouchableOpacity
+                      activeOpacity={0.8}
+                      onPress={() => setPreviewPhotoUri(uri)}
+                    >
+                      <Image
+                        source={{ uri }}
+                        style={styles.photoThumbnail}
+                        resizeMode="cover"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.photoRemoveBadge}
+                      activeOpacity={0.7}
+                      onPress={() => removePhoto(idx)}
+                      accessibilityLabel="Remove photo"
+                    >
+                      <Ionicons name="close-circle" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
           <View style={[styles.inputDivider, { backgroundColor: colors.inputDivider }]} />
 
           <View style={styles.inputFooter}>
-            <TouchableOpacity
-              style={styles.formatBtn}
-              activeOpacity={0.7}
-              onPress={() => Haptics.selectionAsync()}
-            >
-              <Text style={[styles.formatText, { color: colors.subText }]}>Aa  Format</Text>
-            </TouchableOpacity>
+            <View style={styles.inputFooterLeft}>
+              <TouchableOpacity
+                style={styles.formatBtn}
+                activeOpacity={0.7}
+                onPress={() => Haptics.selectionAsync()}
+              >
+                <Text style={[styles.formatText, { color: colors.subText }]}>Aa  Format</Text>
+              </TouchableOpacity>
+
+              {/* Camera Icon Button */}
+              <TouchableOpacity
+                style={[
+                  styles.cameraIconButton,
+                  {
+                    backgroundColor: isDark ? '#1C3026' : '#EAF3EE',
+                    borderColor: isDark ? '#2E4B3D' : '#D0E3D8',
+                  },
+                ]}
+                activeOpacity={0.7}
+                onPress={handleCameraPress}
+                accessibilityLabel="Upload photo answer"
+              >
+                <Ionicons name="camera" size={17} color={colors.accentGreen} />
+                <Text style={[styles.cameraIconLabel, { color: colors.accentGreen }]}>
+                  {currentPhotos.length > 0 ? `Photo (${currentPhotos.length})` : 'Photo'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <Text style={[styles.wordsCountText, { color: colors.subText }]}>
               {wordCount} words
@@ -758,6 +907,31 @@ export default function PreparationExamView({
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Full screen photo preview Modal */}
+      <Modal
+        visible={!!previewPhotoUri}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setPreviewPhotoUri(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={styles.modalCloseBtn}
+            onPress={() => setPreviewPhotoUri(null)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="close" size={28} color="#FFFFFF" />
+          </TouchableOpacity>
+          {previewPhotoUri && (
+            <Image
+              source={{ uri: previewPhotoUri }}
+              style={styles.fullPreviewImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -1052,5 +1226,79 @@ const styles = StyleSheet.create({
     fontSize: 15.5,
     fontWeight: '700',
     letterSpacing: 0.2,
+  },
+  // Attached Photos & Camera button styles
+  attachedPhotosContainer: {
+    marginTop: 10,
+    marginBottom: 6,
+  },
+  attachedPhotosLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  attachedPhotosRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 2,
+  },
+  photoThumbnailWrap: {
+    position: 'relative',
+    borderRadius: 8,
+  },
+  photoThumbnail: {
+    width: 68,
+    height: 68,
+    borderRadius: 8,
+    backgroundColor: '#00000015',
+  },
+  photoRemoveBadge: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+  },
+  inputFooterLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  cameraIconButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  cameraIconLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.92)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  modalCloseBtn: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fullPreviewImage: {
+    width: '100%',
+    height: '80%',
   },
 });

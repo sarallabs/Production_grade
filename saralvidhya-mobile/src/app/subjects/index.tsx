@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
@@ -38,9 +39,7 @@ export default function MySubjectsScreen() {
 
   const [allSubjects, setAllSubjects] = useState<Subject[]>([]);
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
-  const [viewMode, setViewMode] = useState<'subjects' | 'units'>(
-    params.view === 'units' ? 'units' : 'subjects'
-  );
+  const [viewMode, setViewMode] = useState<'subjects' | 'units'>('units');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -49,11 +48,7 @@ export default function MySubjectsScreen() {
   const activeCourse = courses.find((c) => c.id === activeCourseId) || courses[0];
   const courseSubjIds = activeCourse?.subjectIds || ['ento_131'];
 
-  useEffect(() => {
-    loadSubjectsData();
-  }, [params.subjectId, activeCourseId]);
-
-  const loadSubjectsData = async () => {
+  const loadSubjectsData = useCallback(async () => {
     setLoading(true);
     try {
       const subjects = await manifestService.getSubjects();
@@ -73,7 +68,13 @@ export default function MySubjectsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.subjectId, activeCourseId, selectedSubject?.id, courseSubjIds, selectSubject]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadSubjectsData();
+    }, [loadSubjectsData])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -189,68 +190,47 @@ export default function MySubjectsScreen() {
 
       {/* Top Navigation Bar */}
       <View style={styles.navBar}>
-        <TouchableOpacity
-          style={[styles.navButton, { backgroundColor: iconBtnBg }]}
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            if (viewMode === 'units') {
-              setViewMode('subjects');
-            } else {
+        <View style={styles.leftNavActions}>
+          <TouchableOpacity
+            style={[styles.navButton, { backgroundColor: iconBtnBg }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/courses');
+              }
+            }}
+            activeOpacity={0.8}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
+          >
+            <Ionicons name="arrow-back" size={20} color={headerTextColor} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.treeButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               router.replace('/courses');
-            }
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="arrow-back" size={20} color={headerTextColor} />
-        </TouchableOpacity>
+            }}
+            hitSlop={{ top: 12, bottom: 12, left: 10, right: 10 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Go to Courses"
+            accessibilityRole="button"
+          >
+            <Image
+              source={require('@/assets/images/saral-tree.png')}
+              style={styles.headerTreeImage}
+              contentFit="contain"
+            />
+          </TouchableOpacity>
+        </View>
 
         <View style={styles.navTitleContainer}>
           <Text style={[styles.navTitle, { color: headerTextColor }]} numberOfLines={1}>
-            {viewMode === 'subjects' ? 'My Subjects' : activeSubject?.name || 'Subject Units'}
+            {activeSubject?.name || 'Entomology'}
           </Text>
-          <Text style={[styles.navSubtitle, { color: subtextColor }]} numberOfLines={1}>
-            {viewMode === 'subjects'
-              ? `${courseDisplayName} • Enrolled Subjects`
-              : `${activeSubject?.code || 'ENTO 131'} • Units`}
-          </Text>
-        </View>
-
-        {/* View Mode Switcher: Subjects vs Units */}
-        <View style={styles.viewModeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.toggleBtn,
-              { backgroundColor: viewMode === 'subjects' ? activeTabBg : inactiveTabBg },
-            ]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setViewMode('subjects');
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="grid-outline"
-              size={15}
-              color={viewMode === 'subjects' ? activeTabText : inactiveTabText}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.toggleBtn,
-              { backgroundColor: viewMode === 'units' ? activeTabBg : inactiveTabBg },
-            ]}
-            onPress={() => {
-              Haptics.selectionAsync();
-              setViewMode('units');
-            }}
-            activeOpacity={0.8}
-          >
-            <Ionicons
-              name="list-outline"
-              size={15}
-              color={viewMode === 'units' ? activeTabText : inactiveTabText}
-            />
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -475,20 +455,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
-  viewModeToggle: {
+  leftNavActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    borderRadius: 20,
-    padding: 3,
+    gap: 8,
   },
-  toggleBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
+  treeButton: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  headerTreeImage: {
+    width: 26,
+    height: 32,
   },
   searchBar: {
     flexDirection: 'row',

@@ -16,8 +16,11 @@ import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio';
 import Svg, { Path, Rect, Circle } from 'react-native-svg';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
-import { SAMPLE_PODCASTS, PodcastParagraph } from '@/data/samplePodcasts';
+import {
+  ChapterPodcastBundle,
+  PodcastParagraph,
+  fetchPodcastBundle,
+} from '@/services/contentService';
 import { getPodcastAudioUrl } from '@/services/podcastAudioService';
 import ListenScreenTablet from './ListenScreen.tablet';
 
@@ -249,9 +252,41 @@ export default function ListenScreen({
   const isDetailed = mode === 'detailed';
   const isMicro = mode === 'microcasts';
 
-  // Canonical podcast dataset matching web app 1:1
-  const currentBundle = useMemo(() => {
-    return SAMPLE_PODCASTS[chapterNumber] || SAMPLE_PODCASTS[1];
+  // Pure API-driven podcast bundle with local storage caching
+  const [currentBundle, setCurrentBundle] = useState<ChapterPodcastBundle>({
+    chapterNumber,
+    quick: {
+      title: `Chapter ${chapterNumber} Quick Recap`,
+      durationSec: 300,
+      durationFormatted: '00:05:00',
+      durationLabel: '5 min listen',
+      paragraphs: [],
+    },
+    detailed: {
+      title: `Chapter ${chapterNumber} Comprehensive Lecture`,
+      durationSec: 600,
+      durationFormatted: '00:10:00',
+      durationLabel: '10 min listen',
+      paragraphs: [],
+    },
+    microcasts: [],
+  });
+
+  useEffect(() => {
+    let isMounted = true;
+    const controller = new AbortController();
+    fetchPodcastBundle('entomology', chapterNumber, controller.signal)
+      .then((bundle) => {
+        if (isMounted && bundle) {
+          setCurrentBundle(bundle);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
   }, [chapterNumber]);
 
   const microcastEpisodes: MicrocastEpisode[] = useMemo(() => {
@@ -278,7 +313,10 @@ export default function ListenScreen({
   }, [isMicro, isDetailed, activeMicrocast, currentBundle]);
 
   const activeParagraphs: PodcastParagraph[] = useMemo(() => {
-    return activeTrack.paragraphs;
+    return (activeTrack.paragraphs || []).map((p) => ({
+      ...p,
+      text: p.text.replace(/^\[\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\]\s*/, ''),
+    }));
   }, [activeTrack]);
 
   // Tokenized paragraphs for word-level karaoke and timestamp positioning
@@ -875,15 +913,6 @@ export default function ListenScreen({
                       key={pIdx}
                       style={styles.transcriptParagraphCard}
                     >
-                      <TouchableOpacity
-                        style={[styles.timestampBadge, { backgroundColor: isDark ? '#1C3328' : '#E8F5E9' }]}
-                        onPress={() => handleSeekToParagraph(pIdx)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.timestampBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
-                          [{paraItem.timestamp}]
-                        </Text>
-                      </TouchableOpacity>
                       {pIdx === activeParagraphIndex ? (
                         <Text style={[styles.transcriptParagraph, { color: textDark }]}>
                           {paraItem.words.map((w) => {
@@ -1151,15 +1180,6 @@ export default function ListenScreen({
                       key={pIdx}
                       style={styles.microTranscriptCard}
                     >
-                      <TouchableOpacity
-                        style={[styles.timestampBadge, { backgroundColor: isDark ? '#1C3328' : '#E8F5E9' }]}
-                        onPress={() => handleSeekToParagraph(pIdx)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={[styles.timestampBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
-                          [{paraItem.timestamp}]
-                        </Text>
-                      </TouchableOpacity>
                       {pIdx === activeParagraphIndex ? (
                         <Text
                           style={[

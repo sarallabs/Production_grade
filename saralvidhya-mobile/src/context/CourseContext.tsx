@@ -180,10 +180,11 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     resourceType: string
   ) => {
     try {
-      const updatedSubjects = await manifestService.toggleChapterResource(
+      const updatedSubjects = await manifestService.markChapterResource(
         subjectId,
         chapterNumber,
-        resourceType
+        resourceType,
+        true
       );
       setSubjects(updatedSubjects);
 

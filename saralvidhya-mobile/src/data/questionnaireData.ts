@@ -104,11 +104,14 @@ export const QUESTIONS: Question[] = [
   }
 ];
 
-export const calculatePersona = (selections: number[]): { totalScore: number; persona: 'beginner' | 'intermediate' | 'advanced' } => {
+export const calculatePersona = (
+  selections: number[],
+  questionsList: Question[] = QUESTIONS
+): { totalScore: number; persona: 'beginner' | 'intermediate' | 'advanced' } => {
   let totalScore = 0;
   selections.forEach((selIdx, qIdx) => {
-    if (selIdx !== -1 && QUESTIONS[qIdx] && QUESTIONS[qIdx].options[selIdx]) {
-      totalScore += QUESTIONS[qIdx].options[selIdx].points;
+    if (selIdx !== -1 && questionsList[qIdx] && questionsList[qIdx].options[selIdx]) {
+      totalScore += questionsList[qIdx].options[selIdx].points;
     }
   });
 
@@ -118,3 +121,31 @@ export const calculatePersona = (selections: number[]): { totalScore: number; pe
 
   return { totalScore, persona };
 };
+
+/**
+ * Fetches dynamic onboarding questions from Cloud Run API or local storage cache
+ */
+export async function fetchQuestionnaireQuestions(
+  university: string = 'angrau'
+): Promise<Question[]> {
+  const cacheKey = `saral_questionnaire_${university}`;
+  const GCS_API_BASE =
+    process.env.EXPO_PUBLIC_API_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+
+  try {
+    const res = await fetch(`${GCS_API_BASE}/api/content/${university}/questionnaire.json`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.questions;
+      if (Array.isArray(list) && list.length > 0) {
+        return list;
+      }
+    }
+  } catch (err) {
+    // Graceful offline fallback
+  }
+
+  return QUESTIONS;
+}

@@ -23,8 +23,7 @@ import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
 import AssessmentView from '@/components/study/AssessmentView';
 import TeacherQuestionBankView from '@/components/study/TeacherQuestionBankView';
-import { fetchFlashcards } from '@/services/contentService';
-import { SAMPLE_FLASHCARDS, Flashcard, getFlashcardsForPersona } from '@/data/sampleFlashcards';
+import { fetchFlashcards, Flashcard } from '@/services/contentService';
 
 const PRACTICE_PARTS: NavSegment[] = [
   { id: 'revise', label: 'Revise', vectorIcon: 'flash-outline' },
@@ -153,12 +152,7 @@ export default function PracticeScreen() {
             </View>
           ) : (
             <FlashcardDeck
-              cards={getFlashcardsForPersona(
-                flashcardsList.length > 0
-                  ? flashcardsList
-                  : SAMPLE_FLASHCARDS[currentChapter.number] || SAMPLE_FLASHCARDS[1],
-                persona
-              )}
+              cards={flashcardsList}
               chapterNumber={currentChapter.number}
               persona={persona}
               onPersonaChange={updatePersona}

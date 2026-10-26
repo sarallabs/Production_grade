@@ -18,10 +18,9 @@ import { useAppTheme } from '@/context/ThemeContext';
 import { ANGRAU_SUBJECTS, Chapter, manifestService } from '@/api/manifestService';
 import { BorderRadius, Spacing } from '@/constants/theme';
 import MarkdownReader from '@/components/study/MarkdownReader';
-import { SAMPLE_STUDY_CONTENT } from '@/data/sampleStudyContent';
 import { speechService } from '@/services/speechService';
 import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
-import { SAMPLE_FLASHCARDS, Flashcard } from '@/data/sampleFlashcards';
+import { Flashcard } from '@/services/contentService';
 import AssessmentView from '@/components/study/AssessmentView';
 import PodcastsView from '@/components/study/PodcastsView';
 import AskBotView from '@/components/study/AskBotView';
@@ -354,8 +353,7 @@ export default function StudyTableScreen() {
               title={`Ch ${currentChapter.number}: ${currentChapter.name}`}
               content={
                 quickStudyText ||
-                SAMPLE_STUDY_CONTENT[currentChapter.number]?.summary ||
-                `# Chapter ${currentChapter.number}: ${currentChapter.name}\n\nLoading syllabus notes...`
+                `# Chapter ${currentChapter.number}: ${currentChapter.name}\n\nLoading syllabus notes from cloud...`
               }
             />
           ) : activeTool === 'detailed' ? (
@@ -363,17 +361,12 @@ export default function StudyTableScreen() {
               title={`Ch ${currentChapter.number}: ${currentChapter.name}`}
               content={
                 detailedNotesText ||
-                SAMPLE_STUDY_CONTENT[currentChapter.number]?.detailed ||
-                `# Chapter ${currentChapter.number}: ${currentChapter.name}\n\nLoading detailed lecture notes...`
+                `# Chapter ${currentChapter.number}: ${currentChapter.name}\n\nLoading detailed lecture notes from cloud...`
               }
             />
           ) : activeTool === 'flashcards' ? (
             <FlashcardDeck
-              cards={
-                flashcardsList.length > 0
-                  ? flashcardsList
-                  : SAMPLE_FLASHCARDS[currentChapter.number] || SAMPLE_FLASHCARDS[1]
-              }
+              cards={flashcardsList}
               chapterNumber={currentChapter.number}
             />
           ) : activeTool === 'mindmap' ? (

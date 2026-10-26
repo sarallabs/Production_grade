@@ -175,3 +175,56 @@ export function getTermDefinition(rawTerm: string): string | null {
 
   return null;
 }
+
+/**
+ * Parses markdown structured glossary definitions from the Cloud Run API
+ */
+export function parseGlossaryMarkdown(markdown: string): Record<string, string> {
+  const dict: Record<string, string> = {};
+  if (!markdown) return dict;
+
+  const lines = markdown.split('\n');
+  let currentTerm = '';
+
+  for (const line of lines) {
+    if (line.startsWith('### ')) {
+      currentTerm = normalizeTerm(line.replace('### ', ''));
+    } else if (currentTerm && line.includes('- **Definition:**')) {
+      const def = line.replace('- **Definition:**', '').trim();
+      if (def) {
+        dict[currentTerm] = def;
+      }
+    }
+  }
+
+  return dict;
+}
+
+/**
+ * Fetches dynamic glossary definitions for a chapter from Cloud Run API
+ */
+export async function fetchChapterGlossary(
+  chapterNum: number,
+  subjectId: string = 'entomology'
+): Promise<Record<string, string>> {
+  const chPad = String(chapterNum).padStart(2, '0');
+  const cacheKey = `saral_glossary_${subjectId}_ch${chPad}`;
+  const GCS_API_BASE = process.env.EXPO_PUBLIC_API_URL || 'https://saralvidhya-api-193782571555.asia-south1.run.app';
+
+  try {
+    const res = await fetch(`${GCS_API_BASE}/api/content/angrau/${subjectId}/chapter_${chPad}/read/glossary`);
+    if (res.ok) {
+      const text = await res.text();
+      const parsed = parseGlossaryMarkdown(text);
+      if (Object.keys(parsed).length > 0) {
+        // Merge into active in-memory dictionary
+        Object.assign(GLOSSARY_DEFINITIONS, parsed);
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.warn(`[GlossaryTerms] Failed to fetch live glossary for chapter ${chapterNum}:`, err);
+  }
+
+  return {};
+}

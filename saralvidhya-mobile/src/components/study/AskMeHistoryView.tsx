@@ -58,7 +58,6 @@ export default function AskMeHistoryView({
 
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSelectedId, setActiveSelectedId] = useState(selectedId);
-  const [inputQuestion, setInputQuestion] = useState('');
   const [localConversations, setLocalConversations] = useState<HistoryConversation[]>([]);
 
   // Load conversations from service if not provided via props
@@ -170,15 +169,6 @@ export default function AskMeHistoryView({
     }
   };
 
-  const handleSend = () => {
-    const query = inputQuestion.trim();
-    if (!query) return;
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch {}
-    setInputQuestion('');
-    onSendNewQuery(query);
-  };
 
   return (
     <KeyboardAvoidingView
@@ -208,9 +198,6 @@ export default function AskMeHistoryView({
             </TouchableOpacity>
           )}
 
-          <View style={[styles.logoBox, { backgroundColor: colors.logoBoxBg }]}>
-            <Image source={PLANT_BADGE} style={styles.logoImage} resizeMode="contain" />
-          </View>
 
           <View style={styles.headerTitleWrap}>
             <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Ask Me History</Text>
@@ -281,7 +268,7 @@ export default function AskMeHistoryView({
           <Ionicons name="search" size={16} color={colors.searchPlaceholder} />
           <TextInput
             style={[styles.searchInput, { color: colors.primaryText }]}
-            placeholder="Search your questions..."
+            placeholder="Search history"
             placeholderTextColor={colors.searchPlaceholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -351,56 +338,17 @@ export default function AskMeHistoryView({
       </ScrollView>
 
       {/* AI Grounding Disclaimer */}
-      <Text style={[styles.disclaimerText, { color: colors.disclaimerColor }]}>
-        AI answers are based on ANGRAU learning materials
-      </Text>
-
-      {/* Bottom Sticky Input Bar */}
-      <View
+      <Text
         style={[
-          styles.bottomInputContainer,
+          styles.disclaimerText,
           {
-            backgroundColor: colors.bottomBg,
-            borderTopColor: colors.bottomBorder,
-            paddingBottom: insets.bottom > 0 ? insets.bottom : 12,
+            color: colors.disclaimerColor,
+            paddingBottom: insets.bottom > 0 ? insets.bottom + 8 : 16,
           },
         ]}
       >
-        <View
-          style={[
-            styles.inputPill,
-            {
-              backgroundColor: colors.inputPillBg,
-              borderColor: colors.inputPillBorder,
-            },
-          ]}
-        >
-          {/* Sparkle icon circle */}
-          <View style={[styles.inputSparkleCircle, { backgroundColor: colors.inputSparkleBg }]}>
-            <Text style={styles.inputSparkleText}>✦</Text>
-          </View>
-
-          {/* Text Input */}
-          <TextInput
-            style={[styles.chatInput, { color: colors.inputText }]}
-            placeholder="Ask a new question..."
-            placeholderTextColor={colors.inputPlaceholder}
-            value={inputQuestion}
-            onChangeText={setInputQuestion}
-            onSubmitEditing={handleSend}
-            returnKeyType="send"
-          />
-
-          {/* Send Button */}
-          <TouchableOpacity
-            style={[styles.sendButton, { backgroundColor: colors.sendBg }]}
-            onPress={handleSend}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.sendIcon, { color: colors.sendIconColor }]}>➤</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+        AI answers are based on ANGRAU learning materials
+      </Text>
     </KeyboardAvoidingView>
   );
 }
@@ -425,18 +373,6 @@ const styles = StyleSheet.create({
   backArrowBtn: {
     paddingRight: 4,
     justifyContent: 'center',
-  },
-  logoBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  logoImage: {
-    width: 22,
-    height: 28,
   },
   headerTitleWrap: {
     flexDirection: 'column',
@@ -563,48 +499,5 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     marginBottom: 6,
-  },
-  bottomInputContainer: {
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    borderTopWidth: 1,
-  },
-  inputPill: {
-    height: 56,
-    borderRadius: 16,
-    borderWidth: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    gap: 8,
-  },
-  inputSparkleCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputSparkleText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '800',
-  },
-  chatInput: {
-    flex: 1,
-    fontSize: 12.5,
-    fontWeight: '500',
-    paddingHorizontal: 6,
-  },
-  sendButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendIcon: {
-    fontSize: 14,
-    fontWeight: '800',
   },
 });

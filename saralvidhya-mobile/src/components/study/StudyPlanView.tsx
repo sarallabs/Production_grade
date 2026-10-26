@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -61,7 +61,7 @@ export const DEFAULT_STUDY_TASKS: StudyPlanTask[] = [
   },
 ];
 
-function parseStudyPlanTasks(markdown: string, chapterNum: number): StudyPlanTask[] {
+function parseStudyPlanTasks(markdown: string, chapterNum: number, chapterTitle: string): StudyPlanTask[] {
   const tasks: StudyPlanTask[] = [];
   const lines = markdown.split('\n');
   let count = 0;
@@ -93,11 +93,12 @@ function parseStudyPlanTasks(markdown: string, chapterNum: number): StudyPlanTas
   }
 
   if (tasks.length === 0) {
+    const cleanName = chapterTitle.replace(/^chapter\s*\d+\s*[-:·]?\s*/i, '');
     return [
-      { id: `task_${chapterNum}_1`, title: 'Mindmaps & Hierarchical Architecture', category: 'Mindmap', duration: '10m', actionLabel: 'Open →', type: 'mindmap' },
-      { id: `task_${chapterNum}_2`, title: 'Key Takeaways Rapid Reactivation', category: 'Review', duration: '15m', actionLabel: 'Open →', type: 'review' },
-      { id: `task_${chapterNum}_3`, title: 'Video Lecture Breakdown', category: 'Video', duration: '20m', actionLabel: 'Watch →', type: 'video' },
-      { id: `task_${chapterNum}_4`, title: 'Assessment & Question Bank Practice', category: 'Quiz', duration: '15m', actionLabel: 'Start →', type: 'quiz' },
+      { id: `task_${chapterNum}_1`, title: `${cleanName} — Mindmaps & Structural Flow`, category: 'Mindmap', duration: '10m', actionLabel: 'Open →', type: 'mindmap' },
+      { id: `task_${chapterNum}_2`, title: `Key Takeaways & Core Concepts of ${cleanName}`, category: 'Review', duration: '15m', actionLabel: 'Review →', type: 'review' },
+      { id: `task_${chapterNum}_3`, title: `Video Masterclass: ${cleanName}`, category: 'Video', duration: '20m', actionLabel: 'Watch →', type: 'video' },
+      { id: `task_${chapterNum}_4`, title: `${cleanName} — Assessments (MCQ & MSQ)`, category: 'Quiz', duration: '15m', actionLabel: 'Start →', type: 'quiz' },
     ];
   }
   return tasks;
@@ -106,15 +107,19 @@ function parseStudyPlanTasks(markdown: string, chapterNum: number): StudyPlanTas
 interface StudyPlanViewProps {
   subjectId?: string;
   chapterNumber?: number;
+  chapterTitle?: string;
   unitCode?: string;
   unitName?: string;
   subjectName?: string;
+  totalChapters?: number;
   totalMins?: number;
   totalTasksCount?: number;
   modulesCount?: number;
   currentDay?: number;
   totalDays?: number;
   startDate?: string;
+  completedResources?: string[];
+  onMarkModuleCompleted?: () => void;
   onOpenTask?: (task: StudyPlanTask) => void;
   onBack?: () => void;
 }
@@ -122,15 +127,19 @@ interface StudyPlanViewProps {
 export default function StudyPlanView({
   subjectId = 'entomology',
   chapterNumber = 1,
-  unitCode = 'ENTO 131 · UNIT I',
-  unitName = 'Insect Digestive System & Anatomy',
+  chapterTitle = '',
+  unitCode,
+  unitName = 'Digestive System',
   subjectName = 'Entomology',
-  totalMins = 300,
-  totalTasksCount = 18,
-  modulesCount = 5,
+  totalChapters,
+  totalMins,
+  totalTasksCount,
+  modulesCount,
   currentDay = 1,
-  totalDays = 5,
-  startDate = '15 Oct 2026',
+  totalDays,
+  startDate,
+  completedResources,
+  onMarkModuleCompleted,
   onOpenTask,
   onBack,
 }: StudyPlanViewProps) {
@@ -138,7 +147,32 @@ export default function StudyPlanView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const [tasks, setTasks] = useState<StudyPlanTask[]>(DEFAULT_STUDY_TASKS);
+  const displayTitle = (chapterTitle || unitName || 'Digestive System').trim();
+  const activeDay = chapterNumber || currentDay || 1;
+  const activeTotalDays = totalChapters || modulesCount || totalDays || 4;
+  const activeModulesCount = totalChapters || modulesCount || 4;
+
+  const today = useMemo(() => new Date(), []);
+  const formattedStartDate = useMemo(() => {
+    if (startDate && startDate !== '15 Oct 2026') return startDate;
+    return today.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  }, [startDate, today]);
+
+  const formattedTodayDate = useMemo(() => {
+    return today.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  }, [today]);
+
+  const [tasks, setTasks] = useState<StudyPlanTask[]>(() =>
+    parseStudyPlanTasks('', activeDay, displayTitle)
+  );
   const [completedTaskIds, setCompletedTaskIds] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -151,8 +185,10 @@ export default function StudyPlanView({
       .then((markdown) => {
         if (isMounted) {
           if (markdown && markdown.length > 50) {
-            const parsed = parseStudyPlanTasks(markdown, chapterNumber);
+            const parsed = parseStudyPlanTasks(markdown, activeDay, displayTitle);
             setTasks(parsed);
+          } else {
+            setTasks(parseStudyPlanTasks('', activeDay, displayTitle));
           }
           setIsLoading(false);
         }
@@ -161,19 +197,74 @@ export default function StudyPlanView({
         if (!controller.signal.aborted) {
           console.warn('[StudyPlanView] Error fetching study plan:', err);
         }
-        if (isMounted) setIsLoading(false);
+        if (isMounted) {
+          setTasks(parseStudyPlanTasks('', activeDay, displayTitle));
+          setIsLoading(false);
+        }
       });
 
     return () => {
       isMounted = false;
       controller.abort();
     };
-  }, [subjectId, chapterNumber]);
+  }, [subjectId, chapterNumber, activeDay, displayTitle]);
+
+  useEffect(() => {
+    if (completedResources && completedResources.length > 0) {
+      setCompletedTaskIds((prev) => {
+        const updated = { ...prev };
+        tasks.forEach((t) => {
+          if (
+            completedResources.includes(t.type) ||
+            (t.type === 'video' && completedResources.includes('videos')) ||
+            (t.type === 'review' && completedResources.includes('read')) ||
+            (t.type === 'quiz' && completedResources.includes('practice'))
+          ) {
+            updated[t.id] = true;
+          }
+        });
+        return updated;
+      });
+    }
+  }, [completedResources, tasks]);
+
+  const todayEstimatedMins = useMemo(() => {
+    return tasks.reduce((sum, t) => {
+      const m = parseInt(t.duration.replace(/\D/g, ''), 10);
+      return sum + (isNaN(m) ? 15 : m);
+    }, 0);
+  }, [tasks]);
+
+  const activeTotalMins = totalMins || (todayEstimatedMins * activeTotalDays);
+  const activeTotalTasks = totalTasksCount || (tasks.length * activeTotalDays);
 
   const completedTodayCount = tasks.filter((t) => completedTaskIds[t.id]).length;
-  const todayProgressPercent = Math.round((completedTodayCount / tasks.length) * 100);
+  const todayProgressPercent = tasks.length > 0 ? Math.round((completedTodayCount / tasks.length) * 100) : 0;
   const overallDoneCount = completedTodayCount;
-  const overallProgressPercent = Math.round((overallDoneCount / totalTasksCount) * 100);
+  const overallProgressPercent = Math.min(100, Math.round((overallDoneCount / activeTotalTasks) * 100));
+  const isAllTodayTasksCompleted = tasks.length > 0 && tasks.every((t) => completedTaskIds[t.id]);
+
+  const toggleTaskCompleted = (taskId: string) => {
+    Haptics.selectionAsync();
+    setCompletedTaskIds((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
+  const handleMarkModuleDone = () => {
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (isAllTodayTasksCompleted) {
+      setCompletedTaskIds({});
+    } else {
+      const updated: Record<string, boolean> = {};
+      tasks.forEach((t) => {
+        updated[t.id] = true;
+      });
+      setCompletedTaskIds(updated);
+      onMarkModuleCompleted?.();
+    }
+  };
 
   // Exact color palettes from Figma DevMode CSS exports
   const colors = isDark
@@ -214,23 +305,6 @@ export default function StudyPlanView({
         checkboxCheckedBg: '#477562',
       };
 
-  const toggleTaskCompleted = (taskId: string) => {
-    Haptics.selectionAsync();
-    setCompletedTaskIds((prev) => ({
-      ...prev,
-      [taskId]: !prev[taskId],
-    }));
-  };
-
-  const handleMarkModuleDone = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const updated: Record<string, boolean> = {};
-    tasks.forEach((t) => {
-      updated[t.id] = true;
-    });
-    setCompletedTaskIds(updated);
-  };
-
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.screenBg }]}
@@ -245,7 +319,7 @@ export default function StudyPlanView({
       showsVerticalScrollIndicator={false}
     >
       <View style={styles.mainStack}>
-        {/* Top Header Row with Icon & Titles */}
+        {/* Top Header Row: H2 Heading (side box logo removed) */}
         <View style={styles.headerRow}>
           {onBack && (
             <TouchableOpacity
@@ -263,24 +337,9 @@ export default function StudyPlanView({
             </TouchableOpacity>
           )}
 
-          <View
-            style={[
-              styles.iconBox,
-              {
-                backgroundColor: colors.cardSecondaryBg,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.iconBoxSymbol, { color: colors.accentGreen }]}>▦</Text>
-          </View>
-
           <View style={styles.headerTextWrap}>
-            <Text style={[styles.unitCodeTitle, { color: colors.primaryText }]}>
-              {unitCode}
-            </Text>
-            <Text style={[styles.unitNameSub, { color: colors.secondaryText }]}>
-              {unitName}
+            <Text style={[styles.chapterTitleH2, { color: colors.primaryText }]}>
+              {displayTitle.toUpperCase()}
             </Text>
           </View>
         </View>
@@ -297,16 +356,16 @@ export default function StudyPlanView({
         >
           <View style={styles.overallLeft}>
             <Text style={[styles.minsTotalText, { color: colors.primaryText }]}>
-              {totalMins} mins total
+              {activeTotalMins} mins total
             </Text>
             <Text style={[styles.startDateText, { color: colors.secondaryText }]}>
-              Start · {startDate}
+              Start · {formattedStartDate}
             </Text>
           </View>
 
           <View style={styles.overallRight}>
             <Text style={[styles.doneFractionText, { color: colors.primaryText }]}>
-              {overallDoneCount} / {totalTasksCount} done
+              {overallDoneCount} / {activeTotalTasks} done
             </Text>
             <View style={[styles.overallTrack, { backgroundColor: colors.progressTrack }]}>
               <View
@@ -328,7 +387,7 @@ export default function StudyPlanView({
             Study plan overview
           </Text>
           <Text style={[styles.sectionSub, { color: colors.secondaryText }]}>
-            {totalDays}-day {subjectName} learning plan
+            {activeTotalDays}-day {subjectName} learning plan
           </Text>
         </View>
 
@@ -345,10 +404,10 @@ export default function StudyPlanView({
               TOTAL TIME
             </Text>
             <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {totalMins} min
+              {activeTotalMins} min
             </Text>
             <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              {Math.round(totalMins / totalDays)} min/day
+              {Math.round(activeTotalMins / activeTotalDays)} min/day
             </Text>
           </View>
 
@@ -363,10 +422,10 @@ export default function StudyPlanView({
               TOTAL TASKS
             </Text>
             <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {totalTasksCount}
+              {activeTotalTasks}
             </Text>
             <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              Across {totalDays} days
+              Across {activeTotalDays} days
             </Text>
           </View>
 
@@ -381,10 +440,10 @@ export default function StudyPlanView({
               MODULES
             </Text>
             <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {modulesCount}
+              {activeModulesCount}
             </Text>
             <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              Core topics
+              {subjectName} Units
             </Text>
           </View>
         </View>
@@ -410,7 +469,7 @@ export default function StudyPlanView({
               ]}
             >
               <Text style={[styles.dayPillText, { color: colors.accentGreen }]}>
-                Day {currentDay}
+                Day {activeDay}
               </Text>
             </View>
           </View>
@@ -430,7 +489,7 @@ export default function StudyPlanView({
                 FOCUS
               </Text>
               <Text style={[styles.focusSubPillValue, { color: colors.primaryText }]}>
-                Concepts
+                {displayTitle.split(' ')[0] || 'Core'}
               </Text>
             </View>
 
@@ -467,10 +526,10 @@ export default function StudyPlanView({
         {/* Today's Section Header */}
         <View style={styles.todayHeader}>
           <Text style={[styles.todayTitle, { color: colors.primaryText }]}>
-            Today · Day {currentDay} of {totalDays}
+            Today · Day {activeDay} of {activeTotalDays}
           </Text>
           <Text style={[styles.todaySub, { color: colors.secondaryText }]}>
-            Thu, Oct 15  ·  60 minutes
+            {formattedTodayDate}  ·  {todayEstimatedMins} minutes
           </Text>
         </View>
 
@@ -486,23 +545,36 @@ export default function StudyPlanView({
         >
           <View style={styles.moduleTextWrap}>
             <Text style={[styles.moduleLabel, { color: colors.accentGreen }]}>
-              Module 1
+              Module {activeDay}
             </Text>
             <Text style={[styles.moduleName, { color: colors.primaryText }]}>
-              Database Fundamentals
+              {displayTitle}
             </Text>
           </View>
 
           <TouchableOpacity
             style={[
               styles.markDoneButton,
-              { backgroundColor: colors.buttonPrimaryBg },
+              isAllTodayTasksCompleted
+                ? {
+                    backgroundColor: colors.cardSecondaryBg,
+                    borderWidth: 1,
+                    borderColor: colors.accentGreen,
+                  }
+                : { backgroundColor: colors.buttonPrimaryBg },
             ]}
             onPress={handleMarkModuleDone}
             activeOpacity={0.8}
           >
-            <Text style={[styles.markDoneText, { color: colors.buttonPrimaryText }]}>
-              Mark done
+            <Text
+              style={[
+                styles.markDoneText,
+                isAllTodayTasksCompleted
+                  ? { color: colors.accentGreen }
+                  : { color: colors.buttonPrimaryText },
+              ]}
+            >
+              {isAllTodayTasksCompleted ? '✓ Completed' : 'Mark done'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -662,30 +734,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconBoxSymbol: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
   headerTextWrap: {
     flex: 1,
-    flexDirection: 'column',
-    gap: 2,
+    justifyContent: 'center',
   },
-  unitCodeTitle: {
-    fontSize: 15,
+  chapterTitleH2: {
+    fontSize: 22,
     fontWeight: '700',
-  },
-  unitNameSub: {
-    fontSize: 11,
-    fontWeight: '500',
+    letterSpacing: -0.3,
+    lineHeight: 28,
   },
   overallCard: {
     width: '100%',
