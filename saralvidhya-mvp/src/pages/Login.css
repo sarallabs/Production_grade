@@ -138,7 +138,7 @@
 }
 
 .sv-login-subtitle-highlight {
-  color: #D9A55C;
+  color: #E7B864;
   font-weight: 600;
 }
 
@@ -212,11 +212,11 @@
   color: #F5F2EB;
 }
 
-/* Primary Action Button — Amber (#D9A55C) */
+/* Primary Action Button — Amber Gold (#E7B864) */
 .sv-login-button {
   width: 100%;
   height: 46px;
-  background: #D9A55C;
+  background: #E7B864;
   border: none;
   border-radius: 10px;
   color: #1F2A24;
@@ -227,7 +227,7 @@
   align-items: center;
   justify-content: center;
   transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
-  box-shadow: 0 4px 14px rgba(217, 165, 92, 0.25);
+  box-shadow: 0 4px 14px rgba(231, 184, 100, 0.25);
 }
 
 .sv-login-button:hover:not(:disabled) {

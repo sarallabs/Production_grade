@@ -331,26 +331,26 @@ function Login() {
           </div>
 
           {/* Bottom Feature Pills: Learn, Practice, Prepare */}
-          <div className="sv-login-pills" aria-hidden="true">
-            <div className="sv-login-pill">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6B8E7B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+          <div className='sv-login-pills' aria-hidden='true'>
+            <div className='sv-login-pill'>
+              <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#9CC0B4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z' />
+                <path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z' />
               </svg>
               <span>Learn</span>
             </div>
-            <div className="sv-login-pill">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D9A55C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                <path d="m15 5 4 4" />
+            <div className='sv-login-pill'>
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#E7B864' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' />
+                <path d='m15 5 4 4' />
               </svg>
               <span>Practice</span>
             </div>
-            <div className="sv-login-pill">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#BE7E57" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <circle cx="12" cy="12" r="5" />
-                <circle cx="12" cy="12" r="1.5" fill="#BE7E57" />
+            <div className='sv-login-pill'>
+              <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#B5BA9B' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <circle cx='12' cy='12' r='9' />
+                <circle cx='12' cy='12' r='5' />
+                <circle cx='12' cy='12' r='1.5' fill='#B5BA9B' />
               </svg>
               <span>Prepare</span>
             </div>

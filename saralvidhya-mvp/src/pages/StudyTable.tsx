@@ -3948,27 +3948,27 @@ export default function StudyTable() {
             gap: "0"
           }}
         >
-          {/* Study Toolbar (MVP Project) - Toggleable Dark (#2D3E36) / Bright Theme */}
-          {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
+          {/* Study Toolbar (MVP Project) - Toggleable Dark (#546C60) / Bright Theme */}
+          {activeTool !== 'mocktest' && activeTool !== 'pre_final_test' && (
             <div
-              className="study-toolbar-wrapper"
+              className='study-toolbar-wrapper'
               style={{
-                position: "relative",
-                width: "100%",
+                position: 'relative',
+                width: '100%',
                 flexShrink: 0,
-                background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
-                borderBottom: isDarkToolbar ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E2E8F0",
-                boxShadow: isDarkToolbar ? "0 4px 24px rgba(0, 0, 0, 0.22)" : "0 2px 12px rgba(0, 0, 0, 0.05)",
+                background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                borderBottom: isDarkToolbar ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #E2E8F0',
+                boxShadow: isDarkToolbar ? '0 4px 24px rgba(0, 0, 0, 0.22)' : '0 2px 12px rgba(0, 0, 0, 0.05)',
                 zIndex: 100,
-                transition: "background 0.25s ease, border-color 0.25s ease",
+                transition: 'background 0.25s ease, border-color 0.25s ease',
               }}
             >
               {/* Permanent Content Drawer */}
               <div
                 style={{
-                  padding: "2px 14px",
-                  background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
-                  transition: "background 0.25s ease",
+                  padding: '2px 14px',
+                  background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                  transition: 'background 0.25s ease',
                 }}
               >
                 {(() => {
@@ -3977,49 +3977,49 @@ export default function StudyTable() {
                   // a chapter-wide mix.
                   const unitCompleted = completedTools;
                     const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    // Learn (#159A5B toolbar grade; warm paper #FAF8F4 canvas for Read)
-                    videos: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    summary: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
-                    quick_study: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
-                    detailed: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#FAF8F4" },
-                    podcasts: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    // Learn - Mint (#9CC0B4)
+                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
+                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
 
-                    // Practice - Amber (#F59E0B)
-                    flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
-                    master_flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
-                    revision_flashcards: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
-                    revise: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
-                    assessment: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
-                    qbank: { main: "#F59E0B", badge: "#F59E0B", text: "#F59E0B", bg: "#fffbeb" },
+                    // Practice - Amber Gold (#E7B864)
+                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
 
-                    // Prepare - Terra (#E07640)
-                    study_plan: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    pyq: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    prep_exam: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    prep_test: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    mocktest: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    pre_final_test: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
-                    certification_exam: { main: "#E07640", badge: "#E07640", text: "#E07640", bg: "#FFF2E8" },
+                    // Prepare - Sage Cream (#B5BA9B)
+                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
 
-                    // Resources - Sage (#7BA88B)
-                    mindmap: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
-                    foundation: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
-                    key_takeaways: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
-                    ask: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
-                    swot: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
-                    deep_dive: { main: "#7BA88B", badge: "#7BA88B", text: "#7BA88B", bg: "#EEF5F1" },
+                    // Resources - Logo Peach (#D9A382)
+                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
                   };
 
-                  // In Dark Theme (#2D3E36): Use the vibrant section colors (Mint #159A5B, Amber #F59E0B, Terra #E07640, Sage #7BA88B)
+                  // In Menu Theme (#546C60 Deep Pine Green): Use the section colors (Mint #9CC0B4, Amber Gold #E7B864, Sage Cream #B5BA9B, Logo Peach #D9A382)
                   // All other (idle) icons and text are crisp white (#FFFFFF) in dark mode / #18221D in bright mode.
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
                     // Active icon: vibrant bright section color with crisp white highlights.
                     // Inactive icons (the other icons): disabled look, black & white only (no colors).
-                    const iconColor = active ? color : (isDarkToolbar ? "#FFFFFF" : "#475569");
-                    const iconMuted = active ? `${color}BB` : (isDarkToolbar ? "rgba(255, 255, 255, 0.55)" : "#94A3B8");
-                    const innerBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
-                    const contrastBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
+                    const iconColor = active ? color : (isDarkToolbar ? '#FFFFFF' : '#475569');
+                    const iconMuted = active ? `${color}BB` : (isDarkToolbar ? 'rgba(255, 255, 255, 0.55)' : '#94A3B8');
+                    const innerBg = active ? '#FFFFFF' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
+                    const contrastBg = active ? '#546C60' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
 
                     switch (toolId) {
                       case "summary":
@@ -4109,8 +4109,8 @@ export default function StudyTable() {
                               objectFit: "contain",
                               display: "block",
                               filter: active
-                                ? "brightness(1.1) drop-shadow(0 0 6px rgba(123, 168, 139, 0.6))"
-                                : "grayscale(100%) brightness(1.7) opacity(0.7)",
+                                ? 'brightness(1.1) drop-shadow(0 0 6px rgba(217, 163, 130, 0.65))'
+                                : 'grayscale(100%) brightness(1.7) opacity(0.7)',
                             }}
                           />
                         );
@@ -4506,8 +4506,8 @@ export default function StudyTable() {
                               flexShrink: 0,
                             }}
                           >
-                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - #159A5B */}
-                            <div style={groupCardStyle(isLearnActive, "#159A5B")}>
+                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
+                            <div style={groupCardStyle(isLearnActive, '#9CC0B4')}>
                               <div style={{
                                 height: '16px',
                                 minHeight: '16px',
@@ -4516,7 +4516,7 @@ export default function StudyTable() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 gap: '6px',
-                                color: isLearnActive ? '#159A5B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isLearnActive ? '#9CC0B4' : (isDarkToolbar ? '#9CC0B4' : '#18221D'),
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -4527,21 +4527,21 @@ export default function StudyTable() {
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
-                                    style={{ background: '#159A5B', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
+                                    style={{ background: '#9CC0B4', color: '#18221D', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
                                   >
                                     Video {videoIndex}/{chapterVideos.length}
                                   </span>
                                 )}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("summary", "Read", "#159A5B")}
-                                {renderNode("podcasts", "Listen", "#159A5B")}
-                                {renderNode("videos", "Watch", "#159A5B")}
+                                {renderNode('summary', 'Read', '#9CC0B4')}
+                                {renderNode('podcasts', 'Listen', '#9CC0B4')}
+                                {renderNode('videos', 'Watch', '#9CC0B4')}
                               </div>
                             </div>
 
-                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber (#F59E0B) */}
-                            <div style={groupCardStyle(isPracticeActive, "#F59E0B")}>
+                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
+                            <div style={groupCardStyle(isPracticeActive, '#E7B864')}>
                               <div style={{
                                 height: '16px',
                                 minHeight: '16px',
@@ -4549,7 +4549,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPracticeActive ? '#F59E0B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isPracticeActive ? '#E7B864' : (isDarkToolbar ? '#E7B864' : '#18221D'),
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -4559,14 +4559,14 @@ export default function StudyTable() {
                                 Practice
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("revision_flashcards", "Revise", "#F59E0B")}
-                                {renderNode("assessment", "Assessment", "#F59E0B")}
-                                {renderNode("qbank", "Question Bank", "#F59E0B")}
+                                {renderNode('revision_flashcards', 'Revise', '#E7B864')}
+                                {renderNode('assessment', 'Assessment', '#E7B864')}
+                                {renderNode('qbank', 'Question Bank', '#E7B864')}
                               </div>
                             </div>
 
-                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Terra (#E07640) */}
-                            <div style={groupCardStyle(isPrepareActive, "#E07640")}>
+                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
+                            <div style={groupCardStyle(isPrepareActive, '#B5BA9B')}>
                               <div style={{
                                 height: '16px',
                                 minHeight: '16px',
@@ -4574,7 +4574,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isPrepareActive ? '#E07640' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isPrepareActive ? '#B5BA9B' : (isDarkToolbar ? '#B5BA9B' : '#18221D'),
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -4584,14 +4584,14 @@ export default function StudyTable() {
                                 Prepare
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("pyq", "PYQs", "#E07640")}
-                                {renderNode("prep_exam", "Preparation Exam", "#E07640")}
-                                {renderNode("study_plan", "Study Plan", "#E07640")}
+                                {renderNode('pyq', 'PYQs', '#B5BA9B')}
+                                {renderNode('prep_exam', 'Preparation Exam', '#B5BA9B')}
+                                {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
                               </div>
                             </div>
 
-                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Sage (#7BA88B) */}
-                            <div style={groupCardStyle(isResourcesActive, "#7BA88B")}>
+                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
+                            <div style={groupCardStyle(isResourcesActive, '#D9A382')}>
                               <div style={{
                                 height: '16px',
                                 minHeight: '16px',
@@ -4599,7 +4599,7 @@ export default function StudyTable() {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                color: isResourcesActive ? '#7BA88B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
+                                color: isResourcesActive ? '#D9A382' : (isDarkToolbar ? '#D9A382' : '#18221D'),
                                 fontSize: '11.5px',
                                 fontWeight: 700,
                                 textAlign: 'center',
@@ -4609,9 +4609,9 @@ export default function StudyTable() {
                                 Resources
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("mindmap", "Mindmaps", "#7BA88B")}
-                                {renderNode("key_takeaways", "Key Takeaways", "#7BA88B")}
-                                {renderNode("ask", "Ask me", "#7BA88B")}
+                                {renderNode('mindmap', 'Mindmaps', '#D9A382')}
+                                {renderNode('key_takeaways', 'Key Takeaways', '#D9A382')}
+                                {renderNode('ask', 'Ask me', '#D9A382')}
                               </div>
                             </div>
                           </div>
@@ -4629,40 +4629,40 @@ export default function StudyTable() {
                         }}
                       >
 
-                        {/* Log Out Button (Red circular outline with soft red tint) */}
+                        {/* Log Out Button - Cream (#F5F2EB) */}
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleAuthClick}
-                          title="Log Out"
-                          aria-label="Log Out"
+                          title='Log Out'
+                          aria-label='Log Out'
                           style={{
-                            width: "38px",
-                            height: "38px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #EF4444",
-                            background: "#FEF2F2",
-                            color: "#EF4444",
-                            cursor: "pointer",
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1.5px solid #F5F2EB',
+                            background: '#F5F2EB',
+                            color: '#546C60',
+                            cursor: 'pointer',
                             flexShrink: 0,
-                            boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
-                            transition: "all 0.2s ease",
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.14)',
+                            transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
+                            (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF';
+                            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
                           }}
                           onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                            (e.currentTarget as HTMLButtonElement).style.background = '#F5F2EB';
+                            (e.currentTarget as HTMLButtonElement).style.transform = 'none';
                           }}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
-                            <polyline points="15 8 19 12 15 16" />
-                            <line x1="9" y1="12" x2="19" y2="12" />
+                          <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#546C60' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                            <path d='M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8' />
+                            <polyline points='15 8 19 12 15 16' />
+                            <line x1='9' y1='12' x2='19' y2='12' />
                           </svg>
                         </button>
                       </div>
@@ -4942,9 +4942,9 @@ export default function StudyTable() {
                       .sv-hdr-level-btn.lvl-beginner.active-lvl,
                       .sv-hdr-level-btn.lvl-intermediate.active-lvl,
                       .sv-hdr-level-btn.lvl-advanced.active-lvl {
-                        border: 2px solid #D9A55C !important;
+                        border: 2px solid #E7B864 !important;
                         background: #FFFDF9 !important;
-                        box-shadow: 0 3px 10px rgba(217, 165, 92, 0.18) !important;
+                        box-shadow: 0 3px 10px rgba(231, 184, 100, 0.22) !important;
                         border-radius: 12px !important;
                       }
                       .sv-hdr-level-btn.active-lvl img {
@@ -4981,9 +4981,9 @@ export default function StudyTable() {
                         bottom: 3px;
                         left: 3px;
                         width: calc(50% - 3px);
-                        background: #2E3B33;
+                        background: #546C60;
                         border-radius: 9999px;
-                        box-shadow: 0 2px 6px rgba(46, 59, 51, 0.25);
+                        box-shadow: 0 2px 6px rgba(84, 108, 96, 0.28);
                         transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
                         pointer-events: none;
                         z-index: 1;
@@ -5041,9 +5041,9 @@ export default function StudyTable() {
                         transition: all 0.18s ease; white-space: nowrap;
                         line-height: 1;
                       }
-                      .sv-hdr-mode-btn:hover { border-color: #2E3B33; color: #2E3B33; background: rgba(46, 59, 51, 0.05); }
-                      .sv-hdr-mode-btn.active-quick    { background: #2E3B33; border-color: #2E3B33; color: #ffffff; box-shadow: 0 2px 8px rgba(46,59,51,0.28); }
-                      .sv-hdr-mode-btn.active-detailed { background: #2E3B33; border-color: #2E3B33; color: #ffffff; box-shadow: 0 2px 8px rgba(46,59,51,0.28); }
+                      .sv-hdr-mode-btn:hover { border-color: #546C60; color: #546C60; background: rgba(84, 108, 96, 0.06); }
+                      .sv-hdr-mode-btn.active-quick    { background: #546C60; border-color: #546C60; color: #ffffff; box-shadow: 0 2px 8px rgba(84, 108, 96, 0.28); }
+                      .sv-hdr-mode-btn.active-detailed { background: #546C60; border-color: #546C60; color: #ffffff; box-shadow: 0 2px 8px rgba(84, 108, 96, 0.28); }
                     `}</style>
 
                     <div className="sv-hdr">

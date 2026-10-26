@@ -319,27 +319,27 @@ export default function ClassSubjectSelection() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1.5px solid #EF4444',
-                background: '#FEF2F2',
-                color: '#EF4444',
+                border: '1.5px solid #F5F2EB',
+                background: '#F5F2EB',
+                color: '#546C60',
                 cursor: 'pointer',
                 flexShrink: 0,
-                boxShadow: '0 1px 4px rgba(239, 68, 68, 0.12)',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.14)',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#FEE2E2';
+                (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF';
                 (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2';
+                (e.currentTarget as HTMLButtonElement).style.background = '#F5F2EB';
                 (e.currentTarget as HTMLButtonElement).style.transform = 'none';
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
-                <polyline points="15 8 19 12 15 16" />
-                <line x1="9" y1="12" x2="19" y2="12" />
+              <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#546C60' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8' />
+                <polyline points='15 8 19 12 15 16' />
+                <line x1='9' y1='12' x2='19' y2='12' />
               </svg>
             </button>
             <button className="sv-profile-btn" onClick={() => navigate(tenantPath('/profile'))}>
