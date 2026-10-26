@@ -421,15 +421,15 @@ export default function FlashcardsView({
                       fontSize: isFlipped
                         ? (cleanTitle.length > 85 ? '16.5px' : '18px')
                         : (cleanTitle.length > 180
-                            ? 'clamp(36px, 3.8vw, 52px)'
+                            ? 'clamp(20px, 2vw, 26px)'
                             : cleanTitle.length > 120
-                              ? 'clamp(42px, 4.5vw, 60px)'
+                              ? 'clamp(22px, 2.3vw, 29px)'
                               : cleanTitle.length > 75
-                                ? 'clamp(48px, 5.2vw, 68px)'
-                                : 'clamp(54px, 6vw, 78px)'),
+                                ? 'clamp(24px, 2.6vw, 32px)'
+                                : 'clamp(27px, 3vw, 36px)'),
                       fontWeight: 800,
                       color: '#16201A',
-                      lineHeight: isFlipped ? 1.26 : 1.24,
+                      lineHeight: isFlipped ? 1.26 : 1.35,
                       textAlign: 'center',
                       maxWidth: isFlipped ? '90%' : '94%',
                       width: '100%',
