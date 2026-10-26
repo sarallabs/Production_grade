@@ -346,7 +346,7 @@ export default function PYQView({
     <div
       className="pyq-view"
       style={{
-        background: "#F8F5EE",
+        background: '#B5BA9B',
         minHeight: "100%",
         padding: "18px 24px 48px",
         boxSizing: "border-box",

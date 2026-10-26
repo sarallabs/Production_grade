@@ -259,7 +259,7 @@ export default function QuestionBankView({
 
   if (!manifest) {
     return (
-      <div style={{ padding: '48px 36px', background: '#FAF8F3', minHeight: '100%', color: '#5A655E', fontSize: '14px' }}>
+      <div style={{ padding: '48px 36px', background: '#E7B864', minHeight: '100%', color: '#1E2822', fontSize: '14px' }}>
         Loading question bank…
       </div>
     );
@@ -272,7 +272,7 @@ export default function QuestionBankView({
       className="qbank-root"
       ref={qbankContainerRef}
       style={{
-        background: '#FAF8F3',
+        background: '#E7B864',
         minHeight: '100%',
         width: '100%',
         padding: '22px 36px 56px',

@@ -903,7 +903,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       <div
         style={{
           minHeight: "100%",
-          background: "#F8F5EE",
+          background: '#B5BA9B',
           padding: "32px",
           fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
           color: "#1E2822",
@@ -999,7 +999,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       style={{
         minHeight: "100%",
         width: "100%",
-        background: "#F8F5EE",
+        background: '#B5BA9B',
         padding: "18px 28px 48px",
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
         color: "#1E2822",

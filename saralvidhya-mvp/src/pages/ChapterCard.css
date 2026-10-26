@@ -4,10 +4,10 @@
   padding: 12px 32px 24px 32px !important;
 }
 
-/* Background behind the chapter cards: #6F9A7F at 8% */
+/* Background behind the chapter cards: #9CC0B4 [Mint] */
 .book-app .sv-main,
 .book-app .book-content {
-  background: rgba(111, 154, 127, 0.08) !important;
+  background: #9CC0B4 !important;
 }
 
 .chapter-hero-nav-wrapper {

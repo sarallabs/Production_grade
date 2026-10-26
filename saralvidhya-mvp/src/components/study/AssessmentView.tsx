@@ -550,7 +550,7 @@ export function AssessmentView({
               width: "100%",
               minHeight: "100%",
               flexShrink: 0,
-              background: "#F8F5EE",
+              background: '#E7B864',
               padding: "12px 20px 28px",
               boxSizing: "border-box",
               fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif",

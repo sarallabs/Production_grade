@@ -291,7 +291,7 @@ export default function MindMapView({
   };
 
   return (
-    <div style={{ border: '1px solid #E4DFD3', borderRadius: 16, overflow: 'hidden', background: '#F3EFE6', fontFamily: FONT, flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ border: '1px solid rgba(84, 108, 96, 0.25)', borderRadius: 16, overflow: 'hidden', background: '#D9A382', fontFamily: FONT, flex: 1, height: '100%', display: 'flex', flexDirection: 'column' }}>
       <div
         ref={boxRef}
         onPointerDown={onDown}
@@ -301,7 +301,7 @@ export default function MindMapView({
         style={{
           position: 'relative', flex: 1, height: '100%', minHeight: 460, overflow: 'hidden', touchAction: 'none',
           userSelect: 'none', cursor: panning ? 'grabbing' : 'grab',
-          background: '#F3EFE6',
+          background: '#D9A382',
         }}
       >
         {/* Top-right unified zoom control pill */}

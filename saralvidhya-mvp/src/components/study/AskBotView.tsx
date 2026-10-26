@@ -778,8 +778,7 @@ export default function AskBotView({
         width: "100%",
         height: "100%",
         minHeight: 0,
-        background:
-          "radial-gradient(ellipse at 50% 0%, #EFF3EC 0%, #E6ECE3 55%, #F2EFE6 100%)",
+        background: '#D9A382',
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
         overflow: "hidden",
       }}

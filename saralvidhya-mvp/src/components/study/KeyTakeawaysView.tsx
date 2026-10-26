@@ -663,7 +663,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
     <div
       style={{
         minHeight: "100%",
-        background: "#F7F3EB",
+        background: '#D9A382',
         color: "#1E2822",
         fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
         display: "flex",

@@ -2699,7 +2699,7 @@ export default function StudyTable() {
               gap: '0px',
               height: '100%',
               width: '100%',
-              background: mindmapTopicOpen ? 'transparent' : '#FAF8F3',
+              background: mindmapTopicOpen ? 'transparent' : '#D9A382',
             }}
           >
             {/* Map + Inspector Split View — hidden while a topic is open so only content fills the view */}
@@ -2711,7 +2711,7 @@ export default function StudyTable() {
                   height: '100%',
                   width: '100%',
                   minHeight: 0,
-                  background: '#FAF8F3',
+                  background: '#D9A382',
                 }}
               >
                 {/* ── Top Sub-Header Bar ── */}
@@ -3903,12 +3903,40 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
-      case "swot":
-        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
-      case "deep_dive":
-        return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
+      // Learn - #9CC0B4 [Mint]
+      case 'summary':
+      case 'quick_study':
+      case 'detailed':
+      case 'podcasts':
+      case 'videos':
+        return { bg: '#9CC0B4', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
+      // Practice - #E7B864 [Amber Gold]
+      case 'flashcards':
+      case 'master_flashcards':
+      case 'revision_flashcards':
+      case 'revise':
+      case 'assessment':
+      case 'qbank':
+        return { bg: '#E7B864', gradient: 'linear-gradient(90deg, #E7B864 0%, #C8963E 100%)', shadow: '0 4px 12px rgba(231, 184, 100, 0.35)' };
+      // Prepare - #B5BA9B [Sage Cream]
+      case 'study_plan':
+      case 'pyq':
+      case 'prep_exam':
+      case 'prep_test':
+      case 'mocktest':
+      case 'pre_final_test':
+      case 'certification_exam':
+        return { bg: '#B5BA9B', gradient: 'linear-gradient(90deg, #B5BA9B 0%, #7D8462 100%)', shadow: '0 4px 12px rgba(181, 186, 155, 0.35)' };
+      // Resources - #D9A382 [Logo Peach]
+      case 'mindmap':
+      case 'foundation':
+      case 'key_takeaways':
+      case 'ask':
+      case 'swot':
+      case 'deep_dive':
+        return { bg: '#D9A382', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
       default:
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
+        return { bg: '#9CC0B4', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
     }
   };
   const activeToolTheme = getToolTheme(activeTool);
@@ -3978,36 +4006,36 @@ export default function StudyTable() {
                   const unitCompleted = completedTools;
                     const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
                     // Learn - Mint (#9CC0B4)
-                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
-                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
-                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
-                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
-                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
+                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
+                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
+                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
+                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
+                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
 
                     // Practice - Amber Gold (#E7B864)
-                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
-                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
-                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
-                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
-                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
-                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
 
                     // Prepare - Sage Cream (#B5BA9B)
-                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
-                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
 
                     // Resources - Logo Peach (#D9A382)
-                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
-                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
-                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
-                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
-                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
-                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
                   };
 
                   // In Menu Theme (#546C60 Deep Pine Green): Use the section colors (Mint #9CC0B4, Amber Gold #E7B864, Sage Cream #B5BA9B, Logo Peach #D9A382)
