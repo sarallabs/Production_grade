@@ -18,6 +18,7 @@ interface SectionizedReadViewProps {
   isPurpleTheme?: boolean;
   onLoadedContent?: (text: string) => void;
   targetSectionIndex?: number | null;
+  dbDurationMinutes?: number;
   readingHighlight?: {
     active: boolean;
     startWord: number;
@@ -34,6 +35,7 @@ function SectionizedReadViewInner({
   onLoadedContent,
   targetSectionIndex,
   readingHighlight,
+  dbDurationMinutes,
 }: SectionizedReadViewProps) {
   const initialCache = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
   const [data, setData] = useState<SectionizedChapterData | null>(initialCache);
@@ -272,7 +274,7 @@ function SectionizedReadViewInner({
     return () => {
       scrollParent.removeEventListener('scroll', onScrollThrottled);
     };
-  }, [sections]);
+  }, [sections, dbDurationMinutes]);
 
   const markQuickCheckCompleted = (
     idx: number,
@@ -365,8 +367,9 @@ function SectionizedReadViewInner({
     : 0;
 
   const totalReadingMinutes = useMemo(() => {
+    if (typeof dbDurationMinutes === 'number' && dbDurationMinutes > 0) return dbDurationMinutes;
     return sections.reduce((acc, s) => acc + (s.readTimeMinutes || 3), 0);
-  }, [sections]);
+  }, [sections, dbDurationMinutes]);
 
   // Brand-true colors: Pine-deep (#2E3B33), Amber (#D9A55C), Terra (#BE7E57 / #A85D34)
   const pineDeep = '#9CC0B4';

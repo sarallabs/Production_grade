@@ -502,6 +502,16 @@ export default function StudyTable() {
   const setChapterNumber = (num: number) => setChapterNumberState(num);
   const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
   const dbChapterObj = subjectChapters.find((c) => c.number === chapterNumber);
+  const [regReadingDurations, setRegReadingDurations] = useState<Record<string, Record<string, number>> | null>(null);
+  useEffect(() => {
+    let active = true;
+    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
+      if (!active || !reg?.chapter) return;
+      const rd = (reg.chapter as any).readingDurations || (reg.chapter.tools as any)?.readingDurations;
+      if (rd) setRegReadingDurations(rd);
+    });
+    return () => { active = false; };
+  }, [subjectId, chapterNumber]);
   const chapterName =
     dbChapterObj?.title ||
     dbChapterObj?.name ||
@@ -1470,6 +1480,7 @@ export default function StudyTable() {
               isPurpleTheme={false}
               readingHighlight={readingHighlight}
               onLoadedContent={handleLoadedReadContent}
+              dbDurationMinutes={(regReadingDurations || dbChapterObj?.readingDurations || dbChapterObj?.tools?.readingDurations)?.[activeTool === "detailed" ? "detailed" : "summary"]?.[persona]}
             />
           );
         }
@@ -5144,6 +5155,11 @@ export default function StudyTable() {
                                 }
                               }}
                               onHighlightChange={handleHighlightChange}
+                              durationMinutes={
+                                (regReadingDurations || (dbChapterObj as any)?.readingDurations || (dbChapterObj?.tools as any)?.readingDurations)?.[
+                                  activeTool === "detailed" ? "detailed" : "summary"
+                                ]?.[persona]
+                              }
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
                               isPurpleTheme={false}

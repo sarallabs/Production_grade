@@ -104,6 +104,7 @@ function ReadAloudBarInner({
   activeTool,
   onSwitchTool,
   isPurpleTheme,
+  durationMinutes,
 }: {
   text: string;
   subjectId: string;
@@ -117,6 +118,7 @@ function ReadAloudBarInner({
   activeTool?: string;
   onSwitchTool?: (tool: ToolId) => void;
   isPurpleTheme?: boolean;
+  durationMinutes?: number;
 }) {
   const [playbackState, setPlaybackState] = useState<
     "idle" | "playing" | "paused"
@@ -314,7 +316,16 @@ function ReadAloudBarInner({
     };
   }, [progressStorageKey]);
 
-  if (!text) return null;
+  const effectiveDurationMins = useMemo(() => {
+    if (typeof durationMinutes === "number" && durationMinutes > 0) {
+      return durationMinutes;
+    }
+    if (!text) return 0;
+    const words = text.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2, Math.ceil(words / 180));
+  }, [durationMinutes, text]);
+
+  if (!text && !effectiveDurationMins) return null;
 
   return (
     <div
@@ -375,10 +386,15 @@ function ReadAloudBarInner({
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "32px",
+            gap: "6px",
+            width: effectiveDurationMins > 0 ? "auto" : "32px",
             height: "32px",
-            padding: 0,
-            borderRadius: "50%",
+            padding: effectiveDurationMins > 0 ? "0 12px" : 0,
+            borderRadius: "9999px",
+            fontSize: "12.5px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+
             border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
             background: playbackState === "playing"
               ? (isPurple ? "#7c3aed" : "#16a34a")
@@ -410,6 +426,12 @@ function ReadAloudBarInner({
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
           </svg>
+          {effectiveDurationMins > 0 && (
+            <span>{effectiveDurationMins} min</span>
+          )}
+          <svg style={{ display: "none" }}>
+
+          </svg>
         </button>
         <span className="sv-read-aloud-tooltip">
           {playbackState === "playing"
@@ -430,6 +452,7 @@ function ReadAloudBarInner({
             width: "28px",
             height: "28px",
             borderRadius: "50%",
+
             border: `1px solid ${isPurple ? "#ddd6fe" : "#bbf7d0"}`,
             background: "#ffffff",
             color: isPurple ? "#7c3aed" : "#16a34a",
