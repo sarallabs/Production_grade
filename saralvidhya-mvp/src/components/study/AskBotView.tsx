@@ -538,13 +538,23 @@ export default function AskBotView({
   useEffect(() => {
     return cloudStorage.subscribe(() => {
       const loaded = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
+      if (loaded.length === 0) return;
       setSessions((prev) => {
-        if (prev.length === 0 && loaded.length > 0) {
+        if (prev.length === 0) {
           setActiveSessionId((currId) => currId || loaded[0].id);
           setMessages((currMsgs) => (currMsgs.length === 0 ? loaded[0].messages.slice(-30) : currMsgs));
           return loaded;
         }
-        return prev;
+        const byId = new Map<string, ChatSession>();
+        for (const s of [...prev, ...loaded]) {
+          const existing = byId.get(s.id);
+          if (!existing || new Date(s.updatedAt).getTime() > new Date(existing.updatedAt).getTime()) {
+            byId.set(s.id, s);
+          }
+        }
+        return Array.from(byId.values()).sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
       });
     });
   }, [sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty]);
@@ -554,7 +564,7 @@ export default function AskBotView({
     if (messages.some((m) => m.loading)) return;
     if (messages.length === 0) return;
 
-    const firstUserMsg = messages.find((m) => m.role === user && m.text)?.text || `${cleanChapterTitle} Session`;
+    const firstUserMsg = messages.find((m) => m.role === "user" && m.text)?.text || `${cleanChapterTitle} Session`;
     const sessionTitle = firstUserMsg.length > 68 ? `${firstUserMsg.slice(0, 65)}...` : firstUserMsg;
     const now = new Date().toISOString();
     const targetId = activeSessionId || `sess_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;

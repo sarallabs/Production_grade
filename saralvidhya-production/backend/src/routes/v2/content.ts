@@ -25,11 +25,11 @@ const router = Router();
 router.use('/:tenant', tenantMiddleware, requireSession);
 
 function resolveUserId(req: AuthenticatedRequest): string {
-  return (
-    req.session?.userId ||
-    req.session?.sessionId ||
-    `u_${req.tenant?.id || 'default'}_default_student`
-  );
+  const tenantId = req.tenant?.id || req.session?.tenantId || 'default';
+  if (req.session?.email && req.session?.userId) {
+    return req.session.userId;
+  }
+  return `u_${tenantId}_default_student`;
 }
 
 /**

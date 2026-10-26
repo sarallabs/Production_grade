@@ -152,14 +152,17 @@ router.post(
     }
 
     const sessionId = `s_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-    // Derive deterministic userId if email, studentId, or userKey is provided; otherwise scope to unique sessionId
-    const rawIdentity = (email || studentId || userKey || displayName || '')
+    // Derive deterministic userId if email, studentId, or userKey is provided; otherwise use the tenant-level user ID
+    const rawIdentity = (email || studentId || userKey || '')
       .toString()
       .trim()
       .toLowerCase();
     const userId = rawIdentity
       ? `u_${tenant.id}_${crypto.createHash('sha256').update(rawIdentity).digest('hex').slice(0, 16)}`
-      : `u_${tenant.id}_${sessionId.replace(/^s_/, '').slice(0, 16)}`;
+      : `u_${tenant.id}_default_student`;
+    const effectiveDisplayName = displayName
+      ? String(displayName).trim()
+      : `${tenant.shortName || tenant.id.toUpperCase()} Student`;
 
     const token = createSessionToken({
       tenantId: tenant.id,
@@ -168,14 +171,14 @@ router.post(
       sessionId,
       userId,
       email: email ? String(email).trim() : undefined,
-      displayName: displayName ? String(displayName).trim() : undefined,
+      displayName: effectiveDisplayName,
     });
 
     await ensureUserProfile({
       userId,
       tenantId: tenant.id,
       role: 'student',
-      displayName: displayName ? String(displayName).trim() : undefined,
+      displayName: effectiveDisplayName,
       email: email ? String(email).trim() : undefined,
       studentId: studentId ? String(studentId).trim() : undefined,
     }).catch((err) => console.warn('[Login] Failed to ensure user profile:', err));
@@ -272,6 +275,12 @@ router.post('/:tenant/events/batch', tenantMiddleware, async (req: TenantRequest
     } catch {
       // Allow pre-auth / expired-token telemetry events through
     }
+  }
+  if (!resolvedEmail) {
+    resolvedUserId = `u_${tenant.id}_default_student`;
+  }
+  if (!resolvedName) {
+    resolvedName = `${tenant.shortName || tenant.id.toUpperCase()} Student`;
   }
 
   try {
