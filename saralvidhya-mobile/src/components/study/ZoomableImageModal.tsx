@@ -254,7 +254,7 @@ export default function ZoomableImageModal({
       onRequestClose={onClose}
     >
       <View style={styles.backdrop} {...panResponder.panHandlers}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" />
+        <StatusBar barStyle="light-content" />
 
         {/* Minimal Floating Close Button */}
         <TouchableOpacity

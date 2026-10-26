@@ -104,7 +104,7 @@ export default function AskMeWelcomeView({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
 
   // Load chat history from SQLite / AsyncStorage & ANGRAU curriculum DB records
   useEffect(() => {

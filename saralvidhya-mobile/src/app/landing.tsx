@@ -117,7 +117,6 @@ export default function LandingScreen() {
     <View style={[styles.container, { backgroundColor: currentBg }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={currentBg}
       />
 
       {/* Top Bar */}

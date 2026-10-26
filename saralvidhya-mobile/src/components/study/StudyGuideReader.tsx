@@ -330,7 +330,7 @@ export default function StudyGuideReader({
     SAMPLE_STUDY_CONTENT[chapterNumber]?.detailed || ''
   );
 
-  const scrollViewRef = useRef<ScrollView>(null);
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
   const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>(() =>
     FALLBACK_QUICK_CHECK_BANK[chapterNumber] || FALLBACK_QUICK_CHECK_BANK[1] || []
   );

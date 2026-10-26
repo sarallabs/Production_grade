@@ -101,7 +101,6 @@ export default function CourseSelectionScreen() {
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       <StatusBar
         barStyle={isDark ? 'light-content' : 'dark-content'}
-        backgroundColor={screenBg}
       />
 
       <ScrollView
