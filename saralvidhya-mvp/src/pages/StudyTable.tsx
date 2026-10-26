@@ -3911,6 +3911,7 @@ export default function StudyTable() {
         return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
     }
   };
+  const activeToolTheme = getToolTheme(activeTool);
 
   return (
     <div
