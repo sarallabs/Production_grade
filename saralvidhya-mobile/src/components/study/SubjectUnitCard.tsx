@@ -49,10 +49,8 @@ export const SubjectUnitCard: React.FC<SubjectUnitCardProps> = ({
   const chevronBg = isDark ? 'rgba(45, 62, 54, 0.08)' : 'rgba(255, 255, 255, 0.12)';
   const chevronColor = isDark ? '#1C2E24' : '#FFFFFF';
 
-  // Clean cropped book illustration matching user's PNG reference (NO cockroach)
-  const fallbackSource = isDark
-    ? require('@/assets/images/card_thumb_light.png')
-    : require('@/assets/images/card_thumb_dark.png');
+  // Crop illustration matching curriculum hero
+  const fallbackSource = require('@/assets/images/infographics/chapter-digestive-hero.png');
 
   // Load subject thumbnail from cloud database
   const cloudThumbUri = getChapterThumbnailUrl(1, subject.code || subject.name || 'entomology');
@@ -82,10 +80,10 @@ export const SubjectUnitCard: React.FC<SubjectUnitCardProps> = ({
             <Image
               source={imageSource}
               placeholder={fallbackSource}
-              placeholderContentFit="cover"
+              placeholderContentFit="contain"
               style={styles.bookIllustration}
-              contentFit="cover"
-              transition={250}
+              contentFit="contain"
+              transition={200}
               cachePolicy="memory-disk"
               onError={() => setImageError(true)}
             />

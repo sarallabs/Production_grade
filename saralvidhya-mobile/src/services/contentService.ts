@@ -1131,29 +1131,16 @@ export async function fetchPodcastTranscript(
 }
 
 /**
- * Returns the public GCS Cloud Run URL for a chapter thumbnail image from the cloud database.
- * Points to real course diagrams and infographics hosted on GCP:
- *  - Chapter 1: Insect Digestive System Structural Guide Infographic
- *  - Chapter 2: Metamorphosis Mindmap / Structural Infographic
- *  - Chapter 3: Weathering of Rocks & Minerals Foundation Mindmap
- *  - Chapter 4: Pollination Mindmap / Diagram
+ * Returns the public GCS Cloud Run URL for a chapter thumbnail hero image from the cloud database.
+ * Points to canonical chapter hero media hosted on GCP:
+ *  - Chapter 1: /api/content/angrau/entomology/chapter_01/media/hero.png
+ *  - Chapter 2: /api/content/angrau/entomology/chapter_02/media/hero.png
+ *  - Chapter 3: /api/content/angrau/entomology/chapter_03/media/hero.png
+ *  - Chapter 4: /api/content/angrau/entomology/chapter_04/media/hero.png
  */
 export function getChapterThumbnailUrl(chapterNumber: number, subjectId: string = 'entomology'): string {
   const chDir = formatChapterDir(chapterNumber);
   const normalizedSubject = subjectId.toLowerCase().includes('ento') ? 'entomology' : subjectId.toLowerCase();
-  const base = `${GCS_API_BASE}/api/content/angrau/${normalizedSubject}/${chDir}`;
-
-  switch (chapterNumber) {
-    case 1:
-      return `${base}/Mindmaps/Digestive%20System%20Infographics/01.%20Insect_Alimentary_Canal_Structural_Guide.png`;
-    case 2:
-      return `${base}/learn/mindmap.png`;
-    case 3:
-      return `${base}/learn/mindmap.png`;
-    case 4:
-      return `${base}/learn/mindmap.png`;
-    default:
-      return `${base}/learn/mindmap.png`;
-  }
+  return `${GCS_API_BASE}/api/content/angrau/${normalizedSubject}/${chDir}/media/hero.png`;
 }
 

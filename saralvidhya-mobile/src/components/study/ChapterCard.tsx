@@ -21,6 +21,15 @@ export interface ChapterCardProps {
   onToolPress?: (toolId: string) => void;
 }
 
+
+// Local bundled fallback hero images (matching the 4 web app chapter cards)
+const CHAPTER_HERO_IMAGES: Record<number, any> = {
+  1: require('@/assets/images/infographics/chapter-digestive-hero.png'),
+  2: require('@/assets/images/infographics/chapter-metamorphosis-hero.png'),
+  3: require('@/assets/images/infographics/chapter-weathering-hero.png'),
+  4: require('@/assets/images/infographics/chapter-pollination-hero.png'),
+};
+
 export const ChapterCard: React.FC<ChapterCardProps> = ({
   chapter,
   subjectCode,
@@ -31,10 +40,24 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
 }) => {
   const [imageError, setImageError] = React.useState(false);
 
-  // Chapter completion calculation for visual progress line
+  // Chapter completion calculation for visual progress bar
   const progressInfo = manifestService.calculateChapterProgress(chapter);
 
-  // Visual Theme Tokens matching user's exact PNG reference:
+  // Number of topics for this chapter (e.g. 4 for Ch1/Ch3, 6 for Ch2/Ch4)
+  const topicCount =
+    chapter.topicCount ??
+    (Array.isArray(chapter.topics)
+      ? chapter.topics.length
+      : chapter.number === 2 || chapter.number === 4
+      ? 6
+      : 4);
+
+  // Estimated study duration
+  const estimatedTime =
+    chapter.estimatedTime ||
+    `${chapter.estimatedMinutes || (topicCount === 6 ? 55 : 45)}min`;
+
+  // Visual Theme Tokens matching user's design reference:
   // Dark Screen (#2D3E36): Card is Light Cream #FFF6F1 with Sage Green thumbnail box
   // Light Screen (#FFF6F1): Card is Dark Forest #2D3E36 with Cream thumbnail box
   const cardBg = isDark ? '#FFF6F1' : '#2D3E36';
@@ -46,20 +69,24 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
   const chevronColor = isDark ? '#1C2E24' : '#FFFFFF';
 
   // Dedicated topic fallback if offline or failed to fetch from GCP cloud database
-  const fallbackSource = chapter.number === 3
-    ? require('@/assets/images/weathering_thumb.png')
-    : isDark
-      ? require('@/assets/images/card_thumb_light.png')
-      : require('@/assets/images/card_thumb_dark.png');
+  const fallbackSource =
+    CHAPTER_HERO_IMAGES[chapter.number] ||
+    require('@/assets/images/chapter-hero.png');
 
-  // Dynamic GCP Cloud Database URL for the chapter
-  const cloudThumbUri = getChapterThumbnailUrl(chapter.number, subjectCode || subjectName);
+  // Dynamic GCP Cloud Database URL for the chapter (media/hero.png)
+  const cloudThumbUri =
+    chapter.heroImage ||
+    chapter.heroImageUrl ||
+    getChapterThumbnailUrl(chapter.number, subjectCode || subjectName);
+
   const imageSource = imageError || !cloudThumbUri ? fallbackSource : { uri: cloudThumbUri };
 
   const handleCardPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onPress();
   };
+
+  const displayName = chapter.title || chapter.name;
 
   return (
     <View style={styles.outerWrapper}>
@@ -75,46 +102,99 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
         activeOpacity={0.92}
       >
         <View style={styles.contentRow}>
-          {/* Left Topic Illustration Box from Cloud GCS */}
-          <View style={[styles.thumbnailBox, { backgroundColor: isDark ? '#709180' : '#41594D' }]}>
+          {/* Left Topic Illustration Box from Cloud Database / Local Fallback */}
+          <View style={[styles.thumbnailBox, { backgroundColor: isDark ? '#E8EFEA' : '#35483F' }]}>
             <Image
               source={imageSource}
               placeholder={fallbackSource}
-              placeholderContentFit="cover"
+              placeholderContentFit="contain"
               style={styles.bookIllustration}
-              contentFit="cover"
-              transition={250}
+              contentFit="contain"
+              transition={200}
               cachePolicy="memory-disk"
               onError={() => setImageError(true)}
             />
           </View>
 
-          {/* Center: Chapter Name & Subject Subtitle (NO numbers or ticks) */}
+          {/* Center: Chapter Name, Subtitle, Topics Count, and Progress Bar */}
           <View style={styles.infoColumn}>
             <Text style={[styles.titleText, { color: titleColor }]} numberOfLines={1}>
-              {chapter.name}
+              {displayName}
             </Text>
             <Text style={[styles.subtitleText, { color: subtitleColor }]} numberOfLines={1}>
               {subjectName} • Chapter {chapter.number}
             </Text>
 
-            {/* Visual Progress Line Indicator (NO numbers or checkmark ticks) */}
-            <View style={[styles.progressTrack, { backgroundColor: trackBg }]}>
+            {/* Topics Count & Estimated Time Badges */}
+            <View style={styles.metaRow}>
               <View
                 style={[
-                  styles.progressFill,
+                  styles.topicBadge,
+                  { backgroundColor: isDark ? 'rgba(34, 197, 94, 0.12)' : 'rgba(74, 222, 128, 0.2)' },
+                ]}
+              >
+                <Ionicons
+                  name="document-text-outline"
+                  size={11}
+                  color={isDark ? '#16a34a' : '#4ade80'}
+                />
+                <Text
+                  style={[
+                    styles.topicBadgeText,
+                    { color: isDark ? '#16a34a' : '#4ade80' },
+                  ]}
+                >
+                  {topicCount} Topics
+                </Text>
+              </View>
+
+              <View
+                style={[
+                  styles.timeBadge,
+                  { backgroundColor: isDark ? 'rgba(45, 62, 54, 0.06)' : 'rgba(255, 255, 255, 0.1)' },
+                ]}
+              >
+                <Ionicons name="time-outline" size={11} color={subtitleColor} />
+                <Text style={[styles.timeBadgeText, { color: subtitleColor }]}>
+                  {estimatedTime}
+                </Text>
+              </View>
+            </View>
+
+            {/* Visual Progress Bar with Percentage Label */}
+            <View style={styles.progressSection}>
+              <View style={[styles.progressTrack, { backgroundColor: trackBg }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(100, Math.max(0, progressInfo.percentage))}%`,
+                      backgroundColor: progressFill,
+                    },
+                  ]}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.progressPercentText,
                   {
-                    width: `${Math.min(100, Math.max(0, progressInfo.percentage))}%`,
-                    backgroundColor: progressFill,
+                    color:
+                      progressInfo.percentage > 0
+                        ? isDark
+                          ? '#16a34a'
+                          : '#4ade80'
+                        : subtitleColor,
                   },
                 ]}
-              />
+              >
+                {progressInfo.percentage}%
+              </Text>
             </View>
           </View>
 
-          {/* Right Action: Sleek Chevron Arrow (NO numbers) */}
+          {/* Right Action: Sleek Chevron Arrow */}
           <View style={[styles.chevronWrap, { backgroundColor: chevronBg }]}>
-            <Ionicons name="chevron-forward" size={20} color={chevronColor} />
+            <Ionicons name="chevron-forward" size={18} color={chevronColor} />
           </View>
         </View>
       </TouchableOpacity>
@@ -128,22 +208,25 @@ const styles = StyleSheet.create({
   },
   cardContainer: {
     width: '100%',
-    borderRadius: 24,
-    padding: 16,
-    marginVertical: 8,
-    elevation: 4,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
+    borderRadius: 22,
+    padding: 14,
+    marginVertical: 7,
+    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
   },
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   thumbnailBox: {
-    width: 76,
-    height: 72,
-    borderRadius: 18,
+    width: 80,
+    height: 76,
+    borderRadius: 16,
+    padding: 4,
+    justifyContent: 'center',
+    alignItems: 'center',
     overflow: 'hidden',
   },
   bookIllustration: {
@@ -152,36 +235,77 @@ const styles = StyleSheet.create({
   },
   infoColumn: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 13,
     justifyContent: 'center',
   },
   titleText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.3,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   subtitleText: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
+    marginBottom: 6,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
     marginBottom: 8,
   },
+  topicBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 7,
+  },
+  topicBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 7,
+  },
+  timeBadgeText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  progressSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   progressTrack: {
-    width: '100%',
-    height: 4.5,
-    borderRadius: 2.5,
+    flex: 1,
+    height: 5,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 2.5,
+    borderRadius: 3,
+  },
+  progressPercentText: {
+    fontSize: 11,
+    fontWeight: '700',
+    minWidth: 32,
+    textAlign: 'right',
   },
   chevronWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     justifyContent: 'center',
     alignItems: 'center',
-    marginLeft: 10,
+    marginLeft: 8,
   },
 });

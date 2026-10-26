@@ -6,10 +6,17 @@ export interface Chapter {
   number: number;
   name: string;
   title?: string;
+  shortTitle?: string;
   dir: string;
   completed?: string[];
   resourceCount?: number;
   description?: string;
+  topicCount?: number;
+  topics?: string[] | { id: string; label: string; order?: number }[];
+  estimatedMinutes?: number;
+  estimatedTime?: string;
+  heroImage?: string;
+  heroImageUrl?: string;
 }
 
 export interface Subject {
@@ -54,34 +61,82 @@ export const ANGRAU_SUBJECTS: Subject[] = [
       {
         number: 1,
         name: 'Digestive System',
+        title: 'Insect Digestive System',
         dir: 'chapter_01',
         description: 'Alimentary canal, foregut, midgut, hindgut, digestive enzymes and nutrient absorption in insects.',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz'],
         resourceCount: 4,
+        topicCount: 4,
+        estimatedTime: '45min',
+        estimatedMinutes: 45,
+        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/media/hero.png`,
+        topics: [
+          'Three Primary Gut Regions',
+          'Salivary Glands & Specialised Secretions',
+          'Specialized Physiological Adaptations',
+          'Excretory Integration & Gut Renewal',
+        ],
       },
       {
         number: 2,
         name: 'Metamorphosis',
+        title: 'Metamorphosis & Diapause',
         dir: 'chapter_02',
         description: 'Ametabolous, hemimetabolous and holometabolous life cycles, ecdysis and hormonal regulation.',
         completed: ['summary', 'detailed_view', 'flashcards', 'quiz'],
         resourceCount: 4,
+        topicCount: 6,
+        estimatedTime: '50min',
+        estimatedMinutes: 50,
+        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/media/hero.png`,
+        topics: [
+          'Morphogenesis Framework',
+          'Types of Metamorphosis',
+          'Immature & Pupal Classifications',
+          'Hypermetamorphosis',
+          'Endocrine Regulation',
+          'Diapause & Dormancy',
+        ],
       },
       {
         number: 3,
         name: 'Weathering',
+        title: 'Weathering of Rocks and Minerals',
         dir: 'chapter_03',
         description: 'Abiotic environmental factors, temperature, humidity and photoperiod influence on insect population.',
         completed: ['summary'],
         resourceCount: 4,
+        topicCount: 4,
+        estimatedTime: '45min',
+        estimatedMinutes: 45,
+        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
+        topics: [
+          'Fundamentals & Regolith Genesis',
+          'Physical Weathering (Mechanical Agents)',
+          'Biological Weathering (Living Agents)',
+          'Synthesis & Quantitative Summary',
+        ],
       },
       {
         number: 4,
         name: 'Pollination',
+        title: 'Pollination, Pollinizers & Parthenocarpy',
         dir: 'chapter_04',
         description: 'Floral biology, insect pollinators, apiculture, honey bees and crop pollination mechanisms.',
         completed: [],
         resourceCount: 4,
+        topicCount: 6,
+        estimatedTime: '55min',
+        estimatedMinutes: 55,
+        heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
+        topics: [
+          'Fundamentals of Floral Biology & Pollination Anatomy',
+          'Self-Pollination (Autogamy) & Inbreeding Mechanisms',
+          'Cross-Pollination (Allogamy / Xenogamy) & Outcrossing',
+          'Pollinators & Pollination Vectors (Abiotic & Biotic)',
+          'Pollinizers & Orchard Layout Management',
+          'Parthenocarpy (Seedless Fruit Development)',
+        ],
       },
     ],
   },
@@ -89,7 +144,7 @@ export const ANGRAU_SUBJECTS: Subject[] = [
 
 export const manifestService = {
   async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_cached_subjects_v10_ento_starting_card';
+    const cacheKey = 'saral_cached_subjects_v12_topics_hero_images';
     const cached = await storage.getItem<Subject[]>(cacheKey);
     if (cached && cached.length === ANGRAU_SUBJECTS.length && cached[0].chapters?.length === 4) {
       return cached;
