@@ -2699,7 +2699,7 @@ export default function StudyTable() {
               gap: '0px',
               height: '100%',
               width: '100%',
-              background: mindmapTopicOpen ? 'transparent' : '#D9A382',
+              background: mindmapTopicOpen ? 'transparent' : '#FAF8F3',
             }}
           >
             {/* Map + Inspector Split View — hidden while a topic is open so only content fills the view */}
@@ -2711,7 +2711,7 @@ export default function StudyTable() {
                   height: '100%',
                   width: '100%',
                   minHeight: 0,
-                  background: '#D9A382',
+                  background: '#FAF8F3',
                 }}
               >
                 {/* ── Top Sub-Header Bar ── */}
@@ -3388,9 +3388,9 @@ export default function StudyTable() {
                             fontWeight: 600,
                             cursor: 'pointer',
                             border: 'none',
-                            background: mindmapInlineTab === 'quick' ? '#15803d' : 'transparent',
-                            color: mindmapInlineTab === 'quick' ? '#ffffff' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                            background: mindmapInlineTab === 'quick' ? '#9CC0B4' : 'transparent',
+                            color: mindmapInlineTab === 'quick' ? '#18221D' : '#64748b',
+                            boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
                             transition: 'all 0.18s ease',
                           }}
                         >
@@ -3412,9 +3412,9 @@ export default function StudyTable() {
                             fontWeight: 600,
                             cursor: 'pointer',
                             border: 'none',
-                            background: mindmapInlineTab === 'detailed' ? '#15803d' : 'transparent',
-                            color: mindmapInlineTab === 'detailed' ? '#ffffff' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
+                            background: mindmapInlineTab === 'detailed' ? '#9CC0B4' : 'transparent',
+                            color: mindmapInlineTab === 'detailed' ? '#18221D' : '#64748b',
+                            boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
                             transition: 'all 0.18s ease',
                           }}
                         >
@@ -3903,43 +3903,14 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
-      // Learn - #9CC0B4 [Mint]
-      case 'summary':
-      case 'quick_study':
-      case 'detailed':
-      case 'podcasts':
-      case 'videos':
-        return { bg: '#9CC0B4', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
-      // Practice - #E7B864 [Amber Gold]
-      case 'flashcards':
-      case 'master_flashcards':
-      case 'revision_flashcards':
-      case 'revise':
-      case 'assessment':
-      case 'qbank':
-        return { bg: '#E7B864', gradient: 'linear-gradient(90deg, #E7B864 0%, #C8963E 100%)', shadow: '0 4px 12px rgba(231, 184, 100, 0.35)' };
-      // Prepare - #B5BA9B [Sage Cream]
-      case 'study_plan':
-      case 'pyq':
-      case 'prep_exam':
-      case 'prep_test':
-      case 'mocktest':
-      case 'pre_final_test':
-      case 'certification_exam':
-        return { bg: '#B5BA9B', gradient: 'linear-gradient(90deg, #B5BA9B 0%, #7D8462 100%)', shadow: '0 4px 12px rgba(181, 186, 155, 0.35)' };
-      // Resources - #D9A382 [Logo Peach]
-      case 'mindmap':
-      case 'foundation':
-      case 'key_takeaways':
-      case 'ask':
       case 'swot':
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
       case 'deep_dive':
-        return { bg: '#D9A382', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
       default:
-        return { bg: '#9CC0B4', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
     }
   };
-  const activeToolTheme = getToolTheme(activeTool);
 
   return (
     <div
@@ -4006,36 +3977,36 @@ export default function StudyTable() {
                   const unitCompleted = completedTools;
                     const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
                     // Learn - Mint (#9CC0B4)
-                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
-                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
-                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
-                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
-                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#9CC0B4' },
+                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
+                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
 
                     // Practice - Amber Gold (#E7B864)
-                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
-                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
-                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
-                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
-                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
-                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#E7B864' },
+                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
 
                     // Prepare - Sage Cream (#B5BA9B)
-                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
-                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#B5BA9B' },
+                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
 
                     // Resources - Logo Peach (#D9A382)
-                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
-                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
-                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
-                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
-                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
-                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#D9A382' },
+                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
                   };
 
                   // In Menu Theme (#546C60 Deep Pine Green): Use the section colors (Mint #9CC0B4, Amber Gold #E7B864, Sage Cream #B5BA9B, Logo Peach #D9A382)
@@ -4848,13 +4819,13 @@ export default function StudyTable() {
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "prep_exam" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
-                  ? "0px"
-                  : activeTool === "assessment"
-                  ? "4px 16px 0 16px"
-                  : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                  ? "2px 16px 8px 16px"
-                  : activeTool === "podcasts" ? "10px 20px 32px 20px" : "16px 16px 0 16px",
+                activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'prep_exam' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'videos' || activeTool === 'pyq' || (activeTool === 'mindmap' && !mindmapTopicOpen)
+                  ? '0px'
+                  : activeTool === 'assessment'
+                  ? '4px 16px 0 16px'
+                  : (activeTool === 'flashcards' || activeTool === 'revision_flashcards')
+                  ? '2px 16px 8px 16px'
+                  : activeTool === 'podcasts' ? '12px 24px 32px 24px' : '16px 16px 0 16px',
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
@@ -5219,61 +5190,57 @@ export default function StudyTable() {
                 display: "flex",
                 flexDirection: "column",
                 background:
-                  activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" ||
-                    activeTool === "videos" || activeTool === "ask" || activeTool === "mindmap" || activeTool === "prep_exam"
-                    ? "transparent"
-                    : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || (activeTool === "mindmap" && !mindmapTopicOpen)) ? "0px" : "6px",
-                position: "relative",
+                  activeTool === 'flashcards' || activeTool === 'revision_flashcards' ||
+                    activeTool === 'assessment' || activeTool === 'summary' || activeTool === 'detailed' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' ||
+                    activeTool === 'videos' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'ask' || activeTool === 'mindmap' || activeTool === 'prep_exam'
+                    ? 'transparent'
+                    : '#ffffff',
+                borderRadius: (activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'videos' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'ask' || activeTool === 'prep_exam' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || (activeTool === 'mindmap' && !mindmapTopicOpen)) ? '0px' : '6px',
+                position: 'relative',
                 border:
-                  activeTool === "mocktest" ||
-                    activeTool === "pre_final_test" ||
-                    activeTool === "prep_exam" ||
-                    activeTool === "flashcards" ||
-                    activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" ||
-                    activeTool === "videos" ||
-                    activeTool === "ask" ||
-                    activeTool === "key_takeaways" ||
-                    activeTool === "study_plan" ||
-                    activeTool === "qbank" ||
-                    (activeTool === "mindmap" && !mindmapTopicOpen) ||
-                    ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))
-                    ? "none"
-                    : activeTool === "podcasts"
-                      ? "none"
-                      : activeTool === "summary" || activeTool === "detailed"
-                        ? "1px solid #E6E1D6"
-                        : (activeTool === "mindmap" && mindmapTopicOpen)
-                          ? "1px solid #22c55e4D"
-                          : "1px solid #E2E8F0",
-                overflowX: "hidden",
+                  activeTool === 'mocktest' ||
+                    activeTool === 'pre_final_test' ||
+                    activeTool === 'prep_exam' ||
+                    activeTool === 'flashcards' ||
+                    activeTool === 'revision_flashcards' ||
+                    activeTool === 'assessment' ||
+                    activeTool === 'videos' ||
+                    activeTool === 'podcasts' ||
+                    activeTool === 'pyq' ||
+                    activeTool === 'ask' ||
+                    activeTool === 'key_takeaways' ||
+                    activeTool === 'study_plan' ||
+                    activeTool === 'qbank' ||
+                    (activeTool === 'mindmap' && !mindmapTopicOpen) ||
+                    activeTool === 'summary' ||
+                    activeTool === 'detailed'
+                    ? 'none'
+                    : (activeTool === 'mindmap' && mindmapTopicOpen)
+                      ? '1px solid #22c55e4D'
+                      : '1px solid #E2E8F0',
+                overflowX: 'hidden',
                 overflowY:
-                  activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
-                    ? "hidden"
-                    : "auto",
+                  activeTool === 'flashcards' || activeTool === 'revision_flashcards' ||
+                    activeTool === 'ask' || activeTool === 'videos' || (activeTool === 'mindmap' && !mindmapTopicOpen)
+                    ? 'hidden'
+                    : 'auto',
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "prep_exam")
-                    ? "0px"
-                    : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                      ? "0px"
-                      : activeTool === "assessment"
-                        ? "0px"
-                        : activeTool === "videos"
-                          ? "4px"
-                          : activeTool === "podcasts"
-                            ? "16px"
-                            : activeTool === "deep_dive"
-                              ? "8px"
-                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "mindmap"
-                                ? "0px"
-                                : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "prep_exam" || activeTool === "mindmap" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "mindmap" || activeTool === "prep_exam") ? "0px" : activeTool === "videos" ? "8px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "ask" || activeTool === "key_takeaways" || activeTool === "study_plan" || activeTool === "qbank" || activeTool === "prep_exam" || activeTool === "mindmap" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
-                transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  (activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'ask' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq')
+                    ? '0px'
+                    : (activeTool === 'flashcards' || activeTool === 'revision_flashcards')
+                      ? '0px'
+                      : activeTool === 'assessment'
+                        ? '0px'
+                        : activeTool === 'videos'
+                          ? '4px'
+                          : activeTool === 'deep_dive'
+                            ? '8px'
+                            : activeTool === 'summary' || activeTool === 'detailed' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'mindmap'
+                              ? '0px'
+                              : '20px',
+                paddingRight: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'mindmap' || activeTool === 'summary' || activeTool === 'detailed') ? '0px' : '16px',
+                paddingBottom: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'mindmap' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq') ? '0px' : activeTool === 'videos' ? '8px' : '16px',
+                paddingLeft: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'mindmap' || activeTool === 'summary' || activeTool === 'detailed') ? '0px' : '16px',
               }}
             >
               {renderContent()}

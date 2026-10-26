@@ -1544,7 +1544,7 @@ export default function MockTestView({
             width: "100%",
             height: "100%",
             minHeight: 0,
-            background: '#B5BA9B',
+            background: '#F8F5EE',
             fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif",
             boxSizing: "border-box",
             overflowY: "auto",
@@ -2031,8 +2031,8 @@ export default function MockTestView({
                     onClick={handleStartExam}
                     style={{
                       width: "100%",
-                      background: "#BD7D52",
-                      color: "#FFFFFF",
+                      background: '#B5BA9B',
+                      color: '#18221D',
                       border: "none",
                       borderRadius: "11px",
                       padding: "11px 22px",
@@ -2624,7 +2624,7 @@ export default function MockTestView({
           flexDirection: "column",
           minHeight: "100%",
           height: "100%",
-          background: '#B5BA9B',
+          background: '#F8F5EE',
           position: "relative",
           overflowX: "hidden",
           overflowY: "auto",

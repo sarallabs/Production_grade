@@ -903,7 +903,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       <div
         style={{
           minHeight: "100%",
-          background: '#B5BA9B',
+          background: '#F8F5EE',
           padding: "32px",
           fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
           color: "#1E2822",
@@ -999,7 +999,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
       style={{
         minHeight: "100%",
         width: "100%",
-        background: '#B5BA9B',
+        background: '#F8F5EE',
         padding: "18px 28px 48px",
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
         color: "#1E2822",
@@ -1034,8 +1034,8 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                   gap: "12px",
                   padding: "10px 16px",
                   borderRadius: "14px",
-                  background: isActive ? "#F5ECE2" : "#FFFFFF",
-                  border: isActive ? "1.5px solid #C88A5A" : "1px solid #E6E0D4",
+                  background: isActive ? 'rgba(181, 186, 155, 0.25)' : '#FFFFFF',
+                  border: isActive ? '1.5px solid #B5BA9B' : '1px solid #E6E0D4',
                   boxShadow: isActive
                     ? "0 2px 8px rgba(184, 107, 53, 0.08)"
                     : "0 1px 2px rgba(30, 40, 34, 0.02)",
@@ -1178,7 +1178,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 style={{
                   width: `${progressPct}%`,
                   height: "100%",
-                  background: "#2D4A3E",
+                  background: '#B5BA9B',
                   borderRadius: "999px",
                   transition: "width 0.3s ease",
                 }}
@@ -1241,7 +1241,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
         {/* 3. CONTINUE / UP NEXT TERRACOTTA BANNER */}
         <div
           style={{
-            background: "linear-gradient(90deg, #C0784C 0%, #C67F53 100%)",
+            background: '#B5BA9B',
             borderRadius: "14px",
             padding: "16px 24px",
             marginBottom: "18px",
@@ -1322,8 +1322,8 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 }
               }}
               style={{
-                background: "#FAF6F0",
-                color: "#9A542A",
+                background: '#FFFFFF',
+                color: '#18221D',
                 border: "none",
                 borderRadius: "999px",
                 padding: "9px 18px",

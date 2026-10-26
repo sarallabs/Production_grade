@@ -1747,8 +1747,8 @@ export default function VideosView({
           {/* Top Dark Forest-Green Pill: Watching Guide */}
           <div
             style={{
-              background: "#2D3E36",
-              color: "#FFFFFF",
+              background: '#9CC0B4',
+              color: '#18221D',
               borderRadius: "999px",
               padding: "10px 18px",
               fontSize: "13px",
@@ -1977,7 +1977,7 @@ export default function VideosView({
                   style={{
                     width: `${watchProgressPercent}%`,
                     height: "100%",
-                    background: "#689D80",
+                    background: '#9CC0B4',
                     borderRadius: "999px",
                     transition: "width 0.3s ease",
                   }}
@@ -2484,7 +2484,7 @@ export default function VideosView({
                 }
               }}
               style={{
-                background: "#9DC2AD",
+                background: '#9CC0B4',
                 border: "none",
                 borderRadius: "12px",
                 padding: "12px 24px",

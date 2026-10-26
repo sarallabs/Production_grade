@@ -369,8 +369,8 @@ function SectionizedReadViewInner({
   }, [sections]);
 
   // Brand-true colors: Pine-deep (#2E3B33), Amber (#D9A55C), Terra (#BE7E57 / #A85D34)
-  const pineDeep = '#2E3B33';
-  const amberAccent = '#D9A55C';
+  const pineDeep = '#9CC0B4';
+  const amberAccent = '#9CC0B4';
   const amberHeading = '#B87D2B';
   const terraText = '#A85D34';
   const terraBg = '#F9EBE2';
@@ -454,8 +454,8 @@ function SectionizedReadViewInner({
         {/* Reading Guide Header Pill — Pine-deep (#2E3B33) */}
         <div
           style={{
-            background: pineDeep,
-            color: '#FFFFFF',
+            background: '#9CC0B4',
+            color: '#18221D',
             borderRadius: '999px',
             padding: '8px 16px',
             fontSize: '13px',
@@ -1068,9 +1068,9 @@ function SectionizedReadViewInner({
               title={sections[activeVisibleIndex + 1]?.title || `Section ${activeVisibleIndex + 2}`}
               style={{
                 pointerEvents: 'auto',
-                background: amberAccent,
-                color: '#1E2822',
-                border: '1px solid #C89246',
+                background: '#9CC0B4',
+                color: '#18221D',
+                border: '1px solid #7FA89B',
                 borderRadius: '999px',
                 padding: '8px 16px',
                 fontSize: '13px',

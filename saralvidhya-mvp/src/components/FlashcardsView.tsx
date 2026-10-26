@@ -328,9 +328,9 @@ export default function FlashcardsView({
               top: "10px",
               left: "16px",
               background: "#FFFDF9",
-              border: isPurpleTheme ? "1.5px solid #C026D3" : "1.5px solid #CE9B61",
-              borderRadius: "10px",
-              color: isPurpleTheme ? "#86198F" : "#9E6332",
+              border: isPurpleTheme ? '1.5px solid #C026D3' : '1.5px solid #E7B864',
+              borderRadius: '10px',
+              color: isPurpleTheme ? '#86198F' : '#8A6218',
               fontWeight: 800,
               fontSize: "12.5px",
               padding: "4px 13px",
@@ -503,28 +503,6 @@ export default function FlashcardsView({
                     <MarkdownView content={cleanTitle} />
                   </div>
 
-                  {/* Subtle "Click to pull up answer" hint — only visible before click */}
-                  <div
-                    style={{
-                      marginTop: isFlipped ? "0px" : "16px",
-                      height: isFlipped ? "0px" : "24px",
-                      opacity: isFlipped ? 0 : 0.75,
-                      overflow: "hidden",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      fontSize: "12.5px",
-                      fontWeight: 600,
-                      color: isPurpleTheme ? "#7E22CE" : "#4E6357",
-                      transition: "opacity 0.25s ease, height 0.35s ease, margin-top 0.35s ease",
-                      pointerEvents: "none",
-                    }}
-                  >
-                    <span>Click to reveal answer</span>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="18 15 12 9 6 15" />
-                    </svg>
-                  </div>
                 </div>
 
                 {/* ── GPU-Accelerated Answer + Infographic Section (Pulled up smoothly from below) ── */}
@@ -686,8 +664,8 @@ export default function FlashcardsView({
                 gap: "8px",
                 padding: "10px 18px",
                 borderRadius: "999px",
-                background: "#4F7B64",
-                color: "#FFFFFF",
+                background: '#E7B864',
+                color: '#18221D',
                 fontWeight: 700,
                 fontSize: "13.5px",
                 border: "none",

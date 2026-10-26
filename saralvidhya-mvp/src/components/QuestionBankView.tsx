@@ -259,7 +259,7 @@ export default function QuestionBankView({
 
   if (!manifest) {
     return (
-      <div style={{ padding: '48px 36px', background: '#E7B864', minHeight: '100%', color: '#1E2822', fontSize: '14px' }}>
+      <div style={{ padding: '48px 36px', background: '#FAF8F3', minHeight: '100%', color: '#5A655E', fontSize: '14px' }}>
         Loading question bank…
       </div>
     );
@@ -272,7 +272,7 @@ export default function QuestionBankView({
       className="qbank-root"
       ref={qbankContainerRef}
       style={{
-        background: '#E7B864',
+        background: '#FAF8F3',
         minHeight: '100%',
         width: '100%',
         padding: '22px 36px 56px',
@@ -440,9 +440,9 @@ export default function QuestionBankView({
                     fontSize: '12px',
                     fontWeight: active ? 700 : 600,
                     cursor: 'pointer',
-                    background: active ? '#D49B4B' : '#FAF8F3',
-                    color: active ? '#1E2822' : '#4A544E',
-                    border: active ? '1px solid #C68D3E' : '1px solid #DFD9CC',
+                    background: active ? '#E7B864' : '#FAF8F3',
+                    color: active ? '#18221D' : '#4A544E',
+                    border: active ? '1px solid #D4A34F' : '1px solid #DFD9CC',
                     boxShadow: active ? '0 1px 4px rgba(212, 155, 75, 0.22)' : 'none',
                     transition: 'all 0.16s ease',
                   }}
@@ -662,8 +662,8 @@ export default function QuestionBankView({
                                 padding: '5px 11px',
                                 fontSize: '11px',
                                 fontWeight: isCurrentMode ? 800 : 600,
-                                background: isCurrentMode ? '#D49B4B' : 'transparent',
-                                color: isCurrentMode ? '#1E2822' : '#5A655E',
+                                background: isCurrentMode ? '#E7B864' : 'transparent',
+                                color: isCurrentMode ? '#18221D' : '#5A655E',
                                 transition: 'all 0.15s ease',
                               }}
                             >

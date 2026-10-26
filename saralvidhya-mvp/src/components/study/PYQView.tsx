@@ -346,9 +346,9 @@ export default function PYQView({
     <div
       className="pyq-view"
       style={{
-        background: '#B5BA9B',
-        minHeight: "100%",
-        padding: "18px 24px 48px",
+        background: 'transparent',
+        minHeight: '100%',
+        padding: '8px 16px 40px',
         boxSizing: "border-box",
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
       }}
@@ -377,9 +377,9 @@ export default function PYQView({
             style={{
               padding: "6px 18px",
               borderRadius: "999px",
-              border: selectedYear === "All Years" ? "1.5px solid #BD7D52" : "1px solid #E2DDD3",
-              background: selectedYear === "All Years" ? "#BD7D52" : "#FFFFFF",
-              color: selectedYear === "All Years" ? "#FFFFFF" : "#38423B",
+              border: selectedYear === 'All Years' ? '1.5px solid #969C7C' : '1px solid #E2DDD3',
+              background: selectedYear === 'All Years' ? '#B5BA9B' : '#FFFFFF',
+              color: selectedYear === 'All Years' ? '#18221D' : '#38423B',
               fontSize: "12px",
               fontWeight: 700,
               cursor: "pointer",
@@ -398,9 +398,9 @@ export default function PYQView({
                 style={{
                   padding: "6px 16px",
                   borderRadius: "999px",
-                  border: isSelected ? "1.5px solid #BD7D52" : "1px solid #E2DDD3",
-                  background: isSelected ? "#BD7D52" : "#FFFFFF",
-                  color: isSelected ? "#FFFFFF" : "#38423B",
+                  border: isSelected ? '1.5px solid #969C7C' : '1px solid #E2DDD3',
+                  background: isSelected ? '#B5BA9B' : '#FFFFFF',
+                  color: isSelected ? '#18221D' : '#38423B',
                   fontSize: "12px",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -431,9 +431,9 @@ export default function PYQView({
             style={{
               padding: "5px 16px",
               borderRadius: "999px",
-              border: selectedMarks === null ? "1.5px solid #BD7D52" : "1px solid #E2DDD3",
-              background: selectedMarks === null ? "#BD7D52" : "#FFFFFF",
-              color: selectedMarks === null ? "#FFFFFF" : "#38423B",
+              border: selectedMarks === null ? '1.5px solid #969C7C' : '1px solid #E2DDD3',
+              background: selectedMarks === null ? '#B5BA9B' : '#FFFFFF',
+              color: selectedMarks === null ? '#18221D' : '#38423B',
               fontSize: "12px",
               fontWeight: 700,
               cursor: "pointer",
@@ -452,9 +452,9 @@ export default function PYQView({
                 style={{
                   padding: "5px 15px",
                   borderRadius: "999px",
-                  border: isSelected ? "1.5px solid #BD7D52" : "1px solid #E2DDD3",
-                  background: isSelected ? "#BD7D52" : "#FFFFFF",
-                  color: isSelected ? "#FFFFFF" : "#38423B",
+                  border: isSelected ? '1.5px solid #969C7C' : '1px solid #E2DDD3',
+                  background: isSelected ? '#B5BA9B' : '#FFFFFF',
+                  color: isSelected ? '#18221D' : '#38423B',
                   fontSize: "12px",
                   fontWeight: 700,
                   cursor: "pointer",

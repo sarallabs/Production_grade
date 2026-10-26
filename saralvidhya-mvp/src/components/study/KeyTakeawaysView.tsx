@@ -663,7 +663,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
     <div
       style={{
         minHeight: "100%",
-        background: '#D9A382',
+        background: '#F7F3EB',
         color: "#1E2822",
         fontFamily: "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif",
         display: "flex",
@@ -825,9 +825,9 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
                 style={{
                   padding: "5.5px 12px",
                   borderRadius: "9px",
-                  border: active ? "1px solid #C88A5A" : "1px solid #E3DDD1",
-                  background: active ? "#FBF3EB" : "#FFFFFF",
-                  color: active ? "#1E2822" : "#5B635D",
+                  border: active ? '1.5px solid #D9A382' : '1px solid #E3DDD1',
+                  background: active ? 'rgba(217, 163, 130, 0.22)' : '#FFFFFF',
+                  color: active ? '#18221D' : '#5B635D',
                   fontSize: "12.5px",
                   fontWeight: active ? 700 : 500,
                   fontFamily: "inherit",
@@ -909,8 +909,8 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
               padding: "7px 14px",
               borderRadius: "9px",
               border: "none",
-              background: "#BD7D52",
-              color: "#FFFFFF",
+              background: '#D9A382',
+              color: '#18221D',
               fontSize: "12.5px",
               fontWeight: 700,
               fontFamily: "inherit",

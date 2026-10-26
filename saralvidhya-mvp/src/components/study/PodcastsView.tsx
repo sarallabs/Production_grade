@@ -2348,8 +2348,8 @@ export default function PodcastsView({
           {/* Dark Forest Listening Guide Pill */}
           <div
             style={{
-              background: "#2D3E36",
-              color: "#FFFFFF",
+              background: '#9CC0B4',
+              color: '#18221D',
               borderRadius: "999px",
               padding: "9px 16px",
               fontSize: "12.5px",
@@ -2466,8 +2466,8 @@ export default function PodcastsView({
                     {isSelected && (
                       <span
                         style={{
-                          background: "#B86B3D",
-                          color: "#FFFFFF",
+                          background: '#9CC0B4',
+                          color: '#18221D',
                           fontSize: "9px",
                           fontWeight: 800,
                           letterSpacing: "0.05em",
@@ -2692,8 +2692,8 @@ export default function PodcastsView({
                 onClick={handlePlayToggle}
                 title={playing ? "Pause" : "Play"}
                 style={{
-                  background: "#9DC2AD",
-                  color: "#182C22",
+                  background: '#9CC0B4',
+                  color: '#18221D',
                   boxShadow: "0 3px 10px rgba(123, 174, 148, 0.35)",
                 }}
               >
@@ -2789,7 +2789,7 @@ export default function PodcastsView({
                   >
                     <polyline
                       fill="none"
-                      stroke="#98B7A5"
+                      stroke='#9CC0B4'
                       strokeWidth="2"
                       strokeLinecap="round"
                       strokeLinejoin="miter"
@@ -2811,7 +2811,7 @@ export default function PodcastsView({
                     width: "9px",
                     height: "9px",
                     borderRadius: "50%",
-                    background: "#98B7A5",
+                    background: '#9CC0B4',
                     pointerEvents: "none",
                     zIndex: 3,
                   }}
@@ -2851,7 +2851,7 @@ export default function PodcastsView({
                   )}
                 </button>
                 <div className="pod-vol-track" style={{ background: "#DED8CA" }}>
-                  <div className="pod-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%`, background: "#7BAE94" }} />
+                  <div className='pod-vol-fill' style={{ width: `${(isMutedUi ? 0 : volume) * 100}%`, background: '#9CC0B4' }} />
                   <input
                     type="range"
                     min={0}
@@ -2871,13 +2871,12 @@ export default function PodcastsView({
           <div
             className="pod-transcript-card"
             style={{
-              width: "100%",
-              boxSizing: "border-box",
-              border: "1px solid #E6E1D6",
-              borderRadius: "16px",
-              background: "#FFFFFF",
-              height: "420px",
-              boxShadow: "0 4px 14px rgba(30, 40, 34, 0.03)",
+              width: '100%',
+              boxSizing: 'border-box',
+              border: 'none',
+              borderRadius: '0px',
+              background: 'transparent',
+              boxShadow: 'none',
             }}
           >
             <div className="pod-transcript-header" style={{ borderBottom: "1px solid #EFECE4" }}>
@@ -3002,9 +3001,9 @@ export default function PodcastsView({
                     gap: "8px",
                     padding: "10px 20px",
                     borderRadius: "999px",
-                    border: "1px solid #88B39B",
-                    background: "#9DC2AD",
-                    color: "#182C22",
+                    border: '1px solid #7FA89B',
+                    background: '#9CC0B4',
+                    color: '#18221D',
                     fontSize: "13.5px",
                     fontWeight: 700,
                     cursor: "pointer",

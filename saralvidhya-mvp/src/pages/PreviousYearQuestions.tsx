@@ -450,9 +450,9 @@ export function QuestionCard({
               type="button"
               onClick={() => setIsCompleted(!isCompleted)}
               style={{
-                background: isCompleted ? "#FAF2E9" : "#FFFFFF",
-                color: isCompleted ? "#9A542A" : "#38423B",
-                border: isCompleted ? "1.5px solid #C88A5A" : "1px solid #DFD9CE",
+                background: isCompleted ? '#B5BA9B' : '#FFFFFF',
+                color: isCompleted ? '#18221D' : '#38423B',
+                border: isCompleted ? '1.5px solid #969C7C' : '1px solid #DFD9CE',
                 padding: "5px 14px",
                 borderRadius: "999px",
                 fontWeight: 700,
@@ -524,8 +524,8 @@ export function QuestionCard({
               type="button"
               onClick={() => setIsAnswerHidden(true)}
               style={{
-                background: "#BD7D52",
-                color: "#FFFFFF",
+                background: '#B5BA9B',
+                color: '#18221D',
                 border: "none",
                 borderRadius: "999px",
                 padding: "7px 16px",
@@ -586,10 +586,10 @@ export function QuestionCard({
                     cursor: "pointer",
                     padding: "4px 12px",
                     border: "none",
-                    background: !isLongAnswer ? "#BD7D52" : "#FFFFFF",
+                    background: !isLongAnswer ? '#B5BA9B' : '#FFFFFF',
                     fontWeight: 700,
-                    fontSize: "11.5px",
-                    color: !isLongAnswer ? "#FFFFFF" : "#49524C",
+                    fontSize: '11.5px',
+                    color: !isLongAnswer ? '#18221D' : '#49524C',
                     transition: "all 0.15s ease",
                   }}
                 >
@@ -602,10 +602,10 @@ export function QuestionCard({
                     cursor: "pointer",
                     padding: "4px 12px",
                     border: "none",
-                    background: isLongAnswer ? "#BD7D52" : "#FFFFFF",
+                    background: isLongAnswer ? '#B5BA9B' : '#FFFFFF',
                     fontWeight: 700,
-                    fontSize: "11.5px",
-                    color: isLongAnswer ? "#FFFFFF" : "#49524C",
+                    fontSize: '11.5px',
+                    color: isLongAnswer ? '#18221D' : '#49524C',
                     transition: "all 0.15s ease",
                   }}
                 >

@@ -1716,7 +1716,7 @@
 /* ── Class selection landing: rich motion ── */
 .sv-class-landing {
   position: relative;
-  background: #9CC0B4;
+  background: rgba(111, 154, 127, 0.08);
 }
 
 
