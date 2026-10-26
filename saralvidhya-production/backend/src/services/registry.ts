@@ -116,6 +116,8 @@ export interface TenantPublic {
     bucket: string;
     prefix: string;
   };
+  uiCopy?: Record<string, any>;
+  translations?: Record<string, Record<string, string>>;
 }
 
 export interface TenantAuth {
@@ -302,6 +304,8 @@ export async function getTenant(tenantId: string): Promise<TenantPublic | null> 
       features: data.features || {},
       hierarchy: data.hierarchy || ['program', 'subject'],
       storage: storageCfg,
+      uiCopy: data.uiCopy || {},
+      translations: data.translations || {},
     };
 
     setInCache(cacheKey, tenant, 60);

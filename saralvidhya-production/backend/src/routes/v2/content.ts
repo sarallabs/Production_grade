@@ -15,7 +15,9 @@ import {
   recordToolOrChapterProgress,
   updateAudioPlaybackProgress,
   recordQuizAttempt,
+  getTenantLeaderboard,
 } from '../../services/userState.js';
+import { ingestAnalyticsBatch } from '../../services/analyticsService.js';
 
 const router = Router();
 
@@ -139,6 +141,22 @@ router.get('/:tenant/signed-url', async (req: AuthenticatedRequest, res: Respons
   }
 });
 
+/**
+ * GET /v2/t/:tenant/leaderboard
+ * Returns the cloud-synced tenant leaderboard from Firestore user state & quiz scores.
+ */
+router.get('/:tenant/leaderboard', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant = req.tenant!;
+  const userId = resolveUserId(req);
+  try {
+    const leaderboard = await getTenantLeaderboard(tenant.id, userId);
+    res.json({ tenantId: tenant.id, leaderboard });
+  } catch (err: any) {
+    console.error(`[Leaderboard] Failed loading leaderboard for '${tenant.id}':`, err);
+    res.status(500).json({ error: 'Failed to load leaderboard' });
+  }
+});
+
 // ── Cloud-Native User State & Progress Endpoints (/v2/t/:tenant/me/*) ─────
 
 /**
@@ -197,6 +215,32 @@ router.post('/:tenant/me/progress/tool', async (req: AuthenticatedRequest, res: 
       completedVideoId,
       openedVideoId,
     });
+    ingestAnalyticsBatch(
+      tenant.id,
+      [
+        {
+          eventType: completedTool
+            ? 'tool.complete'
+            : openedVideoId
+            ? 'video.open'
+            : completedVideoId
+            ? 'video.complete'
+            : 'chapter.visit',
+          category: completedTool ? 'study_tool' : openedVideoId || completedVideoId ? 'media' : 'navigation',
+          subjectId,
+          chapterId,
+          toolId: completedTool || (openedVideoId || completedVideoId ? 'videos' : undefined),
+          status: 'completed',
+        },
+      ],
+      {
+        userId,
+        sessionId: req.session?.sessionId,
+        userEmail: req.session?.email,
+        displayName: req.session?.displayName,
+        userAgent: req.headers['user-agent'],
+      }
+    ).catch(() => {});
     res.json({ success: true, chapterProgress });
   } catch (err: any) {
     console.error(`[UserState] Failed recording tool progress for '${userId}':`, err);
@@ -273,6 +317,31 @@ router.post('/:tenant/me/progress/quiz', async (req: AuthenticatedRequest, res: 
       timeTakenSeconds,
       answers,
     });
+    ingestAnalyticsBatch(
+      tenant.id,
+      [
+        {
+          eventType: 'quiz.submit',
+          category: 'assessment',
+          subjectId,
+          chapterId,
+          toolId: quizType || 'quiz',
+          persona: difficulty,
+          score,
+          total,
+          scorePct: result.percentage,
+          durationMs: typeof timeTakenSeconds === 'number' ? timeTakenSeconds * 1000 : 0,
+          status: 'completed',
+        },
+      ],
+      {
+        userId,
+        sessionId: req.session?.sessionId,
+        userEmail: req.session?.email,
+        displayName: req.session?.displayName,
+        userAgent: req.headers['user-agent'],
+      }
+    ).catch(() => {});
     res.json({ success: true, ...result });
   } catch (err: any) {
     console.error(`[UserState] Failed recording quiz attempt for '${userId}':`, err);
