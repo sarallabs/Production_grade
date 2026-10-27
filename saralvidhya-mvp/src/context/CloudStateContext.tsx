@@ -428,21 +428,36 @@ export function applyHydratedCloudState(state: CloudUserState) {
     const p = state.lastActive.podcast;
     const chNumMatch = p.chapterId.match(/(\d+)/);
     const chNum = p.chapterNumber || (chNumMatch ? Number(chNumMatch[1]) : 1);
+    const resolvedLessonId = p.trackId && p.trackId.includes('_ch')
+      ? p.trackId
+      : `${p.subjectId}_ch${chNum}_${state.preferences?.persona || 'intermediate'}_${p.trackId}`;
     const globalPodcast = {
       userId: state.user.userId,
-      lessonId: `${p.subjectId}_ch${chNum}_${p.trackId}`,
+      lessonId: resolvedLessonId,
       subjectId: p.subjectId,
       chapterNumber: chNum,
       chapterName: p.chapterTitle || p.title || `Chapter ${chNum}`,
       persona: state.preferences?.persona || 'intermediate',
-      track: p.trackId,
+      track: p.title || p.trackId,
       currentTime: p.currentTime,
       updatedAt: new Date(p.updatedAt || Date.now()).getTime(),
       wasPaused: !p.completed && p.currentTime > 0,
     };
     memoryKv.set(`global_last_podcast_${state.user.userId}`, JSON.stringify(globalPodcast));
+    memoryKv.set('global_last_podcast_shared', JSON.stringify(globalPodcast));
+    if (p.currentTime > 0 && !memoryKv.has(`audio_progress_shared_${resolvedLessonId}`)) {
+      const progPayload = JSON.stringify({
+        userId: state.user.userId,
+        lessonId: resolvedLessonId,
+        currentTime: p.currentTime,
+        duration: p.duration || 0,
+        updatedAt: globalPodcast.updatedAt,
+        wasPaused: true,
+      });
+      memoryKv.set(`audio_progress_${state.user.userId}_${resolvedLessonId}`, progPayload);
+      memoryKv.set(`audio_progress_shared_${resolvedLessonId}`, progPayload);
+    }
   }
-
   notifyListeners();
 }
 

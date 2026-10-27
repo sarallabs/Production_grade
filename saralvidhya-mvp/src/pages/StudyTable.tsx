@@ -1315,7 +1315,7 @@ export default function StudyTable() {
     } else if (activeTool === "key_takeaways") {
       getResourceContent(internalSubId, chapterNumber, "key_takeaways.md", persona, activeVideoDir)
         .then(apply)
-        .catch(() => apply("Key Takeaways not available for this chapter."));
+        .catch(() => apply("Takeaways not available for this chapter."));
     } else if (activeTool === "study_plan") {
       getResourceContent(internalSubId, chapterNumber, "study_plan.md", persona, activeVideoDir)
         .then(apply)
@@ -3846,7 +3846,7 @@ export default function StudyTable() {
   const TOOL_LABELS: Record<string, string> = {
     summary: "Study Table",
     detailed: "Study Table",
-    key_takeaways: "Key Takeaways",
+    key_takeaways: "Takeaways",
     study_plan: "Study Plan",
     mindmap: "Mindmap",
     foundation: "Mindmap",
@@ -3861,6 +3861,7 @@ export default function StudyTable() {
     leaderboard: "Leaderboard",
     deep_dive: "Deep Dive",
     mocktest: "Mock Test",
+    prep_exam: "Exam Prep.",
     pre_final_test: "Certification Exam",
   };
 
@@ -4604,7 +4605,7 @@ export default function StudyTable() {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
                                 {renderNode('pyq', 'PYQs', '#B5BA9B')}
-                                {renderNode('prep_exam', 'Exam Prep', '#B5BA9B')}
+                                 {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
                                 {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
                               </div>
                             </div>
@@ -4629,7 +4630,7 @@ export default function StudyTable() {
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
                                 {renderNode('mindmap', 'Mindmaps', '#D9A382')}
-                                {renderNode('key_takeaways', 'Key Takeaways', '#D9A382')}
+                                 {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
                                 {renderNode('ask', 'Ask me', '#D9A382')}
                               </div>
                             </div>
@@ -5329,9 +5330,6 @@ export default function StudyTable() {
                 <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1E2822" }}>
                   Saral · 24/7 Learning Assistant
                 </h3>
-                <span style={{ fontSize: "11.5px", color: "#BD7D52", fontWeight: 600 }}>
-                  Grounded in your {getChapterPrefix(subjectId)} {chapterNumber} material
-                </span>
               </div>
             </div>
             <button

@@ -41,7 +41,7 @@ const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string; disabl
   { id: "revision_flashcards", icon: "🗂️", label: "Revise", desc: "Quick revision" },
   { id: "assessment", icon: "🎯", label: "Assessments", desc: "Test knowledge" },
   { id: "qbank", icon: "🏦", label: "Question Bank", desc: "Practice more" },
-  { id: "key_takeaways", icon: "🔑", label: "Key Takeaways", desc: "Key Takeaways" },
+  { id: "key_takeaways", icon: "🔑", label: "Takeaways", desc: "Takeaways" },
   { id: "study_plan", icon: "📅", label: "Study Plan", desc: "Curriculum roadmap and schedule" },
   { id: "pyq", icon: "📄", label: "PYQs", desc: "Previous Year Questions" },
   { id: "prep_exam", icon: "📝", label: "Preparation Exam", desc: "Test your preparation" },

@@ -162,7 +162,7 @@ function parseTakeawaysContent(
   chapterNumber?: number
 ): ParsedTakeaways {
   const trimmed = (rawContent || "").trim();
-  const defaultTitle = fallbackChapterName || "Key Takeaways";
+  const defaultTitle = fallbackChapterName || "Takeaways";
 
   if (!trimmed) {
     return {
@@ -452,7 +452,7 @@ function formatHeaderTitle(
   subjectId?: string,
   chapterNumber?: number
 ): string {
-  const clean = (parsedTitle || fallbackChapterName || "Key Takeaways").trim();
+  const clean = (parsedTitle || fallbackChapterName || "Takeaways").trim();
   if (/unit\s*[—–\-:]?\s*[ivx\d]+/i.test(clean) || /lecture\s*\d+/i.test(clean)) {
     return clean.replace(/\s*-\s*Unit\s+/i, " Unit — ").replace(/:\s+/, " · ");
   }

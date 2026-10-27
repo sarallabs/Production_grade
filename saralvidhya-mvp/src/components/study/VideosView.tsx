@@ -394,12 +394,24 @@ export default function VideosView({
   const currentVideo = videos[robustActive] || videos[0];
   const isSingleVideo = videos.length <= 1;
 
-  // Active index sync from parent
+  // Active index sync from parent or cloud storage
   useEffect(() => {
     if (activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
       setActiveVideo(activeVideoIndex - 1);
+      return;
     }
-  }, [activeVideoIndex, videos.length]);
+    const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    if (savedIdx != null) {
+      const idx = parseInt(savedIdx, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < videos.length) {
+        setActiveVideo(idx);
+      }
+    }
+  }, [activeVideoIndex, videos.length, subjectId, chapterNumber]);
+
+  useEffect(() => {
+    cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(robustActive));
+  }, [robustActive, subjectId, chapterNumber]);
 
   const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
   const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
@@ -416,21 +428,24 @@ export default function VideosView({
   });
 
   useEffect(() => {
-    try {
-      const raw = cloudStorage.getItem(completedStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setCompletedVideos(new Set(parsed));
-          return;
+    const syncCompleted = () => {
+      try {
+        const raw = cloudStorage.getItem(completedStorageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setCompletedVideos(new Set(parsed));
+            return;
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-    setCompletedVideos(new Set());
+      setCompletedVideos(new Set());
+    };
+    syncCompleted();
+    return cloudStorage.subscribe(syncCompleted);
   }, [completedStorageKey]);
-
   const markVideoDone = useCallback(
     (idx: number) => {
       setCompletedVideos((prev) => {
@@ -471,6 +486,43 @@ export default function VideosView({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  const videoTimeStorageKey = currentVideo?.ytId
+    ? `sv_video_time_${subjectId}_ch${chapterNumber}_${currentVideo.ytId}`
+    : "";
+  const lastVideoTimeSaveRef = useRef<number>(0);
+  const restoredVideoTimeRef = useRef<number>(0);
+
+  // Restore saved video playback position immediately for visual progress bar & timestamp
+  useEffect(() => {
+    if (!videoTimeStorageKey) return;
+    const applySavedVideoTime = () => {
+      try {
+        const raw = cloudStorage.getItem(videoTimeStorageKey);
+        if (!raw) {
+          restoredVideoTimeRef.current = 0;
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime > 1) {
+          restoredVideoTimeRef.current = parsed.currentTime;
+          setCurrentTime(parsed.currentTime);
+          if (typeof parsed.duration === "number" && parsed.duration > 0) {
+            setDuration(parsed.duration);
+            setProgress(Math.min(100, (parsed.currentTime / parsed.duration) * 100));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    applySavedVideoTime();
+    return cloudStorage.subscribe(() => {
+      if (!isPlaying && restoredVideoTimeRef.current <= 0) {
+        applySavedVideoTime();
+      }
+    });
+  }, [videoTimeStorageKey, isPlaying]);
+
   // YouTube Player setup
   useEffect(() => {
     hasStartedPlayingRef.current = false;
@@ -484,11 +536,41 @@ export default function VideosView({
     }
 
     let checkInterval: any;
+    const timeKey = `sv_video_time_${subjectId}_ch${chapterNumber}_${currentVideo.ytId}`;
+
+    const readSavedSec = (): number => {
+      try {
+        const raw = cloudStorage.getItem(timeKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime > 1) {
+            return parsed.currentTime;
+          }
+        }
+      } catch {}
+      return 0;
+    };
+
+    const persistVideoSec = (cur: number, dur: number, force = false) => {
+      if (!timeKey || cur <= 0) return;
+      const now = Date.now();
+      if (!force && now - lastVideoTimeSaveRef.current < 3000) return;
+      lastVideoTimeSaveRef.current = now;
+      restoredVideoTimeRef.current = cur;
+      try {
+        cloudStorage.setItem(
+          timeKey,
+          JSON.stringify({ currentTime: cur, duration: dur, updatedAt: now }),
+        );
+      } catch {}
+    };
 
     const initPlayer = () => {
       const elementId = `yt-player-${currentVideo.ytId}`;
       const el = document.getElementById(elementId);
       if (!el || el.tagName === "IFRAME") return;
+
+      const initialStartSec = Math.floor(readSavedSec());
 
       try {
         playerRef.current = new (window as any).YT.Player(elementId, {
@@ -506,6 +588,7 @@ export default function VideosView({
             cc_lang_pref: "none",
             playsinline: 1,
             iv_load_policy: 3,
+            ...(initialStartSec > 1 ? { start: initialStartSec } : {}),
           },
           events: {
             onReady: (event: any) => {
@@ -517,8 +600,20 @@ export default function VideosView({
                   if (typeof event.target.setOption === "function") {
                     event.target.setOption("captions", "track", {});
                   }
+                  const dur = typeof event.target.getDuration === "function" ? event.target.getDuration() : 0;
+                  const savedSec = readSavedSec();
+                  if (dur > 0) {
+                    setDuration(dur);
+                    if (savedSec > 1 && savedSec < dur - 2) {
+                      setCurrentTime(savedSec);
+                      setProgress((savedSec / dur) * 100);
+                    }
+                  }
                   if (autoPlayOnReadyRef.current && typeof event.target.playVideo === "function") {
                     autoPlayOnReadyRef.current = false;
+                    if (savedSec > 1 && typeof event.target.seekTo === "function") {
+                      event.target.seekTo(savedSec, true);
+                    }
                     event.target.playVideo();
                   }
                 }
@@ -536,6 +631,18 @@ export default function VideosView({
                     playerRef.current.setOption?.("captions", "track", {});
                   } catch (e) {}
                 }
+                if (!hasStartedPlayingRef.current && playerRef.current) {
+                  const savedSec = readSavedSec();
+                  const curNow = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
+                  const durNow = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
+                  if (savedSec > 2 && curNow < 2 && (durNow <= 0 || savedSec < durNow - 3)) {
+                    try {
+                      playerRef.current.seekTo?.(savedSec, true);
+                      setCurrentTime(savedSec);
+                      if (durNow > 0) setProgress((savedSec / durNow) * 100);
+                    } catch {}
+                  }
+                }
                 hasStartedPlayingRef.current = true;
                 setIsPlaying(true);
                 if (!progressIntervalRef.current) {
@@ -548,6 +655,7 @@ export default function VideosView({
                         setCurrentTime(cur);
                         setDuration(dur);
                         setProgress(pct);
+                        persistVideoSec(cur, dur, false);
                         if (pct >= WATCHED_THRESHOLD_PCT && hasStartedPlayingRef.current) {
                           markWatched(robustActive + 1, false);
                         }
@@ -570,6 +678,10 @@ export default function VideosView({
                   clearInterval(progressIntervalRef.current);
                   progressIntervalRef.current = null;
                 }
+                try {
+                  cloudStorage.removeItem(timeKey);
+                  restoredVideoTimeRef.current = 0;
+                } catch {}
                 if (hasStartedPlayingRef.current) {
                   hasStartedPlayingRef.current = false;
                   markWatched(robustActive + 1, true);
@@ -582,6 +694,13 @@ export default function VideosView({
                     playerRef.current?.playVideo?.();
                   } catch (e) {}
                   return;
+                }
+                if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+                  const cur = playerRef.current.getCurrentTime();
+                  const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+                  if (cur > 1) {
+                    persistVideoSec(cur, dur || 0, true);
+                  }
                 }
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
@@ -610,6 +729,15 @@ export default function VideosView({
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
+      if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+        try {
+          const cur = playerRef.current.getCurrentTime();
+          const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
+          if (cur > 1 && (!dur || cur < dur - 2)) {
+            persistVideoSec(cur, dur, true);
+          }
+        } catch {}
+      }
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
           playerRef.current.destroy();
@@ -617,7 +745,7 @@ export default function VideosView({
         playerRef.current = null;
       }
     };
-  }, [currentVideo?.ytId, robustActive, markWatched, onComplete]);
+  }, [currentVideo?.ytId, robustActive, markWatched, onComplete, subjectId, chapterNumber]);
 
   // Player controls
   const handlePlayPause = () => {
@@ -686,12 +814,8 @@ export default function VideosView({
     }
   };
 
-  // Netflix-style Skip Intro (only inside player at start: first 2 minutes / 120s, and only when NOT the first time opening this video)
-  const currentVideoOpenCount = currentVideo?.ytId ? (videoOpenCounts[currentVideo.ytId] || 0) : 0;
-  const isNotFirstWatch = currentVideoOpenCount >= 2;
+  // Netflix-style Skip Intro (available inside player during the first 2 minutes / 120s, including on fresh login)
   const canSkipIntro =
-    isNotFirstWatch &&
-    (isPlaying || isFullscreen) &&
     currentTime < 120 &&
     (duration === 0 || duration > 125);
   const canSkipIntroRef = useRef(canSkipIntro);
@@ -1427,6 +1551,43 @@ export default function VideosView({
         </button>
       )}
 
+      {/* Netflix-style Floating Skip Intro Button (first 2 minutes) */}
+      {canSkipIntro && (
+        <button
+          type="button"
+          onClick={handleSkipIntro}
+          title="Skip Intro (Jump to 2:00)"
+          aria-label="Skip Intro"
+          style={{
+            position: "absolute",
+            right: isFullscreen ? "28px" : "18px",
+            bottom: isFullscreen ? "74px" : "60px",
+            zIndex: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: isFullscreen ? "9px 16px" : "7px 13px",
+            borderRadius: "8px",
+            background: "rgba(22, 42, 32, 0.88)",
+            border: "1px solid rgba(255, 255, 255, 0.35)",
+            color: "#FFFFFF",
+            fontSize: isFullscreen ? "13px" : "12px",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            cursor: "pointer",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <span>Skip Intro</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4" fill="currentColor" />
+            <line x1="19" y1="5" x2="19" y2="19" />
+          </svg>
+        </button>
+      )}
+
       {/* Sleek Bottom Control Bar (Always visible when paused or hovered, both inline & fullscreen) */}
       <div
         onMouseEnter={() => {
@@ -1510,6 +1671,36 @@ export default function VideosView({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
             <polyline points="3 3 3 8 8 8" />
+          </svg>
+          <span style={{ fontSize: "10px" }}>10</span>
+        </button>
+
+        {/* Forward 10s (↻10) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleForward10();
+          }}
+          title="Forward 10 seconds"
+          aria-label="Forward 10 seconds"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "rgba(255, 255, 255, 0.85)",
+            cursor: "pointer",
+            padding: "2px 4px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "2px",
+            fontSize: "11.5px",
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+            <polyline points="21 3 21 8 16 8" />
           </svg>
           <span style={{ fontSize: "10px" }}>10</span>
         </button>

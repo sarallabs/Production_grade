@@ -606,26 +606,6 @@ export function AssessmentView({
                     {step + 1} / {questions.length}
                   </div>
 
-                  {/* Question Type Pill */}
-                  <div
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "999px",
-                      background: "#F0EDE6",
-                      color: "#49524C",
-                      fontWeight: 700,
-                      fontSize: "11.5px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    {currentQ?.type === "msq"
-                      ? "Multiple Select (MSQ)"
-                      : currentQ?.type === "true_false"
-                      ? "True / False"
-                      : "Single Choice (MCQ)"}
-                  </div>
-
                   {/* Difficulty Pill */}
                   <div
                     style={{

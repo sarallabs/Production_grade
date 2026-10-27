@@ -373,7 +373,31 @@ export default function PodcastsView({
   );
   const [selectedDl, setSelectedDl] = useState(0);
   const [selectedQl, setSelectedQl] = useState(0);
-  const [selectedMc, setSelectedMc] = useState(initialMcIndex ?? 0);
+  const [selectedMc, setSelectedMc] = useState(() => {
+    if (initialMcIndex != null) return initialMcIndex;
+    const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
+    return savedMc ? Math.max(0, parseInt(savedMc, 10) || 0) : 0;
+  });
+
+  useEffect(() => {
+    if (initialMcIndex != null) return;
+    const syncSavedMc = () => {
+      const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
+      if (savedMc != null) {
+        const parsed = parseInt(savedMc, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          setSelectedMc((prev) => (prev !== parsed ? parsed : prev));
+        }
+      }
+    };
+    syncSavedMc();
+    return cloudStorage.subscribe(syncSavedMc);
+  }, [subjectId, chapterNumber, initialMcIndex]);
+
+  useEffect(() => {
+    if (!isRegistryResolved) return;
+    cloudStorage.setItem(`last_mc_${subjectId}_${chapterNumber}`, String(selectedMc));
+  }, [selectedMc, subjectId, chapterNumber, isRegistryResolved]);
 
   const completedStorageKey = `sv_listen_done_${subjectId}_ch${chapterNumber}_${selectedTrack}`;
   const [completedEpisodes, setCompletedEpisodes] = useState<Set<number>>(() => {
@@ -390,21 +414,24 @@ export default function PodcastsView({
   });
 
   useEffect(() => {
-    try {
-      const raw = cloudStorage.getItem(completedStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setCompletedEpisodes(new Set(parsed));
-          return;
+    const syncCompleted = () => {
+      try {
+        const raw = cloudStorage.getItem(completedStorageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setCompletedEpisodes(new Set(parsed));
+            return;
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-    setCompletedEpisodes(new Set());
+      setCompletedEpisodes(new Set());
+    };
+    syncCompleted();
+    return cloudStorage.subscribe(syncCompleted);
   }, [completedStorageKey]);
-
   const markEpisodeDone = useCallback(
     (idx: number) => {
       setCompletedEpisodes((prev) => {
@@ -886,44 +913,69 @@ export default function PodcastsView({
     setIsTrackGridExpanded(true);
   }, [selectedTrack]);
 
+  const handleResumeAudioTime = useCallback(
+    (restoredTime: number) => {
+      currentTimeRef.current = restoredTime;
+      setCurrentTime(restoredTime);
+    },
+    [],
+  );
+
   useAudioProgress(
     userId,
     lessonId,
     audioRef,
     available === true,
     metadata,
-    setCurrentTime,
+    handleResumeAudioTime,
   );
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || available !== true) return;
+    const tryRestore = () => {
+      const savedData =
+        cloudStorage.getItem(`audio_progress_${userId}_${lessonId}`) ||
+        cloudStorage.getItem(`audio_progress_shared_${lessonId}`) ||
+        cloudStorage.getItem(`audio_progress_anonymous_${lessonId}`);
+      if (!savedData) return;
 
-    const savedData = cloudStorage.getItem(
-      `audio_progress_${userId}_${lessonId}`,
-    );
-    if (!savedData) return;
-
-    try {
-      const parsed = JSON.parse(savedData) as AudioProgress;
-      if (parsed.currentTime > 0) {
-        const seekAudio = () => {
-          if (!audio) return;
-          audio.currentTime = parsed.currentTime;
+      try {
+        const parsed = JSON.parse(savedData) as AudioProgress;
+        if (parsed && parsed.currentTime > 0) {
+          currentTimeRef.current = parsed.currentTime;
           setCurrentTime(parsed.currentTime);
-        };
-
-        if (audio.readyState >= 1) {
-          seekAudio();
-        } else {
-          audio.addEventListener("loadedmetadata", seekAudio, { once: true });
+          if (parsed.duration && parsed.duration > 0 && audioDurationRef.current <= 0) {
+            audioDurationRef.current = parsed.duration;
+            setAudioDuration(parsed.duration);
+          }
+          const audio = audioRef.current;
+          if (audio && audio.paused) {
+            const seekAudio = () => {
+              if (!audio) return;
+              try {
+                audio.currentTime = parsed.currentTime;
+              } catch {
+                // wait for metadata
+              }
+            };
+            if (audio.readyState >= 1) {
+              seekAudio();
+            } else {
+              audio.addEventListener("loadedmetadata", seekAudio, { once: true });
+            }
+          }
         }
+      } catch (error) {
+        console.warn("Failed to restore cloud audio progress:", error);
       }
-    } catch (error) {
-      console.warn("Failed to restore cloud audio progress:", error);
-    }
-  }, [available, lessonId, userId]);
+    };
 
+    tryRestore();
+    return cloudStorage.subscribe(() => {
+      if (!isPlaying && currentTimeRef.current <= 0) {
+        tryRestore();
+      }
+    });
+  }, [available, lessonId, userId, isPlaying]);
   /** Resolve filenames via registry chapterFiles signed URLs first, then fallback */
   const getFileNames = useCallback((track: string): { audio: string; transcript: string; jsonTranscript?: string; fromRegistry?: boolean } => {
     // 1. Registry signed URLs (100% cloud-native contract/v1)
@@ -1135,24 +1187,31 @@ export default function PodcastsView({
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
+      currentTimeRef.current = 0;
+      setCurrentTime(0);
       setAudioDuration(0);
       audio.load();
     }
     setSelectedModuleOverride(null);
   }, [selectedTrack, selectedMc, selectedDl, selectedQl]);
 
+  const isPersonaMount = useRef(true);
   // ── Reset player when persona changes ──
   useEffect(() => {
+    if (isPersonaMount.current) {
+      isPersonaMount.current = false;
+      return;
+    }
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
+      currentTimeRef.current = 0;
       setCurrentTime(0);
       setAudioDuration(0);
     }
   }, [persona]);
-
   const isNebMount = useRef(true);
   // ── Reset NEB Nepal and Nagarjuna University player when track, persona, subject, or chapter changes ──
   useEffect(() => {
@@ -1337,7 +1396,8 @@ export default function PodcastsView({
       if (dur > 0 && dur !== audioDurationRef.current) {
         audioDurationRef.current = dur;
         setAudioDuration(dur);
-        updateProgress(audio.currentTime, dur);
+        const effectiveTime = audio.currentTime > 0 ? audio.currentTime : currentTimeRef.current;
+        updateProgress(effectiveTime, dur);
       }
     };
 
@@ -1561,6 +1621,13 @@ export default function PodcastsView({
       onPlayingChange?.(true);
       if (audio.error) {
         audio.load();
+      }
+      if (currentTimeRef.current > 0 && audio.currentTime < 1) {
+        try {
+          audio.currentTime = currentTimeRef.current;
+        } catch {
+          // ignore if not seekable yet
+        }
       }
       audio.play().catch((e) => {
         console.warn("Play failed:", e);
@@ -2244,7 +2311,12 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              if (currentTimeRef.current > 0 && a.currentTime < 1) {
+                try {
+                  a.currentTime = currentTimeRef.current;
+                } catch {}
+              }
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
             if (autoPlay && a.paused) {
               handlePlay();
@@ -2256,7 +2328,7 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
           }}
           onCanPlay={(e) => {
@@ -2265,7 +2337,12 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              if (currentTimeRef.current > 0 && a.currentTime < 1) {
+                try {
+                  a.currentTime = currentTimeRef.current;
+                } catch {}
+              }
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
             if (autoPlay && a.paused) {
               handlePlay();

@@ -1568,7 +1568,7 @@ export default function MockTestView({
                 {subjectName || "Subject"}
               </span>
               <span style={{ color: "#949A94" }}>›</span>
-              <span style={{ color: "#6E766E", fontWeight: 500 }}>Exam Prep</span>
+              <span style={{ color: "#6E766E", fontWeight: 500 }}>Exam Prep.</span>
             </div>
           </div>
 
@@ -1633,7 +1633,7 @@ export default function MockTestView({
                       letterSpacing: "-0.015em",
                     }}
                   >
-                    Exam Prep
+                    Exam Prep.
                   </h1>
                 </div>
 
@@ -2646,7 +2646,7 @@ export default function MockTestView({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px" }}>
             <span style={{ fontWeight: 800, color: "#1E2822" }}>
-              {isPreFinalTest ? "Certification Exam" : "Exam Prep"}
+              {isPreFinalTest ? "Certification Exam" : "Exam Prep."}
             </span>
             <span style={{ color: "#949A94" }}>›</span>
             <span style={{ color: "#6E766E", fontWeight: 500 }}>

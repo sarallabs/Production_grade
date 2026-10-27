@@ -1092,27 +1092,6 @@ export default function AskBotView({
           )}
         </div>
 
-        {/* Grounded in your university course material pill */}
-        {!isCompactDrawer && (
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              padding: "5px 14px",
-              borderRadius: "999px",
-              background: "#FBF4EE",
-              border: "1px solid #EBD5C3",
-              color: "#4A453E",
-              fontSize: "12.5px",
-              fontWeight: 600,
-              flexShrink: 0,
-            }}
-          >
-            <span style={{ fontSize: "13px", lineHeight: 1 }}>📕</span>
-            <span>Grounded in your university course material</span>
-          </div>
-        )}
       </div>
 
       {/* ── Body Wrapper: Session History Sidebar + Main Scrollable Area ── */}
@@ -1404,7 +1383,7 @@ export default function AskBotView({
                     color: "#4A544E",
                   }}
                 >
-                  Every answer is grounded in your university syllabus material —
+                  Every answer is aligned with your syllabus —
                   complete with <strong style={{ color: "#BD7D52" }}>Exam Tips</strong>,{" "}
                   <strong style={{ color: "#1E2822" }}>In-depth Read § citations</strong>,
                   and direct <strong style={{ color: "#1E2822" }}>Mindmap node links</strong>.
@@ -2112,7 +2091,7 @@ export default function AskBotView({
                         {isSaved ? "✓" : "🔑"}
                       </span>
                       <span>
-                        {isSaved ? "Saved to Takeaways" : "Save to Key Takeaways"}
+                        {isSaved ? "Saved to Takeaways" : "Save to Takeaways"}
                       </span>
                     </button>
 

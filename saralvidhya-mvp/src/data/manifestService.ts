@@ -311,7 +311,9 @@ function buildOverlay(
       return trimmed;
     };
 
-    const chapters: Chapter[] = ((s.chapters || []) as any[]).map((c) => ({
+    const chapters: Chapter[] = ((s.chapters || []) as any[])
+      .filter((c) => typeof c.number === 'number' && c.number > 0)
+      .map((c) => ({
       number: c.number,
       name: c.title,
       title: c.title,
@@ -842,6 +844,7 @@ export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
 
   const map = new Map<number, Chapter>();
   for (const ch of subject.chapters) {
+    if (!ch.number || ch.number <= 0) continue;
     const existing = map.get(ch.number);
     if (!existing || (ch.resourceCount ?? 0) > (existing.resourceCount ?? 0)) {
       map.set(ch.number, ch);

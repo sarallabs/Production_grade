@@ -262,12 +262,6 @@ function Login() {
 
             <div className="sv-login-card">
               <h1 className="sv-login-title">Welcome to Saral Vidhya</h1>
-              <p className="sv-login-subtitle">
-                Personalised Adaptive Learning Platform{" "}
-                <span className="sv-login-subtitle-highlight">
-                  exclusively built for Students.
-                </span>
-              </p>
 
               <form onSubmit={handleStudentLogin} className="sv-login-form">
                 <label className="sv-input-label" htmlFor="sv-access-code-input">

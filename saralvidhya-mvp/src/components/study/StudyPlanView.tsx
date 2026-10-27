@@ -200,7 +200,7 @@ export function formatTaskDisplayLabels(task: StudyTaskItem): {
     case "mindmap":
       return { primary: "Mindmap", secondary: "visual hierarchy" };
     case "key_takeaways":
-      return { primary: "Key Takeaways", secondary: "high-yield summary" };
+      return { primary: "Takeaways", secondary: "high-yield summary" };
     case "assessment":
       return { primary: "Assessment", secondary: "self-check quiz" };
     case "qbank":
