@@ -201,7 +201,7 @@ export function AssessmentView({
 
   const markQuestionAnswered = (isAnswerCorrect: boolean) => {
     const used = retriesUsed[step] || 0;
-    if (!isAnswerCorrect && used < 2) {
+    if (!isAnswerCorrect && used < 1) {
       setSubmitted(true);
       setCurrentIsCorrect(false);
       setAwaitingRetry(true);
@@ -1038,7 +1038,7 @@ export function AssessmentView({
                         >
                           <span>✕ Incorrect</span>
                           <span style={{ fontWeight: 600, color: "#5A625C" }}>
-                            — {2 - (retriesUsed[step] || 0)} try-again {2 - (retriesUsed[step] || 0) === 1 ? "attempt" : "attempts"} left
+                            — {1 - (retriesUsed[step] || 0)} try-again {1 - (retriesUsed[step] || 0) === 1 ? "attempt" : "attempts"} left
                           </span>
                         </span>
                         <button
@@ -1059,7 +1059,7 @@ export function AssessmentView({
                           }}
                         >
                           <span>↻</span>
-                          <span>Try Again ({2 - (retriesUsed[step] || 0)} left)</span>
+                          <span>Try Again ({1 - (retriesUsed[step] || 0)} left)</span>
                         </button>
                       </div>
                     ) : (

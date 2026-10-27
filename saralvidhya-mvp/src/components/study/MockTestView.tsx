@@ -1757,24 +1757,6 @@ export default function MockTestView({
                           </div>
                         </div>
 
-                        <div
-                          style={{
-                            height: "1px",
-                            background: "#EFECE6",
-                            margin: "14px 0 12px",
-                            width: "100%",
-                          }}
-                        />
-
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            fontWeight: 700,
-                            color: "#49524C",
-                          }}
-                        >
-                          Syllabus · {allUnits.length} {allUnits.length === 1 ? "chapter" : "chapters"} · {selectedQuestionCount} PYQs mapped
-                        </div>
                       </div>
                     );
                   })}
