@@ -1,0 +1,106 @@
+name: Mobile Release (Android)
+
+# Builds the Android app in the cloud with EAS and publishes it as a GitHub
+# Release asset, so APKs/AABs never need to be committed to git.
+#
+# Trigger:  git tag android-v1.2.0 && git push origin android-v1.2.0
+#      or:  Actions -> Mobile Release (Android) -> Run workflow
+#
+# Prerequisites (one-time):
+#   1. cd saralvidhya-mobile && npx eas-cli init   (adds extra.eas.projectId to app.json)
+#   2. Set android.package in app.json (e.g. "com.sarallabs.saralvidhya")
+#   3. Repo secret EXPO_TOKEN  (expo.dev -> Account settings -> Access tokens)
+
+on:
+  push:
+    tags: ['android-v*']
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        type: choice
+        options: [preview, preview-universal, production]
+        default: preview
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mobile-release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROFILE: ${{ inputs.profile || 'preview' }}
+  # Size budgets (MB). Fail fast if the build regresses.
+  APK_BUDGET_MB: '70'
+  AAB_BUDGET_MB: '120'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: saralvidhya-mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: saralvidhya-mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Setup EAS
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build with EAS (${{ env.PROFILE }})
+        id: build
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile "$PROFILE" \
+            --non-interactive --wait --json > build.json
+          URL="$(jq -r '.[0].artifacts.buildUrl' build.json)"
+          [ -n "$URL" ] && [ "$URL" != "null" ] || { echo "::error::No artifact URL"; cat build.json; exit 1; }
+          case "$URL" in *.aab) EXT=aab; BUDGET=$AAB_BUDGET_MB ;; *) EXT=apk; BUDGET=$APK_BUDGET_MB ;; esac
+          NAME="SaralVidhya-${GITHUB_REF_NAME//\//-}-${PROFILE}.${EXT}"
+          curl -fsSL "$URL" -o "$NAME"
+          echo "file=saralvidhya-mobile/$NAME" >> "$GITHUB_OUTPUT"
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "budget=$BUDGET" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce size budget
+        run: |
+          SIZE_MB=$(( $(stat -c%s "${{ steps.build.outputs.name }}") / 1024 / 1024 ))
+          echo "### Build size: ${SIZE_MB} MB (budget ${{ steps.build.outputs.budget }} MB)" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$SIZE_MB" -gt "${{ steps.build.outputs.budget }}" ]; then
+            echo "::error::Artifact is ${SIZE_MB} MB, over the ${{ steps.build.outputs.budget }} MB budget. Check reactNativeArchitectures / assets."
+            exit 1
+          fi
+
+      - name: Publish GitHub Release (tag builds)
+        if: startsWith(github.ref, 'refs/tags/android-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.build.outputs.file }}
+          generate_release_notes: true
+          prerelease: ${{ env.PROFILE != 'production' }}
+
+      - name: Upload workflow artifact (manual runs)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.name }}
+          path: ${{ steps.build.outputs.file }}
+          retention-days: 14

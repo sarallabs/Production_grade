@@ -1,0 +1,8 @@
+# Reviewed exceptions to the 5 MB per-file limit (scripts/repo-hygiene/check-large-files.sh).
+# One glob per line ('*' also matches '/'). Changes to this file require review.
+#
+# LEGACY CONTENT - already in history. Allowlisted so existing workflows keep
+# working; target state is to serve these from GCS (see remediation plan, Phase 3).
+saralvidhya-production/backend/data/*.json
+saralvidhya-production/frontend/public/generated_resources/*
+MLRIT/*

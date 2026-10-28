@@ -1,6 +1,7 @@
 {
   "cli": {
-    "version": ">= 14.0.0"
+    "version": ">= 14.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -11,12 +12,28 @@
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "arm64-v8a"
+      }
+    },
+    "preview-universal": {
+      "extends": "preview",
+      "env": {
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "armeabi-v7a,arm64-v8a"
       }
     },
     "production": {
+      "autoIncrement": true,
       "android": {
         "buildType": "app-bundle"
+      },
+      "env": {
+        "ORG_GRADLE_PROJECT_reactNativeArchitectures": "armeabi-v7a,arm64-v8a"
       }
     }
+  },
+  "submit": {
+    "production": {}
   }
 }

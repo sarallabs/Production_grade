@@ -17,4 +17,6 @@ if echo "$FILTERED_LINES" | grep -E "$KEY_PATTERN" > /dev/null 2>&1; then
     exit 1
 fi
 
-exit 0
+# Block build artifacts (APK/AAB/IPA), signing keys, and files > 5 MB.
+# Rules live in one shared script so CI (repo-hygiene.yml) enforces the same thing.
+exec sh "$(git rev-parse --show-toplevel)/scripts/repo-hygiene/check-large-files.sh" --staged

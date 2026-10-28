@@ -1,0 +1,8 @@
+# Shell scripts and git hooks must use LF, or `sh` fails on Windows checkouts.
+*.sh            text eol=lf
+.githooks/*     text eol=lf
+
+# Build artifacts are never diffed/merged (and are blocked by repo-hygiene).
+*.apk           binary
+*.aab           binary
+*.ipa           binary
