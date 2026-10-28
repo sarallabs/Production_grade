@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -302,9 +302,30 @@ export default function TeacherQuestionBankView({
 
   const MARK_OPTIONS: MarkType[] = ['2M', '5M', '10M'];
 
+  const scrollViewRef = useRef<any>(null);
+  const cardsContainerY = useRef<number>(0);
+  const cardLayoutsRef = useRef<Record<string | number, number>>({});
+  const targetScrollIdRef = useRef<number | string | null>(null);
+
   const handleSelectQuestion = (id: number | string) => {
     Haptics.selectionAsync();
-    setSelectedQuestionId(selectedQuestionId === id ? null : id);
+    if (selectedQuestionId === id) {
+      setSelectedQuestionId(null);
+      targetScrollIdRef.current = null;
+    } else {
+      setSelectedQuestionId(id);
+      targetScrollIdRef.current = id;
+      setTimeout(() => {
+        if (targetScrollIdRef.current === id) {
+          targetScrollIdRef.current = null;
+          const relativeY = cardLayoutsRef.current[id];
+          if (typeof relativeY === 'number') {
+            const targetY = Math.max(0, cardsContainerY.current + relativeY - 12);
+            scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+          }
+        }
+      }, 80);
+    }
   };
 
   const handleSelectMark = (mark: MarkType) => {
@@ -315,6 +336,7 @@ export default function TeacherQuestionBankView({
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
+        ref={scrollViewRef}
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
@@ -350,12 +372,28 @@ export default function TeacherQuestionBankView({
         )}
 
         {/* Question Cards */}
-        <View style={styles.cardsList}>
+        <View
+          style={styles.cardsList}
+          onLayout={(e) => {
+            cardsContainerY.current = e.nativeEvent.layout.y;
+          }}
+        >
           {questions.map((item) => {
             const isExpanded = selectedQuestionId === item.id;
             return (
               <View
                 key={item.id}
+                onLayout={(e) => {
+                  const newY = e.nativeEvent.layout.y;
+                  cardLayoutsRef.current[item.id] = newY;
+                  if (targetScrollIdRef.current === item.id) {
+                    targetScrollIdRef.current = null;
+                    const targetY = Math.max(0, cardsContainerY.current + newY - 12);
+                    requestAnimationFrame(() => {
+                      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+                    });
+                  }
+                }}
                 style={[
                   styles.questionCard,
                   {
@@ -382,18 +420,15 @@ export default function TeacherQuestionBankView({
                       isDark={isDark}
                       onTermPress={handleTermPress}
                     />
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                      <Text style={[styles.assignedByText, { color: assignedByColor, marginTop: 0 }]}>
-                        Assigned by: {item.assignedBy}
-                      </Text>
-                      {item.bloomLevel ? (
+                    {item.bloomLevel ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                         <View style={{ backgroundColor: isDark ? '#3D2F1B' : '#FDF6EC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                           <Text style={{ fontSize: 10, fontWeight: '700', color: isDark ? '#E5B978' : '#B07B30' }}>
                             {item.bloomLevel}
                           </Text>
                         </View>
-                      ) : null}
-                    </View>
+                      </View>
+                    ) : null}
                   </View>
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
@@ -407,9 +442,6 @@ export default function TeacherQuestionBankView({
                   <View style={styles.expandedContent}>
                     {/* Mark Selector Chips: 2M | 5M | 10M */}
                     <View style={styles.marksRow}>
-                      <Text style={[styles.marksLabel, { color: assignedByColor }]}>
-                        Model Answer:
-                      </Text>
                       {MARK_OPTIONS.map((mark) => {
                         const isMarkActive = selectedMark === mark;
                         return (
@@ -452,31 +484,12 @@ export default function TeacherQuestionBankView({
                         { backgroundColor: answerBg, borderColor: answerBorder },
                       ]}
                     >
-                      <View style={styles.answerHeaderRow}>
-                        <View style={styles.answerBadge}>
-                          <Text style={styles.answerBadgeText}>FACULTY ANSWER ({selectedMark})</Text>
-                        </View>
-                      </View>
                       <HighlightedGlossaryText
                         text={item.answers[selectedMark]}
                         style={[styles.answerText, { color: answerTextColor }]}
                         isDark={isDark}
                         onTermPress={handleTermPress}
                       />
-                    </View>
-
-                    {/* Teacher Exam Tip */}
-                    <View style={[styles.tipCard, { backgroundColor: tipBg, borderColor: tipBorder }]}>
-                      <Ionicons name="bulb-outline" size={15} color={tipText} />
-                      <Text style={[styles.tipText, { color: tipText }]}>
-                        <Text style={{ fontWeight: '700' }}>Teacher Tip: </Text>
-                        <HighlightedGlossaryText
-                          text={item.teacherTip}
-                          style={[styles.tipText, { color: tipText }]}
-                          isDark={isDark}
-                          onTermPress={handleTermPress}
-                        />
-                      </Text>
                     </View>
                   </View>
                 )}
@@ -642,6 +655,7 @@ const styles = StyleSheet.create({
   marksRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     gap: 8,
   },
   marksLabel: {

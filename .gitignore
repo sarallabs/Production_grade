@@ -46,6 +46,24 @@ dist/
 build/
 out/
 
+# Mobile build artifacts — distribute via GitHub Releases / EAS, NEVER commit
+# (a 118 MB APK exceeded GitHub's 100 MB limit and blocked pushes)
+*.apk
+*.aab
+*.ipa
+*.apks
+*.xapk
+output-metadata.json
+**/android/app/build/
+**/android/.gradle/
+**/ios/build/
+
+# Signing material — store in EAS credentials / GitHub encrypted secrets
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
 # Environment files
 .env
 .env.local

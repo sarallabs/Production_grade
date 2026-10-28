@@ -78,7 +78,13 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
           const onPress = () => {
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!focused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
+              const defaultParams: Record<string, any> = {
+                learn: { segment: 'read' },
+                practice: { part: 'revise' },
+                prepare: { segment: 'pyq' },
+                resources: { segment: 'mindmaps' },
+              };
+              (navigation as any).navigate(route.name, defaultParams[route.name]);
             }
           };
 

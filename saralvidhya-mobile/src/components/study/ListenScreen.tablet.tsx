@@ -32,6 +32,8 @@ interface ListenScreenTabletProps {
   chapterNumber?: number;
   chapterTitle?: string;
   initialMode?: ListenMode;
+  initialMicrocastTopic?: string;
+  initialAutoPlay?: boolean;
   onNavigateToRead?: (moduleNumber?: number) => void;
   onBackPress?: () => void;
 }
@@ -97,6 +99,8 @@ export default function ListenScreenTablet({
   chapterNumber = 1,
   chapterTitle = 'Insect Digestive System & Anatomy',
   initialMode = 'detailed',
+  initialMicrocastTopic,
+  initialAutoPlay,
   onNavigateToRead,
   onBackPress,
 }: ListenScreenTabletProps) {
@@ -265,15 +269,15 @@ export default function ListenScreenTablet({
       };
     }
     return {
-      title: activeMicrocast.title,
-      durationSec: activeMicrocast.durationSec,
-      durationFormatted: activeMicrocast.durationFormatted.replace(/^00:/, ''),
-      subtitle: `Microcast · Episode ${activeMicrocast.id} of ${microcastList.length}`,
-      paragraphs: activeMicrocast.paragraphs,
+      title: activeMicrocast?.title || initialMicrocastTopic || 'Microcast Topic',
+      durationSec: activeMicrocast?.durationSec || 300,
+      durationFormatted: activeMicrocast?.durationFormatted?.replace(/^00:/, '') || '05:00',
+      subtitle: `Microcast · Episode ${activeMicrocast?.id || 1} of ${microcastList.length || 1}`,
+      paragraphs: activeMicrocast?.paragraphs || [],
     };
-  }, [mode, activeMicrocast, microcastList, currentBundle]);
+  }, [mode, activeMicrocast, microcastList, currentBundle, initialMicrocastTopic]);
 
-  const totalDurationSec = activeTrack.durationSec;
+  const totalDurationSec = activeTrack?.durationSec || 300;
   const currentSpeed = SPEED_OPTIONS[speedIndex];
 
   // Stop audio on unmount
@@ -395,6 +399,41 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
       console.warn('Failed to load cloud podcast audio in tablet:', err);
     }
   };
+
+  useEffect(() => {
+    if (initialMode === 'microcasts') {
+      setMode('microcasts');
+    }
+  }, [initialMode]);
+
+  useEffect(() => {
+    if (!cloudTitles || cloudTitles.length === 0) return;
+
+    let targetEpId = 1;
+    if (initialMicrocastTopic) {
+      const topicLower = initialMicrocastTopic.toLowerCase();
+      const matchedIdx = cloudTitles.findIndex((title) => {
+        const titleLower = title.toLowerCase();
+        return (
+          titleLower.includes(topicLower) ||
+          topicLower.includes(titleLower) ||
+          topicLower.split(/\s+/).some((w) => w.length > 3 && titleLower.includes(w))
+        );
+      });
+      if (matchedIdx !== -1) {
+        targetEpId = matchedIdx + 1;
+      }
+    }
+    setSelectedMicrocastId(targetEpId);
+
+    if (initialAutoPlay) {
+      const timer = setTimeout(() => {
+        const url = getPodcastAudioUrl(chapterNumber, 'microcasts', targetEpId);
+        loadAndPlayTrack(url, true, 0);
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [cloudTitles, initialMicrocastTopic, initialAutoPlay]);
 
   // Audio Play / Pause handler
   const handleTogglePlay = async () => {
@@ -529,15 +568,15 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
   // Subheader labels based on mode
   const subheaderLabel =
     mode === 'detailed'
-      ? 'DETAILED LISTEN · 1 OF 1 MATCH'
+      ? 'IN-DEPTH · 1/1 MATCH'
       : mode === 'quick'
-      ? 'QUICK LISTEN · STANDARD DEPTH'
+      ? 'ESSENTIALS · STANDARD DEPTH'
       : 'MICROCASTS · STANDARD DEPTH';
 
   const subheaderCount =
     mode === 'microcasts'
       ? `${microcastList.length} lessons matched`
-      : '1 OF 1 MATCH';
+      : '1/1 MATCH';
 
   // Progress percentage
   const progressRatio = Math.min(1, Math.max(0, currentSec / (totalDurationSec || 1)));
@@ -626,7 +665,7 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                   { color: mode === 'quick' ? '#FFFFFF' : textColor },
                 ]}
               >
-                Quick Listen
+                Essentials
               </Text>
             </TouchableOpacity>
 
@@ -655,7 +694,7 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                   { color: mode === 'detailed' ? '#FFFFFF' : textColor },
                 ]}
               >
-                Detailed Listen
+                In-Depth
               </Text>
             </TouchableOpacity>
 
@@ -889,7 +928,7 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                     FOLLOW ALONG IN READ
                   </Text>
                   <Text style={[styles.topicCountBadge, { color: mutedTextColor }]}>
-                    {mode === 'quick' ? 'TOPIC 1 OF 6' : 'TOPIC 1 OF 8'}
+                    {mode === 'quick' ? 'TOPIC 1/6' : 'TOPIC 1/8'}
                   </Text>
                 </View>
 

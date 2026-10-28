@@ -30,6 +30,7 @@ import { parseMarkdownSections, StudySection } from '@/utils/sectionParser';
 import { fetchQuickStudyGuide, fetchDetailedNotes, GCS_API_BASE } from '@/services/contentService';
 import StudyGuideReaderTablet from './StudyGuideReader.tablet';
 import ZoomableImageModal from './ZoomableImageModal';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 
 const { width, height } = Dimensions.get('window');
 
@@ -49,6 +50,7 @@ interface StudyGuideReaderProps {
   chapterTitle?: string;
   subjectName?: string;
   subjectId?: string;
+  initialTopic?: string;
   onBackPress?: () => void;
   onBookmarkPress?: () => void;
   onOpenListen?: (mode: 'quick' | 'detailed') => void;
@@ -262,6 +264,7 @@ export default function StudyGuideReader({
   chapterTitle,
   subjectName = 'Entomology',
   subjectId = 'ento_131',
+  initialTopic,
   onBackPress,
   onBookmarkPress,
   onOpenListen,
@@ -291,6 +294,7 @@ export default function StudyGuideReader({
         chapterTitle={effectiveChapterTitle}
         subjectName={subjectName}
         subjectId={subjectId}
+        initialTopic={initialTopic}
         onBackPress={onBackPress}
         onBookmarkPress={onBookmarkPress}
         onOpenListen={onOpenListen}
@@ -325,6 +329,7 @@ export default function StudyGuideReader({
   const [detailedContent, setDetailedContent] = useState<string>('');
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const scrollViewHeightRef = useRef<number>(Dimensions.get('window').height);
   const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>([]);
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
@@ -388,7 +393,8 @@ export default function StudyGuideReader({
   );
 
   const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(false);
-  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
+  const [sectionsContainerY, setSectionsContainerY] = useState(0);
+  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, { y: number; height: number }>>({});
 
   const handleScrollToSection = (targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < sections.length) {
@@ -396,12 +402,80 @@ export default function StudyGuideReader({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch {}
       setActiveSectionIndex(targetIndex);
-      const targetY = sectionLayouts[targetIndex];
-      if (typeof targetY === 'number') {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 15), animated: true });
+      const relativeY = sectionLayouts[targetIndex];
+      if (typeof relativeY === 'number') {
+        const absoluteY = sectionsContainerY + relativeY;
+        // Scroll so the entire section banner starts cleanly from the full top
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, absoluteY - 10), animated: true });
       }
     }
   };
+
+  const hasScrolledToTopicRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialTopic || sections.length === 0) return;
+    if (hasScrolledToTopicRef.current === initialTopic) return;
+
+    // Clean up topic title (remove Bloom tags, numbering, etc.)
+    const cleanTopic = initialTopic
+      .replace(/\[Bloom:.*?\]/i, '')
+      .replace(/^\d+[\.\s]*/, '')
+      .trim();
+    const lower = cleanTopic.toLowerCase();
+    const searchWords = lower
+      .split(/[\s,()\/\-]+/)
+      .filter((w) => w.length > 2);
+
+    const targetIdx = sections.findIndex((s) => {
+      const sLower = s.title.toLowerCase();
+      const sShortLower = (s.shortTitle || '').toLowerCase();
+      const sContentLower = (s.content || '').slice(0, 1000).toLowerCase();
+
+      // 1. Direct match on title or shortTitle
+      if (
+        sLower.includes(lower) ||
+        lower.includes(sLower) ||
+        sShortLower.includes(lower) ||
+        lower.includes(sShortLower)
+      ) {
+        return true;
+      }
+
+      // 2. Keyword match in title
+      if (searchWords.length > 0 && searchWords.some((w) => sLower.includes(w) || sShortLower.includes(w))) {
+        return true;
+      }
+
+      // 3. Fallback: topic keyword appears in section content
+      if (searchWords.length > 0 && searchWords.every((w) => sContentLower.includes(w))) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (targetIdx !== -1) {
+      setActiveSectionIndex(targetIdx);
+      const relativeY = sectionLayouts[targetIdx];
+      if (typeof relativeY === 'number') {
+        hasScrolledToTopicRef.current = initialTopic;
+        const absoluteY = sectionsContainerY + relativeY;
+        const targetScrollY = Math.max(0, absoluteY - 10);
+        scrollViewRef.current?.scrollTo({ y: targetScrollY, animated: true });
+      } else {
+        const timer = setTimeout(() => {
+          const retryY = sectionLayouts[targetIdx];
+          if (typeof retryY === 'number') {
+            hasScrolledToTopicRef.current = initialTopic;
+            const absoluteY = sectionsContainerY + retryY;
+            scrollViewRef.current?.scrollTo({ y: Math.max(0, absoluteY - 10), animated: true });
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [initialTopic, sections, sectionLayouts, sectionsContainerY]);
 
   const handleScrollToQuickCheck = (secIdx: number) => {
     if (secIdx >= 0 && secIdx < sections.length) {
@@ -409,20 +483,47 @@ export default function StudyGuideReader({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch {}
       setActiveSectionIndex(secIdx);
-      const targetY = quickCheckLayouts[secIdx] ?? sectionLayouts[secIdx];
-      if (typeof targetY === 'number') {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 40), animated: true });
+      const qcLayout = quickCheckLayouts[secIdx];
+      const relativeY = qcLayout?.y ?? sectionLayouts[secIdx];
+      if (typeof relativeY === 'number') {
+        const absoluteY = sectionsContainerY + relativeY;
+        const cardH = qcLayout?.height || 360;
+        const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+        const targetY = cardH >= viewH - 60
+          ? Math.max(0, absoluteY - 20)
+          : Math.max(0, absoluteY - (viewH - cardH) / 2);
+        scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
       }
     }
   };
 
-  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean) => {
+  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean, secIdx?: number) => {
     if (isCorrect) {
       setCompletedQuickChecks((prev) => {
         const next = new Set(prev);
         next.add(sectionNumber);
         return next;
       });
+    }
+
+    // Scroll so the quick check card is positioned in the center of the page
+    if (typeof secIdx === 'number') {
+      const qcLayout = quickCheckLayouts[secIdx];
+      if (qcLayout) {
+        const absoluteY = sectionsContainerY + qcLayout.y;
+        const cardH = qcLayout.height || 380;
+        const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+        const targetY = cardH >= viewH - 60
+          ? Math.max(0, absoluteY - 20)
+          : Math.max(0, absoluteY - (viewH - cardH) / 2);
+
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: targetY,
+            animated: true,
+          });
+        }, 120);
+      }
     }
   };
 
@@ -489,6 +590,9 @@ export default function StudyGuideReader({
     <View style={[styles.container, { backgroundColor: bg }]}>
       <ScrollView
         ref={scrollViewRef}
+        onLayout={(e) => {
+          scrollViewHeightRef.current = e.nativeEvent.layout.height;
+        }}
         style={styles.scrollArea}
         contentContainerStyle={[
           styles.scrollContent,
@@ -513,22 +617,12 @@ export default function StudyGuideReader({
         scrollEventThrottle={32}
       >
         {/* 1. BREADCRUMB HEADER (Matching Web App Screenshot) */}
-        <View style={styles.breadcrumbBar}>
-          <View style={styles.breadcrumbLeft}>
-            {onBackPress && (
-              <TouchableOpacity
-                onPress={onBackPress}
-                style={styles.backBtn}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-              >
-                <Ionicons name="arrow-back" size={18} color={textColor} />
-              </TouchableOpacity>
-            )}
-            <Text style={[styles.breadcrumbText, { color: subtextColor }]} numberOfLines={1}>
-              {subjectName || 'Fundamentals of Entomology'} › Chapter {chapterNumber}: {effectiveChapterTitle}
-            </Text>
-          </View>
-        </View>
+        <BreadcrumbBar
+          subjectName={subjectName}
+          chapterNumber={chapterNumber}
+          chapterTitle={effectiveChapterTitle}
+          onBackPress={onBackPress}
+        />
 
         {/* 2. PERSONA SELECTOR: ONLY LOGOS & CENTERED */}
         <View style={styles.personaCenterRow}>
@@ -821,7 +915,12 @@ export default function StudyGuideReader({
         </View>
 
         {/* 6. SECTIONIZED READING STREAM + MASTER HERO INFOGRAPHIC */}
-        <View style={styles.sectionsContainer}>
+        <View
+          style={styles.sectionsContainer}
+          onLayout={(e) => {
+            setSectionsContainerY(e.nativeEvent.layout.y);
+          }}
+        >
           {sections.map((sec, idx) => (
             <View
               key={`${sec.id}-${idx}`}
@@ -835,13 +934,7 @@ export default function StudyGuideReader({
               <View style={styles.sectionHeaderBanner}>
                 <View style={styles.sectionMetaTop}>
                   <Text style={[styles.sectionOrderLabel, { color: isDark ? '#F59E0B' : '#B45309' }]}>
-                    SECTION {sec.sectionNumber} OF {sections.length}
-                  </Text>
-                </View>
-
-                <View style={styles.sectionHeadingWrap}>
-                  <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
-                    {sec.title}
+                    SECTION {sec.sectionNumber}/{sections.length}
                   </Text>
                   {sec.hasInfographic && (
                     <View style={styles.infographicTagBadge}>
@@ -850,7 +943,17 @@ export default function StudyGuideReader({
                   )}
                 </View>
 
-                <View style={styles.sectionMetaRow}>
+                <View style={styles.sectionHeadingWrap}>
+                  <Text style={[styles.sectionHeadingTitle, { color: textColor }]}>
+                    {sec.title}
+                  </Text>
+                </View>
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.sectionMetaRow}
+                >
                   <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
                     <Ionicons name="time-outline" size={12} color={subtextColor} />
                     <Text style={[styles.readTimeText, { color: textColor }]}>
@@ -861,16 +964,18 @@ export default function StudyGuideReader({
                   {sec.quickChecks && sec.quickChecks.length > 0 && (
                     <TouchableOpacity
                       style={[
-                        styles.quickChecksPill,
-                        {
-                          backgroundColor: isDark ? '#3D2A14' : '#FEF3C7',
-                          borderColor: isDark ? '#B45309' : '#FDE68A',
-                        },
+                        styles.readTimeBadge,
+                        { backgroundColor: isDark ? '#22382B' : '#F1F5F9' },
                       ]}
                       onPress={() => handleScrollToQuickCheck(idx)}
                       activeOpacity={0.75}
                     >
-                      <Text style={[styles.quickChecksPillText, { color: isDark ? '#FDE68A' : '#92400E' }]}>
+                      <Ionicons
+                        name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle-outline' : 'help-circle-outline'}
+                        size={12}
+                        color={subtextColor}
+                      />
+                      <Text style={[styles.readTimeText, { color: textColor }]}>
                         {completedQuickChecks.has(sec.sectionNumber)
                           ? '✓ Quick Check Answered'
                           : `${sec.quickChecks.length} quick check${sec.quickChecks.length > 1 ? 's' : ''}`}
@@ -879,12 +984,14 @@ export default function StudyGuideReader({
                   )}
 
                   {sec.examBadge && (
-                    <View style={styles.examBadgePill}>
-                      <Ionicons name="disc-outline" size={12} color="#BE123C" />
-                      <Text style={styles.examBadgeText}>{sec.examBadge}</Text>
+                    <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
+                      <Ionicons name="disc-outline" size={12} color={subtextColor} />
+                      <Text style={[styles.readTimeText, { color: textColor }]}>
+                        {sec.examBadge.replace(/\s*-\s*\d+\s*marks?/i, '')}
+                      </Text>
                     </View>
                   )}
-                </View>
+                </ScrollView>
               </View>
 
               {/* Section Markdown Reading Content */}
@@ -899,8 +1006,11 @@ export default function StudyGuideReader({
                 <View
                   onLayout={(e) => {
                     const blockY = sectionLayouts[idx] || 0;
-                    const cardRelativeY = e.nativeEvent.layout.y;
-                    setQuickCheckLayouts((prev) => ({ ...prev, [idx]: blockY + cardRelativeY }));
+                    const { y: cardRelativeY, height: cardHeight } = e.nativeEvent.layout;
+                    setQuickCheckLayouts((prev) => ({
+                      ...prev,
+                      [idx]: { y: blockY + cardRelativeY, height: cardHeight },
+                    }));
                   }}
                 >
                   <QuickCheckCard
@@ -915,7 +1025,7 @@ export default function StudyGuideReader({
                         : undefined
                     }
                     onAnswerSubmitted={(isCorrect) => {
-                      handleQcAnswer(sec.sectionNumber, isCorrect);
+                      handleQcAnswer(sec.sectionNumber, isCorrect, idx);
                     }}
                   />
                 </View>
@@ -956,18 +1066,7 @@ export default function StudyGuideReader({
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Floating Bottom-Right "Next: Section [N+1] →" Button (Matching Web App Screenshot) */}
-      {activeSectionIndex + 1 < sections.length && (
-        <TouchableOpacity
-          style={styles.floatingNextBtn}
-          onPress={() => handleScrollToSection(activeSectionIndex + 1)}
-          activeOpacity={0.88}
-        >
-          <Text style={styles.floatingNextBtnText}>
-            Next: Section {activeSectionIndex + 2} →
-          </Text>
-        </TouchableOpacity>
-      )}
+
 
       {/* 6. FULL-SCREEN INTERACTIVE ZOOMABLE DIAGRAM MODAL */}
       <ZoomableImageModal
@@ -1884,6 +1983,7 @@ const styles = StyleSheet.create({
   sectionMetaTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   sectionOrderLabel: {
     fontSize: 11.5,
@@ -1922,7 +2022,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 4,
-    flexWrap: 'wrap',
   },
   readTimeBadge: {
     flexDirection: 'row',

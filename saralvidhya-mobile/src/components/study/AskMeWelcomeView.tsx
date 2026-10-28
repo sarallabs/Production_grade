@@ -31,6 +31,7 @@ import { chatHistoryService, HistoryConversation } from '@/services/chatHistoryS
 
 const PLANT_BADGE = require('@/assets/images/entomology_plant_badge.png');
 const SARAL_TREE_LOGO = require('@/assets/images/saral-tree.png');
+const SARAL_TREE_BG = require('@/assets/images/saral-tree-bg.png');
 
 export interface ChatMessage {
   id: string;
@@ -106,6 +107,8 @@ export default function AskMeWelcomeView({
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const messageLayouts = useRef<Record<string, number>>({});
+  const lastUserMsgIdRef = useRef<string | null>(null);
 
   // Load chat history from SQLite / AsyncStorage & ANGRAU curriculum DB records
   useEffect(() => {
@@ -114,7 +117,7 @@ export default function AskMeWelcomeView({
     });
   }, [chapterNumber]);
 
-  // Auto-scroll and keep input bar lifted above Android/iOS keyboard
+  // Keep input bar lifted above Android/iOS keyboard
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
@@ -122,7 +125,12 @@ export default function AskMeWelcomeView({
     const showSub = Keyboard.addListener(showEvent, (e) => {
       setKeyboardHeight(e.endCoordinates.height);
       setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
+        if (lastUserMsgIdRef.current && messageLayouts.current[lastUserMsgIdRef.current] !== undefined) {
+          scrollViewRef.current?.scrollTo({
+            y: Math.max(0, messageLayouts.current[lastUserMsgIdRef.current] - 12),
+            animated: true,
+          });
+        }
       }, 60);
     });
 
@@ -136,12 +144,13 @@ export default function AskMeWelcomeView({
     };
   }, []);
 
-  // Auto scroll to latest bot answer
+  // Anchor scroll view to the START of the latest question and answer
   useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+    if (messages.length > 0 && lastUserMsgIdRef.current) {
+      const targetY = messageLayouts.current[lastUserMsgIdRef.current];
+      if (typeof targetY === 'number') {
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 12), animated: true });
+      }
     }
   }, [messages.length, isGenerating]);
 
@@ -377,8 +386,11 @@ export default function AskMeWelcomeView({
     setViewMode('chat');
     setInputQuestion('');
 
+    const userMsgId = `user_${Date.now()}`;
+    lastUserMsgIdRef.current = userMsgId;
+
     const userMsg: ChatMessage = {
-      id: `user_${Date.now()}`,
+      id: userMsgId,
       sender: 'user',
       text: query,
       timestamp: 'Just now',
@@ -444,6 +456,8 @@ export default function AskMeWelcomeView({
 
   const handleSelectHistoryConversation = (item: HistoryConversation) => {
     setSelectedConversationId(item.id);
+    lastUserMsgIdRef.current = null;
+    messageLayouts.current = {};
     if (item.messages && item.messages.length > 0) {
       setMessages(
         item.messages.map((m) => ({
@@ -488,10 +502,15 @@ export default function AskMeWelcomeView({
       }
     }
     setViewMode('chat');
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ y: 0, animated: false });
+    }, 50);
   };
 
   const handleResetToWelcome = () => {
     Haptics.selectionAsync();
+    lastUserMsgIdRef.current = null;
+    messageLayouts.current = {};
     setMessages([]);
     setInputQuestion('');
     setViewMode('welcome');
@@ -502,6 +521,20 @@ export default function AskMeWelcomeView({
       style={[styles.container, { backgroundColor: colors.screenBg }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Background Watermark Tree Graphic */}
+      <View style={styles.watermarkContainer} pointerEvents="none">
+        <Image
+          source={SARAL_TREE_BG}
+          style={[
+            styles.watermarkImage,
+            {
+              opacity: isDark ? 0.28 : 0.22,
+            },
+          ]}
+          resizeMode="contain"
+        />
+      </View>
+
       {/* Top Header Bar */}
       <View
         style={[
@@ -509,25 +542,22 @@ export default function AskMeWelcomeView({
           {
             backgroundColor: colors.headerBg,
             borderBottomColor: colors.divider,
-            paddingTop: insets.top + (Platform.OS === 'android' ? 10 : 4),
+            paddingTop: 8,
+            paddingBottom: 10,
           },
         ]}
       >
         <View style={styles.headerLeft}>
-          {viewMode === 'chat' && (
+          {(messages.length > 0 || viewMode === 'chat') && (
             <TouchableOpacity
               style={styles.backArrowBtn}
-              onPress={() => {
-                Haptics.selectionAsync();
-                setViewMode('welcome');
-              }}
+              onPress={handleResetToWelcome}
               activeOpacity={0.7}
               accessibilityLabel="Back to welcome"
             >
               <Ionicons name="arrow-back" size={22} color={colors.primaryText} />
             </TouchableOpacity>
           )}
-
 
           <View style={styles.headerTitleWrap}>
             <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Ask Me</Text>
@@ -537,7 +567,7 @@ export default function AskMeWelcomeView({
           </View>
         </View>
 
-        {/* Options button (⋯) - Exactly matches Figma! */}
+        {/* History button - Changed from 3 dots to history icon */}
         <TouchableOpacity
           style={[
             styles.optionsButton,
@@ -551,9 +581,9 @@ export default function AskMeWelcomeView({
             openDrawer();
           }}
           activeOpacity={0.75}
-          accessibilityLabel="Options and History"
+          accessibilityLabel="Chat History"
         >
-          <Text style={[styles.optionsDots, { color: colors.primaryText }]}>⋯</Text>
+          <Ionicons name="time-outline" size={20} color={colors.primaryText} />
         </TouchableOpacity>
       </View>
 
@@ -563,15 +593,15 @@ export default function AskMeWelcomeView({
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
+          messages.length === 0 && keyboardHeight === 0 && styles.scrollContentCentered,
           isTablet && styles.tabletContainer,
         ]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {viewMode === 'welcome' ? (
-          /* Welcome View */
-          <View style={styles.welcomeStack}>
-            {/* Hi there card */}
+        {messages.length === 0 ? (
+          /* Welcome Card in center at the starting chat - goes away once chat messages exist */
+          <View style={styles.welcomeCenterWrap}>
             <View
               style={[
                 styles.welcomeCard,
@@ -603,84 +633,6 @@ export default function AskMeWelcomeView({
               <Text style={[styles.askMeDesc, { color: colors.primaryText }]}>
                 Ask me anything about your course, or get a simple step-by-step explanation.
               </Text>
-
-              <View style={styles.actionButtonsRow}>
-                <TouchableOpacity
-                  style={[styles.primaryActionBtn, { backgroundColor: colors.primaryButtonBg }]}
-                  onPress={() => handleSendQuery('What are the key concepts of this unit?')}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.actionSparkleCircle, { backgroundColor: colors.sparkleBg }]}>
-                    <Text style={[styles.sparkleIcon, { color: colors.sparkleColor }]}>✦</Text>
-                  </View>
-                  <Text style={[styles.primaryActionText, { color: colors.primaryButtonText }]}>
-                    Ask questions
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[
-                    styles.secondaryActionBtn,
-                    {
-                      backgroundColor: colors.secondaryButtonBg,
-                      borderColor: colors.secondaryButtonBorder,
-                    },
-                  ]}
-                  onPress={() => handleSendQuery('Explain this chapter step by step')}
-                  activeOpacity={0.8}
-                >
-                  <View style={[styles.actionSparkleCircle, { backgroundColor: colors.sparkleBg }]}>
-                    <Text style={[styles.sparkleIcon, { color: colors.sparkleColor }]}>✧</Text>
-                  </View>
-                  <Text style={[styles.secondaryActionText, { color: colors.secondaryButtonText }]}>
-                    Explain a topic
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Try Asking Section */}
-            <View style={styles.tryAskingSection}>
-              <Text style={[styles.tryAskingTitle, { color: colors.primaryText }]}>
-                Try asking
-              </Text>
-
-              <View style={styles.promptsList}>
-                {TRY_ASKING_PROMPTS.map((promptText, idx) => (
-                  <TouchableOpacity
-                    key={idx}
-                    style={[
-                      styles.promptCard,
-                      {
-                        backgroundColor: colors.promptCardBg,
-                        borderColor: colors.promptCardBorder,
-                      },
-                    ]}
-                    onPress={() => handleSendQuery(promptText)}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.promptText, { color: colors.primaryText }]}>
-                      {promptText}
-                    </Text>
-                    <Text style={[styles.promptArrow, { color: colors.arrowColor }]}>↗</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            {/* Study Smarter Banner Card */}
-            <View
-              style={[
-                styles.infoBannerCard,
-                { backgroundColor: colors.infoBannerBg },
-              ]}
-            >
-              <Text style={[styles.infoBannerTitle, { color: colors.infoBannerTitle }]}>
-                Study smarter with Saral
-              </Text>
-              <Text style={[styles.infoBannerSub, { color: colors.infoBannerSub }]}>
-                Answers grounded in your course material.
-              </Text>
             </View>
           </View>
         ) : (
@@ -691,6 +643,20 @@ export default function AskMeWelcomeView({
               return (
                 <View
                   key={msg.id}
+                  onLayout={(e) => {
+                    const y = e.nativeEvent.layout.y;
+                    messageLayouts.current[msg.id] = y;
+
+                    // When this user question is laid out, scroll so it starts right at the top
+                    if (msg.id === lastUserMsgIdRef.current) {
+                      scrollViewRef.current?.scrollTo({ y: Math.max(0, y - 12), animated: true });
+                    } else if (!isUser && lastUserMsgIdRef.current) {
+                      // When the bot answer is laid out, anchor the view to the START (user question or top of answer)
+                      const userY = messageLayouts.current[lastUserMsgIdRef.current];
+                      const scrollY = typeof userY === 'number' ? Math.max(0, userY - 12) : Math.max(0, y - 50);
+                      scrollViewRef.current?.scrollTo({ y: scrollY, animated: true });
+                    }
+                  }}
                   style={[
                     styles.messageRow,
                     isUser ? styles.messageRowUser : styles.messageRowBot,
@@ -843,11 +809,6 @@ export default function AskMeWelcomeView({
         )}
       </ScrollView>
 
-      {/* AI Grounding Disclaimer */}
-      <Text style={[styles.disclaimerText, { color: colors.subText }]}>
-        AI answers are based on your learning material
-      </Text>
-
       {/* Bottom Sticky Input Bar */}
       <View
         style={[
@@ -881,8 +842,10 @@ export default function AskMeWelcomeView({
             placeholderTextColor={colors.inputPlaceholder}
             value={inputQuestion}
             onChangeText={setInputQuestion}
-            onSubmitEditing={() => handleSendQuery()}
-            returnKeyType="send"
+            multiline={true}
+            scrollEnabled={true}
+            blurOnSubmit={false}
+            returnKeyType="default"
           />
 
           {/* Voice Mic Button */}
@@ -969,27 +932,7 @@ export default function AskMeWelcomeView({
           />
         </View>
 
-        {/* Slide Bar Arrow Handle - Pinned to the Left side when closed, moves with drawer */}
-        <View
-          style={[
-            styles.slideBarHandle,
-            {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          <View style={styles.slideBarGripIndicator}>
-            <View style={[styles.gripLine, { backgroundColor: colors.divider }]} />
-            <View style={[styles.gripLine, { backgroundColor: colors.divider }]} />
-          </View>
-          <Ionicons
-            name={isDrawerOpen ? 'chevron-back' : 'chevron-forward'}
-            size={18}
-            color={colors.arrowColor}
-          />
-        </View>
+
       </Animated.View>
 
       {/* Voice Recognition Modal */}
@@ -1010,6 +953,20 @@ export default function AskMeWelcomeView({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 0,
+  },
+  watermarkImage: {
+    width: Math.min(SCREEN_WIDTH * 0.85, 340),
+    height: Math.min(SCREEN_WIDTH * 0.85, 340) * 1.43,
   },
   headerBar: {
     paddingHorizontal: 18,
@@ -1053,9 +1010,9 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   optionsButton: {
-    width: 50,
-    height: 32,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1073,10 +1030,18 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 24,
   },
+  scrollContentCentered: {
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   tabletContainer: {
     maxWidth: 540,
     width: '100%',
     alignSelf: 'center',
+  },
+  welcomeCenterWrap: {
+    width: '100%',
+    paddingVertical: 12,
   },
   welcomeStack: {
     flexDirection: 'column',
@@ -1226,12 +1191,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
   },
   inputBar: {
-    height: 58,
-    borderRadius: 18,
+    minHeight: 54,
+    maxHeight: 120,
+    borderRadius: 20,
     borderWidth: 1,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     paddingHorizontal: 8,
+    paddingVertical: 7,
     gap: 8,
   },
   inputSparkleCircle: {
@@ -1240,6 +1207,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 2,
   },
   inputSparkleText: {
     fontSize: 14,
@@ -1248,9 +1216,14 @@ const styles = StyleSheet.create({
   },
   chatInput: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: '500',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
+    paddingTop: Platform.OS === 'ios' ? 8 : 6,
+    paddingBottom: Platform.OS === 'ios' ? 8 : 6,
+    maxHeight: 110,
+    textAlignVertical: 'center',
   },
   micButton: {
     width: 36,
@@ -1258,6 +1231,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 1,
   },
   sendButton: {
     width: 36,
@@ -1265,6 +1239,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+    marginBottom: 1,
   },
   sendIcon: {
     fontSize: 14,

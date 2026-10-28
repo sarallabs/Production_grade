@@ -414,110 +414,176 @@ export function parseMermaidMindmap(raw: string, chapterNum: number): MindmapDat
 /**
  * Fallback mindmap data for offline or non-parsed state
  */
+/**
+ * Fallback mindmap data for offline or non-parsed state matching official cloud topics
+ */
 function getDefaultMindmapData(chapterNum: number): MindmapData {
+  const DB_FALLBACKS: Record<number, {
+    title: string;
+    branches: { title: string; children: string[] }[];
+  }> = {
+    1: {
+      title: 'Insect Digestive System',
+      branches: [
+        {
+          title: 'Three Primary Regions',
+          children: ['Foregut / Stomodaeum', 'Midgut / Mesenteron', 'Hindgut / Proctodaeum'],
+        },
+        {
+          title: 'Salivary Glands',
+          children: [
+            'Location and Structure',
+            'General Functions',
+            'Specialised Secretions by Feeding Guild',
+            'Blood-feeder Salivary Biochemistry',
+          ],
+        },
+        {
+          title: 'Specialized Physiological Adaptations',
+          children: [
+            'Filter Chamber',
+            'Symbiotic Digestion',
+            'Alkaline Midgut - Lepidoptera',
+            'Cibarial and Pharyngeal Pump',
+          ],
+        },
+        {
+          title: 'Excretory Integration',
+          children: [
+            'Malpighian Tubules',
+            'Rectal Pads - Water Recovery',
+            'Nitrogenous Waste Processing',
+            'Moulting and Gut Renewal',
+          ],
+        },
+      ],
+    },
+    2: {
+      title: 'Metamorphosis & Diapause',
+      branches: [
+        {
+          title: '1. Morphogenesis Framework',
+          children: ['1.1 Post-Embryonic Growth', '1.2 Four Developmental Stages'],
+        },
+        {
+          title: '2. Types of Metamorphosis',
+          children: [
+            '2.1 Ametabolous (No Metamorphosis)',
+            '2.2 Hemimetabolous (Incomplete Metamorphosis)',
+            '2.3 Holometabolous (Complete Metamorphosis)',
+          ],
+        },
+        {
+          title: '3. Immature & Pupal Classifications',
+          children: ['3.1 Larval Types', '3.2 Pupal Types'],
+        },
+        {
+          title: '4. Hypermetamorphosis',
+          children: ['4.1 Definition', '4.2 Specialized Instars', '4.3 Representative Taxa'],
+        },
+        {
+          title: '5. Endocrine Regulation',
+          children: ['5.1 PTTH (Brain Hormone)', '5.2 Ecdysone (Moulting Hormone)', '5.3 Juvenile Hormone (JH)'],
+        },
+        {
+          title: '6. Diapause & Dormancy',
+          children: ['6.1 Core Concepts', '6.2 Diapause Types', '6.3 Seasonal Variations'],
+        },
+      ],
+    },
+    3: {
+      title: 'Weathering of Rocks and Minerals',
+      branches: [
+        {
+          title: '1. Fundamentals & Regolith Genesis',
+          children: ['Definition & Mineral Dynamics', 'The Three Core Weathering Processes'],
+        },
+        {
+          title: '2. Physical Weathering (Mechanical Agents)',
+          children: [
+            'Agent 1 - Rock Permeability & Structure',
+            'Agent 2 - Temperature Variations & Exfoliation',
+            'Agent 3 - Water Action, Glaciers & Frost Wedging',
+            'Agent 4 - Wind Action & Sandblasting',
+          ],
+        },
+        {
+          title: '3. Biological Weathering (Living Agents)',
+          children: ['Role of Flora (Plants & Microbes)', 'Role of Fauna (Humans, Animals & Insects)'],
+        },
+        {
+          title: '4. Synthesis & Quantitative Summary',
+          children: ['Continuous Genesis Feedback Loop', 'Master Metric Reference Matrix'],
+        },
+      ],
+    },
+    4: {
+      title: 'Pollination, Pollinizers & Parthenocarpy',
+      branches: [
+        {
+          title: '1. Fundamentals of Floral Biology & Pollination Anatomy',
+          children: [
+            'Floral Reproductive Structures & Morphology',
+            'Pollination Definition & 4-Stage Transfer Dynamic',
+            'Post-Pollination Physiology & Double Fertilization',
+          ],
+        },
+        {
+          title: '2. Self-Pollination (Autogamy) & Inbreeding Mechanisms',
+          children: ['Classifications of Self-Pollination', 'Floral Adaptations Favouring Autogamy'],
+        },
+        {
+          title: '3. Cross-Pollination (Allogamy / Xenogamy)',
+          children: [
+            'Allogamy Dynamics & Evolutionary Advantages',
+            'Unisexuality / Dicliny',
+            'Self-Incompatibility',
+          ],
+        },
+        {
+          title: '4. Pollinators & Pollination Vectors',
+          children: ['Abiotic Pollination Vectors', 'Biotic Entomophily (Insect Pollination)', 'Biotic Vertebrate Zoophily'],
+        },
+        {
+          title: '5. Pollinizers & Orchard Layout Management',
+          children: [
+            'Pollinizer vs. Pollinator Distinction',
+            'Agronomic Conditions Requiring Pollinizers',
+            'Desirable Attributes of an Ideal Pollinizer',
+          ],
+        },
+        {
+          title: '6. Parthenocarpy (Seedless Fruit Development)',
+          children: ['Etymology, Concept & Botanical History', 'Types & Classifications of Parthenocarpy'],
+        },
+      ],
+    },
+  };
+
+  const cfg = DB_FALLBACKS[chapterNum] || DB_FALLBACKS[1];
+
   return {
-    title: `Chapter ${chapterNum}: Structural Organization & Physiology`,
-    subject: 'Fundamentals of Entomology',
+    title: cfg.title,
+    subject: 'Fundamentals of Entomology (ENTO 131)',
     chapter: chapterNum,
     rawMermaid: '',
     rootNode: {
       id: 'root',
-      title: 'Insect Digestive System & Alimentary Canal',
+      title: cfg.title,
       depth: 0,
-      children: [
-        {
-          id: 'b_1',
-          title: 'Foregut (Stomodaeum)',
-          depth: 1,
-          bloomLevel: 'L-1 Remembering',
-          children: [
-            {
-              id: 'sub_1_1',
-              title: 'Embryology & Cuticle',
-              depth: 2,
-              children: [],
-              details: [
-                'Ectodermal origin with cuticular intima',
-                'Intima sheds during each nymphal/larval ecdysis',
-              ],
-            },
-            {
-              id: 'sub_1_2',
-              title: 'Key Organs',
-              depth: 2,
-              children: [],
-              details: [
-                'Pharynx: Muscle-powered sucking pump',
-                'Esophagus: Straight transport conduit to crop',
-                'Crop: Distensible food reservoir for ingestion',
-                'Proventriculus: 6 cuticular teeth for mastication',
-              ],
-            },
-          ],
-          details: ['Ingestion, food storage, and mechanical maceration'],
-        },
-        {
-          id: 'b_2',
-          title: 'Midgut (Mesenteron / Ventriculus)',
-          depth: 1,
-          bloomLevel: 'L-2 Understanding',
-          children: [
-            {
-              id: 'sub_2_1',
-              title: 'Cellular Architecture',
-              depth: 2,
-              children: [],
-              details: [
-                'Endodermal embryonic origin (naked epithelium)',
-                'Columnar epithelial cells with microvilli',
-                'Regenerative nidi cells replace worn epithelium',
-              ],
-            },
-            {
-              id: 'sub_2_2',
-              title: 'Peritrophic Membrane',
-              depth: 2,
-              children: [],
-              details: [
-                'Chitin-protein porous meshwork envelope',
-                'Protects epithelial microvilli from mechanical abrasion',
-                'Acts as ultrafilter against bacterial invasion',
-              ],
-            },
-          ],
-          details: ['Enzymatic digestion, amylase/protease secretion & nutrient absorption'],
-        },
-        {
-          id: 'b_3',
-          title: 'Hindgut (Proctodaeum)',
-          depth: 1,
-          bloomLevel: 'L-3 Application',
-          children: [
-            {
-              id: 'sub_3_1',
-              title: 'Regional Anatomy',
-              depth: 2,
-              children: [],
-              details: [
-                'Ectodermal origin lined with thin cuticular intima',
-                'Subdivided into Ileum, Colon, and Rectum',
-              ],
-            },
-            {
-              id: 'sub_3_2',
-              title: 'Osmoregulation & Excretion',
-              depth: 2,
-              children: [],
-              details: [
-                'Malpighian tubules insert at midgut-hindgut junction',
-                'Rectal pads/papillae reabsorb water and electrolytes',
-                'Ensures terrestrial survival without desiccation',
-              ],
-            },
-          ],
-          details: ['Water recovery, electrolyte conservation & fecal pellet formation'],
-        },
-      ],
+      children: cfg.branches.map((b, bIdx) => ({
+        id: `branch_${bIdx + 1}`,
+        title: b.title,
+        depth: 1,
+        children: b.children.map((c, cIdx) => ({
+          id: `child_${bIdx + 1}_${cIdx + 1}`,
+          title: c,
+          depth: 2,
+          children: [],
+          details: [],
+        })),
+        details: [],
+      })),
     },
   };
 }

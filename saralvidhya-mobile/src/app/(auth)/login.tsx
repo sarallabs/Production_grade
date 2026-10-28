@@ -119,23 +119,6 @@ export default function LoginScreen() {
             Personalised Adaptive Learning{'\n'}Platform exclusively built for Students.
           </Text>
 
-          {/* University Material Pill - hidden when typing to maximize visible space */}
-          {!isKeyboardVisible && (
-            <>
-              <View style={styles.pillContainer}>
-                <Text style={styles.pillText}>
-                  Grounded in your university's course material
-                </Text>
-              </View>
-
-              <View style={[styles.pillContainer, styles.pillSecondary]}>
-                <Text style={styles.pillTextSecondary}>
-                  Mindmaps · Read · Listen · Watch
-                </Text>
-              </View>
-            </>
-          )}
-
           {/* University Logo Circular Badge */}
           <View style={[styles.universityCircleBadge, isKeyboardVisible && styles.universityCircleBadgeCompact]}>
             <Image
@@ -227,17 +210,13 @@ export default function LoginScreen() {
               )}
             </TouchableOpacity>
 
-            {/* 3 Pillars: Learn, Practice, Prepare */}
-            <View style={styles.pillarsRow}>
-              <View style={[styles.pillarPill, styles.learnPill]}>
-                <Text style={[styles.pillarText, styles.learnText]}>Learn</Text>
-              </View>
-              <View style={[styles.pillarPill, styles.practicePill]}>
-                <Text style={[styles.pillarText, styles.practiceText]}>Practice</Text>
-              </View>
-              <View style={[styles.pillarPill, styles.preparePill]}>
-                <Text style={[styles.pillarText, styles.prepareText]}>Prepare</Text>
-              </View>
+            {/* 3 Pillars Flow: Learn → Practice → Prepare */}
+            <View style={styles.pillarsFlowRow}>
+              <Text style={styles.learnFlowText}>Learn</Text>
+              <Text style={styles.arrowSeparator}>→</Text>
+              <Text style={styles.practiceFlowText}>Practice</Text>
+              <Text style={styles.arrowSeparator}>→</Text>
+              <Text style={styles.prepareFlowText}>Prepare</Text>
             </View>
           </View>
         </View>
@@ -299,7 +278,7 @@ const styles = StyleSheet.create({
     color: '#E8C99B',
     textAlign: 'center',
     lineHeight: 23,
-    marginBottom: 14,
+    marginBottom: 20,
     paddingHorizontal: 12,
   },
   headlineCompact: {
@@ -307,58 +286,29 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     marginBottom: 8,
   },
-  pillContainer: {
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.28)',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 24,
-    paddingVertical: 6,
-    paddingHorizontal: 18,
-    marginBottom: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pillSecondary: {
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    paddingVertical: 5,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  pillText: {
-    color: '#E3ECE6',
-    fontSize: 12.5,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  pillTextSecondary: {
-    color: '#CDE0D6',
-    fontSize: 12,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
   universityCircleBadge: {
-    width: 86,
-    height: 86,
-    borderRadius: 43,
+    width: 124,
+    height: 124,
+    borderRadius: 62,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 9,
-    marginBottom: 18,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.45)',
+    padding: 11,
+    marginBottom: 22,
+    borderWidth: 2.5,
+    borderColor: 'rgba(255, 255, 255, 0.55)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.18,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    elevation: 5,
     overflow: 'hidden',
   },
   universityCircleBadgeCompact: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
-    padding: 6,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
+    padding: 7,
     marginBottom: 10,
   },
   universityLogoImage: {
@@ -469,44 +419,33 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.4,
   },
-  pillarsRow: {
+  pillarsFlowRow: {
     flexDirection: 'row',
-    gap: 10,
-    width: '100%',
-    marginTop: 4,
-  },
-  pillarPill: {
-    flex: 1,
-    height: 34,
-    borderRadius: 8,
-    borderWidth: 1.2,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 8,
+    marginTop: 6,
+    paddingVertical: 2,
   },
-  learnPill: {
-    backgroundColor: '#F3FAF6',
-    borderColor: '#7EAD98',
-  },
-  practicePill: {
-    backgroundColor: '#FDF6F1',
-    borderColor: '#C88358',
-  },
-  preparePill: {
-    backgroundColor: '#FAF4EF',
-    borderColor: '#C98F6C',
-  },
-  pillarText: {
-    fontSize: 12.5,
+  learnFlowText: {
+    fontSize: 13.5,
     fontWeight: '700',
-  },
-  learnText: {
     color: '#285C45',
   },
-  practiceText: {
+  practiceFlowText: {
+    fontSize: 13.5,
+    fontWeight: '700',
     color: '#9C542B',
   },
-  prepareText: {
+  prepareFlowText: {
+    fontSize: 13.5,
+    fontWeight: '700',
     color: '#965A31',
+  },
+  arrowSeparator: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#8BA094',
   },
 });
 

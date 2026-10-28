@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -19,10 +19,12 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import {
   ChapterPodcastBundle,
   PodcastParagraph,
+  MicrocastItemData,
   fetchPodcastBundle,
 } from '@/services/contentService';
 import { getPodcastAudioUrl } from '@/services/podcastAudioService';
 import ListenScreenTablet from './ListenScreen.tablet';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 
 const { width } = Dimensions.get('window');
 
@@ -32,6 +34,8 @@ interface ListenScreenProps {
   chapterNumber?: number;
   chapterTitle?: string;
   initialMode?: ListenMode;
+  initialMicrocastTopic?: string;
+  initialAutoPlay?: boolean;
   onNavigateToRead?: (moduleNumber?: number) => void;
   onBackPress?: () => void;
 }
@@ -206,6 +210,8 @@ export default function ListenScreen({
   chapterNumber = 1,
   chapterTitle,
   initialMode = 'quick',
+  initialMicrocastTopic,
+  initialAutoPlay,
   onNavigateToRead,
   onBackPress,
 }: ListenScreenProps) {
@@ -232,6 +238,8 @@ export default function ListenScreen({
         chapterNumber={chapterNumber}
         chapterTitle={effectiveChapterTitle}
         initialMode={initialMode}
+        initialMicrocastTopic={initialMicrocastTopic}
+        initialAutoPlay={initialAutoPlay}
         onNavigateToRead={onNavigateToRead}
         onBackPress={onBackPress}
       />
@@ -252,6 +260,17 @@ export default function ListenScreen({
   const isDetailed = mode === 'detailed';
   const isMicro = mode === 'microcasts';
 
+  // Fallback initial microcast placeholder so activeTrack is never undefined while bundle loads
+  const initialMicrocastPlaceholder: MicrocastItemData = useMemo(() => ({
+    id: 1,
+    title: initialMicrocastTopic || `Chapter ${chapterNumber} Audio Lesson`,
+    recap: 'Audio overview',
+    durationSec: 300,
+    durationFormatted: '00:05:00',
+    durationLabel: '5 min listen',
+    paragraphs: [],
+  }), [chapterNumber, initialMicrocastTopic]);
+
   // Pure API-driven podcast bundle with local storage caching
   const [currentBundle, setCurrentBundle] = useState<ChapterPodcastBundle>({
     chapterNumber,
@@ -269,7 +288,7 @@ export default function ListenScreen({
       durationLabel: '10 min listen',
       paragraphs: [],
     },
-    microcasts: [],
+    microcasts: [initialMicrocastPlaceholder],
   });
 
   useEffect(() => {
@@ -303,17 +322,19 @@ export default function ListenScreen({
   const activeMicrocast = useMemo(() => {
     return (
       currentBundle.microcasts.find((e) => e.id === selectedMicrocastId) ||
-      currentBundle.microcasts[0]
+      currentBundle.microcasts[0] ||
+      initialMicrocastPlaceholder
     );
-  }, [currentBundle, selectedMicrocastId]);
+  }, [currentBundle, selectedMicrocastId, initialMicrocastPlaceholder]);
 
   const activeTrack = useMemo(() => {
-    if (isMicro) return activeMicrocast;
-    return isDetailed ? currentBundle.detailed : currentBundle.quick;
-  }, [isMicro, isDetailed, activeMicrocast, currentBundle]);
+    if (isMicro) return activeMicrocast || initialMicrocastPlaceholder;
+    if (isDetailed) return currentBundle.detailed || initialMicrocastPlaceholder;
+    return currentBundle.quick || initialMicrocastPlaceholder;
+  }, [isMicro, isDetailed, activeMicrocast, currentBundle, initialMicrocastPlaceholder]);
 
   const activeParagraphs: PodcastParagraph[] = useMemo(() => {
-    return (activeTrack.paragraphs || []).map((p) => ({
+    return (activeTrack?.paragraphs || []).map((p) => ({
       ...p,
       text: p.text.replace(/^\[\d{1,2}[:.]\d{2}(?:[:.]\d{2})?\]\s*/, ''),
     }));
@@ -334,7 +355,7 @@ export default function ListenScreen({
   }, [tokenizedParagraphs]);
 
   const totalDurationSec = useMemo(() => {
-    return activeTrack.durationSec;
+    return activeTrack?.durationSec || 0;
   }, [activeTrack]);
 
   const totalDurationLabel = useMemo(() => {
@@ -349,6 +370,16 @@ export default function ListenScreen({
   const modeRef = useRef<ListenMode>(mode);
   const microcastIdRef = useRef<number>(selectedMicrocastId);
   const totalDurationRef = useRef<number>(totalDurationSec);
+  const transcriptScrollRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const [paragraphLayouts, setParagraphLayouts] = useState<Record<number, number>>({});
+
+  // Auto-scroll transcript box to keep active read-through paragraph centered in view
+  useEffect(() => {
+    if (transcriptScrollRef.current && paragraphLayouts[activeParagraphIndex] !== undefined) {
+      const targetY = Math.max(0, paragraphLayouts[activeParagraphIndex] - 16);
+      transcriptScrollRef.current.scrollTo({ y: targetY, animated: true });
+    }
+  }, [activeParagraphIndex, paragraphLayouts]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -455,7 +486,9 @@ export default function ListenScreen({
     try {
       const player = createAudioPlayer(url, { updateInterval: 200 });
       audioPlayerRef.current = player;
-      player.setPlaybackRate(speedRef.current);
+      try {
+        player.setPlaybackRate(speedRef.current);
+      } catch {}
 
       player.addListener('playbackStatusUpdate', (status) => {
         if (!status) return;
@@ -468,6 +501,15 @@ export default function ListenScreen({
           const sec = Math.floor(status.currentTime);
           setCurrentSec(sec);
           syncTranscriptProgress(status.currentTime);
+        }
+
+        // Lock playback rate to speedRef.current whenever audio status updates
+        if (status.isLoaded && typeof (status as any).playbackRate === 'number') {
+          if (Math.abs((status as any).playbackRate - speedRef.current) > 0.05) {
+            try {
+              player.setPlaybackRate(speedRef.current);
+            } catch {}
+          }
         }
 
         if (status.didJustFinish) {
@@ -485,6 +527,11 @@ export default function ListenScreen({
       if (autoPlay) {
         player.play();
         setIsPlaying(true);
+        setTimeout(() => {
+          try {
+            player.setPlaybackRate(speedRef.current);
+          } catch {}
+        }, 80);
       }
     } catch (err) {
       console.warn('Failed to load cloud podcast audio:', err);
@@ -551,6 +598,42 @@ export default function ListenScreen({
     loadAndPlayTrack(url, true, 0);
   };
 
+  useEffect(() => {
+    if (initialMode === 'microcasts') {
+      setMode('microcasts');
+    }
+  }, [initialMode]);
+
+  useEffect(() => {
+    if (!currentBundle.microcasts || currentBundle.microcasts.length === 0) return;
+
+    let targetEpId = 1;
+    if (initialMicrocastTopic) {
+      const topicLower = initialMicrocastTopic.toLowerCase();
+      const matched = currentBundle.microcasts.find((m) => {
+        const titleLower = m.title.toLowerCase();
+        const recapLower = (m.recap || '').toLowerCase();
+        return (
+          titleLower.includes(topicLower) ||
+          topicLower.includes(titleLower) ||
+          topicLower.split(/\s+/).some((w) => w.length > 3 && titleLower.includes(w)) ||
+          recapLower.includes(topicLower)
+        );
+      });
+      if (matched) {
+        targetEpId = matched.id;
+      }
+    }
+    setSelectedMicrocastId(targetEpId);
+
+    if (initialAutoPlay) {
+      const timer = setTimeout(() => {
+        handleSelectAndPlayMicrocast(targetEpId);
+      }, 350);
+      return () => clearTimeout(timer);
+    }
+  }, [currentBundle.microcasts, initialMicrocastTopic, initialAutoPlay]);
+
   const handleSelectMode = (newMode: ListenMode) => {
     if (newMode === mode) return;
     try {
@@ -570,6 +653,7 @@ export default function ListenScreen({
     setCurrentSec(0);
     setActiveParagraphIndex(0);
     setActiveWordIndex(-1);
+    setParagraphLayouts({});
     setMode(newMode);
   };
 
@@ -591,6 +675,11 @@ export default function ListenScreen({
     } else {
       audioPlayerRef.current.play();
       setIsPlaying(true);
+      setTimeout(() => {
+        try {
+          audioPlayerRef.current?.setPlaybackRate(speedRef.current);
+        } catch {}
+      }, 50);
     }
   };
 
@@ -687,6 +776,30 @@ export default function ListenScreen({
     }
   };
 
+  const [scrubberWidth, setScrubberWidth] = useState(0);
+
+  const handleScrubberPress = useCallback(
+    (e: any) => {
+      if (scrubberWidth <= 0 || totalDurationSec <= 0) return;
+      try {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+      } catch {}
+      const clickX = e.nativeEvent.locationX;
+      const ratio = Math.max(0, Math.min(1, clickX / scrubberWidth));
+      const targetSec = Math.round(ratio * totalDurationSec);
+      setCurrentSec(targetSec);
+      syncTranscriptProgress(targetSec);
+
+      const url = getPodcastAudioUrl(chapterNumber, mode, selectedMicrocastId);
+      if (audioPlayerRef.current && currentUrlRef.current === url) {
+        audioPlayerRef.current.seekTo(targetSec).catch(() => {});
+      } else {
+        loadAndPlayTrack(url, isPlaying, targetSec);
+      }
+    },
+    [scrubberWidth, totalDurationSec, chapterNumber, mode, selectedMicrocastId, isPlaying, loadAndPlayTrack]
+  );
+
   const progressPercent = Math.min(100, (currentSec / totalDurationSec) * 100);
 
   // DevMode CSS Color Tokens (.quickListenMobile412918)
@@ -711,6 +824,13 @@ export default function ListenScreen({
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        {/* Consistent Breadcrumb Line */}
+        <BreadcrumbBar
+          chapterNumber={chapterNumber}
+          chapterTitle={effectiveChapterTitle}
+          onBackPress={onBackPress}
+        />
+
         {/* 1. BRANDING HEADER OR MICROCASTS HEADER */}
         {isMicro ? (
           /* Microcasts Header */
@@ -731,7 +851,7 @@ export default function ListenScreen({
 
         {/* 2. THREE LISTEN MODE TABS (.listenModeTabs) */}
         <View style={[styles.listenModeTabs, { backgroundColor: cardBg, borderColor: isMicro ? '#DBE5E0' : cardBorder }]}>
-          {/* Quick Listen Tab */}
+          {/* Quick Listen / Essentials Tab */}
           <TouchableOpacity
             style={[
               styles.listenTab,
@@ -748,11 +868,11 @@ export default function ListenScreen({
               ]}
             />
             <Text style={[styles.listenTabText, { color: mode === 'quick' ? '#FFFFFF' : textDark }]}>
-              Quick Listen
+              Essentials
             </Text>
           </TouchableOpacity>
 
-          {/* Detailed Listen Tab */}
+          {/* Detailed Listen / In-Depth Tab */}
           <TouchableOpacity
             style={[
               styles.listenTab,
@@ -769,7 +889,7 @@ export default function ListenScreen({
               ]}
             />
             <Text style={[styles.listenTabText, { color: mode === 'detailed' ? '#FFFFFF' : textDark }]}>
-              Detailed Listen
+              In-Depth
             </Text>
           </TouchableOpacity>
 
@@ -804,172 +924,192 @@ export default function ListenScreen({
         </View>
 
         {/* ========================================================================= */}
-        {/* VIEW A & B: QUICK LISTEN & DETAILED LISTEN                                 */}
+        {/* VIEW A & B: ESSENTIALS & IN-DEPTH LISTEN                                   */}
         {/* ========================================================================= */}
         {!isMicro ? (
           <>
-            {/* 3. Section Label & Badges */}
-            <View style={styles.sectionHeaderRow}>
-              <View style={styles.badgeGroupRow}>
-                <View style={[styles.durationBadgePill, { backgroundColor: isDark ? '#1C3328' : '#E6F4EA' }]}>
-                  <Ionicons name="time-outline" size={13} color="#00996E" />
-                  <Text style={[styles.durationBadgeText, { color: isDark ? '#81C995' : '#0D652D' }]}>
-                    {activeTrack.durationLabel}
-                  </Text>
+            {/* Unified Audio Player Card (Matching User's Reference) */}
+            <View style={[styles.unifiedPlayerCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+              {/* Top: Full-Width Scrubber Progress Bar */}
+              <TouchableOpacity
+                activeOpacity={1}
+                onPress={handleScrubberPress}
+                onLayout={(e) => setScrubberWidth(e.nativeEvent.layout.width)}
+                style={styles.playerScrubberTouch}
+              >
+                <View style={[styles.playerScrubberTrack, { backgroundColor: isDark ? '#263B30' : '#D2E6DC' }]}>
+                  <View
+                    style={[
+                      styles.playerScrubberFill,
+                      { width: `${progressPercent}%`, backgroundColor: '#00996E' },
+                    ]}
+                  />
                 </View>
-                <View style={[styles.countBadgePill, { backgroundColor: isDark ? '#1C3328' : '#F0FDF4' }]}>
-                  <Text style={[styles.countBadgeText, { color: isDark ? '#81C995' : '#15803D' }]}>
-                    1 Podcast
+              </TouchableOpacity>
+
+              {/* Bottom: Main Player Controls Row */}
+              <View style={styles.playerControlsRow}>
+                {/* Left: Speed Toggle (Bold Clean Text) */}
+                <TouchableOpacity
+                  onPress={handleCycleSpeed}
+                  hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                  activeOpacity={0.7}
+                  style={styles.playerSpeedBtn}
+                >
+                  <Text style={[styles.playerSpeedText, { color: textDark }]}>
+                    {SPEED_OPTIONS[speedIndex]}×
                   </Text>
+                </TouchableOpacity>
+
+                {/* Center Cluster: Rewind 15s, Play/Pause, Forward 15s */}
+                <View style={styles.playerCenterGroup}>
+                  {/* Skip -15s */}
+                  <TouchableOpacity
+                    style={[
+                      styles.playerSkipCircle,
+                      { backgroundColor: isDark ? 'rgba(0, 153, 110, 0.22)' : '#E6F3EB' },
+                    ]}
+                    onPress={() => handleSkip(-15)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.playerSkipLabel, { color: textDark }]}>↶15</Text>
+                  </TouchableOpacity>
+
+                  {/* Play / Pause Button */}
+                  <TouchableOpacity
+                    style={styles.playerPlayCircle}
+                    onPress={handleTogglePlay}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons
+                      name={isPlaying ? 'pause' : 'play'}
+                      size={25}
+                      color="#FFFFFF"
+                      style={!isPlaying ? { marginLeft: 2.5 } : undefined}
+                    />
+                  </TouchableOpacity>
+
+                  {/* Skip +15s */}
+                  <TouchableOpacity
+                    style={[
+                      styles.playerSkipCircle,
+                      { backgroundColor: isDark ? 'rgba(0, 153, 110, 0.22)' : '#E6F3EB' },
+                    ]}
+                    onPress={() => handleSkip(15)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={[styles.playerSkipLabel, { color: textDark }]}>15↷</Text>
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <View style={[styles.chapterPillBtn, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                <Ionicons name="book-outline" size={13} color={emeraldPrimary} />
-                <Text style={[styles.chapterPillBtnText, { color: textDark }]}>
-                  Ch {chapterNumber}
+
+                {/* Right: Timestamp */}
+                <Text style={[styles.playerTimeText, { color: isDark ? '#A6C5B3' : '#475569' }]}>
+                  {formatSeconds(currentSec)} / {totalDurationLabel}
                 </Text>
               </View>
             </View>
 
-            {/* 4. Single Main Player Header */}
-            <View style={styles.playerHeader}>
-              <Text style={[styles.podcastOverline, { color: '#00996E' }]}>PODCAST 1 OF 1</Text>
-              <Text style={[styles.playerTitle, { color: textDark }]}>
-                {activeTrack.title}
-              </Text>
-              <Text style={[styles.playerSubtitle, { color: textMuted }]}>
-                {effectiveChapterTitle} · {isQuick ? 'Essentials' : 'In-depth'}
-              </Text>
-            </View>
-
-            {/* 5. Audio Player Controls Card (.audioPlayerControls) */}
-            <View style={[styles.audioPlayerControls, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-              {/* Skip Back 15s */}
-              <TouchableOpacity
-                style={[styles.back15Seconds, { backgroundColor: mintPillBg }]}
-                onPress={() => handleSkip(-15)}
-                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.backLabel, { color: textDark }]}>↶15</Text>
-              </TouchableOpacity>
-
-              {/* Main Play / Pause Circle (44x44) */}
-              <TouchableOpacity
-                style={[styles.playAudio, { backgroundColor: emeraldPrimary }]}
-                onPress={handleTogglePlay}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                activeOpacity={0.75}
-              >
-                <Ionicons name={isPlaying ? 'pause' : 'play'} size={22} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              {/* Skip Forward 15s */}
-              <TouchableOpacity
-                style={[styles.forward30Seconds, { backgroundColor: mintPillBg }]}
-                onPress={() => handleSkip(15)}
-                hitSlop={{ top: 10, bottom: 10, left: 8, right: 8 }}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.forwardLabel, { color: textDark }]}>15↷</Text>
-              </TouchableOpacity>
-
-              {/* Speed Button */}
-              <TouchableOpacity
-                style={styles.speedBtn}
-                onPress={handleCycleSpeed}
-                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                activeOpacity={0.75}
-              >
-                <Text style={[styles.speedText, { color: textDark }]}>
-                  {SPEED_OPTIONS[speedIndex]}×
-                </Text>
-              </TouchableOpacity>
-
-              {/* Duration Timestamp */}
-              <Text style={[styles.durationText, { color: textMuted }]}>
-                {formatSeconds(currentSec)} / {totalDurationLabel}
-              </Text>
-            </View>
-
-            {/* 6. Audio Progress Track (.audioProgressTrack) */}
-            <View style={[styles.audioProgressTrack, { backgroundColor: isDark ? '#263B30' : '#D1E3D9' }]}>
-              <View
-                style={[
-                  styles.audioProgress,
-                  { width: `${progressPercent}%`, backgroundColor: emeraldPrimary },
-                ]}
-              />
-            </View>
-
-            {/* 7. Transcript Section (.transcriptHeading & .transcriptReadingCard) */}
+            {/* 7. Transcript Section (Dedicated Scrollable Box with Auto-following Read-through) */}
             <View style={styles.transcriptSection}>
-              <Text style={[styles.transcriptHeading, { color: textDark }]}>Transcript</Text>
+              <View style={styles.transcriptHeaderRow}>
+                <Text style={[styles.transcriptHeading, { color: textDark }]}>Transcript</Text>
+                {isPlaying && (
+                  <View style={[styles.followingBadge, { backgroundColor: isDark ? 'rgba(0, 153, 110, 0.2)' : '#E6F4EA' }]}>
+                    <View style={styles.followingDot} />
+                    <Text style={[styles.followingText, { color: '#00996E' }]}>Auto-following</Text>
+                  </View>
+                )}
+              </View>
 
-              <View style={[styles.transcriptReadingCard, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-                {tokenizedParagraphs.map((paraItem, pIdx) => {
-                  return (
-                    <View
-                      key={pIdx}
-                      style={styles.transcriptParagraphCard}
-                    >
-                      {pIdx === activeParagraphIndex ? (
-                        <Text style={[styles.transcriptParagraph, { color: textDark }]}>
-                          {paraItem.words.map((w) => {
-                            const isWordActive = activeWordIndex === w.index;
-                            return (
-                              <Text
-                                key={w.index}
-                                onPress={() => handleWordPress(pIdx, w)}
-                                style={[
-                                  styles.wordInline,
-                                  isWordActive && [
-                                    styles.wordInlineActive,
-                                    { backgroundColor: emeraldPrimary },
-                                  ],
-                                  w.isGlossary && styles.wordInlineGlossary,
-                                  {
-                                    color: isWordActive
-                                      ? '#FFFFFF'
-                                      : textDark,
-                                    fontWeight: isWordActive
-                                      ? '700'
-                                      : w.isGlossary
-                                      ? '600'
-                                      : '400',
-                                  },
-                                ]}
-                              >
-                                {w.raw}{' '}
-                              </Text>
-                            );
-                          })}
-                        </Text>
-                      ) : (
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => handleSeekToParagraph(pIdx)}
-                        >
-                          <Text
-                            style={[
-                              styles.transcriptParagraph,
-                              {
-                                color:
-                                  isPlaying && pIdx < activeParagraphIndex
-                                    ? isDark
-                                      ? '#8DA297'
-                                      : '#687D72'
-                                    : textDark,
-                              },
-                            ]}
-                          >
-                            {activeParagraphs[pIdx]?.text || ''}
+              <View style={[styles.transcriptBoxContainer, { backgroundColor: cardBg, borderColor: cardBorder }]}>
+                <ScrollView
+                  ref={transcriptScrollRef}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                  contentContainerStyle={styles.transcriptBoxContent}
+                >
+                  {tokenizedParagraphs.map((paraItem, pIdx) => {
+                    const isActive = pIdx === activeParagraphIndex;
+                    return (
+                      <View
+                        key={pIdx}
+                        onLayout={(e) => {
+                          const y = e.nativeEvent.layout.y;
+                          setParagraphLayouts((prev) => ({ ...prev, [pIdx]: y }));
+                        }}
+                        style={[
+                          styles.transcriptParagraphCard,
+                          isActive && [
+                            styles.transcriptParagraphActive,
+                            {
+                              backgroundColor: isDark
+                                ? 'rgba(0, 153, 110, 0.15)'
+                                : 'rgba(0, 153, 110, 0.08)',
+                            },
+                          ],
+                        ]}
+                      >
+                        {isActive ? (
+                          <Text style={[styles.transcriptParagraph, { color: textDark }]}>
+                            {paraItem.words.map((w) => {
+                              const isWordActive = activeWordIndex === w.index;
+                              return (
+                                <Text
+                                  key={w.index}
+                                  onPress={() => handleWordPress(pIdx, w)}
+                                  style={[
+                                    styles.wordInline,
+                                    isWordActive && [
+                                      styles.wordInlineActive,
+                                      { backgroundColor: emeraldPrimary },
+                                    ],
+                                    w.isGlossary && styles.wordInlineGlossary,
+                                    {
+                                      color: isWordActive
+                                        ? '#FFFFFF'
+                                        : textDark,
+                                      fontWeight: isWordActive
+                                        ? '700'
+                                        : w.isGlossary
+                                        ? '600'
+                                        : '400',
+                                    },
+                                  ]}
+                                >
+                                  {w.raw}{' '}
+                                </Text>
+                              );
+                            })}
                           </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  );
-                })}
+                        ) : (
+                          <TouchableOpacity
+                            activeOpacity={0.8}
+                            onPress={() => handleSeekToParagraph(pIdx)}
+                          >
+                            <Text
+                              style={[
+                                styles.transcriptParagraph,
+                                {
+                                  color:
+                                    isPlaying && pIdx < activeParagraphIndex
+                                      ? isDark
+                                        ? '#8DA297'
+                                        : '#687D72'
+                                      : textDark,
+                                },
+                              ]}
+                            >
+                              {activeParagraphs[pIdx]?.text || ''}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    );
+                  })}
+                </ScrollView>
               </View>
             </View>
           </>
@@ -1154,97 +1294,6 @@ export default function ListenScreen({
                   </TouchableOpacity>
                 );
               })}
-            </View>
-
-            {/* Microcast Transcript Panel (.transcriptPanel) */}
-            <View
-              style={[
-                styles.transcriptPanel,
-                {
-                  backgroundColor: cardBg,
-                  borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                },
-              ]}
-            >
-              <Text style={[styles.transcriptHeadingText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>
-                Transcript
-              </Text>
-
-              {/* Transcript Divider (.transcriptDivider) */}
-              <View style={[styles.transcriptDivider, { backgroundColor: isDark ? '#2D4538' : '#DBE5E0' }]} />
-
-              <View style={styles.transcriptParagraphsWrap}>
-                {tokenizedParagraphs.map((paraItem, pIdx) => {
-                  return (
-                    <View
-                      key={pIdx}
-                      style={styles.microTranscriptCard}
-                    >
-                      {pIdx === activeParagraphIndex ? (
-                        <Text
-                          style={[
-                            styles.transcriptParagraphText,
-                            { color: isDark ? '#FFFFFF' : '#1A282D' },
-                          ]}
-                        >
-                          {paraItem.words.map((w) => {
-                            const isWordActive = activeWordIndex === w.index;
-                            return (
-                              <Text
-                                key={w.index}
-                                onPress={() => handleWordPress(pIdx, w)}
-                                style={[
-                                  styles.wordInline,
-                                  isWordActive && [
-                                    styles.wordInlineActive,
-                                    { backgroundColor: '#00996E' },
-                                  ],
-                                  w.isGlossary && styles.wordInlineGlossary,
-                                  {
-                                    color: isWordActive
-                                      ? '#FFFFFF'
-                                      : (isDark ? '#FFFFFF' : '#1A282D'),
-                                    fontWeight: isWordActive
-                                      ? '700'
-                                      : w.isGlossary
-                                      ? '600'
-                                      : '400',
-                                  },
-                                ]}
-                              >
-                                {w.raw}{' '}
-                              </Text>
-                            );
-                          })}
-                        </Text>
-                      ) : (
-                        <TouchableOpacity
-                          activeOpacity={0.8}
-                          onPress={() => handleSeekToParagraph(pIdx)}
-                        >
-                          <Text
-                            style={[
-                              styles.transcriptParagraphText,
-                              {
-                                color:
-                                  isPlaying && pIdx < activeParagraphIndex
-                                    ? isDark
-                                      ? '#8DA297'
-                                      : '#687D72'
-                                    : isDark
-                                    ? '#FFFFFF'
-                                    : '#1A282D',
-                              },
-                            ]}
-                          >
-                            {activeParagraphs[pIdx]?.text || ''}
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  );
-                })}
-              </View>
             </View>
           </View>
         )}
@@ -1511,16 +1560,111 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 2,
   },
+  /* Unified Player Card (Matching User's Reference Image) */
+  unifiedPlayerCard: {
+    borderRadius: 22,
+    borderWidth: 1.5,
+    paddingTop: 12,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    marginBottom: 18,
+  },
+  playerScrubberTouch: {
+    width: '100%',
+    paddingVertical: 4,
+  },
+  playerScrubberTrack: {
+    height: 7,
+    borderRadius: 4,
+    width: '100%',
+    overflow: 'hidden',
+  },
+  playerScrubberFill: {
+    height: 7,
+    borderRadius: 4,
+  },
+  playerControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingHorizontal: 4,
+  },
+  playerSpeedBtn: {
+    minWidth: 44,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+  },
+  playerSpeedText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  playerCenterGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+  },
+  playerSkipCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  playerSkipLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  playerPlayCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#00996E',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#00996E',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  playerTimeText: {
+    fontSize: 14.5,
+    fontWeight: '600',
+    minWidth: 105,
+    textAlign: 'right',
+  },
+  /* Progress Track on top of the Audio Player */
+  audioProgressTrack: {
+    height: 5,
+    borderRadius: 3,
+    width: '100%',
+    overflow: 'hidden',
+    marginTop: 4,
+    marginBottom: 8,
+  },
+  audioProgress: {
+    height: 5,
+    borderRadius: 3,
+  },
   /* Controls Card (.audioPlayerControls) */
   audioPlayerControls: {
-    height: 67,
+    height: 66,
     borderRadius: 14,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    marginBottom: 12,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    marginBottom: 14,
+  },
+  allControlsCentered: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    width: '100%',
   },
   back15Seconds: {
     width: 42,
@@ -1552,41 +1696,63 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   speedBtn: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
   speedText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   durationText: {
-    fontSize: 10,
-    fontWeight: '500',
+    fontSize: 10.5,
+    fontWeight: '600',
   },
-  /* Progress Track (.audioProgressTrack) */
-  audioProgressTrack: {
-    height: 5,
-    borderRadius: 3,
-    width: '100%',
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  audioProgress: {
-    height: 5,
-    borderRadius: 3,
-  },
-  /* Transcript (.transcriptHeading, .transcriptReadingCard) */
+  /* Transcript (.transcriptHeading, .transcriptBoxContainer) */
   transcriptSection: {
     marginBottom: 24,
+  },
+  transcriptHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  followingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  followingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#00996E',
+  },
+  followingText: {
+    fontSize: 10.5,
+    fontWeight: '700',
   },
   transcriptHeading: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 8,
   },
   transcriptHint: {
     fontSize: 9.5,
     marginBottom: 8,
+  },
+  transcriptBoxContainer: {
+    height: 270,
+    borderRadius: 14,
+    borderWidth: 1,
+    overflow: 'hidden',
+  },
+  transcriptBoxContent: {
+    padding: 12,
+    gap: 8,
   },
   transcriptReadingCard: {
     borderRadius: 14,
@@ -1595,12 +1761,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   transcriptParagraphCard: {
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    borderRadius: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    borderRadius: 8,
   },
   transcriptParagraphActive: {
-    borderRadius: 6,
+    borderRadius: 8,
   },
   activeSpeakerRow: {
     flexDirection: 'row',

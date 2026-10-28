@@ -16,6 +16,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 import PYQView from '@/components/study/PYQView';
 import StudyPlanView from '@/components/study/StudyPlanView';
 import PreparationExamView from '@/components/study/PreparationExamView';
@@ -23,7 +24,7 @@ import PreparationExamSelectionView, { DEFAULT_UNITS } from '@/components/study/
 import { BorderRadius, Spacing } from '@/constants/theme';
 
 const PREPARE_SEGMENTS: NavSegment[] = [
-  { id: 'pyq', label: "PYQ's", vectorIcon: 'document-text-outline' },
+  { id: 'pyq', label: 'PYQs', vectorIcon: 'document-text-outline' },
   { id: 'prep_exam', label: 'Preparation Exam', vectorIcon: 'timer-outline' },
   { id: 'study_plan', label: 'Study Plan', vectorIcon: 'calendar-outline' },
 ];
@@ -39,7 +40,7 @@ export default function PrepareScreen() {
   const [activeSegment, setActiveSegment] = useState<string>(
     params.segment && ['pyq', 'prep_exam', 'study_plan'].includes(params.segment)
       ? params.segment
-      : 'prep_exam'
+      : 'pyq'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
@@ -121,6 +122,20 @@ export default function PrepareScreen() {
           showProfile={true}
         />
       )}
+
+      {/* Consistent Breadcrumb Line */}
+      <BreadcrumbBar
+        subjectName={activeSubject.name}
+        chapterNumber={currentChapter.number}
+        chapterTitle={currentChapter.name}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/subjects');
+          }
+        }}
+      />
 
       {/* Main Content Area based on Active Segment */}
       {activeSegment === 'pyq' ? (

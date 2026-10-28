@@ -375,6 +375,13 @@ export default function MySubjectsScreen() {
                   </ScrollView>
                 )}
 
+                {/* H2 Section Header */}
+                <View style={styles.sectionHeader}>
+                  <Text style={[styles.sectionTitle, { color: headerTextColor }]}>
+                    My Subjects
+                  </Text>
+                </View>
+
                 {/* Units List */}
                 <View style={isTablet ? styles.tabletGrid : undefined}>
                   {(activeSubject?.chapters || []).map((chapter) => (
@@ -536,5 +543,15 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  sectionHeader: {
+    marginBottom: 14,
+    paddingHorizontal: 2,
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 });

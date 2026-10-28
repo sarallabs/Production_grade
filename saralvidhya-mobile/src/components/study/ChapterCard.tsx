@@ -52,10 +52,7 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
       ? 6
       : 4);
 
-  // Estimated study duration
-  const estimatedTime =
-    chapter.estimatedTime ||
-    `${chapter.estimatedMinutes || (topicCount === 6 ? 55 : 45)}min`;
+
 
   // Visual Theme Tokens matching user's design reference:
   // Dark Screen (#2D3E36): Card is Light Cream #FFF6F1 with Sage Green thumbnail box
@@ -125,7 +122,7 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
               {subjectName} • Chapter {chapter.number}
             </Text>
 
-            {/* Topics Count & Estimated Time Badges */}
+            {/* Topics Count Badge */}
             <View style={styles.metaRow}>
               <View
                 style={[
@@ -145,18 +142,6 @@ export const ChapterCard: React.FC<ChapterCardProps> = ({
                   ]}
                 >
                   {topicCount} Topics
-                </Text>
-              </View>
-
-              <View
-                style={[
-                  styles.timeBadge,
-                  { backgroundColor: isDark ? 'rgba(45, 62, 54, 0.06)' : 'rgba(255, 255, 255, 0.1)' },
-                ]}
-              >
-                <Ionicons name="time-outline" size={11} color={subtitleColor} />
-                <Text style={[styles.timeBadgeText, { color: subtitleColor }]}>
-                  {estimatedTime}
                 </Text>
               </View>
             </View>
@@ -266,18 +251,6 @@ const styles = StyleSheet.create({
   topicBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-  },
-  timeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3.5,
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 7,
-  },
-  timeBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
   progressSection: {
     flexDirection: 'row',

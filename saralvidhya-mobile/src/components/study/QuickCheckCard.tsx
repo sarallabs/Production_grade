@@ -112,72 +112,22 @@ export default function QuickCheckCard({
 
   return (
     <View style={[styles.card, { backgroundColor: cardBg, borderColor: cardBorder }]}>
-      {/* 1. Header: Badge, Progress & Arrows */}
+      {/* 1. Header: Badge & Counter */}
       <View style={styles.headerRow}>
         <View style={styles.badgeGroup}>
           <View style={[styles.headerPill, { backgroundColor: headerPillBg }]}>
             <Ionicons name="flash" size={13} color={headerPillText} />
-            <Text
-              style={[styles.headerPillText, { color: headerPillText }]}
-              numberOfLines={1}
-            >
-              QUICK CHECK • {displaySectionTitle}
+            <Text style={[styles.headerPillText, { color: headerPillText }]}>
+              Quick Check
             </Text>
           </View>
 
           <View style={[styles.counterPill, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
             <Text style={[styles.counterText, { color: textMuted }]}>
-              {currentQuestionIndex + 1} / {totalQuestions}
+              {currentQuestionIndex + 1}/{totalQuestions}
             </Text>
           </View>
         </View>
-
-        {/* Question Switcher Controls (< >) */}
-        {totalQuestions > 1 && (
-          <View style={styles.navButtonGroup}>
-            <TouchableOpacity
-              style={[
-                styles.navArrowBtn,
-                {
-                  borderColor: isDark ? '#2E4738' : '#E2E8F0',
-                  opacity: canGoPrev ? 1 : 0.35,
-                },
-              ]}
-              onPress={handlePrev}
-              disabled={!canGoPrev}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={0.7}
-              accessibilityLabel="Previous Question"
-            >
-              <Ionicons
-                name="chevron-back"
-                size={16}
-                color={isDark ? '#E2E8F0' : '#475569'}
-              />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.navArrowBtn,
-                {
-                  borderColor: isDark ? '#2E4738' : '#E2E8F0',
-                  opacity: canGoNext ? 1 : 0.35,
-                },
-              ]}
-              onPress={handleNext}
-              disabled={!canGoNext}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={0.7}
-              accessibilityLabel="Next Question"
-            >
-              <Ionicons
-                name="chevron-forward"
-                size={16}
-                color={isDark ? '#E2E8F0' : '#475569'}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
       {/* 2. Question Stem */}
@@ -287,7 +237,7 @@ export default function QuickCheckCard({
                 { color: isUserCorrect ? '#16A34A' : isDark ? '#FDE047' : '#B45309' },
               ]}
             >
-              {isUserCorrect ? 'Correct Conceptual Understanding' : 'Explanation & Exam Key'}
+              Explanation
             </Text>
           </View>
           <Text style={[styles.rationaleText, { color: isDark ? '#CBD5E1' : '#334155' }]}>
@@ -296,23 +246,62 @@ export default function QuickCheckCard({
         </View>
       )}
 
-      {/* 5. Navigation Footer: Next Section Button */}
-      <View style={styles.footerRow}>
-        {/* Next Question Pill if within section */}
-        {canGoNext && isSubmitted && (
+      {/* Bottom Question Navigation Controls (< Question 2 of 4 >) */}
+      {totalQuestions > 1 && (
+        <View style={styles.bottomNavRow}>
           <TouchableOpacity
-            style={[styles.nextQuestionBtn, { borderColor: cardBorder }]}
-            onPress={handleNext}
-            activeOpacity={0.8}
+            style={[
+              styles.navArrowBtn,
+              {
+                borderColor: isDark ? '#2E4738' : '#E2E8F0',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                opacity: canGoPrev ? 1 : 0.35,
+              },
+            ]}
+            onPress={handlePrev}
+            disabled={!canGoPrev}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Previous Question"
           >
-            <Text style={[styles.nextQuestionText, { color: isDark ? '#4ADE80' : '#147A43' }]}>
-              Question {currentQuestionIndex + 2} of {totalQuestions} →
-            </Text>
+            <Ionicons
+              name="chevron-back"
+              size={18}
+              color={isDark ? '#E2E8F0' : '#475569'}
+            />
           </TouchableOpacity>
-        )}
 
-        {/* Next Section CTA */}
-        {hasNextSection && (
+          <Text style={[styles.bottomCounterText, { color: textMuted }]}>
+            Question {currentQuestionIndex + 1}/{totalQuestions}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.navArrowBtn,
+              {
+                borderColor: isDark ? '#2E4738' : '#E2E8F0',
+                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#F8FAFC',
+                opacity: canGoNext ? 1 : 0.35,
+              },
+            ]}
+            onPress={handleNext}
+            disabled={!canGoNext}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
+            accessibilityLabel="Next Question"
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={18}
+              color={isDark ? '#E2E8F0' : '#475569'}
+            />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 5. Navigation Footer: Next Section Button */}
+      {hasNextSection && (
+        <View style={styles.footerRow}>
           <TouchableOpacity
             style={[styles.nextSectionBtn, { backgroundColor: '#147A43' }]}
             onPress={onNextSection}
@@ -320,15 +309,15 @@ export default function QuickCheckCard({
           >
             <View style={styles.nextSectionContent}>
               <Text style={styles.nextSectionSub}>
-                NEXT · SECTION {sectionNumber + 1} OF {totalSections}
+                NEXT · SECTION {sectionNumber + 1}/{totalSections}
               </Text>
               <Text style={styles.nextSectionTitle} numberOfLines={1}>
                 {nextSectionTitle ? `${nextSectionTitle} →` : 'Continue Reading →'}
               </Text>
             </View>
           </TouchableOpacity>
-        )}
-      </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -377,10 +366,9 @@ const styles = StyleSheet.create({
     maxWidth: '82%',
   },
   headerPillText: {
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    textTransform: 'uppercase',
+    fontSize: 11.5,
+    fontWeight: '700',
+    letterSpacing: 0.2,
   },
   counterPill: {
     paddingVertical: 4,
@@ -397,13 +385,25 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   navArrowBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'transparent',
+  },
+  bottomNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(150, 150, 150, 0.15)',
+  },
+  bottomCounterText: {
+    fontSize: 12.5,
+    fontWeight: '600',
   },
   stemContainer: {
     flexDirection: 'row',
@@ -482,17 +482,6 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: 'rgba(150, 150, 150, 0.15)',
-  },
-  nextQuestionBtn: {
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 8,
-    borderWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  nextQuestionText: {
-    fontSize: 12.5,
-    fontWeight: '700',
   },
   nextSectionBtn: {
     paddingVertical: 9,

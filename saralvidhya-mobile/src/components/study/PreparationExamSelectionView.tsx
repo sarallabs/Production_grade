@@ -224,9 +224,6 @@ export default function PreparationExamSelectionView({
               <Text style={[styles.cardTitle, { color: colors.cardTitle }]}>
                 Choose units to prepare
               </Text>
-              <Text style={[styles.cardSubtitle, { color: colors.cardSubtitle }]}>
-                Select one or more units
-              </Text>
             </View>
 
             <View style={styles.unitList}>
@@ -295,66 +292,6 @@ export default function PreparationExamSelectionView({
                         ]}
                       />
                     )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Card 2: Number of questions */}
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.cardBg,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.cardTitle }]}>
-                Number of questions
-              </Text>
-              <Text style={[styles.cardSubtitle, { color: colors.cardSubtitle }]}>
-                Choose your test length
-              </Text>
-            </View>
-
-            <View style={styles.pillsRow}>
-              {[10, 20].map((count) => {
-                const isSelected = questionCount === count;
-                return (
-                  <TouchableOpacity
-                    key={count}
-                    style={[
-                      styles.pill,
-                      isSelected
-                        ? { backgroundColor: colors.pillSelectedBg }
-                        : { backgroundColor: colors.pillUnselectedBg },
-                    ]}
-                    onPress={() => handleSelectCount(count)}
-                    activeOpacity={0.8}
-                  >
-                    {isSelected && (
-                      <Ionicons
-                        name="checkmark"
-                        size={16}
-                        color={colors.pillSelectedCheck}
-                        style={styles.pillCheckIcon}
-                      />
-                    )}
-                    <Text
-                      style={[
-                        styles.pillText,
-                        {
-                          color: isSelected
-                            ? colors.pillSelectedText
-                            : colors.pillUnselectedText,
-                        },
-                      ]}
-                    >
-                      {count}
-                    </Text>
                   </TouchableOpacity>
                 );
               })}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -43,11 +44,13 @@ export default function AssessmentView({
   const [isEvaluated, setIsEvaluated] = useState(false);
   const [userAnswersRecord, setUserAnswersRecord] = useState<Record<string, number[]>>({});
   const [isQuizComplete, setIsQuizComplete] = useState(false);
+  const [measuredMaxHeight, setMeasuredMaxHeight] = useState<number | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
     setIsLoading(true);
+    setMeasuredMaxHeight(null);
 
     fetchMockTest(subjectId, chapterNumber, controller.signal)
       .then((data) => {
@@ -58,6 +61,7 @@ export default function AssessmentView({
           setIsEvaluated(false);
           setUserAnswersRecord({});
           setIsQuizComplete(false);
+          setMeasuredMaxHeight(null);
           setIsLoading(false);
         }
       })
@@ -81,6 +85,29 @@ export default function AssessmentView({
   const questionNumberFormatted = currentIndex + 1 < 10 ? `0${currentIndex + 1}` : `${currentIndex + 1}`;
   const totalQuestions = questions.length;
 
+  // Find the question with the largest text in this chapter's assessment
+  const maxQuestionText = useMemo(() => {
+    if (!questions || questions.length === 0) return '';
+    let longest = '';
+    for (const q of questions) {
+      if (q.question && q.question.length > longest.length) {
+        longest = q.question;
+      }
+    }
+    return longest;
+  }, [questions]);
+
+  // Compute initial minimum height proportional to the biggest question
+  const dynamicFallbackHeight = useMemo(() => {
+    if (!maxQuestionText) return 120;
+    // Average line on mobile fits ~36 characters
+    const estimatedLines = Math.max(2, Math.ceil(maxQuestionText.length / 36));
+    // 36px vertical padding + 26px eyebrow + estimated lines * 25px line height
+    return Math.max(110, 64 + estimatedLines * 25);
+  }, [maxQuestionText]);
+
+  const dynamicQuestionPanelHeight = measuredMaxHeight || dynamicFallbackHeight;
+
   const isMultiple = Boolean(
     currentQ?.isMultipleSelect ||
     (Array.isArray(currentQ?.correctAnswers) && currentQ.correctAnswers.length > 1)
@@ -100,8 +127,26 @@ export default function AssessmentView({
         }
       });
     } else {
-      // Single Choice (MCQ): select single option
-      setSelectedOptions([idx]);
+      // Single Choice (MCQ): select option & directly reveal answer immediately
+      const newSelection = [idx];
+      setSelectedOptions(newSelection);
+      setIsEvaluated(true);
+
+      const isCorrect =
+        Array.isArray(currentQ?.correctAnswers) &&
+        currentQ.correctAnswers.length === 1 &&
+        currentQ.correctAnswers.includes(idx);
+
+      if (isCorrect) {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+
+      setUserAnswersRecord((prev) => ({
+        ...prev,
+        [currentQ.id]: newSelection,
+      }));
     }
   };
 
@@ -112,7 +157,7 @@ export default function AssessmentView({
         'Selection Required',
         isMultiple
           ? 'Please select at least one option before submitting.'
-          : 'Please select an option before checking.'
+          : 'Please select an option before submitting.'
       );
       return;
     }
@@ -136,13 +181,38 @@ export default function AssessmentView({
     }));
   };
 
+  const goToQuestion = (targetIndex: number) => {
+    if (targetIndex < 0 || targetIndex >= questions.length) return;
+    Haptics.selectionAsync();
+    const targetQ = questions[targetIndex];
+    setCurrentIndex(targetIndex);
+    const recordedAns = userAnswersRecord[targetQ.id];
+    if (recordedAns !== undefined) {
+      setSelectedOptions(recordedAns);
+      setIsEvaluated(true);
+    } else {
+      setSelectedOptions([]);
+      setIsEvaluated(false);
+    }
+  };
+
+  const handlePrev = () => {
+    if (currentIndex > 0) {
+      goToQuestion(currentIndex - 1);
+    }
+  };
+
+  const handleNextQuestion = () => {
+    if (currentIndex < questions.length - 1) {
+      goToQuestion(currentIndex + 1);
+    }
+  };
+
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     if (currentIndex < questions.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedOptions([]);
-      setIsEvaluated(false);
+      goToQuestion(currentIndex + 1);
     } else {
       setIsQuizComplete(true);
       onFinish?.();
@@ -151,7 +221,12 @@ export default function AssessmentView({
 
   const handleActionButton = () => {
     if (!isEvaluated) {
-      handleSubmitAnswer();
+      if (isMultiple) {
+        handleSubmitAnswer();
+      } else {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        Alert.alert('Selection Required', 'Please select an option before proceeding.');
+      }
     } else {
       handleNext();
     }
@@ -296,12 +371,37 @@ export default function AssessmentView({
 
   return (
     <View style={[styles.container, { backgroundColor: bg }]}>
+      {/* Hidden offscreen layout measurer for the chapter's biggest question */}
+      {maxQuestionText ? (
+        <View
+          style={[
+            styles.questionPanel,
+            styles.hiddenMeasurePanel,
+            {
+              width: isTablet
+                ? Math.min(Dimensions.get('window').width - 48, 640)
+                : Dimensions.get('window').width - 32,
+            },
+          ]}
+          pointerEvents="none"
+          onLayout={(e) => {
+            const h = Math.ceil(e.nativeEvent.layout.height);
+            if (h > 0 && Math.abs(h - (measuredMaxHeight || 0)) > 2) {
+              setMeasuredMaxHeight(h);
+            }
+          }}
+        >
+          <Text style={styles.questionEyebrow}>QUESTION 01</Text>
+          <Text style={styles.questionText}>{maxQuestionText}</Text>
+        </View>
+      ) : null}
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
       >
-        {/* PILLS ROW: Progress | Question Type | Difficulty */}
+        {/* PILLS ROW: Progress Counter */}
         <View style={styles.pillsRow}>
           {/* Progress Pill (.progressChip) */}
           <View
@@ -317,40 +417,6 @@ export default function AssessmentView({
               {`${currentIndex + 1} / ${totalQuestions}`}
             </Text>
           </View>
-
-          {/* Question Type Pill (.questionTypeChip) */}
-          <View
-            style={[
-              styles.questionTypePill,
-              {
-                backgroundColor: isDark ? '#304D3B' : '#E3F2E8',
-                borderColor: cardBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.typeDotIcon, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>
-              {isMultiple ? '☑' : '◉'}
-            </Text>
-            <Text style={[styles.typeLabelText, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>
-              {isMultiple ? 'Multiple Select' : 'Single Choice (MCQ)'}
-            </Text>
-          </View>
-
-          {/* Difficulty Pill (.difficultyChip) */}
-          <View
-            style={[
-              styles.difficultyPill,
-              {
-                backgroundColor: isDark ? '#304D3B' : '#E3F2E8',
-                borderColor: cardBorder,
-                borderWidth: isDark ? 1 : 0,
-              },
-            ]}
-          >
-            <Text style={[styles.difficultyLabelText, { color: isDark ? '#F0F7F0' : '#2D3E36' }]}>
-              {currentQ.difficulty || 'Easy'}
-            </Text>
-          </View>
         </View>
 
         {/* 3. QUESTION CARD (.questionCard) */}
@@ -360,6 +426,7 @@ export default function AssessmentView({
             {
               backgroundColor: isDark ? '#21362B' : '#FFFFFF',
               borderColor: cardBorder,
+              minHeight: dynamicQuestionPanelHeight,
             },
           ]}
         >
@@ -601,19 +668,47 @@ export default function AssessmentView({
           </View>
         )}
 
-        {/* 6. SUBMIT / NEXT BUTTON */}
-        <View style={styles.nextBtnWrap}>
+        {/* 6. BOTTOM NAVIGATION & SUBMIT ROW */}
+        <View style={styles.bottomActionRow}>
+          {/* Backward Arrow */}
           <TouchableOpacity
             style={[
-              styles.nextQuestionButton,
+              styles.navArrowBtn,
+              {
+                backgroundColor: isDark ? '#21362B' : '#FFFFFF',
+                borderColor: isDark ? '#4D6E57' : '#C7DBCF',
+              },
+              currentIndex === 0 && styles.navArrowBtnDisabled,
+            ]}
+            onPress={handlePrev}
+            disabled={currentIndex === 0}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Previous question"
+          >
+            <Ionicons
+              name="chevron-back"
+              size={22}
+              color={currentIndex === 0 ? (isDark ? '#4A6356' : '#A6C5B3') : (isDark ? '#F0F7F0' : '#1C2E24')}
+            />
+          </TouchableOpacity>
+
+          {/* Submit / Next / Finish Button */}
+          <TouchableOpacity
+            style={[
+              styles.submitButton,
               {
                 backgroundColor: !isEvaluated
-                  ? selectedOptions.length === 0
-                    ? isDark
-                      ? '#2A2318'
-                      : '#E8DFD3'
-                    : '#D9A55C'
-                  : '#D9A55C',
+                  ? isMultiple
+                    ? selectedOptions.length === 0
+                      ? isDark
+                        ? '#2A2318'
+                        : '#E8DFD3'
+                      : '#D9A55C'
+                    : isDark
+                      ? '#1E3328'
+                      : '#DCE8E0'
+                  : '#265945',
               },
             ]}
             onPress={handleActionButton}
@@ -621,26 +716,51 @@ export default function AssessmentView({
           >
             <Text
               style={[
-                styles.nextQuestionLabel,
+                styles.submitButtonText,
                 {
-                  color: !isEvaluated && selectedOptions.length === 0
-                    ? isDark
-                      ? '#7A6B56'
-                      : '#94836D'
+                  color: !isEvaluated
+                    ? isMultiple
+                      ? selectedOptions.length === 0
+                        ? isDark
+                          ? '#7A6B56'
+                          : '#94836D'
+                        : '#FFFFFF'
+                      : isDark
+                        ? '#4A6956'
+                        : '#88A394'
                     : '#FFFFFF',
                 },
               ]}
             >
-              {!isEvaluated
-                ? isMultiple
-                  ? selectedOptions.length > 0
-                    ? `Submit Answer (${selectedOptions.length} selected)`
-                    : 'Submit Answer'
-                  : 'Check Answer'
+              {isMultiple && !isEvaluated
+                ? 'Submit'
                 : currentIndex === questions.length - 1
                 ? 'Finish Assessment'
                 : 'Next'}
             </Text>
+          </TouchableOpacity>
+
+          {/* Forward Arrow */}
+          <TouchableOpacity
+            style={[
+              styles.navArrowBtn,
+              {
+                backgroundColor: isDark ? '#21362B' : '#FFFFFF',
+                borderColor: isDark ? '#4D6E57' : '#C7DBCF',
+              },
+              currentIndex === questions.length - 1 && styles.navArrowBtnDisabled,
+            ]}
+            onPress={handleNextQuestion}
+            disabled={currentIndex === questions.length - 1}
+            activeOpacity={0.75}
+            accessibilityRole="button"
+            accessibilityLabel="Next question"
+          >
+            <Ionicons
+              name="chevron-forward"
+              size={22}
+              color={currentIndex === questions.length - 1 ? (isDark ? '#4A6356' : '#A6C5B3') : (isDark ? '#F0F7F0' : '#1C2E24')}
+            />
           </TouchableOpacity>
         </View>
 
@@ -718,12 +838,13 @@ const styles = StyleSheet.create({
   pillsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     marginBottom: 14,
   },
   progressPill: {
     height: 29,
-    width: 66,
+    minWidth: 66,
+    paddingHorizontal: 12,
     borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -735,41 +856,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2D3E36',
   },
-  questionTypePill: {
-    height: 29,
-    borderRadius: 14,
-    backgroundColor: '#E8F2EB',
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  typeDotIcon: {
-    fontSize: 11,
-    color: '#2D3E36',
-  },
-  typeLabelText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#2D3E36',
-  },
-  difficultyPill: {
-    height: 29,
-    width: 62,
-    borderRadius: 14,
-    backgroundColor: '#D6E5DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  difficultyLabelText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#2D3E36',
-  },
   /* 3. Question Panel (.questionPanel) */
   questionPanel: {
-    minHeight: 180,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -782,6 +870,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
+  },
+  hiddenMeasurePanel: {
+    position: 'absolute',
+    top: -9999,
+    left: -9999,
+    opacity: 0,
+    zIndex: -10,
   },
   questionEyebrow: {
     fontSize: 10,
@@ -818,10 +913,10 @@ const styles = StyleSheet.create({
     borderColor: '#336B54',
   },
   radioCircle: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 1.8,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -833,10 +928,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#336B54',
   },
   checkboxBox: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     borderRadius: 5,
-    borderWidth: 1.5,
+    borderWidth: 1.8,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -897,17 +992,36 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     fontWeight: '500',
   },
-  /* 6. Next Button (.nextQuestionButton) */
-  nextBtnWrap: {
+  /* 6. Bottom Navigation & Submit Row */
+  bottomActionRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
     marginBottom: 16,
     width: '100%',
   },
-  nextQuestionButton: {
-    width: '100%',
+  navArrowBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1.5 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    flexShrink: 0,
+  },
+  navArrowBtnDisabled: {
+    opacity: 0.28,
+  },
+  submitButton: {
+    flex: 1,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2B634A',
     alignItems: 'center',
     justifyContent: 'center',
     elevation: 3,
@@ -916,10 +1030,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 3,
   },
-  nextQuestionLabel: {
+  submitButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
   },
   /* 7. Footer (.questionFooter) */
   questionFooter: {

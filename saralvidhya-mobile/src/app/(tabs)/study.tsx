@@ -27,6 +27,7 @@ import AskBotView from '@/components/study/AskBotView';
 import PYQView from '@/components/study/PYQView';
 import MindmapView from '@/components/study/MindmapView';
 import VideosView from '@/components/study/VideosView';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 import {
   fetchQuickStudyGuide,
   fetchDetailedNotes,
@@ -60,7 +61,7 @@ const STUDY_TOOLS: StudyTool[] = [
   { id: 'flashcards', label: 'Flashcards', icon: '🗂️' },
   { id: 'assessment', label: 'Assessments', icon: '🎯' },
   { id: 'podcasts', label: 'Podcasts', icon: '🎙️' },
-  { id: 'videos', label: 'Videos', icon: '📺' },
+  { id: 'videos', label: 'Watch', icon: '📺' },
   { id: 'mindmap', label: 'Mindmap', icon: '🧠' },
   { id: 'pyq', label: 'Past PYQs', icon: '📜' },
   { id: 'ask', label: 'Ask AI Bot', icon: '🤖', badge: 'AI' },
@@ -232,6 +233,20 @@ export default function StudyTableScreen() {
 
       {/* Detail pane (the existing study UI) */}
       <View style={{ flex: 1, minWidth: 0 }}>
+      {/* Consistent Breadcrumb Line */}
+      <BreadcrumbBar
+        subjectName={activeSubject.name}
+        chapterNumber={currentChapter.number}
+        chapterTitle={currentChapter.name}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/subjects');
+          }
+        }}
+      />
+
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.courseHeaderRow}>

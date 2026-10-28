@@ -21,6 +21,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import FlashcardDeck from '@/components/flashcards/FlashcardDeck';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 import AssessmentView from '@/components/study/AssessmentView';
 import TeacherQuestionBankView from '@/components/study/TeacherQuestionBankView';
 import { fetchFlashcards, Flashcard } from '@/services/contentService';
@@ -41,13 +42,13 @@ export default function PracticeScreen() {
   const params = useLocalSearchParams<{ chapter?: string; part?: string }>();
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
-  // 3 Practice parts: Revise, Assessments, Question Bank. Default to Assessments per user request.
+  // 3 Practice parts: Revise, Assessments, Question Bank. Default to Revise.
   const [activePart, setActivePart] = useState<'revise' | 'assessments' | 'question_bank'>(
-    params.part === 'revise'
-      ? 'revise'
+    params.part === 'assessments'
+      ? 'assessments'
       : params.part === 'question_bank'
       ? 'question_bank'
-      : 'assessments'
+      : 'revise'
   );
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
@@ -56,6 +57,12 @@ export default function PracticeScreen() {
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
   const [flashcardsList, setFlashcardsList] = useState<Flashcard[]>([]);
   const [isLoadingCards, setIsLoadingCards] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (params.part && ['revise', 'assessments', 'question_bank'].includes(params.part)) {
+      setActivePart(params.part as 'revise' | 'assessments' | 'question_bank');
+    }
+  }, [params.part]);
 
   useEffect(() => {
     if (params.chapter) {
@@ -120,6 +127,20 @@ export default function PracticeScreen() {
           }
         }}
         showProfile={true}
+      />
+
+      {/* Consistent Breadcrumb Line */}
+      <BreadcrumbBar
+        subjectName={activeSubject.name}
+        chapterNumber={currentChapter.number}
+        chapterTitle={currentChapter.name}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/subjects');
+          }
+        }}
       />
 
       {/* 2. MAIN ACTIVE PART */}

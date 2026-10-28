@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Dimensions,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
@@ -481,7 +482,7 @@ const PYQ_DATA: PYQItem[] = [
   },
 ];
 
-const YEARS = ['All Years', 2024, 2023, 2022, 2021, 2020];
+const YEARS = ['All', 2024, 2023, 2022, 2021, 2020];
 
 interface PYQViewProps {
   chapterNumber?: number;
@@ -495,7 +496,7 @@ export default function PYQView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const [selectedYear, setSelectedYear] = useState<string | number>('All Years');
+  const [selectedYear, setSelectedYear] = useState<string | number>('All');
   const [completedMap, setCompletedMap] = useState<Record<number, boolean>>({});
   const [answerModeMap, setAnswerModeMap] = useState<Record<number, AnswerMode>>({});
 
@@ -543,9 +544,27 @@ export default function PYQView({
   const answerTextColor = isDark ? '#F0F7F0' : '#1F2E26';
 
   const filteredQuestions = useMemo(() => {
-    if (selectedYear === 'All Years') return PYQ_DATA;
+    if (selectedYear === 'All' || selectedYear === 'All Years') return PYQ_DATA;
     return PYQ_DATA.filter((q) => q.year === selectedYear);
   }, [selectedYear]);
+
+  const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const scrollViewHeightRef = useRef<number>(Dimensions.get('window').height);
+  const cardLayoutsRef = useRef<Record<number, { y: number; height: number }>>({});
+  const pendingCenterIdRef = useRef<number | null>(null);
+
+  const scrollToCenter = (id: number) => {
+    const layout = cardLayoutsRef.current[id];
+    if (!layout) return;
+    const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+    let targetY: number;
+    if (layout.height >= viewH - 60) {
+      targetY = Math.max(0, layout.y - 20);
+    } else {
+      targetY = Math.max(0, layout.y - (viewH - layout.height) / 2);
+    }
+    scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+  };
 
   const toggleComplete = (id: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -558,6 +577,17 @@ export default function PYQView({
       ...prev,
       [id]: mode,
     }));
+
+    if (mode === 'long') {
+      pendingCenterIdRef.current = id;
+      // Fallback timer in case the card's height is unchanged and onLayout doesn't re-fire
+      setTimeout(() => {
+        if (pendingCenterIdRef.current === id) {
+          pendingCenterIdRef.current = null;
+          scrollToCenter(id);
+        }
+      }, 120);
+    }
   };
 
   return (
@@ -566,15 +596,19 @@ export default function PYQView({
       <View style={[styles.topStatusAccent, { backgroundColor: topAccentColor }]} />
 
       <ScrollView
+        ref={scrollViewRef}
+        onLayout={(e) => {
+          scrollViewHeightRef.current = e.nativeEvent.layout.height;
+        }}
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
       >
         {/* Page Title & Question Count (.pageTitle & .count) */}
         <View style={styles.titleBlock}>
-          <Text style={[styles.pageTitle, { color: titleColor }]}>PYQ</Text>
+          <Text style={[styles.pageTitle, { color: titleColor }]}>PYQs</Text>
           <Text style={[styles.count, { color: subtextColor }]}>
-            20 questions · 2M, 5M & 10M answers
+            {filteredQuestions.length} questions · Model answers
           </Text>
         </View>
 
@@ -619,11 +653,6 @@ export default function PYQView({
           </ScrollView>
         </View>
 
-        {/* Intro text (.intro) */}
-        <Text style={[styles.intro, { color: subtextColor }]}>
-          Select a subject to view chapter questions and model answers.
-        </Text>
-
         {/* Question Cards List */}
         <View style={styles.cardsList}>
           {filteredQuestions.map((item) => {
@@ -635,6 +664,17 @@ export default function PYQView({
             return (
               <View
                 key={item.id}
+                onLayout={(e) => {
+                  const { y, height } = e.nativeEvent.layout;
+                  cardLayoutsRef.current[item.id] = { y, height };
+
+                  if (pendingCenterIdRef.current === item.id) {
+                    pendingCenterIdRef.current = null;
+                    requestAnimationFrame(() => {
+                      scrollToCenter(item.id);
+                    });
+                  }
+                }}
                 style={[
                   styles.questionCard,
                   { backgroundColor: cardBg, borderColor: cardBorder },
@@ -649,34 +689,14 @@ export default function PYQView({
                     {item.questionPrompt}
                   </Text>
 
-                  {/* Metadata Tags Row: Chapter Tag, Year Tag, Marks */}
-                  <View style={styles.tagRow}>
-                    {/* Chapter Tag */}
-                    <View style={[styles.chapterTag, { backgroundColor: chapterTagBg }]}>
-                      <Text style={[styles.chapterText, { color: chapterTagText }]}>
-                        {item.chapterText}
+                  {/* Top Meta Row under Question: Year Tag + Mark as Read Button */}
+                  <View style={styles.cardTopMetaRow}>
+                    <View style={[styles.yearTag, { backgroundColor: yearTagBg }]}>
+                      <Text style={[styles.yearText, { color: yearTagText }]}>
+                        ▦ {item.year}
                       </Text>
                     </View>
 
-                    <View style={styles.rightTagGroup}>
-                      {/* Year Tag */}
-                      <View style={[styles.yearTag, { backgroundColor: yearTagBg }]}>
-                        <Text style={[styles.yearText, { color: yearTagText }]}>
-                          ▦ {item.year}
-                        </Text>
-                      </View>
-
-                      {/* Marks Tag */}
-                      <View style={[styles.marksTag, { backgroundColor: marksTagBg }]}>
-                        <Text style={[styles.marksText, { color: marksTagText }]}>
-                          {item.marks}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Action Row: Mark as Read (placed in place of SOS) */}
-                  <View style={styles.actionRow}>
                     <TouchableOpacity
                       style={[
                         styles.markAsReadButton,
@@ -845,7 +865,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 14,
     paddingTop: 14,
-    paddingBottom: 40,
+    paddingBottom: Dimensions.get('window').height * 0.45,
   },
   tabletContent: {
     maxWidth: 680,
@@ -935,6 +955,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     lineHeight: 18,
     marginBottom: 10,
+  },
+  cardTopMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
   },
   tagRow: {
     flexDirection: 'row',

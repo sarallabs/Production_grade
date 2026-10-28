@@ -20,8 +20,10 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 
 // Fallback thumbnail URI helper
 const getYoutubeThumb = (ytId: string) => `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
@@ -316,6 +318,7 @@ export default function VideosView({
   const { isTablet } = useDeviceLayout();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   // Dynamic Video Lessons for the current chapter
   const currentChapterLessons = useMemo(() => {
@@ -358,6 +361,8 @@ export default function VideosView({
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [showSpeedModal, setShowSpeedModal] = useState(false);
   const [showCaptions, setShowCaptions] = useState(false);
+  const [captionToastText, setCaptionToastText] = useState<string | null>(null);
+  const captionToastTimerRef = useRef<any>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -369,6 +374,26 @@ export default function VideosView({
   const playerFsRef = useRef<any>(null);
   const currentTimeRef = useRef<number>(0);
   const hasStartedRef = useRef<boolean>(false);
+
+  const handleToggleCaptions = useCallback(() => {
+    Haptics.selectionAsync();
+    setShowCaptions((prev) => {
+      const next = !prev;
+      setCaptionToastText(next ? 'Subtitles on' : 'Subtitles off');
+      if (captionToastTimerRef.current) clearTimeout(captionToastTimerRef.current);
+      captionToastTimerRef.current = setTimeout(() => {
+        setCaptionToastText(null);
+      }, 2000);
+      return next;
+    });
+    // Reset control hide timer so UI remains visible while interacting
+    if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
+    setControlsVisible(true);
+    fadeAnim.setValue(1);
+    hideControlsTimerRef.current = setTimeout(() => {
+      setControlsVisible(false);
+    }, 3500);
+  }, [fadeAnim]);
 
   // Orientation handling: Lock to landscape for fullscreen, restore portrait/default on exit
   const lockLandscape = useCallback(async () => {
@@ -808,11 +833,49 @@ export default function VideosView({
     playerFsWidth = Math.round((fsScreenHeight * 16) / 9);
   }
 
-  // Crop bleed: bleed the YouTube player 46px on top and bottom to eliminate YouTube's watermark, title bar, and share button
-  const cropBleedY = 46;
-  const cropBleedX = Math.round((cropBleedY * 16) / 9); // ~82px
-  const renderedFsWidth = playerFsWidth + cropBleedX * 2;
-  const renderedFsHeight = playerFsHeight + cropBleedY * 2;
+  // Fit 16:9 perfectly inside fullscreen without crop bleed, keeping subtitles and bottom content 100% visible
+  const renderedFsWidth = playerFsWidth;
+  const renderedFsHeight = playerFsHeight;
+
+  // Injected JavaScript for YouTube player WebView to dynamically configure Closed Captions track & styling
+  const injectedCcScript = useMemo(() => {
+    return `
+      (function() {
+        function configureCaptions() {
+          if (typeof player !== 'undefined' && player && typeof player.loadModule === 'function') {
+            try {
+              if (${showCaptions ? 'true' : 'false'}) {
+                player.loadModule('captions');
+                try {
+                  var tracks = player.getOption('captions', 'tracklist') || [];
+                  if (tracks.length > 0) {
+                    player.setOption('captions', 'track', tracks[0]);
+                  } else {
+                    player.setOption('captions', 'track', { languageCode: 'en' });
+                  }
+                } catch(err) {
+                  player.setOption('captions', 'track', { languageCode: 'en' });
+                }
+                player.setOption('captions', 'fontSize', 1);
+              } else {
+                player.unloadModule('captions');
+                player.setOption('captions', 'track', {});
+              }
+            } catch(e) {}
+          } else {
+            setTimeout(configureCaptions, 200);
+          }
+        }
+        configureCaptions();
+        try {
+          var st = document.createElement('style');
+          st.innerHTML = '.caption-window, .ytp-caption-window-bottom { margin-bottom: 12px !important; }';
+          document.head.appendChild(st);
+        } catch(e) {}
+      })();
+      true;
+    `;
+  }, [showCaptions]);
 
   // Shared Bottom Controls Bar Component (Matching User's PNG + Clean No-Overlap Spacing)
   const renderControlsBar = (isFull: boolean) => {
@@ -924,11 +987,7 @@ export default function VideosView({
           <View style={styles.controlsRightGroup}>
             {/* Subtitles [CC] */}
             <TouchableOpacity
-              onPress={() => {
-                Haptics.selectionAsync();
-                setShowCaptions((c) => !c);
-                resetHideTimer();
-              }}
+              onPress={handleToggleCaptions}
               style={[
                 styles.ccBadge,
                 showCaptions && styles.ccBadgeActive,
@@ -982,6 +1041,22 @@ export default function VideosView({
         contentContainerStyle={[styles.scrollContent, isTablet && styles.tabletContent]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Consistent Breadcrumb Line */}
+        <BreadcrumbBar
+          subjectName={subjectName}
+          chapterNumber={chapterNumber}
+          chapterTitle={chapterName}
+          onBackPress={() => {
+            if (selectedLessonId !== null && !isSingleVideoUnit) {
+              setSelectedLessonId(null);
+            } else if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/subjects');
+            }
+          }}
+        />
+
         {/* ========================================================================= */}
         {/* VIEW 1: MULTI-VIDEO SELECTION SCREEN (Shown ONLY if videos > 1)           */}
         {/* ========================================================================= */}
@@ -1323,8 +1398,8 @@ export default function VideosView({
           <View style={styles.fullScreenVideoWrap}>
             {Platform.OS === 'web' ? (
               React.createElement('iframe', {
-                key: `fs-${currentLesson.ytId}`,
-                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0&start=${Math.floor(currentTimeRef.current || 0)}`,
+                key: `fs-${currentLesson.ytId}-${showCaptions ? 'cc1' : 'cc0'}`,
+                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0&cc_load_policy=${showCaptions ? 1 : 0}&cc_lang_pref=en&start=${Math.floor(currentTimeRef.current || 0)}`,
                 width: '100%',
                 height: '100%',
                 style: { border: 0, display: 'block', backgroundColor: '#000000' },
@@ -1335,6 +1410,7 @@ export default function VideosView({
               })
             ) : (
               <YoutubePlayer
+                key={`fs-player-${currentLesson.ytId}-${showCaptions ? 'cc1' : 'cc0'}`}
                 ref={playerFsRef}
                 height={renderedFsHeight}
                 width={renderedFsWidth}
@@ -1348,6 +1424,7 @@ export default function VideosView({
                   allowsInlineMediaPlayback: true,
                   mediaPlaybackRequiresUserAction: false,
                   androidLayerType: 'hardware',
+                  injectedJavaScript: injectedCcScript,
                 }}
                 initialPlayerParams={{
                   rel: false,
@@ -1355,6 +1432,7 @@ export default function VideosView({
                   controls: false,
                   preventFullScreen: true,
                   showClosedCaptions: showCaptions,
+                  cc_lang_pref: 'en',
                   iv_load_policy: 3,
                   start: Math.floor(currentTimeRef.current || 0),
                 }}
@@ -1570,11 +1648,7 @@ export default function VideosView({
                 <View style={styles.controlsRightGroup}>
                   {/* CC Button (Subtitles) */}
                   <TouchableOpacity
-                    onPress={() => {
-                      Haptics.selectionAsync();
-                      setShowCaptions((c) => !c);
-                      resetHideTimer();
-                    }}
+                    onPress={handleToggleCaptions}
                     style={[
                       styles.ccBadge,
                       showCaptions && styles.ccBadgeActive,
@@ -1677,11 +1751,20 @@ export default function VideosView({
           )}
 
           {/* Subtitles Toast Indicator */}
-          {showCaptions && controlsVisible && (
+          {captionToastText && (
             <View style={styles.captionsIndicatorWrap} pointerEvents="none">
-              <View style={styles.captionsIndicator}>
-                <Ionicons name="chatbox-ellipses-outline" size={14} color="#4ADE80" />
-                <Text style={styles.captionsIndicatorText}>Subtitles enabled</Text>
+              <View
+                style={[
+                  styles.captionsIndicator,
+                  { borderColor: showCaptions ? '#4ADE80' : '#94A3B8' },
+                ]}
+              >
+                <Ionicons
+                  name={showCaptions ? 'chatbox-ellipses-outline' : 'chatbox-outline'}
+                  size={14}
+                  color={showCaptions ? '#4ADE80' : '#94A3B8'}
+                />
+                <Text style={styles.captionsIndicatorText}>{captionToastText}</Text>
               </View>
             </View>
           )}

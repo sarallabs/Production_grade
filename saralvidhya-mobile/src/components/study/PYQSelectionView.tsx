@@ -208,9 +208,6 @@ export default function PYQSelectionView({
               <Text style={[styles.cardTitle, { color: colors.titleColor }]}>
                 Choose units to prepare
               </Text>
-              <Text style={[styles.cardSubtitle, { color: colors.subtitleColor }]}>
-                Select one or more units
-              </Text>
             </View>
 
             <View style={styles.unitList}>
@@ -275,84 +272,6 @@ export default function PYQSelectionView({
                         ]}
                       />
                     )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Number of Questions / Test Length Card */}
-          <View
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.cardBg,
-                borderColor: colors.cardBorder,
-              },
-            ]}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={[styles.cardTitle, { color: colors.titleColor }]}>
-                Number of questions
-              </Text>
-              <Text style={[styles.cardSubtitle, { color: colors.subtitleColor }]}>
-                Choose your test length
-              </Text>
-            </View>
-
-            <View style={styles.chipsRow}>
-              {[10, 20].map((count) => {
-                const isSelected = questionCount === count;
-                return (
-                  <TouchableOpacity
-                    key={count}
-                    style={[
-                      styles.chip,
-                      isSelected
-                        ? [
-                            styles.chipSelected,
-                            { backgroundColor: colors.chipSelectedBg },
-                          ]
-                        : [
-                            styles.chipUnselected,
-                            {
-                              backgroundColor: colors.chipUnselectedBg,
-                              borderColor: colors.chipUnselectedBorder,
-                            },
-                          ],
-                    ]}
-                    onPress={() => handleSelectCount(count)}
-                    activeOpacity={0.8}
-                  >
-                    {isSelected && (
-                      <View
-                        style={[
-                          styles.chipTickSquare,
-                          { backgroundColor: colors.chipSelectedTickBox },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.chipTickText,
-                            { color: colors.chipSelectedText },
-                          ]}
-                        >
-                          ✓
-                        </Text>
-                      </View>
-                    )}
-                    <Text
-                      style={[
-                        styles.chipText,
-                        {
-                          color: isSelected
-                            ? colors.chipSelectedText
-                            : colors.chipUnselectedText,
-                        },
-                      ]}
-                    >
-                      {count}
-                    </Text>
                   </TouchableOpacity>
                 );
               })}

@@ -20,89 +20,89 @@ const CHAPTER_EXAM_BADGES: Record<
 > = {
   1: {
     1: {
-      full: 'Asked in 2023 & 2024 - 8 marks',
-      short: "asked '23 '24 - 8 marks",
+      full: 'Asked in 2023 & 2024',
+      short: "asked '23 '24",
       hasInfographic: true,
     },
     2: {
-      full: 'Asked in 2022 & 2023 - 5 marks',
-      short: "asked '22 '23 - 5 marks",
+      full: 'Asked in 2022 & 2023',
+      short: "asked '22 '23",
       hasInfographic: false,
     },
     3: {
-      full: 'Asked in 2023 - 8 marks',
-      short: "asked '23 - 8 marks",
+      full: 'Asked in 2023',
+      short: "asked '23",
       hasInfographic: false,
     },
     4: {
-      full: 'Asked in 2021 & 2024 - 5 marks',
-      short: "asked '21 '24 - 5 marks",
+      full: 'Asked in 2021 & 2024',
+      short: "asked '21 '24",
       hasInfographic: false,
     },
     5: {
-      full: 'Asked in 2022 - 4 marks',
-      short: "asked '22 - 4 marks",
+      full: 'Asked in 2022',
+      short: "asked '22",
       hasInfographic: false,
     },
   },
   2: {
     1: {
-      full: 'Asked in 2023 & 2024 - 10 marks',
-      short: "asked '23 '24 - 10 marks",
+      full: 'Asked in 2023 & 2024',
+      short: "asked '23 '24",
       hasInfographic: true,
     },
     2: {
-      full: 'Asked in 2022 - 5 marks',
-      short: "asked '22 - 5 marks",
+      full: 'Asked in 2022',
+      short: "asked '22",
       hasInfographic: false,
     },
     3: {
-      full: 'Asked in 2023 - 8 marks',
-      short: "asked '23 - 8 marks",
+      full: 'Asked in 2023',
+      short: "asked '23",
       hasInfographic: false,
     },
     4: {
-      full: 'Asked in 2024 - 5 marks',
-      short: "asked '24 - 5 marks",
+      full: 'Asked in 2024',
+      short: "asked '24",
       hasInfographic: false,
     },
   },
   3: {
     1: {
-      full: 'Asked in 2023 & 2024 - 8 marks',
-      short: "asked '23 '24 - 8 marks",
+      full: 'Asked in 2023 & 2024',
+      short: "asked '23 '24",
       hasInfographic: true,
     },
     2: {
-      full: 'Asked in 2022 - 6 marks',
-      short: "asked '22 - 6 marks",
+      full: 'Asked in 2022',
+      short: "asked '22",
       hasInfographic: false,
     },
     3: {
-      full: 'Asked in 2023 - 5 marks',
-      short: "asked '23 - 5 marks",
+      full: 'Asked in 2023',
+      short: "asked '23",
       hasInfographic: false,
     },
     4: {
-      full: 'Asked in 2024 - 5 marks',
-      short: "asked '24 - 5 marks",
+      full: 'Asked in 2024',
+      short: "asked '24",
       hasInfographic: false,
     },
   },
   4: {
     1: {
-      full: 'Asked in 2023 & 2024 - 8 marks',
-      short: "asked '23 '24 - 8 marks",
+      full: 'Asked in 2023 & 2024',
+      short: "asked '23 '24",
       hasInfographic: true,
     },
     2: {
-      full: 'Asked in 2023 - 5 marks',
-      short: "asked '23 - 5 marks",
+      full: 'Asked in 2023',
+      short: "asked '23",
       hasInfographic: false,
     },
     3: {
-      full: 'Asked in 2022 & 2024 - 8 marks',
-      short: "asked '22 '24 - 8 marks",
+      full: 'Asked in 2022 & 2024',
+      short: "asked '22 '24",
       hasInfographic: false,
     },
   },
@@ -188,19 +188,27 @@ export function parseMarkdownSections(
 
   if (topicParts.length <= 1) {
     const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[1] || {
-      full: 'Asked in 2023 & 2024 - 8 marks',
-      short: "asked '23 '24 - 8 marks",
+      full: 'Asked in 2023 & 2024',
+      short: "asked '23 '24",
       hasInfographic: false,
     };
+
+    const firstHeadingMatch = rawMarkdown.match(/^#{1,3}\s+([^\n\r]+)/);
+    let singleContent = rawMarkdown;
+    let singleTitle = 'Architectural Blueprint & Regional Partitioning';
+    if (firstHeadingMatch) {
+      singleTitle = cleanHeadingText(firstHeadingMatch[1].trim());
+      singleContent = rawMarkdown.replace(/^#{1,3}\s+[^\n\r]+(?:\r?\n)*/, '').trim();
+    }
 
     return [
       {
         id: 'sec-1',
         sectionNumber: 1,
-        title: 'Architectural Blueprint & Regional Partitioning',
+        title: singleTitle,
         shortTitle: 'Blueprint',
-        content: rawMarkdown,
-        readTimeMinutes: estimateReadingTime(rawMarkdown),
+        content: singleContent,
+        readTimeMinutes: estimateReadingTime(singleContent),
         quickChecks: quickChecks.length > 0 ? quickChecks : [],
         hasInfographic: false,
         examBadge: badgeInfo.full,
@@ -219,6 +227,12 @@ export function parseMarkdownSections(
     const rawHeading = headingMatch ? headingMatch[1].trim() : `Section ${sections.length + 1}`;
     const cleanTitle = cleanHeadingText(rawHeading);
     const shortTitle = getShortTitle(rawHeading);
+
+    // Strip leading heading line from markdown content so it is not duplicated below the section header
+    let cleanContent = part;
+    if (headingMatch) {
+      cleanContent = part.replace(/^#{1,3}\s+[^\n\r]+(?:\r?\n)*/, '').trim();
+    }
 
     const seqIndex = sections.length + 1;
     // Extract module number (e.g. '1' from '1. Master System' or 'Module 2:')
@@ -239,8 +253,8 @@ export function parseMarkdownSections(
     }
 
     const badgeInfo = CHAPTER_EXAM_BADGES[chapterNumber]?.[secNum] || {
-      full: secNum === 1 ? 'Asked in 2023 & 2024 - 8 marks' : undefined,
-      short: secNum === 1 ? "asked '23 '24 - 8 marks" : undefined,
+      full: secNum === 1 ? 'Asked in 2023 & 2024' : undefined,
+      short: secNum === 1 ? "asked '23 '24" : undefined,
       hasInfographic: false,
     };
 
@@ -249,8 +263,8 @@ export function parseMarkdownSections(
       sectionNumber: secNum,
       title: cleanTitle,
       shortTitle: shortTitle || `Section ${seqIndex}`,
-      content: part,
-      readTimeMinutes: estimateReadingTime(part),
+      content: cleanContent,
+      readTimeMinutes: estimateReadingTime(cleanContent),
       quickChecks: matchedQuestions,
       hasInfographic: badgeInfo.hasInfographic,
       examBadge: badgeInfo.full,

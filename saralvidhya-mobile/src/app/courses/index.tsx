@@ -11,7 +11,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -23,7 +22,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 export default function CourseSelectionScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDark, setThemeMode } = useAppTheme();
+  const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
   const { selectSubject, selectChapter } = useCourseContext();
 
@@ -101,7 +100,6 @@ export default function CourseSelectionScreen() {
   const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const headerTextColor = isDark ? '#FFFFFF' : '#1C2E24';
   const subtextColor = isDark ? '#A6C5B3' : '#688875';
-  const badgeBg = isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(45, 62, 54, 0.08)';
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
@@ -123,40 +121,15 @@ export default function CourseSelectionScreen() {
         <View style={isTablet ? styles.tabletColumn : undefined}>
           {/* Top Brand Header */}
           <View style={styles.topHeader}>
-            <View>
-              <Text style={[styles.greetingText, { color: headerTextColor }]}>
-                Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
-              </Text>
-              <Text style={[styles.uniBadge, { color: subtextColor }]}>
-                Saral Vidhya Learning Portal
-              </Text>
-            </View>
-
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                style={[styles.themePill, { backgroundColor: badgeBg }]}
-                onPress={() => {
-                  Haptics.selectionAsync();
-                  setThemeMode(isDark ? 'light' : 'dark');
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name={isDark ? 'sunny' : 'moon'}
-                  size={16}
-                  color={headerTextColor}
-                />
-              </TouchableOpacity>
-            </View>
+            <Text style={[styles.greetingText, { color: headerTextColor }]}>
+              Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
+            </Text>
           </View>
 
           {/* Section Title */}
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: headerTextColor }]}>
-              Enrolled Subject
-            </Text>
-            <Text style={[styles.semesterTag, { color: subtextColor, backgroundColor: badgeBg }]}>
-              ANGRAU
+              My Subject
             </Text>
           </View>
 
@@ -218,41 +191,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  uniBadge: {
-    fontSize: 12,
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  themePill: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 16,
     paddingHorizontal: 4,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-  },
-  semesterTag: {
-    fontSize: 12,
-    fontWeight: '700',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
   },
   cardsList: {
     width: '100%',

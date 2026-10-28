@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -32,6 +33,7 @@ interface StudyGuideReaderTabletProps {
   chapterTitle?: string;
   subjectName?: string;
   subjectId?: string;
+  initialTopic?: string;
   onBackPress?: () => void;
   onBookmarkPress?: () => void;
   onOpenListen?: (mode: 'quick' | 'detailed') => void;
@@ -77,6 +79,7 @@ export default function StudyGuideReaderTablet({
   chapterTitle = 'Insect Digestive System & Anatomy',
   subjectName = 'Entomology',
   subjectId = 'ento_131',
+  initialTopic,
   onBackPress,
   onBookmarkPress,
   onOpenListen,
@@ -107,6 +110,7 @@ export default function StudyGuideReaderTablet({
   const [detailedContent, setDetailedContent] = useState<string>('');
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const scrollViewHeightRef = useRef<number>(Dimensions.get('window').height);
   const [quickCheckQuestions, setQuickCheckQuestions] = useState<QuickCheckQuestion[]>([]);
   const [completedQuickChecks, setCompletedQuickChecks] = useState<Set<number>>(new Set());
   const [activeSectionIndex, setActiveSectionIndex] = useState<number>(0);
@@ -180,7 +184,8 @@ export default function StudyGuideReaderTablet({
     Math.round((completedQuickChecks.size / Math.max(1, totalSections)) * 100)
   );
 
-  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, number>>({});
+  const [sectionsContainerY, setSectionsContainerY] = useState(0);
+  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, { y: number; height: number }>>({});
 
   const handleScrollToSection = (targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < sections.length) {
@@ -188,12 +193,79 @@ export default function StudyGuideReaderTablet({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch {}
       setActiveSectionIndex(targetIndex);
-      const targetY = sectionLayouts[targetIndex];
-      if (typeof targetY === 'number') {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 20), animated: true });
+      const relativeY = sectionLayouts[targetIndex];
+      if (typeof relativeY === 'number') {
+        const absoluteY = sectionsContainerY + relativeY;
+        scrollViewRef.current?.scrollTo({ y: Math.max(0, absoluteY - 12), animated: true });
       }
     }
   };
+
+  const hasScrolledToTopicRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!initialTopic || sections.length === 0) return;
+    if (hasScrolledToTopicRef.current === initialTopic) return;
+
+    // Clean up topic title (remove Bloom tags, numbering, etc.)
+    const cleanTopic = initialTopic
+      .replace(/\[Bloom:.*?\]/i, '')
+      .replace(/^\d+[\.\s]*/, '')
+      .trim();
+    const lower = cleanTopic.toLowerCase();
+    const searchWords = lower
+      .split(/[\s,()\/\-]+/)
+      .filter((w) => w.length > 2);
+
+    const targetIdx = sections.findIndex((s) => {
+      const sLower = s.title.toLowerCase();
+      const sShortLower = (s.shortTitle || '').toLowerCase();
+      const sContentLower = (s.content || '').slice(0, 1000).toLowerCase();
+
+      // 1. Direct match on title or shortTitle
+      if (
+        sLower.includes(lower) ||
+        lower.includes(sLower) ||
+        sShortLower.includes(lower) ||
+        lower.includes(sShortLower)
+      ) {
+        return true;
+      }
+
+      // 2. Keyword match in title
+      if (searchWords.length > 0 && searchWords.some((w) => sLower.includes(w) || sShortLower.includes(w))) {
+        return true;
+      }
+
+      // 3. Fallback: topic keyword appears in section content
+      if (searchWords.length > 0 && searchWords.every((w) => sContentLower.includes(w))) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (targetIdx !== -1) {
+      setActiveSectionIndex(targetIdx);
+      const relativeY = sectionLayouts[targetIdx];
+      if (typeof relativeY === 'number') {
+        hasScrolledToTopicRef.current = initialTopic;
+        const absoluteY = sectionsContainerY + relativeY;
+        const targetScrollY = Math.max(0, absoluteY - 12);
+        scrollViewRef.current?.scrollTo({ y: targetScrollY, animated: true });
+      } else {
+        const timer = setTimeout(() => {
+          const retryY = sectionLayouts[targetIdx];
+          if (typeof retryY === 'number') {
+            hasScrolledToTopicRef.current = initialTopic;
+            const absoluteY = sectionsContainerY + retryY;
+            scrollViewRef.current?.scrollTo({ y: Math.max(0, absoluteY - 12), animated: true });
+          }
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [initialTopic, sections, sectionLayouts, sectionsContainerY]);
 
   const handleScrollToQuickCheck = (secIdx: number) => {
     if (secIdx >= 0 && secIdx < sections.length) {
@@ -201,20 +273,47 @@ export default function StudyGuideReaderTablet({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch {}
       setActiveSectionIndex(secIdx);
-      const targetY = quickCheckLayouts[secIdx] ?? sectionLayouts[secIdx];
-      if (typeof targetY === 'number') {
-        scrollViewRef.current?.scrollTo({ y: Math.max(0, targetY - 40), animated: true });
+      const qcLayout = quickCheckLayouts[secIdx];
+      const relativeY = qcLayout?.y ?? sectionLayouts[secIdx];
+      if (typeof relativeY === 'number') {
+        const absoluteY = sectionsContainerY + relativeY;
+        const cardH = qcLayout?.height || 360;
+        const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+        const targetY = cardH >= viewH - 60
+          ? Math.max(0, absoluteY - 20)
+          : Math.max(0, absoluteY - (viewH - cardH) / 2);
+        scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
       }
     }
   };
 
-  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean) => {
+  const handleQcAnswer = (sectionNumber: number, isCorrect: boolean, secIdx?: number) => {
     if (isCorrect) {
       setCompletedQuickChecks((prev) => {
         const next = new Set(prev);
         next.add(sectionNumber);
         return next;
       });
+    }
+
+    // Scroll so the quick check card is positioned in the center of the page
+    if (typeof secIdx === 'number') {
+      const qcLayout = quickCheckLayouts[secIdx];
+      if (qcLayout) {
+        const absoluteY = sectionsContainerY + qcLayout.y;
+        const cardH = qcLayout.height || 380;
+        const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+        const targetY = cardH >= viewH - 60
+          ? Math.max(0, absoluteY - 20)
+          : Math.max(0, absoluteY - (viewH - cardH) / 2);
+
+        setTimeout(() => {
+          scrollViewRef.current?.scrollTo({
+            y: targetY,
+            animated: true,
+          });
+        }, 120);
+      }
     }
   };
 
@@ -277,7 +376,12 @@ export default function StudyGuideReaderTablet({
   const personaBtnActiveBg = isDark ? '#263D33' : '#FFFFFF';
   const personaBtnActiveBorder = isDark ? '#4ADE80' : '#C8DAD0';
 
-  const breadcrumbText = `${(subjectName || 'ENTOMOLOGY').toUpperCase()} / CHAPTER ${chapterNumber}`;
+  const cleanSub = (subjectName || 'Entomology')
+    .replace(/^Fundamentals of\s+/i, '')
+    .replace(/^Introductory\s+/i, '')
+    .trim();
+  const cleanChTitle = chapterTitle.replace(/^Chapter\s+\d+[:\s\-\.]*/i, '').trim();
+  const breadcrumbText = `${cleanSub} › Chapter ${chapterNumber}: ${cleanChTitle}`;
 
   // Clean chapter title for study guide header
   const cleanTitle = chapterTitle.replace(/&.*/, '').trim();
@@ -296,6 +400,9 @@ export default function StudyGuideReaderTablet({
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       <ScrollView
         ref={scrollViewRef}
+        onLayout={(e) => {
+          scrollViewHeightRef.current = e.nativeEvent.layout.height;
+        }}
         style={styles.scrollView}
         contentContainerStyle={[
           styles.scrollContent,
@@ -624,6 +731,11 @@ export default function StudyGuideReaderTablet({
             </View>
 
             {/* Render Each Section + Inline Quick Check Card */}
+            <View
+              onLayout={(e) => {
+                setSectionsContainerY(e.nativeEvent.layout.y);
+              }}
+            >
             {sections.map((sec, idx) => (
               <View
                 key={`${sec.id}-${idx}`}
@@ -637,13 +749,7 @@ export default function StudyGuideReaderTablet({
                 <View style={styles.sectionHeaderBanner}>
                   <View style={styles.sectionMetaTop}>
                     <Text style={[styles.sectionOrderLabel, { color: isDark ? '#F59E0B' : '#B45309' }]}>
-                      SECTION {sec.sectionNumber} OF {sections.length}
-                    </Text>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                    <Text style={[styles.sectionHeadingTitle, { color: textColor, flex: 1 }]}>
-                      {sec.title}
+                      SECTION {sec.sectionNumber}/{sections.length}
                     </Text>
                     {sec.hasInfographic && (
                       <View
@@ -662,6 +768,12 @@ export default function StudyGuideReaderTablet({
                     )}
                   </View>
 
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Text style={[styles.sectionHeadingTitle, { color: textColor, flex: 1 }]}>
+                      {sec.title}
+                    </Text>
+                  </View>
+
                   <View style={styles.sectionMetaRow}>
                     <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
                       <Ionicons name="time-outline" size={13} color={breadcrumbColor} />
@@ -672,18 +784,16 @@ export default function StudyGuideReaderTablet({
 
                     {sec.quickChecks && sec.quickChecks.length > 0 && (
                       <TouchableOpacity
-                        style={{
-                          backgroundColor: isDark ? '#3D2A14' : '#FEF3C7',
-                          borderColor: isDark ? '#B45309' : '#FDE68A',
-                          borderWidth: 1,
-                          paddingVertical: 4,
-                          paddingHorizontal: 10,
-                          borderRadius: 6,
-                        }}
+                        style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}
                         onPress={() => handleScrollToQuickCheck(idx)}
                         activeOpacity={0.75}
                       >
-                        <Text style={{ color: isDark ? '#FDE68A' : '#92400E', fontSize: 12, fontWeight: '700' }}>
+                        <Ionicons
+                          name={completedQuickChecks.has(sec.sectionNumber) ? 'checkmark-circle-outline' : 'help-circle-outline'}
+                          size={13}
+                          color={breadcrumbColor}
+                        />
+                        <Text style={[styles.readTimeText, { color: textColor }]}>
                           {completedQuickChecks.has(sec.sectionNumber)
                             ? '✓ Quick Check Answered'
                             : `${sec.quickChecks.length} quick check${sec.quickChecks.length > 1 ? 's' : ''}`}
@@ -692,20 +802,10 @@ export default function StudyGuideReaderTablet({
                     )}
 
                     {sec.examBadge && (
-                      <View
-                        style={{
-                          backgroundColor: '#FFE4E6',
-                          paddingVertical: 4,
-                          paddingHorizontal: 9,
-                          borderRadius: 6,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 5,
-                        }}
-                      >
-                        <Ionicons name="disc-outline" size={13} color="#BE123C" />
-                        <Text style={{ color: '#BE123C', fontSize: 12, fontWeight: '700' }}>
-                          {sec.examBadge}
+                      <View style={[styles.readTimeBadge, { backgroundColor: isDark ? '#22382B' : '#F1F5F9' }]}>
+                        <Ionicons name="disc-outline" size={13} color={breadcrumbColor} />
+                        <Text style={[styles.readTimeText, { color: textColor }]}>
+                          {sec.examBadge.replace(/\s*-\s*\d+\s*marks?/i, '')}
                         </Text>
                       </View>
                     )}
@@ -722,8 +822,11 @@ export default function StudyGuideReaderTablet({
                   <View
                     onLayout={(e) => {
                       const blockY = sectionLayouts[idx] || 0;
-                      const cardRelativeY = e.nativeEvent.layout.y;
-                      setQuickCheckLayouts((prev) => ({ ...prev, [idx]: blockY + cardRelativeY }));
+                      const { y: cardRelativeY, height: cardHeight } = e.nativeEvent.layout;
+                      setQuickCheckLayouts((prev) => ({
+                        ...prev,
+                        [idx]: { y: blockY + cardRelativeY, height: cardHeight },
+                      }));
                     }}
                   >
                     <QuickCheckCard
@@ -738,13 +841,14 @@ export default function StudyGuideReaderTablet({
                           : undefined
                       }
                       onAnswerSubmitted={(isCorrect) => {
-                        handleQcAnswer(sec.sectionNumber, isCorrect);
+                        handleQcAnswer(sec.sectionNumber, isCorrect, idx);
                       }}
                     />
                   </View>
                 )}
               </View>
             ))}
+            </View>
 
             {/* Key Concept Callout Box (as shown in user design PNG) */}
             <View style={[styles.keyConceptCard, { backgroundColor: isDark ? '#192C22' : '#E1EFE6' }]}>
@@ -776,32 +880,7 @@ export default function StudyGuideReaderTablet({
         </View>
       </ScrollView>
 
-      {/* Floating Bottom-Right "Next: Section [N+1] →" Button */}
-      {activeSectionIndex + 1 < sections.length && (
-        <TouchableOpacity
-          style={{
-            position: 'absolute',
-            bottom: 28,
-            right: 28,
-            backgroundColor: '#D97706',
-            paddingHorizontal: 22,
-            paddingVertical: 13,
-            borderRadius: 999,
-            elevation: 6,
-            shadowColor: '#B45309',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
-            shadowRadius: 6,
-            zIndex: 99,
-          }}
-          onPress={() => handleScrollToSection(activeSectionIndex + 1)}
-          activeOpacity={0.88}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700', letterSpacing: 0.2 }}>
-            Next: Section {activeSectionIndex + 2} →
-          </Text>
-        </TouchableOpacity>
-      )}
+
 
       {/* Floating Read Aloud / Voice Over Bar */}
       {showReadAloudBar && (
@@ -1068,6 +1147,7 @@ const styles = StyleSheet.create({
   sectionMetaTop: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   sectionOrderLabel: {
     fontSize: 12,

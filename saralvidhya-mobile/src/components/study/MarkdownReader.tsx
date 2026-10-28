@@ -196,6 +196,16 @@ export default function MarkdownReader({ content, title, chapterNumber = 1 }: Ma
       .replace(/^\*\*Target Bloom.*$/gmi, '')
       .replace(/^.*Word count:.*Persona:.*$/gmi, '');
 
+    // A2. Strip leading section heading if it repeats the section title passed into MarkdownReader
+    if (title && title.trim()) {
+      const cleanT = title.trim();
+      const escaped = cleanT.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      cleaned = cleaned.replace(
+        new RegExp(`^\\s*(?:#{1,4}\\s+|\\*\\*\\s*)?${escaped}(?:\\s*\\*\\*)?\\s*(?:\\r?\\n)+`, 'i'),
+        ''
+      );
+    }
+
     // B. Fix base64 padding & strip comments
     cleaned = cleaned
       .replace(/base64,\s+/g, 'base64,')

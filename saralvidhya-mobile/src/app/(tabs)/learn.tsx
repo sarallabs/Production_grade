@@ -26,7 +26,7 @@ import { BorderRadius, Spacing } from '@/constants/theme';
 const LEARN_SEGMENTS: NavSegment[] = [
   { id: 'read', label: 'Read', vectorIcon: 'book-outline' },
   { id: 'listen', label: 'Listen', vectorIcon: 'headset-outline' },
-  { id: 'watch', label: 'Videos', vectorIcon: 'play-circle-outline' },
+  { id: 'watch', label: 'Watch', vectorIcon: 'play-circle-outline' },
 ];
 
 class SafeErrorBoundary extends React.Component<
@@ -79,17 +79,34 @@ export default function LearnScreen() {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
   const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
-  const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
+  const params = useLocalSearchParams<{
+    chapter?: string;
+    segment?: string;
+    mode?: string;
+    topic?: string;
+    autoPlay?: string;
+  }>();
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<'read' | 'listen' | 'watch'>(
     params.segment === 'watch' ? 'watch' : params.segment === 'listen' ? 'listen' : 'read'
   );
-  const [listenInitialMode, setListenInitialMode] = useState<ListenMode>('detailed');
+  const [listenInitialMode, setListenInitialMode] = useState<ListenMode>(
+    params.mode === 'microcasts' ? 'microcasts' : 'detailed'
+  );
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
     params.chapter ? parseInt(params.chapter, 10) : 1
   );
+
+  useEffect(() => {
+    if (params.segment && ['read', 'listen', 'watch'].includes(params.segment)) {
+      setActiveSegment(params.segment as 'read' | 'listen' | 'watch');
+    }
+    if (params.mode && ['quick', 'detailed', 'microcasts'].includes(params.mode)) {
+      setListenInitialMode(params.mode as ListenMode);
+    }
+  }, [params.segment, params.mode]);
 
   useEffect(() => {
     if (params.chapter) {
@@ -148,11 +165,13 @@ export default function LearnScreen() {
           </View>
         </SafeErrorBoundary>
       ) : activeSegment === 'listen' ? (
-        <SafeErrorBoundary sectionName="Audio Lessons" key={`listen_${selectedChapterNum}`}>
+        <SafeErrorBoundary sectionName="Audio Lessons" key={`listen_${selectedChapterNum}_${listenInitialMode}_${params.topic || ''}`}>
           <ListenScreen
             chapterNumber={selectedChapterNum}
             chapterTitle={currentChapter.name}
-            initialMode={listenInitialMode}
+            initialMode={params.mode === 'microcasts' ? 'microcasts' : listenInitialMode}
+            initialMicrocastTopic={params.topic}
+            initialAutoPlay={params.autoPlay === 'true'}
             onNavigateToRead={() => {
               markResourceCompleted(activeSubject.id, currentChapter.number, 'audio');
               setActiveSegment('read');
@@ -161,14 +180,15 @@ export default function LearnScreen() {
           />
         </SafeErrorBoundary>
       ) : (
-        <SafeErrorBoundary sectionName="Study Guide" key={`read_${selectedChapterNum}`}>
+        <SafeErrorBoundary sectionName="Study Guide" key={`read_${selectedChapterNum}_${params.topic || ''}`}>
           <View style={{ flex: 1 }}>
             <StudyGuideReader
-              key={`study_reader_${selectedChapterNum}_${currentChapter.name}`}
+              key={`study_reader_${selectedChapterNum}_${currentChapter.name}_${params.topic || ''}`}
               chapterNumber={selectedChapterNum}
               chapterTitle={currentChapter.name}
               subjectName={activeSubject.name}
               subjectId={activeSubject.id}
+              initialTopic={params.topic}
               onBackPress={() => {
                 if (router.canGoBack()) {
                   router.back();

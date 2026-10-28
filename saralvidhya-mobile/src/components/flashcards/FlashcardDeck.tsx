@@ -9,6 +9,7 @@ import {
   Modal,
   Platform,
   ActivityIndicator,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -88,24 +89,22 @@ export default function FlashcardDeck({
   const [currentIndex, setCurrentIndex] = useState(
     cards && cards.length >= 4 ? 3 : 0
   );
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
-  const [showAnswerText, setShowAnswerText] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const flipAnimation = useSharedValue(0);
+  const revealAnim = useSharedValue(0);
 
   useEffect(() => {
     if (cards && cards.length > 0) {
       setDeck(cards);
       setCurrentIndex(cards.length >= 4 ? 3 : 0);
-      setIsFlipped(false);
+      setIsRevealed(false);
       setIsImageZoomed(false);
-      setShowAnswerText(false);
       setIsFinished(false);
-      flipAnimation.value = 0;
+      revealAnim.value = 0;
     }
   }, [cards]);
 
@@ -162,25 +161,25 @@ export default function FlashcardDeck({
     handlePersonaSelect(next);
   };
 
-  const handleFlip = () => {
+  const handleToggleReveal = () => {
     if (isImageZoomed) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (isFlipped) {
-      flipAnimation.value = withTiming(0, { duration: 320 });
-      setIsFlipped(false);
+    if (isRevealed) {
+      revealAnim.value = withTiming(0, { duration: 240 });
+      setIsRevealed(false);
     } else {
-      flipAnimation.value = withTiming(1, { duration: 320 });
-      setIsFlipped(true);
+      revealAnim.value = 0;
+      revealAnim.value = withTiming(1, { duration: 340 });
+      setIsRevealed(true);
     }
   };
 
   const handleNext = () => {
     if (currentIndex < deck.length - 1) {
       Haptics.selectionAsync();
-      flipAnimation.value = withTiming(0, { duration: 150 });
-      setIsFlipped(false);
+      revealAnim.value = 0;
+      setIsRevealed(false);
       setIsImageZoomed(false);
-      setShowAnswerText(false);
       setCurrentIndex((prev) => prev + 1);
     } else {
       setIsFinished(true);
@@ -191,10 +190,9 @@ export default function FlashcardDeck({
   const handlePrev = () => {
     if (currentIndex > 0) {
       Haptics.selectionAsync();
-      flipAnimation.value = withTiming(0, { duration: 150 });
-      setIsFlipped(false);
+      revealAnim.value = 0;
+      setIsRevealed(false);
       setIsImageZoomed(false);
-      setShowAnswerText(false);
       setCurrentIndex((prev) => prev - 1);
     }
   };
@@ -203,10 +201,9 @@ export default function FlashcardDeck({
     Haptics.selectionAsync();
     setCurrentIndex(0);
     setIsFinished(false);
-    flipAnimation.value = 0;
-    setIsFlipped(false);
+    revealAnim.value = 0;
+    setIsRevealed(false);
     setIsImageZoomed(false);
-    setShowAnswerText(false);
   };
 
   const handleShuffle = () => {
@@ -216,25 +213,12 @@ export default function FlashcardDeck({
     handleRestart();
   };
 
-  const frontAnimatedStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(flipAnimation.value, [0, 1], [0, 180]);
-    const isFront = flipAnimation.value < 0.5;
+  const revealedAnimatedStyle = useAnimatedStyle(() => {
+    const translateY = interpolate(revealAnim.value, [0, 1], [36, 0]);
+    const opacity = interpolate(revealAnim.value, [0, 1], [0, 1]);
     return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      opacity: isFront ? 1 : 0,
-      zIndex: isFront ? 2 : 0,
-      backfaceVisibility: 'hidden',
-    };
-  });
-
-  const backAnimatedStyle = useAnimatedStyle(() => {
-    const rotateValue = interpolate(flipAnimation.value, [0, 1], [180, 360]);
-    const isBack = flipAnimation.value >= 0.5;
-    return {
-      transform: [{ perspective: 1200 }, { rotateY: `${rotateValue}deg` }],
-      opacity: isBack ? 1 : 0,
-      zIndex: isBack ? 2 : 0,
-      backfaceVisibility: 'hidden',
+      transform: [{ translateY }],
+      opacity,
     };
   });
 
@@ -274,9 +258,9 @@ export default function FlashcardDeck({
     );
   }
 
-  // Exact card dimensions from Figma DevMode: width 380px, height 359px
-  const cardWidth = isTablet ? 460 : Math.min(width - 32, 380);
-  const cardHeight = isTablet ? 380 : 359;
+  // Card dimensions: wider and longer as requested
+  const cardWidth = isTablet ? 560 : Math.min(width - 32, 388);
+  const cardHeight = isTablet ? 500 : 440;
 
   return (
     <View style={styles.screenWrapper}>
@@ -319,210 +303,141 @@ export default function FlashcardDeck({
         })}
       </View>
 
-      {/* Outer Card Container with floating side navigation arrows */}
+      {/* The Non-flipping Card with Reveal Animation */}
       <View style={[styles.cardOuterContainer, { width: cardWidth, height: cardHeight }]}>
-        {/* The 3D Flip Card */}
-        <TouchableOpacity
-          activeOpacity={0.96}
-          onPress={handleFlip}
-          style={[styles.cardTouchArea, { width: cardWidth, height: cardHeight }]}
+        <LinearGradient
+          colors={CARD_GRADIENT_COLORS}
+          locations={CARD_GRADIENT_LOCATIONS}
+          start={{ x: 0.15, y: 0 }}
+          end={{ x: 0.85, y: 1 }}
+          style={styles.cardGradient}
         >
-          {/* FRONT FACE (Question + Tap here button) */}
-          <Animated.View
-            pointerEvents={isFlipped ? 'none' : 'auto'}
-            style={[styles.cardFace, frontAnimatedStyle, { width: cardWidth, height: cardHeight }]}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENT_COLORS}
-              locations={CARD_GRADIENT_LOCATIONS}
-              start={{ x: 0.15, y: 0 }}
-              end={{ x: 0.85, y: 1 }}
-              style={styles.cardGradient}
+          {/* Top-Right Counter Badge: e.g. 4/20 */}
+          <View style={styles.counterBadgeRight}>
+            <Text style={styles.counterText}>
+              {currentIndex + 1}/{deck.length}
+            </Text>
+          </View>
+
+          {/* Card Body */}
+          {!isRevealed ? (
+            /* UNREVEALED VIEW: Centered Question + "Tap" button */
+            <TouchableOpacity
+              style={styles.frontCenterBody}
+              activeOpacity={0.92}
+              onPress={handleToggleReveal}
             >
-              {/* Top-Left Counter Badge: e.g. 4/10 (.wrapper / .div) */}
-              <View style={styles.counterBadge}>
-                <Text style={styles.counterText}>
-                  {currentIndex + 1}/{deck.length}
-                </Text>
+              <Text style={styles.questionText}>
+                {currentCard?.front}
+              </Text>
+
+              <View style={styles.tapPill}>
+                <Text style={styles.tapPillText}>Tap</Text>
+                <Ionicons name="hand-left-outline" size={16} color="#1A2921" style={styles.handIcon} />
               </View>
-
-              {/* Top-Right Persona Badge (.flashCard8Child) */}
-              <TouchableOpacity
-                style={styles.cardPersonaBadge}
-                activeOpacity={0.75}
-                onPress={handleCyclePersona}
-                accessibilityRole="button"
-                accessibilityLabel={`Active persona: ${currentPersona}. Tap to switch`}
+            </TouchableOpacity>
+          ) : (
+            /* REVEALED VIEW: Question + Answer + Infographic shown together */
+            <View style={styles.revealedWrapper}>
+              <ScrollView
+                style={styles.cardScrollContainer}
+                contentContainerStyle={styles.cardScrollContent}
+                showsVerticalScrollIndicator={false}
+                bounces={false}
               >
-                <Image
-                  source={PERSONA_ICONS[currentPersona]}
-                  style={styles.cardPersonaImg}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-
-              {/* Center Content: Question + Tap here button */}
-              <View style={styles.frontCenterBody}>
-                <Text style={styles.questionText}>
-                  {currentCard?.front}
-                </Text>
-
+                {/* Question at Top */}
                 <TouchableOpacity
-                  style={styles.tapPill}
                   activeOpacity={0.8}
-                  onPress={handleFlip}
+                  onPress={handleToggleReveal}
+                  style={styles.questionTouchable}
                 >
-                  <Text style={styles.tapPillText}>Tap here</Text>
-                  <Ionicons name="hand-left-outline" size={16} color="#1A2921" style={styles.handIcon} />
+                  <Text style={styles.revealedQuestionText}>
+                    {currentCard?.front}
+                  </Text>
                 </TouchableOpacity>
-              </View>
-            </LinearGradient>
-          </Animated.View>
 
-          {/* BACK FACE (Question + Infographic answer) */}
-          <Animated.View
-            pointerEvents={isFlipped ? 'auto' : 'none'}
-            style={[styles.cardFace, styles.cardBack, backAnimatedStyle, { width: cardWidth, height: cardHeight }]}
-          >
-            <LinearGradient
-              colors={CARD_GRADIENT_COLORS}
-              locations={CARD_GRADIENT_LOCATIONS}
-              start={{ x: 0.15, y: 0 }}
-              end={{ x: 0.85, y: 1 }}
-              style={styles.cardGradient}
-            >
-              {/* Top-Left Counter Badge */}
-              <View style={styles.counterBadge}>
-                <Text style={styles.counterText}>
-                  {currentIndex + 1}/{deck.length}
-                </Text>
-              </View>
-
-              {/* Top-Right Persona Badge (.flashCard8Child) */}
-              <TouchableOpacity
-                style={styles.cardPersonaBadge}
-                activeOpacity={0.75}
-                onPress={handleCyclePersona}
-                accessibilityRole="button"
-                accessibilityLabel={`Active persona: ${currentPersona}. Tap to switch`}
-              >
-                <Image
-                  source={PERSONA_ICONS[currentPersona]}
-                  style={styles.cardPersonaImg}
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-
-              {/* Back Content: Question at top + Infographic below */}
-              <View style={styles.backCenterBody}>
-                <Text style={styles.backQuestionText} numberOfLines={3}>
-                  {currentCard?.front}
-                </Text>
-
-                {/* Infographic Image or Formatted Answer Text */}
-                {cardImageSource && !showAnswerText ? (
-                  <TouchableOpacity
-                    style={styles.infographicThumbWrap}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                      setIsImageZoomed(true);
-                    }}
-                    activeOpacity={0.88}
-                  >
-                    <Image
-                      source={cardImageSource}
-                      style={styles.infographicThumb}
-                      resizeMode="cover"
-                      onLoadStart={() => setImageLoading(true)}
-                      onLoadEnd={() => setImageLoading(false)}
-                      onError={() => {
-                        setImageError(true);
-                        setImageLoading(false);
-                      }}
-                    />
-                    {imageLoading && (
-                      <View style={styles.imageLoadingOverlay}>
-                        <ActivityIndicator size="small" color="#05996B" />
-                      </View>
-                    )}
-                    {/* Zoom indicator chip */}
-                    <View style={styles.zoomChip}>
-                      <Ionicons name="scan-outline" size={12} color="#FFFFFF" />
-                      <Text style={styles.zoomChipText}>Tap to zoom</Text>
+                {/* Revealed Section with bottom slide-up animation */}
+                <Animated.View style={[styles.revealedAnimatedBox, revealedAnimatedStyle]}>
+                  {/* Answer text */}
+                  {currentCard?.back ? (
+                    <View style={styles.revealedAnswerBox}>
+                      <Text style={styles.revealedAnswerText}>
+                        {currentCard.back}
+                      </Text>
                     </View>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.answerTextBox}>
-                    <Text style={styles.answerTextBody}>
-                      {currentCard?.back}
-                    </Text>
-                  </View>
-                )}
+                  ) : null}
 
-                {/* Bottom row: Optional text toggle if card has both text and image */}
-                {currentCard?.back && cardImageSource ? (
-                  <TouchableOpacity
-                    style={styles.switchModePill}
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      Haptics.selectionAsync();
-                      setShowAnswerText((prev) => !prev);
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={showAnswerText ? 'image-outline' : 'document-text-outline'}
-                      size={13}
-                      color="#1A2921"
-                    />
-                    <Text style={styles.switchModeText}>
-                      {showAnswerText ? 'Show Infographic' : 'Show Text Answer'}
-                    </Text>
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            </LinearGradient>
-          </Animated.View>
-        </TouchableOpacity>
+                  {/* Infographic Image (Tap to zoom) */}
+                  {cardImageSource ? (
+                    <TouchableOpacity
+                      style={styles.revealedInfographicWrap}
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                        setIsImageZoomed(true);
+                      }}
+                      activeOpacity={0.88}
+                    >
+                      <Image
+                        source={cardImageSource}
+                        style={styles.revealedInfographicImg}
+                        resizeMode="cover"
+                        onLoadStart={() => setImageLoading(true)}
+                        onLoadEnd={() => setImageLoading(false)}
+                        onError={() => {
+                          setImageError(true);
+                          setImageLoading(false);
+                        }}
+                      />
+                      {imageLoading && (
+                        <View style={styles.imageLoadingOverlay}>
+                          <ActivityIndicator size="small" color="#05996B" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ) : null}
+                </Animated.View>
+              </ScrollView>
+            </View>
+          )}
+        </LinearGradient>
+      </View>
 
-        {/* Floating Left Navigation Button (.frameChild) */}
+      {/* Bottom Navigation Arrows */}
+      <View style={[styles.bottomNavRow, { width: cardWidth }]}>
         <TouchableOpacity
           style={[
-            styles.arrowButton,
-            styles.leftArrow,
-            currentIndex === 0 && styles.arrowDisabled,
+            styles.bottomArrowBtn,
+            currentIndex === 0 && styles.bottomArrowBtnDisabled,
           ]}
           onPress={handlePrev}
           disabled={currentIndex === 0}
-          activeOpacity={0.8}
+          activeOpacity={0.75}
           accessibilityRole="button"
           accessibilityLabel="Previous card"
         >
           <Ionicons
-            name="arrow-back"
-            size={16}
-            color={currentIndex === 0 ? '#A6C5B3' : '#1C2E24'}
+            name="chevron-back"
+            size={22}
+            color={currentIndex === 0 ? (isDark ? '#4A6356' : '#A6C5B3') : (isDark ? '#E5EDE8' : '#1C2E24')}
           />
         </TouchableOpacity>
 
-        {/* Floating Right Navigation Button (.frameItem) */}
         <TouchableOpacity
           style={[
-            styles.arrowButton,
-            styles.rightArrow,
-            currentIndex === deck.length - 1 && styles.arrowDisabled,
+            styles.bottomArrowBtn,
+            currentIndex === deck.length - 1 && styles.bottomArrowBtnDisabled,
           ]}
           onPress={handleNext}
           disabled={currentIndex === deck.length - 1}
-          activeOpacity={0.8}
+          activeOpacity={0.75}
           accessibilityRole="button"
           accessibilityLabel="Next card"
         >
           <Ionicons
-            name="arrow-forward"
-            size={16}
-            color={currentIndex === deck.length - 1 ? '#A6C5B3' : '#1C2E24'}
+            name="chevron-forward"
+            size={22}
+            color={currentIndex === deck.length - 1 ? (isDark ? '#4A6356' : '#A6C5B3') : (isDark ? '#E5EDE8' : '#1C2E24')}
           />
         </TouchableOpacity>
       </View>
@@ -638,19 +553,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.45)',
   },
-  /* Card Outer Container */
-  cardOuterContainer: {
-    position: 'relative',
+  /* Bottom Navigation Arrows */
+  bottomNavRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 36,
+    marginTop: 18,
   },
-  cardTouchArea: {
-    borderRadius: 20,
+  bottomArrowBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
   },
-  cardFace: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
+  bottomArrowBtnDisabled: {
+    opacity: 0.28,
+  },
+  /* Card Outer Container */
+  cardOuterContainer: {
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
@@ -661,59 +591,38 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 6,
   },
-  cardBack: {
-    // Rotated by 180deg
-  },
   cardGradient: {
     flex: 1,
     borderRadius: 20,
     overflow: 'hidden',
     position: 'relative',
   },
-  counterBadge: {
+  counterBadgeRight: {
     position: 'absolute',
     top: -1,
-    left: -1,
-    width: 46,
-    height: 30,
+    right: -1,
+    minWidth: 50,
+    height: 28,
+    paddingHorizontal: 10,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 20,
-    borderBottomRightRadius: 10,
-    borderRightWidth: 1,
+    borderTopRightRadius: 20,
+    borderBottomLeftRadius: 12,
+    borderLeftWidth: 1,
     borderBottomWidth: 1,
-    borderColor: 'rgba(7, 7, 7, 0.2)',
+    borderColor: 'rgba(7, 7, 7, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
-  },
-  counterText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#000000',
-    lineHeight: 25,
-  },
-  cardPersonaBadge: {
-    position: 'absolute',
-    top: 10,
-    right: 12,
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(7, 7, 7, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
+    zIndex: 20,
     elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: -1, height: 1 },
+    shadowOpacity: 0.08,
     shadowRadius: 2,
   },
-  cardPersonaImg: {
-    width: 20,
-    height: 20,
+  counterText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#1C2E24',
   },
   frontCenterBody: {
     flex: 1,
@@ -722,12 +631,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   questionText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    lineHeight: 25,
+    lineHeight: 26,
     color: '#000000',
     textAlign: 'center',
-    width: 301,
+    maxWidth: 320,
   },
   tapPill: {
     flexDirection: 'row',
@@ -735,11 +644,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
     height: 38,
-    width: 220,
+    paddingHorizontal: 24,
     borderRadius: 19,
     borderWidth: 1,
     borderColor: 'rgba(0, 0, 0, 0.28)',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
     marginTop: 24,
   },
   tapPillText: {
@@ -750,27 +659,56 @@ const styles = StyleSheet.create({
   handIcon: {
     transform: [{ rotate: '45deg' }],
   },
-  backCenterBody: {
+  /* Revealed Content */
+  revealedWrapper: {
     flex: 1,
+    width: '100%',
+  },
+  cardScrollContainer: {
+    flex: 1,
+    width: '100%',
+  },
+  cardScrollContent: {
+    paddingTop: 36,
+    paddingBottom: 20,
+    paddingHorizontal: 16,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 14,
-    justifyContent: 'space-between',
   },
-  backQuestionText: {
-    fontSize: 14.5,
+  questionTouchable: {
+    width: '100%',
+    marginBottom: 12,
+  },
+  revealedQuestionText: {
+    fontSize: 15.5,
     fontWeight: '700',
-    lineHeight: 21,
-    color: '#000000',
+    lineHeight: 22,
+    color: '#0F1D16',
     textAlign: 'center',
-    width: 305,
-    marginBottom: 8,
   },
-  infographicThumbWrap: {
-    width: 285,
-    height: 159,
-    borderRadius: 4,
+  revealedAnimatedBox: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  revealedAnswerBox: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+    marginBottom: 12,
+  },
+  revealedAnswerText: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    lineHeight: 20,
+    color: '#0F1D16',
+    textAlign: 'left',
+  },
+  revealedInfographicWrap: {
+    width: '100%',
+    height: 195,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
@@ -781,90 +719,11 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
+    marginBottom: 8,
   },
-  infographicThumb: {
+  revealedInfographicImg: {
     width: '100%',
     height: '100%',
-  },
-  zoomChip: {
-    position: 'absolute',
-    bottom: 6,
-    right: 6,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(28, 46, 36, 0.88)',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  zoomChipText: {
-    color: '#FFFFFF',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  answerTextBox: {
-    width: 285,
-    minHeight: 140,
-    maxHeight: 170,
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255, 255, 255, 0.65)',
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.1)',
-    justifyContent: 'center',
-  },
-  answerTextBody: {
-    fontSize: 13,
-    fontWeight: '600',
-    lineHeight: 19,
-    color: '#0F1D16',
-    textAlign: 'left',
-  },
-  switchModePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.35)',
-    borderWidth: 0.8,
-    borderColor: 'rgba(0, 0, 0, 0.15)',
-    marginTop: 4,
-  },
-  switchModeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1A2921',
-  },
-  arrowButton: {
-    position: 'absolute',
-    top: '50%',
-    marginTop: -14,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 30,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1.5 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    borderWidth: 1,
-    borderColor: 'rgba(0, 0, 0, 0.12)',
-  },
-  leftArrow: {
-    left: -14,
-  },
-  rightArrow: {
-    right: -14,
-  },
-  arrowDisabled: {
-    opacity: 0.35,
   },
   finishedCard: {
     padding: 32,

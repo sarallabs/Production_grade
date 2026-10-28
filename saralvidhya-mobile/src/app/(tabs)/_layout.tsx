@@ -64,6 +64,11 @@ export default function TabsLayout() {
       {/* 2. Learn (Matches Mint #A4C6B5) */}
       <Tabs.Screen
         name="learn"
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('learn', { segment: 'read' });
+          },
+        })}
         options={{
           title: 'Learn',
           tabBarActiveTintColor: isDark ? '#A4C6B5' : '#3C7359',
@@ -76,6 +81,11 @@ export default function TabsLayout() {
       {/* 3. Practice (Matches Amber #D9A55C) */}
       <Tabs.Screen
         name="practice"
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('practice', { part: 'revise' });
+          },
+        })}
         options={{
           title: 'Practice',
           tabBarActiveTintColor: '#D9A55C',
@@ -88,6 +98,11 @@ export default function TabsLayout() {
       {/* 4. Prepare (Matches Terra #BE7E57) */}
       <Tabs.Screen
         name="prepare"
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('prepare', { segment: 'pyq' });
+          },
+        })}
         options={{
           title: 'Prepare',
           tabBarActiveTintColor: '#BE7E57',
@@ -100,6 +115,11 @@ export default function TabsLayout() {
       {/* 5. Resources (Matches Terra #BE7E57) */}
       <Tabs.Screen
         name="resources"
+        listeners={({ navigation }) => ({
+          tabPress: () => {
+            navigation.navigate('resources', { segment: 'mindmaps' });
+          },
+        })}
         options={{
           title: 'Resources',
           tabBarActiveTintColor: '#BE7E57',

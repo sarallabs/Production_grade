@@ -206,6 +206,13 @@ export default function SubjectChaptersScreen() {
             </Text>
           </View>
 
+          {/* H2 Section Header */}
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: headerTextColor }]}>
+              My Subjects
+            </Text>
+          </View>
+
           {/* Chapters List using ChapterCard */}
           <View style={isTablet ? styles.tabletGrid : undefined}>
             {(subject?.chapters || []).map((ch) => (
@@ -323,5 +330,15 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 13,
     fontWeight: '600',
+  },
+  sectionHeader: {
+    marginBottom: 14,
+    paddingHorizontal: 2,
+    marginTop: 4,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
 });
