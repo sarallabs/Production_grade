@@ -361,7 +361,7 @@ export function QuestionCard({
               flexShrink: 0,
             }}
           >
-            Q{question.id}
+            Q{question.id})
           </span>
           <div
             style={{
@@ -779,10 +779,10 @@ export default function PreviousYearQuestions() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
         {displayQuestions.length > 0 ? (
-          displayQuestions.map((q) => (
+          displayQuestions.map((q, idx) => (
             <QuestionCard
-              key={q.id}
-              question={q}
+              key={q.id ?? idx}
+              question={{ ...q, id: idx + 1 }}
               onSOS={() => handleSOS(q.subjectId, q.chapterNumber)}
             />
           ))

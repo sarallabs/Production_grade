@@ -528,7 +528,7 @@ function DescriptiveQuestionCard({
               lineHeight: 1.45,
             }}
           >
-            <MarkdownView content={question.text} />
+            <MarkdownView content={question.text} disableGlossary={true} />
           </div>
         </div>
 
@@ -557,10 +557,8 @@ function DescriptiveQuestionCard({
         }}
       >
         {([
-          { id: "type", label: "Type", icon: "⌨" },
-          { id: "scan", label: "Scan written answer", icon: "📷" },
-          { id: "draw", label: "Draw", icon: "✏️" },
-          { id: "image", label: "Image", icon: "🖼️" },
+          { id: 'type', label: 'Type and Draw', icon: '⌨' },
+          { id: 'scan', label: 'Scan/Upload', icon: '📷' },
         ] as const).map((tab) => {
           const isActive = inputMode === tab.id;
           return (
@@ -835,7 +833,7 @@ function DescriptiveQuestionCard({
           </div>
           {expandedRubric && (
             <div style={{ fontSize: "13px", color: "#1E2822", lineHeight: 1.6 }}>
-              {question.modelAnswer && <MarkdownView content={question.modelAnswer} />}
+              {question.modelAnswer && <MarkdownView content={question.modelAnswer} disableGlossary={true} />}
               {matchedKeywords.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginTop: "10px" }}>
                   {matchedKeywords.map((k, idx) => (
@@ -984,7 +982,7 @@ export default function MockTestView({
   const examTitle = isPreFinalTest
     ? "Certification Exam"
     : isPrepExam
-      ? "Preparation Exam"
+      ? "Exam Prep."
       : "Mock Test";
   const isGreenTheme = isPreFinalTest || isPrepExam;
 
@@ -1370,9 +1368,7 @@ export default function MockTestView({
         }
       }
 
-      const slicedQuestions = isPrepExam
-        ? combined.slice(0, selectedQuestionCount)
-        : combined;
+      const slicedQuestions = combined;
 
       const finalQuestions = slicedQuestions.map((q) => ({
         ...q,
@@ -1386,9 +1382,9 @@ export default function MockTestView({
         (q) => q.modelAnswer || q.type === "short_answer" || q.type === "long_answer" || q.type === "descriptive"
       );
       const prepSeconds =
-        selectedQuestionCount <= 10
+        finalQuestions.length <= 10
           ? 25 * 60
-          : selectedQuestionCount <= 12
+          : finalQuestions.length <= 12
           ? 40 * 60
           : 60 * 60;
       const totalSeconds = isPrepExam
@@ -1530,12 +1526,6 @@ export default function MockTestView({
 
   if (showSetupScreen) {
     if (isPrepExam) {
-      const prepCountOptions = [
-        { count: 10, timeLabel: "≈ 25 min" },
-        { count: 12, timeLabel: "≈ 40 min" },
-        { count: 20, timeLabel: "≈ 60 min" },
-      ];
-
       return (
         <div
           style={{
@@ -1563,12 +1553,10 @@ export default function MockTestView({
               flexShrink: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px" }}>
-              <span style={{ fontWeight: 800, color: "#1E2822" }}>
-                {subjectName || "Subject"}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.84rem" }}>
+              <span style={{ fontWeight: 700, color: "#1E2822" }} title={chapterName}>
+                {chapterName}
               </span>
-              <span style={{ color: "#949A94" }}>›</span>
-              <span style={{ color: "#6E766E", fontWeight: 500 }}>Exam Prep.</span>
             </div>
           </div>
 
@@ -1637,26 +1625,6 @@ export default function MockTestView({
                   </h1>
                 </div>
 
-                <div
-                  style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E2DDD3",
-                    color: "#1E2822",
-                    borderRadius: "999px",
-                    padding: "5px 13px",
-                    fontSize: "11.5px",
-                    fontWeight: 700,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 1px 2px rgba(30, 40, 34, 0.03)",
-                  }}
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="#C85A48" stroke="#C85A48" strokeWidth="1.8">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                  </svg>
-                  <span>All the best!</span>
-                </div>
               </div>
 
               {/* Two-Column Grid: Left (Unit Card) + Right (Config Cards + Start Button) */}
@@ -1770,91 +1738,6 @@ export default function MockTestView({
                     gap: "10px",
                   }}
                 >
-                  {/* 1. NO. OF QUESTIONS Card */}
-                  <div
-                    style={{
-                      background: "#FFFFFF",
-                      border: "1px solid #E2DDD3",
-                      borderRadius: "13px",
-                      padding: "11px 15px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 800,
-                        letterSpacing: "0.08em",
-                        color: "#6E766E",
-                        textTransform: "uppercase",
-                        marginBottom: "8px",
-                      }}
-                    >
-                      NO. OF QUESTIONS
-                    </div>
-
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(3, 1fr)",
-                        gap: "8px",
-                      }}
-                    >
-                      {prepCountOptions.map((opt) => {
-                        const isChosen = selectedQuestionCount === opt.count;
-                        return (
-                          <button
-                            key={opt.count}
-                            type="button"
-                            onClick={() => setSelectedQuestionCount(opt.count)}
-                            style={{
-                              padding: "6px 6px",
-                              borderRadius: "9px",
-                              border: isChosen ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
-                              background: isChosen ? "#FAF2E9" : "#FFFFFF",
-                              cursor: "pointer",
-                              display: "flex",
-                              flexDirection: "column",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              gap: "1px",
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            <span
-                              style={{
-                                fontSize: "13px",
-                                fontWeight: 800,
-                                color: isChosen ? "#A86334" : "#1E2822",
-                              }}
-                            >
-                              {opt.count}
-                            </span>
-                            <span
-                              style={{
-                                fontSize: "10px",
-                                fontWeight: 600,
-                                color: isChosen ? "#A86334" : "#6E766E",
-                              }}
-                            >
-                              {opt.timeLabel}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    <div
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 600,
-                        color: "#49524C",
-                        marginTop: "7px",
-                      }}
-                    >
-                      University pattern · 2M × 6 · 5M × 4 · 10M × 2
-                    </div>
-                  </div>
-
                   {/* 2. MODE Card */}
                   <div
                     style={{
@@ -1980,10 +1863,8 @@ export default function MockTestView({
 
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
                       {[
-                        { label: "Type", icon: "⌨", highlight: false },
-                        { label: "Scan written answer", icon: "📷", highlight: true },
-                        { label: "Draw", icon: "✏️", highlight: false },
-                        { label: "Image", icon: "🖼️", highlight: false },
+                        { label: 'Type and Draw', icon: '⌨', highlight: false },
+                        { label: 'Scan/Upload', icon: '📷', highlight: true },
                       ].map((fmt) => (
                         <span
                           key={fmt.label}
@@ -2146,26 +2027,6 @@ export default function MockTestView({
               </h1>
             </div>
 
-            <div
-              style={{
-                background: themeLightBg,
-                border: `1px solid ${themeBorder}`,
-                color: themeDarkColor,
-                borderRadius: "20px",
-                padding: "6px 16px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={themeDarkColor} strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="m9 12 2 2 4-4" />
-              </svg>
-              All the best!
-            </div>
           </div>
 
           <div
@@ -2883,7 +2744,7 @@ export default function MockTestView({
                         Q{currentQuestionIdx + 1}
                       </span>
                       <div style={{ fontSize: "16px", fontWeight: 700, color: "#1E2822", lineHeight: 1.45 }}>
-                        <MarkdownView content={currentQ.text} />
+                        <MarkdownView content={currentQ.text} disableGlossary={true} />
                       </div>
                     </div>
                     <span style={{ fontSize: "12px", fontWeight: 600, color: "#7A807A", whiteSpace: "nowrap" }}>
@@ -2954,7 +2815,7 @@ export default function MockTestView({
                             {String.fromCharCode(65 + optIdx)}
                           </div>
                           <div style={{ flex: 1, fontWeight: 500 }}>
-                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, "\\f").replace(/♠rac/g, "\\frac").replace(/♠/g, "\\f")} />
+                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, "\\f").replace(/♠rac/g, "\\frac").replace(/♠/g, "\\f")} disableGlossary={true} />
                           </div>
                         </div>
                       );
@@ -3189,7 +3050,7 @@ export default function MockTestView({
                     }}
                   >
                     <span style={{ whiteSpace: "nowrap" }}>{idx + 1}.</span>
-                    <MarkdownView content={q.text} />
+                    <MarkdownView content={q.text} disableGlossary={true} />
                   </div>
 
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -3277,7 +3138,7 @@ export default function MockTestView({
                             {String.fromCharCode(65 + optIdx)}.
                           </span>
                           <div style={{ flex: 1, fontWeight: 500 }}>
-                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} />
+                            <MarkdownView content={opt.replace(/[\x0c\u000c]/g, '\\f').replace(/♠rac/g, '\\frac').replace(/♠/g, '\\f')} disableGlossary={true} />
                           </div>
                         </div>
                       );

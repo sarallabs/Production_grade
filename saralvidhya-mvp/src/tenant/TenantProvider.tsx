@@ -176,10 +176,14 @@ export function getCloudUiCopy(): Record<string, any> {
     studyTools: {
       ...(activeCloudPlatformConfig?.uiCopy?.studyTools || {}),
       ...(activeCloudTenantConfig?.uiCopy?.studyTools || {}),
+      key_takeaways: "Takeaways",
+      prep_exam: "Exam Prep.",
     },
     toolbarLabels: {
       ...(activeCloudPlatformConfig?.uiCopy?.toolbarLabels || {}),
       ...(activeCloudTenantConfig?.uiCopy?.toolbarLabels || {}),
+      key_takeaways: "Takeaways",
+      prep_exam: "Exam Prep.",
     },
     toolbarSections: {
       ...(activeCloudPlatformConfig?.uiCopy?.toolbarSections || {}),

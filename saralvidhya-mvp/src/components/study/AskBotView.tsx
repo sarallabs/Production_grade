@@ -618,6 +618,7 @@ export default function AskBotView({
   const selectedLang = subjectId === "pubadm_ur" ? "ur-PK" : "en-IN";
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const latestBotCardRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const speechSessionRef = useRef<SpeechSession | null>(null);
   const sessionStartingPromiseRef = useRef<Promise<SpeechSession> | null>(null);
@@ -626,11 +627,44 @@ export default function AskBotView({
   const pointerDownTimeRef = useRef<number>(0);
   const isHoldingMicRef = useRef<boolean>(false);
   const currentInputRef = useRef<string>("");
+  const [typingState, setTypingState] = useState<{ idx: number; charCount: number; totalChars: number } | null>(null);
+  const typingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Stop TTS and mic on unmount
+  const startTypingForBotAnswer = (botMsgIdx: number, structured: StructuredBotAnswer) => {
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    const totalChars = Math.max(1, structured.paragraphs.reduce((acc, p) => acc + p.length, 0));
+    setTypingState({ idx: botMsgIdx, charCount: 14, totalChars });
+    setTimeout(() => {
+      latestBotCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 40);
+    const step = Math.max(10, Math.ceil(totalChars / 42));
+    typingTimerRef.current = setInterval(() => {
+      setTypingState((prev) => {
+        if (!prev || prev.idx !== botMsgIdx) return null;
+        const nextCount = prev.charCount + step;
+        if (nextCount >= prev.totalChars) {
+          if (typingTimerRef.current) {
+            clearInterval(typingTimerRef.current);
+            typingTimerRef.current = null;
+          }
+          return null;
+        }
+        return { ...prev, charCount: nextCount };
+      });
+    }, 24);
+  };
+
+  // Stop TTS, typing timer, and mic on unmount
   useEffect(() => {
     return () => {
       googleTtsStop();
+      if (typingTimerRef.current) {
+        clearInterval(typingTimerRef.current);
+        typingTimerRef.current = null;
+      }
       if (speechSessionRef.current) {
         speechSessionRef.current.stop().catch(() => {});
         speechSessionRef.current = null;
@@ -826,6 +860,7 @@ export default function AskBotView({
         ? `${textToSend} (regarding "${lastBotMsg.structured.title}" in ${unitPrefix} ${_chapterNumber}: ${cleanChapterTitle})`
         : textToSend;
 
+    const newBotIdx = messages.length + 1;
     setMessages((prev) => [
       ...prev,
       { role: "user", text: textToSend },
@@ -833,8 +868,8 @@ export default function AskBotView({
     ]);
 
     setTimeout(() => {
-      chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-    }, 60);
+      latestBotCardRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
 
     try {
       const result = await askGemini(
@@ -862,6 +897,7 @@ export default function AskBotView({
         };
         return updated;
       });
+      startTypingForBotAnswer(newBotIdx, structured);
     } catch {
       const lowerQ = textToSend.toLowerCase().trim();
       const isSeedMatch = lowerQ === seedExchange.question.toLowerCase().trim();
@@ -882,6 +918,7 @@ export default function AskBotView({
           };
           return updated;
         });
+        startTypingForBotAnswer(newBotIdx, structured);
       } else {
         const fallbackText = `**${textToSend.replace(/\?+$/, "")}** is a core concept in **${unitPrefix} ${_chapterNumber} (${cleanChapterTitle})**.\n\nIt connects the foundational definitions in your course syllabus with practical application scenarios. Review the key structural properties and standard examples in the In-depth Read notes for complete exam coverage.`;
         const structured = parseBotResponseToStructured(
@@ -900,17 +937,20 @@ export default function AskBotView({
           };
           return updated;
         });
+        startTypingForBotAnswer(newBotIdx, structured);
       }
     } finally {
       setIsSending(false);
-      setTimeout(() => {
-        chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-      }, 100);
     }
   };
 
   const handleResetToSeed = () => {
     googleTtsStop();
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    setTypingState(null);
     setSpeakingIdx(null);
     setActiveSessionId(null);
     setMessages([]);
@@ -920,6 +960,11 @@ export default function AskBotView({
 
   const handleSelectSession = (session: ChatSession) => {
     googleTtsStop();
+    if (typingTimerRef.current) {
+      clearInterval(typingTimerRef.current);
+      typingTimerRef.current = null;
+    }
+    setTypingState(null);
     setSpeakingIdx(null);
     setActiveSessionId(session.id);
     setMessages(session.messages.slice(-30));
@@ -1081,12 +1126,8 @@ export default function AskBotView({
                 marginLeft: "4px",
               }}
             >
-              <span style={{ color: "#1E2822", fontWeight: 700 }}>Ask me</span>
-              <span style={{ margin: "0 8px", color: "#B4B8B2" }}>›</span>
-              <span>{subjectName}</span>
-              <span style={{ margin: "0 8px", color: "#B4B8B2" }}>›</span>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
-                {unitPrefix} {_chapterNumber} · {cleanChapterTitle}
+              <span style={{ color: "#1E2822", fontWeight: 700, fontSize: "0.84rem", overflow: "hidden", textOverflow: "ellipsis" }} title={chapterName}>
+                {chapterName}
               </span>
             </div>
           )}
@@ -1322,152 +1363,79 @@ export default function AskBotView({
                 flexDirection: "column",
                 gap: "18px",
                 width: "100%",
-                marginTop: isCompactDrawer ? "8px" : "24px",
+                marginTop: isCompactDrawer ? "8px" : "20px",
               }}
             >
-              {/* Welcome Card matching Editorial Botanical + Terracotta Palette */}
+              {/* Subtle Welcome Card */}
               <div
                 style={{
                   width: "100%",
                   background: "#FFFFFF",
-                  border: "1px solid #E8E2D7",
-                  borderLeft: '4px solid #D9A382',
-                  borderRadius: "16px",
-                  padding: isCompactDrawer ? "20px 18px" : "26px 30px",
-                  boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                  border: "1px solid #E8E4DB",
+                  borderRadius: "14px",
+                  padding: isCompactDrawer ? "18px 18px" : "22px 26px",
+                  boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
                   boxSizing: "border-box",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "10px",
+                  gap: "6px",
                 }}
               >
-                <div
+                <span
                   style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    alignSelf: "flex-start",
-                    gap: "6px",
-                    padding: "4px 10px",
-                    borderRadius: "999px",
-                    background: "#E8F0EB",
-                    color: "#365343",
-                    fontSize: "10.5px",
-                    fontWeight: 800,
-                    letterSpacing: "0.07em",
-                    textTransform: "uppercase",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#6B766F",
+                    letterSpacing: "0.01em",
                   }}
                 >
-                  <span>SARAL · 24/7 LEARNING ASSISTANT</span>
-                </div>
+                  Saral
+                </span>
 
                 <h2
                   style={{
                     margin: 0,
-                    fontFamily: "'Fraunces', 'Georgia', serif",
-                    fontSize: isCompactDrawer ? "18px" : "22px",
+                    fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+                    fontSize: isCompactDrawer ? "16px" : "18px",
                     fontWeight: 600,
-                    color: "#1E2822",
-                    lineHeight: 1.28,
+                    color: "#25302A",
+                    lineHeight: 1.35,
                     letterSpacing: "-0.01em",
                   }}
                 >
-                  What would you like to explore in {unitPrefix} {_chapterNumber} ·{" "}
-                  {cleanChapterTitle}?
+                  What would you like to explore in {cleanChapterTitle}?
                 </h2>
 
                 <p
                   style={{
                     margin: 0,
-                    fontSize: "13.5px",
-                    lineHeight: 1.6,
-                    color: "#4A544E",
+                    fontSize: "13px",
+                    lineHeight: 1.5,
+                    color: "#6B766F",
+                    fontWeight: 400,
                   }}
                 >
-                  Every answer is aligned with your syllabus —
-                  complete with <strong style={{ color: "#BD7D52" }}>Exam Tips</strong>,{" "}
-                  <strong style={{ color: "#1E2822" }}>In-depth Read § citations</strong>,
-                  and direct <strong style={{ color: "#1E2822" }}>Mindmap node links</strong>.
+                  Ask a question below or pick a topic to get started.
                 </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    flexWrap: "wrap",
-                    marginTop: "4px",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: "12px",
-                      color: "#7A827C",
-                      fontWeight: 600,
-                    }}
-                  >
-                    Connected to ·
-                  </span>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "999px",
-                      background: "#F6F4EE",
-                      border: "1px solid #E5DFD3",
-                      fontSize: "12px",
-                      color: "#1E2822",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {unitPrefix} {_chapterNumber} Syllabus Notes
-                  </span>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "999px",
-                      background: "#F6F4EE",
-                      border: "1px solid #E5DFD3",
-                      fontSize: "12px",
-                      color: "#1E2822",
-                      fontWeight: 600,
-                    }}
-                  >
-                    In-depth Read &amp; Mindmaps
-                  </span>
-                  <span
-                    style={{
-                      padding: "4px 12px",
-                      borderRadius: "999px",
-                      background: "#FBF4EE",
-                      border: "1px solid #EBD5C3",
-                      fontSize: "12px",
-                      color: "#B86B35",
-                      fontWeight: 700,
-                    }}
-                  >
-                    University PYQ Patterns
-                  </span>
-                </div>
               </div>
 
-              {/* Starter Prompt Pills */}
+              {/* Subtle Suggested Questions */}
               <div>
                 <div
                   style={{
-                    fontSize: "10.5px",
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    color: "#6E7771",
-                    textTransform: "uppercase",
-                    marginBottom: "10px",
+                    fontSize: "11.5px",
+                    fontWeight: 500,
+                    color: "#7A827C",
+                    marginBottom: "8px",
                   }}
                 >
-                  SUGGESTED QUESTIONS FOR {unitPrefix.toUpperCase()} {_chapterNumber}
+                  Suggested questions
                 </div>
                 <div
                   style={{
                     display: "flex",
                     flexWrap: "wrap",
-                    gap: "10px",
+                    gap: "8px",
                   }}
                 >
                   {[
@@ -1480,27 +1448,26 @@ export default function AskBotView({
                       onClick={() => handleSend(qText)}
                       disabled={isSending}
                       style={{
-                        padding: "9px 16px",
+                        padding: "7px 14px",
                         borderRadius: "999px",
                         background: "#FFFFFF",
-                        border: "1px solid #E5CFC0",
-                        color: "#1E2822",
+                        border: "1px solid #E6E2D8",
+                        color: "#38423C",
                         fontSize: "12.5px",
-                        fontWeight: 600,
+                        fontWeight: 500,
                         cursor: isSending ? "default" : "pointer",
-                        boxShadow: "0 1px 4px rgba(30, 40, 34, 0.03)",
                         transition: "all 0.15s ease",
                         textAlign: "left",
                       }}
                       onMouseEnter={(e) => {
                         if (!isSending) {
-                          e.currentTarget.style.background = "#FBF5EE";
-                          e.currentTarget.style.borderColor = "#BD7D52";
+                          e.currentTarget.style.background = "#FAF8F4";
+                          e.currentTarget.style.borderColor = "#D5CEC0";
                         }
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.background = "#FFFFFF";
-                        e.currentTarget.style.borderColor = "#E5CFC0";
+                        e.currentTarget.style.borderColor = "#E6E2D8";
                       }}
                     >
                       {qText}
@@ -1509,17 +1476,14 @@ export default function AskBotView({
                 </div>
               </div>
 
-              {/* Recent Sessions Strip on Welcome Screen */}
+              {/* Subtle Recent Sessions (Max 2) */}
               {sessions.length > 0 && (
                 <div
                   style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #E8E2D7",
-                    borderRadius: "14px",
-                    padding: "14px 18px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "10px",
+                    gap: "6px",
+                    marginTop: "2px",
                   }}
                 >
                   <div
@@ -1531,77 +1495,81 @@ export default function AskBotView({
                   >
                     <span
                       style={{
-                        fontSize: "10.5px",
-                        fontWeight: 800,
-                        letterSpacing: "0.08em",
-                        color: "#6E7771",
-                        textTransform: "uppercase",
+                        fontSize: "11.5px",
+                        fontWeight: 500,
+                        color: "#7A827C",
                       }}
                     >
-                      RECENT SESSIONS ({sessions.length})
+                      Recent
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => setIsHistoryOpen(true)}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#BD7D52",
-                        fontSize: "12px",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        padding: 0,
-                      }}
-                    >
-                      View all history →
-                    </button>
+                    {sessions.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsHistoryOpen(true)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#6B766F",
+                          fontSize: "11.5px",
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          padding: 0,
+                        }}
+                      >
+                        All history →
+                      </button>
+                    )}
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-                    {sessions.slice(0, 3).map((sess) => {
-                      const qCount = sess.messages.filter((m) => m.role === "user").length;
-                      return (
-                        <button
-                          key={sess.id}
-                          type="button"
-                          onClick={() => handleSelectSession(sess)}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {sessions.slice(0, 2).map((sess) => (
+                      <button
+                        key={sess.id}
+                        type="button"
+                        onClick={() => handleSelectSession(sess)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "12px",
+                          padding: "8px 12px",
+                          borderRadius: "10px",
+                          background: "rgba(255, 255, 255, 0.7)",
+                          border: "1px solid #E8E4DB",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "background 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#FFFFFF";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)";
+                        }}
+                      >
+                        <span
                           style={{
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            gap: "12px",
-                            padding: "9px 13px",
-                            borderRadius: "10px",
-                            background: "#FAF8F3",
-                            border: "1px solid #EAE4D7",
-                            cursor: "pointer",
-                            textAlign: "left",
+                            fontSize: "12.5px",
+                            fontWeight: 500,
+                            color: "#38423C",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}
                         >
-                          <span
-                            style={{
-                              fontSize: "12.8px",
-                              fontWeight: 600,
-                              color: "#1E2822",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            🕒 {sess.title}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: "11.5px",
-                              color: "#7A827C",
-                              fontWeight: 600,
-                              flexShrink: 0,
-                            }}
-                          >
-                            {qCount} Q&amp;A · {formatSessionTime(sess.updatedAt)}
-                          </span>
-                        </button>
-                      );
-                    })}
+                          {sess.title}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "11px",
+                            color: "#88908B",
+                            fontWeight: 400,
+                            flexShrink: 0,
+                          }}
+                        >
+                          {formatSessionTime(sess.updatedAt)}
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
@@ -1616,14 +1584,14 @@ export default function AskBotView({
                     alignSelf: "flex-end",
                     maxWidth: "85%",
                     background: "#FFFFFF",
-                    border: "1px solid #E6D2C3",
-                    borderRadius: "18px 18px 4px 18px",
-                    padding: "12px 22px",
-                    color: "#1E2822",
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    lineHeight: 1.4,
-                    boxShadow: "0 2px 8px rgba(30, 40, 34, 0.04)",
+                    border: "1px solid #E8E4DB",
+                    borderRadius: "16px 16px 4px 16px",
+                    padding: "10px 18px",
+                    color: "#25302A",
+                    fontSize: "13.5px",
+                    fontWeight: 500,
+                    lineHeight: 1.45,
+                    boxShadow: "0 1px 4px rgba(30, 40, 34, 0.03)",
                   }}
                 >
                   {m.text}
@@ -1635,28 +1603,25 @@ export default function AskBotView({
               return (
                 <div
                   key={idx}
+                  ref={latestBotCardRef}
                   style={{
                     width: "100%",
                     background: "#FFFFFF",
-                    border: "1px solid #E8E2D7",
-                    borderLeft: '4px solid #D9A382',
-                    borderRadius: "16px",
-                    padding: "22px 26px",
-                    boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                    border: "1px solid #E8E4DB",
+                    borderRadius: "14px",
+                    padding: "18px 22px",
+                    boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "12.5px",
-                      marginBottom: "10px",
+                      fontSize: "12px",
+                      color: "#6B766F",
+                      fontWeight: 600,
+                      marginBottom: "8px",
                     }}
                   >
-                    <strong style={{ color: "#1E2822" }}>Saral</strong>
-                    <span style={{ color: "#BD7D52", fontWeight: 600 }}>
-                      {" "}
-                      · 24/7 Learning Assistant — checking your {unitPrefix}{" "}
-                      {_chapterNumber} material…
-                    </span>
+                    Saral
                   </div>
                   <div className="saral-loading-bubble" aria-label="Thinking">
                     <div className="saral-loading-dot"></div>
@@ -1679,55 +1644,63 @@ export default function AskBotView({
             const isLastBot = idx === messages.length - 1;
             const fb = feedbackMap[idx];
             const isSaved = Boolean(savedTakeawayMap[idx]);
+            const isTypingThis = typingState?.idx === idx;
+            let remainingChars = isTypingThis ? typingState.charCount : Infinity;
+            const visibleParagraphs: string[] = [];
+            for (const p of st.paragraphs) {
+              if (remainingChars <= 0) break;
+              if (remainingChars < p.length) {
+                visibleParagraphs.push(p.slice(0, remainingChars) + " ▍");
+                remainingChars = 0;
+              } else {
+                visibleParagraphs.push(p);
+                remainingChars -= p.length;
+              }
+            }
 
             return (
               <div
                 key={idx}
+                ref={isLastBot ? latestBotCardRef : undefined}
                 style={{
                   display: "flex",
                   flexDirection: "column",
                   width: "100%",
+                  scrollMarginTop: "12px",
                 }}
               >
-                {/* ── Saral Grounded Answer Card ── */}
+                {/* ── Subtle Saral Answer Card ── */}
                 <div
                   style={{
                     width: "100%",
                     background: "#FFFFFF",
-                    border: "1px solid #E8E2D7",
-                    borderLeft: '4px solid #D9A382',
-                    borderRadius: "16px",
-                    padding: isCompactDrawer ? "18px 18px" : "24px 28px 22px",
-                    boxShadow: "0 6px 24px rgba(30, 40, 34, 0.05)",
+                    border: "1px solid #E8E4DB",
+                    borderRadius: "14px",
+                    padding: isCompactDrawer ? "16px 16px" : "20px 24px",
+                    boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
                     boxSizing: "border-box",
                   }}
                 >
                   {/* Header attribution */}
                   <div
                     style={{
-                      fontSize: "12.5px",
-                      lineHeight: 1.4,
+                      fontSize: "12px",
+                      color: "#6B766F",
+                      fontWeight: 600,
                       marginBottom: "6px",
                     }}
                   >
-                    <strong style={{ color: "#1E2822", fontWeight: 800 }}>
-                      Saral
-                    </strong>
-                    <span style={{ color: "#BD7D52", fontWeight: 600 }}>
-                      {" "}
-                      · 24/7 Learning Assistant — answered from your {unitPrefix}{" "}
-                      {_chapterNumber} material
-                    </span>
+                    Saral
                   </div>
 
                   {/* Answer Heading */}
                   <h2
                     style={{
-                      margin: "0 0 12px 0",
-                      fontSize: isCompactDrawer ? "16.5px" : "18.5px",
-                      fontWeight: 800,
-                      color: "#1E2822",
-                      lineHeight: 1.3,
+                      margin: "0 0 10px 0",
+                      fontSize: isCompactDrawer ? "15.5px" : "17px",
+                      fontWeight: 600,
+                      color: "#25302A",
+                      lineHeight: 1.35,
                       letterSpacing: "-0.01em",
                     }}
                   >
@@ -1740,414 +1713,260 @@ export default function AskBotView({
                       display: "flex",
                       flexDirection: "column",
                       gap: "10px",
-                      fontSize: "13.8px",
+                      fontSize: "13.5px",
                       lineHeight: 1.62,
-                      color: "#2C3530",
+                      color: "#333D37",
                     }}
                   >
-                    {st.paragraphs.map((p, pIdx) => (
+                    {visibleParagraphs.map((p, pIdx) => (
                       <div key={pIdx} className="saral-ask-v2-md">
                         <MarkdownView content={p} isPurpleTheme={false} />
                       </div>
                     ))}
                   </div>
 
-                  {/* EXAM TIP Callout Box */}
-                  <div
-                    style={{
-                      marginTop: "14px",
-                      marginBottom: "16px",
-                      padding: "12px 16px",
-                      borderRadius: "10px",
-                      background: "#FDF7F0",
-                      border: "1px solid #F0D9C2",
-                      fontSize: "13px",
-                      lineHeight: 1.55,
-                      color: "#3A322B",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "#C27A38",
-                        fontWeight: 800,
-                        letterSpacing: "0.03em",
-                      }}
-                    >
-                      EXAM TIP ·{" "}
-                    </span>
-                    {st.examTipPrefix && <span>{st.examTipPrefix}</span>}
-                    {st.examTipHighlight && (
-                      <strong style={{ color: "#B86B35", fontWeight: 700 }}>
-                        {st.examTipHighlight}
-                      </strong>
-                    )}
-                    {st.examTipSuffix && <span>{st.examTipSuffix}</span>}
-                  </div>
-
-                  {/* Grounded in · chips + Thumbs Up / Down */}
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "10px",
-                      flexWrap: "wrap",
-                      marginBottom: "16px",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
-                      }}
-                    >
-                      <span
+                  {!isTypingThis && (
+                    <>
+                      {/* Subtle Exam Tip Callout Box */}
+                      <div
                         style={{
-                          fontSize: "12px",
-                          color: "#7A827C",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Grounded in ·
-                      </span>
-
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "4px 12px",
-                          borderRadius: "999px",
-                          background: "#F6F4EE",
-                          border: "1px solid #E5DFD3",
-                          fontSize: "12px",
+                          marginTop: "14px",
+                          marginBottom: "14px",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          background: "#FAF8F4",
+                          border: "1px solid #EAE4D8",
+                          fontSize: "12.5px",
+                          lineHeight: 1.55,
                           color: "#4A544E",
                         }}
                       >
-                        {st.groundedTopic.includes("·") ? (
-                          <>
-                            <span>
-                              {st.groundedTopic.split("·")[0].trim()} ·{" "}
-                            </span>
-                            <strong
-                              style={{
-                                color: "#1E2822",
-                                fontWeight: 700,
-                                marginLeft: "3px",
-                              }}
-                            >
-                              {st.groundedTopic
-                                .split("·")
-                                .slice(1)
-                                .join("·")
-                                .trim()}
-                            </strong>
-                          </>
-                        ) : (
-                          <strong style={{ color: "#1E2822", fontWeight: 700 }}>
-                            {st.groundedTopic}
+                        <span
+                          style={{
+                            color: "#8C6239",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Exam tip ·{" "}
+                        </span>
+                        {st.examTipPrefix && <span>{st.examTipPrefix}</span>}
+                        {st.examTipHighlight && (
+                          <strong style={{ color: "#25302A", fontWeight: 600 }}>
+                            {st.examTipHighlight}
                           </strong>
                         )}
-                      </span>
+                        {st.examTipSuffix && <span>{st.examTipSuffix}</span>}
+                      </div>
 
-                      <span
+                      {/* Subtle Action Row + Feedback */}
+                      <div
                         style={{
-                          display: "inline-flex",
+                          display: "flex",
                           alignItems: "center",
-                          padding: "4px 12px",
-                          borderRadius: "999px",
-                          background: "#F6F4EE",
-                          border: "1px solid #E5DFD3",
-                          fontSize: "12px",
-                          color: "#4A544E",
+                          justifyContent: "space-between",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                          paddingTop: "4px",
                         }}
                       >
-                        <span>In-depth Read · </span>
-                        <strong
+                        <div
                           style={{
-                            color: "#1E2822",
-                            fontWeight: 700,
-                            marginLeft: "3px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
                           }}
                         >
-                          {st.groundedSection}
-                        </strong>
-                      </span>
+                          <button
+                            type="button"
+                            onClick={() => onNavigateTool?.("detailed")}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "999px",
+                              background: "#FAF9F5",
+                              border: "1px solid #E6E2D8",
+                              color: "#38423C",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <span>Read</span>
+                          </button>
 
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "4px 12px",
-                          borderRadius: "999px",
-                          background: "#F6F4EE",
-                          border: "1px solid #E5DFD3",
-                          fontSize: "12px",
-                          color: "#4A544E",
-                        }}
-                      >
-                        <span>Mindmap · </span>
-                        <strong
-                          style={{
-                            color: "#1E2822",
-                            fontWeight: 700,
-                            marginLeft: "3px",
-                          }}
-                        >
-                          {st.groundedNode}
-                        </strong>
-                      </span>
-                    </div>
+                          <button
+                            type="button"
+                            onClick={() => onNavigateTool?.("mindmap")}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "999px",
+                              background: "#FAF9F5",
+                              border: "1px solid #E6E2D8",
+                              color: "#38423C",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <span>Mindmap</span>
+                          </button>
 
-                    {/* Thumbs Up / Down */}
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFeedbackMap((prev) => ({
-                            ...prev,
-                            [idx]: prev[idx] === "up" ? undefined! : "up",
-                          }))
-                        }
-                        title="Helpful answer"
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "7px",
-                          border:
-                            fb === "up"
-                              ? "1px solid #BD7D52"
-                              : "1px solid #EAE2D6",
-                          background: fb === "up" ? "#FBF4EE" : "#FAF8F3",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          fontSize: "13px",
-                          padding: 0,
-                        }}
-                      >
-                        👍
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFeedbackMap((prev) => ({
-                            ...prev,
-                            [idx]: prev[idx] === "down" ? undefined! : "down",
-                          }))
-                        }
-                        title="Needs improvement"
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          borderRadius: "7px",
-                          border:
-                            fb === "down"
-                              ? "1px solid #BD7D52"
-                              : "1px solid #EAE2D6",
-                          background: fb === "down" ? "#FBF4EE" : "#FAF8F3",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                          fontSize: "13px",
-                          padding: 0,
-                        }}
-                      >
-                        👎
-                      </button>
-                    </div>
-                  </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextSaved = !savedTakeawayMap[idx];
+                              setSavedTakeawayMap((prev) => ({
+                                ...prev,
+                                [idx]: nextSaved,
+                              }));
+                              try {
+                                const savedKey = `sv_kt_saved_from_ask_${subjectId}_ch${_chapterNumber}`;
+                                const existingRaw = cloudStorage.getItem(savedKey);
+                                const existing: Array<{ id: string; lead: string; body: string }> =
+                                  existingRaw ? JSON.parse(existingRaw) : [];
+                                const itemId = `ask-saved-${idx}-${st.title.slice(0, 24).replace(/\W+/g, "_")}`;
+                                if (nextSaved) {
+                                  const updated = [
+                                    ...existing.filter((x) => x.id !== itemId),
+                                    {
+                                      id: itemId,
+                                      lead: st.title,
+                                      body: st.paragraphs.join(" "),
+                                    },
+                                  ];
+                                  cloudStorage.setItem(savedKey, JSON.stringify(updated));
+                                } else {
+                                  cloudStorage.setItem(
+                                    savedKey,
+                                    JSON.stringify(existing.filter((x) => x.id !== itemId)),
+                                  );
+                                }
+                              } catch {
+                                // ignore storage error
+                              }
+                            }}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "999px",
+                              background: isSaved ? "#EEF5F0" : "#FAF9F5",
+                              border: isSaved ? "1px solid #B5CBBF" : "1px solid #E6E2D8",
+                              color: isSaved ? "#284B37" : "#38423C",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <span>{isSaved ? "✓ Saved" : "Save takeaway"}</span>
+                          </button>
 
-                  {/* 4-Column Action Bar: Open in Read | View in Mindmap | Save to Key Takeaways | Listen to this */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: isCompactDrawer
-                        ? "repeat(2, 1fr)"
-                        : "repeat(4, 1fr)",
-                      gap: "10px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => onNavigateTool?.("detailed")}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: "999px",
-                        background: "#FAF7F2",
-                        border: "1px solid #E5D5C5",
-                        color: "#2C3530",
-                        fontSize: "12.5px",
-                        fontWeight: 600,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#F3ECE2";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#FAF7F2";
-                      }}
-                    >
-                      <span style={{ fontSize: "13px" }}>📖</span>
-                      <span>Open in Read</span>
-                    </button>
+                          <button
+                            type="button"
+                            onClick={() => speakText(m.text, idx)}
+                            style={{
+                              padding: "6px 12px",
+                              borderRadius: "999px",
+                              background: speakingIdx === idx ? "#FAF4EE" : "#FAF9F5",
+                              border: speakingIdx === idx ? "1px solid #D9B89C" : "1px solid #E6E2D8",
+                              color: speakingIdx === idx ? "#9A5B32" : "#38423C",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <span>{speakingIdx === idx ? "Stop" : "Listen"}</span>
+                          </button>
+                        </div>
 
-                    <button
-                      type="button"
-                      onClick={() => onNavigateTool?.("mindmap")}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: "999px",
-                        background: "#FAF7F2",
-                        border: "1px solid #E5D5C5",
-                        color: "#2C3530",
-                        fontSize: "12.5px",
-                        fontWeight: 600,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = "#F3ECE2";
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = "#FAF7F2";
-                      }}
-                    >
-                      <span style={{ fontSize: "13px", color: "#5A7D68" }}>✺</span>
-                      <span>View in Mindmap</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const nextSaved = !savedTakeawayMap[idx];
-                        setSavedTakeawayMap((prev) => ({
-                          ...prev,
-                          [idx]: nextSaved,
-                        }));
-                        try {
-                          const savedKey = `sv_kt_saved_from_ask_${subjectId}_ch${_chapterNumber}`;
-                          const existingRaw = cloudStorage.getItem(savedKey);
-                          const existing: Array<{ id: string; lead: string; body: string }> =
-                            existingRaw ? JSON.parse(existingRaw) : [];
-                          const itemId = `ask-saved-${idx}-${st.title.slice(0, 24).replace(/\W+/g, "_")}`;
-                          if (nextSaved) {
-                            const updated = [
-                              ...existing.filter((x) => x.id !== itemId),
-                              {
-                                id: itemId,
-                                lead: st.title,
-                                body: st.paragraphs.join(" "),
-                              },
-                            ];
-                            cloudStorage.setItem(savedKey, JSON.stringify(updated));
-                          } else {
-                            cloudStorage.setItem(
-                              savedKey,
-                              JSON.stringify(existing.filter((x) => x.id !== itemId)),
-                            );
-                          }
-                        } catch {
-                          // ignore storage error
-                        }
-                      }}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: "999px",
-                        background: isSaved ? "#EEF5F0" : "#FAF7F2",
-                        border: isSaved
-                          ? "1px solid #86B398"
-                          : "1px solid #E5D5C5",
-                        color: isSaved ? "#284B37" : "#2C3530",
-                        fontSize: "12.5px",
-                        fontWeight: 600,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      <span style={{ fontSize: "13px" }}>
-                        {isSaved ? "✓" : "🔑"}
-                      </span>
-                      <span>
-                        {isSaved ? "Saved to Takeaways" : "Save to Takeaways"}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => speakText(m.text, idx)}
-                      style={{
-                        padding: "9px 12px",
-                        borderRadius: "999px",
-                        background:
-                          speakingIdx === idx ? "#FBF4EE" : "#FAF7F2",
-                        border:
-                          speakingIdx === idx
-                            ? "1px solid #BD7D52"
-                            : "1px solid #E5D5C5",
-                        color: speakingIdx === idx ? "#BD7D52" : "#2C3530",
-                        fontSize: "12.5px",
-                        fontWeight: 600,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        cursor: "pointer",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      <span style={{ fontSize: "13px" }}>
-                        {speakingIdx === idx ? "⏹" : "🎧"}
-                      </span>
-                      <span>
-                        {speakingIdx === idx ? "Stop listening" : "Listen to this"}
-                      </span>
-                    </button>
-                  </div>
+                        {/* Thumbs Up / Down */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFeedbackMap((prev) => ({
+                                ...prev,
+                                [idx]: prev[idx] === "up" ? undefined! : "up",
+                              }))
+                            }
+                            title="Helpful answer"
+                            style={{
+                              width: "26px",
+                              height: "26px",
+                              borderRadius: "6px",
+                              border: fb === "up" ? "1px solid #C8B5A2" : "1px solid transparent",
+                              background: fb === "up" ? "#FAF4EE" : "transparent",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              padding: 0,
+                              opacity: fb === "up" ? 1 : 0.65,
+                            }}
+                          >
+                            👍
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setFeedbackMap((prev) => ({
+                                ...prev,
+                                [idx]: prev[idx] === "down" ? undefined! : "down",
+                              }))
+                            }
+                            title="Needs improvement"
+                            style={{
+                              width: "26px",
+                              height: "26px",
+                              borderRadius: "6px",
+                              border: fb === "down" ? "1px solid #C8B5A2" : "1px solid transparent",
+                              background: fb === "down" ? "#FAF4EE" : "transparent",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              fontSize: "12px",
+                              padding: 0,
+                              opacity: fb === "down" ? 1 : 0.65,
+                            }}
+                          >
+                            👎
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* ── Suggested Follow-Ups (shown below the latest bot card) ── */}
-                {isLastBot && st.followUps && st.followUps.length > 0 && (
-                  <div style={{ marginTop: "16px" }}>
+                {/* ── Suggested Follow-Ups (shown below the latest bot card once typing finishes) ── */}
+                {!isTypingThis && isLastBot && st.followUps && st.followUps.length > 0 && (
+                  <div style={{ marginTop: "12px" }}>
                     <div
                       style={{
-                        fontSize: "10.5px",
-                        fontWeight: 800,
-                        letterSpacing: "0.08em",
-                        color: "#6E7771",
-                        textTransform: "uppercase",
-                        marginBottom: "10px",
+                        fontSize: "11.5px",
+                        fontWeight: 500,
+                        color: "#7A827C",
+                        marginBottom: "8px",
                       }}
                     >
-                      SUGGESTED FOLLOW-UPS
+                      Follow-ups
                     </div>
                     <div
                       style={{
                         display: "flex",
                         flexWrap: "wrap",
-                        gap: "10px",
+                        gap: "8px",
                       }}
                     >
                       {st.followUps.map((fText, fIdx) => (
@@ -2157,26 +1976,25 @@ export default function AskBotView({
                           onClick={() => handleSend(fText)}
                           disabled={isSending}
                           style={{
-                            padding: "8px 16px",
+                            padding: "7px 14px",
                             borderRadius: "999px",
                             background: "#FFFFFF",
-                            border: "1px solid #E5CFC0",
-                            color: "#1E2822",
+                            border: "1px solid #E6E2D8",
+                            color: "#38423C",
                             fontSize: "12.5px",
-                            fontWeight: 600,
+                            fontWeight: 500,
                             cursor: isSending ? "default" : "pointer",
-                            boxShadow: "0 1px 4px rgba(30, 40, 34, 0.03)",
                             transition: "all 0.15s ease",
                           }}
                           onMouseEnter={(e) => {
                             if (!isSending) {
-                              e.currentTarget.style.background = "#FBF5EE";
-                              e.currentTarget.style.borderColor = "#BD7D52";
+                              e.currentTarget.style.background = "#FAF8F4";
+                              e.currentTarget.style.borderColor = "#D5CEC0";
                             }
                           }}
                           onMouseLeave={(e) => {
                             e.currentTarget.style.background = "#FFFFFF";
-                            e.currentTarget.style.borderColor = "#E5CFC0";
+                            e.currentTarget.style.borderColor = "#E6E2D8";
                           }}
                         >
                           {fText}

@@ -712,7 +712,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
               textOverflow: "ellipsis",
             }}
           >
-            {parsed.title}
+            {chapterName || parsed.title}
           </h1>
         </div>
 

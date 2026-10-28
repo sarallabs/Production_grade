@@ -206,7 +206,7 @@ export function formatTaskDisplayLabels(task: StudyTaskItem): {
     case "qbank":
       return { primary: "Question Bank", secondary: "structured practice" };
     case "prep_exam":
-      return { primary: "Preparation Exam", secondary: "mock test" };
+      return { primary: "Exam Prep.", secondary: "mock test" };
     default:
       return {
         primary: rawTitle || "Study Session",
@@ -1011,16 +1011,14 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
         <div
           className="sp-pace-cards-row"
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, minmax(195px, 244px))",
+            display: "flex",
             justifyContent: "center",
-            gap: "14px",
+            alignItems: "center",
+            gap: "16px",
             marginBottom: "18px",
           }}
         >
           {(["beginner", "intermediate", "advanced"] as PaceLevel[]).map((paceKey) => {
-            const bp =
-              parsed.blueprints.find((b) => b.pace === paceKey) || activeBlueprint;
             const meta = PACE_META[paceKey];
             const isActive = activePace === paceKey;
             return (
@@ -1028,70 +1026,56 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 key={paceKey}
                 type="button"
                 onClick={() => handleSelectPace(paceKey)}
+                title={meta.label}
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "10px 16px",
-                  borderRadius: "14px",
-                  background: isActive ? 'rgba(181, 186, 155, 0.25)' : '#FFFFFF',
-                  border: isActive ? '1.5px solid #B5BA9B' : '1px solid #E6E0D4',
-                  boxShadow: isActive
-                    ? "0 2px 8px rgba(184, 107, 53, 0.08)"
-                    : "0 1px 2px rgba(30, 40, 34, 0.02)",
+                  minWidth: "60px",
+                  height: "54px",
+                  borderRadius: "11px",
+                  padding: "3px 8px 4px",
+                  border: isActive ? "2px solid #E7B864" : "2px solid transparent",
+                  background: isActive ? "#FFFDF9" : "transparent",
+                  boxShadow: isActive ? "0 3px 10px rgba(231, 184, 100, 0.22)" : "none",
                   cursor: "pointer",
-                  textAlign: "left",
-                  transition: "all 0.18s ease",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  overflow: "visible",
+                  flexShrink: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "2px",
+                  boxSizing: "border-box",
                 }}
               >
-                <div
+                <img
+                  src={`${import.meta.env.BASE_URL}${meta.img}`}
+                  alt={meta.label}
                   style={{
-                    width: "38px",
-                    height: "38px",
-                    borderRadius: "50%",
-                    background: isActive ? "#EEDCC9" : "#F3EFE8",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                    overflow: "hidden",
+                    width: "34px",
+                    height: "34px",
+                    objectFit: "contain",
+                    borderRadius: "8px",
+                    padding: 0,
+                    boxSizing: "border-box",
+                    filter: isActive
+                      ? "grayscale(0) opacity(1) drop-shadow(0 2px 4px rgba(0,0,0,0.1))"
+                      : "grayscale(0.15) opacity(0.78)",
+                    transform: isActive ? "scale(1.06)" : "scale(1)",
+                    transition: "filter 0.2s ease, transform 0.2s ease",
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: isActive ? 700 : 600,
+                    color: isActive ? "#1E2822" : "#64748B",
+                    lineHeight: 1.1,
+                    letterSpacing: "0.01em",
+                    whiteSpace: "nowrap",
                   }}
                 >
-                  <img
-                    src={`${import.meta.env.BASE_URL}${meta.img}`}
-                    alt={meta.label}
-                    style={{
-                      width: "32px",
-                      height: "32px",
-                      objectFit: "contain",
-                    }}
-                  />
-                </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      fontSize: "13.5px",
-                      fontWeight: 800,
-                      color: isActive ? "#B46530" : "#1E2822",
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {meta.label}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "11.5px",
-                      fontWeight: 500,
-                      color: isActive ? "#9A6744" : "#7A807A",
-                      marginTop: "2px",
-                      whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                    }}
-                  >
-                    {bp.days.length} days · {meta.tagline}
-                  </div>
-                </div>
+                  {meta.label}
+                </span>
               </button>
             );
           })}

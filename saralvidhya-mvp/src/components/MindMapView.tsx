@@ -358,7 +358,7 @@ export default function MindMapView({
           </span>
         </div>
 
-        <div style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}>
+        <div style={{ position: 'absolute', left: 0, top: 0, transformOrigin: '0 0', transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.k})`, willChange: 'transform', backfaceVisibility: 'hidden' }}>
           <svg width="1" height="1" style={{ position: 'absolute', left: 0, top: 0, overflow: 'visible', pointerEvents: 'none' }}>
             {layout.edges.map(e => (
               <path key={e.id} d={e.d} stroke={e.color} strokeWidth={e.sw} fill="none" strokeLinecap="round" opacity={0.9} />

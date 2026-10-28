@@ -404,7 +404,7 @@ export default function QuestionBankView({
                 color: '#647068',
               }}
             >
-              {questions.length} {questions.length === 1 ? 'question' : 'questions'} · 2M, 5M &amp; 10M model answers
+              {questions.length} {questions.length === 1 ? 'question' : 'questions'}
             </span>
           )}
         </div>

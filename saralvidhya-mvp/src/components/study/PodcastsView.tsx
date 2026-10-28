@@ -45,36 +45,52 @@ const PENCIL_WAVEFORM_BARS: number[] = Array.from({ length: 120 }, (_, i) => {
   return Math.round(scaled);
 });
 
-// Connected zig-zag waveform geometry matching the exact reference wave
+// Connected waveform geometry with graceful rounded corners at every peak and valley
 const OSCILLOSCOPE_WAVE = (() => {
   const width = 520;
   const height = 36;
   const cy = height / 2;
   const count = 64;
-  // Repeating 8-point motif: medium zig-zag, tall peak/valley, shallow kink, tallest peak/valley
-  const motifOffsets = [-4.5, 5.5, -9.5, 9.5, -3.5, 2.5, -11, 11.5];
-  const pts: string[] = [];
+  const motifOffsets = [-4.0, 5.0, -8.5, 8.5, -3.2, 2.5, -9.8, 9.8];
+  const coords: Array<{ x: number; y: number }> = [];
 
   for (let i = 0; i <= count; i++) {
     const x = Number(((i / count) * width).toFixed(1));
     if (i === 0) {
-      pts.push(`${x},${cy + 1}`);
+      coords.push({ x, y: cy + 0.5 });
       continue;
     }
     if (i === count) {
-      pts.push(`${x},${cy}`);
+      coords.push({ x, y: cy });
       continue;
     }
     const offset = motifOffsets[(i - 1) % motifOffsets.length];
     const y = Number((cy + offset).toFixed(1));
-    pts.push(`${x},${y}`);
+    coords.push({ x, y });
   }
+
+  // Build a smooth path by rounding every vertex corner with a quadratic Bezier curve
+  const cornerFraction = 0.42;
+  const pathParts: string[] = [`M ${coords[0].x},${coords[0].y}`];
+  for (let i = 1; i < coords.length - 1; i++) {
+    const prev = coords[i - 1];
+    const curr = coords[i];
+    const next = coords[i + 1];
+    const inX = Number((curr.x - (curr.x - prev.x) * cornerFraction).toFixed(2));
+    const inY = Number((curr.y - (curr.y - prev.y) * cornerFraction).toFixed(2));
+    const outX = Number((curr.x + (next.x - curr.x) * cornerFraction).toFixed(2));
+    const outY = Number((curr.y + (next.y - curr.y) * cornerFraction).toFixed(2));
+    pathParts.push(`L ${inX},${inY} Q ${curr.x},${curr.y} ${outX},${outY}`);
+  }
+  const last = coords[coords.length - 1];
+  pathParts.push(`L ${last.x},${last.y}`);
 
   return {
     width,
     height,
     cy,
-    polylinePoints: pts.join(" "),
+    polylinePoints: coords.map((p) => `${p.x},${p.y}`).join(" "),
+    smoothPath: pathParts.join(" "),
   };
 })();
 
@@ -118,9 +134,11 @@ export function cleanTranscriptPreamble(text: string): string {
   // 3. Strip table blocks if any remain
   t = t.replace(/\|[^\n]+\|\n\|[-:\s|]+\|\n(?:\|[^\n]+\|\n?)*/g, "");
 
-  // 4. Strip timestamp segment headers: ### `[00:00 - 00:36]` • **Lecture Segment** (100 words)
-  t = t.replace(/###\s*`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
-  t = t.replace(/`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
+  // 4. Strip timestamp segment headers and any inline/bracketed/parenthesized timestamps
+  t = t.replace(/###\s*`?\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]`?[^\n]*/gi, "");
+  t = t.replace(/`?\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]`?\s*/gi, "");
+  t = t.replace(/\(\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\)\s*/gi, "");
+  t = t.replace(/^\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?\s*[-–—:]\s*/gm, "");
 
   // 5. Strip speaker cues: "> **Prof. AI / Host**:" or "**Host**:" but preserve spoken words
   t = t.replace(/>?\s*\*\*[^*]+\*\*:\s*/gi, "");
@@ -161,6 +179,9 @@ export function stripMarkdown(text: string): string {
   t = t.replace(/\*([^*]+)\*/g, "$1");
   // Remove markdown links
   t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  // Remove any remaining bracketed or parenthesized timestamps like [00:00:19] or [00:19]
+  t = t.replace(/\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]\s*/g, "");
+  t = t.replace(/\(\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\)\s*/g, "");
   // Remove blockquotes and symbols
   t = t.replace(/[>*_~`#]/g, "");
   t = t.replace(/⚠️|📖|📚|💙|🚫|🙏|👋|💡/g, "");
@@ -1518,13 +1539,19 @@ export default function PodcastsView({
       const parsed = JSON.parse(txt);
       if (cancelled) return true;
       if (parsed && (typeof parsed.full_text === "string" || Array.isArray(parsed.segments))) {
-        const fullText = parsed.full_text || parsed.transcript || (Array.isArray(parsed.segments) ? parsed.segments.map((s: any) => s.transcript || s.text || '').join(' ') : '');
+        const segmentText = Array.isArray(parsed.segments)
+          ? parsed.segments
+              .map((s: any) => cleanTranscriptPreamble(s.transcript || s.text || ""))
+              .filter(Boolean)
+              .join("\n\n")
+          : "";
+        const fullText = segmentText || parsed.full_text || parsed.transcript || "";
         setTranscript(cleanTranscriptPreamble(fullText));
         if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
           const normalized = parsed.segments.map((s: any) => ({
             start_sec: typeof s.start_sec === "number" ? s.start_sec : (typeof s.start === "number" ? s.start : 0),
             end_sec: typeof s.end_sec === "number" ? s.end_sec : (typeof s.end === "number" ? s.end : 0),
-            transcript: s.transcript || s.text || "",
+            transcript: cleanTranscriptPreamble(s.transcript || s.text || ""),
           }));
           setTranscriptSegments(normalized);
         } else {
@@ -2351,7 +2378,7 @@ export default function PodcastsView({
         />
       )}
 
-      {/* ── Top Header Bar: Left Breadcrumb + Right Track Toggle (No Personas) ── */}
+      {/* ── Top Header Bar: Left Breadcrumb + Centered Track Toggle ── */}
       <div
         className="podcast-sticky-top"
         style={{
@@ -2360,8 +2387,8 @@ export default function PodcastsView({
           justifyContent: "space-between",
           gap: "16px",
           flexWrap: "wrap",
-          paddingBottom: "12px",
-          marginBottom: "16px",
+          paddingBottom: "10px",
+          marginBottom: "14px",
           borderBottom: "1px solid #E6E1D6",
         }}
       >
@@ -2374,26 +2401,29 @@ export default function PodcastsView({
             color: "#6E7670",
             fontWeight: 500,
             minWidth: 0,
+            flex: 1,
           }}
         >
-          <span style={{ whiteSpace: "nowrap" }}>
-            {subjectName || subjectId.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-          </span>
-          <span style={{ color: "#ABA59A" }}>›</span>
           <strong
             style={{
               color: "#1E2822",
               fontWeight: 700,
+              fontSize: "0.84rem",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
             }}
+            title={chapterName}
           >
-            Chapter {chapterNumber}: {chapterName}
+            {chapterName}
           </strong>
         </div>
 
-        {renderSegmentedTrackToggle()}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+          {renderSegmentedTrackToggle()}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
       </div>
 
       {/* ── Section-Wise 2-Column Layout (Matching New Listen Screen) ── */}
@@ -2493,30 +2523,54 @@ export default function PodcastsView({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
-                      {isDone || isSelected ? (
+                      {isDone ? (
                         <span
                           style={{
-                            width: "20px",
-                            height: "20px",
+                            width: "18px",
+                            height: "18px",
                             borderRadius: "50%",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             flexShrink: 0,
-                            background: isDone ? "#2D3E36" : "transparent",
-                            border: "1.5px solid #2D3E36",
-                            color: isDone ? "#FFFFFF" : "#2D3E36",
+                            background: "#375545",
+                            color: "#FFFFFF",
                             fontSize: "11px",
                             fontWeight: 800,
                           }}
                         >
                           ✓
                         </span>
+                      ) : isSelected ? (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            background: "#FFFFFF",
+                            border: "1.8px solid #375545",
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "7px",
+                              height: "7px",
+                              borderRadius: "50%",
+                              background: "#375545",
+                              display: "block",
+                            }}
+                          />
+                        </span>
                       ) : (
                         <span
                           style={{
-                            width: "20px",
-                            height: "20px",
+                            width: "18px",
+                            height: "18px",
                             borderRadius: "50%",
                             display: "flex",
                             alignItems: "center",
@@ -2530,34 +2584,17 @@ export default function PodcastsView({
 
                       <span
                         style={{
-                          fontSize: "13px",
+                          fontSize: "12.5px",
                           fontWeight: isSelected ? 700 : isDone ? 600 : 500,
                           color: isSelected ? "#1E2822" : "#4A544E",
                           lineHeight: 1.35,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
                         }}
                       >
                         {cleanEpisodeTitle}
                       </span>
                     </div>
-
-                    {isSelected && (
-                      <span
-                        style={{
-                          background: '#9CC0B4',
-                          color: '#18221D',
-                          fontSize: "9px",
-                          fontWeight: 800,
-                          letterSpacing: "0.05em",
-                          padding: "3px 6px",
-                          borderRadius: "5px",
-                          textTransform: "uppercase",
-                          whiteSpace: "nowrap",
-                          flexShrink: 0,
-                        }}
-                      >
-                        YOU ARE HERE
-                      </span>
-                    )}
                   </button>
                 );
               })}
@@ -2623,51 +2660,6 @@ export default function PodcastsView({
             gap: "16px",
           }}
         >
-          {/* Meta Pills Line */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              style={{
-                background: "#FFFFFF",
-                color: "#2C3530",
-                border: "1px solid #E2DDD3",
-                borderRadius: "999px",
-                padding: "4px 12px",
-                fontSize: "12.5px",
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>⏱</span>
-              <span>{displayDuration ? `${Math.max(1, Math.round(displayDuration / 60))} min listen` : trackTypeLabel}</span>
-            </span>
-            <span
-              style={{
-                background: "#FFFFFF",
-                color: "#2C3530",
-                border: "1px solid #E2DDD3",
-                borderRadius: "999px",
-                padding: "4px 12px",
-                fontSize: "12.5px",
-                fontWeight: 600,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <span>🎧</span>
-              <span>{totalEpisodes} {totalEpisodes === 1 ? "Podcast" : "Podcasts"}</span>
-            </span>
-          </div>
-
           {/* Active Podcast Section Header */}
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
@@ -2676,7 +2668,7 @@ export default function PodcastsView({
                   fontSize: "11.5px",
                   fontWeight: 800,
                   letterSpacing: "0.08em",
-                  color: "#4A7C62",
+                  color: "#375545",
                   textTransform: "uppercase",
                 }}
               >
@@ -2696,21 +2688,6 @@ export default function PodcastsView({
               >
                 {displayTitle.replace(/^\d+\.\s*/, "")}
               </h2>
-              <span
-                style={{
-                  background: "#FAF2E9",
-                  color: "#B46530",
-                  border: "1px solid #EBD5C3",
-                  borderRadius: "999px",
-                  padding: "3px 10px",
-                  fontSize: "10.5px",
-                  fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {trackTypeLabel} · FORMAT
-              </span>
             </div>
           </div>
 
@@ -2721,7 +2698,7 @@ export default function PodcastsView({
               marginBottom: 0,
               background: "#F9F6F0",
               border: "1px solid #E4DEC9",
-              borderRadius: "16px",
+              borderRadius: "20px",
               padding: "12px 18px",
               boxShadow: "0 2px 10px rgba(30, 40, 34, 0.04)",
             }}
@@ -2821,7 +2798,7 @@ export default function PodcastsView({
                   minWidth: "140px",
                 }}
               >
-                {/* Unplayed dark slate-charcoal zig-zag stroke */}
+                {/* Unplayed dark slate-charcoal smooth rounded-corner wave stroke */}
                 <svg
                   viewBox={`0 0 ${OSCILLOSCOPE_WAVE.width} ${OSCILLOSCOPE_WAVE.height}`}
                   preserveAspectRatio="none"
@@ -2832,19 +2809,18 @@ export default function PodcastsView({
                     overflow: "visible",
                   }}
                 >
-                  <polyline
+                  <path
                     fill="none"
-                    stroke="#59635D"
-                    strokeWidth="2"
+                    stroke="#647069"
+                    strokeWidth="2.2"
                     strokeLinecap="round"
-                    strokeLinejoin="miter"
-                    strokeMiterlimit="3"
+                    strokeLinejoin="round"
                     vectorEffect="non-scaling-stroke"
-                    points={OSCILLOSCOPE_WAVE.polylinePoints}
+                    d={OSCILLOSCOPE_WAVE.smoothPath}
                   />
                 </svg>
 
-                {/* Played sage-green zig-zag stroke (clipped to progressPct%) */}
+                {/* Played sage-green smooth rounded-corner wave stroke (clipped to progressPct%) */}
                 <div
                   ref={progressFillRef}
                   style={{
@@ -2864,15 +2840,14 @@ export default function PodcastsView({
                       overflow: "visible",
                     }}
                   >
-                    <polyline
+                    <path
                       fill="none"
-                      stroke='#9CC0B4'
-                      strokeWidth="2"
+                      stroke="#375545"
+                      strokeWidth="2.4"
                       strokeLinecap="round"
-                      strokeLinejoin="miter"
-                      strokeMiterlimit="3"
+                      strokeLinejoin="round"
                       vectorEffect="non-scaling-stroke"
-                      points={OSCILLOSCOPE_WAVE.polylinePoints}
+                      d={OSCILLOSCOPE_WAVE.smoothPath}
                     />
                   </svg>
                 </div>
@@ -2900,21 +2875,8 @@ export default function PodcastsView({
               </span>
             </div>
 
-            {/* Right Controls: ⏱ Timer + Volume */}
+            {/* Right Controls: Volume */}
             <div className="pod-player-right">
-              <button
-                className="pod-timer-btn"
-                onClick={handleToggleSleepTimer}
-                title={sleepTimerMinutes ? `Timer set for ${sleepTimerMinutes}m` : "Set sleep timer"}
-                style={{ borderColor: "#DED8CA", background: "#FFFFFF", color: "#2C3530" }}
-              >
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>{sleepTimerMinutes ? `${sleepTimerMinutes}m` : "Timer"} ▾</span>
-              </button>
-
               <div className="pod-player-volume">
                 <button className="pod-vol-icon-btn" onClick={() => {
                   const next = !isMutedUi;
@@ -2959,9 +2921,6 @@ export default function PodcastsView({
             <div className="pod-transcript-header" style={{ borderBottom: "1px solid #EFECE4" }}>
               <div className="pod-transcript-title-wrap" style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
                 <strong className="pod-transcript-title" style={{ color: "#1E2822", fontSize: "15px" }}>Transcript</strong>
-                <span className="pod-transcript-subtitle" style={{ color: "#8A8479", fontSize: "12px" }}>
-                  Click any timestamp to jump the audio to that point
-                </span>
               </div>
               <label className="pod-autofollow-label" style={{ color: "#4A544E" }}>
                 <input
@@ -2976,75 +2935,28 @@ export default function PodcastsView({
             <div className="pod-transcript-body" ref={transcriptRef}>
               {transcript ? (
                 <div className="transcript-box transcript-body" ref={transcriptBoxRef} onClick={handleWordClick}>
-                  {(() => {
-                    let wordCounter = 0;
-                    const totalWords = Math.max(1, wordTimings.wordIndexes.length);
-                    const totalDur = displayDuration || 96;
-                    return transcriptTokens.map((token, idx) => {
-                      const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
-                      if (!isWord) {
-                        return <span key={idx}>{token}</span>;
-                      }
-                      const curWordIdx = wordCounter++;
-                      const prevToken = idx > 0 ? transcriptTokens[idx - 1] : "";
-                      const isParagraphStart =
-                        curWordIdx === 0 ||
-                        prevToken.includes("\n") ||
-                        (curWordIdx > 0 && curWordIdx % 52 === 0 && /[.!?]/.test(transcriptTokens[idx - 2] || ""));
-
-                      let badgeEl: React.ReactNode = null;
-                      if (isParagraphStart) {
-                        const sec =
-                          wordTimings.exactTimestamps && wordTimings.exactTimestamps[curWordIdx] !== undefined
-                            ? wordTimings.exactTimestamps[curWordIdx]
-                            : Math.round((curWordIdx / totalWords) * totalDur);
-                        badgeEl = (
-                          <span
-                            data-seek-sec={sec}
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              background: "#F5ECE2",
-                              color: "#B46530",
-                              border: "1px solid #E8D5C4",
-                              borderRadius: "6px",
-                              padding: "1px 7px",
-                              fontSize: "11px",
-                              fontWeight: 700,
-                              fontVariantNumeric: "tabular-nums",
-                              marginRight: "8px",
-                              cursor: "pointer",
-                              verticalAlign: "baseline",
-                              userSelect: "none",
-                            }}
-                            title={`Jump to ${fmtTime(sec)}`}
-                          >
-                            {fmtTime(sec)}
-                          </span>
-                        );
-                      }
-
-                      const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, "");
-                      const def = getTermDefinition(cleanWord);
-                      if (def) {
-                        return (
-                          <span key={idx} className="transcript-word">
-                            {badgeEl}
-                            <DottedTerm definition={def} isPurpleTheme={false}>
-                              {token}
-                            </DottedTerm>
-                          </span>
-                        );
-                      }
+                  {transcriptTokens.map((token, idx) => {
+                    const isWord = token.trim() !== "" && !/^[.,!?;:]+$/.test(token);
+                    if (!isWord) {
+                      return <span key={idx}>{token}</span>;
+                    }
+                    const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, "");
+                    const def = getTermDefinition(cleanWord);
+                    if (def) {
                       return (
                         <span key={idx} className="transcript-word">
-                          {badgeEl}
-                          {token}
+                          <DottedTerm definition={def} isPurpleTheme={false}>
+                            {token}
+                          </DottedTerm>
                         </span>
                       );
-                    });
-                  })()}
+                    }
+                    return (
+                      <span key={idx} className="transcript-word">
+                        {token}
+                      </span>
+                    );
+                  })}
                 </div>
               ) : (
                 <p style={{ color: "var(--text-secondary)", fontSize: "0.9rem" }}>Loading transcript…</p>

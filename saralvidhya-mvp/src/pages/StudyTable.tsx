@@ -276,7 +276,7 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
     ),
   },
   prep_exam: {
-    title: "Preparation Exam",
+    title: "Exam Prep.",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -384,6 +384,14 @@ export default function StudyTable() {
     }
   });
   const [mmSelectedBranch, setMmSelectedBranch] = useState<string | null>(null);
+  const [mmDrawerOpen, setMmDrawerOpen] = useState<boolean>(false);
+  const mmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [mmIsPlaying, setMmIsPlaying] = useState<boolean>(false);
+  const [mmAudioCurrentTime, setMmAudioCurrentTime] = useState<number>(0);
+  const [mmAudioDuration, setMmAudioDuration] = useState<number>(0);
+  const [mmPlaybackRate, setMmPlaybackRate] = useState<number>(1);
+  const [mmAutoPlayNonce, setMmAutoPlayNonce] = useState<number>(0);
+  const [mmFallbackAudioUsed, setMmFallbackAudioUsed] = useState<boolean>(false);
   const [mmStudiedBranches, setMmStudiedBranches] = useState<Record<string, string[]>>(() => {
     try {
       const saved = cloudStorage.getItem('sv_mm_studied_v2');
@@ -503,12 +511,15 @@ export default function StudyTable() {
   const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
   const dbChapterObj = subjectChapters.find((c) => c.number === chapterNumber);
   const [regReadingDurations, setRegReadingDurations] = useState<Record<string, Record<string, number>> | null>(null);
+  const [regChapterFiles, setRegChapterFiles] = useState<Record<string, string>>({});
   useEffect(() => {
     let active = true;
+    setRegChapterFiles({});
     getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
       if (!active || !reg?.chapter) return;
       const rd = (reg.chapter as any).readingDurations || (reg.chapter.tools as any)?.readingDurations;
       if (rd) setRegReadingDurations(rd);
+      if (reg.files) setRegChapterFiles(reg.files);
     });
     return () => { active = false; };
   }, [subjectId, chapterNumber]);
@@ -1117,12 +1128,31 @@ export default function StudyTable() {
     setMmDeepDiveRaw('');
     setMmConceptSection('summary');
     setMmFlippedCards(new Set());
-    // Also close the inline mindmap topic panel
+    // Also close the inline mindmap topic panel & slide-in drawer
     setMindmapTopicOpen(false);
     setMindmapTopicTitle(null);
     setMindmapInlineType('text');
     setMindmapMediaUrl('');
+    setMmDrawerOpen(false);
+    setMmIsPlaying(false);
+    setMmAudioCurrentTime(0);
+    setMmAudioDuration(0);
+    if (mmAudioRef.current) {
+      mmAudioRef.current.pause();
+    }
   }, [subjectId, chapterNumber, activeTool]);
+
+  useEffect(() => {
+    if (!mmAutoPlayNonce || !mmDrawerOpen || !mmAudioRef.current) return;
+    const audio = mmAudioRef.current;
+    audio.playbackRate = mmPlaybackRate;
+    if (audio.readyState >= 1) {
+      audio
+        .play()
+        .then(() => setMmIsPlaying(true))
+        .catch(() => setMmIsPlaying(false));
+    }
+  }, [mmAutoPlayNonce, mmDrawerOpen, mmPlaybackRate]);
 
   // Reset flipped cards when switching concepts or tabs
   useEffect(() => {
@@ -2063,6 +2093,13 @@ export default function StudyTable() {
           dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
           dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
         }
+        if (treeForHierarchy?.children) {
+          for (const branchNode of treeForHierarchy.children) {
+            const bClean = branchNode.label.trim();
+            dynamicMmIcons[bClean] = { hasRead: true, hasPodcast: true, hasVideo: true };
+            dynamicMmIcons[bClean.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+          }
+        }
 
         const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isNebBiologyChap6 ? {
           'ANIMAL TISSUE': { hasRead: true },
@@ -2119,28 +2156,12 @@ export default function StudyTable() {
             }
 
             if (action === 'podcast') {
-              const nebMcNames = [
-                'MC1_Histology_pioneers_and_the_first_tissues',
-                'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
-                'MC3_Simple_Epithelium_Types_and_Functions',
-                'MC4_Body_armor_and_shape_shifting_bladders',
-                'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
-                'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
-                'MC7_Why_tendons_anchor_and_ligaments_stretch',
-                'MC8_Four_unique_types_of_body_cartilage',
-                'MC9_The_microscopic_plumbing_of_mammalian_bones',
-                'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
-                'MC11_Why_Some_Muscles_Never_Get_Tired',
-                'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
-              ];
-              const nebIdx = mappedMedia?.audio ? nebMcNames.indexOf(mappedMedia.audio) : -1;
-              const targetIdx = nebIdx >= 0 ? nebIdx : 0;
               setMindmapTopicOpen(false);
-              setPodcastTargetTrack('mc');
-              setPodcastTargetMcIndex(targetIdx);
-              setPodcastAutoPlay(true);
-              setPodcastPlayTrigger(Date.now());
-              setActiveTool('podcasts');
+              setMmSelectedBranch(label);
+              setMmFallbackAudioUsed(false);
+              setMmAudioCurrentTime(0);
+              setMmDrawerOpen(true);
+              setMmAutoPlayNonce(Date.now());
               return;
             }
 
@@ -2237,14 +2258,12 @@ export default function StudyTable() {
           }
 
           if (action === 'podcast') {
-            const mcIdx = effectiveTopics.indexOf(match);
-            const targetIdx = mcIdx >= 0 ? mcIdx : 0;
             setMindmapTopicOpen(false);
-            setPodcastTargetTrack('mc');
-            setPodcastTargetMcIndex(targetIdx);
-            setPodcastAutoPlay(true);
-            setPodcastPlayTrigger(Date.now());
-            setActiveTool('podcasts');
+            setMmSelectedBranch(label);
+            setMmFallbackAudioUsed(false);
+            setMmAudioCurrentTime(0);
+            setMmDrawerOpen(true);
+            setMmAutoPlayNonce(Date.now());
             return;
           }
 
@@ -2704,6 +2723,54 @@ export default function StudyTable() {
           .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, '')
           .trim();
 
+        const mcPad = String(selectedBranchIdx + 1).padStart(2, '0');
+        const mmChDir = dbChapterObj?.dir || `chapter_${String(chapterNumber).padStart(2, '0')}`;
+        const nebMcNames = [
+          'MC1_Histology_pioneers_and_the_first_tissues',
+          'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
+          'MC3_Simple_Epithelium_Types_and_Functions',
+          'MC4_Body_armor_and_shape_shifting_bladders',
+          'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
+          'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
+          'MC7_Why_tendons_anchor_and_ligaments_stretch',
+          'MC8_Four_unique_types_of_body_cartilage',
+          'MC9_The_microscopic_plumbing_of_mammalian_bones',
+          'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
+          'MC11_Why_Some_Muscles_Never_Get_Tired',
+          'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
+        ];
+        const nebMappedAudio =
+          MEDIA_MAPPING[activeSelectedBranch.toLowerCase().trim()]?.audio ||
+          nebMcNames[selectedBranchIdx % nebMcNames.length] ||
+          nebMcNames[0];
+        const nebAudioUrl = `${getSubjectBaseUrl(subjectId)}/chapter_06/Podcasts/${encodeURIComponent(nebMappedAudio)}.mp3`;
+        const regMcUrl =
+          regChapterFiles[`podcasts/microcast_${mcPad}.m4a`] ||
+          regChapterFiles[`podcasts/microcast_${mcPad}.mp3`] ||
+          resolveAssetUrl(subjectId, chapterNumber, `podcasts/microcast_${mcPad}.m4a`) ||
+          resolveAssetUrl(subjectId, chapterNumber, `podcasts/microcast_${mcPad}.mp3`);
+        const gcsMcUrl = `${getSubjectBaseUrl(subjectId)}/${mmChDir}/podcasts/microcast_${mcPad}.m4a`;
+        const primaryMmAudioSrc = isNebBiologyChap6 ? nebAudioUrl : (regMcUrl || gcsMcUrl);
+        const fallbackMmAudioSrc =
+          regChapterFiles['podcasts/microcast_01.m4a'] ||
+          regChapterFiles['podcasts/short_podcast.m4a'] ||
+          regChapterFiles['podcasts/short_podcast.mp3'] ||
+          resolveAssetUrl(subjectId, chapterNumber, 'podcasts/short_podcast.m4a') ||
+          `${getSubjectBaseUrl(subjectId)}/${mmChDir}/podcasts/short_podcast.m4a`;
+        const activeMmAudioSrc = mmFallbackAudioUsed ? fallbackMmAudioSrc : primaryMmAudioSrc;
+
+        const formatMmTime = (secs: number) => {
+          if (!Number.isFinite(secs) || secs < 0) return '0:00';
+          const m = Math.floor(secs / 60);
+          const s = Math.floor(secs % 60);
+          return `${m}:${s < 10 ? '0' : ''}${s}`;
+        };
+        const effectiveMmDuration =
+          mmAudioDuration > 0 ? mmAudioDuration : branchMeta.podcastMins * 60;
+        const mmProgressPct =
+          effectiveMmDuration > 0
+            ? Math.min(100, Math.max(0, (mmAudioCurrentTime / effectiveMmDuration) * 100))
+            : 0;
         return (
           <div
             className="mindmap-container"
@@ -2754,60 +2821,63 @@ export default function StudyTable() {
                       textOverflow: 'ellipsis',
                     }}
                   >
-                    <span>Mindmaps</span>
-                    <span style={{ margin: '0 9px', color: '#B4B8B2' }}>›</span>
-                    <span>{subjectName}</span>
-                    <span style={{ margin: '0 9px', color: '#B4B8B2' }}>›</span>
-                    <span style={{ color: '#1E2822', fontWeight: 700 }}>
-                      {getChapterPrefix(subjectId)} {chapterNumber} · {cleanChapterLabel}
+                    <span style={{ color: '#1E2822', fontWeight: 700, fontSize: '0.84rem' }} title={chapterName}>
+                      {chapterName}
                     </span>
                   </div>
 
-                  {/* Studied progress pill */}
-                  <div
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '7px',
-                      padding: '5px 13px',
-                      borderRadius: '999px',
-                      background: '#FBF4EE',
-                      border: '1px solid #EBD5C3',
-                      color: '#B67346',
-                      fontSize: '12.5px',
-                      fontWeight: 600,
-                      flexShrink: 0,
-                    }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#BD7D52" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="4" />
-                      <path d="M12 2v2" />
-                      <path d="M12 20v2" />
-                      <path d="m4.93 4.93 1.41 1.41" />
-                      <path d="m17.66 17.66 1.41 1.41" />
-                      <path d="M2 12h2" />
-                      <path d="M20 12h2" />
-                      <path d="m6.34 17.66-1.41 1.41" />
-                      <path d="m19.07 4.93-1.41 1.41" />
-                    </svg>
-                    <span>
-                      {chapterStudiedCount} of {allTopicLabels.length || 1} branches studied
-                    </span>
-                  </div>
                 </div>
 
-                {/* ── Main Split Area: Left MindMap Canvas + Right Branch Inspector ── */}
+                {/* ── Main Split Area: Left MindMap Canvas + Right GPU Slide-In Branch Inspector ── */}
                 <div
                   style={{
+                    position: 'relative',
                     flex: 1,
                     minHeight: 0,
                     display: 'flex',
-                    gap: '16px',
+                    gap: mmDrawerOpen ? '16px' : '0px',
                     padding: '14px 20px 18px 20px',
                     overflow: 'hidden',
+                    transition: 'gap 0.52s cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  {/* Left: MindMap Canvas */}
+                  {/* Hidden Audio Element for Mindmap Microcast Player */}
+                  <audio
+                    ref={mmAudioRef}
+                    src={activeMmAudioSrc}
+                    preload="metadata"
+                    onLoadedMetadata={(e) => {
+                      const dur = e.currentTarget.duration;
+                      if (Number.isFinite(dur) && dur > 0) {
+                        setMmAudioDuration(dur);
+                      }
+                      e.currentTarget.playbackRate = mmPlaybackRate;
+                      if (mmAutoPlayNonce > 0 && mmDrawerOpen) {
+                        e.currentTarget
+                          .play()
+                          .then(() => setMmIsPlaying(true))
+                          .catch(() => setMmIsPlaying(false));
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      setMmAudioCurrentTime(e.currentTarget.currentTime);
+                    }}
+                    onPlay={() => setMmIsPlaying(true)}
+                    onPause={() => setMmIsPlaying(false)}
+                    onEnded={() => {
+                      setMmIsPlaying(false);
+                      setMmAudioCurrentTime(0);
+                    }}
+                    onError={() => {
+                      if (!mmFallbackAudioUsed && fallbackMmAudioSrc && fallbackMmAudioSrc !== primaryMmAudioSrc) {
+                        setMmFallbackAudioUsed(true);
+                      } else {
+                        setMmIsPlaying(false);
+                      }
+                    }}
+                  />
+
+                  {/* Left: Full-Width MindMap Canvas */}
                   <div
                     style={{
                       flex: 1,
@@ -2819,12 +2889,32 @@ export default function StudyTable() {
                   >
                     <MindMapView
                       content={mermaidContent}
-                      onTopicClick={handleTopicClick}
+                      onTopicClick={(lbl, act) => {
+                        const candidate = childToParentBranch[lbl.toLowerCase().trim()] || lbl;
+                        const canonical =
+                          allTopicLabels.find(
+                            (l) =>
+                              l.toLowerCase().trim() === candidate.toLowerCase().trim() ||
+                              l.toLowerCase().includes(candidate.toLowerCase().trim()) ||
+                              candidate.toLowerCase().includes(l.toLowerCase().trim())
+                          ) || candidate;
+                        const isSameBranch =
+                          canonical.toLowerCase().trim() === activeSelectedBranch.toLowerCase().trim();
+                        handleTopicClick(canonical, act);
+                        if (act === 'podcast' && isSameBranch && mmAudioRef.current) {
+                          mmAudioRef.current.playbackRate = mmPlaybackRate;
+                          mmAudioRef.current
+                            .play()
+                            .then(() => setMmIsPlaying(true))
+                            .catch(() => setMmIsPlaying(false));
+                        }
+                      }}
                       nodeIcons={mmIcons}
-                      selectedTopic={null}
+                      selectedTopic={mmDrawerOpen ? activeSelectedBranch : null}
                       studiedTopics={[]}
                       onSelectTopic={(lbl, depth, parentLbl) => {
                         if (isNebBiologyChap6 && MINDMAP_MAPPING[lbl.toLowerCase().trim()]) {
+                          if (mmAudioRef.current) mmAudioRef.current.pause();
                           handleTopicClick(lbl, 'read');
                           return;
                         }
@@ -2839,45 +2929,109 @@ export default function StudyTable() {
                               l.toLowerCase().includes(candidate.toLowerCase().trim()) ||
                               candidate.toLowerCase().includes(l.toLowerCase().trim())
                           ) || candidate;
+                        if (mmAudioRef.current) mmAudioRef.current.pause();
                         handleTopicClick(canonical, 'read');
                       }}
                     />
                   </div>
 
-                  {/* Right: Contextual Branch Inspector Card */}
+                  {/* Right: Side-by-Side GPU Slide-In Contextual Branch Card + Botanical Microcast Player */}
                   <aside
+                    aria-hidden={!mmDrawerOpen}
                     style={{
-                      width: '375px',
+                      width: '380px',
                       flexShrink: 0,
                       height: '100%',
+                      marginRight: mmDrawerOpen ? '0px' : '-380px',
                       background: '#FFFFFF',
                       border: '1px solid #E6E0D4',
                       borderRadius: '16px',
-                      padding: '20px',
+                      padding: '16px 18px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '14px',
+                      gap: '10px',
                       overflowY: 'auto',
-                      boxShadow: '0 2px 10px rgba(30, 40, 34, 0.03)',
+                      boxShadow: mmDrawerOpen
+                        ? '0 4px 18px rgba(30, 40, 34, 0.05)'
+                        : 'none',
+                      transform: mmDrawerOpen
+                        ? 'translate3d(0, 0, 0)'
+                        : 'translate3d(42px, 0, 0)',
+                      opacity: mmDrawerOpen ? 1 : 0,
+                      pointerEvents: mmDrawerOpen ? 'auto' : 'none',
+                      willChange: 'margin-right, transform, opacity',
+                      backfaceVisibility: 'hidden',
+                      WebkitFontSmoothing: 'antialiased',
+                      transition:
+                        'margin-right 0.52s cubic-bezier(0.22, 1, 0.36, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.36s ease',
                     }}
                   >
-                    {/* Pill badge */}
+                    {/* Header Row: Pill badge + Close Drawer Button */}
                     <div
                       style={{
-                        display: 'inline-flex',
+                        display: 'flex',
                         alignItems: 'center',
-                        alignSelf: 'flex-start',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        background: '#E8F0EB',
-                        color: '#365343',
-                        fontSize: '10.5px',
-                        fontWeight: 800,
-                        letterSpacing: '0.07em',
-                        textTransform: 'uppercase',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        flexShrink: 0,
                       }}
                     >
-                      BRANCH · {getChapterPrefix(subjectId).toUpperCase()} {chapterNumber}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          background: '#E8F0EB',
+                          color: '#365343',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          letterSpacing: '0.07em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        BRANCH · {getChapterPrefix(subjectId).toUpperCase()} {chapterNumber}
+                      </div>
+
+                      <button
+                        type="button"
+                        title="Close panel"
+                        aria-label="Close panel"
+                        onClick={() => {
+                          setMmDrawerOpen(false);
+                          if (mmAudioRef.current) {
+                            mmAudioRef.current.pause();
+                          }
+                        }}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          border: '1px solid #E6E0D4',
+                          background: '#FAF8F3',
+                          color: '#5C6660',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          flexShrink: 0,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#EFECE2';
+                          e.currentTarget.style.color = '#1E2822';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FAF8F3';
+                          e.currentTarget.style.color = '#5C6660';
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
                     </div>
 
                     {/* Branch Title */}
@@ -2885,11 +3039,12 @@ export default function StudyTable() {
                       style={{
                         margin: 0,
                         fontFamily: "'Fraunces', 'Georgia', serif",
-                        fontSize: '20px',
+                        fontSize: '18.5px',
                         fontWeight: 600,
                         color: '#1E2822',
-                        lineHeight: 1.26,
+                        lineHeight: 1.24,
                         letterSpacing: '-0.01em',
+                        flexShrink: 0,
                       }}
                     >
                       {activeSelectedBranch}
@@ -2898,20 +3053,21 @@ export default function StudyTable() {
                     {/* Subtitle */}
                     <div
                       style={{
-                        fontSize: '12.5px',
+                        fontSize: '12px',
                         color: '#7A827C',
                         fontWeight: 500,
-                        marginTop: '-6px',
+                        marginTop: '-4px',
+                        flexShrink: 0,
                       }}
                     >
                       {branchMeta.subTopics.length} sub-topics · ~{totalBranchMins} min of study material
                     </div>
 
                     {/* Sub-Topics List */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
                       <div
                         style={{
-                          fontSize: '10.5px',
+                          fontSize: '10px',
                           fontWeight: 800,
                           letterSpacing: '0.08em',
                           color: '#848C86',
@@ -2925,13 +3081,16 @@ export default function StudyTable() {
                         <button
                           key={st.code}
                           type="button"
-                          onClick={() => handleTopicClick(activeSelectedBranch, 'read')}
+                          onClick={() => {
+                            if (mmAudioRef.current) mmAudioRef.current.pause();
+                            handleTopicClick(activeSelectedBranch, 'read');
+                          }}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px',
-                            padding: '11px 12px',
-                            borderRadius: '11px',
+                            gap: '10px',
+                            padding: '9px 11px',
+                            borderRadius: '10px',
                             background: '#F6F3EC',
                             border: '1px solid #EAE4D7',
                             cursor: 'pointer',
@@ -2950,15 +3109,15 @@ export default function StudyTable() {
                         >
                           <span
                             style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '8px',
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '7px',
                               background: '#FFFFFF',
                               border: '1px solid #E5DFD2',
                               display: 'inline-flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '11.5px',
+                              fontSize: '11px',
                               fontWeight: 700,
                               color: '#5C6660',
                               flexShrink: 0,
@@ -2969,17 +3128,17 @@ export default function StudyTable() {
                           <span
                             style={{
                               flex: 1,
-                              fontSize: '13px',
+                              fontSize: '12.5px',
                               fontWeight: 600,
                               color: '#1E2822',
-                              lineHeight: 1.35,
+                              lineHeight: 1.32,
                             }}
                           >
                             {st.title}
                           </span>
                           <span
                             style={{
-                              fontSize: '12px',
+                              fontSize: '11.5px',
                               fontWeight: 600,
                               color: '#848C86',
                               flexShrink: 0,
@@ -2991,243 +3150,431 @@ export default function StudyTable() {
                       ))}
                     </div>
 
-                    {/* 4-Column Multi-Modal Action Grid */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(4, 1fr)',
-                        gap: '8px',
-                        marginTop: '2px',
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => handleTopicClick(activeSelectedBranch, 'read')}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          padding: '11px 6px',
-                          borderRadius: '11px',
-                          background: '#FFFFFF',
-                          border: '1px solid #E5DFD2',
-                          cursor: 'pointer',
-                          color: '#1E2822',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#F6F3EC';
-                          e.currentTarget.style.borderColor = '#D5CEC0';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.borderColor = '#E5DFD2';
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-                          <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-                        </svg>
-                        <span>Read</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleTopicClick(activeSelectedBranch, 'podcast')}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          padding: '11px 6px',
-                          borderRadius: '11px',
-                          background: '#FFFFFF',
-                          border: '1px solid #E5DFD2',
-                          cursor: 'pointer',
-                          color: '#1E2822',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#F6F3EC';
-                          e.currentTarget.style.borderColor = '#D5CEC0';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.borderColor = '#E5DFD2';
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                        </svg>
-                        <span>Listen</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => handleTopicClick(activeSelectedBranch, 'video')}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          padding: '11px 6px',
-                          borderRadius: '11px',
-                          background: '#FFFFFF',
-                          border: '1px solid #E5DFD2',
-                          cursor: 'pointer',
-                          color: '#1E2822',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#F6F3EC';
-                          e.currentTarget.style.borderColor = '#D5CEC0';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.borderColor = '#E5DFD2';
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                        <span>Watch</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          markMmBranchStudied(activeSelectedBranch);
-                          setIsAskOpen(true);
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px',
-                          padding: '11px 6px',
-                          borderRadius: '11px',
-                          background: '#FFFFFF',
-                          border: '1px solid #E5DFD2',
-                          cursor: 'pointer',
-                          color: '#1E2822',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          transition: 'all 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#F6F3EC';
-                          e.currentTarget.style.borderColor = '#D5CEC0';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#FFFFFF';
-                          e.currentTarget.style.borderColor = '#E5DFD2';
-                        }}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#365343" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                        <span>Ask me</span>
-                      </button>
-                    </div>
-
-                    {/* Context Podcast Card */}
+                    {/* ── Botanical Theme Spotify-Layout Microcast Player Card ── */}
                     <div
                       style={{
                         marginTop: 'auto',
+                        borderRadius: '14px',
+                        padding: '14px 15px',
+                        background: 'linear-gradient(145deg, #F3F7F4 0%, #EFECE2 100%)',
+                        border: '1px solid #DCE3DD',
+                        boxShadow: '0 3px 12px rgba(45, 62, 54, 0.06)',
+                        color: '#1E2822',
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '12px 14px',
-                        borderRadius: '13px',
-                        background: '#FBF5EE',
-                        border: '1px solid #EBD5C3',
+                        flexDirection: 'column',
+                        gap: '11px',
+                        flexShrink: 0,
                       }}
                     >
+                      <style>{`
+                        @keyframes svSpotifyEq1 {
+                          0%, 100% { height: 5px; }
+                          50% { height: 15px; }
+                        }
+                        @keyframes svSpotifyEq2 {
+                          0%, 100% { height: 14px; }
+                          35% { height: 5px; }
+                          70% { height: 17px; }
+                        }
+                        @keyframes svSpotifyEq3 {
+                          0%, 100% { height: 7px; }
+                          45% { height: 16px; }
+                        }
+                      `}</style>
+
+                      {/* Top Row: Cover Tile + Track Metadata + Speed Pill */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                        {/* Cover Artwork Tile (Matches Mindmap Node Botanical Forest Sage) */}
+                        <div
+                          style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '10px',
+                            background: '#375545',
+                            border: '1px solid #2C4638',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: '0 3px 8px rgba(55, 85, 69, 0.2)',
+                          }}
+                        >
+                          {mmIsPlaying ? (
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '17px' }}>
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#F5F1E6', animation: 'svSpotifyEq1 0.75s ease-in-out infinite' }} />
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#E8C39E', animation: 'svSpotifyEq2 0.65s ease-in-out infinite' }} />
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#F5F1E6', animation: 'svSpotifyEq3 0.8s ease-in-out infinite' }} />
+                            </div>
+                          ) : (
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F5F1E6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Track Info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#375545',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: mmIsPlaying ? '#375545' : '#BD7D52',
+                              }}
+                            />
+                            <span>MICROCAST · EP {selectedBranchIdx + 1}</span>
+                          </div>
+                          <div
+                            title={activeSelectedBranch}
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#1E2822',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {activeSelectedBranch}
+                          </div>
+                          <div
+                            title={cleanChapterLabel || chapterName}
+                            style={{
+                              fontSize: '11px',
+                              color: '#6E7872',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              marginTop: '1px',
+                            }}
+                          >
+                            {cleanChapterLabel || chapterName}
+                          </div>
+                        </div>
+
+                        {/* Playback Speed Button */}
+                        <button
+                          type="button"
+                          title="Change playback speed"
+                          onClick={() => {
+                            const rates = [1, 1.25, 1.5, 2];
+                            const nextRate = rates[(rates.indexOf(mmPlaybackRate) + 1) % rates.length];
+                            setMmPlaybackRate(nextRate);
+                            if (mmAudioRef.current) {
+                              mmAudioRef.current.playbackRate = nextRate;
+                            }
+                          }}
+                          style={{
+                            padding: '3px 9px',
+                            borderRadius: '999px',
+                            background: '#FFFFFF',
+                            border: '1px solid #D5DDD8',
+                            color: '#375545',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#E8F0EB';
+                            e.currentTarget.style.borderColor = '#C2D1C8';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#FFFFFF';
+                            e.currentTarget.style.borderColor = '#D5DDD8';
+                          }}
+                        >
+                          {mmPlaybackRate}x
+                        </button>
+                      </div>
+
+                      {/* Scrubber Bar + Timestamps */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div
+                          style={{
+                            position: 'relative',
+                            height: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '5px',
+                              borderRadius: '999px',
+                              background: '#D6DFD9',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: `${mmProgressPct}%`,
+                                height: '100%',
+                                borderRadius: '999px',
+                                background: '#375545',
+                                transition: 'width 0.1s linear',
+                              }}
+                            />
+                          </div>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `calc(${mmProgressPct}% - 5.5px)`,
+                              width: '11px',
+                              height: '11px',
+                              borderRadius: '50%',
+                              background: '#375545',
+                              border: '2px solid #FFFFFF',
+                              boxShadow: '0 1px 4px rgba(30, 40, 34, 0.25)',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                          <input
+                            type="range"
+                            min={0}
+                            max={effectiveMmDuration}
+                            step={0.5}
+                            value={Math.min(mmAudioCurrentTime, effectiveMmDuration)}
+                            onChange={(e) => {
+                              const nextTime = parseFloat(e.target.value);
+                              setMmAudioCurrentTime(nextTime);
+                              if (mmAudioRef.current) {
+                                mmAudioRef.current.currentTime = nextTime;
+                              }
+                            }}
+                            aria-label="Seek microcast audio"
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                              margin: 0,
+                            }}
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            color: '#6E7872',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          <span>{formatMmTime(mmAudioCurrentTime)}</span>
+                          <span>{formatMmTime(effectiveMmDuration)}</span>
+                        </div>
+                      </div>
+
+                      {/* Transport Controls */}
                       <div
                         style={{
-                          width: '38px',
-                          height: '38px',
-                          borderRadius: '50%',
-                          background: '#FFFFFF',
-                          border: '1px solid #EBD5C3',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
+                          justifyContent: 'space-between',
+                          padding: '0 4px',
                         }}
                       >
-                        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#BD7D52" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                          <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                        </svg>
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
+                        {/* Rewind 10s */}
+                        <button
+                          type="button"
+                          title="Rewind 10 seconds"
+                          onClick={() => {
+                            if (mmAudioRef.current) {
+                              const next = Math.max(0, mmAudioRef.current.currentTime - 10);
+                              mmAudioRef.current.currentTime = next;
+                              setMmAudioCurrentTime(next);
+                            }
+                          }}
                           style={{
-                            fontSize: '13px',
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#5C6660',
+                            fontSize: '11px',
                             fontWeight: 700,
-                            color: '#1E2822',
-                            lineHeight: 1.25,
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#1E2822';
+                            e.currentTarget.style.background = 'rgba(55, 85, 69, 0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#5C6660';
+                            e.currentTarget.style.background = 'transparent';
                           }}
                         >
-                          Context podcast
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '11.5px',
-                            color: '#7D766D',
-                            lineHeight: 1.35,
-                            marginTop: '2px',
-                          }}
-                        >
-                          This branch explained on the go · {branchMeta.podcastMins} min
-                        </div>
-                      </div>
+                          -10s
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => handleTopicClick(activeSelectedBranch, 'podcast')}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '8px 14px',
-                          borderRadius: '999px',
-                          background: '#BD7D52',
-                          color: '#FFFFFF',
-                          border: 'none',
-                          fontSize: '12.5px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          flexShrink: 0,
-                          boxShadow: '0 2px 6px rgba(189, 125, 82, 0.25)',
-                          transition: 'background 0.15s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = '#A96B42';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = '#BD7D52';
-                        }}
-                      >
-                        <svg width="10" height="10" viewBox="0 0 24 24" fill="#FFFFFF" stroke="none">
-                          <polygon points="5 3 19 12 5 21 5 3" />
-                        </svg>
-                        <span>Play</span>
-                      </button>
+                        {/* Previous Branch Microcast */}
+                        <button
+                          type="button"
+                          title="Previous branch microcast"
+                          disabled={selectedBranchIdx <= 0}
+                          onClick={() => {
+                            if (selectedBranchIdx > 0) {
+                              const prevBranch = allTopicLabels[selectedBranchIdx - 1];
+                              if (prevBranch) handleTopicClick(prevBranch, 'podcast');
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: selectedBranchIdx > 0 ? '#375545' : '#B8C2BC',
+                            cursor: selectedBranchIdx > 0 ? 'pointer' : 'default',
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="19 20 9 12 19 4 19 20" />
+                            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                          </svg>
+                        </button>
+
+                        {/* Play / Pause Primary Circle Button */}
+                        <button
+                          type="button"
+                          aria-label={mmIsPlaying ? 'Pause microcast' : 'Play microcast'}
+                          onClick={() => {
+                            const audio = mmAudioRef.current;
+                            if (!audio) return;
+                            if (mmIsPlaying) {
+                              audio.pause();
+                            } else {
+                              audio.playbackRate = mmPlaybackRate;
+                              audio
+                                .play()
+                                .then(() => setMmIsPlaying(true))
+                                .catch(() => setMmIsPlaying(false));
+                            }
+                          }}
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: '#375545',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(55, 85, 69, 0.25)',
+                            transition: 'transform 0.15s ease, background 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.06)';
+                            e.currentTarget.style.background = '#2B4437';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.background = '#375545';
+                          }}
+                        >
+                          {mmIsPlaying ? (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                              <rect x="6" y="4" width="4" height="16" rx="1" />
+                              <rect x="14" y="4" width="4" height="16" rx="1" />
+                            </svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Next Branch Microcast */}
+                        <button
+                          type="button"
+                          title="Next branch microcast"
+                          disabled={selectedBranchIdx >= allTopicLabels.length - 1}
+                          onClick={() => {
+                            if (selectedBranchIdx < allTopicLabels.length - 1) {
+                              const nextBranch = allTopicLabels[selectedBranchIdx + 1];
+                              if (nextBranch) handleTopicClick(nextBranch, 'podcast');
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: selectedBranchIdx < allTopicLabels.length - 1 ? '#375545' : '#B8C2BC',
+                            cursor: selectedBranchIdx < allTopicLabels.length - 1 ? 'pointer' : 'default',
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 4 15 12 5 20 5 4" />
+                            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                          </svg>
+                        </button>
+
+                        {/* Forward 10s */}
+                        <button
+                          type="button"
+                          title="Forward 10 seconds"
+                          onClick={() => {
+                            if (mmAudioRef.current) {
+                              const next = Math.min(effectiveMmDuration, mmAudioRef.current.currentTime + 10);
+                              mmAudioRef.current.currentTime = next;
+                              setMmAudioCurrentTime(next);
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#5C6660',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#1E2822';
+                            e.currentTarget.style.background = 'rgba(55, 85, 69, 0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#5C6660';
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          +10s
+                        </button>
+                      </div>
                     </div>
                   </aside>
                 </div>
@@ -3240,30 +3587,18 @@ export default function StudyTable() {
                 <div
                   className="mm-concept-topbar"
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: '12px',
                     flexWrap: 'nowrap',
                     width: '100%',
+                    minHeight: '56px',
                   }}
                 >
-                  {/* Left: prev */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-start', minWidth: 0 }}>
-                    {prevTopicLabel && (
-                      <button
-                        className="mm-next-topic-btn"
-                        onClick={() => handleTopicClick(prevTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
-                        title={prevTopicLabel}
-                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
-                      >
-                        ← Prev: {prevTopicLabel.length > 20 ? `${prevTopicLabel.slice(0, 18)}…` : prevTopicLabel}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Center: Mindmap button */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {/* Left: Mindmap back button + Prev topic */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-start', minWidth: 0, zIndex: 11 }}>
                     <button
                       className="mm-back-btn"
                       onClick={() => {
@@ -3272,44 +3607,24 @@ export default function StudyTable() {
                         setMindmapInlineType('text');
                         setMindmapMediaUrl('');
                       }}
+                      style={{ flexShrink: 0 }}
                     >
                       ← Mindmap
                     </button>
-                  </div>
-
-                  {/* Right: next */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
-                    {nextTopicLabel && (
+                    {prevTopicLabel && (
                       <button
                         className="mm-next-topic-btn"
-                        onClick={() => handleTopicClick(nextTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
-                        title={nextTopicLabel}
-                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
+                        onClick={() => handleTopicClick(prevTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
+                        title={prevTopicLabel}
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}
                       >
-                        Next: {nextTopicLabel.length > 20 ? `${nextTopicLabel.slice(0, 18)}…` : nextTopicLabel} →
+                        ← Prev: {prevTopicLabel.length > 18 ? `${prevTopicLabel.slice(0, 16)}…` : prevTopicLabel}
                       </button>
                     )}
                   </div>
-                </div>
 
-                {/* Header row: Persona levels centered + Essentials / In-depth toggle button on the right */}
-                {mindmapInlineType === 'text' && (
-                  <div
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      minHeight: '48px',
-                      padding: '4px 12px 6px',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    {/* Left spacer to keep center aligned */}
-                    <div style={{ flex: 1, minWidth: 0 }} />
-
-                    {/* Center: persona levels (exact match with assessment & flashcards) */}
+                  {/* Center: Persona levels centered in the single header row */}
+                  {mindmapInlineType === 'text' && (
                     <div
                       className="sv-hdr-levels"
                       style={{
@@ -3318,7 +3633,7 @@ export default function StudyTable() {
                         top: '50%',
                         transform: 'translate(-50%, -50%)',
                         display: 'flex',
-                        gap: '8px',
+                        gap: '16px',
                         alignItems: 'center',
                         justifyContent: 'center',
                         zIndex: 10,
@@ -3326,6 +3641,7 @@ export default function StudyTable() {
                     >
                       {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => {
                         const isSelected = persona === lvl;
+                        const labelText = lvl.charAt(0).toUpperCase() + lvl.slice(1);
                         return (
                           <button
                             key={lvl}
@@ -3338,110 +3654,77 @@ export default function StudyTable() {
                                 loadMindmapTopicForPersona(mindmapTopicTitle, lvl, 'read', true);
                               }
                             }}
-                            title={lvl.charAt(0).toUpperCase() + lvl.slice(1)}
+                            title={labelText}
                             style={{
-                              width: '54px',
-                              height: '54px',
-                              borderRadius: '12px',
-                              padding: 0,
-                              border: isSelected ? '2.5px solid #2D473B' : '2.5px solid transparent',
-                              background: isSelected ? '#FFFFFF' : 'transparent',
-                              boxShadow: isSelected ? '0 3px 12px rgba(45, 71, 59, 0.2)' : 'none',
+                              minWidth: '60px',
+                              height: '52px',
+                              borderRadius: '11px',
+                              padding: '3px 8px 4px',
+                              border: isSelected ? '2px solid #E7B864' : '2px solid transparent',
+                              background: isSelected ? '#FFFDF9' : 'transparent',
+                              boxShadow: isSelected ? '0 3px 10px rgba(231, 184, 100, 0.22)' : 'none',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                              overflow: 'visible',
+                              flexShrink: 0,
                               display: 'flex',
+                              flexDirection: 'column',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              cursor: 'pointer',
+                              gap: '2px',
                               boxSizing: 'border-box',
-                              flexShrink: 0,
-                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                             }}
                           >
                             <img
                               src={`${import.meta.env.BASE_URL}personas/${lvl}.png`}
-                              alt={lvl}
+                              alt={labelText}
                               style={{
-                                width: '100%',
-                                height: '100%',
+                                width: '32px',
+                                height: '32px',
                                 objectFit: 'contain',
                                 borderRadius: '8px',
-                                padding: '3px',
+                                padding: 0,
                                 boxSizing: 'border-box',
-                                filter: isSelected ? 'grayscale(0) opacity(1)' : 'grayscale(0.2) opacity(0.75)',
-                                transform: isSelected ? 'scale(1.04)' : 'none',
+                                filter: isSelected
+                                  ? 'grayscale(0) opacity(1) drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                                  : 'grayscale(0.15) opacity(0.78)',
+                                transform: isSelected ? 'scale(1.06)' : 'scale(1)',
                                 transition: 'filter 0.2s ease, transform 0.2s ease',
                               }}
                             />
+                            <span
+                              className="sv-hdr-level-label"
+                              style={{
+                                fontSize: '10.5px',
+                                fontWeight: isSelected ? 700 : 600,
+                                color: isSelected ? '#1E2822' : '#64748B',
+                                lineHeight: 1.1,
+                                letterSpacing: '0.01em',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {labelText}
+                            </span>
                           </button>
                         );
                       })}
                     </div>
+                  )}
 
-                    {/* Right: toggle button for Essentials | In-depth */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', zIndex: 11 }}>
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          background: '#E2E8F0',
-                          padding: '3px',
-                          borderRadius: '999px',
-                          border: '1px solid #CBD5E1',
-                          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
-                        }}
+                  {/* Right: next */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: 0, zIndex: 11 }}>
+                    {nextTopicLabel && (
+                      <button
+                        className="mm-next-topic-btn"
+                        onClick={() => handleTopicClick(nextTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
+                        title={nextTopicLabel}
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => setMindmapInlineTab('quick')}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 18px',
-                            borderRadius: '999px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: mindmapInlineTab === 'quick' ? '#9CC0B4' : 'transparent',
-                            color: mindmapInlineTab === 'quick' ? '#18221D' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
-                            transition: 'all 0.18s ease',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                          </svg>
-                          Essentials
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMindmapInlineTab('detailed')}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 18px',
-                            borderRadius: '999px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: mindmapInlineTab === 'detailed' ? '#9CC0B4' : 'transparent',
-                            color: mindmapInlineTab === 'detailed' ? '#18221D' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
-                            transition: 'all 0.18s ease',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M12 8v4l2 2" />
-                          </svg>
-                          In-depth
-                        </button>
-                      </div>
-                    </div>
+                        Next: {nextTopicLabel.length > 20 ? `${nextTopicLabel.slice(0, 18)}…` : nextTopicLabel} →
+                      </button>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* Content */}
                 <div className="mm-concept-content" style={{ padding: 0 }}>
@@ -3483,60 +3766,126 @@ export default function StudyTable() {
                           boxSizing: 'border-box',
                         }}
                       >
-                        {/* Mindmap Artifact Meta & Quick Check Badge Row (same properties as Read sections) */}
+                        {/* Top of body: Meta badges on left + Essentials | In-depth toggle on right */}
                         <div
                           style={{
                             display: 'flex',
-                            gap: '8px',
+                            justifyContent: 'space-between',
                             alignItems: 'center',
+                            gap: '12px',
                             flexWrap: 'wrap',
-                            marginBottom: '16px',
+                            marginBottom: '18px',
                           }}
                         >
-                          <span
-                            style={{
-                              background: '#f1f5f9',
-                              color: '#334155',
-                              borderRadius: '6px',
-                              padding: '3px 9px',
-                              fontSize: '12px',
-                              fontWeight: 600,
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '4px',
-                            }}
-                          >
-                            ⏱ {activeMmReadMins} min read
-                          </span>
-
-                          {activeMmQcList.length > 0 && (
-                            <button
-                              type="button"
-                              onClick={() =>
-                                mindmapQcRef.current?.scrollIntoView({
-                                  behavior: 'smooth',
-                                  block: 'start',
-                                })
-                              }
-                              title="Skip to Quick Check"
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span
                               style={{
-                                background: isMmQcDone ? '#dcfce7' : '#f0fdf4',
-                                color: '#15803d',
-                                border: '1px solid #bbf7d0',
+                                background: '#F1F5F3',
+                                color: '#2E4A3B',
+                                border: '1px solid #DCE7E1',
                                 borderRadius: '6px',
-                                padding: '3px 9px',
+                                padding: '4px 10px',
                                 fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
                               }}
                             >
-                              {isMmQcDone
-                                ? `✓ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''} answered`
-                                : answeredInMmTopic > 0
-                                ? `✔ ${answeredInMmTopic}/${activeMmQcList.length} quick checks`
-                                : `✔ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''}`}
+                              ⏱ {activeMmReadMins} min read
+                            </span>
+
+                            {activeMmQcList.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  mindmapQcRef.current?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center',
+                                  })
+                                }
+                                title="Skip to Quick Check"
+                                style={{
+                                  background: isMmQcDone ? '#DCEBE3' : '#EBF3EE',
+                                  color: '#2E4A3B',
+                                  border: '1px solid #C5D9CD',
+                                  borderRadius: '6px',
+                                  padding: '4px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {isMmQcDone
+                                  ? `✓ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''} answered`
+                                  : answeredInMmTopic > 0
+                                  ? `✔ ${answeredInMmTopic}/${activeMmQcList.length} quick checks`
+                                  : `✔ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''}`}
+                              </button>
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              background: '#E2E8F0',
+                              padding: '3px',
+                              borderRadius: '999px',
+                              border: '1px solid #CBD5E1',
+                              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setMindmapInlineTab('quick')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '5px 16px',
+                                borderRadius: '999px',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: mindmapInlineTab === 'quick' ? '#9CC0B4' : 'transparent',
+                                color: mindmapInlineTab === 'quick' ? '#18221D' : '#64748b',
+                                boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
+                                transition: 'all 0.18s ease',
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                              </svg>
+                              Essentials
                             </button>
-                          )}
+                            <button
+                              type="button"
+                              onClick={() => setMindmapInlineTab('detailed')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '5px 16px',
+                                borderRadius: '999px',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: mindmapInlineTab === 'detailed' ? '#9CC0B4' : 'transparent',
+                                color: mindmapInlineTab === 'detailed' ? '#18221D' : '#64748b',
+                                boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
+                                transition: 'all 0.18s ease',
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 8v4l2 2" />
+                              </svg>
+                              In-depth
+                            </button>
+                          </div>
                         </div>
 
                         <MarkdownView content={activeMmMarkdown} />
@@ -4485,6 +4834,8 @@ export default function StudyTable() {
                         const isResourcesActive = activeTool === "mindmap" || activeTool === "foundation" || activeTool === "key_takeaways" || activeTool === "ask";
 
                         const groupCardStyle = (isActive: boolean, groupColor: string): React.CSSProperties => ({
+                          position: 'relative',
+                          overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -4510,7 +4861,24 @@ export default function StudyTable() {
                           maxHeight: '84px',
                           boxSizing: 'border-box',
                           flex: '0 0 232px',
-                          transition: 'all 0.25s ease',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease',
+                        });
+
+                        const groupTitleStyle = (isActive: boolean, groupColor: string): React.CSSProperties => ({
+                          height: '16px',
+                          minHeight: '16px',
+                          maxHeight: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          color: isActive ? groupColor : (isDarkToolbar ? groupColor : '#18221D'),
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          lineHeight: '16px',
+                          width: '100%',
                         });
 
                         return (
@@ -4526,23 +4894,45 @@ export default function StudyTable() {
                               flexShrink: 0,
                             }}
                           >
+                            <style>{`
+                              .sv-tool-group-card .sv-tool-group-title {
+                                transform: translate3d(0, 28px, 0) scale(1.52);
+                                transform-origin: center center;
+                                transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+                                will-change: transform;
+                                z-index: 2;
+                                pointer-events: none;
+                              }
+                              .sv-tool-group-card .sv-tool-group-options {
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                width: 100%;
+                                flex: 1 1 auto;
+                                opacity: 0;
+                                transform: translate3d(0, 10px, 0) scale(0.94);
+                                transform-origin: center bottom;
+                                pointer-events: none;
+                                transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+                                will-change: opacity, transform;
+                              }
+                              .sv-tool-group-card.is-active .sv-tool-group-title,
+                              .sv-tool-group-card:hover .sv-tool-group-title,
+                              .sv-tool-group-card:focus-within .sv-tool-group-title {
+                                transform: translate3d(0, 0, 0) scale(1);
+                              }
+                              .sv-tool-group-card.is-active .sv-tool-group-options,
+                              .sv-tool-group-card:hover .sv-tool-group-options,
+                              .sv-tool-group-card:focus-within .sv-tool-group-options {
+                                opacity: 1;
+                                transform: translate3d(0, 0, 0) scale(1);
+                                pointer-events: auto;
+                              }
+                            `}</style>
+
                             {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
-                            <div style={groupCardStyle(isLearnActive, '#9CC0B4')}>
-                              <div style={{
-                                height: '16px',
-                                minHeight: '16px',
-                                maxHeight: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                color: isLearnActive ? '#9CC0B4' : (isDarkToolbar ? '#9CC0B4' : '#18221D'),
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '16px',
-                                width: '100%',
-                              }}>
+                            <div className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`} style={groupCardStyle(isLearnActive, '#9CC0B4')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
                                 <span>Learn</span>
                                 {isSegmented && (
                                   <span
@@ -4553,7 +4943,7 @@ export default function StudyTable() {
                                   </span>
                                 )}
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                              <div className="sv-tool-group-options">
                                 {renderNode('summary', 'Read', '#9CC0B4')}
                                 {renderNode('podcasts', 'Listen', '#9CC0B4')}
                                 {renderNode('videos', 'Watch', '#9CC0B4')}
@@ -4561,24 +4951,11 @@ export default function StudyTable() {
                             </div>
 
                             {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
-                            <div style={groupCardStyle(isPracticeActive, '#E7B864')}>
-                              <div style={{
-                                height: '16px',
-                                minHeight: '16px',
-                                maxHeight: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isPracticeActive ? '#E7B864' : (isDarkToolbar ? '#E7B864' : '#18221D'),
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '16px',
-                                width: '100%',
-                              }}>
+                            <div className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`} style={groupCardStyle(isPracticeActive, '#E7B864')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
                                 Practice
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                              <div className="sv-tool-group-options">
                                 {renderNode('revision_flashcards', 'Revise', '#E7B864')}
                                 {renderNode('assessment', 'Assessment', '#E7B864')}
                                 {renderNode('qbank', 'Q. Bank', '#E7B864')}
@@ -4586,51 +4963,25 @@ export default function StudyTable() {
                             </div>
 
                             {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
-                            <div style={groupCardStyle(isPrepareActive, '#B5BA9B')}>
-                              <div style={{
-                                height: '16px',
-                                minHeight: '16px',
-                                maxHeight: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isPrepareActive ? '#B5BA9B' : (isDarkToolbar ? '#B5BA9B' : '#18221D'),
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '16px',
-                                width: '100%',
-                              }}>
+                            <div className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`} style={groupCardStyle(isPrepareActive, '#B5BA9B')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
                                 Prepare
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                              <div className="sv-tool-group-options">
                                 {renderNode('pyq', 'PYQs', '#B5BA9B')}
-                                 {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
+                                {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
                                 {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
                               </div>
                             </div>
 
                             {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
-                            <div style={groupCardStyle(isResourcesActive, '#D9A382')}>
-                              <div style={{
-                                height: '16px',
-                                minHeight: '16px',
-                                maxHeight: '16px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isResourcesActive ? '#D9A382' : (isDarkToolbar ? '#D9A382' : '#18221D'),
-                                fontSize: '11.5px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '16px',
-                                width: '100%',
-                              }}>
+                            <div className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`} style={groupCardStyle(isResourcesActive, '#D9A382')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
                                 Resources
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
+                              <div className="sv-tool-group-options">
                                 {renderNode('mindmap', 'Mindmaps', '#D9A382')}
-                                 {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
+                                {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
                                 {renderNode('ask', 'Ask me', '#D9A382')}
                               </div>
                             </div>
@@ -4842,7 +5193,7 @@ export default function StudyTable() {
               padding:
                 activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'prep_exam' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'videos' || activeTool === 'pyq' || (activeTool === 'mindmap' && !mindmapTopicOpen)
                   ? '0px'
-                  : activeTool === 'assessment'
+                  : (activeTool === 'assessment' || activeTool === 'summary' || activeTool === 'detailed')
                   ? '4px 16px 0 16px'
                   : (activeTool === 'flashcards' || activeTool === 'revision_flashcards')
                   ? '2px 16px 8px 16px'
@@ -4866,7 +5217,7 @@ export default function StudyTable() {
                   gap: "20px",
                   marginTop: 0,
                   paddingTop: 0,
-                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "4px" : "12px",
+                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed") ? "4px" : "12px",
                   flexShrink: 0,
                 }}
               >
@@ -4884,8 +5235,8 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
-                        min-height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "46px" : "56px"};
-                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos") ? "0 0 2px 0" : "2px 0 6px 0"};
+                        min-height: ${activeTool === "videos" ? "46px" : "56px"};
+                        padding: ${activeTool === "videos" ? "0 0 2px 0" : "2px 0 6px 0"};
                         overflow: visible;
                       }
                       /* LEFT breadcrumb — single line, no card box */
@@ -4909,14 +5260,14 @@ export default function StudyTable() {
                         left: 50%;
                         top: 50%;
                         transform: translate(-50%, -50%);
-                        display: flex; gap: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "10px" : "16px"}; align-items: center; justify-content: center;
+                        display: flex; gap: 16px; align-items: center; justify-content: center;
                         z-index: 10;
                       }
                       .sv-hdr-level-btn {
-                        min-width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "48px" : "60px"};
-                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "48px" : "54px"};
+                        min-width: 60px;
+                        height: 54px;
                         border-radius: 11px;
-                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0" : "3px 8px 4px"};
+                        padding: 3px 8px 4px;
                         border: 2px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -4925,8 +5276,8 @@ export default function StudyTable() {
                         box-sizing: border-box;
                       }
                       .sv-hdr-level-btn img {
-                        width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "100%" : "34px"};
-                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "100%" : "34px"};
+                        width: 34px;
+                        height: 34px;
                         object-fit: contain;
                         border-radius: 8px;
                         padding: 0;
@@ -5083,27 +5434,21 @@ export default function StudyTable() {
                           onClick={() => setPersona("beginner")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
-                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
-                            <span className="sv-hdr-level-label">Beginner</span>
-                          )}
+                          <span className="sv-hdr-level-label">Beginner</span>
                         </button>
                         <button id="studybar-level-intermediate" type="button"
                           className={`sv-hdr-level-btn lvl-intermediate${uiPersona === "intermediate" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("intermediate")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
-                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
-                            <span className="sv-hdr-level-label">Intermediate</span>
-                          )}
+                          <span className="sv-hdr-level-label">Intermediate</span>
                         </button>
                         <button id="studybar-level-advanced" type="button"
                           className={`sv-hdr-level-btn lvl-advanced${uiPersona === "advanced" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("advanced")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
-                          {!(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") && (
-                            <span className="sv-hdr-level-label">Advanced</span>
-                          )}
+                          <span className="sv-hdr-level-label">Advanced</span>
                         </button>
                       </div>
 

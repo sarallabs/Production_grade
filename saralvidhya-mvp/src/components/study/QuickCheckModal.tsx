@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import type { QuickCheckQuestion } from '@/data/sectionizedReadService';
 
 interface QuickCheckModalProps {
@@ -40,7 +40,7 @@ function QuickCheckModalInner({
   }, [questions, question]);
 
   const [currentIdx, setCurrentIdx] = useState(0);
-
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const [selectedByQ, setSelectedByQ] = useState<Record<number, string>>(() => {
     if (initialSelectedKeys && Object.keys(initialSelectedKeys).length > 0) {
       return { ...initialSelectedKeys };
@@ -77,11 +77,22 @@ function QuickCheckModalInner({
   const answeredCount = Object.keys(selectedByQ).filter((k) => Boolean(selectedByQ[Number(k)])).length;
   const allQuestionsAnswered = answeredCount >= qList.length;
 
+  const scrollQuickCheckToCenter = () => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = cardRef.current;
+        if (!el) return;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+  };
+
   const handleSelectOption = (qIdx: number, key: string, isCorrect: boolean) => {
     if (selectedByQ[qIdx] || pendingWrongByQ[qIdx]) return;
     const usedRetries = retriesUsedByQ[qIdx] || 0;
     if (!isCorrect && usedRetries < 1) {
       setPendingWrongByQ((prev) => ({ ...prev, [qIdx]: key }));
+      scrollQuickCheckToCenter();
       return;
     }
     setPendingWrongByQ((prev) => ({ ...prev, [qIdx]: null }));
@@ -91,6 +102,7 @@ function QuickCheckModalInner({
     if (onAnswerSubmitted) {
       onAnswerSubmitted(isCorrect, key, qIdx, nextAnsweredCount >= qList.length);
     }
+    scrollQuickCheckToCenter();
   };
 
   const handleTryAgain = (qIdx: number) => {
@@ -99,28 +111,29 @@ function QuickCheckModalInner({
   };
 
   const borderColor =
-    allQuestionsAnswered || isCompleted ? 'rgba(22, 163, 74, 0.3)' : 'rgba(45, 71, 59, 0.22)';
+    allQuestionsAnswered || isCompleted ? 'rgba(134, 239, 172, 0.45)' : 'rgba(156, 192, 180, 0.28)';
   const canPrev = safeIdx > 0;
   const canNext = safeIdx < qList.length - 1;
 
   return (
     <div
+      ref={cardRef}
       style={{
         position: 'relative',
         width: '100%',
         marginTop: '12px',
-        background: '#ffffff',
+        background: 'linear-gradient(145deg, #3A5648 0%, #2F483C 100%)',
         borderRadius: '16px',
         border: `1.5px solid ${borderColor}`,
-        boxShadow: '0 8px 28px rgba(15, 23, 42, 0.06)',
-        padding: '22px 26px',
+        boxShadow: '0 10px 28px rgba(24, 38, 31, 0.16)',
+        padding: '20px 24px',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        gap: '18px',
+        gap: '16px',
       }}
     >
-      {/* Header Badge + Simple Carousel Arrows */}
+      {/* Header Row: 1 / 4 on Left, subtle Quick Check heading + Carousel Arrows on Right */}
       <div
         style={{
           display: 'flex',
@@ -130,37 +143,17 @@ function QuickCheckModalInner({
           gap: '10px',
         }}
       >
+        {/* Left: 1 / 4 counter (+ subtle answered status if applicable) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span
             style={{
-              fontSize: '11.5px',
-              fontWeight: 800,
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              color: '#2E3B33',
-              background: '#FDF6EC',
-              border: '1px solid #F3DEC0',
-              padding: '4px 11px',
-              borderRadius: '999px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '5px',
-            }}
-          >
-            <span>⚡</span>
-            <span>
-              QUICK CHECK · {sectionTitle ? sectionTitle : `SECTION ${currentSectionNumber}`}
-            </span>
-          </span>
-
-          <span
-            style={{
-              fontSize: '12px',
+              fontSize: '12.5px',
               fontWeight: 700,
-              color: '#475569',
-              background: '#F1EFEA',
-              padding: '3px 10px',
+              color: '#ECF4F0',
+              background: 'rgba(255, 255, 255, 0.14)',
+              padding: '3px 11px',
               borderRadius: '999px',
+              letterSpacing: '0.02em',
             }}
           >
             {safeIdx + 1} / {qList.length}
@@ -169,11 +162,10 @@ function QuickCheckModalInner({
           {(answeredCount > 0 || isCompleted) && (
             <span
               style={{
-                fontSize: '12px',
-                fontWeight: 700,
-                color: (isCompleted || answeredCount >= qList.length) ? '#2E3B33' : '#8C5A19',
-                background: (isCompleted || answeredCount >= qList.length) ? '#EBF3EE' : '#FDF6EC',
-                border: (isCompleted || answeredCount >= qList.length) ? '1px solid #C5D9CD' : '1px solid #F3DEC0',
+                fontSize: '11.5px',
+                fontWeight: 600,
+                color: '#D1FAE5',
+                background: 'rgba(16, 185, 129, 0.2)',
                 padding: '3px 10px',
                 borderRadius: '999px',
                 display: 'inline-flex',
@@ -191,59 +183,73 @@ function QuickCheckModalInner({
           )}
         </div>
 
-        {/* Simple Left / Right Arrow Navigation */}
-        {qList.length > 1 && (
-          <div style={{ display: ' inline-flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              type="button"
-              aria-label="Previous question"
-              disabled={!canPrev}
-              onClick={() => canPrev && setCurrentIdx((i) => Math.max(0, i - 1))}
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                border: '1.5px solid #cbd5e1',
-                background: canPrev ? '#ffffff' : '#f8fafc',
-                color: canPrev ? '#1e293b' : '#cbd5e1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: canPrev ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s ease',
-                padding: 0,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              aria-label="Next question"
-              disabled={!canNext}
-              onClick={() => canNext && setCurrentIdx((i) => Math.min(qList.length - 1, i + 1))}
-              style={{
-                width: '34px',
-                height: '34px',
-                borderRadius: '50%',
-                border: '1.5px solid #cbd5e1',
-                background: canNext ? '#ffffff' : '#f8fafc',
-                color: canNext ? '#1e293b' : '#cbd5e1',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: canNext ? 'pointer' : 'not-allowed',
-                transition: 'all 0.2s ease',
-                padding: 0,
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </button>
-          </div>
-        )}
+        {/* Right: Subtle Quick Check heading (no border/highlight) + Left/Right Navigation */}
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '12px' }}>
+          <span
+            style={{
+              fontSize: '12.5px',
+              fontWeight: 600,
+              letterSpacing: '0.03em',
+              color: 'rgba(232, 242, 237, 0.78)',
+            }}
+          >
+            Quick Check
+          </span>
+
+          {qList.length > 1 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                aria-label="Previous question"
+                disabled={!canPrev}
+                onClick={() => canPrev && setCurrentIdx((i) => Math.max(0, i - 1))}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: canPrev ? '1.5px solid rgba(255, 255, 255, 0.35)' : '1.5px solid rgba(255, 255, 255, 0.14)',
+                  background: canPrev ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+                  color: canPrev ? '#F1F7F4' : 'rgba(255, 255, 255, 0.28)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: canPrev ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s ease',
+                  padding: 0,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                aria-label="Next question"
+                disabled={!canNext}
+                onClick={() => canNext && setCurrentIdx((i) => Math.min(qList.length - 1, i + 1))}
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: canNext ? '1.5px solid #C6EDE0' : '1.5px solid rgba(255, 255, 255, 0.14)',
+                  background: canNext ? '#A8DBC8' : 'rgba(255, 255, 255, 0.04)',
+                  color: canNext ? '#12241C' : 'rgba(255, 255, 255, 0.28)',
+                  boxShadow: canNext ? '0 0 12px rgba(168, 219, 200, 0.5)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: canNext ? 'pointer' : 'not-allowed',
+                  transition: 'all 0.2s ease',
+                  padding: 0,
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Smooth Horizontal Carousel Viewport */}
@@ -280,9 +286,9 @@ function QuickCheckModalInner({
               >
                 <h3
                   style={{
-                    fontSize: '16.5px',
-                    fontWeight: 700,
-                    color: '#0f172a',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#F8FBF9',
                     lineHeight: '1.45',
                     margin: 0,
                     display: 'flex',
@@ -292,8 +298,8 @@ function QuickCheckModalInner({
                 >
                   <span
                     style={{
-                      color: '#2D473B',
-                      fontWeight: 800,
+                      color: '#A8DBC8',
+                      fontWeight: 700,
                       minWidth: '22px',
                     }}
                   >
@@ -302,36 +308,46 @@ function QuickCheckModalInner({
                   <span style={{ flex: 1 }}>{qItem.stem}</span>
                 </h3>
 
-                {/* Options with Alternating Lighter and Darker Shades */}
+                {/* Options */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
                   {qItem.options.map((opt, optIdx) => {
                     const isSelected = selectedKey === opt.key;
                     const isEven = optIdx % 2 === 0;
 
-                    let optBorder = isEven ? '#e2e8f0' : '#cbdcd1';
-                    let optBg = isEven ? '#ffffff' : '#f4f7f5';
-                    let optColor = '#1e293b';
+                    let optBorder = isEven ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.22)';
+                    let optBg = isEven ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.13)';
+                    let optColor = '#F1F7F4';
+                    let pillBg = isEven ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.2)';
+                    let pillColor = '#FFFFFF';
 
                     if (isSelected && !isSubmitted) {
-                      optBorder = '2px solid #2D473B';
-                      optBg = '#E4EFE8';
-                      optColor = '#16251D';
+                      optBorder = '2px solid #A8DBC8';
+                      optBg = 'rgba(168, 219, 200, 0.22)';
+                      optColor = '#FFFFFF';
+                      pillBg = '#A8DBC8';
+                      pillColor = '#14261E';
                     }
 
                     if (isFinalSubmitted) {
                       if (opt.is_correct) {
-                        optBorder = '2px solid #16a34a';
-                        optBg = '#f0fdf4';
-                        optColor = '#15803d';
+                        optBorder = '2px solid #4ADE80';
+                        optBg = 'rgba(22, 163, 74, 0.28)';
+                        optColor = '#ECFDF5';
+                        pillBg = '#22C55E';
+                        pillColor = '#FFFFFF';
                       } else if (isSelected && !opt.is_correct) {
-                        optBorder = '2px solid #ef4444';
-                        optBg = '#fef2f2';
-                        optColor = '#991b1b';
+                        optBorder = '2px solid #F87171';
+                        optBg = 'rgba(239, 68, 68, 0.26)';
+                        optColor = '#FEF2F2';
+                        pillBg = '#EF4444';
+                        pillColor = '#FFFFFF';
                       }
                     } else if (isPendingRetry && isSelected) {
-                      optBorder = '2px solid #ef4444';
-                      optBg = '#fef2f2';
-                      optColor = '#991b1b';
+                      optBorder = '2px solid #F87171';
+                      optBg = 'rgba(239, 68, 68, 0.26)';
+                      optColor = '#FEF2F2';
+                      pillBg = '#EF4444';
+                      pillColor = '#FFFFFF';
                     }
 
                     return (
@@ -367,8 +383,8 @@ function QuickCheckModalInner({
                             width: '26px',
                             height: '26px',
                             borderRadius: '6px',
-                            background: isSelected ? '#2D473B' : isEven ? '#f1f5f9' : '#dbe8df',
-                            color: isSelected ? '#ffffff' : '#334155',
+                            background: pillBg,
+                            color: pillColor,
                             fontWeight: 700,
                             fontSize: '12.5px',
                             display: 'flex',
@@ -392,8 +408,8 @@ function QuickCheckModalInner({
                     style={{
                       padding: '10px 16px',
                       borderRadius: '10px',
-                      background: '#FCF6F0',
-                      border: '1px solid #E5C8AF',
+                      background: 'rgba(254, 243, 199, 0.14)',
+                      border: '1px solid rgba(251, 191, 36, 0.4)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -401,18 +417,18 @@ function QuickCheckModalInner({
                       flexWrap: 'wrap',
                     }}
                   >
-                    <span style={{ fontSize: '13px', fontWeight: 700, color: '#B86B3D' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#FDE68A' }}>
                       ✕ Not quite right — you have 1 retry attempt remaining.
                     </span>
                     <button
                       type="button"
                       onClick={() => handleTryAgain(qIdx)}
                       style={{
-                        padding: '6px 14px',
+                        padding: '5px 14px',
                         borderRadius: '999px',
-                        border: '1.5px solid #C88A5A',
-                        background: '#FFFFFF',
-                        color: '#9A5226',
+                        border: '1px solid #FCD34D',
+                        background: '#FEF3C7',
+                        color: '#78350F',
                         fontWeight: 700,
                         fontSize: '12px',
                         cursor: 'pointer',
@@ -427,20 +443,20 @@ function QuickCheckModalInner({
                   </div>
                 )}
 
-                {/* Diagnostic Rationale & Key Takeaway (shown when correct or after retry is exhausted) */}
+                {/* Diagnostic Rationale & Key Takeaway */}
                 {isFinalSubmitted && (
                   <div
                     style={{
                       padding: '12px 16px',
                       borderRadius: '10px',
-                      background: '#f8fafc',
-                      border: '1px solid #e2e8f0',
+                      background: 'rgba(15, 28, 22, 0.34)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
                       fontSize: '13.5px',
                       lineHeight: '1.5',
-                      color: '#334155',
+                      color: '#E2EFE9',
                     }}
                   >
-                    <div style={{ fontWeight: 700, color: '#0f172a', marginBottom: '4px' }}>
+                    <div style={{ fontWeight: 700, color: '#FFFFFF', marginBottom: '4px' }}>
                       {qItem.options.find((o) => o.key === finalSelectedKey)?.is_correct
                         ? '✓ Correct Answer'
                         : '✕ Incorrect — Explanation'}

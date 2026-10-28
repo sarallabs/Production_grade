@@ -121,6 +121,9 @@ export default function PYQView({
               mapped.sort(
                 (a: any, b: any) => (b.frequency ?? 0) - (a.frequency ?? 0) || b.marks - a.marks,
               );
+              mapped.forEach((item: any, idx: number) => {
+                item.id = idx + 1;
+              });
               setBaseQuestions(mapped);
               setIsLoading(false);
               return;
@@ -481,8 +484,8 @@ export default function PYQView({
       >
         {displayQuestions.map((q, idx) => (
           <QuestionCard
-            key={q.id}
-            question={q}
+            key={q.id ?? idx}
+            question={{ ...q, id: idx + 1 }}
             defaultExpanded={idx === 0}
             onSOS={() => onSOS(q.subjectId, q.chapterNumber)}
           />

@@ -400,7 +400,7 @@ export function AssessmentView({
   };
 
   const renderText = (text: string) => {
-    return <MarkdownView content={text} isPurpleTheme={false} disableGlossary={false} />;
+    return <MarkdownView content={text} isPurpleTheme={false} disableGlossary={true} />;
   };
 
   const attemptedCount = answered.filter(Boolean).length;
@@ -1164,18 +1164,6 @@ export function AssessmentView({
                   flexWrap: "wrap",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: "11.5px",
-                    fontWeight: 600,
-                    color: "#6E766E",
-                  }}
-                >
-                  {(currentQ as any)?.source ||
-                    `Source · Watch — Part ${chapterNumber}: ${
-                      (chapterName || `Unit ${chapterNumber}`).replace(/^unit\s*\d+\s*[-:—:]\s*/i, "")
-                    }`}
-                </div>
 
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "auto" }}>
                   {currentQ.type === "msq" && !submitted && (
@@ -1248,7 +1236,7 @@ export function AssessmentView({
                     title={
                       submitted
                         ? step < questions.length - 1
-                          ? "Next Question"
+                          ? "Next"
                           : "Finish Assessment"
                         : "Select an answer to proceed"
                     }
@@ -1269,7 +1257,7 @@ export function AssessmentView({
                       transition: "all 0.15s ease",
                     }}
                   >
-                    <span>{step < questions.length - 1 ? "Next Question ›" : "Finish ›"}</span>
+                    <span>{step < questions.length - 1 ? "Next ›" : "Finish ›"}</span>
                   </button>
                 </div>
               </div>

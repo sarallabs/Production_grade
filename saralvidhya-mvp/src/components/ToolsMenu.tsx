@@ -44,7 +44,7 @@ const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string; disabl
   { id: "key_takeaways", icon: "🔑", label: "Takeaways", desc: "Takeaways" },
   { id: "study_plan", icon: "📅", label: "Study Plan", desc: "Curriculum roadmap and schedule" },
   { id: "pyq", icon: "📄", label: "PYQs", desc: "Previous Year Questions" },
-  { id: "prep_exam", icon: "📝", label: "Preparation Exam", desc: "Test your preparation" },
+  { id: "prep_exam", icon: "📝", label: "Exam Prep.", desc: "Test your preparation" },
   { id: "swot", icon: "💡", label: "SWOT", desc: "SWOT Analysis", disabled: true },
   { id: "deep_dive", icon: "🔍", label: "Deep Dive", desc: "Detailed explanations" },
   { id: "pre_final_test", icon: "🎓", label: "Certification Exam", desc: "Certification Exam" },
