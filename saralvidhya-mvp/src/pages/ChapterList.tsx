@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useParams, useLocation } from 'react-router-dom';
+import { cloudStorage } from '@/context/CloudStateContext';
 import {
   getManifest,
   getChapters,
@@ -28,27 +29,43 @@ export function toTitleCase(str: string): string {
 
 export default function ChapterList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const { subjectId } = useParams<{ subjectId: string }>();
   const { tenantPath } = useTenant();
-  const treeLogoSrc = subjectId?.startsWith('neb_')
+  const navState = (location.state as Record<string, any>) || {};
+  const savedCourseParams: Record<string, string> = (() => {
+    try { return JSON.parse(cloudStorage.getItem('sv_last_course_params') || '{}'); } catch { return {}; }
+  })();
+
+  useEffect(() => {
+    if (window.location.search) {
+      const merged: Record<string, string> = { ...savedCourseParams };
+      searchParams.forEach((v, k) => { if (v) merged[k] = v; });
+      cloudStorage.setItem('sv_last_course_params', JSON.stringify(merged));
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const initialChapterParam = String(navState.chapter || searchParams.get('chapter') || savedCourseParams.chapter || '');
+  const initialChapterNum = initialChapterParam ? parseInt(initialChapterParam, 10) : null;
+  const [flipIndex, setFlipIndex] = useState<number>(() => {
+    return initialChapterNum && initialChapterNum > 0 ? initialChapterNum - 1 : 0;
+  });
+  const className   = navState.className || searchParams.get('className') || savedCourseParams.className || '';
+  const sId         = subjectId || navState.sId || searchParams.get('sId') || savedCourseParams.sId || '';
+  const treeLogoSrc = sId?.startsWith('neb_')
     ? `${import.meta.env.BASE_URL}neb-logo.png`
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [bookOpen, setBookOpen] = useState(false);
   const [clickedChapter, setClickedChapter] = useState<number | null>(null);
-
-  const initialChapterParam = searchParams.get('chapter');
-  const initialChapterNum = initialChapterParam ? parseInt(initialChapterParam, 10) : null;
-  const [flipIndex, setFlipIndex] = useState<number>(() => {
-    return initialChapterNum && initialChapterNum > 0 ? initialChapterNum - 1 : 0;
-  });
-  const className   = searchParams.get('className')   || '';
-  const sId         = subjectId || searchParams.get('sId')         || '';
-  const [resolvedSubjectName, setResolvedSubjectName] = useState(searchParams.get('subjectName') || '');
-  const lastChapterParamRef = React.useRef<string | null>(initialChapterParam);
-
+  const [resolvedSubjectName, setResolvedSubjectName] = useState(
+    navState.subjectName || searchParams.get('subjectName') || savedCourseParams.subjectName || ''
+  );
+  const lastChapterParamRef = React.useRef<string | null>(initialChapterParam || null);
   useEffect(() => {
     if (!sId) return;
     let cancelled = false;
@@ -57,10 +74,10 @@ export default function ChapterList() {
       const subject = getSubject(m, sId);
       const chList = getChapters(m, sId);
       setChapters(chList);
-      setResolvedSubjectName(searchParams.get('subjectName') || subject?.name || sId);
+      setResolvedSubjectName(navState.subjectName || searchParams.get('subjectName') || savedCourseParams.subjectName || subject?.name || sId);
       setLoading(false);
 
-      const chParam = searchParams.get('chapter');
+      const chParam = String(navState.chapter || searchParams.get('chapter') || savedCourseParams.chapter || '');
       if (chParam) {
         const chNum = parseInt(chParam, 10);
         const idx = chList.findIndex((c) => c.number === chNum);
@@ -150,13 +167,18 @@ export default function ChapterList() {
   const handleChapterClick = (ch: Chapter) => {
     if (isDisabled(ch)) return;
     setClickedChapter(ch.number);
-    const params = new URLSearchParams(searchParams);
-    if (sId) params.set('sId', sId);
-    if (resolvedSubjectName && !params.get('subjectName')) params.set('subjectName', resolvedSubjectName);
-    params.set('chapter', ch.number.toString());
-    params.set('chapterName', toTitleCase(ch.name));
-    params.delete('tool');
-    navigate(tenantPath(`/study-table?${params.toString()}`));
+    const nextParams: Record<string, string> = {
+      ...savedCourseParams,
+      ...(sId ? { sId } : {}),
+      ...(resolvedSubjectName ? { subjectName: resolvedSubjectName } : {}),
+      ...(className ? { className } : {}),
+      chapter: ch.number.toString(),
+      chapterName: toTitleCase(ch.name),
+      tool: 'summary',
+    };
+    delete nextParams.section;
+    cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextParams));
+    navigate(tenantPath('/study-table'), { state: nextParams });
   };
 
   return (

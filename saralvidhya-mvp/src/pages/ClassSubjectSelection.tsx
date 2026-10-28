@@ -240,26 +240,27 @@ export default function ClassSubjectSelection() {
 
   const handleSubjectClick = (subject: CatalogSubject, targetChapter?: number) => {
     if (!selectedBoard || !selectedClass) return;
-    const params = new URLSearchParams({
-      boardId: selectedBoard.id,
-      boardName: selectedBoard.shortName || selectedBoard.name,
-      cId: `${selectedBoard.id}_${selectedClass.id}`,
-      className: `${selectedBoard.shortName || selectedBoard.name} ${selectedClass.name}`,
-      sId: subject.id,
-      subjectName: subject.name,
-    });
+    const cId = `${selectedBoard.id}_${selectedClass.id}`;
+    const sId = subject.id;
     const userPersona = (cloudStorage.getItem('user_persona') || 'beginner').toLowerCase();
-    const cId = params.get('cId') || '';
-    const sId = params.get('sId') || '';
     if (cId && sId) {
       cloudStorage.setItem(`persona_${cId}_${sId}`, userPersona);
     }
 
-    params.set('persona', userPersona);
+    const courseParams: Record<string, string> = {
+      boardId: selectedBoard.id,
+      boardName: selectedBoard.shortName || selectedBoard.name,
+      cId,
+      className: `${selectedBoard.shortName || selectedBoard.name} ${selectedClass.name}`,
+      sId,
+      subjectName: subject.name,
+      persona: userPersona,
+    };
     if (targetChapter) {
-      params.set('chapter', targetChapter.toString());
+      courseParams.chapter = targetChapter.toString();
     }
-    navigate(tenantPath(`/chapters?${params.toString()}`));
+    cloudStorage.setItem('sv_last_course_params', JSON.stringify(courseParams));
+    navigate(tenantPath('/chapters'), { state: courseParams });
   };
 
   const handleBackToBoard = () => {

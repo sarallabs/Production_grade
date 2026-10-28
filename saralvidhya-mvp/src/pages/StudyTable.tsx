@@ -438,25 +438,40 @@ export default function StudyTable() {
   );
   const navigate = useNavigate();
   const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
-  const [searchParams, setSearchParams] = useSearchParams();
-  // Remember the course params of the last valid URL so a link that lost its
-  // subject (back/forward, bookmark, stripped query) doesn't fall back to "english".
-  const COURSE_PARAM_KEYS = ["boardId", "boardName", "cId", "className", "sId", "subjectName", "semesterName"];
+  const location = useLocation();
+  const navState = (location.state as Record<string, any>) || {};
+  const [searchParams] = useSearchParams();
+  // Persist all study/course parameters in cloudStorage so URLs remain clean (zero query strings)
+  // while refresh and back/forward navigation restore the exact subject, chapter, tool, and persona.
+  const COURSE_PARAM_KEYS = [
+    "boardId", "boardName", "cId", "className", "sId", "subjectName",
+    "semesterName", "chapter", "chapterName", "persona", "tool", "video", "section"
+  ];
   const savedCourseParams: Record<string, string> = (() => {
     try { return JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
   })();
+  const updateSavedCourseParams = useCallback((patch: Record<string, string>) => {
+    try {
+      const current = JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}");
+      const next = { ...current, ...patch };
+      cloudStorage.setItem("sv_last_course_params", JSON.stringify(next));
+    } catch {}
+  }, []);
   const subjectId =
-    searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
+    navState.sId || searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
   useEffect(() => {
-    if (searchParams.get("sId")) {
-      const toSave: Record<string, string> = {};
-      COURSE_PARAM_KEYS.forEach((k) => { const v = searchParams.get(k); if (v) toSave[k] = v; });
-      cloudStorage.setItem("sv_last_course_params", JSON.stringify(toSave));
-    } else if (!searchParams.get("subjectId") && savedCourseParams.sId) {
-      setSearchParams((prev) => {
-        COURSE_PARAM_KEYS.forEach((k) => { if (!prev.get(k) && savedCourseParams[k]) prev.set(k, savedCourseParams[k]); });
-        return prev;
-      }, { replace: true });
+    const merged: Record<string, string> = { ...savedCourseParams };
+    COURSE_PARAM_KEYS.forEach((k) => {
+      const fromNav = navState[k];
+      const fromUrl = searchParams.get(k);
+      if (fromUrl) merged[k] = fromUrl;
+      else if (fromNav !== undefined && fromNav !== null && String(fromNav)) merged[k] = String(fromNav);
+    });
+    if (merged.sId) {
+      cloudStorage.setItem("sv_last_course_params", JSON.stringify(merged));
+    }
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -465,19 +480,17 @@ export default function StudyTable() {
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const isMoocMode = cloudStorage.getItem('sv_moocs_mode') === 'true';
 
-  const className = searchParams.get("className") || "Class";
+  const className = navState.className || searchParams.get("className") || savedCourseParams.className || "Class";
   const [dbSubjectName, setDbSubjectName] = useState<string | null>(null);
-  const subjectName = dbSubjectName || searchParams.get("subjectName") || savedCourseParams.subjectName || "Subject";
-  const semesterName = searchParams.get("semesterName") || "";
-  const personaRaw = searchParams.get("persona") || "intermediate";
+  const subjectName = dbSubjectName || navState.subjectName || searchParams.get("subjectName") || savedCourseParams.subjectName || "Subject";
+  const semesterName = navState.semesterName || searchParams.get("semesterName") || savedCourseParams.semesterName || "";
+  const personaRaw = navState.persona || searchParams.get("persona") || savedCourseParams.persona || "intermediate";
   const [persona, setPersonaState] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
   const [uiPersona, setUiPersona] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
-
-  // Clean query strings logic removed to fix refresh state persistence
 
   const setPersona = useCallback((level: DifficultyLevel) => {
     // Stop any active TTS/audio before switching persona
@@ -486,10 +499,9 @@ export default function StudyTable() {
     trackPersonaChange(persona, level);
     React.startTransition(() => {
       setPersonaState(level);
-      setSearchParams(prev => { prev.set("persona", level); return prev; }, { replace: true });
+      updateSavedCourseParams({ persona: level });
     });
-  }, [persona, setSearchParams]);
-
+  }, [persona, updateSavedCourseParams]);
   const PERSONAS: { key: DifficultyLevel; label: string; imgSrc: string }[] = [
     { key: "beginner", label: "Beginner", imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png` },
     {
@@ -504,10 +516,13 @@ export default function StudyTable() {
   const isDarkToolbar = true;
 
   const [chapterNumberState, setChapterNumberState] = useState<number>(() => {
-    return parseInt(searchParams.get("chapter") || "1", 10) || 1;
+    return parseInt(String(navState.chapter || searchParams.get("chapter") || savedCourseParams.chapter || "1"), 10) || 1;
   });
   const chapterNumber = chapterNumberState;
-  const setChapterNumber = (num: number) => setChapterNumberState(num);
+  const setChapterNumber = (num: number) => {
+    setChapterNumberState(num);
+    updateSavedCourseParams({ chapter: String(num) });
+  };
   const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
   const dbChapterObj = subjectChapters.find((c) => c.number === chapterNumber);
   const [regReadingDurations, setRegReadingDurations] = useState<Record<string, Record<string, number>> | null>(null);
@@ -526,12 +541,10 @@ export default function StudyTable() {
   const chapterName =
     dbChapterObj?.title ||
     dbChapterObj?.name ||
+    navState.chapterName ||
     searchParams.get("chapterName") ||
+    savedCourseParams.chapterName ||
     `Chapter ${chapterNumber}`;
-
-  const location = useLocation();
-  const navState = location.state as any;
-
   // Videos this chapter is split into. Empty for every chapter without a
   // videos.json, which is the signal to keep the original chapter-scoped
   // behaviour throughout this component.
@@ -574,7 +587,7 @@ export default function StudyTable() {
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
   const [videoIndexState, setVideoIndexState] = useState<number>(() => {
-    return Math.max(1, parseInt(searchParams.get("video") || "1", 10) || 1);
+    return Math.max(1, parseInt(String(navState.video || searchParams.get("video") || savedCourseParams.video || "1"), 10) || 1);
   });
   const videoIndex = videoIndexState;
   const activeVideo = chapterVideos.find((v) => v.index === videoIndex) ?? chapterVideos[0];
@@ -582,7 +595,7 @@ export default function StudyTable() {
 
   const setVideoIndex = (index: number) => {
     setVideoIndexState(index);
-    setSearchParams(prev => { prev.set("video", index.toString()); return prev; }, { replace: true });
+    updateSavedCourseParams({ video: index.toString() });
   };
 
   /**
@@ -640,10 +653,12 @@ export default function StudyTable() {
       return completed;
     });
 
-    // Sync active tool state for the new chapter/unit
+    // Sync active tool state if explicitly passed in URL
     const fromUrl = searchParams.get("tool") as ToolId | null;
     if (!videosLoaded) return;
-    setActiveToolState(fromUrl || "summary");
+    if (fromUrl) {
+      setActiveToolState(fromUrl === "foundation" ? "mindmap" : fromUrl);
+    }
   }, [
     subjectId,
     chapterNumber,
@@ -657,18 +672,11 @@ export default function StudyTable() {
     videosLoaded,
   ]);
 
-  // The tool the URL is asking for (may be locked — see the gate below).
-  const toolFromUrl =
-    (searchParams.get("tool") as ToolId) || "summary";
-
-  // Persist activeTool in URL so refresh restores the same tool.
-  // The registry is still loading on first render, so this consults the cached
-  // video count instead — without it a locked tool would render for one frame
-  // before the sync effect corrects it.
+  // Persist activeTool in savedCourseParams so refresh restores the same tool without query strings.
   const [activeTool, setActiveToolState] = useState<ToolId>(() => {
-    const fromUrl = searchParams.get("tool") as ToolId | null;
-    if (fromUrl === "foundation") return "mindmap";
-    return fromUrl || "summary";
+    const rawTool = (navState.tool || searchParams.get("tool") || savedCourseParams.tool) as ToolId | null;
+    if (rawTool === "foundation") return "mindmap";
+    return rawTool || "summary";
   });
 
   // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
@@ -725,7 +733,7 @@ export default function StudyTable() {
   const [podcastTargetMcIndex, setPodcastTargetMcIndex] = useState<number | null>(null);
   const [podcastAutoPlay, setPodcastAutoPlay] = useState<boolean>(false);
   const [readTargetSection, setReadTargetSection] = useState<number | null>(() => {
-    const fromUrl = searchParams.get("section");
+    const fromUrl = searchParams.get("section") || savedCourseParams.section;
     return fromUrl ? parseInt(fromUrl, 10) : null;
   });
 
@@ -736,13 +744,10 @@ export default function StudyTable() {
     const targetTool = activeTool === "detailed" ? "detailed" : "summary";
     // Direct state switch to avoid 1100ms artificial transition wait screen
     setActiveToolState(targetTool);
-    setSearchParams((prev) => {
-      prev.set("tool", targetTool);
-      if (secIdx !== undefined && secIdx !== null) {
-        prev.set("section", String(secIdx));
-      }
-      return prev;
-    }, { replace: true });
+    updateSavedCourseParams({
+      tool: targetTool,
+      ...(secIdx !== undefined && secIdx !== null ? { section: String(secIdx) } : {}),
+    });
     trackToolUsage({
       tool: targetTool,
       subjectId,
@@ -848,7 +853,7 @@ export default function StudyTable() {
     }
     React.startTransition(() => {
       setActiveToolState(tool);
-      setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+      updateSavedCourseParams({ tool });
     });
     trackToolUsage({
       tool,
@@ -926,7 +931,12 @@ export default function StudyTable() {
     setCompletedTools(unitCompleted);
     setActiveToolState(tool);
     setVideoIndex(1);
-    setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+    updateSavedCourseParams({
+      chapter: String(ch.number),
+      chapterName: toTitleCase(ch.name),
+      tool,
+      video: "1",
+    });
     const chapterTitle = toTitleCase(ch.name);
     trackToolUsage({
       tool,
@@ -942,7 +952,11 @@ export default function StudyTable() {
     const unitCompleted = getCompletedTools(subjectId, num);
     setCompletedTools(unitCompleted);
     setVideoIndex(1);
-    setSearchParams(prev => { prev.set("tool", activeTool); return prev; }, { replace: true });
+    updateSavedCourseParams({
+      chapter: String(num),
+      tool: activeTool,
+      video: "1",
+    });
   };
 
   // The unit that follows the one being studied — where "Finish Unit" lands.
@@ -986,10 +1000,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx > 0) {
             const prevCh = subjectChapters[currentIdx - 1];
-            const params = new URLSearchParams(searchParams);
-            params.set("chapter", prevCh.number.toString());
-            params.set("chapterName", prevCh.name);
-            navigate(`/study-table?${params.toString()}`);
+            handleChapterChange(prevCh.number);
           }
         }
       } else if (e.key === "ArrowRight") {
@@ -997,10 +1008,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx >= 0 && currentIdx < subjectChapters.length - 1) {
             const nextCh = subjectChapters[currentIdx + 1];
-            const params = new URLSearchParams(searchParams);
-            params.set("chapter", nextCh.number.toString());
-            params.set("chapterName", nextCh.name);
-            navigate(`/study-table?${params.toString()}`);
+            handleChapterChange(nextCh.number);
           }
         }
       }
@@ -1008,7 +1016,7 @@ export default function StudyTable() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [chapterNumber, subjectChapters, searchParams, navigate]);
+  }, [chapterNumber, subjectChapters, activeTool]);
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(false);

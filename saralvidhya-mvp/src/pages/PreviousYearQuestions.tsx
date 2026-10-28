@@ -5,6 +5,7 @@ import MarkdownView from '@/components/MarkdownView';
 import { getFallbackTenantId, getCloudUiCopy } from '@/tenant/TenantProvider';
 import { registryClient } from '@/data/registryClient';
 import { trackCloudEvent } from '@/utils/analytics';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export interface QuestionData {
   id: number;
@@ -646,13 +647,21 @@ export function QuestionCard({
 
 export default function PreviousYearQuestions() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { startFocusMode } = useFocusMode();
   const [year, setYear] = useState('');
 
-  const subjectIdFromUrl = searchParams.get('sId') || searchParams.get('subjectId') || 'maths';
+  const savedCourseParams: Record<string, string> = (() => {
+    try { return JSON.parse(cloudStorage.getItem('sv_last_course_params') || '{}'); } catch { return {}; }
+  })();
+  const subjectIdFromUrl = searchParams.get('sId') || searchParams.get('subjectId') || savedCourseParams.sId || 'maths';
   const [selectedSubject, setSelectedSubject] = useState(subjectIdFromUrl);
 
+  useEffect(() => {
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+    }
+  }, []);
   const [cloudPyqBySubject, setCloudPyqBySubject] = useState<Record<string, QuestionData[]>>({});
   const [cloudAvailableSubjects, setCloudAvailableSubjects] = useState<Array<{ id: string; name: string }>>([]);
   const [cloudSubjectMeta, setCloudSubjectMeta] = useState<Record<string, { title: string; subtitle: string }>>({});
@@ -694,14 +703,10 @@ export default function PreviousYearQuestions() {
       },
       true
     );
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set('sId', newSubject);
-        return next;
-      },
-      { replace: true }
-    );
+    try {
+      const nextCourse = { ...savedCourseParams, sId: newSubject };
+      cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextCourse));
+    } catch {}
   };
 
   const handleSOS = (subjectId: string, chapterNumber: number) => {
