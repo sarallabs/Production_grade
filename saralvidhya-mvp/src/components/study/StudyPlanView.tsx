@@ -994,20 +994,27 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     activeBlueprint.days.length - 1
   );
 
+  const circleSize = 136;
+  const circleStroke = 9;
+  const circleRadius = (circleSize - circleStroke) / 2;
+  const circleCircumference = 2 * Math.PI * circleRadius;
+  const circleDashOffset =
+    circleCircumference - (Math.min(100, Math.max(0, progressPct)) / 100) * circleCircumference;
+
   return (
     <div
       style={{
         minHeight: "100%",
         width: "100%",
-        background: '#F8F5EE',
-        padding: "18px 28px 48px",
+        background: "#F8F5EE",
+        padding: "12px 20px 36px",
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
         color: "#1E2822",
         boxSizing: "border-box",
       }}
     >
-      <div style={{ maxWidth: "1060px", margin: "0 auto" }}>
-        {/* 1. TOP 3 PACE / PERSONA SELECTOR CARDS */}
+      <div style={{ width: "100%", margin: "0 auto" }}>
+        {/* 1. TOP PERSONA / PACE BAR */}
         <div
           className="sp-pace-cards-row"
           style={{
@@ -1015,7 +1022,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             justifyContent: "center",
             alignItems: "center",
             gap: "16px",
-            marginBottom: "18px",
+            marginBottom: "14px",
           }}
         >
           {(["beginner", "intermediate", "advanced"] as PaceLevel[]).map((paceKey) => {
@@ -1081,281 +1088,58 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
           })}
         </div>
 
-        {/* 2. CHAPTER HEADER & PROGRESS SUMMARY CARD */}
-        <div
-          style={{
-            background: "#FFFFFF",
-            border: "1px solid #E6E0D4",
-            borderRadius: "16px",
-            padding: "20px 26px",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "24px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ minWidth: "240px", flex: 1 }}>
-            <div
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "#1E2822",
-                letterSpacing: "-0.01em",
-                lineHeight: 1.25,
-              }}
-            >
-              {headerTitle}
-            </div>
-            <div
-              style={{
-                fontSize: "13px",
-                fontWeight: 500,
-                color: "#6E766E",
-                marginTop: "4px",
-              }}
-            >
-              {headerChapterTitle} · {activeBlueprint.days.length}-day plan · ~{avgDailyMins} min/day
-            </div>
-          </div>
-
-          <div style={{ minWidth: "270px", flexShrink: 0 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                marginBottom: "7px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "13px",
-                  fontWeight: 800,
-                  color: "#1E2822",
-                }}
-              >
-                {completedTasksCount} of {totalTasksCount} tasks
-              </span>
-              <span
-                style={{
-                  fontSize: "12.5px",
-                  fontWeight: 600,
-                  color: "#7A807A",
-                }}
-              >
-                {progressPct}%
-              </span>
-            </div>
-
-            <div
-              style={{
-                height: "6px",
-                borderRadius: "999px",
-                background: "#EAE5DC",
-                overflow: "hidden",
-                marginBottom: "8px",
-              }}
-            >
-              <div
-                style={{
-                  width: `${progressPct}%`,
-                  height: "100%",
-                  background: '#B5BA9B',
-                  borderRadius: "999px",
-                  transition: "width 0.3s ease",
-                }}
-              />
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                gap: "14px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#3B5E4C",
-                }}
-              >
-                ✓ On track — finish by {finishDateLabel}
-              </span>
-              <button
-                type="button"
-                onClick={handleReplanFromToday}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  color: "#B46530",
-                  cursor: "pointer",
-                }}
-              >
-                ↻ Re-plan
-              </button>
-            </div>
-          </div>
-        </div>
-
         {replanNotice && (
           <div
             style={{
-              background: "#F5ECE2",
-              border: "1px solid #C88A5A",
-              color: "#8C4A1F",
+              background: "#F1F5F3",
+              border: "1px solid #C5D9CD",
+              color: "#2E4A3B",
               borderRadius: "10px",
-              padding: "9px 16px",
-              fontSize: "12.5px",
+              padding: "8px 14px",
+              fontSize: "12px",
               fontWeight: 600,
-              marginBottom: "14px",
+              marginBottom: "12px",
+              textAlign: "center",
             }}
           >
             ✓ {replanNotice}
           </div>
         )}
 
-        {/* 3. CONTINUE / UP NEXT TERRACOTTA BANNER */}
-        <div
-          style={{
-            background: '#B5BA9B',
-            borderRadius: "14px",
-            padding: "16px 24px",
-            marginBottom: "18px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: "20px",
-            flexWrap: "wrap",
-            color: "#FFFFFF",
-            boxShadow: "0 4px 14px rgba(192, 120, 76, 0.16)",
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: "15.5px",
-                fontWeight: 800,
-                color: "#FFFFFF",
-                display: "flex",
-                alignItems: "center",
-                gap: "7px",
-              }}
-            >
-              <span style={{ fontSize: "12px" }}>▶</span>
-              <span>Continue Day {currentActiveDay.dayNumber}</span>
-            </div>
-            <div
-              style={{
-                fontSize: "12.5px",
-                color: "rgba(255, 255, 255, 0.9)",
-                marginTop: "3px",
-                fontWeight: 500,
-              }}
-            >
-              {cleanDayTopicTitle(currentActiveDay.title)} ·{" "}
-              {remainingActiveDayTasks.length} tasks · ~{remainingActiveDayMins} min left
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "18px",
-              flexWrap: "wrap",
-            }}
-          >
-            {upNextTask && (
-              <div style={{ textAlign: "right" }}>
-                <div
-                  style={{
-                    fontSize: "11px",
-                    color: "rgba(255, 255, 255, 0.82)",
-                    fontWeight: 500,
-                  }}
-                >
-                  Up next
-                </div>
-                <div
-                  style={{
-                    fontSize: "13px",
-                    fontWeight: 700,
-                    color: "#FFFFFF",
-                    marginTop: "1px",
-                  }}
-                >
-                  {formatTaskDisplayLabels(upNextTask).primary} · {upNextTask.durationMins} min
-                </div>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedDayNum(currentActiveDay.dayNumber);
-                if (upNextTask?.toolTarget && onSwitchTool) {
-                  onSwitchTool(upNextTask.toolTarget);
-                }
-              }}
-              style={{
-                background: '#FFFFFF',
-                color: '#18221D',
-                border: "none",
-                borderRadius: "999px",
-                padding: "9px 18px",
-                fontSize: "13px",
-                fontWeight: 800,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-                boxShadow: "0 2px 6px rgba(0, 0, 0, 0.08)",
-              }}
-            >
-              Resume Day {currentActiveDay.dayNumber} →
-            </button>
-          </div>
-        </div>
-
-        {/* 4. MAIN 2-COLUMN SPLIT GRID: STUDY DAYS (LEFT) & DAY N TASKS (RIGHT) */}
+        {/* 2. FULL-WIDTH 3-COLUMN GRID: STUDY DAYS (LEFT) | DAY TASKS (MIDDLE) | PROGRESS & RESUME CARD (RIGHT) */}
         <div
           className="sp-days-split-grid"
           style={{
             display: "grid",
-            gridTemplateColumns: "310px minmax(0, 1fr)",
-            gap: "18px",
+            gridTemplateColumns: "290px minmax(0, 1fr) 280px",
+            gap: "16px",
             alignItems: "start",
           }}
         >
-          {/* LEFT COLUMN: STUDY DAYS */}
+          {/* LEFT COLUMN: DAY-WISE PLANNER (STUDY DAYS) */}
           <div
             style={{
               background: "#FFFFFF",
               border: "1px solid #E6E0D4",
               borderRadius: "16px",
-              padding: "18px",
+              padding: "16px",
             }}
           >
             <div
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 800,
                 letterSpacing: "0.08em",
                 color: "#7A807A",
                 textTransform: "uppercase",
-                marginBottom: "12px",
+                marginBottom: "10px",
+                paddingLeft: "2px",
               }}
             >
               STUDY DAYS
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {activeBlueprint.days.map((day, idx) => {
                 const isSelected = day.dayNumber === selectedDayPlan.dayNumber;
                 const isToday = day.dayNumber === currentActiveDay.dayNumber;
@@ -1371,10 +1155,10 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      gap: "12px",
+                      gap: "10px",
                       width: "100%",
-                      padding: "12px 14px",
-                      borderRadius: "13px",
+                      padding: "10px 12px",
+                      borderRadius: "12px",
                       background: isSelected ? "#FAF3EB" : "#FFFFFF",
                       border: isSelected
                         ? "1.5px solid #C88A5A"
@@ -1388,22 +1172,22 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: "12px",
+                        gap: "10px",
                         minWidth: 0,
                         flex: 1,
                       }}
                     >
                       <div
                         style={{
-                          width: "34px",
-                          height: "34px",
-                          borderRadius: "9px",
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
                           background: isSelected ? "#BD7D52" : "#EAE6DF",
                           color: isSelected ? "#FFFFFF" : "#49524C",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          fontSize: "12.5px",
+                          fontSize: "12px",
                           fontWeight: 800,
                           flexShrink: 0,
                         }}
@@ -1415,7 +1199,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                         {isToday && (
                           <div
                             style={{
-                              fontSize: "10px",
+                              fontSize: "9.5px",
                               fontWeight: 800,
                               color: "#B46530",
                               letterSpacing: "0.06em",
@@ -1428,7 +1212,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                         )}
                         <div
                           style={{
-                            fontSize: "13.5px",
+                            fontSize: "13px",
                             fontWeight: 700,
                             color: "#1E2822",
                             whiteSpace: "nowrap",
@@ -1440,10 +1224,10 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                         </div>
                         <div
                           style={{
-                            fontSize: "11.5px",
+                            fontSize: "11px",
                             fontWeight: 600,
                             color: isSelected ? "#B46530" : "#7A807A",
-                            marginTop: "2px",
+                            marginTop: "1px",
                           }}
                         >
                           {day.tasks.length} tasks
@@ -1453,7 +1237,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
 
                     <span
                       style={{
-                        fontSize: "12.5px",
+                        fontSize: "12px",
                         fontWeight: 600,
                         color: "#6E766E",
                         flexShrink: 0,
@@ -1467,13 +1251,14 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
             </div>
           </div>
 
-          {/* RIGHT COLUMN: DAY N TASKS */}
+          {/* MIDDLE COLUMN: DAY N TASKS BODY */}
           <div
             style={{
               background: "#FFFFFF",
               border: "1px solid #E6E0D4",
               borderRadius: "16px",
-              padding: "22px 24px",
+              padding: "20px 22px",
+              minWidth: 0,
             }}
           >
             <div
@@ -1482,23 +1267,26 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: "12px",
-                marginBottom: "16px",
+                marginBottom: "14px",
               }}
             >
-              <div
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 800,
-                  color: "#1E2822",
-                }}
-              >
-                Day {selectedDayPlan.dayNumber} tasks
+              <div style={{ minWidth: 0 }}>
+                <div
+                  style={{
+                    fontSize: "16px",
+                    fontWeight: 800,
+                    color: "#1E2822",
+                  }}
+                >
+                  Day {selectedDayPlan.dayNumber} · {cleanDayTopicTitle(selectedDayPlan.title)}
+                </div>
               </div>
               <div
                 style={{
-                  fontSize: "13px",
+                  fontSize: "12.5px",
                   fontWeight: 500,
                   color: "#7A807A",
+                  flexShrink: 0,
                 }}
               >
                 {selectedDayDoneCount} of {selectedDayPlan.tasks.length} done · ~
@@ -1668,105 +1456,218 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                 );
               })}
             </div>
+          </div>
 
-            {/* MISSED A DAY RE-PLANNING FOOTER */}
+          {/* RIGHT COLUMN: UNIFIED SUBTLE PROGRESS CIRCLE + METADATA + CONTINUE/RESUME CARD */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E6E0D4",
+              borderRadius: "16px",
+              padding: "22px 20px 20px",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+              position: "sticky",
+              top: "14px",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+            }}
+          >
+            {/* Subtle Header Title */}
             <div
               style={{
-                marginTop: "14px",
-                background: "#FAF7F2",
-                border: "1.5px dashed #DFD7C9",
-                borderRadius: "11px",
-                padding: "11px 16px",
+                fontSize: "14.5px",
+                fontWeight: 700,
+                color: "#1E2822",
+                lineHeight: 1.35,
+                marginBottom: "3px",
+              }}
+            >
+              {headerChapterTitle}
+            </div>
+            <div
+              style={{
+                fontSize: "11.5px",
+                fontWeight: 500,
+                color: "#7A807A",
+                marginBottom: "18px",
+              }}
+            >
+              {activeBlueprint.days.length}-day plan · ~{avgDailyMins} min/day
+            </div>
+
+            {/* Big Circular Progress Ring with Percentage in Center */}
+            <div
+              style={{
+                position: "relative",
+                width: `${circleSize}px`,
+                height: `${circleSize}px`,
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-                flexWrap: "wrap",
+                justifyContent: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <svg
+                width={circleSize}
+                height={circleSize}
+                viewBox={`0 0 ${circleSize} ${circleSize}`}
+                style={{ transform: "rotate(-90deg)" }}
+              >
+                <circle
+                  cx={circleSize / 2}
+                  cy={circleSize / 2}
+                  r={circleRadius}
+                  fill="none"
+                  stroke="#EFECE5"
+                  strokeWidth={circleStroke}
+                />
+                <circle
+                  cx={circleSize / 2}
+                  cy={circleSize / 2}
+                  r={circleRadius}
+                  fill="none"
+                  stroke="#546C60"
+                  strokeWidth={circleStroke}
+                  strokeLinecap="round"
+                  strokeDasharray={circleCircumference}
+                  strokeDashoffset={circleDashOffset}
+                  style={{ transition: "stroke-dashoffset 0.45s cubic-bezier(0.22, 1, 0.36, 1)" }}
+                />
+              </svg>
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "28px",
+                    fontWeight: 800,
+                    color: "#1E2822",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1,
+                  }}
+                >
+                  {progressPct}%
+                </span>
+                <span
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 600,
+                    color: "#8A928C",
+                    marginTop: "4px",
+                  }}
+                >
+                  completed
+                </span>
+              </div>
+            </div>
+
+            {/* Subtle Metadata Below Circle */}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                marginBottom: "18px",
+                width: "100%",
               }}
             >
               <div
                 style={{
-                  fontSize: "12px",
-                  color: "#5C645E",
-                  lineHeight: 1.45,
+                  fontSize: "12.5px",
+                  fontWeight: 600,
+                  color: "#334155",
                 }}
               >
-                <span style={{ marginRight: "6px" }}>💡</span>
-                <strong style={{ color: "#1E2822", fontWeight: 700 }}>
-                  Missed a day?
-                </strong>{" "}
-                Study Plan reshuffles the remaining tasks around your target date —
-                nothing piles up silently.
+                {completedTasksCount} of {totalTasksCount} tasks done
               </div>
-
-              <button
-                type="button"
-                onClick={() => setShowReplanInfo((prev) => !prev)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  color: "#B46530",
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                ↻ How re-planning works
-              </button>
-            </div>
-
-            {showReplanInfo && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  background: "#F5ECE2",
-                  border: "1px solid #DEC6AE",
-                  borderRadius: "10px",
-                  padding: "12px 16px",
-                  fontSize: "12px",
-                  color: "#4A3B31",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "14px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <span>
-                  Clicking <strong>Re-plan</strong> shifts your active study timeline to
-                  start today while keeping all completed tasks checked off across your{" "}
-                  {activeBlueprint.days.length}-day blueprint.
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleReplanFromToday();
-                    setShowReplanInfo(false);
-                  }}
+              {upNextTask && (
+                <div
                   style={{
-                    background: "#BD7D52",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "999px",
-                    padding: "6px 14px",
                     fontSize: "11.5px",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    whiteSpace: "nowrap",
+                    fontWeight: 500,
+                    color: "#7A807A",
                   }}
                 >
-                  Re-plan from today →
-                </button>
+                  Up next: {formatTaskDisplayLabels(upNextTask).primary} ({upNextTask.durationMins}m)
+                </div>
+              )}
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 500,
+                  color: "#8A928C",
+                }}
+              >
+                Target: {finishDateLabel}
               </div>
-            )}
+            </div>
+
+            {/* Continue / Resume Day Button at Bottom */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedDayNum(currentActiveDay.dayNumber);
+                if (upNextTask?.toolTarget && onSwitchTool) {
+                  onSwitchTool(upNextTask.toolTarget);
+                }
+              }}
+              style={{
+                width: "100%",
+                background: "#546C60",
+                color: "#FFFFFF",
+                border: "none",
+                borderRadius: "11px",
+                padding: "11px 16px",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                boxShadow: "0 2px 8px rgba(84, 108, 96, 0.2)",
+                transition: "all 0.18s ease",
+              }}
+            >
+              <span>
+                {completedTasksCount > 0
+                  ? `Resume Day ${currentActiveDay.dayNumber} →`
+                  : `Continue Day ${currentActiveDay.dayNumber} →`}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={handleReplanFromToday}
+              style={{
+                marginTop: "10px",
+                background: "none",
+                border: "none",
+                padding: "2px 6px",
+                fontSize: "11px",
+                fontWeight: 600,
+                color: "#8A928C",
+                cursor: "pointer",
+              }}
+              title="Reset schedule start date to today while keeping completed tasks"
+            >
+              ↻ Re-plan schedule
+            </button>
           </div>
         </div>
       </div>
 
       <style>{`
-        @media (max-width: 920px) {
+        @media (max-width: 1024px) {
           .sp-days-split-grid {
             grid-template-columns: 1fr !important;
           }
