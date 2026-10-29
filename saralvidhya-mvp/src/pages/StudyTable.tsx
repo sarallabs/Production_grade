@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback, Suspense } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import MarkdownView from "@/components/MarkdownView";
+import { buildTree } from "@/components/MermaidView";
 import SectionizedReadView from "@/components/study/SectionizedReadView";
+import QuickCheckModal from "@/components/study/QuickCheckModal";
 import type { ToolId } from "@/components/ToolsMenu";
 import {
   getResourceContent,
@@ -24,8 +26,13 @@ import {
   type Chapter,
   type ChapterVideo,
 } from "@/data/contentRepository";
-import { getSectionizedReadData } from "@/data/sectionizedReadService";
-import { truncateMindmapToLevels } from "@/data/markdownService";
+import {
+  getSectionizedReadData,
+  estimateReadingTime,
+  generateQuickCheckQuestionsFromMarkdown,
+  type QuickCheckQuestion,
+} from "@/data/sectionizedReadService";
+import { truncateMindmapToLevels, mindmapJsonToMermaid } from '@/data/markdownService';
 import { toTitleCase } from "@/pages/ChapterList";
 import { askGemini } from "@/services/askService";
 import {
@@ -80,9 +87,9 @@ import { useFocusMode } from "@/context/FocusModeContext";
 import ReadAloudBar, { preprocessSummaryText } from "@/components/study/ReadAloudBar";
 import ReadingHighlightView from "@/components/study/ReadingHighlightView";
 import { getRegistryTenantId } from "@/data/manifestService";
+import { useTenant, getCloudUiCopy } from "@/tenant/TenantProvider";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
 import { cloudStorage } from "@/context/CloudStateContext";
-
 const MindMapView = React.lazy(() => import("@/components/MindMapView"));
 const FlashcardsView = React.lazy(() => import("@/components/FlashcardsView"));
 const QuestionBankView = React.lazy(() => import("@/components/QuestionBankView"));
@@ -269,7 +276,7 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
     ),
   },
   prep_exam: {
-    title: "Preparation Exam",
+    title: "Exam Prep.",
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -307,8 +314,17 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
   },
 };
 
-// ── In-memory cache for Mindmap Topic Markdown content ───────────────────────
-const topicNotesCache = new Map<string, { quick: string; detailed?: string }>();
+// ── In-memory cache for Mindmap Topic Markdown content & Quick Checks ────────
+const topicNotesCache = new Map<
+  string,
+  {
+    quick: string;
+    detailed?: string;
+    quickQc?: QuickCheckQuestion[];
+    detailedQc?: QuickCheckQuestion[];
+    QuickQcLoaded?: boolean;
+  }
+>();
 
 export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label: string }>): string {
   if (!chapterTitle && (!topics || topics.length === 0)) return '';
@@ -336,6 +352,10 @@ export default function StudyTable() {
   const [mindmapTopicTitle, setMindmapTopicTitle] = useState<string | null>(null);
   const [mindmapTopicContent, setMindmapTopicContent] = useState<string | null>(null);
   const [mindmapDetailedContent, setMindmapDetailedContent] = useState<string | null>(null);
+  const [mindmapQuickChecks, setMindmapQuickChecks] = useState<{
+    quick: QuickCheckQuestion[];
+    detailed: QuickCheckQuestion[];
+  }>({ quick: [], detailed: [] });
   const [mindmapInlineTab, setMindmapInlineTab] = useState<'quick' | 'detailed'>('quick');
   const [mindmapTopicOpen, setMindmapTopicOpen] = useState(false);
   const [mindmapTopicLoading, setMindmapTopicLoading] = useState(false);
@@ -345,26 +365,113 @@ export default function StudyTable() {
   const [mindmapMicrocastIdx, setMindmapMicrocastIdx] = useState<number>(0);
   const [foundationMindmapContent, setFoundationMindmapContent] = useState<string>('');
   const [foundationLoading, setFoundationLoading] = useState(false);
+  const mindmapQcRef = useRef<HTMLDivElement | null>(null);
+  const mmConceptQcRef = useRef<HTMLDivElement | null>(null);
+  const [mmCompletedQuickChecks, setMmCompletedQuickChecks] = useState<Set<string>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_qc_done');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+  const [mmQcAnswers, setMmQcAnswers] = useState<Record<string, string>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_qc_answers');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [mmSelectedBranch, setMmSelectedBranch] = useState<string | null>(null);
+  const [mmDrawerOpen, setMmDrawerOpen] = useState<boolean>(false);
+  const mmAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [mmIsPlaying, setMmIsPlaying] = useState<boolean>(false);
+  const [mmAudioCurrentTime, setMmAudioCurrentTime] = useState<number>(0);
+  const [mmAudioDuration, setMmAudioDuration] = useState<number>(0);
+  const [mmPlaybackRate, setMmPlaybackRate] = useState<number>(1);
+  const [mmAutoPlayNonce, setMmAutoPlayNonce] = useState<number>(0);
+  const [mmFallbackAudioUsed, setMmFallbackAudioUsed] = useState<boolean>(false);
+  const [mmStudiedBranches, setMmStudiedBranches] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = cloudStorage.getItem('sv_mm_studied_v2');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch {
+      // ignore storage errors
+    }
+    return {};
+  });
+  const markMmQuickCheckCompleted = useCallback(
+    (
+      artifactKey: string,
+      selectedKey?: string,
+      questionIndex: number = 0,
+      markComplete: boolean = true
+    ) => {
+      if (markComplete) {
+        setMmCompletedQuickChecks((prev) => {
+          const updated = new Set(prev);
+          updated.add(artifactKey);
+          try {
+            cloudStorage.setItem('sv_mm_qc_done', JSON.stringify(Array.from(updated)));
+          } catch {}
+          return updated;
+        });
+      }
+      if (selectedKey) {
+        setMmQcAnswers((prev) => {
+          const updated = {
+            ...prev,
+            [`${artifactKey}_${questionIndex}`]: selectedKey,
+            ...(questionIndex === 0 ? { [artifactKey]: selectedKey } : {}),
+          };
+          try {
+            cloudStorage.setItem('sv_mm_qc_answers', JSON.stringify(updated));
+          } catch {}
+          return updated;
+        });
+      }
+    },
+    []
+  );
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  // Remember the course params of the last valid URL so a link that lost its
-  // subject (back/forward, bookmark, stripped query) doesn't fall back to "english".
-  const COURSE_PARAM_KEYS = ["boardId", "boardName", "cId", "className", "sId", "subjectName", "semesterName"];
+  const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
+  const location = useLocation();
+  const navState = (location.state as Record<string, any>) || {};
+  const [searchParams] = useSearchParams();
+  // Persist all study/course parameters in cloudStorage so URLs remain clean (zero query strings)
+  // while refresh and back/forward navigation restore the exact subject, chapter, tool, and persona.
+  const COURSE_PARAM_KEYS = [
+    "boardId", "boardName", "cId", "className", "sId", "subjectName",
+    "semesterName", "chapter", "chapterName", "persona", "tool", "video", "section"
+  ];
   const savedCourseParams: Record<string, string> = (() => {
     try { return JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
   })();
+  const updateSavedCourseParams = useCallback((patch: Record<string, string>) => {
+    try {
+      const current = JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}");
+      const next = { ...current, ...patch };
+      cloudStorage.setItem("sv_last_course_params", JSON.stringify(next));
+    } catch {}
+  }, []);
   const subjectId =
-    searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
+    navState.sId || searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
   useEffect(() => {
-    if (searchParams.get("sId")) {
-      const toSave: Record<string, string> = {};
-      COURSE_PARAM_KEYS.forEach((k) => { const v = searchParams.get(k); if (v) toSave[k] = v; });
-      cloudStorage.setItem("sv_last_course_params", JSON.stringify(toSave));
-    } else if (!searchParams.get("subjectId") && savedCourseParams.sId) {
-      setSearchParams((prev) => {
-        COURSE_PARAM_KEYS.forEach((k) => { if (!prev.get(k) && savedCourseParams[k]) prev.set(k, savedCourseParams[k]); });
-        return prev;
-      }, { replace: true });
+    const merged: Record<string, string> = { ...savedCourseParams };
+    COURSE_PARAM_KEYS.forEach((k) => {
+      const fromNav = navState[k];
+      const fromUrl = searchParams.get(k);
+      if (fromUrl) merged[k] = fromUrl;
+      else if (fromNav !== undefined && fromNav !== null && String(fromNav)) merged[k] = String(fromNav);
+    });
+    if (merged.sId) {
+      cloudStorage.setItem("sv_last_course_params", JSON.stringify(merged));
+    }
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -373,18 +480,17 @@ export default function StudyTable() {
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
   const isMoocMode = cloudStorage.getItem('sv_moocs_mode') === 'true';
 
-  const className = searchParams.get("className") || "Class";
-  const subjectName = searchParams.get("subjectName") || "Subject";
-  const semesterName = searchParams.get("semesterName") || "";
-  const personaRaw = searchParams.get("persona") || "intermediate";
+  const className = navState.className || searchParams.get("className") || savedCourseParams.className || "Class";
+  const [dbSubjectName, setDbSubjectName] = useState<string | null>(null);
+  const subjectName = dbSubjectName || navState.subjectName || searchParams.get("subjectName") || savedCourseParams.subjectName || "Subject";
+  const semesterName = navState.semesterName || searchParams.get("semesterName") || savedCourseParams.semesterName || "";
+  const personaRaw = navState.persona || searchParams.get("persona") || savedCourseParams.persona || "intermediate";
   const [persona, setPersonaState] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
   const [uiPersona, setUiPersona] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
-
-  // Clean query strings logic removed to fix refresh state persistence
 
   const setPersona = useCallback((level: DifficultyLevel) => {
     // Stop any active TTS/audio before switching persona
@@ -393,10 +499,9 @@ export default function StudyTable() {
     trackPersonaChange(persona, level);
     React.startTransition(() => {
       setPersonaState(level);
-      setSearchParams(prev => { prev.set("persona", level); return prev; }, { replace: true });
+      updateSavedCourseParams({ persona: level });
     });
-  }, [persona, setSearchParams]);
-
+  }, [persona, updateSavedCourseParams]);
   const PERSONAS: { key: DifficultyLevel; label: string; imgSrc: string }[] = [
     { key: "beginner", label: "Beginner", imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png` },
     {
@@ -411,16 +516,35 @@ export default function StudyTable() {
   const isDarkToolbar = true;
 
   const [chapterNumberState, setChapterNumberState] = useState<number>(() => {
-    return parseInt(searchParams.get("chapter") || "1", 10) || 1;
+    return parseInt(String(navState.chapter || searchParams.get("chapter") || savedCourseParams.chapter || "1"), 10) || 1;
   });
   const chapterNumber = chapterNumberState;
-  const setChapterNumber = (num: number) => setChapterNumberState(num);
+  const setChapterNumber = (num: number) => {
+    setChapterNumberState(num);
+    updateSavedCourseParams({ chapter: String(num) });
+  };
+  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
+  const dbChapterObj = subjectChapters.find((c) => c.number === chapterNumber);
+  const [regReadingDurations, setRegReadingDurations] = useState<Record<string, Record<string, number>> | null>(null);
+  const [regChapterFiles, setRegChapterFiles] = useState<Record<string, string>>({});
+  useEffect(() => {
+    let active = true;
+    setRegChapterFiles({});
+    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
+      if (!active || !reg?.chapter) return;
+      const rd = (reg.chapter as any).readingDurations || (reg.chapter.tools as any)?.readingDurations;
+      if (rd) setRegReadingDurations(rd);
+      if (reg.files) setRegChapterFiles(reg.files);
+    });
+    return () => { active = false; };
+  }, [subjectId, chapterNumber]);
   const chapterName =
-    searchParams.get("chapterName") || `Chapter ${chapterNumber}`;
-
-  const location = useLocation();
-  const navState = location.state as any;
-
+    dbChapterObj?.title ||
+    dbChapterObj?.name ||
+    navState.chapterName ||
+    searchParams.get("chapterName") ||
+    savedCourseParams.chapterName ||
+    `Chapter ${chapterNumber}`;
   // Videos this chapter is split into. Empty for every chapter without a
   // videos.json, which is the signal to keep the original chapter-scoped
   // behaviour throughout this component.
@@ -450,11 +574,11 @@ export default function StudyTable() {
     };
   }, [subjectId, chapterNumber]);
 
-  const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
-
   useEffect(() => {
     if (!subjectId) return;
     getManifest().then((m) => {
+      const subjObj = m.subjects.find((s) => s.id === subjectId);
+      if (subjObj?.name) setDbSubjectName(subjObj.name);
       const list = getChapters(m, subjectId);
       setSubjectChapters(list);
     });
@@ -463,7 +587,7 @@ export default function StudyTable() {
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
   const [videoIndexState, setVideoIndexState] = useState<number>(() => {
-    return Math.max(1, parseInt(searchParams.get("video") || "1", 10) || 1);
+    return Math.max(1, parseInt(String(navState.video || searchParams.get("video") || savedCourseParams.video || "1"), 10) || 1);
   });
   const videoIndex = videoIndexState;
   const activeVideo = chapterVideos.find((v) => v.index === videoIndex) ?? chapterVideos[0];
@@ -471,7 +595,7 @@ export default function StudyTable() {
 
   const setVideoIndex = (index: number) => {
     setVideoIndexState(index);
-    setSearchParams(prev => { prev.set("video", index.toString()); return prev; }, { replace: true });
+    updateSavedCourseParams({ video: index.toString() });
   };
 
   /**
@@ -529,10 +653,12 @@ export default function StudyTable() {
       return completed;
     });
 
-    // Sync active tool state for the new chapter/unit
+    // Sync active tool state if explicitly passed in URL
     const fromUrl = searchParams.get("tool") as ToolId | null;
     if (!videosLoaded) return;
-    setActiveToolState(fromUrl || "summary");
+    if (fromUrl) {
+      setActiveToolState(fromUrl === "foundation" ? "mindmap" : fromUrl);
+    }
   }, [
     subjectId,
     chapterNumber,
@@ -546,18 +672,11 @@ export default function StudyTable() {
     videosLoaded,
   ]);
 
-  // The tool the URL is asking for (may be locked — see the gate below).
-  const toolFromUrl =
-    (searchParams.get("tool") as ToolId) || "summary";
-
-  // Persist activeTool in URL so refresh restores the same tool.
-  // The registry is still loading on first render, so this consults the cached
-  // video count instead — without it a locked tool would render for one frame
-  // before the sync effect corrects it.
+  // Persist activeTool in savedCourseParams so refresh restores the same tool without query strings.
   const [activeTool, setActiveToolState] = useState<ToolId>(() => {
-    const fromUrl = searchParams.get("tool") as ToolId | null;
-    if (fromUrl === "foundation") return "mindmap";
-    return fromUrl || "summary";
+    const rawTool = (navState.tool || searchParams.get("tool") || savedCourseParams.tool) as ToolId | null;
+    if (rawTool === "foundation") return "mindmap";
+    return rawTool || "summary";
   });
 
   // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
@@ -614,7 +733,7 @@ export default function StudyTable() {
   const [podcastTargetMcIndex, setPodcastTargetMcIndex] = useState<number | null>(null);
   const [podcastAutoPlay, setPodcastAutoPlay] = useState<boolean>(false);
   const [readTargetSection, setReadTargetSection] = useState<number | null>(() => {
-    const fromUrl = searchParams.get("section");
+    const fromUrl = searchParams.get("section") || savedCourseParams.section;
     return fromUrl ? parseInt(fromUrl, 10) : null;
   });
 
@@ -625,13 +744,10 @@ export default function StudyTable() {
     const targetTool = activeTool === "detailed" ? "detailed" : "summary";
     // Direct state switch to avoid 1100ms artificial transition wait screen
     setActiveToolState(targetTool);
-    setSearchParams((prev) => {
-      prev.set("tool", targetTool);
-      if (secIdx !== undefined && secIdx !== null) {
-        prev.set("section", String(secIdx));
-      }
-      return prev;
-    }, { replace: true });
+    updateSavedCourseParams({
+      tool: targetTool,
+      ...(secIdx !== undefined && secIdx !== null ? { section: String(secIdx) } : {}),
+    });
     trackToolUsage({
       tool: targetTool,
       subjectId,
@@ -737,7 +853,7 @@ export default function StudyTable() {
     }
     React.startTransition(() => {
       setActiveToolState(tool);
-      setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+      updateSavedCourseParams({ tool });
     });
     trackToolUsage({
       tool,
@@ -815,7 +931,12 @@ export default function StudyTable() {
     setCompletedTools(unitCompleted);
     setActiveToolState(tool);
     setVideoIndex(1);
-    setSearchParams(prev => { prev.set("tool", tool); return prev; }, { replace: true });
+    updateSavedCourseParams({
+      chapter: String(ch.number),
+      chapterName: toTitleCase(ch.name),
+      tool,
+      video: "1",
+    });
     const chapterTitle = toTitleCase(ch.name);
     trackToolUsage({
       tool,
@@ -831,7 +952,11 @@ export default function StudyTable() {
     const unitCompleted = getCompletedTools(subjectId, num);
     setCompletedTools(unitCompleted);
     setVideoIndex(1);
-    setSearchParams(prev => { prev.set("tool", activeTool); return prev; }, { replace: true });
+    updateSavedCourseParams({
+      chapter: String(num),
+      tool: activeTool,
+      video: "1",
+    });
   };
 
   // The unit that follows the one being studied — where "Finish Unit" lands.
@@ -875,10 +1000,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx > 0) {
             const prevCh = subjectChapters[currentIdx - 1];
-            const params = new URLSearchParams(searchParams);
-            params.set("chapter", prevCh.number.toString());
-            params.set("chapterName", prevCh.name);
-            navigate(`/study-table?${params.toString()}`);
+            handleChapterChange(prevCh.number);
           }
         }
       } else if (e.key === "ArrowRight") {
@@ -886,10 +1008,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx >= 0 && currentIdx < subjectChapters.length - 1) {
             const nextCh = subjectChapters[currentIdx + 1];
-            const params = new URLSearchParams(searchParams);
-            params.set("chapter", nextCh.number.toString());
-            params.set("chapterName", nextCh.name);
-            navigate(`/study-table?${params.toString()}`);
+            handleChapterChange(nextCh.number);
           }
         }
       }
@@ -897,7 +1016,7 @@ export default function StudyTable() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [chapterNumber, subjectChapters, searchParams, navigate]);
+  }, [chapterNumber, subjectChapters, activeTool]);
 
   const [content, setContent] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -1017,12 +1136,31 @@ export default function StudyTable() {
     setMmDeepDiveRaw('');
     setMmConceptSection('summary');
     setMmFlippedCards(new Set());
-    // Also close the inline mindmap topic panel
+    // Also close the inline mindmap topic panel & slide-in drawer
     setMindmapTopicOpen(false);
     setMindmapTopicTitle(null);
     setMindmapInlineType('text');
     setMindmapMediaUrl('');
+    setMmDrawerOpen(false);
+    setMmIsPlaying(false);
+    setMmAudioCurrentTime(0);
+    setMmAudioDuration(0);
+    if (mmAudioRef.current) {
+      mmAudioRef.current.pause();
+    }
   }, [subjectId, chapterNumber, activeTool]);
+
+  useEffect(() => {
+    if (!mmAutoPlayNonce || !mmDrawerOpen || !mmAudioRef.current) return;
+    const audio = mmAudioRef.current;
+    audio.playbackRate = mmPlaybackRate;
+    if (audio.readyState >= 1) {
+      audio
+        .play()
+        .then(() => setMmIsPlaying(true))
+        .catch(() => setMmIsPlaying(false));
+    }
+  }, [mmAutoPlayNonce, mmDrawerOpen, mmPlaybackRate]);
 
   // Reset flipped cards when switching concepts or tabs
   useEffect(() => {
@@ -1096,23 +1234,41 @@ export default function StudyTable() {
   const [miniMessages, setMiniMessages] = useState<Array<{ role: 'user' | 'assistant'; content: string }>>([]);
   const [miniIsLoading, setMiniIsLoading] = useState(false);
 
-  const handleSendMiniAsk = () => {
+  const handleSendMiniAsk = async () => {
     if (!miniAskInput.trim() || miniIsLoading) return;
     const userQ = miniAskInput.trim();
     setMiniAskInput("");
     setMiniMessages((prev) => [...prev, { role: 'user', content: userQ }]);
     setMiniIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const res = await askGemini(
+        userQ,
+        subjectId,
+        chapterName || `Chapter ${chapterNumber}`,
+        chapterNumber,
+        persona,
+        'en-IN',
+        className
+      );
       setMiniMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}! Feel free to ask more or review the lesson materials.`
-        }
+          content: res.answer || `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}.`,
+        },
       ]);
+    } catch {
+      setMiniMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: `I'm here to help with "${userQ}" in ${chapterName || 'this chapter'}! Feel free to ask more or review the lesson materials.`,
+        },
+      ]);
+    } finally {
       setMiniIsLoading(false);
-    }, 600);
+    }
   };
 
   const handleAuthClick = () => {
@@ -1123,13 +1279,12 @@ export default function StudyTable() {
     cloudStorage.removeItem("questionnaire_completed");
     cloudStorage.removeItem("sv_video_open_counts");
     setIsAuthenticated(false);
-    const activeTenant = getRegistryTenantId();
+    tenantLogout();
+    const activeTenant = contextTenantId || getRegistryTenantId();
     if (activeTenant) {
       cloudStorage.removeItem(`sv_session_${activeTenant}`);
-      navigate(`/${activeTenant}/login`, { replace: true });
-    } else {
-      navigate("/login", { replace: true });
     }
+    navigate("/login", { replace: true });
   };
 
   const { startFocusMode, isFocusModeActive } = useFocusMode();
@@ -1198,7 +1353,7 @@ export default function StudyTable() {
     } else if (activeTool === "key_takeaways") {
       getResourceContent(internalSubId, chapterNumber, "key_takeaways.md", persona, activeVideoDir)
         .then(apply)
-        .catch(() => apply("Key Takeaways not available for this chapter."));
+        .catch(() => apply("Takeaways not available for this chapter."));
     } else if (activeTool === "study_plan") {
       getResourceContent(internalSubId, chapterNumber, "study_plan.md", persona, activeVideoDir)
         .then(apply)
@@ -1223,21 +1378,40 @@ export default function StudyTable() {
       } else {
         apply("Deep Dive not available for this chapter.");
       }
-    } else if (activeTool === "flashcards") {
-      getFlashcards(internalSubId, chapterNumber, persona, activeVideoDir)
-        .then(apply)
-        .catch(() => apply([]));
-    } else if (activeTool === "revision_flashcards") {
+    } else if (activeTool === "flashcards" || activeTool === "revision_flashcards") {
       getFlashcards(internalSubId, chapterNumber, persona, activeVideoDir)
         .then((cards) => {
-          const taggedCards = (cards || []).map(c => ({ ...c, level: persona }));
+          let weakCards: any[] = [];
+          try {
+            const rawWeak = cloudStorage.getItem(`sv_weak_cards_${subjectId}_${chapterNumber}`);
+            const parsedWeak = rawWeak ? JSON.parse(rawWeak) : [];
+            if (Array.isArray(parsedWeak)) {
+              weakCards = parsedWeak
+                .filter((w: any) => w && w.question && w.answer)
+                .map((w: any, idx: number) => ({
+                  id: w.id || `weak-${idx}`,
+                  question: w.question,
+                  answer: w.answer,
+                  topic: w.topic ? `Weak Card · ${w.topic}` : "Weak Card · From Assessment",
+                  level: persona,
+                }));
+            }
+          } catch {}
 
-          // Random shuffle for Revision Flashcards
-          for (let i = taggedCards.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [taggedCards[i], taggedCards[j]] = [taggedCards[j], taggedCards[i]];
+          const baseCards = Array.isArray(cards) ? cards : [];
+          const existingQs = new Set(baseCards.map((c: any) => (c.question || "").trim().toLowerCase()));
+          const uniqueWeak = weakCards.filter((w) => !existingQs.has((w.question || "").trim().toLowerCase()));
+
+          if (activeTool === "revision_flashcards") {
+            const taggedCards = [...uniqueWeak, ...baseCards.map((c) => ({ ...c, level: persona }))];
+            for (let i = taggedCards.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [taggedCards[i], taggedCards[j]] = [taggedCards[j], taggedCards[i]];
+            }
+            apply(taggedCards);
+          } else {
+            apply([...uniqueWeak, ...baseCards]);
           }
-          apply(taggedCards);
         })
         .catch(() => apply([]));
     } else if (activeTool === "mindmap" || activeTool === "foundation") {
@@ -1344,6 +1518,7 @@ export default function StudyTable() {
               isPurpleTheme={false}
               readingHighlight={readingHighlight}
               onLoadedContent={handleLoadedReadContent}
+              dbDurationMinutes={(regReadingDurations || dbChapterObj?.readingDurations || dbChapterObj?.tools?.readingDurations)?.[activeTool === "detailed" ? "detailed" : "summary"]?.[persona]}
             />
           );
         }
@@ -1459,6 +1634,8 @@ export default function StudyTable() {
             chapterNumber={chapterNumber}
             chapterName={chapterName}
             isPurpleTheme={false}
+            persona={uiPersona}
+            onChangePersona={(p) => setPersona(p)}
             onSwitchTool={(tool) => setActiveTool(tool)}
           />
         );
@@ -1508,6 +1685,22 @@ export default function StudyTable() {
               mmConceptSection === 'detailed' ? sections.detailed :
                 mmDeepDiveRaw;
           const mmCards = mmConceptSection === 'flashcards' ? parseMmFlashcards(sections.flashcards) : [];
+          const mmConceptTitle = activeNodeTitle || mmActiveNodeId.replace(/_/g, ' ');
+          const mmConceptQcKey = `mm_master_${subjectId}_${chapterNumber}_${mmActiveNodeId}_${persona}_${mmConceptSection}`;
+          const mmConceptQcList =
+            mmConceptSection !== 'flashcards' && sectionContent
+              ? generateQuickCheckQuestionsFromMarkdown(mmConceptTitle, sectionContent, `M_${conceptN}`)
+              : [];
+          const mmConceptQcDone = mmCompletedQuickChecks.has(mmConceptQcKey);
+          const mmConceptSelectedKeys: Record<number, string> = {};
+          for (let qIdx = 0; qIdx < mmConceptQcList.length; qIdx++) {
+            const val =
+              mmQcAnswers[`${mmConceptQcKey}_${qIdx}`] ||
+              (qIdx === 0 ? mmQcAnswers[mmConceptQcKey] : undefined);
+            if (val) mmConceptSelectedKeys[qIdx] = val;
+          }
+          const mmConceptAnsweredCount = Object.keys(mmConceptSelectedKeys).length;
+          const mmConceptReadMins = estimateReadingTime(sectionContent || '');
 
           return (
             <div className="mm-concept-view">
@@ -1653,7 +1846,87 @@ export default function StudyTable() {
                     <MarkdownView content={sections.flashcards} />
                   )
                 ) : (
-                  <MarkdownView content={sectionContent} />
+                  <div style={{ maxWidth: '1040px', margin: '0 auto', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '16px' }}>
+                      <span
+                        style={{
+                          background: '#f1f5f9',
+                          color: '#334155',
+                          borderRadius: '6px',
+                          padding: '3px 9px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                        }}
+                      >
+                        ⏱ {mmConceptReadMins} min read
+                      </span>
+
+                      {mmConceptQcList.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => mmConceptQcRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                          title="Skip to Quick Check"
+                          style={{
+                            background: mmConceptQcDone ? '#dcfce7' : '#f0fdf4',
+                            color: '#15803d',
+                            border: '1px solid #bbf7d0',
+                            borderRadius: '6px',
+                            padding: '3px 9px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {mmConceptQcDone
+                            ? `✓ ${mmConceptQcList.length} quick check${mmConceptQcList.length > 1 ? 's' : ''} answered`
+                            : mmConceptAnsweredCount > 0
+                            ? `✔ ${mmConceptAnsweredCount}/${mmConceptQcList.length} quick checks`
+                            : `✔ ${mmConceptQcList.length} quick check${mmConceptQcList.length > 1 ? 's' : ''}`}
+                        </button>
+                      )}
+                    </div>
+
+                    <MarkdownView content={sectionContent} />
+
+                    {mmConceptQcList.length > 0 && (
+                      <div ref={mmConceptQcRef} style={{ scrollMarginTop: '20px', marginTop: '28px' }}>
+                        <QuickCheckModal
+                          key={`mm-concept-qc-${mmConceptQcKey}`}
+                          isOpen={true}
+                          question={mmConceptQcList[0]}
+                          questions={mmConceptQcList}
+                          currentSectionNumber={1}
+                          totalSections={1}
+                          sectionTitle={mmConceptTitle}
+                          nextSectionTitle={nextTopicLink?.name}
+                          isPurpleTheme={false}
+                          initialSelectedKey={mmConceptSelectedKeys[0] || null}
+                          initialSelectedKeys={mmConceptSelectedKeys}
+                          isCompleted={mmConceptQcDone}
+                          onNextSection={
+                            nextTopicLink
+                              ? () => {
+                                  markMmQuickCheckCompleted(mmConceptQcKey);
+                                  setMmActiveNodeId(nextTopicLink.id);
+                                  setMmConceptSection('summary');
+                                }
+                              : undefined
+                          }
+                          onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                            markMmQuickCheckCompleted(
+                              mmConceptQcKey,
+                              selectedKey,
+                              questionIndex,
+                              allAnswered || mmConceptQcList.length === 1
+                            );
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
             </div>
@@ -1686,6 +1959,9 @@ export default function StudyTable() {
 
         // Extract only the mermaid block — strips any markdown title/frontmatter/blockquotes outside the fence
         function extractMermaidBlock(raw: string): string {
+          if (raw.trim().startsWith('{')) {
+            raw = mindmapJsonToMermaid(raw);
+          }
           const match = raw.match(/```mermaid([\s\S]*?)```/);
           if (match) return '```mermaid' + match[1] + '```';
           // Already raw mermaid (no fences)
@@ -1785,17 +2061,55 @@ export default function StudyTable() {
         const curCh = subjectChapters.find((c) => c.number === chapterNumber);
         const dynamicTopicCfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
 
+        // Compute the final mermaid content:
+        const mermaidContent = dynamicTopicCfg
+          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
+          : truncateMindmapToLevels(rawMermaid, 2);
+
+        // Always parse mermaid tree so we can map Level-2 child nodes to their Level-1 parent branch
+        const parsedMermaidTree = mermaidContent ? buildTree(mermaidContent) : null;
+        const rawMermaidTree = rawMermaid ? buildTree(truncateMindmapToLevels(rawMermaid, 2)) : null;
+        const treeForHierarchy = rawMermaidTree || parsedMermaidTree;
+        const childToParentBranch: Record<string, string> = {};
+        const dynamicTreeSubtopics: Record<string, { code: string; title: string; duration: string; mins: number }[]> = {};
+        if (treeForHierarchy?.children) {
+          treeForHierarchy.children.forEach((branchNode, bIdx) => {
+            const bClean = branchNode.label.trim();
+            childToParentBranch[bClean.toLowerCase()] = bClean;
+            if (branchNode.children && branchNode.children.length > 0) {
+              dynamicTreeSubtopics[bClean.toLowerCase()] = branchNode.children.map((subNode, sIdx) => {
+                childToParentBranch[subNode.label.trim().toLowerCase()] = bClean;
+                return {
+                  code: `${bIdx + 1}.${sIdx + 1}`,
+                  title: subNode.label.trim(),
+                  duration: '8m',
+                  mins: 8,
+                };
+              });
+            }
+          });
+        }
+
+        const effectiveTopics: MindmapTopic[] = dynamicTopicCfg
+          ? dynamicTopicCfg.topics
+          : parsedMermaidTree?.children?.map((c, idx) => ({
+              label: c.label,
+              topicNum: idx + 1,
+            })) || [];
         const dynamicMmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = {};
-        if (dynamicTopicCfg) {
-          for (const t of dynamicTopicCfg.topics) {
-            dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
-            dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+        for (const t of effectiveTopics) {
+          dynamicMmIcons[t.label] = { hasRead: true, hasPodcast: true, hasVideo: true };
+          dynamicMmIcons[t.label.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+        }
+        if (treeForHierarchy?.children) {
+          for (const branchNode of treeForHierarchy.children) {
+            const bClean = branchNode.label.trim();
+            dynamicMmIcons[bClean] = { hasRead: true, hasPodcast: true, hasVideo: true };
+            dynamicMmIcons[bClean.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
           }
         }
 
-        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = dynamicTopicCfg
-          ? dynamicMmIcons
-          : isNebBiologyChap6 ? {
+        const mmIcons: Record<string, { hasRead?: boolean; hasVideo?: boolean; hasPodcast?: boolean }> = isNebBiologyChap6 ? {
           'ANIMAL TISSUE': { hasRead: true },
           'History': { hasRead: true },
           'Epithelial Tissue': { hasRead: true },
@@ -1818,7 +2132,7 @@ export default function StudyTable() {
           'Cardiac / Heart muscle': { hasRead: true },
           'Neuroglia': { hasRead: true },
           'Neurone': { hasRead: true }
-        } : {};
+        } : dynamicMmIcons;
 
         for (const key of Object.keys(mmIcons)) {
           const mapped = MEDIA_MAPPING[key.toLowerCase().trim()];
@@ -1828,239 +2142,1452 @@ export default function StudyTable() {
           }
         }
 
-        // Compute the final mermaid content:
-        const mermaidContent = dynamicTopicCfg
-          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
-          : truncateMindmapToLevels(rawMermaid, 2);
-
-        const handleTopicClick = async (label: string, action?: 'read' | 'podcast' | 'video') => {
+        const loadMindmapTopicForPersona = async (
+          label: string,
+          targetPersona: DifficultyLevel,
+          action?: 'read' | 'podcast' | 'video',
+          preserveTab = false
+        ) => {
           setMindmapTopicTitle(label);
           const lowerLabel = label.toLowerCase().trim();
 
-          // ── Dynamic topic path (Works for all subjects with topics) ───────
-          if (dynamicTopicCfg) {
-            const match = dynamicTopicCfg.topics.find((t: any) => t.label.toLowerCase() === lowerLabel);
-            if (!match) return; // root node or unmapped — ignore
+          // ── NEB Biology Chapter 6 path ────────────────────────────────────────
+          if (isNebBiologyChap6) {
+            const mappedMedia = MEDIA_MAPPING[lowerLabel];
+            const mapped = MINDMAP_MAPPING[lowerLabel];
 
-            if (action === 'video') {
+            if (action === 'video' && mappedMedia?.ytId) {
               setMindmapInlineType('video');
-              const mappedMedia = MEDIA_MAPPING[lowerLabel];
-              const ytId = mappedMedia?.ytId || 'EQl-5nKXme0';
-              setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
+              setMindmapMediaUrl(`https://www.youtube.com/embed/${mappedMedia.ytId}?autoplay=1`);
               setMindmapTopicOpen(true);
               return;
             }
 
             if (action === 'podcast') {
-              const mcIdx = dynamicTopicCfg.topics.indexOf(match);
-              const targetIdx = mcIdx >= 0 ? mcIdx : 0;
               setMindmapTopicOpen(false);
-              setPodcastTargetTrack('mc');
-              setPodcastTargetMcIndex(targetIdx);
-              setPodcastAutoPlay(true);
-              setPodcastPlayTrigger(Date.now());
-              setActiveTool('podcasts');
+              setMmSelectedBranch(label);
+              setMmFallbackAudioUsed(false);
+              setMmAudioCurrentTime(0);
+              setMmDrawerOpen(true);
+              setMmAutoPlayNonce(Date.now());
               return;
             }
 
-            // Default: read (quick + detailed)
             setMindmapInlineType('text');
-            setMindmapInlineTab('quick');
+            if (!preserveTab) setMindmapInlineTab('quick');
             setMindmapTopicOpen(true);
 
-            const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
-            const topicNum = (match as any).topicNum ?? (dynamicTopicCfg.topics.indexOf(match) + 1);
-            const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
-            const cached = topicNotesCache.get(cacheKey);
+            if (mapped) {
+              const cacheKey = `neb_${mapped.type}_${mapped.id}`;
+              const cached = topicNotesCache.get(cacheKey);
 
-            if (cached && cached.quick) {
-              setMindmapTopicContent(cached.quick);
-              setMindmapDetailedContent(cached.detailed || '');
-              setMindmapTopicLoading(false);
-              return;
-            }
-
-            setMindmapTopicLoading(true);
-            setMindmapTopicContent(null);
-            setMindmapDetailedContent(null);
-
-            try {
-              const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
-              const subBase = getSubjectBaseUrl(subjectId);
-
-              const fetchSafeMd = async (url: string) => {
-                try {
-                  const res = await fetch(url);
-                  const ct = res.headers.get('content-type') || '';
-                  if (!res.ok || ct.includes('text/html')) return '';
-                  const txt = await res.text();
-                  if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
-                  return txt;
-                } catch { return ''; }
-              };
-
-              const quickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`)
-                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
-              const detailedSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`)
-                || resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
-
-              let quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
-              if (!quickText) {
-                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
-              }
-              if (!quickText) {
-                const secQuick = await getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel);
-                const foundSec = secQuick?.sections.find((s) => s.sectionNumber === topicNum) || secQuick?.sections[topicNum];
-                if (foundSec?.content) quickText = foundSec.content;
-              }
-              let detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
-              if (!detailedText) {
-                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
-              }
-              if (!detailedText) {
-                const secDetailed = await getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel);
-                const foundDet = secDetailed?.sections.find((s) => s.sectionNumber === topicNum) || secDetailed?.sections[topicNum];
-                if (foundDet?.content) detailedText = foundDet.content;
+              if (cached && cached.quick) {
+                setMindmapTopicContent(cached.quick);
+                setMindmapDetailedContent(cached.detailed || '');
+                setMindmapQuickChecks({
+                  quick: cached.quickQc || generateQuickCheckQuestionsFromMarkdown(label, cached.quick, `M_${mapped.id}`),
+                  detailed: cached.detailedQc || generateQuickCheckQuestionsFromMarkdown(label, cached.detailed || cached.quick, `M_${mapped.id}`),
+                });
+                setMindmapTopicLoading(false);
+                return;
               }
 
-              setMindmapTopicContent(quickText || `Summary content for ${match.label}`);
-              setMindmapDetailedContent(detailedText || quickText || `Detailed notes for ${match.label}`);
-              topicNotesCache.set(cacheKey, { quick: quickText, detailed: detailedText || quickText });
-            } catch (e) {
-              console.error('Dynamic mindmap topic fetch error', e);
-              setMindmapTopicContent(`Content for ${match.label}`);
-            } finally {
-              setMindmapTopicLoading(false);
+              setMindmapTopicLoading(true);
+              setMindmapTopicContent(null);
+              setMindmapDetailedContent(null);
+
+              try {
+                const basePathDetailed = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
+                const basePathQuick = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
+
+                const detailedFilename = mapped.type === 'topic' ? `detailed_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
+                const quickFilename = mapped.type === 'topic' ? `quick_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
+
+                fetch(basePathQuick + quickFilename)
+                  .then(r => (r.ok ? r.text() : "Quick content not found for this topic."))
+                  .then(quickText => {
+                    quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
+                    quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
+                    const quickQc = generateQuickCheckQuestionsFromMarkdown(label, quickText, `M_${mapped.id}`);
+                    setMindmapTopicContent(quickText);
+                    setMindmapQuickChecks(prev => ({ ...prev, quick: quickQc }));
+                    setMindmapTopicLoading(false);
+                    const entry = topicNotesCache.get(cacheKey) || { quick: quickText };
+                    entry.quick = quickText;
+                    entry.quickQc = quickQc;
+                    topicNotesCache.set(cacheKey, entry);
+                  })
+                  .catch(e => {
+                    console.error(e);
+                    setMindmapTopicLoading(false);
+                  });
+
+                fetch(basePathDetailed + detailedFilename)
+                  .then(r => (r.ok ? r.text() : "Detailed content not found for this topic."))
+                  .then(detailedText => {
+                    detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
+                    detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
+                    const detailedQc = generateQuickCheckQuestionsFromMarkdown(label, detailedText, `M_${mapped.id}`);
+                    setMindmapDetailedContent(detailedText);
+                    setMindmapQuickChecks(prev => ({ ...prev, detailed: detailedQc }));
+                    const entry = topicNotesCache.get(cacheKey) || { quick: '' };
+                    entry.detailed = detailedText;
+                    entry.detailedQc = detailedQc;
+                    topicNotesCache.set(cacheKey, entry);
+                  })
+                  .catch(console.error);
+              } catch (e) {
+                console.error(e);
+                setMindmapTopicLoading(false);
+              }
             }
             return;
           }
 
-          // ── NEB Biology path ─────────────────────────────────────────────────
-          if (!isNebBiologyChap6) return;
-          const mappedMedia = MEDIA_MAPPING[lowerLabel];
-          const mapped = MINDMAP_MAPPING[lowerLabel];
+          // ── Dynamic / Multi-Tenant topic path (Works for all subjects) ───────
+          const match =
+            effectiveTopics.find((t: any) => t.label.toLowerCase() === lowerLabel) ||
+            ({ label, topicNum: Math.max(1, effectiveTopics.findIndex((t) => t.label.toLowerCase().includes(lowerLabel)) + 1) } as MindmapTopic);
 
-          if (action === 'video' && mappedMedia?.ytId) {
+          if (action === 'video') {
             setMindmapInlineType('video');
-            setMindmapMediaUrl(`https://www.youtube.com/embed/${mappedMedia.ytId}?autoplay=1`);
+            const mappedMedia = MEDIA_MAPPING[lowerLabel];
+            const angrauYtMap: Record<number, string> = {
+              1: 'Ioa25iYy53g',
+              2: '7TyeiuOEVBo',
+              3: 'UMJFfCFFF4M',
+              4: 'elWWuKv5b9Q',
+            };
+            const isAngrauEnto = subjectId.includes('ento');
+            const ytId = mappedMedia?.ytId || (isAngrauEnto ? angrauYtMap[chapterNumber] : undefined) || 'EQl-5nKXme0';
+            setMindmapMediaUrl(`https://www.youtube.com/embed/${ytId}?autoplay=1`);
             setMindmapTopicOpen(true);
             return;
           }
 
           if (action === 'podcast') {
-            const nebMcNames = [
-              'MC1_Histology_pioneers_and_the_first_tissues',
-              'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
-              'MC3_Simple_Epithelium_Types_and_Functions',
-              'MC4_Body_armor_and_shape_shifting_bladders',
-              'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
-              'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
-              'MC7_Why_tendons_anchor_and_ligaments_stretch',
-              'MC8_Four_unique_types_of_body_cartilage',
-              'MC9_The_microscopic_plumbing_of_mammalian_bones',
-              'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
-              'MC11_Why_Some_Muscles_Never_Get_Tired',
-              'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
-            ];
-            const nebIdx = mappedMedia?.audio ? nebMcNames.indexOf(mappedMedia.audio) : -1;
-            const targetIdx = nebIdx >= 0 ? nebIdx : 0;
             setMindmapTopicOpen(false);
-            setPodcastTargetTrack('mc');
-            setPodcastTargetMcIndex(targetIdx);
-            setPodcastAutoPlay(true);
-            setPodcastPlayTrigger(Date.now());
-            setActiveTool('podcasts');
+            setMmSelectedBranch(label);
+            setMmFallbackAudioUsed(false);
+            setMmAudioCurrentTime(0);
+            setMmDrawerOpen(true);
+            setMmAutoPlayNonce(Date.now());
             return;
           }
 
+          // Default: read (quick + detailed + quick checks)
           setMindmapInlineType('text');
-          setMindmapInlineTab('quick');
+          if (!preserveTab) setMindmapInlineTab('quick');
           setMindmapTopicOpen(true);
 
-          if (mapped) {
-            const cacheKey = `neb_${mapped.type}_${mapped.id}`;
-            const cached = topicNotesCache.get(cacheKey);
+          const normLevel = ['beginner', 'intermediate', 'advanced'].includes(targetPersona)
+            ? targetPersona
+            : 'intermediate';
+          const topicNum = (match as any).topicNum ?? (effectiveTopics.indexOf(match) + 1);
+          const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+          const cached = topicNotesCache.get(cacheKey);
 
-            if (cached && cached.quick) {
-              setMindmapTopicContent(cached.quick);
-              setMindmapDetailedContent(cached.detailed || '');
-              setMindmapTopicLoading(false);
-              return;
-            }
-
-            setMindmapTopicLoading(true);
-            setMindmapTopicContent(null);
-            setMindmapDetailedContent(null);
-
-            try {
-              const basePathDetailed = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Detailed_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
-              const basePathQuick = `/generated_resources/neb_nepal/class_12/biology/chapter_06/Read/Quick_Summary/${mapped.type === 'topic' ? 'Topic_Level' : 'SubTopic_Level'}/`;
-
-              const detailedFilename = mapped.type === 'topic' ? `detailed_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
-              const quickFilename = mapped.type === 'topic' ? `quick_summary_topic${mapped.id}.md` : `subtopic${mapped.id}.md`;
-
-              fetch(basePathQuick + quickFilename)
-                .then(r => (r.ok ? r.text() : "Quick content not found for this topic."))
-                .then(quickText => {
-                  quickText = quickText.replace(/\]\(images\//g, `](${basePathQuick}images/`);
-                  quickText = quickText.replace(/src="images\//g, `src="${basePathQuick}images/`);
-                  setMindmapTopicContent(quickText);
-                  setMindmapTopicLoading(false);
-                  const entry = topicNotesCache.get(cacheKey) || { quick: quickText };
-                  entry.quick = quickText;
-                  topicNotesCache.set(cacheKey, entry);
-                })
-                .catch(e => {
-                  console.error(e);
-                  setMindmapTopicLoading(false);
-                });
-
-              fetch(basePathDetailed + detailedFilename)
-                .then(r => (r.ok ? r.text() : "Detailed content not found for this topic."))
-                .then(detailedText => {
-                  detailedText = detailedText.replace(/\]\(images\//g, `](${basePathDetailed}images/`);
-                  detailedText = detailedText.replace(/src="images\//g, `src="${basePathDetailed}images/`);
-                  setMindmapDetailedContent(detailedText);
-                  const entry = topicNotesCache.get(cacheKey) || { quick: '' };
-                  entry.detailed = detailedText;
-                  topicNotesCache.set(cacheKey, entry);
-                })
-                .catch(console.error);
-            } catch (e) {
-              console.error(e);
-              setMindmapTopicLoading(false);
-            }
+          if (cached && cached.quick && cached.quickQc && cached.QuickQcLoaded) {
+            setMindmapTopicContent(cached.quick);
+            setMindmapDetailedContent(cached.detailed || cached.quick);
+            setMindmapQuickChecks({
+              quick: cached.quickQc,
+              detailed: cached.detailedQc || cached.quickQc,
+            });
+            setMindmapTopicLoading(false);
+            return;
           }
 
-          if ((action as any) === 'podcast') {
-            setMindmapTopicOpen(false);
-            setPodcastTargetTrack('mc');
-            setPodcastTargetMcIndex(0);
-            setPodcastAutoPlay(true);
-            setPodcastPlayTrigger(Date.now());
-            setActiveTool('podcasts');
-            return;
+          setMindmapTopicLoading(true);
+          if (!preserveTab) {
+            setMindmapTopicContent(null);
+            setMindmapDetailedContent(null);
+          }
+
+          try {
+            const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
+            const subBase = getSubjectBaseUrl(subjectId);
+
+            const fetchSafeMd = async (url: string) => {
+              try {
+                const res = await fetch(url);
+                const ct = res.headers.get('content-type') || '';
+                if (!res.ok || ct.includes('text/html')) return '';
+                const txt = await res.text();
+                if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html') || txt.includes('<script type="module"') || txt.startsWith('<script')) return '';
+                return txt;
+              } catch { return ''; }
+            };
+
+            const [secQuick, secDetailed] = await Promise.all([
+              getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel),
+              getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel),
+            ]);
+
+            const foundSec =
+              secQuick?.sections.find((s) => s.sectionNumber === topicNum) ||
+              secQuick?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+              secQuick?.sections[topicNum - 1];
+            const foundDet =
+              secDetailed?.sections.find((s) => s.sectionNumber === topicNum) ||
+              secDetailed?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+              secDetailed?.sections[topicNum - 1];
+
+            let quickText = foundSec?.content || '';
+            if (!quickText) {
+              const quickSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
+              quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+              if (!quickText) {
+                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
+              }
+            }
+
+            let detailedText = foundDet?.content || '';
+            if (!detailedText) {
+              const detailedSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
+              detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+              if (!detailedText) {
+                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+              }
+            }
+
+            const finalQuick = quickText || `Summary content for ${match.label}`;
+            const finalDetailed = detailedText || finalQuick || `Detailed notes for ${match.label}`;
+
+            const quickQc =
+              foundSec?.quickChecks && foundSec.quickChecks.length > 0
+                ? foundSec.quickChecks
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalQuick, `M${topicNum}`);
+            const detailedQc =
+              foundDet?.quickChecks && foundDet.quickChecks.length > 0
+                ? foundDet.quickChecks
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalDetailed, `M${topicNum}`);
+
+            setMindmapTopicContent(finalQuick);
+            setMindmapDetailedContent(finalDetailed);
+            setMindmapQuickChecks({ quick: quickQc, detailed: detailedQc });
+            topicNotesCache.set(cacheKey, {
+              quick: finalQuick,
+              detailed: finalDetailed,
+              quickQc,
+              detailedQc,
+              ...({ QuickQcLoaded: true } as any),
+            });
+          } catch (e) {
+            console.error('Dynamic mindmap topic fetch error', e);
+            const fallbackMd = `Content for ${match.label}`;
+            setMindmapTopicContent(fallbackMd);
+            setMindmapQuickChecks({
+              quick: generateQuickCheckQuestionsFromMarkdown(match.label, fallbackMd, `M${topicNum}`),
+              detailed: generateQuickCheckQuestionsFromMarkdown(match.label, fallbackMd, `M${topicNum}`),
+            });
+          } finally {
+            setMindmapTopicLoading(false);
           }
         };
 
+        const chStudyKey = `${subjectId}_${chapterNumber}`;
+        const markMmBranchStudied = (branchLabel: string) => {
+          if (!branchLabel) return;
+          setMmStudiedBranches((prev) => {
+            const existing = prev[chStudyKey] || [];
+            if (existing.some((x) => x.toLowerCase() === branchLabel.toLowerCase())) return prev;
+            const next = { ...prev, [chStudyKey]: [...existing, branchLabel] };
+            try {
+              cloudStorage.setItem('sv_mm_studied_v2', JSON.stringify(next));
+            } catch {
+              // ignore storage errors
+            }
+            return next;
+          });
+        };
+
+        const handleTopicClick = (label: string, action?: 'read' | 'podcast' | 'video') => {
+          setMmSelectedBranch(label);
+          markMmBranchStudied(label);
+          return loadMindmapTopicForPersona(label, persona, action, false);
+        };
 
         // Compute next/prev topic for inline navigation (Multi-Tenant)
-        const allTopicLabels: string[] = dynamicTopicCfg
-          ? dynamicTopicCfg.topics.map(t => t.label)
-          : [];
-        const currentTopicIdx = allTopicLabels.indexOf(mindmapTopicTitle ?? '');
+        const allTopicLabels: string[] = isNebBiologyChap6
+          ? Object.keys(mmIcons).filter((k) => k !== 'ANIMAL TISSUE')
+          : effectiveTopics.map((t) => t.label);
+        const currentTopicIdx = allTopicLabels.findIndex(
+          (l) => l.toLowerCase() === (mindmapTopicTitle ?? '').toLowerCase()
+        );
         const prevTopicLabel = currentTopicIdx > 0 ? allTopicLabels[currentTopicIdx - 1] : null;
         const nextTopicLabel = currentTopicIdx >= 0 && currentTopicIdx < allTopicLabels.length - 1
           ? allTopicLabels[currentTopicIdx + 1]
           : null;
 
-        return (
-          <div className="mindmap-container" style={{ display: 'flex', flexDirection: 'column', gap: mindmapTopicOpen ? '0px' : '16px', height: '100%' }}>
-            {/* Map — hidden while a topic is open so only content fills the view */}
-            {!mindmapTopicOpen && (
-              <MindMapView content={mermaidContent} onTopicClick={handleTopicClick} nodeIcons={mmIcons} />
-            )}
+        const activeMmMarkdown = (
+          (mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || ''
+        ).replace(/^#\s+[^\n]+(\r?\n)+/, '');
+        const activeMmReadMins = estimateReadingTime(activeMmMarkdown);
+        const rawMmQcList =
+          mindmapInlineTab === 'quick' ? mindmapQuickChecks.quick : mindmapQuickChecks.detailed;
+        const activeMmQcList =
+          rawMmQcList && rawMmQcList.length > 0
+            ? rawMmQcList
+            : activeMmMarkdown
+            ? generateQuickCheckQuestionsFromMarkdown(
+                mindmapTopicTitle || 'Topic Overview',
+                activeMmMarkdown,
+                `M${currentTopicIdx >= 0 ? currentTopicIdx + 1 : 1}`
+              )
+            : [];
+        const mmArtifactKey = `mm_topic_${subjectId}_${chapterNumber}_${mindmapTopicTitle || 'topic'}_${persona}_${mindmapInlineTab}`;
+        const isMmQcDone = mmCompletedQuickChecks.has(mmArtifactKey);
+        const mmSelectedKeys: Record<number, string> = {};
+        for (let qIdx = 0; qIdx < activeMmQcList.length; qIdx++) {
+          const val =
+            mmQcAnswers[`${mmArtifactKey}_${qIdx}`] ||
+            (qIdx === 0 ? mmQcAnswers[mmArtifactKey] : undefined);
+          if (val) mmSelectedKeys[qIdx] = val;
+        }
+        const answeredInMmTopic = Object.keys(mmSelectedKeys).length;
 
+        // ── Contextual Branch Inspector metadata for MLRIT & ANGRAU ──
+        const MM_BRANCH_SUBTOPICS: Record<
+          string,
+          { podcastMins: number; subTopics: { code: string; title: string; duration: string; mins: number }[] }
+        > = {
+          // MLRIT — DBMS Unit 1 (6 branches)
+          'database fundamentals & engine architecture': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'File-System vs DBMS & ACID Motivation', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'ANSI-SPARC Three-Schema Architecture & Data Independence', duration: '12m', mins: 12 },
+              { code: '1.3', title: 'Storage Manager, Query Processor & Transaction Engine', duration: '6m', mins: 6 },
+            ],
+          },
+          'conceptual database design & er modeling': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Entities, Attributes (Simple, Composite, Derived) & Domains', duration: '7m', mins: 7 },
+              { code: '2.2', title: 'Relationships, Degree, Role Names & Recursive Links', duration: '9m', mins: 9 },
+              { code: '2.3', title: 'Mapping Cardinalities (1:1, 1:N, M:N) & Participation Constraints', duration: '8m', mins: 8 },
+            ],
+          },
+          'advanced er & extended er (eer) mechanisms': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '3.1', title: 'Weak Entities, Identifying Relationships & Partial Keys', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Specialization, Generalization & Attribute Inheritance', duration: '10m', mins: 10 },
+              { code: '3.3', title: 'Disjoint/Overlapping Constraints & Aggregation', duration: '7m', mins: 7 },
+            ],
+          },
+          'relational model foundations & integrity constraints': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Relations, Tuples, Domains & Mathematical Set Semantics', duration: '7m', mins: 7 },
+              { code: '4.2', title: 'Superkeys, Candidate Keys, Primary & Foreign Keys', duration: '9m', mins: 9 },
+              { code: '4.3', title: 'Domain, Entity & Referential Integrity Rules', duration: '8m', mins: 8 },
+            ],
+          },
+          'logical database design (er-to-relational translation)': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '5.1', title: 'Strong & Weak Entity Translation to Relational Schemas', duration: '8m', mins: 8 },
+              { code: '5.2', title: '1:1, 1:N & M:N Relationship Mapping Strategies', duration: '10m', mins: 10 },
+              { code: '5.3', title: 'Multivalued Attributes & EER Hierarchy Translation', duration: '8m', mins: 8 },
+            ],
+          },
+          'relational querying, views & schema evolution': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '6.1', title: 'Relational Algebra (σ, π, ∪, −, ×, ⋈, ÷) & Calculus', duration: '11m', mins: 11 },
+              { code: '6.2', title: 'SQL DDL, Constraints & Schema Modification', duration: '8m', mins: 8 },
+              { code: '6.3', title: 'Virtual Views, Updatability & Logical Security', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 1: History of Entomology in India
+          'ancient references & etymology': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '1.1', title: 'Etymology of Entomon & Logos and Arthropoda Roots', duration: '6m', mins: 6 },
+              { code: '1.2', title: 'Vedic, Ramayana & Mahabharata References to Insects', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Ancient Classification (Ushma-ja, Anda-ja) & Early Silkworm/Bee Lore', duration: '7m', mins: 7 },
+            ],
+          },
+          'early entomology in india': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: '18th Century Pioneers: Koenig, Fabricius & Linnaeus (1758)', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Medical & Natural History Contributions (Ronald Ross, Kerr, Roxburgh)', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Indian Museum (1875), BNHS (1883) & Fauna of British India', duration: '7m', mins: 7 },
+            ],
+          },
+          'imperial entomologists': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Lionel de Niceville (1901) & H. Maxwell-Lefroy (Indian Insect Life)', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'T.B. Fletcher & Early Pusa Research Milestones', duration: '7m', mins: 7 },
+              { code: '3.3', title: 'H.S. Pruthi, Hem Singh & Post-Independence Transition', duration: '7m', mins: 7 },
+            ],
+          },
+          'first government entomologists': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'T.V. Ramakrishna Ayyar & Handbook of Economic Entomology', duration: '8m', mins: 8 },
+              { code: '4.2', title: 'State Entomologists of Madras, Punjab, Mysore & Coimbatore', duration: '7m', mins: 7 },
+              { code: '4.3', title: '1914 Destructive Insects and Pests Act & Early Quarantine', duration: '6m', mins: 6 },
+            ],
+          },
+          'major institutions & milestones': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '5.1', title: 'IARI Pusa (1905), FRI Dehradun, ZSI (1916) & ILRI Ranchi', duration: '8m', mins: 8 },
+              { code: '5.2', title: 'ESI (1938), LWO (1939), DPPQS (1946) & NBAIR Bengaluru', duration: '9m', mins: 9 },
+              { code: '5.3', title: 'NCIPM, Insecticides Act (1968) & Modern Agricultural Universities', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 2: Factors for Insect Abundance
+          'structural perfections': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'Chitinous Exoskeleton, Cuticular Wax Layer & Desiccation Resistance', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'Functional Wings, Hexapod Locomotion & Dispersal Advantage', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Small Body Size, Tracheal Respiration & Compound Eyes', duration: '7m', mins: 7 },
+            ],
+          },
+          'mechanism of reproduction': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'High Fecundity (Queen Termite & Honeybee) & Short Life Cycle', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Parthenogenesis, Viviparity, Paedogenesis & Polyembryony', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Sperm Storage (Spermatheca) & Controlled Fertilization', duration: '6m', mins: 6 },
+            ],
+          },
+          'developmental characteristics': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '3.1', title: 'Complete Metamorphosis (Holometaboly) & Niche Partitioning', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Larval Feeding Stage vs Adult Reproductive/Dispersal Stage', duration: '7m', mins: 7 },
+              { code: '3.3', title: 'Diapause, Quiescence & Arrested Development in Harsh Seasons', duration: '7m', mins: 7 },
+            ],
+          },
+          'protective adaptations & specificity': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Crypsis, Camouflage, Batesian & Müllerian Mimicry', duration: '8m', mins: 8 },
+              { code: '4.2', title: 'Aposematism, Chemical Defenses & Reflex Bleeding', duration: '7m', mins: 7 },
+              { code: '4.3', title: 'Host-Plant Specificity & Co-Evolutionary Adaptations', duration: '7m', mins: 7 },
+            ],
+          },
+          'numbers & ecological dominance': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '5.1', title: 'Global Species Share (>70% of All Known Animal Species)', duration: '6m', mins: 6 },
+              { code: '5.2', title: 'Dominant Orders: Coleoptera, Lepidoptera, Diptera & Hymenoptera', duration: '8m', mins: 8 },
+              { code: '5.3', title: 'Ecosystem Services vs Agricultural Pest Impact', duration: '6m', mins: 6 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 3: Role of Insects in Pollination
+          'importance & types': {
+            podcastMins: 5,
+            subTopics: [
+              { code: '1.1', title: 'Self-Pollination (Autogamy/Geitonogamy) vs Cross-Pollination (Xenogamy)', duration: '7m', mins: 7 },
+              { code: '1.2', title: 'Entomophily vs Anemophily & Hydrophily', duration: '7m', mins: 7 },
+              { code: '1.3', title: 'Economic Value of Insect Pollination in Crop Yield & Quality', duration: '7m', mins: 7 },
+            ],
+          },
+          'mechanism of pollination': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Floral Rewards (Nectar, Pollen, Oils) & Visual/Olfactory Cues', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Pollen Adhesion, Scopa/Corbicula & Stigma Transfer Mechanics', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Floral Constancy & Co-adapted Flower-Pollinator Morphology', duration: '7m', mins: 7 },
+            ],
+          },
+          'insect orders involved': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Hymenoptera: Honeybees, Bumblebees, Solitary Bees & Fig Wasps', duration: '9m', mins: 9 },
+              { code: '3.2', title: 'Diptera (Syrphid Hoverflies, Midges) & Lepidoptera (Butterflies, Moths)', duration: '8m', mins: 8 },
+              { code: '3.3', title: 'Coleoptera (Cantharophily — Oil Palm Weevil) & Thysanoptera', duration: '7m', mins: 7 },
+            ],
+          },
+          'adaptations & crop examples': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Melittophily, Psychophily, Phalaenophily, Myophily & Cantharophily', duration: '9m', mins: 9 },
+              { code: '4.2', title: 'Obligate Mutualisms: Fig–Blastophaga & Yucca–Tegeticula', duration: '8m', mins: 8 },
+              { code: '4.3', title: 'Managed Bee Colonies per Hectare in Horticultural & Oilseed Crops', duration: '7m', mins: 7 },
+            ],
+          },
+
+          // ANGRAU — Entomology Chapter 4: Apiculture (Bee Keeping)
+          'honeybee species': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '1.1', title: 'Rock Bee (Apis dorsata) & Little Bee (Apis florea) — Wild Open-Nesting', duration: '8m', mins: 8 },
+              { code: '1.2', title: 'Indian Hive Bee (Apis cerana indica) & Italian Bee (Apis mellifera)', duration: '8m', mins: 8 },
+              { code: '1.3', title: 'Stingless/Dammer Bee (Tetragonula iridipennis) & Species Comparison', duration: '7m', mins: 7 },
+            ],
+          },
+          'castes & structural adaptations': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '2.1', title: 'Queen, Worker & Drone Castes: Diploid vs Haploid Development', duration: '8m', mins: 8 },
+              { code: '2.2', title: 'Age-Related Polyethism (Nurse, Builder, Guard & Forager Roles)', duration: '8m', mins: 8 },
+              { code: '2.3', title: 'Pollen Basket (Corbicula), Proboscis, Wax Glands & Barbed Sting', duration: '8m', mins: 8 },
+            ],
+          },
+          'beehive & appliances': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '3.1', title: 'Langstroth, Newton & ISI Movable-Frame Hive Architecture', duration: '8m', mins: 8 },
+              { code: '3.2', title: 'Brood Chamber, Super Chamber, Queen Excluder & Bee Space Principle', duration: '8m', mins: 8 },
+              { code: '3.3', title: 'Comb Foundation Sheet, Smoker, Hive Tool & Centrifugal Extractor', duration: '7m', mins: 7 },
+            ],
+          },
+          'foraging behaviour & communication': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '4.1', title: 'Nectar, Pollen, Propolis & Water Foraging Range & Flight Activity', duration: '7m', mins: 7 },
+              { code: '4.2', title: 'Karl von Frisch Dance Language: Round Dance (<50m) & Waggle Dance', duration: '9m', mins: 9 },
+              { code: '4.3', title: 'Queen Substance (9-ODA) & Alarm Pheromone Regulation', duration: '7m', mins: 7 },
+            ],
+          },
+          'seasonal management': {
+            podcastMins: 6,
+            subTopics: [
+              { code: '5.1', title: 'Spring & Honey-Flow Management (Supering & Swarm Prevention)', duration: '8m', mins: 8 },
+              { code: '5.2', title: 'Dearth-Period Sugar Feeding, Monsoon & Winter Insulation', duration: '7m', mins: 7 },
+              { code: '5.3', title: 'Robbing, Absconding Control & Uniting Weak Colonies', duration: '7m', mins: 7 },
+            ],
+          },
+          'enemies, diseases & bee products': {
+            podcastMins: 7,
+            subTopics: [
+              { code: '6.1', title: 'Greater/Lesser Wax Moth, Varroa/Tracheal Mites, Wasps & Bee-Eaters', duration: '8m', mins: 8 },
+              { code: '6.2', title: 'American/European Foulbrood, Thai Sacbrood Virus & Nosema', duration: '8m', mins: 8 },
+              { code: '6.3', title: 'Honey Composition, Beeswax, Royal Jelly, Propolis & Bee Venom', duration: '8m', mins: 8 },
+            ],
+          },
+        };
+
+        const resolvedSelectedCandidate = mmSelectedBranch
+          ? childToParentBranch[mmSelectedBranch.toLowerCase().trim()] || mmSelectedBranch
+          : null;
+        const matchedTopicFromList = resolvedSelectedCandidate
+          ? allTopicLabels.find(
+              (l) =>
+                l.toLowerCase().trim() === resolvedSelectedCandidate.toLowerCase().trim() ||
+                l.toLowerCase().includes(resolvedSelectedCandidate.toLowerCase().trim()) ||
+                resolvedSelectedCandidate.toLowerCase().includes(l.toLowerCase().trim())
+            )
+          : null;
+        const activeSelectedBranch =
+          matchedTopicFromList || resolvedSelectedCandidate || allTopicLabels[0] || 'Overview';
+        const selectedBranchIdx = Math.max(
+          0,
+          allTopicLabels.findIndex((l) => l.toLowerCase() === activeSelectedBranch.toLowerCase())
+        );
+        const branchMeta =
+          MM_BRANCH_SUBTOPICS[activeSelectedBranch.toLowerCase().trim()] ||
+          (dynamicTreeSubtopics[activeSelectedBranch.toLowerCase().trim()]
+            ? {
+                podcastMins: 6,
+                subTopics: dynamicTreeSubtopics[activeSelectedBranch.toLowerCase().trim()],
+              }
+            : {
+                podcastMins: 6,
+                subTopics: [
+                  {
+                    code: `${selectedBranchIdx + 1}.1`,
+                    title: `Core Concepts & Foundations of ${activeSelectedBranch}`,
+                    duration: '8m',
+                    mins: 8,
+                  },
+                  {
+                    code: `${selectedBranchIdx + 1}.2`,
+                    title: `Mechanisms, Classification & Structural Principles`,
+                    duration: '10m',
+                    mins: 10,
+                  },
+                  {
+                    code: `${selectedBranchIdx + 1}.3`,
+                    title: `Applied Examples & Exam-Focused Synthesis`,
+                    duration: '7m',
+                    mins: 7,
+                  },
+                ],
+              });
+        const totalBranchMins = branchMeta.subTopics.reduce((acc, st) => acc + st.mins, 0);
+        const chapterStudiedList = mmStudiedBranches[chStudyKey] || [];
+        const chapterStudiedCount = allTopicLabels.filter((lbl) =>
+          chapterStudiedList.some((s) => s.toLowerCase() === lbl.toLowerCase())
+        ).length;
+        const cleanChapterLabel = (chapterName || '')
+          .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]\s*/i, '')
+          .trim();
+
+        const mcPad = String(selectedBranchIdx + 1).padStart(2, '0');
+        const mmChDir = dbChapterObj?.dir || `chapter_${String(chapterNumber).padStart(2, '0')}`;
+        const nebMcNames = [
+          'MC1_Histology_pioneers_and_the_first_tissues',
+          'MC2_How_Avascular_Epithelium_Survives_and_Stays_Intact',
+          'MC3_Simple_Epithelium_Types_and_Functions',
+          'MC4_Body_armor_and_shape_shifting_bladders',
+          'MC5_Modified_Epithelia_and_Glandular_Secretion_Methods',
+          'MC6_Connective_Tissue_Proper_Cells_and_Fibers',
+          'MC7_Why_tendons_anchor_and_ligaments_stretch',
+          'MC8_Four_unique_types_of_body_cartilage',
+          'MC9_The_microscopic_plumbing_of_mammalian_bones',
+          'MC10_How_Blood_and_Lymph_Fuel_and_Protect',
+          'MC11_Why_Some_Muscles_Never_Get_Tired',
+          'MC12_How_Myelin_Speeds_Up_Nerve_Signals',
+        ];
+        const nebMappedAudio =
+          MEDIA_MAPPING[activeSelectedBranch.toLowerCase().trim()]?.audio ||
+          nebMcNames[selectedBranchIdx % nebMcNames.length] ||
+          nebMcNames[0];
+        const nebAudioUrl = `${getSubjectBaseUrl(subjectId)}/chapter_06/Podcasts/${encodeURIComponent(nebMappedAudio)}.mp3`;
+        const regMcUrl =
+          regChapterFiles[`podcasts/microcast_${mcPad}.m4a`] ||
+          regChapterFiles[`podcasts/microcast_${mcPad}.mp3`] ||
+          resolveAssetUrl(subjectId, chapterNumber, `podcasts/microcast_${mcPad}.m4a`) ||
+          resolveAssetUrl(subjectId, chapterNumber, `podcasts/microcast_${mcPad}.mp3`);
+        const gcsMcUrl = `${getSubjectBaseUrl(subjectId)}/${mmChDir}/podcasts/microcast_${mcPad}.m4a`;
+        const primaryMmAudioSrc = isNebBiologyChap6 ? nebAudioUrl : (regMcUrl || gcsMcUrl);
+        const fallbackMmAudioSrc =
+          regChapterFiles['podcasts/microcast_01.m4a'] ||
+          regChapterFiles['podcasts/short_podcast.m4a'] ||
+          regChapterFiles['podcasts/short_podcast.mp3'] ||
+          resolveAssetUrl(subjectId, chapterNumber, 'podcasts/short_podcast.m4a') ||
+          `${getSubjectBaseUrl(subjectId)}/${mmChDir}/podcasts/short_podcast.m4a`;
+        const activeMmAudioSrc = mmFallbackAudioUsed ? fallbackMmAudioSrc : primaryMmAudioSrc;
+
+        const formatMmTime = (secs: number) => {
+          if (!Number.isFinite(secs) || secs < 0) return '0:00';
+          const m = Math.floor(secs / 60);
+          const s = Math.floor(secs % 60);
+          return `${m}:${s < 10 ? '0' : ''}${s}`;
+        };
+        const effectiveMmDuration =
+          mmAudioDuration > 0 ? mmAudioDuration : branchMeta.podcastMins * 60;
+        const mmProgressPct =
+          effectiveMmDuration > 0
+            ? Math.min(100, Math.max(0, (mmAudioCurrentTime / effectiveMmDuration) * 100))
+            : 0;
+        return (
+          <div
+            className="mindmap-container"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0px',
+              height: '100%',
+              width: '100%',
+              background: mindmapTopicOpen ? 'transparent' : '#FAF8F3',
+            }}
+          >
+            {/* Map + Inspector Split View — hidden while a topic is open so only content fills the view */}
+            {!mindmapTopicOpen && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '100%',
+                  width: '100%',
+                  minHeight: 0,
+                  background: '#FAF8F3',
+                }}
+              >
+                {/* ── Top Sub-Header Bar ── */}
+                <div
+                  style={{
+                    height: '50px',
+                    padding: '0 24px',
+                    background: '#FAF8F3',
+                    borderBottom: '1px solid #EAE4D7',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexShrink: 0,
+                    gap: '16px',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      fontSize: '13.5px',
+                      color: '#7A827C',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    <span style={{ color: '#1E2822', fontWeight: 700, fontSize: '0.84rem' }} title={chapterName}>
+                      {chapterName}
+                    </span>
+                  </div>
+
+                </div>
+
+                {/* ── Main Split Area: Left MindMap Canvas + Right GPU Slide-In Branch Inspector ── */}
+                <div
+                  style={{
+                    position: 'relative',
+                    flex: 1,
+                    minHeight: 0,
+                    display: 'flex',
+                    gap: mmDrawerOpen ? '16px' : '0px',
+                    padding: '14px 20px 18px 20px',
+                    overflow: 'hidden',
+                    transition: 'gap 0.52s cubic-bezier(0.22, 1, 0.36, 1)',
+                  }}
+                >
+                  {/* Hidden Audio Element for Mindmap Microcast Player */}
+                  <audio
+                    ref={mmAudioRef}
+                    src={activeMmAudioSrc}
+                    preload="metadata"
+                    onLoadedMetadata={(e) => {
+                      const dur = e.currentTarget.duration;
+                      if (Number.isFinite(dur) && dur > 0) {
+                        setMmAudioDuration(dur);
+                      }
+                      e.currentTarget.playbackRate = mmPlaybackRate;
+                      if (mmAutoPlayNonce > 0 && mmDrawerOpen) {
+                        e.currentTarget
+                          .play()
+                          .then(() => setMmIsPlaying(true))
+                          .catch(() => setMmIsPlaying(false));
+                      }
+                    }}
+                    onTimeUpdate={(e) => {
+                      setMmAudioCurrentTime(e.currentTarget.currentTime);
+                    }}
+                    onPlay={() => setMmIsPlaying(true)}
+                    onPause={() => setMmIsPlaying(false)}
+                    onEnded={() => {
+                      setMmIsPlaying(false);
+                      setMmAudioCurrentTime(0);
+                    }}
+                    onError={() => {
+                      if (!mmFallbackAudioUsed && fallbackMmAudioSrc && fallbackMmAudioSrc !== primaryMmAudioSrc) {
+                        setMmFallbackAudioUsed(true);
+                      } else {
+                        setMmIsPlaying(false);
+                      }
+                    }}
+                  />
+
+                  {/* Left: Full-Width MindMap Canvas */}
+                  <div
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <MindMapView
+                      content={mermaidContent}
+                      onTopicClick={(lbl, act) => {
+                        const candidate = childToParentBranch[lbl.toLowerCase().trim()] || lbl;
+                        const canonical =
+                          allTopicLabels.find(
+                            (l) =>
+                              l.toLowerCase().trim() === candidate.toLowerCase().trim() ||
+                              l.toLowerCase().includes(candidate.toLowerCase().trim()) ||
+                              candidate.toLowerCase().includes(l.toLowerCase().trim())
+                          ) || candidate;
+                        const isSameBranch =
+                          canonical.toLowerCase().trim() === activeSelectedBranch.toLowerCase().trim();
+                        handleTopicClick(canonical, act);
+                        if (act === 'podcast' && isSameBranch && mmAudioRef.current) {
+                          mmAudioRef.current.playbackRate = mmPlaybackRate;
+                          mmAudioRef.current
+                            .play()
+                            .then(() => setMmIsPlaying(true))
+                            .catch(() => setMmIsPlaying(false));
+                        }
+                      }}
+                      nodeIcons={mmIcons}
+                      selectedTopic={mmDrawerOpen ? activeSelectedBranch : null}
+                      studiedTopics={[]}
+                      onSelectTopic={(lbl, depth, parentLbl) => {
+                        if (isNebBiologyChap6 && MINDMAP_MAPPING[lbl.toLowerCase().trim()]) {
+                          if (mmAudioRef.current) mmAudioRef.current.pause();
+                          handleTopicClick(lbl, 'read');
+                          return;
+                        }
+                        const candidate =
+                          (parentLbl && depth && depth >= 2 ? parentLbl : null) ||
+                          childToParentBranch[lbl.toLowerCase().trim()] ||
+                          lbl;
+                        const canonical =
+                          allTopicLabels.find(
+                            (l) =>
+                              l.toLowerCase().trim() === candidate.toLowerCase().trim() ||
+                              l.toLowerCase().includes(candidate.toLowerCase().trim()) ||
+                              candidate.toLowerCase().includes(l.toLowerCase().trim())
+                          ) || candidate;
+                        if (mmAudioRef.current) mmAudioRef.current.pause();
+                        handleTopicClick(canonical, 'read');
+                      }}
+                    />
+                  </div>
+
+                  {/* Right: Side-by-Side GPU Slide-In Contextual Branch Card + Botanical Microcast Player */}
+                  <aside
+                    aria-hidden={!mmDrawerOpen}
+                    style={{
+                      width: '380px',
+                      flexShrink: 0,
+                      height: '100%',
+                      marginRight: mmDrawerOpen ? '0px' : '-380px',
+                      background: '#FFFFFF',
+                      border: '1px solid #E6E0D4',
+                      borderRadius: '16px',
+                      padding: '16px 18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      overflowY: 'auto',
+                      boxShadow: mmDrawerOpen
+                        ? '0 4px 18px rgba(30, 40, 34, 0.05)'
+                        : 'none',
+                      transform: mmDrawerOpen
+                        ? 'translate3d(0, 0, 0)'
+                        : 'translate3d(42px, 0, 0)',
+                      opacity: mmDrawerOpen ? 1 : 0,
+                      pointerEvents: mmDrawerOpen ? 'auto' : 'none',
+                      willChange: 'margin-right, transform, opacity',
+                      backfaceVisibility: 'hidden',
+                      WebkitFontSmoothing: 'antialiased',
+                      transition:
+                        'margin-right 0.52s cubic-bezier(0.22, 1, 0.36, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.36s ease',
+                    }}
+                  >
+                    {/* Header Row: Pill badge + Close Drawer Button */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          padding: '4px 10px',
+                          borderRadius: '999px',
+                          background: '#E8F0EB',
+                          color: '#365343',
+                          fontSize: '10.5px',
+                          fontWeight: 800,
+                          letterSpacing: '0.07em',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        BRANCH · {getChapterPrefix(subjectId).toUpperCase()} {chapterNumber}
+                      </div>
+
+                      <button
+                        type="button"
+                        title="Close panel"
+                        aria-label="Close panel"
+                        onClick={() => {
+                          setMmDrawerOpen(false);
+                          if (mmAudioRef.current) {
+                            mmAudioRef.current.pause();
+                          }
+                        }}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          border: '1px solid #E6E0D4',
+                          background: '#FAF8F3',
+                          color: '#5C6660',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          padding: 0,
+                          flexShrink: 0,
+                          transition: 'all 0.15s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = '#EFECE2';
+                          e.currentTarget.style.color = '#1E2822';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = '#FAF8F3';
+                          e.currentTarget.style.color = '#5C6660';
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Branch Title */}
+                    <h2
+                      style={{
+                        margin: 0,
+                        fontFamily: "'Fraunces', 'Georgia', serif",
+                        fontSize: '18.5px',
+                        fontWeight: 600,
+                        color: '#1E2822',
+                        lineHeight: 1.24,
+                        letterSpacing: '-0.01em',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {activeSelectedBranch}
+                    </h2>
+
+                    {/* Subtitle */}
+                    <div
+                      style={{
+                        fontSize: '12px',
+                        color: '#7A827C',
+                        fontWeight: 500,
+                        marginTop: '-4px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {branchMeta.subTopics.length} sub-topics · ~{totalBranchMins} min of study material
+                    </div>
+
+                    {/* Sub-Topics List */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '2px' }}>
+                      <div
+                        style={{
+                          fontSize: '10px',
+                          fontWeight: 800,
+                          letterSpacing: '0.08em',
+                          color: '#848C86',
+                          textTransform: 'uppercase',
+                        }}
+                      >
+                        SUB-TOPICS
+                      </div>
+
+                      {branchMeta.subTopics.map((st) => (
+                        <button
+                          key={st.code}
+                          type="button"
+                          onClick={() => {
+                            if (mmAudioRef.current) mmAudioRef.current.pause();
+                            handleTopicClick(activeSelectedBranch, 'read');
+                          }}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            padding: '9px 11px',
+                            borderRadius: '10px',
+                            background: '#F6F3EC',
+                            border: '1px solid #EAE4D7',
+                            cursor: 'pointer',
+                            textAlign: 'left',
+                            transition: 'all 0.15s ease',
+                            width: '100%',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#EFECE2';
+                            e.currentTarget.style.borderColor = '#DCD4C4';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#F6F3EC';
+                            e.currentTarget.style.borderColor = '#EAE4D7';
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: '26px',
+                              height: '26px',
+                              borderRadius: '7px',
+                              background: '#FFFFFF',
+                              border: '1px solid #E5DFD2',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              color: '#5C6660',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {st.code}
+                          </span>
+                          <span
+                            style={{
+                              flex: 1,
+                              fontSize: '12.5px',
+                              fontWeight: 600,
+                              color: '#1E2822',
+                              lineHeight: 1.32,
+                            }}
+                          >
+                            {st.title}
+                          </span>
+                          <span
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              color: '#848C86',
+                              flexShrink: 0,
+                            }}
+                          >
+                            {st.duration}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* ── Botanical Theme Spotify-Layout Microcast Player Card ── */}
+                    <div
+                      style={{
+                        marginTop: 'auto',
+                        borderRadius: '14px',
+                        padding: '14px 15px',
+                        background: 'linear-gradient(145deg, #F3F7F4 0%, #EFECE2 100%)',
+                        border: '1px solid #DCE3DD',
+                        boxShadow: '0 3px 12px rgba(45, 62, 54, 0.06)',
+                        color: '#1E2822',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '11px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <style>{`
+                        @keyframes svSpotifyEq1 {
+                          0%, 100% { height: 5px; }
+                          50% { height: 15px; }
+                        }
+                        @keyframes svSpotifyEq2 {
+                          0%, 100% { height: 14px; }
+                          35% { height: 5px; }
+                          70% { height: 17px; }
+                        }
+                        @keyframes svSpotifyEq3 {
+                          0%, 100% { height: 7px; }
+                          45% { height: 16px; }
+                        }
+                      `}</style>
+
+                      {/* Top Row: Cover Tile + Track Metadata + Speed Pill */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '11px' }}>
+                        {/* Cover Artwork Tile (Matches Mindmap Node Botanical Forest Sage) */}
+                        <div
+                          style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '10px',
+                            background: '#375545',
+                            border: '1px solid #2C4638',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            boxShadow: '0 3px 8px rgba(55, 85, 69, 0.2)',
+                          }}
+                        >
+                          {mmIsPlaying ? (
+                            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '3px', height: '17px' }}>
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#F5F1E6', animation: 'svSpotifyEq1 0.75s ease-in-out infinite' }} />
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#E8C39E', animation: 'svSpotifyEq2 0.65s ease-in-out infinite' }} />
+                              <span style={{ width: '3px', borderRadius: '2px', background: '#F5F1E6', animation: 'svSpotifyEq3 0.8s ease-in-out infinite' }} />
+                            </div>
+                          ) : (
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#F5F1E6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                              <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                            </svg>
+                          )}
+                        </div>
+
+                        {/* Track Info */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              letterSpacing: '0.08em',
+                              textTransform: 'uppercase',
+                              color: '#375545',
+                              marginBottom: '2px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: '6px',
+                                height: '6px',
+                                borderRadius: '50%',
+                                background: mmIsPlaying ? '#375545' : '#BD7D52',
+                              }}
+                            />
+                            <span>MICROCAST · EP {selectedBranchIdx + 1}</span>
+                          </div>
+                          <div
+                            title={activeSelectedBranch}
+                            style={{
+                              fontSize: '13px',
+                              fontWeight: 700,
+                              color: '#1E2822',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              lineHeight: 1.25,
+                            }}
+                          >
+                            {activeSelectedBranch}
+                          </div>
+                          <div
+                            title={cleanChapterLabel || chapterName}
+                            style={{
+                              fontSize: '11px',
+                              color: '#6E7872',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              marginTop: '1px',
+                            }}
+                          >
+                            {cleanChapterLabel || chapterName}
+                          </div>
+                        </div>
+
+                        {/* Playback Speed Button */}
+                        <button
+                          type="button"
+                          title="Change playback speed"
+                          onClick={() => {
+                            const rates = [1, 1.25, 1.5, 2];
+                            const nextRate = rates[(rates.indexOf(mmPlaybackRate) + 1) % rates.length];
+                            setMmPlaybackRate(nextRate);
+                            if (mmAudioRef.current) {
+                              mmAudioRef.current.playbackRate = nextRate;
+                            }
+                          }}
+                          style={{
+                            padding: '3px 9px',
+                            borderRadius: '999px',
+                            background: '#FFFFFF',
+                            border: '1px solid #D5DDD8',
+                            color: '#375545',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = '#E8F0EB';
+                            e.currentTarget.style.borderColor = '#C2D1C8';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = '#FFFFFF';
+                            e.currentTarget.style.borderColor = '#D5DDD8';
+                          }}
+                        >
+                          {mmPlaybackRate}x
+                        </button>
+                      </div>
+
+                      {/* Scrubber Bar + Timestamps */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div
+                          style={{
+                            position: 'relative',
+                            height: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: '100%',
+                              height: '5px',
+                              borderRadius: '999px',
+                              background: '#D6DFD9',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            <div
+                              style={{
+                                width: `${mmProgressPct}%`,
+                                height: '100%',
+                                borderRadius: '999px',
+                                background: '#375545',
+                                transition: 'width 0.1s linear',
+                              }}
+                            />
+                          </div>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              left: `calc(${mmProgressPct}% - 5.5px)`,
+                              width: '11px',
+                              height: '11px',
+                              borderRadius: '50%',
+                              background: '#375545',
+                              border: '2px solid #FFFFFF',
+                              boxShadow: '0 1px 4px rgba(30, 40, 34, 0.25)',
+                              pointerEvents: 'none',
+                            }}
+                          />
+                          <input
+                            type="range"
+                            min={0}
+                            max={effectiveMmDuration}
+                            step={0.5}
+                            value={Math.min(mmAudioCurrentTime, effectiveMmDuration)}
+                            onChange={(e) => {
+                              const nextTime = parseFloat(e.target.value);
+                              setMmAudioCurrentTime(nextTime);
+                              if (mmAudioRef.current) {
+                                mmAudioRef.current.currentTime = nextTime;
+                              }
+                            }}
+                            aria-label="Seek microcast audio"
+                            style={{
+                              position: 'absolute',
+                              inset: 0,
+                              width: '100%',
+                              height: '100%',
+                              opacity: 0,
+                              cursor: 'pointer',
+                              margin: 0,
+                            }}
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            fontSize: '10.5px',
+                            fontWeight: 600,
+                            color: '#6E7872',
+                            fontVariantNumeric: 'tabular-nums',
+                          }}
+                        >
+                          <span>{formatMmTime(mmAudioCurrentTime)}</span>
+                          <span>{formatMmTime(effectiveMmDuration)}</span>
+                        </div>
+                      </div>
+
+                      {/* Transport Controls */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0 4px',
+                        }}
+                      >
+                        {/* Rewind 10s */}
+                        <button
+                          type="button"
+                          title="Rewind 10 seconds"
+                          onClick={() => {
+                            if (mmAudioRef.current) {
+                              const next = Math.max(0, mmAudioRef.current.currentTime - 10);
+                              mmAudioRef.current.currentTime = next;
+                              setMmAudioCurrentTime(next);
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#5C6660',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#1E2822';
+                            e.currentTarget.style.background = 'rgba(55, 85, 69, 0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#5C6660';
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          -10s
+                        </button>
+
+                        {/* Previous Branch Microcast */}
+                        <button
+                          type="button"
+                          title="Previous branch microcast"
+                          disabled={selectedBranchIdx <= 0}
+                          onClick={() => {
+                            if (selectedBranchIdx > 0) {
+                              const prevBranch = allTopicLabels[selectedBranchIdx - 1];
+                              if (prevBranch) handleTopicClick(prevBranch, 'podcast');
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: selectedBranchIdx > 0 ? '#375545' : '#B8C2BC',
+                            cursor: selectedBranchIdx > 0 ? 'pointer' : 'default',
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="19 20 9 12 19 4 19 20" />
+                            <line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                          </svg>
+                        </button>
+
+                        {/* Play / Pause Primary Circle Button */}
+                        <button
+                          type="button"
+                          aria-label={mmIsPlaying ? 'Pause microcast' : 'Play microcast'}
+                          onClick={() => {
+                            const audio = mmAudioRef.current;
+                            if (!audio) return;
+                            if (mmIsPlaying) {
+                              audio.pause();
+                            } else {
+                              audio.playbackRate = mmPlaybackRate;
+                              audio
+                                .play()
+                                .then(() => setMmIsPlaying(true))
+                                .catch(() => setMmIsPlaying(false));
+                            }
+                          }}
+                          style={{
+                            width: '40px',
+                            height: '40px',
+                            borderRadius: '50%',
+                            background: '#375545',
+                            color: '#FFFFFF',
+                            border: 'none',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 12px rgba(55, 85, 69, 0.25)',
+                            transition: 'transform 0.15s ease, background 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.transform = 'scale(1.06)';
+                            e.currentTarget.style.background = '#2B4437';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.transform = 'scale(1)';
+                            e.currentTarget.style.background = '#375545';
+                          }}
+                        >
+                          {mmIsPlaying ? (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                              <rect x="6" y="4" width="4" height="16" rx="1" />
+                              <rect x="14" y="4" width="4" height="16" rx="1" />
+                            </svg>
+                          ) : (
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: '2px' }}>
+                              <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                          )}
+                        </button>
+
+                        {/* Next Branch Microcast */}
+                        <button
+                          type="button"
+                          title="Next branch microcast"
+                          disabled={selectedBranchIdx >= allTopicLabels.length - 1}
+                          onClick={() => {
+                            if (selectedBranchIdx < allTopicLabels.length - 1) {
+                              const nextBranch = allTopicLabels[selectedBranchIdx + 1];
+                              if (nextBranch) handleTopicClick(nextBranch, 'podcast');
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: selectedBranchIdx < allTopicLabels.length - 1 ? '#375545' : '#B8C2BC',
+                            cursor: selectedBranchIdx < allTopicLabels.length - 1 ? 'pointer' : 'default',
+                            padding: '6px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            transition: 'color 0.15s ease',
+                          }}
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5 4 15 12 5 20 5 4" />
+                            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                          </svg>
+                        </button>
+
+                        {/* Forward 10s */}
+                        <button
+                          type="button"
+                          title="Forward 10 seconds"
+                          onClick={() => {
+                            if (mmAudioRef.current) {
+                              const next = Math.min(effectiveMmDuration, mmAudioRef.current.currentTime + 10);
+                              mmAudioRef.current.currentTime = next;
+                              setMmAudioCurrentTime(next);
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#5C6660',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#1E2822';
+                            e.currentTarget.style.background = 'rgba(55, 85, 69, 0.08)';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#5C6660';
+                            e.currentTarget.style.background = 'transparent';
+                          }}
+                        >
+                          +10s
+                        </button>
+                      </div>
+                    </div>
+                  </aside>
+                </div>
+              </div>
+            )}
             {/* Inline topic panel — shown below the map, no popup */}
             {mindmapTopicOpen && (
               <div className="mm-concept-view" style={{ marginTop: 0 }}>
@@ -2068,30 +3595,18 @@ export default function StudyTable() {
                 <div
                   className="mm-concept-topbar"
                   style={{
+                    position: 'relative',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     gap: '12px',
                     flexWrap: 'nowrap',
                     width: '100%',
+                    minHeight: '56px',
                   }}
                 >
-                  {/* Left: prev */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-start', minWidth: 0 }}>
-                    {prevTopicLabel && (
-                      <button
-                        className="mm-next-topic-btn"
-                        onClick={() => handleTopicClick(prevTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
-                        title={prevTopicLabel}
-                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}
-                      >
-                        ← Prev: {prevTopicLabel.length > 20 ? `${prevTopicLabel.slice(0, 18)}…` : prevTopicLabel}
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Center: Mindmap button */}
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  {/* Left: Mindmap back button + Prev topic */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, justifyContent: 'flex-start', minWidth: 0, zIndex: 11 }}>
                     <button
                       className="mm-back-btn"
                       onClick={() => {
@@ -2100,13 +3615,112 @@ export default function StudyTable() {
                         setMindmapInlineType('text');
                         setMindmapMediaUrl('');
                       }}
+                      style={{ flexShrink: 0 }}
                     >
                       ← Mindmap
                     </button>
+                    {prevTopicLabel && (
+                      <button
+                        className="mm-next-topic-btn"
+                        onClick={() => handleTopicClick(prevTopicLabel, mindmapInlineType === 'audio' ? 'podcast' : 'read')}
+                        title={prevTopicLabel}
+                        style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}
+                      >
+                        ← Prev: {prevTopicLabel.length > 18 ? `${prevTopicLabel.slice(0, 16)}…` : prevTopicLabel}
+                      </button>
+                    )}
                   </div>
 
+                  {/* Center: Persona levels centered in the single header row */}
+                  {mindmapInlineType === 'text' && (
+                    <div
+                      className="sv-hdr-levels"
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        display: 'flex',
+                        gap: '16px',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10,
+                      }}
+                    >
+                      {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => {
+                        const isSelected = persona === lvl;
+                        const labelText = lvl.charAt(0).toUpperCase() + lvl.slice(1);
+                        return (
+                          <button
+                            key={lvl}
+                            id={`mm-studybar-level-${lvl}`}
+                            type="button"
+                            className={`sv-hdr-level-btn lvl-${lvl}${isSelected ? " active-lvl" : ""}`}
+                            onClick={() => {
+                              setPersona(lvl);
+                              if (mindmapTopicTitle) {
+                                loadMindmapTopicForPersona(mindmapTopicTitle, lvl, 'read', true);
+                              }
+                            }}
+                            title={labelText}
+                            style={{
+                              minWidth: '60px',
+                              height: '52px',
+                              borderRadius: '11px',
+                              padding: '3px 8px 4px',
+                              border: isSelected ? '2px solid #E7B864' : '2px solid transparent',
+                              background: isSelected ? '#FFFDF9' : 'transparent',
+                              boxShadow: isSelected ? '0 3px 10px rgba(231, 184, 100, 0.22)' : 'none',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                              overflow: 'visible',
+                              flexShrink: 0,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '2px',
+                              boxSizing: 'border-box',
+                            }}
+                          >
+                            <img
+                              src={`${import.meta.env.BASE_URL}personas/${lvl}.png`}
+                              alt={labelText}
+                              style={{
+                                width: '32px',
+                                height: '32px',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                padding: 0,
+                                boxSizing: 'border-box',
+                                filter: isSelected
+                                  ? 'grayscale(0) opacity(1) drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                                  : 'grayscale(0.15) opacity(0.78)',
+                                transform: isSelected ? 'scale(1.06)' : 'scale(1)',
+                                transition: 'filter 0.2s ease, transform 0.2s ease',
+                              }}
+                            />
+                            <span
+                              className="sv-hdr-level-label"
+                              style={{
+                                fontSize: '10.5px',
+                                fontWeight: isSelected ? 700 : 600,
+                                color: isSelected ? '#1E2822' : '#64748B',
+                                lineHeight: 1.1,
+                                letterSpacing: '0.01em',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {labelText}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {/* Right: next */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1, justifyContent: 'flex-end', minWidth: 0, zIndex: 11 }}>
                     {nextTopicLabel && (
                       <button
                         className="mm-next-topic-btn"
@@ -2119,152 +3733,6 @@ export default function StudyTable() {
                     )}
                   </div>
                 </div>
-
-                {/* Header row: Persona levels centered + Essentials / In-depth toggle button on the right */}
-                {mindmapInlineType === 'text' && (
-                  <div
-                    style={{
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      width: '100%',
-                      minHeight: '48px',
-                      padding: '4px 12px 6px',
-                      boxSizing: 'border-box',
-                    }}
-                  >
-                    {/* Left spacer to keep center aligned */}
-                    <div style={{ flex: 1, minWidth: 0 }} />
-
-                    {/* Center: persona levels (exact match with assessment & flashcards) */}
-                    <div
-                      className="sv-hdr-levels"
-                      style={{
-                        position: 'absolute',
-                        left: '50%',
-                        top: '50%',
-                        transform: 'translate(-50%, -50%)',
-                        display: 'flex',
-                        gap: '8px',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10,
-                      }}
-                    >
-                      {(['beginner', 'intermediate', 'advanced'] as const).map((lvl) => {
-                        const isSelected = persona === lvl;
-                        return (
-                          <button
-                            key={lvl}
-                            id={`mm-studybar-level-${lvl}`}
-                            type="button"
-                            className={`sv-hdr-level-btn lvl-${lvl}${isSelected ? " active-lvl" : ""}`}
-                            onClick={() => setPersona(lvl)}
-                            title={lvl.charAt(0).toUpperCase() + lvl.slice(1)}
-                            style={{
-                              width: '54px',
-                              height: '54px',
-                              borderRadius: '12px',
-                              padding: 0,
-                              border: isSelected ? '2.5px solid #2D473B' : '2.5px solid transparent',
-                              background: isSelected ? '#FFFFFF' : 'transparent',
-                              boxShadow: isSelected ? '0 3px 12px rgba(45, 71, 59, 0.2)' : 'none',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              boxSizing: 'border-box',
-                              flexShrink: 0,
-                              transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                            }}
-                          >
-                            <img
-                              src={`${import.meta.env.BASE_URL}personas/${lvl}.png`}
-                              alt={lvl}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'contain',
-                                borderRadius: '8px',
-                                padding: '3px',
-                                boxSizing: 'border-box',
-                                filter: isSelected ? 'grayscale(0) opacity(1)' : 'grayscale(0.2) opacity(0.75)',
-                                transform: isSelected ? 'scale(1.04)' : 'none',
-                                transition: 'filter 0.2s ease, transform 0.2s ease',
-                              }}
-                            />
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {/* Right: toggle button for Essentials | In-depth */}
-                    <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end', alignItems: 'center', zIndex: 11 }}>
-                      <div
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          background: '#E2E8F0',
-                          padding: '3px',
-                          borderRadius: '999px',
-                          border: '1px solid #CBD5E1',
-                          boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
-                        }}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => setMindmapInlineTab('quick')}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 18px',
-                            borderRadius: '999px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: mindmapInlineTab === 'quick' ? '#15803d' : 'transparent',
-                            color: mindmapInlineTab === 'quick' ? '#ffffff' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
-                            transition: 'all 0.18s ease',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                          </svg>
-                          Essentials
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setMindmapInlineTab('detailed')}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            padding: '6px 18px',
-                            borderRadius: '999px',
-                            fontSize: '13px',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            border: 'none',
-                            background: mindmapInlineTab === 'detailed' ? '#15803d' : 'transparent',
-                            color: mindmapInlineTab === 'detailed' ? '#ffffff' : '#64748b',
-                            boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(21, 128, 61, 0.35)' : 'none',
-                            transition: 'all 0.18s ease',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M12 8v4l2 2" />
-                          </svg>
-                          In-depth
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Content */}
                 <div className="mm-concept-content" style={{ padding: 0 }}>
@@ -2306,12 +3774,167 @@ export default function StudyTable() {
                           boxSizing: 'border-box',
                         }}
                       >
-                        <MarkdownView
-                          content={
-                            ((mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || '')
-                              .replace(/^#\s+[^\n]+(\r?\n)+/, '')
-                          }
-                        />
+                        {/* Top of body: Meta badges on left + Essentials | In-depth toggle on right */}
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px',
+                            flexWrap: 'wrap',
+                            marginBottom: '18px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                            <span
+                              style={{
+                                background: '#F1F5F3',
+                                color: '#2E4A3B',
+                                border: '1px solid #DCE7E1',
+                                borderRadius: '6px',
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              ⏱ {activeMmReadMins} min read
+                            </span>
+
+                            {activeMmQcList.length > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  mindmapQcRef.current?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'center',
+                                  })
+                                }
+                                title="Skip to Quick Check"
+                                style={{
+                                  background: isMmQcDone ? '#DCEBE3' : '#EBF3EE',
+                                  color: '#2E4A3B',
+                                  border: '1px solid #C5D9CD',
+                                  borderRadius: '6px',
+                                  padding: '4px 10px',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {isMmQcDone
+                                  ? `✓ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''} answered`
+                                  : answeredInMmTopic > 0
+                                  ? `✔ ${answeredInMmTopic}/${activeMmQcList.length} quick checks`
+                                  : `✔ ${activeMmQcList.length} quick check${activeMmQcList.length > 1 ? 's' : ''}`}
+                              </button>
+                            )}
+                          </div>
+
+                          <div
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              background: '#E2E8F0',
+                              padding: '3px',
+                              borderRadius: '999px',
+                              border: '1px solid #CBD5E1',
+                              boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.06)',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setMindmapInlineTab('quick')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '5px 16px',
+                                borderRadius: '999px',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: mindmapInlineTab === 'quick' ? '#9CC0B4' : 'transparent',
+                                color: mindmapInlineTab === 'quick' ? '#18221D' : '#64748b',
+                                boxShadow: mindmapInlineTab === 'quick' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
+                                transition: 'all 0.18s ease',
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                              </svg>
+                              Essentials
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setMindmapInlineTab('detailed')}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '5px 16px',
+                                borderRadius: '999px',
+                                fontSize: '12.5px',
+                                fontWeight: 600,
+                                cursor: 'pointer',
+                                border: 'none',
+                                background: mindmapInlineTab === 'detailed' ? '#9CC0B4' : 'transparent',
+                                color: mindmapInlineTab === 'detailed' ? '#18221D' : '#64748b',
+                                boxShadow: mindmapInlineTab === 'detailed' ? '0 2px 8px rgba(156, 192, 180, 0.35)' : 'none',
+                                transition: 'all 0.18s ease',
+                              }}
+                            >
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M12 8v4l2 2" />
+                              </svg>
+                              In-depth
+                            </button>
+                          </div>
+                        </div>
+
+                        <MarkdownView content={activeMmMarkdown} />
+
+                        {activeMmQcList.length > 0 && (
+                          <div
+                            ref={mindmapQcRef}
+                            style={{ scrollMarginTop: '20px', marginTop: '28px' }}
+                          >
+                            <QuickCheckModal
+                              key={`mm-inline-qc-${mmArtifactKey}`}
+                              isOpen={true}
+                              question={activeMmQcList[0]}
+                              questions={activeMmQcList}
+                              currentSectionNumber={currentTopicIdx >= 0 ? currentTopicIdx + 1 : 1}
+                              totalSections={allTopicLabels.length > 0 ? allTopicLabels.length : 1}
+                              sectionTitle={mindmapTopicTitle || 'Topic Overview'}
+                              nextSectionTitle={nextTopicLabel || undefined}
+                              isPurpleTheme={false}
+                              initialSelectedKey={mmSelectedKeys[0] || null}
+                              initialSelectedKeys={mmSelectedKeys}
+                              isCompleted={isMmQcDone}
+                              onNextSection={
+                                nextTopicLabel
+                                  ? () => {
+                                      markMmQuickCheckCompleted(mmArtifactKey);
+                                      handleTopicClick(nextTopicLabel, 'read');
+                                    }
+                                  : undefined
+                              }
+                              onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                                markMmQuickCheckCompleted(
+                                  mmArtifactKey,
+                                  selectedKey,
+                                  questionIndex,
+                                  allAnswered || activeMmQcList.length === 1
+                                );
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
                     )
                   )}
@@ -2421,6 +4044,7 @@ export default function StudyTable() {
             difficulty={persona}
             className={className}
             subjectName={subjectName}
+            onNavigateTool={(tool) => setActiveTool(tool as any)}
           />
         );
       case "podcasts":
@@ -2428,6 +4052,7 @@ export default function StudyTable() {
           <PodcastsView
             key={`podcasts-${subjectId}-${chapterNumber}-${podcastTargetTrack ?? 'default'}-${podcastTargetMcIndex ?? 0}`}
             chapterName={chapterName}
+            subjectName={subjectName}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             persona={persona}
@@ -2495,6 +4120,7 @@ export default function StudyTable() {
             markdownContent={typeof content === "string" ? content : ""}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
+            chapterName={chapterName}
             persona={persona}
             videoDir={activeVideoDir}
             onQuit={() => {
@@ -2577,7 +4203,7 @@ export default function StudyTable() {
   const TOOL_LABELS: Record<string, string> = {
     summary: "Study Table",
     detailed: "Study Table",
-    key_takeaways: "Key Takeaways",
+    key_takeaways: "Takeaways",
     study_plan: "Study Plan",
     mindmap: "Mindmap",
     foundation: "Mindmap",
@@ -2586,12 +4212,13 @@ export default function StudyTable() {
     videos: "Videos",
     ask: "Ask Me",
     assessment: "Assessments",
-    qbank: "Question Bank",
+    qbank: "Q. Bank",
     swot: "SWOT Analysis",
     pyq: "PYQs",
     leaderboard: "Leaderboard",
     deep_dive: "Deep Dive",
     mocktest: "Mock Test",
+    prep_exam: "Exam Prep.",
     pre_final_test: "Certification Exam",
   };
 
@@ -2648,12 +4275,12 @@ export default function StudyTable() {
 
   const getToolTheme = (toolId: ToolId) => {
     switch (toolId) {
-      case "swot":
-        return { bg: "#f5f3ff", gradient: "linear-gradient(90deg, #7C3AED 0%, #6D28D9 100%)", shadow: "0 4px 12px rgba(124, 58, 237, 0.35)" };
-      case "deep_dive":
-        return { bg: "#f0fdf4", gradient: "linear-gradient(90deg, #365345 0%, #24382E 100%)", shadow: "0 4px 12px rgba(54, 83, 69, 0.35)" };
+      case 'swot':
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
+      case 'deep_dive':
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #D9A382 0%, #B87B56 100%)', shadow: '0 4px 12px rgba(217, 163, 130, 0.35)' };
       default:
-        return { bg: "#f0f7f4", gradient: "linear-gradient(90deg, #4F7B64 0%, #3B5E4C 100%)", shadow: "0 4px 12px rgba(79, 123, 100, 0.35)" };
+        return { bg: '#FAF8F3', gradient: 'linear-gradient(90deg, #9CC0B4 0%, #546C60 100%)', shadow: '0 4px 12px rgba(156, 192, 180, 0.35)' };
     }
   };
   const activeToolTheme = getToolTheme(activeTool);
@@ -2693,27 +4320,27 @@ export default function StudyTable() {
             gap: "0"
           }}
         >
-          {/* Study Toolbar (MVP Project) - Toggleable Dark (#2D3E36) / Bright Theme */}
-          {activeTool !== "mocktest" && activeTool !== "pre_final_test" && (
+          {/* Study Toolbar (MVP Project) - Toggleable Dark (#546C60) / Bright Theme */}
+          {activeTool !== 'mocktest' && activeTool !== 'pre_final_test' && (
             <div
-              className="study-toolbar-wrapper"
+              className='study-toolbar-wrapper'
               style={{
-                position: "relative",
-                width: "100%",
+                position: 'relative',
+                width: '100%',
                 flexShrink: 0,
-                background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
-                borderBottom: isDarkToolbar ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid #E2E8F0",
-                boxShadow: isDarkToolbar ? "0 4px 24px rgba(0, 0, 0, 0.22)" : "0 2px 12px rgba(0, 0, 0, 0.05)",
+                background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                borderBottom: isDarkToolbar ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #E2E8F0',
+                boxShadow: isDarkToolbar ? '0 4px 24px rgba(0, 0, 0, 0.22)' : '0 2px 12px rgba(0, 0, 0, 0.05)',
                 zIndex: 100,
-                transition: "background 0.25s ease, border-color 0.25s ease",
+                transition: 'background 0.25s ease, border-color 0.25s ease',
               }}
             >
               {/* Permanent Content Drawer */}
               <div
                 style={{
-                  padding: "4px 16px",
-                  background: isDarkToolbar ? "#2D3E36" : "#FFFFFF",
-                  transition: "background 0.25s ease",
+                  padding: '2px 14px',
+                  background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                  transition: 'background 0.25s ease',
                 }}
               >
                 {(() => {
@@ -2722,50 +4349,49 @@ export default function StudyTable() {
                   // a chapter-wide mix.
                   const unitCompleted = completedTools;
                     const TOOL_THEMES: Record<string, { main: string; badge: string; text: string; bg: string }> = {
-                    // Learn (#159A5B)
-                    videos: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    summary: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    quick_study: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    detailed: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
-                    podcasts: { main: "#159A5B", badge: "#159A5B", text: "#159A5B", bg: "#f0fdf4" },
+                    // Learn - Mint (#9CC0B4)
+                    videos: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
+                    summary: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    quick_study: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    detailed: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#FAF8F4' },
+                    podcasts: { main: '#9CC0B4', badge: '#9CC0B4', text: '#9CC0B4', bg: '#f0fdf4' },
 
-                    // Practice (#8658EC)
-                    flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    master_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    revision_flashcards: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    revise: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    assessment: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
-                    qbank: { main: "#8658EC", badge: "#8658EC", text: "#8658EC", bg: "#f5f3ff" },
+                    // Practice - Amber Gold (#E7B864)
+                    flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    master_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revision_flashcards: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    revise: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    assessment: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
+                    qbank: { main: '#E7B864', badge: '#E7B864', text: '#E7B864', bg: '#fffbeb' },
 
-                    // Prepare (#FF2476)
-                    study_plan: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    pyq: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    prep_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    prep_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    mocktest: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    pre_final_test: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
-                    certification_exam: { main: "#FF2476", badge: "#FF2476", text: "#FF2476", bg: "#fff1f5" },
+                    // Prepare - Sage Cream (#B5BA9B)
+                    study_plan: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pyq: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    prep_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    mocktest: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    pre_final_test: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
+                    certification_exam: { main: '#B5BA9B', badge: '#B5BA9B', text: '#B5BA9B', bg: '#F9FAF6' },
 
-                    // Resources (#3886D7)
-                    mindmap: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    foundation: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    key_takeaways: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    ask: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    swot: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
-                    deep_dive: { main: "#3886D7", badge: "#3886D7", text: "#3886D7", bg: "#eff6ff" },
+                    // Resources - Logo Peach (#D9A382)
+                    mindmap: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    foundation: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    key_takeaways: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    ask: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    swot: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
+                    deep_dive: { main: '#D9A382', badge: '#D9A382', text: '#D9A382', bg: '#FDF8F5' },
                   };
 
-                  // In Dark Theme (#2D3E36): Use the vibrant section colors (#159A5B, #8658EC, #FF2476, #3886D7)
-                  // matching the bright theme for the active icon and active group card.
+                  // In Menu Theme (#546C60 Deep Pine Green): Use the section colors (Mint #9CC0B4, Amber Gold #E7B864, Sage Cream #B5BA9B, Logo Peach #D9A382)
                   // All other (idle) icons and text are crisp white (#FFFFFF) in dark mode / #18221D in bright mode.
 
                   const getNodeIcon = (toolId: string, color: string, active: boolean) => {
                     // Active icon: vibrant bright section color with crisp white highlights.
                     // Inactive icons (the other icons): disabled look, black & white only (no colors).
-                    const iconColor = active ? color : (isDarkToolbar ? "#FFFFFF" : "#475569");
-                    const iconMuted = active ? `${color}BB` : (isDarkToolbar ? "rgba(255, 255, 255, 0.55)" : "#94A3B8");
-                    const innerBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
-                    const contrastBg = active ? "#FFFFFF" : (isDarkToolbar ? "#2D3E36" : "#FFFFFF");
+                    const iconColor = active ? color : (isDarkToolbar ? '#FFFFFF' : '#475569');
+                    const iconMuted = active ? `${color}BB` : (isDarkToolbar ? 'rgba(255, 255, 255, 0.55)' : '#94A3B8');
+                    const innerBg = active ? '#FFFFFF' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
+                    const contrastBg = active ? '#546C60' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
 
                     switch (toolId) {
                       case "summary":
@@ -2847,7 +4473,7 @@ export default function StudyTable() {
                       case "mindmap": {
                         return (
                           <img
-                            src="/mindmap_brain_blue.png"
+                            src="/mindmap_brain.png"
                             alt="Mindmaps"
                             style={{
                               width: "34px",
@@ -2855,8 +4481,8 @@ export default function StudyTable() {
                               objectFit: "contain",
                               display: "block",
                               filter: active
-                                ? "brightness(1.1) drop-shadow(0 0 6px rgba(56, 134, 215, 0.6))"
-                                : "grayscale(100%) brightness(1.7) opacity(0.7)",
+                                ? 'brightness(1.1) drop-shadow(0 0 6px rgba(217, 163, 130, 0.65))'
+                                : 'grayscale(100%) brightness(1.7) opacity(0.7)',
                             }}
                           />
                         );
@@ -3056,6 +4682,11 @@ export default function StudyTable() {
 
                   const renderNode = (toolId: ToolId, labelOverride?: string, colorOverride?: string) => {
                     const locked = false;
+                    const cloudUiCopy = getCloudUiCopy();
+                    labelOverride =
+                      cloudUiCopy?.toolbarLabels?.[toolId] ||
+                      cloudUiCopy?.studyTools?.[toolId] ||
+                      labelOverride;
                     const active = activeTool === toolId ||
                       (toolId === "summary" && activeTool === "detailed") ||
                       (toolId === "prep_exam" && ((activeTool as string) === "mocktest" || (activeTool as string) === "pre_final_test")) ||
@@ -3073,7 +4704,7 @@ export default function StudyTable() {
                           e.stopPropagation();
                           if (!locked) {
                             if (toolId === "mocktest" || toolId === "prep_exam") {
-                              setMockTestVariant(labelOverride === "Preparation Exam" ? "prep" : "mock");
+                              setMockTestVariant(toolId === "prep_exam" ? "prep" : "mock");
                             }
                             setActiveTool(toolId);
                           }
@@ -3083,8 +4714,8 @@ export default function StudyTable() {
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          padding: '4px 2px',
-                          borderRadius: '10px',
+                          padding: '2px 2px',
+                          borderRadius: '9px',
                           background: active ? (isDarkToolbar ? `${themeColor}26` : '#ffffff') : 'transparent',
                           border: active ? `1.8px solid ${activeBorderColor}` : '1.8px solid transparent',
                           boxShadow: active
@@ -3096,19 +4727,19 @@ export default function StudyTable() {
                           opacity: 1,
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                           position: 'relative',
-                          gap: '2px',
+                          gap: '1px',
                           flex: '1 1 0',
                           minWidth: 0,
                           width: '100%',
-                          height: '70px',
-                          minHeight: '70px',
-                          maxHeight: '70px',
+                          height: '56px',
+                          minHeight: '56px',
+                          maxHeight: '56px',
                           boxSizing: 'border-box',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.04)';
-                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
+                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = 'transparent';
@@ -3119,10 +4750,10 @@ export default function StudyTable() {
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          height: '32px',
-                          width: '34px',
+                          height: '26px',
+                          width: '28px',
                           transition: 'transform 0.18s ease, filter 0.18s ease, opacity 0.18s ease',
-                          transform: active ? 'scale(1.08)' : 'scale(1)',
+                          transform: active ? 'scale(0.95)' : 'scale(0.88)',
                           filter: active ? `drop-shadow(0 2px 8px ${themeColor}90)` : 'none',
                           opacity: active ? 1 : 0.72,
                           flexShrink: 0
@@ -3130,20 +4761,20 @@ export default function StudyTable() {
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
                         <span style={{
-                          fontSize: '11px',
+                          fontSize: '10.5px',
                           fontWeight: active ? 700 : 500,
                           color: active ? activeThemeColor : (isDarkToolbar ? 'rgba(255, 255, 255, 0.75)' : '#64748B'),
                           textAlign: 'center',
-                          lineHeight: '1.15',
+                          lineHeight: '1.1',
                           letterSpacing: '-0.2px',
                           transition: 'color 0.18s ease',
                           display: '-webkit-box',
                           WebkitLineClamp: 2,
                           WebkitBoxOrient: 'vertical',
                           overflow: 'hidden',
-                          height: '26px',
-                          minHeight: '26px',
-                          maxHeight: '26px',
+                          height: '22px',
+                          minHeight: '22px',
+                          maxHeight: '22px',
                           width: '100%',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
@@ -3173,8 +4804,8 @@ export default function StudyTable() {
                         justifyContent: 'space-between',
                         width: '100%',
                         overflowX: 'auto',
-                        padding: '6px 20px',
-                        gap: '20px',
+                        padding: '3px 16px',
+                        gap: '16px',
                       }}
                       onClick={(e) => e.stopPropagation()}
                     >
@@ -3190,9 +4821,9 @@ export default function StudyTable() {
                             src={treeLogoSrc}
                             alt="Saral Vidhya"
                             style={{
-                              height: '76px',
+                              height: '56px',
                               width: 'auto',
-                              minWidth: '72px',
+                              minWidth: '54px',
                               objectFit: 'contain',
                               display: 'block',
                               transition: 'transform 0.2s ease',
@@ -3211,6 +4842,8 @@ export default function StudyTable() {
                         const isResourcesActive = activeTool === "mindmap" || activeTool === "foundation" || activeTool === "key_takeaways" || activeTool === "ask";
 
                         const groupCardStyle = (isActive: boolean, groupColor: string): React.CSSProperties => ({
+                          position: 'relative',
+                          overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
@@ -3218,8 +4851,8 @@ export default function StudyTable() {
                           border: isActive
                             ? `1.8px solid ${groupColor}`
                             : (isDarkToolbar ? '1.5px solid rgba(255, 255, 255, 0.12)' : '1.5px solid #D5E2D9'),
-                          borderRadius: '16px',
-                          padding: '6px 8px 8px',
+                          borderRadius: '13px',
+                          padding: '3px 7px 5px',
                           background: isActive
                             ? (isDarkToolbar ? `${groupColor}14` : `${groupColor}0a`)
                             : (isDarkToolbar ? 'rgba(0, 0, 0, 0.20)' : '#FFFFFF'),
@@ -3228,15 +4861,32 @@ export default function StudyTable() {
                                 ? `0 2px 10px ${groupColor}2a, 0 2px 8px rgba(0, 0, 0, 0.28)`
                                 : `0 3px 12px ${groupColor}33, 0 1px 3px rgba(0, 0, 0, 0.2)`)
                             : (isDarkToolbar ? '0 1px 4px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.04)'),
-                          width: '236px',
-                          minWidth: '236px',
-                          maxWidth: '236px',
-                          height: '112px',
-                          minHeight: '112px',
-                          maxHeight: '112px',
+                          width: '232px',
+                          minWidth: '232px',
+                          maxWidth: '232px',
+                          height: '84px',
+                          minHeight: '84px',
+                          maxHeight: '84px',
                           boxSizing: 'border-box',
-                          flex: '0 0 236px',
-                          transition: 'all 0.25s ease',
+                          flex: '0 0 232px',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease',
+                        });
+
+                        const groupTitleStyle = (isActive: boolean, groupColor: string): React.CSSProperties => ({
+                          height: '16px',
+                          minHeight: '16px',
+                          maxHeight: '16px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          color: isActive ? groupColor : (isDarkToolbar ? groupColor : '#18221D'),
+                          fontSize: '11.5px',
+                          fontWeight: 700,
+                          textAlign: 'center',
+                          lineHeight: '16px',
+                          width: '100%',
                         });
 
                         return (
@@ -3245,119 +4895,102 @@ export default function StudyTable() {
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              gap: '12px',
-                              padding: '4px 8px',
+                              gap: '10px',
+                              padding: '2px 6px',
                               background: 'transparent',
                               margin: '0 auto',
                               flexShrink: 0,
                             }}
                           >
-                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - #159A5B */}
-                            <div style={groupCardStyle(isLearnActive, "#159A5B")}>
-                              <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px',
-                                color: isLearnActive ? '#159A5B' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '20px',
-                                width: '100%',
-                              }}>
+                            <style>{`
+                              .sv-tool-group-card .sv-tool-group-title {
+                                transform: translate3d(0, 28px, 0) scale(1.52);
+                                transform-origin: center center;
+                                transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+                                will-change: transform;
+                                z-index: 2;
+                                pointer-events: none;
+                              }
+                              .sv-tool-group-card .sv-tool-group-options {
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                width: 100%;
+                                flex: 1 1 auto;
+                                opacity: 0;
+                                transform: translate3d(0, 10px, 0) scale(0.94);
+                                transform-origin: center bottom;
+                                pointer-events: none;
+                                transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+                                will-change: opacity, transform;
+                              }
+                              .sv-tool-group-card.is-active .sv-tool-group-title,
+                              .sv-tool-group-card:hover .sv-tool-group-title,
+                              .sv-tool-group-card:focus-within .sv-tool-group-title {
+                                transform: translate3d(0, 0, 0) scale(1);
+                              }
+                              .sv-tool-group-card.is-active .sv-tool-group-options,
+                              .sv-tool-group-card:hover .sv-tool-group-options,
+                              .sv-tool-group-card:focus-within .sv-tool-group-options {
+                                opacity: 1;
+                                transform: translate3d(0, 0, 0) scale(1);
+                                pointer-events: auto;
+                              }
+                            `}</style>
+
+                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
+                            <div className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`} style={groupCardStyle(isLearnActive, '#9CC0B4')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
                                 <span>Learn</span>
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
-                                    style={{ background: '#159A5B', color: '#fff', borderRadius: '4px', padding: '1px 5px', fontSize: '10px', fontWeight: 800 }}
+                                    style={{ background: '#9CC0B4', color: '#18221D', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
                                   >
                                     Video {videoIndex}/{chapterVideos.length}
                                   </span>
                                 )}
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("summary", "Read", "#159A5B")}
-                                {renderNode("podcasts", "Listen", "#159A5B")}
-                                {renderNode("videos", "Watch", "#159A5B")}
+                              <div className="sv-tool-group-options">
+                                {renderNode('summary', 'Read', '#9CC0B4')}
+                                {renderNode('podcasts', 'Listen', '#9CC0B4')}
+                                {renderNode('videos', 'Watch', '#9CC0B4')}
                               </div>
                             </div>
 
-                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - #8658EC */}
-                            <div style={groupCardStyle(isPracticeActive, "#8658EC")}>
-                              <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isPracticeActive ? '#8658EC' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '20px',
-                                width: '100%',
-                              }}>
+                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
+                            <div className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`} style={groupCardStyle(isPracticeActive, '#E7B864')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
                                 Practice
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("revision_flashcards", "Revise", "#8658EC")}
-                                {renderNode("assessment", "Assessment", "#8658EC")}
-                                {renderNode("qbank", "Question Bank", "#8658EC")}
+                              <div className="sv-tool-group-options">
+                                {renderNode('revision_flashcards', 'Revise', '#E7B864')}
+                                {renderNode('assessment', 'Assessment', '#E7B864')}
+                                {renderNode('qbank', 'Q. Bank', '#E7B864')}
                               </div>
                             </div>
 
-                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - #FF2476 */}
-                            <div style={groupCardStyle(isPrepareActive, "#FF2476")}>
-                              <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isPrepareActive ? '#FF2476' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '20px',
-                                width: '100%',
-                              }}>
+                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
+                            <div className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`} style={groupCardStyle(isPrepareActive, '#B5BA9B')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
                                 Prepare
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("pyq", "PYQs", "#FF2476")}
-                                {renderNode("prep_exam", "Preparation Exam", "#FF2476")}
-                                {renderNode("study_plan", "Study Plan", "#FF2476")}
+                              <div className="sv-tool-group-options">
+                                {renderNode('pyq', 'PYQs', '#B5BA9B')}
+                                {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
+                                {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
                               </div>
                             </div>
 
-                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - #3886D7 */}
-                            <div style={groupCardStyle(isResourcesActive, "#3886D7")}>
-                              <div style={{
-                                height: '20px',
-                                minHeight: '20px',
-                                maxHeight: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: isResourcesActive ? '#3886D7' : (isDarkToolbar ? '#FFFFFF' : '#18221D'),
-                                fontSize: '13px',
-                                fontWeight: 700,
-                                textAlign: 'center',
-                                lineHeight: '20px',
-                                width: '100%',
-                              }}>
+                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
+                            <div className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`} style={groupCardStyle(isResourcesActive, '#D9A382')}>
+                              <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
                                 Resources
                               </div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%', flex: '1 1 auto' }}>
-                                {renderNode("mindmap", "Mindmaps", "#3886D7")}
-                                {renderNode("key_takeaways", "Key Takeaways", "#3886D7")}
-                                {renderNode("ask", "Ask me", "#3886D7")}
+                              <div className="sv-tool-group-options">
+                                {renderNode('mindmap', 'Mindmaps', '#D9A382')}
+                                {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
+                                {renderNode('ask', 'Ask me', '#D9A382')}
                               </div>
                             </div>
                           </div>
@@ -3375,40 +5008,40 @@ export default function StudyTable() {
                         }}
                       >
 
-                        {/* Log Out Button (Red circular outline with soft red tint) */}
+                        {/* Log Out Button - Cream (#F5F2EB) */}
                         <button
-                          type="button"
+                          type='button'
                           onClick={handleAuthClick}
-                          title="Log Out"
-                          aria-label="Log Out"
+                          title='Log Out'
+                          aria-label='Log Out'
                           style={{
-                            width: "38px",
-                            height: "38px",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "1.5px solid #EF4444",
-                            background: "#FEF2F2",
-                            color: "#EF4444",
-                            cursor: "pointer",
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1.5px solid #F5F2EB',
+                            background: '#F5F2EB',
+                            color: '#546C60',
+                            cursor: 'pointer',
                             flexShrink: 0,
-                            boxShadow: "0 1px 4px rgba(239, 68, 68, 0.12)",
-                            transition: "all 0.2s ease",
+                            boxShadow: '0 2px 6px rgba(0, 0, 0, 0.14)',
+                            transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEE2E2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "scale(1.08)";
+                            (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF';
+                            (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
                           }}
                           onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLButtonElement).style.background = "#FEF2F2";
-                            (e.currentTarget as HTMLButtonElement).style.transform = "none";
+                            (e.currentTarget as HTMLButtonElement).style.background = '#F5F2EB';
+                            (e.currentTarget as HTMLButtonElement).style.transform = 'none';
                           }}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
-                            <polyline points="15 8 19 12 15 16" />
-                            <line x1="9" y1="12" x2="19" y2="12" />
+                          <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#546C60' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                            <path d='M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8' />
+                            <polyline points='15 8 19 12 15 16' />
+                            <line x1='9' y1='12' x2='19' y2='12' />
                           </svg>
                         </button>
                       </div>
@@ -3562,17 +5195,17 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "prep_exam" || activeTool === "assessment" || activeTool === "videos"
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "prep_exam" || activeTool === "assessment" || activeTool === "videos" || (activeTool === "mindmap" && !mindmapTopicOpen)
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask"
-                  ? "0px"
-                  : activeTool === "assessment"
-                  ? "4px 16px 0 16px"
-                  : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                  ? "2px 16px 8px 16px"
-                  : "16px 16px 0 16px",
+                activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'prep_exam' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'videos' || activeTool === 'pyq' || (activeTool === 'mindmap' && !mindmapTopicOpen)
+                  ? '0px'
+                  : (activeTool === 'assessment' || activeTool === 'summary' || activeTool === 'detailed')
+                  ? '4px 16px 0 16px'
+                  : (activeTool === 'flashcards' || activeTool === 'revision_flashcards')
+                  ? '2px 16px 8px 16px'
+                  : activeTool === 'podcasts' ? '12px 24px 32px 24px' : '16px 16px 0 16px',
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
@@ -3582,22 +5215,22 @@ export default function StudyTable() {
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "videos" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
+            {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
               <div
                 style={{
-                  display: (activeTool === "mindmap" || activeTool === "qbank") ? "none" : "flex",
+                  display: (activeTool === "mindmap" || activeTool === "qbank" || activeTool === "videos") ? "none" : "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   position: "relative",
                   gap: "20px",
                   marginTop: 0,
                   paddingTop: 0,
-                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "4px" : "12px",
+                  marginBottom: (activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed") ? "4px" : "12px",
                   flexShrink: 0,
                 }}
               >
                 {/* ── MVP STUDY HEADER: pixel-perfect reference match ── */}
-                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment") ? (
+                {(activeTool === "summary" || activeTool === "detailed" || activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "videos") ? (
                   <>
                     <style>{`
                       @keyframes sv-hdr-in {
@@ -3610,56 +5243,70 @@ export default function StudyTable() {
                         display: flex; align-items: center; justify-content: space-between;
                         width: 100%; gap: 16px; flex-shrink: 0;
                         animation: sv-hdr-in 0.2s ease;
-                        min-height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "64px"};
-                        padding: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "0 0 2px 0" : "4px 0 8px 0"};
+                        min-height: ${activeTool === "videos" ? "46px" : "56px"};
+                        padding: ${activeTool === "videos" ? "0 0 2px 0" : "2px 0 6px 0"};
                         overflow: visible;
                       }
                       /* LEFT breadcrumb — single line, no card box */
                       .sv-hdr-card {
                         display: flex; align-items: center; gap: 0;
                         min-width: 0; flex-shrink: 0;
-                        max-width: 380px;
+                        max-width: 420px;
                         position: relative; z-index: 1;
                       }
                       .sv-hdr-crumb {
-                        font-size: 0.82rem; font-weight: 500; color: #64748b;
+                        font-size: 0.84rem; font-weight: 500; color: #64748b;
                         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
                         line-height: 1.4;
                       }
-                      .sv-hdr-crumb .crumb-subject { color: #2563eb; font-weight: 700; }
-                      .sv-hdr-crumb .crumb-sep { color: #94a3b8; margin: 0 5px; font-weight: 400; }
-                      .sv-hdr-crumb .crumb-chapter { color: #4f46e5; font-weight: 700; }
+                      .sv-hdr-crumb .crumb-subject { color: #1E2822; font-weight: 700; }
+                      .sv-hdr-crumb .crumb-sep { color: #94a3b8; margin: 0 7px; font-weight: 400; }
+                      .sv-hdr-crumb .crumb-chapter { color: #64748B; font-weight: 500; }
                       /* MIDDLE levels — absolutely centered to the full bar */
                       .sv-hdr-levels {
                         position: absolute;
                         left: 50%;
                         top: 50%;
                         transform: translate(-50%, -50%);
-                        display: flex; gap: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "10px" : "12px"}; align-items: center; justify-content: center;
+                        display: flex; gap: 16px; align-items: center; justify-content: center;
                         z-index: 10;
                       }
                       .sv-hdr-level-btn {
-                        width: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
-                        height: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "54px" : "58px"};
-                        border-radius: ${(activeTool === "assessment" || activeTool === "flashcards" || activeTool === "revision_flashcards") ? "12px" : "14px"};
-                        padding: 0; border: 2.5px solid transparent;
+                        min-width: 60px;
+                        height: 54px;
+                        border-radius: 11px;
+                        padding: 3px 8px 4px;
+                        border: 2px solid transparent;
                         cursor: pointer; background: transparent;
                         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
                         overflow: visible; flex-shrink: 0;
-                        display: flex; align-items: center; justify-content: center;
+                        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
                         box-sizing: border-box;
                       }
                       .sv-hdr-level-btn img {
-                        width: 100%; height: 100%; object-fit: contain;
-                        border-radius: 10px;
-                        padding: 3px;
+                        width: 34px;
+                        height: 34px;
+                        object-fit: contain;
+                        border-radius: 8px;
+                        padding: 0;
                         box-sizing: border-box;
-                        filter: grayscale(0.2) opacity(0.75);
+                        filter: grayscale(0.15) opacity(0.78);
                         transition: filter 0.2s ease, transform 0.2s ease;
+                      }
+                      .sv-hdr-level-label {
+                        font-size: 10.5px;
+                        font-weight: 600;
+                        color: #64748B;
+                        line-height: 1.1;
+                        letter-spacing: 0.01em;
+                        white-space: nowrap;
                       }
                       .sv-hdr-level-btn:hover img {
                         filter: grayscale(0) opacity(1);
-                        transform: scale(1.08);
+                        transform: scale(1.06);
+                      }
+                      .sv-hdr-level-btn:hover .sv-hdr-level-label {
+                        color: #1E2822;
                       }
                       /* Inactive — NO box for unselected ones */
                       .sv-hdr-level-btn.lvl-beginner,
@@ -3669,25 +5316,23 @@ export default function StudyTable() {
                         background: transparent !important;
                         box-shadow: none !important;
                       }
-                      /* Active — box shown ONLY for the selected one */
-                      .sv-hdr-level-btn.active-lvl {
-                        border: 2.5px solid #2D473B !important;
-                        background: #FFFFFF !important;
-                        box-shadow: 0 3px 12px rgba(45, 71, 59, 0.2) !important;
-                        border-radius: 14px !important;
-                      }
-                      .sv-hdr-level-btn.lvl-beginner.active-lvl {
-                        border-color: #4F7B64 !important;
-                      }
-                      .sv-hdr-level-btn.lvl-intermediate.active-lvl {
-                        border-color: #2D473B !important;
-                      }
+                      /* Active — warm Amber border shown ONLY for the selected one */
+                      .sv-hdr-level-btn.active-lvl,
+                      .sv-hdr-level-btn.lvl-beginner.active-lvl,
+                      .sv-hdr-level-btn.lvl-intermediate.active-lvl,
                       .sv-hdr-level-btn.lvl-advanced.active-lvl {
-                        border-color: #1E293B !important;
+                        border: 2px solid #E7B864 !important;
+                        background: #FFFDF9 !important;
+                        box-shadow: 0 3px 10px rgba(231, 184, 100, 0.22) !important;
+                        border-radius: 12px !important;
                       }
                       .sv-hdr-level-btn.active-lvl img {
                         filter: grayscale(0) opacity(1) !important;
-                        transform: scale(1.04);
+                        transform: scale(1.03);
+                      }
+                      .sv-hdr-level-btn.active-lvl .sv-hdr-level-label {
+                        color: #1E2822 !important;
+                        font-weight: 700 !important;
                       }
                       /* RIGHT controls */
                       .sv-hdr-controls {
@@ -3695,16 +5340,16 @@ export default function StudyTable() {
                       }
                       /* Mode row: Quick | Detailed */
                       .sv-hdr-modes { display: flex; gap: 8px; align-items: center; }
-                      /* Reading Depth Segmented Toggle */
+                      /* Reading Depth Segmented Toggle (2 modes: Essentials | In-depth) */
                       .sv-hdr-segmented-toggle {
                         position: relative;
                         display: inline-flex;
                         align-items: center;
-                        background: #f1f5f9;
-                        border: 1.5px solid #cbd5e1;
+                        background: #FFFFFF;
+                        border: 1px solid #E2DDD3;
                         border-radius: 9999px;
                         padding: 3px;
-                        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+                        box-shadow: 0 1px 3px rgba(30, 40, 34, 0.05);
                         user-select: none;
                         gap: 0;
                         box-sizing: border-box;
@@ -3715,9 +5360,9 @@ export default function StudyTable() {
                         bottom: 3px;
                         left: 3px;
                         width: calc(50% - 3px);
-                        background: #15803d;
+                        background: #546C60;
                         border-radius: 9999px;
-                        box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
+                        box-shadow: 0 2px 6px rgba(84, 108, 96, 0.28);
                         transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
                         pointer-events: none;
                         z-index: 1;
@@ -3740,11 +5385,11 @@ export default function StudyTable() {
                         align-items: center;
                         justify-content: center;
                         gap: 6px;
-                        padding: 7px 22px;
+                        padding: 7px 20px;
                         border-radius: 9999px;
                         border: none;
                         background: transparent;
-                        font-size: 0.84rem;
+                        font-size: 0.82rem;
                         font-weight: 600;
                         cursor: pointer;
                         white-space: nowrap;
@@ -3754,7 +5399,7 @@ export default function StudyTable() {
                         flex: 1;
                       }
                       .sv-hdr-toggle-btn:hover {
-                        color: #0f172a;
+                        color: #1E2822;
                       }
                       .sv-hdr-toggle-btn.active {
                         color: #ffffff;
@@ -3764,29 +5409,29 @@ export default function StudyTable() {
                         transition: transform 0.18s ease;
                       }
                       .sv-hdr-toggle-btn:hover svg {
-                        transform: scale(1.1);
+                        transform: scale(1.08);
                       }
                       .sv-hdr-mode-btn {
                         display: inline-flex; align-items: center; gap: 6px;
                         padding: 8px 22px; border-radius: 20px;
                         font-size: 0.84rem; font-weight: 600; cursor: pointer;
-                        border: 1.5px solid #cbd5e1;
+                        border: 1.5px solid #E2DDD3;
                         background: #ffffff; color: #475569;
                         transition: all 0.18s ease; white-space: nowrap;
                         line-height: 1;
                       }
-                      .sv-hdr-mode-btn:hover { border-color: #15803d; color: #15803d; background: rgba(21, 128, 61, 0.05); }
-                      .sv-hdr-mode-btn.active-quick    { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
-                      .sv-hdr-mode-btn.active-detailed { background: #15803d; border-color: #15803d; color: #ffffff; box-shadow: 0 2px 8px rgba(21,128,61,0.4); }
+                      .sv-hdr-mode-btn:hover { border-color: #546C60; color: #546C60; background: rgba(84, 108, 96, 0.06); }
+                      .sv-hdr-mode-btn.active-quick    { background: #546C60; border-color: #546C60; color: #ffffff; box-shadow: 0 2px 8px rgba(84, 108, 96, 0.28); }
+                      .sv-hdr-mode-btn.active-detailed { background: #546C60; border-color: #546C60; color: #ffffff; box-shadow: 0 2px 8px rgba(84, 108, 96, 0.28); }
                     `}</style>
 
                     <div className="sv-hdr">
-                      {/* LEFT: inline breadcrumb — "Entomology · Chapter 4: Pollination" */}
+                      {/* LEFT: inline breadcrumb — "Entomology › Chapter 4: Pollination" */}
                       <div className="sv-hdr-card">
                         <span className="sv-hdr-crumb">
-                          <span className="crumb-subject">{subjectName}</span>
-                          <span className="crumb-sep">·</span>
-                          <span className="crumb-chapter">{getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}</span>
+                          <span className="crumb-subject" title={chapterName}>{chapterName}</span>
+
+
                         </span>
                       </div>
 
@@ -3797,18 +5442,21 @@ export default function StudyTable() {
                           onClick={() => setPersona("beginner")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/beginner.png`} alt="Beginner" title="Beginner" />
+                          <span className="sv-hdr-level-label">Beginner</span>
                         </button>
                         <button id="studybar-level-intermediate" type="button"
                           className={`sv-hdr-level-btn lvl-intermediate${uiPersona === "intermediate" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("intermediate")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/intermediate.png`} alt="Intermediate" title="Intermediate" />
+                          <span className="sv-hdr-level-label">Intermediate</span>
                         </button>
                         <button id="studybar-level-advanced" type="button"
                           className={`sv-hdr-level-btn lvl-advanced${uiPersona === "advanced" ? " active-lvl" : ""}`}
                           onClick={() => setPersona("advanced")}
                         >
                           <img src={`${import.meta.env.BASE_URL}personas/advanced.png`} alt="Advanced" title="Advanced" />
+                          <span className="sv-hdr-level-label">Advanced</span>
                         </button>
                       </div>
 
@@ -3849,7 +5497,7 @@ export default function StudyTable() {
                               </button>
                             </div>
                             {/* Read Aloud — inline, right of mode buttons */}
-                            <div style={{ width: '1px', height: '20px', background: '#e2e8f0', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
+                            <div style={{ width: '1px', height: '20px', background: '#E2DDD3', margin: '0 4px', alignSelf: 'center', flexShrink: 0 }} />
                             <ReadAloudBar
                               key={`${persona}-${activeTool}`}
                               text={readAloudProcessedText}
@@ -3861,9 +5509,14 @@ export default function StudyTable() {
                                 }
                               }}
                               onHighlightChange={handleHighlightChange}
+                              durationMinutes={
+                                (regReadingDurations || (dbChapterObj as any)?.readingDurations || (dbChapterObj?.tools as any)?.readingDurations)?.[
+                                  activeTool === "detailed" ? "detailed" : "summary"
+                                ]?.[persona]
+                              }
                               activeTool={activeTool}
                               onSwitchTool={setActiveTool}
-                              isPurpleTheme={subjectId === "dbms" || subjectId.includes("dbms")}
+                              isPurpleTheme={false}
                             />
                           </div>
                         )}
@@ -3892,7 +5545,7 @@ export default function StudyTable() {
                             !isMoocMode && (
                               <div className="st-page-subtitle-row" style={{ marginTop: '2px' }}>
                                 <span className="st-page-subtitle" style={{ color: 'var(--text-secondary)', fontSize: '0.88rem', fontWeight: 500 }}>
-                                  {getChapterPrefix(subjectId)} {chapterNumber}: {chapterName}
+                                  {chapterName}
                                 </span>
                               </div>
                             )
@@ -3909,64 +5562,64 @@ export default function StudyTable() {
 
 
             <div
-              className={`st-mainview ${activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" ? "st-mainview--flashcards" : ""}`}
+              className={`st-mainview ${activeTool === "flashcards" || activeTool === "revision_flashcards" ? "st-mainview--flashcards" : ""}`}
               style={{
                 flex: 1,
                 minHeight: 0,
                 display: "flex",
                 flexDirection: "column",
                 background:
-                  activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" || activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" ||
-                    activeTool === "videos" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam"
-                    ? "transparent"
-                    : "#ffffff",
-                borderRadius: (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "videos" || activeTool === "ask" || activeTool === "prep_exam" || activeTool === "key_takeaways" || activeTool === "study_plan") ? "0px" : "6px",
-                position: "relative",
+                  activeTool === 'flashcards' || activeTool === 'revision_flashcards' ||
+                    activeTool === 'assessment' || activeTool === 'summary' || activeTool === 'detailed' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' ||
+                    activeTool === 'videos' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'ask' || activeTool === 'mindmap' || activeTool === 'prep_exam'
+                    ? 'transparent'
+                    : '#ffffff',
+                borderRadius: (activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'videos' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'ask' || activeTool === 'prep_exam' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || (activeTool === 'mindmap' && !mindmapTopicOpen)) ? '0px' : '6px',
+                position: 'relative',
                 border:
-                  activeTool === "mocktest" ||
-                    activeTool === "pre_final_test" ||
-                    activeTool === "prep_exam" ||
-                    activeTool === "flashcards" ||
-                    activeTool === "revision_flashcards" ||
-                    activeTool === "assessment" ||
-                    activeTool === "videos" ||
-                    activeTool === "ask" ||
-                    activeTool === "key_takeaways" ||
-                    activeTool === "study_plan" ||
-                    ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))
-                    ? "none"
-                    : activeTool === "podcasts"
-                      ? "none"
-                      : activeTool === "summary" || activeTool === "detailed" || (activeTool === "mindmap" && mindmapTopicOpen)
-                        ? "1px solid #22c55e4D"
-                        : "1px solid #E2E8F0",
-                overflowX: "hidden",
+                  activeTool === 'mocktest' ||
+                    activeTool === 'pre_final_test' ||
+                    activeTool === 'prep_exam' ||
+                    activeTool === 'flashcards' ||
+                    activeTool === 'revision_flashcards' ||
+                    activeTool === 'assessment' ||
+                    activeTool === 'videos' ||
+                    activeTool === 'podcasts' ||
+                    activeTool === 'pyq' ||
+                    activeTool === 'ask' ||
+                    activeTool === 'key_takeaways' ||
+                    activeTool === 'study_plan' ||
+                    activeTool === 'qbank' ||
+                    (activeTool === 'mindmap' && !mindmapTopicOpen) ||
+                    activeTool === 'summary' ||
+                    activeTool === 'detailed'
+                    ? 'none'
+                    : (activeTool === 'mindmap' && mindmapTopicOpen)
+                      ? '1px solid #22c55e4D'
+                      : '1px solid #E2E8F0',
+                overflowX: 'hidden',
                 overflowY:
-                  activeTool === "flashcards" || activeTool === "revision_flashcards" ||
-                    activeTool === "ask" || activeTool === "prep_exam" || activeTool === "videos"
-                    ? "hidden"
-                    : "auto",
+                  activeTool === 'flashcards' || activeTool === 'revision_flashcards' ||
+                    activeTool === 'ask' || activeTool === 'videos' || (activeTool === 'mindmap' && !mindmapTopicOpen)
+                    ? 'hidden'
+                    : 'auto',
                 paddingTop:
-                  (activeTool === "mocktest" || activeTool === "pre_final_test" || activeTool === "ask" || activeTool === "prep_exam")
-                    ? "0px"
-                    : (activeTool === "flashcards" || activeTool === "revision_flashcards")
-                      ? "0px"
-                      : activeTool === "assessment"
-                        ? "12px"
-                        : activeTool === "videos"
-                          ? "4px"
-                          : activeTool === "podcasts"
-                            ? "16px"
-                            : activeTool === "deep_dive"
-                              ? "8px"
-                              : activeTool === "summary" || activeTool === "detailed" || activeTool === "key_takeaways" || activeTool === "study_plan" || (activeTool === "mindmap" && mindmapTopicOpen)
-                                ? "0px"
-                                : "20px",
-                paddingRight: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
-                paddingBottom: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || (activeTool === "mindmap" && mindmapTopicOpen) || activeTool === "prep_exam") ? "0px" : activeTool === "videos" ? "8px" : "16px",
-                paddingLeft: (activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "ask" || activeTool === "prep_exam" || ((activeTool === "summary" || activeTool === "detailed") && (subjectId === "dbms" || subjectId.includes("dbms")))) ? "0px" : (activeTool === "mindmap" && mindmapTopicOpen) ? "0px" : (activeTool === "summary" || activeTool === "detailed") ? "48px" : "16px",
-                transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+                  (activeTool === 'mocktest' || activeTool === 'pre_final_test' || activeTool === 'ask' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq')
+                    ? '0px'
+                    : (activeTool === 'flashcards' || activeTool === 'revision_flashcards')
+                      ? '0px'
+                      : activeTool === 'assessment'
+                        ? '0px'
+                        : activeTool === 'videos'
+                          ? '4px'
+                          : activeTool === 'deep_dive'
+                            ? '8px'
+                            : activeTool === 'summary' || activeTool === 'detailed' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'mindmap'
+                              ? '0px'
+                              : '20px',
+                paddingRight: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'mindmap' || activeTool === 'summary' || activeTool === 'detailed') ? '0px' : '16px',
+                paddingBottom: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'mindmap' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq') ? '0px' : activeTool === 'videos' ? '8px' : '16px',
+                paddingLeft: (activeTool === 'flashcards' || activeTool === 'revision_flashcards' || activeTool === 'assessment' || activeTool === 'ask' || activeTool === 'key_takeaways' || activeTool === 'study_plan' || activeTool === 'qbank' || activeTool === 'prep_exam' || activeTool === 'podcasts' || activeTool === 'pyq' || activeTool === 'mindmap' || activeTool === 'summary' || activeTool === 'detailed') ? '0px' : '16px',
               }}
             >
               {renderContent()}
@@ -3980,15 +5633,15 @@ export default function StudyTable() {
         <aside
           className="ask-sidebar-drawer"
           style={{
-            width: "380px",
-            minWidth: "320px",
-            borderLeft: "1px solid var(--border, #E2E8F0)",
-            background: "var(--background, #fff)",
+            width: "410px",
+            minWidth: "340px",
+            borderLeft: "1px solid #EAE4D7",
+            background: "#FAF8F3",
             display: "flex",
             flexDirection: "column",
             height: "100%",
             zIndex: 50,
-            boxShadow: "-4px 0 16px rgba(0,0,0,0.06)",
+            boxShadow: "-6px 0 24px rgba(30, 40, 34, 0.08)",
             animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
@@ -4003,37 +5656,51 @@ export default function StudyTable() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--border, #E2E8F0)",
-              background: "var(--surface, #fafafa)",
+              padding: "14px 18px",
+              borderBottom: "1px solid #EAE4D7",
+              background: "#FAF8F3",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.3rem" }}>🤖</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "#FBF4EE",
+                  border: "1px solid #EBD5C3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#BD7D52",
+                  fontSize: "14px",
+                  flexShrink: 0,
+                }}
+              >
+                ✦
+              </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 600, color: "var(--text, #333)" }}>
-                  AI Study Tutor
+                <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1E2822" }}>
+                  Saral · 24/7 Learning Assistant
                 </h3>
-                <span style={{ fontSize: "0.75rem", color: "#666" }}>
-                  Ask questions about this chapter
-                </span>
               </div>
             </div>
             <button
               onClick={() => setIsAskOpen(false)}
               style={{
-                background: "none",
-                border: "none",
+                background: "#FFFFFF",
+                border: "1px solid #E5DFD2",
                 cursor: "pointer",
-                fontSize: "1.2rem",
-                color: "#666",
-                padding: "4px 8px",
-                borderRadius: "4px",
+                fontSize: "13px",
+                color: "#5C6660",
+                width: "28px",
+                height: "28px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              title="Close Tutor"
+              title="Close Saral Assistant"
             >
               ✕
             </button>
@@ -4047,6 +5714,11 @@ export default function StudyTable() {
                 difficulty={persona}
                 className={className}
                 subjectName={subjectName}
+                isCompactDrawer={true}
+                onNavigateTool={(tool) => {
+                  setIsAskOpen(false);
+                  setActiveTool(tool as any);
+                }}
               />
             </Suspense>
           </div>

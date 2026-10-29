@@ -1,5 +1,5 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-
+import { cloudStorage } from '@/context/CloudStateContext';
 interface Props {
   children: ReactNode;
   resetKey?: any;
@@ -22,8 +22,21 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const msg = error?.message || '';
+    if (
+      msg.includes('Failed to fetch dynamically imported module') ||
+      msg.includes('error loading dynamically imported module') ||
+      msg.includes('Importing a module script failed')
+    ) {
+      const reloadKey = 'sv_chunk_reload';
+      const lastReload = cloudStorage.getItem(reloadKey);
+      const now = Date.now();
+      if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+        cloudStorage.setItem(reloadKey, String(now));
+        window.location.reload();
+      }
+    }
   }
-
   componentDidUpdate(prevProps: Props) {
     if (this.props.resetKey !== prevProps.resetKey && this.state.hasError) {
       this.setState({ hasError: false, error: null });

@@ -102,9 +102,14 @@ export function getResourceFileCandidates(
     'key_takeaways.md': [
       `Resources/Key Takeaways/key_takeaways.md`,
       `Resources/Key Takeaways/key_takeaways.json`,
+      `Learn/Key Takeaways/key_takeaways.md`,
+      `Learn/Key Takeaways/key_takeaways.json`,
       `Reading/Key Takeaways/key_takeaways.md`,
+      `Reading/Key Takeaways/key_takeaways.json`,
       `Read/Key Takeaways/key_takeaways.md`,
+      `Read/Key Takeaways/key_takeaways.json`,
       `Reading/key_takeaways.md`,
+      'key_takeaways.json',
       'key_takeaways.md'
     ],
     'mindmap.md': [
@@ -117,8 +122,12 @@ export function getResourceFileCandidates(
       'mindmap.json'
     ],
     'study_plan.md': [
+      'Resources/Study Plan/study_plan.md',
+      'Resources/Study Plan/study_plan.json',
       'Prepare/Study Plan/study_plan.md',
       'Prepare/Study Plan/study_plan.json',
+      'Learn/Study Plan/study_plan.md',
+      'Learn/Study Plan/study_plan.json',
       'study_plan.md',
       'Foundation/Study Plan/study_plan.md',
       'Foundation/study_plan.md',
@@ -194,22 +203,69 @@ export function escapeMermaidLabel(value: string): string {
 }
 
 export function mindmapJsonToMermaid(text: string): string {
-  const root = JSON.parse(text);
-  const lines = ['```mermaid', 'mindmap'];
+  try {
+    const parsed = JSON.parse(text);
+    const lines = ['```mermaid', 'mindmap'];
 
-  const visit = (node: any, depth = 1) => {
-    const rawLabel = String(node?.name ?? node?.label ?? 'Topic').replace(/\\s+/g, ' ').trim();
-    const label = escapeMermaidLabel(rawLabel);
-    const indent = '  '.repeat(depth);
-    lines.push(depth === 1 ? `${indent}root(("${label}"))` : `${indent}${label}`);
-    for (const child of node?.children ?? []) {
-      visit(child, depth + 1);
+    if (Array.isArray(parsed?.branches)) {
+      const rawRoot = String(
+        parsed?.chapter_meta?.unit_title ||
+          parsed?.chapter_title ||
+          parsed?.title ||
+          'Chapter Overview',
+      )
+        .replace(/^(?:[A-Z0-9_]+\s+)?UNIT\s*[-–—]?\s*[IVX0-9]+\s*:\s*/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      lines.push('  root((' + JSON.stringify(rawRoot) + '))');
+      for (const b of parsed.branches) {
+        const bTitle = String(b?.title || b?.label || b?.name || 'Topic')
+          .replace(/^\d+\.\s*/, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        lines.push('    ' + JSON.stringify(bTitle));
+        for (const sub of b?.sub_topics ?? b?.children ?? []) {
+          const sTitle = String(sub?.title || sub?.label || sub?.name || '')
+            .replace(/\s+/g, ' ')
+            .trim();
+          if (sTitle) lines.push('      ' + JSON.stringify(sTitle));
+        }
+      }
+      lines.push('```');
+      return lines.join('\n');
     }
-  };
 
-  visit(root);
-  lines.push('```');
-  return lines.join('\\n');
+    const root = parsed?.hierarchy ?? parsed;
+    const visit = (node: any, depth = 1) => {
+      let rawLabel = String(
+        node?.name ?? node?.label ?? node?.title ?? parsed?.chapter_title ?? 'Topic',
+      )
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (depth === 1) {
+        rawLabel = rawLabel
+          .replace(/^(?:[A-Z0-9_]+\s+)?UNIT\s*[-–—]?\s*[IVX0-9]+\s*:\s*/i, '')
+          .trim();
+      } else if (depth === 2) {
+        rawLabel = rawLabel.replace(/^\d+\.\s*/, '').trim();
+      }
+      const indent = '  '.repeat(depth);
+      lines.push(
+        depth === 1
+          ? indent + 'root((' + JSON.stringify(rawLabel) + '))'
+          : indent + JSON.stringify(rawLabel),
+      );
+      for (const child of node?.children ?? []) {
+        visit(child, depth + 1);
+      }
+    };
+
+    visit(root);
+    lines.push('```');
+    return lines.join('\n');
+  } catch {
+    return text;
+  }
 }
 
 /**
@@ -388,7 +444,7 @@ export async function getResourceContent(
     const regKeyCandidates: Record<string, string[]> = {
       'summary.md':         [`read/quick/${level}.md`],
       'detailed_view.md':   [`read/detailed/${level}.md`],
-      'key_takeaways.md':   ['read/key_takeaways.md'],
+      'key_takeaways.md':   ['read/key_takeaways.md', 'read/key_takeaways.json', 'learn/key_takeaways.md', 'learn/key_takeaways.json', 'resources/key_takeaways.md', 'resources/key_takeaways.json'],
       'glossary.md':        ['read/glossary.md'],
       'mindmap.md':         ['learn/mindmap.md', 'learn/mindmap.json'],
       'mindmap.json':       ['learn/mindmap.json', 'learn/mindmap.md'],
@@ -402,13 +458,25 @@ export async function getResourceContent(
     };
     const keysToTry = regKeyCandidates[resourceName] || [resourceName];
     for (const k of keysToTry) {
-      const signedUrl = regCh.files[k]?.url;
+      const fileEntry = regCh.files[k];
+      const signedUrl = typeof fileEntry === 'string' ? fileEntry : (fileEntry as any)?.url;
       if (signedUrl) {
         try {
           const res = await fetch(signedUrl);
           if (res.ok) {
             const rawText = await res.text();
-            if (resourceName === 'mindmap.json' || k.endsWith('.json')) {
+            if (resourceName === 'mindmap.json') {
+              return cacheAndReturn(rawText);
+            }
+            if (
+              resourceName === 'mindmap.md' &&
+              rawText.trim().startsWith('{') &&
+              !MASTERMINDS_MINDMAP_MAP[normSubject]?.[chapterNumber] &&
+              !MASTERMINDS_MINDMAP_MAP[subject]?.[chapterNumber]
+            ) {
+              return cacheAndReturn(mindmapJsonToMermaid(rawText));
+            }
+            if (k.endsWith('.json')) {
               return cacheAndReturn(rawText);
             }
             return cacheAndReturn(rewriteGcsRelativeImages(cleanAiPreamble(rawText)));
@@ -444,7 +512,16 @@ export async function getResourceContent(
         if (res.ok) {
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('text/html')) {
-            const md = rewriteGcsRelativeImages(cleanAiPreamble(await res.text()));
+            const rawBody = await res.text();
+            if (
+              resourceName === 'mindmap.md' &&
+              rawBody.trim().startsWith('{') &&
+              !MASTERMINDS_MINDMAP_MAP[normSubject]?.[chapterNumber] &&
+              !MASTERMINDS_MINDMAP_MAP[subject]?.[chapterNumber]
+            ) {
+              return cacheAndReturn(mindmapJsonToMermaid(rawBody));
+            }
+            const md = rewriteGcsRelativeImages(cleanAiPreamble(rawBody));
             return cacheAndReturn(md);
           }
         }
@@ -476,7 +553,15 @@ export async function getResourceContent(
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('text/html')) return null;
       let text = await res.text();
-      if (fileName === 'mindmap.json') {
+      if (fileName.toLowerCase().endsWith('mindmap.json')) {
+        if (
+          resourceName === 'mindmap.md' &&
+          text.trim().startsWith('{') &&
+          !MASTERMINDS_MINDMAP_MAP[normSubject]?.[chapterNumber] &&
+          !MASTERMINDS_MINDMAP_MAP[subject]?.[chapterNumber]
+        ) {
+          return mindmapJsonToMermaid(text);
+        }
         return text;
       }
       

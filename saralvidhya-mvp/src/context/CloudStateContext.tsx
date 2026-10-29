@@ -178,6 +178,7 @@ export function setCloudAuthContext(tenantId: string | null, token: string | nul
   }
   if (tenantId && token) {
     memoryKv.set(`sv_session_${tenantId}`, token);
+    writeFirstPartyCookie(`sv_session_${tenantId}`, token);
     memoryKv.set('app_authenticated', 'true');
     if (!memoryKv.get('username')) {
       const displayName = `${tenantId.toUpperCase()} Student`;
@@ -199,6 +200,10 @@ export function getCloudAuthToken(tenantId?: string | null): string | null {
   return activeTokenInternal;
 }
 
+export function hasValidCloudToken(tenantId?: string | null): boolean {
+  return Boolean(tenantId || activeTenantIdInternal);
+}
+
 export function getCloudAuthHeaders(tenantId?: string | null): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -213,11 +218,20 @@ export function getCloudAuthHeaders(tenantId?: string | null): Record<string, st
 let meEndpointsAvailable = true;
 let inflightStatePromise: Promise<CloudUserState | null> | null = null;
 
+function clearInvalidCloudToken(tid: string) {
+  memoryKv.delete(`sv_session_${tid}`);
+  deleteFirstPartyCookie(`sv_session_${tid}`);
+  if (activeTenantIdInternal === tid) {
+    activeTokenInternal = null;
+  }
+}
+
 function scheduleCloudKvFlush() {
-  if (!activeTenantIdInternal || !meEndpointsAvailable) return;
+  if (!activeTenantIdInternal || !meEndpointsAvailable || !hasValidCloudToken(activeTenantIdInternal)) return;
   if (syncTimer) clearTimeout(syncTimer);
   const tid = activeTenantIdInternal;
   syncTimer = setTimeout(async () => {
+    if (!hasValidCloudToken(tid)) return;
     const batch = { ...pendingClientStateUpdates };
     for (const k of Object.keys(pendingClientStateUpdates)) {
       delete pendingClientStateUpdates[k];
@@ -259,6 +273,8 @@ function scheduleCloudKvFlush() {
       });
       if (res.status === 404) {
         meEndpointsAvailable = false;
+      } else if (res.status === 401) {
+        clearInvalidCloudToken(tid);
       }
     } catch {
       // Cloud sync is best-effort when offline
@@ -412,21 +428,36 @@ export function applyHydratedCloudState(state: CloudUserState) {
     const p = state.lastActive.podcast;
     const chNumMatch = p.chapterId.match(/(\d+)/);
     const chNum = p.chapterNumber || (chNumMatch ? Number(chNumMatch[1]) : 1);
+    const resolvedLessonId = p.trackId && p.trackId.includes('_ch')
+      ? p.trackId
+      : `${p.subjectId}_ch${chNum}_${state.preferences?.persona || 'intermediate'}_${p.trackId}`;
     const globalPodcast = {
       userId: state.user.userId,
-      lessonId: `${p.subjectId}_ch${chNum}_${p.trackId}`,
+      lessonId: resolvedLessonId,
       subjectId: p.subjectId,
       chapterNumber: chNum,
       chapterName: p.chapterTitle || p.title || `Chapter ${chNum}`,
       persona: state.preferences?.persona || 'intermediate',
-      track: p.trackId,
+      track: p.title || p.trackId,
       currentTime: p.currentTime,
       updatedAt: new Date(p.updatedAt || Date.now()).getTime(),
       wasPaused: !p.completed && p.currentTime > 0,
     };
     memoryKv.set(`global_last_podcast_${state.user.userId}`, JSON.stringify(globalPodcast));
+    memoryKv.set('global_last_podcast_shared', JSON.stringify(globalPodcast));
+    if (p.currentTime > 0 && !memoryKv.has(`audio_progress_shared_${resolvedLessonId}`)) {
+      const progPayload = JSON.stringify({
+        userId: state.user.userId,
+        lessonId: resolvedLessonId,
+        currentTime: p.currentTime,
+        duration: p.duration || 0,
+        updatedAt: globalPodcast.updatedAt,
+        wasPaused: true,
+      });
+      memoryKv.set(`audio_progress_${state.user.userId}_${resolvedLessonId}`, progPayload);
+      memoryKv.set(`audio_progress_shared_${resolvedLessonId}`, progPayload);
+    }
   }
-
   notifyListeners();
 }
 
@@ -440,7 +471,7 @@ export async function syncToolProgressToCloud(payload: {
   openedVideoId?: string;
 }): Promise<void> {
   const tid = payload.tenantId || activeTenantIdInternal;
-  if (!tid) return;
+  if (!tid || !hasValidCloudToken(tid)) return;
   try {
     if (meEndpointsAvailable) {
       const res = await fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/progress/tool`, {
@@ -448,6 +479,10 @@ export async function syncToolProgressToCloud(payload: {
         headers: getCloudAuthHeaders(tid),
         body: JSON.stringify(payload),
       });
+      if (res.status === 401) {
+        clearInvalidCloudToken(tid);
+        return;
+      }
       if (res.status !== 404) return;
       meEndpointsAvailable = false;
     }
@@ -479,7 +514,7 @@ export async function syncAudioProgressToCloud(payload: {
   completed?: boolean;
 }): Promise<void> {
   const tid = payload.tenantId || activeTenantIdInternal;
-  if (!tid) return;
+  if (!tid || !hasValidCloudToken(tid)) return;
   try {
     if (meEndpointsAvailable) {
       const res = await fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/progress/audio`, {
@@ -487,6 +522,10 @@ export async function syncAudioProgressToCloud(payload: {
         headers: getCloudAuthHeaders(tid),
         body: JSON.stringify(payload),
       });
+      if (res.status === 401) {
+        clearInvalidCloudToken(tid);
+        return;
+      }
       if (res.status !== 404) return;
       meEndpointsAvailable = false;
     }
@@ -516,7 +555,7 @@ export async function syncQuizScoreToCloud(payload: {
   timeTakenSeconds?: number;
 }): Promise<void> {
   const tid = payload.tenantId || activeTenantIdInternal;
-  if (!tid) return;
+  if (!tid || !hasValidCloudToken(tid)) return;
   try {
     if (meEndpointsAvailable) {
       const res = await fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/progress/quiz`, {
@@ -524,6 +563,10 @@ export async function syncQuizScoreToCloud(payload: {
         headers: getCloudAuthHeaders(tid),
         body: JSON.stringify(payload),
       });
+      if (res.status === 401) {
+        clearInvalidCloudToken(tid);
+        return;
+      }
       if (res.status !== 404) return;
       meEndpointsAvailable = false;
     }
@@ -572,7 +615,7 @@ export const CloudStateProvider: React.FC<{
   const refreshCloudState = useCallback(
     async (tenantIdOverride?: string | null): Promise<CloudUserState | null> => {
       const tid = tenantIdOverride || tenantId || activeTenantIdInternal;
-      if (!tid || !meEndpointsAvailable) {
+      if (!tid || !meEndpointsAvailable || !hasValidCloudToken(tid)) {
         setIsHydrated(true);
         return hydratedStateInternal;
       }
@@ -587,6 +630,11 @@ export const CloudStateProvider: React.FC<{
           });
           if (res.status === 404) {
             meEndpointsAvailable = false;
+            setIsHydrated(true);
+            return null;
+          }
+          if (res.status === 401) {
+            clearInvalidCloudToken(tid);
             setIsHydrated(true);
             return null;
           }
@@ -612,7 +660,7 @@ export const CloudStateProvider: React.FC<{
   );
 
   useEffect(() => {
-    if (tenantId && token) {
+    if (tenantId) {
       refreshCloudState(tenantId);
     } else {
       setIsHydrated(true);
@@ -628,7 +676,7 @@ export const CloudStateProvider: React.FC<{
       }
     ) => {
       const tid = tenantId || activeTenantIdInternal;
-      if (!tid || !meEndpointsAvailable) return;
+      if (!tid || !meEndpointsAvailable || !hasValidCloudToken(tid)) return;
       try {
         const res = await fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/preferences`, {
           method: 'PATCH',
@@ -637,6 +685,10 @@ export const CloudStateProvider: React.FC<{
         });
         if (res.status === 404) {
           meEndpointsAvailable = false;
+          return;
+        }
+        if (res.status === 401) {
+          clearInvalidCloudToken(tid);
           return;
         }
         if (res.ok) {

@@ -49,8 +49,7 @@ function AuthGuard({ children }: { children: JSX.Element }) {
     return <LoadingSpinner />;
   }
   if (!isAuthenticated() && !tenantAuthed) {
-    const loginRoute = tenantId ? `/${tenantId}/login` : '/login';
-    return <Navigate to={loginRoute} state={{ from: location.pathname + location.search }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
   return children;
 }
@@ -62,23 +61,22 @@ function GuestOnly({ children }: { children: JSX.Element }) {
     return <LoadingSpinner />;
   }
   if (isAuthenticated() || tenantAuthed) {
-    const homeRoute = tenantId ? `/${tenantId}` : '/';
-    return <Navigate to={homeRoute} replace />;
+    return <Navigate to="/" replace />;
   }
   return children;
 }
 
 /** Enforce onboarding after authentication */
 function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { tenantId } = useTenant();
   const username = cloudStorage.getItem('username');
   const questionnaireCompleted = cloudStorage.getItem('questionnaire_completed') === 'true';
   const profileCompleted = !!cloudStorage.getItem('saral_student_profile');
   const location = useLocation();
 
-  if (!username && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+  if (!username) {
+    return <Navigate to="/login" replace />;
   }
-
   if (username) {
     // 1. Enforce student profile details completion first
     if (!profileCompleted && location.pathname !== '/profile') {
@@ -251,23 +249,6 @@ export default function App() {
                 </AuthGuard>
               } />
               <Route element={<Layout />}>
-                {renderAppRoutes()}
-              </Route>
-
-              {/* ── Multi-Tenant Prefixed Routes (/:tenantId/...) ── */}
-              <Route path="/:tenantId/login" element={
-                <GuestOnly>
-                  <Login />
-                </GuestOnly>
-              } />
-              <Route path="/:tenantId/onboarding" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Onboarding />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/:tenantId" element={<Layout />}>
                 {renderAppRoutes()}
               </Route>
 

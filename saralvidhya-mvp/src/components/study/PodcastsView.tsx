@@ -45,6 +45,55 @@ const PENCIL_WAVEFORM_BARS: number[] = Array.from({ length: 120 }, (_, i) => {
   return Math.round(scaled);
 });
 
+// Connected waveform geometry with graceful rounded corners at every peak and valley
+const OSCILLOSCOPE_WAVE = (() => {
+  const width = 520;
+  const height = 36;
+  const cy = height / 2;
+  const count = 64;
+  const motifOffsets = [-4.0, 5.0, -8.5, 8.5, -3.2, 2.5, -9.8, 9.8];
+  const coords: Array<{ x: number; y: number }> = [];
+
+  for (let i = 0; i <= count; i++) {
+    const x = Number(((i / count) * width).toFixed(1));
+    if (i === 0) {
+      coords.push({ x, y: cy + 0.5 });
+      continue;
+    }
+    if (i === count) {
+      coords.push({ x, y: cy });
+      continue;
+    }
+    const offset = motifOffsets[(i - 1) % motifOffsets.length];
+    const y = Number((cy + offset).toFixed(1));
+    coords.push({ x, y });
+  }
+
+  // Build a smooth path by rounding every vertex corner with a quadratic Bezier curve
+  const cornerFraction = 0.42;
+  const pathParts: string[] = [`M ${coords[0].x},${coords[0].y}`];
+  for (let i = 1; i < coords.length - 1; i++) {
+    const prev = coords[i - 1];
+    const curr = coords[i];
+    const next = coords[i + 1];
+    const inX = Number((curr.x - (curr.x - prev.x) * cornerFraction).toFixed(2));
+    const inY = Number((curr.y - (curr.y - prev.y) * cornerFraction).toFixed(2));
+    const outX = Number((curr.x + (next.x - curr.x) * cornerFraction).toFixed(2));
+    const outY = Number((curr.y + (next.y - curr.y) * cornerFraction).toFixed(2));
+    pathParts.push(`L ${inX},${inY} Q ${curr.x},${curr.y} ${outX},${outY}`);
+  }
+  const last = coords[coords.length - 1];
+  pathParts.push(`L ${last.x},${last.y}`);
+
+  return {
+    width,
+    height,
+    cy,
+    polylinePoints: coords.map((p) => `${p.x},${p.y}`).join(" "),
+    smoothPath: pathParts.join(" "),
+  };
+})();
+
 /**
  * Cleans transcript preamble, course metadata tables, and headers.
  */
@@ -85,9 +134,11 @@ export function cleanTranscriptPreamble(text: string): string {
   // 3. Strip table blocks if any remain
   t = t.replace(/\|[^\n]+\|\n\|[-:\s|]+\|\n(?:\|[^\n]+\|\n?)*/g, "");
 
-  // 4. Strip timestamp segment headers: ### `[00:00 - 00:36]` • **Lecture Segment** (100 words)
-  t = t.replace(/###\s*`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
-  t = t.replace(/`\[\d{2}:\d{2}\s*-\s*\d{2}:\d{2}\]`[^\n]*/gi, "");
+  // 4. Strip timestamp segment headers and any inline/bracketed/parenthesized timestamps
+  t = t.replace(/###\s*`?\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]`?[^\n]*/gi, "");
+  t = t.replace(/`?\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]`?\s*/gi, "");
+  t = t.replace(/\(\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\)\s*/gi, "");
+  t = t.replace(/^\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?\s*[-–—:]\s*/gm, "");
 
   // 5. Strip speaker cues: "> **Prof. AI / Host**:" or "**Host**:" but preserve spoken words
   t = t.replace(/>?\s*\*\*[^*]+\*\*:\s*/gi, "");
@@ -128,6 +179,9 @@ export function stripMarkdown(text: string): string {
   t = t.replace(/\*([^*]+)\*/g, "$1");
   // Remove markdown links
   t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  // Remove any remaining bracketed or parenthesized timestamps like [00:00:19] or [00:19]
+  t = t.replace(/\[\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\]\s*/g, "");
+  t = t.replace(/\(\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?(?:\s*[-–—]\s*\d{1,2}:\d{2}(?::\d{2})?(?:\.\d+)?)?\s*\)\s*/g, "");
   // Remove blockquotes and symbols
   t = t.replace(/[>*_~`#]/g, "");
   t = t.replace(/⚠️|📖|📚|💙|🚫|🙏|👋|💡/g, "");
@@ -191,6 +245,7 @@ const StaticWaveformBars = React.memo(function StaticWaveformBars({
 
 export interface PodcastsViewProps {
   chapterName: string;
+  subjectName?: string;
   subjectId: string;
   chapterNumber: number;
   persona: string;
@@ -213,6 +268,7 @@ export interface PodcastsViewProps {
  */
 export default function PodcastsView({
   chapterName,
+  subjectName,
   subjectId,
   chapterNumber,
   persona,
@@ -246,27 +302,62 @@ export default function PodcastsView({
 
   const [currentChapterInfo, setCurrentChapterInfo] = useState<Chapter | null>(null);
   const [chapterFiles, setChapterFiles] = useState<Record<string, string>>({});
+  const [isRegistryResolved, setIsRegistryResolved] = useState<boolean>(false);
   const [selectedModuleOverride, setSelectedModuleOverride] = useState<number | null>(null);
 
   useEffect(() => {
     if (!subjectId) return;
-    getManifest().then((m) => {
-      const list = getChapters(m, subjectId);
-      const ch = list.find((c) => c.number === chapterNumber);
-      if (ch?.dir) {
-        setChapterDir(ch.dir);
+    let cancelled = false;
+    setIsRegistryResolved(false);
+
+    Promise.all([
+      getManifest().catch(() => null),
+      getRegistryChapterData(subjectId, chapterNumber).catch(() => null),
+    ]).then(([m, reg]) => {
+      if (cancelled) return;
+      let ch: Chapter | undefined;
+      if (m) {
+        const list = getChapters(m, subjectId);
+        ch = list.find((c) => c.number === chapterNumber);
+        if (ch?.dir) {
+          setChapterDir(ch.dir);
+        }
+        if (ch) {
+          setCurrentChapterInfo(ch);
+        }
       }
-      if (ch) {
-        setCurrentChapterInfo(ch);
-      }
-    });
-    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
-      if (reg?.files) {
-        setChapterFiles(reg.files);
+      const nextFiles = reg?.files ? reg.files : {};
+      setChapterFiles(nextFiles);
+
+      // Re-validate saved track once registry/manifest have hydrated so "mc" is preserved on refresh
+      const hasRegPods = Object.keys(nextFiles).some((k) => k.startsWith("podcasts/"));
+      const isMultiTrack =
+        hasRegPods ||
+        subjectId.startsWith("neb_") ||
+        subjectId === "management" ||
+        GCS_BACKEND_SUBJECTS.has(subjectId) ||
+        Boolean(ch?.topics && ch.topics.length > 0) ||
+        Boolean(reg?.chapter?.topics && reg.chapter.topics.length > 0);
+
+      if (resumeTrack === "ql" || resumeTrack === "dl" || resumeTrack === "mc" || resumeTrack === "short" || resumeTrack === "long") {
+        setSelectedTrack(resumeTrack);
       } else {
-        setChapterFiles({});
+        const saved = cloudStorage.getItem(`last_track_${subjectId}_${chapterNumber}_${persona}`);
+        if (isMultiTrack) {
+          if (saved === "ql" || saved === "dl" || saved === "mc") {
+            setSelectedTrack(saved);
+          } else {
+            setSelectedTrack((prev) => (prev === "ql" || prev === "dl" || prev === "mc" ? prev : "mc"));
+          }
+        }
       }
+
+      setIsRegistryResolved(true);
     });
+
+    return () => {
+      cancelled = true;
+    };
   }, [subjectId, chapterNumber]);
 
   const isNebBiologyChap6 = subjectId === "neb_xii_biology" && chapterNumber === 6;
@@ -288,8 +379,11 @@ export default function PodcastsView({
     const saved = cloudStorage.getItem(
       `last_track_${subjectId}_${chapterNumber}_${persona}`,
     );
+    if (saved === "mc" || saved === "ql" || saved === "dl") {
+      return saved;
+    }
     if (isNebOrMgmt) {
-      return saved === "ql" || saved === "dl" || saved === "mc" ? saved : "ql";
+      return "mc";
     } else {
       return saved === "short" || saved === "long" ? saved : "short";
     }
@@ -300,7 +394,31 @@ export default function PodcastsView({
   );
   const [selectedDl, setSelectedDl] = useState(0);
   const [selectedQl, setSelectedQl] = useState(0);
-  const [selectedMc, setSelectedMc] = useState(initialMcIndex ?? 0);
+  const [selectedMc, setSelectedMc] = useState(() => {
+    if (initialMcIndex != null) return initialMcIndex;
+    const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
+    return savedMc ? Math.max(0, parseInt(savedMc, 10) || 0) : 0;
+  });
+
+  useEffect(() => {
+    if (initialMcIndex != null) return;
+    const syncSavedMc = () => {
+      const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
+      if (savedMc != null) {
+        const parsed = parseInt(savedMc, 10);
+        if (!isNaN(parsed) && parsed >= 0) {
+          setSelectedMc((prev) => (prev !== parsed ? parsed : prev));
+        }
+      }
+    };
+    syncSavedMc();
+    return cloudStorage.subscribe(syncSavedMc);
+  }, [subjectId, chapterNumber, initialMcIndex]);
+
+  useEffect(() => {
+    if (!isRegistryResolved) return;
+    cloudStorage.setItem(`last_mc_${subjectId}_${chapterNumber}`, String(selectedMc));
+  }, [selectedMc, subjectId, chapterNumber, isRegistryResolved]);
 
   const completedStorageKey = `sv_listen_done_${subjectId}_ch${chapterNumber}_${selectedTrack}`;
   const [completedEpisodes, setCompletedEpisodes] = useState<Set<number>>(() => {
@@ -317,21 +435,24 @@ export default function PodcastsView({
   });
 
   useEffect(() => {
-    try {
-      const raw = cloudStorage.getItem(completedStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setCompletedEpisodes(new Set(parsed));
-          return;
+    const syncCompleted = () => {
+      try {
+        const raw = cloudStorage.getItem(completedStorageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setCompletedEpisodes(new Set(parsed));
+            return;
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-    setCompletedEpisodes(new Set());
+      setCompletedEpisodes(new Set());
+    };
+    syncCompleted();
+    return cloudStorage.subscribe(syncCompleted);
   }, [completedStorageKey]);
-
   const markEpisodeDone = useCallback(
     (idx: number) => {
       setCompletedEpisodes((prev) => {
@@ -418,12 +539,35 @@ export default function PodcastsView({
   }, [resumeTrack]);
 
   const MICROCASTS = useMemo(() => {
-    // Dynamic topic outline from registry/catalog v2
+    // 1. Dynamic topic outline from registry/catalog v2
     if (currentChapterInfo?.topics && currentChapterInfo.topics.length > 0) {
       return currentChapterInfo.topics.map((t, i) => ({
         title: `${i + 1}. ${t.label}`,
         audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
         txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
+      }));
+    }
+    // 2. Fallback to sectionized read sections when manifest topics haven't populated yet
+    const validReadSections = (readData?.sections || []).filter((s) => s.sectionNumber > 0);
+    if (validReadSections.length > 0 && !isNebBiologyChap6) {
+      return validReadSections.map((s, i) => ({
+        title: `${i + 1}. ${s.title.replace(/^\d+[\.\)]\s*/, "")}`,
+        audio: `microcast_${String(i + 1).padStart(2, "0")}.m4a`,
+        txt: `microcast_${String(i + 1).padStart(2, "0")}.md`,
+      }));
+    }
+    // 3. Fallback to discovering microcast keys directly from chapterFiles
+    const mcNums = new Set<number>();
+    for (const k of Object.keys(chapterFiles)) {
+      const m = k.match(/^podcasts\/microcast_(\d+)\./);
+      if (m) mcNums.add(parseInt(m[1], 10));
+    }
+    if (mcNums.size > 0) {
+      const sorted = Array.from(mcNums).sort((a, b) => a - b);
+      return sorted.map((num, idx) => ({
+        title: `${idx + 1}. Topic ${num}`,
+        audio: `microcast_${String(num).padStart(2, "0")}.m4a`,
+        txt: `microcast_${String(num).padStart(2, "0")}.md`,
       }));
     }
     if (isNebBiologyChap6) {
@@ -442,10 +586,15 @@ export default function PodcastsView({
         { title: "12. How Myelin Speeds Up Nerve Signals", audio: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.mp3", txt: "MC12_How_Myelin_Speeds_Up_Nerve_Signals.txt" }
       ];
     }
+    if (hasRegistryPodcasts || GCS_BACKEND_SUBJECTS.has(subjectId)) {
+      return [
+        { title: "1. Topic Overview", audio: "microcast_01.m4a", txt: "microcast_01.md" }
+      ];
+    }
     return [
       { title: "1. Topic Overview", audio: "MC1.mp3", txt: "MC1.txt" }
     ];
-  }, [currentChapterInfo, isNebBiologyChap6]);
+  }, [currentChapterInfo, readData?.sections, chapterFiles, isNebBiologyChap6, hasRegistryPodcasts, subjectId]);
 
   const DETAILED_LISTENS = useMemo(() => {
     if (hasRegistryPodcasts || GCS_BACKEND_SUBJECTS.has(subjectId)) {
@@ -470,11 +619,12 @@ export default function PodcastsView({
   }, [hasRegistryPodcasts, isNebBiologyChap6, chapterName, subjectId]);
 
   useEffect(() => {
+    if (!isRegistryResolved) return;
     cloudStorage.setItem(
       `last_track_${subjectId}_${chapterNumber}_${persona}`,
       selectedTrack,
     );
-  }, [selectedTrack, subjectId, chapterNumber, persona]);
+  }, [selectedTrack, subjectId, chapterNumber, persona, isRegistryResolved]);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -784,44 +934,69 @@ export default function PodcastsView({
     setIsTrackGridExpanded(true);
   }, [selectedTrack]);
 
+  const handleResumeAudioTime = useCallback(
+    (restoredTime: number) => {
+      currentTimeRef.current = restoredTime;
+      setCurrentTime(restoredTime);
+    },
+    [],
+  );
+
   useAudioProgress(
     userId,
     lessonId,
     audioRef,
     available === true,
     metadata,
-    setCurrentTime,
+    handleResumeAudioTime,
   );
 
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || available !== true) return;
+    const tryRestore = () => {
+      const savedData =
+        cloudStorage.getItem(`audio_progress_${userId}_${lessonId}`) ||
+        cloudStorage.getItem(`audio_progress_shared_${lessonId}`) ||
+        cloudStorage.getItem(`audio_progress_anonymous_${lessonId}`);
+      if (!savedData) return;
 
-    const savedData = cloudStorage.getItem(
-      `audio_progress_${userId}_${lessonId}`,
-    );
-    if (!savedData) return;
-
-    try {
-      const parsed = JSON.parse(savedData) as AudioProgress;
-      if (parsed.currentTime > 0) {
-        const seekAudio = () => {
-          if (!audio) return;
-          audio.currentTime = parsed.currentTime;
+      try {
+        const parsed = JSON.parse(savedData) as AudioProgress;
+        if (parsed && parsed.currentTime > 0) {
+          currentTimeRef.current = parsed.currentTime;
           setCurrentTime(parsed.currentTime);
-        };
-
-        if (audio.readyState >= 1) {
-          seekAudio();
-        } else {
-          audio.addEventListener("loadedmetadata", seekAudio, { once: true });
+          if (parsed.duration && parsed.duration > 0 && audioDurationRef.current <= 0) {
+            audioDurationRef.current = parsed.duration;
+            setAudioDuration(parsed.duration);
+          }
+          const audio = audioRef.current;
+          if (audio && audio.paused) {
+            const seekAudio = () => {
+              if (!audio) return;
+              try {
+                audio.currentTime = parsed.currentTime;
+              } catch {
+                // wait for metadata
+              }
+            };
+            if (audio.readyState >= 1) {
+              seekAudio();
+            } else {
+              audio.addEventListener("loadedmetadata", seekAudio, { once: true });
+            }
+          }
         }
+      } catch (error) {
+        console.warn("Failed to restore cloud audio progress:", error);
       }
-    } catch (error) {
-      console.warn("Failed to restore cloud audio progress:", error);
-    }
-  }, [available, lessonId, userId]);
+    };
 
+    tryRestore();
+    return cloudStorage.subscribe(() => {
+      if (!isPlaying && currentTimeRef.current <= 0) {
+        tryRestore();
+      }
+    });
+  }, [available, lessonId, userId, isPlaying]);
   /** Resolve filenames via registry chapterFiles signed URLs first, then fallback */
   const getFileNames = useCallback((track: string): { audio: string; transcript: string; jsonTranscript?: string; fromRegistry?: boolean } => {
     // 1. Registry signed URLs (100% cloud-native contract/v1)
@@ -991,6 +1166,11 @@ export default function PodcastsView({
       setAvailable(false);
       return;
     }
+    if (!isRegistryResolved) {
+      setAvailable(null);
+      return;
+    }
+    let cancelled = false;
     const resolved = getFileNames(selectedTrack);
     if (resolved.fromRegistry && resolved.audio) {
       setAvailable(true);
@@ -1003,14 +1183,18 @@ export default function PodcastsView({
     setAvailable(null);
     fetch(resolved.audio, { method: "HEAD" })
       .then((res) => {
+        if (cancelled) return;
         const ct = res.headers.get("content-type") || "";
         const hasAudio = res.ok && !ct.includes("text/html");
         setAvailable(hasAudio);
       })
       .catch(() => {
-        setAvailable(false);
+        if (!cancelled) setAvailable(false);
       });
-  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl, getFileNames]);
+    return () => {
+      cancelled = true;
+    };
+  }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl, getFileNames, isRegistryResolved]);
 
   const isTrackMount = useRef(true);
   // ── Reset player when track selection changes ──
@@ -1024,24 +1208,31 @@ export default function PodcastsView({
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
+      currentTimeRef.current = 0;
+      setCurrentTime(0);
       setAudioDuration(0);
       audio.load();
     }
     setSelectedModuleOverride(null);
   }, [selectedTrack, selectedMc, selectedDl, selectedQl]);
 
+  const isPersonaMount = useRef(true);
   // ── Reset player when persona changes ──
   useEffect(() => {
+    if (isPersonaMount.current) {
+      isPersonaMount.current = false;
+      return;
+    }
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
+      currentTimeRef.current = 0;
       setCurrentTime(0);
       setAudioDuration(0);
     }
   }, [persona]);
-
   const isNebMount = useRef(true);
   // ── Reset NEB Nepal and Nagarjuna University player when track, persona, subject, or chapter changes ──
   useEffect(() => {
@@ -1087,7 +1278,7 @@ export default function PodcastsView({
       playheadRef.current.style.left = `${pct}%`;
     }
     if (progressFillRef.current) {
-      progressFillRef.current.style.width = `${pct}%`;
+      progressFillRef.current.style.clipPath = `inset(0 ${Math.max(0, 100 - pct)}% 0 0)`;
     }
 
     // Update bar colors directly in DOM
@@ -1226,7 +1417,8 @@ export default function PodcastsView({
       if (dur > 0 && dur !== audioDurationRef.current) {
         audioDurationRef.current = dur;
         setAudioDuration(dur);
-        updateProgress(audio.currentTime, dur);
+        const effectiveTime = audio.currentTime > 0 ? audio.currentTime : currentTimeRef.current;
+        updateProgress(effectiveTime, dur);
       }
     };
 
@@ -1331,7 +1523,8 @@ export default function PodcastsView({
 
   // ── Load transcript when track, subject, chapter, or level changes ──
   useEffect(() => {
-    if (!subjectId) return;
+    if (!subjectId || !isRegistryResolved) return;
+    let cancelled = false;
     setTranscript(null);
     setTranscriptSegments(null);
     setTranscriptDuration(null);
@@ -1344,14 +1537,21 @@ export default function PodcastsView({
       if (!r.ok || ct.includes("text/html")) throw new Error("not json");
       const txt = await r.text();
       const parsed = JSON.parse(txt);
+      if (cancelled) return true;
       if (parsed && (typeof parsed.full_text === "string" || Array.isArray(parsed.segments))) {
-        const fullText = parsed.full_text || parsed.transcript || (Array.isArray(parsed.segments) ? parsed.segments.map((s: any) => s.transcript || s.text || '').join(' ') : '');
+        const segmentText = Array.isArray(parsed.segments)
+          ? parsed.segments
+              .map((s: any) => cleanTranscriptPreamble(s.transcript || s.text || ""))
+              .filter(Boolean)
+              .join("\n\n")
+          : "";
+        const fullText = segmentText || parsed.full_text || parsed.transcript || "";
         setTranscript(cleanTranscriptPreamble(fullText));
         if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
           const normalized = parsed.segments.map((s: any) => ({
             start_sec: typeof s.start_sec === "number" ? s.start_sec : (typeof s.start === "number" ? s.start : 0),
             end_sec: typeof s.end_sec === "number" ? s.end_sec : (typeof s.end === "number" ? s.end : 0),
-            transcript: s.transcript || s.text || "",
+            transcript: cleanTranscriptPreamble(s.transcript || s.text || ""),
           }));
           setTranscriptSegments(normalized);
         } else {
@@ -1371,6 +1571,7 @@ export default function PodcastsView({
       const ct = r.headers.get("content-type") || "";
       if (!r.ok || ct.includes("text/html")) throw new Error("not md");
       const txt = await r.text();
+      if (cancelled) return true;
       setTranscript(cleanTranscriptPreamble(txt));
       setTranscriptSegments(null);
       return true;
@@ -1400,6 +1601,17 @@ export default function PodcastsView({
         }
       }
 
+      // If microcast transcript wasn't found via direct URL, fall back to sectionized read content for that topic
+      if (selectedTrack === "mc") {
+        const validSecs = (readData?.sections || []).filter((s) => s.sectionNumber > 0);
+        const secForMc = validSecs[selectedMc] || validSecs[0];
+        if (secForMc?.content && !cancelled) {
+          setTranscript(cleanTranscriptPreamble(secForMc.content));
+          setTranscriptSegments(null);
+          return;
+        }
+      }
+
       // Fallback to getResourceContent
       try {
         const script = await getResourceContent(
@@ -1408,6 +1620,7 @@ export default function PodcastsView({
           selectedTrack === "long" || selectedTrack === "dl" ? "long_podcast.md" : "short_podcast.md",
           persona as DifficultyLevel,
         );
+        if (cancelled) return;
         if (script && !script.includes("Content not available")) {
           setTranscript(cleanTranscriptPreamble(script));
         } else {
@@ -1415,13 +1628,18 @@ export default function PodcastsView({
         }
         setTranscriptSegments(null);
       } catch {
-        setTranscript("Content not available.");
-        setTranscriptSegments(null);
+        if (!cancelled) {
+          setTranscript("Content not available.");
+          setTranscriptSegments(null);
+        }
       }
     };
 
     loadTranscript();
-  }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir, getFileNames]);
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTrack, selectedMc, selectedDl, selectedQl, subjectId, chapterNumber, persona, chapterDir, getFileNames, isRegistryResolved, readData?.sections]);
 
   const handlePlay = () => {
     const audio = audioRef.current;
@@ -1430,6 +1648,13 @@ export default function PodcastsView({
       onPlayingChange?.(true);
       if (audio.error) {
         audio.load();
+      }
+      if (currentTimeRef.current > 0 && audio.currentTime < 1) {
+        try {
+          audio.currentTime = currentTimeRef.current;
+        } catch {
+          // ignore if not seekable yet
+        }
       }
       audio.play().catch((e) => {
         console.warn("Play failed:", e);
@@ -1743,11 +1968,10 @@ export default function PodcastsView({
     return (
       <div
         style={{
-          display: "flex",
-          justifyContent: "center",
+          display: "inline-flex",
+          justifyContent: "flex-end",
           alignItems: "center",
-          margin: "2px auto 16px auto",
-          width: "100%",
+          flexShrink: 0,
         }}
       >
         <div
@@ -1759,17 +1983,17 @@ export default function PodcastsView({
             position: "relative",
             display: "inline-flex",
             alignItems: "center",
-            background: "#edf3ee",
+            background: "#FFFFFF",
             borderRadius: "9999px",
             padding: "4px",
-            border: "1.5px solid #d5e2d9",
-            boxShadow: "inset 0 1px 2px rgba(54, 83, 69, 0.05)",
+            border: "1px solid #DED8CA",
+            boxShadow: "0 1px 3px rgba(30, 40, 34, 0.05)",
             gap: "0px",
             maxWidth: "100%",
             overflowX: "auto",
           }}
         >
-          {/* Smooth sliding pill indicator colored with SV app theme */}
+          {/* Smooth sliding pill indicator colored with dark forest theme */}
           <div
             className="pod-segmented-indicator"
             style={{
@@ -1779,8 +2003,8 @@ export default function PodcastsView({
               width: `${indicatorStyle.width}px`,
               height: "calc(100% - 8px)",
               borderRadius: "9999px",
-              background: "var(--primary-color, var(--primary, #365345))",
-              boxShadow: "0 2px 10px rgba(54, 83, 69, 0.28), 0 1px 3px rgba(54, 83, 69, 0.16)",
+              background: "#2D3E36",
+              boxShadow: "0 2px 6px rgba(30, 40, 34, 0.22)",
               transition: indicatorStyle.ready
                 ? "left 0.26s cubic-bezier(0.25, 1, 0.5, 1), width 0.26s cubic-bezier(0.25, 1, 0.5, 1)"
                 : "none",
@@ -1814,35 +2038,25 @@ export default function PodcastsView({
                   zIndex: 2,
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "7px",
-                  padding: "7px 20px",
+                  gap: "6px",
+                  padding: "6px 16px",
                   borderRadius: "9999px",
                   border: "none",
                   outline: "none",
                   background: isActive
                     ? isIndicatorSettled
                       ? "transparent"
-                      : "var(--primary-color, var(--primary, #365345))"
+                      : "#2D3E36"
                     : "transparent",
-                  color: isActive ? "#ffffff" : "#4b6354",
-                  fontSize: "13.5px",
-                  fontWeight: isActive ? 700 : 550,
+                  color: isActive ? "#FFFFFF" : "#4A554E",
+                  fontSize: "13px",
+                  fontWeight: isActive ? 700 : 600,
                   cursor: isDisabled ? "not-allowed" : "pointer",
                   transition: "color 0.22s ease, background 0.15s ease",
                   opacity: isDisabled ? 0.35 : 1,
                   userSelect: "none",
                   whiteSpace: "nowrap",
                   letterSpacing: "-0.01em",
-                }}
-                onMouseEnter={(e) => {
-                  if (!isActive && !isDisabled) {
-                    e.currentTarget.style.color = "#1e3328";
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isActive && !isDisabled) {
-                    e.currentTarget.style.color = "#4b6354";
-                  }
                 }}
               >
                 {renderedIcon}
@@ -2046,6 +2260,22 @@ export default function PodcastsView({
   };
 
   const handleWordClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const tsBtn = (e.target as HTMLElement).closest("[data-seek-sec]") as HTMLElement | null;
+    if (tsBtn && audioRef.current) {
+      const seekSec = parseFloat(tsBtn.getAttribute("data-seek-sec") || "0");
+      if (!isNaN(seekSec) && seekSec >= 0) {
+        audioRef.current.currentTime = seekSec;
+        setCurrentTime(seekSec);
+        updateProgress(seekSec, audioDurationRef.current || audioRef.current.duration || displayDuration || 0);
+        if (audioRef.current.paused) {
+          audioRef.current.play().then(() => {
+            setIsPlaying(true);
+            onPlayingChange?.(true);
+          }).catch(() => {});
+        }
+      }
+      return;
+    }
     const target = (e.target as HTMLElement).closest(".transcript-word") as HTMLElement | null;
     if (!target || !audioRef.current) return;
     const index = Array.from(target.parentElement?.children || []).indexOf(target);
@@ -2108,7 +2338,12 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              if (currentTimeRef.current > 0 && a.currentTime < 1) {
+                try {
+                  a.currentTime = currentTimeRef.current;
+                } catch {}
+              }
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
             if (autoPlay && a.paused) {
               handlePlay();
@@ -2120,7 +2355,7 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
           }}
           onCanPlay={(e) => {
@@ -2129,7 +2364,12 @@ export default function PodcastsView({
             if (d && isFinite(d) && d > 0) {
               audioDurationRef.current = d;
               setAudioDuration(d);
-              updateProgress(a.currentTime, d);
+              if (currentTimeRef.current > 0 && a.currentTime < 1) {
+                try {
+                  a.currentTime = currentTimeRef.current;
+                } catch {}
+              }
+              updateProgress(a.currentTime > 0 ? a.currentTime : currentTimeRef.current, d);
             }
             if (autoPlay && a.paused) {
               handlePlay();
@@ -2138,63 +2378,105 @@ export default function PodcastsView({
         />
       )}
 
-      {/* ── Fixed top section: track selector toggle ── */}
-      <div className="podcast-sticky-top">
-        {renderSegmentedTrackToggle()}
+      {/* ── Top Header Bar: Left Breadcrumb + Centered Track Toggle ── */}
+      <div
+        className="podcast-sticky-top"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          flexWrap: "wrap",
+          paddingBottom: "10px",
+          marginBottom: "14px",
+          borderBottom: "1px solid #E6E1D6",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13.5px",
+            color: "#6E7670",
+            fontWeight: 500,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <strong
+            style={{
+              color: "#1E2822",
+              fontWeight: 700,
+              fontSize: "0.84rem",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={chapterName}
+          >
+            {chapterName}
+          </strong>
+        </div>
+
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+          {renderSegmentedTrackToggle()}
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
       </div>
 
-      {/* ── Section-Wise 2-Column Layout (Matching Read UI) ── */}
+      {/* ── Section-Wise 2-Column Layout (Matching New Listen Screen) ── */}
       <div
         style={{
           display: "flex",
           gap: "24px",
           width: "100%",
           margin: 0,
-          padding: "0 0 60px",
+          padding: "0 0 40px",
           boxSizing: "border-box",
           alignItems: "flex-start",
         }}
       >
-        {/* ── LEFT NAVIGATION SIDEBAR (Sticky, matching Read's 'IN THIS CHAPTER' sidebar) ── */}
+        {/* ── LEFT NAVIGATION SIDEBAR ── */}
         <div
           style={{
-            width: "260px",
+            width: "268px",
             flexShrink: 0,
             position: "sticky",
             top: "8px",
             alignSelf: "flex-start",
-            maxHeight: "calc(100vh - 80px)",
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
             zIndex: 10,
           }}
         >
-          {/* Resumed / Listening Guide Pill */}
+          {/* Dark Forest Listening Guide Pill */}
           <div
             style={{
-              background: "#e0f2fe",
-              color: "#0369a1",
+              background: '#9CC0B4',
+              color: '#18221D',
               borderRadius: "999px",
-              padding: "6px 14px",
+              padding: "9px 16px",
               fontSize: "12.5px",
               fontWeight: 700,
               textAlign: "center",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
+              letterSpacing: "0.01em",
+              boxShadow: "0 2px 6px rgba(30, 40, 34, 0.12)",
             }}
           >
             {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Listening Guide"}
           </div>
 
-          {/* Podcast Checklist Card */}
+          {/* IN THIS CHAPTER Checklist Card */}
           <div
             style={{
-              background: "#ffffff",
+              background: "#FFFFFF",
               borderRadius: "16px",
-              border: "1px solid #e2e8f0",
+              border: "1px solid #E6E1D6",
               padding: "16px 12px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              boxShadow: "0 4px 14px rgba(30, 40, 34, 0.04)",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -2204,17 +2486,17 @@ export default function PodcastsView({
               style={{
                 fontSize: "11px",
                 fontWeight: 800,
-                letterSpacing: "0.07em",
+                letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "#64748b",
-                padding: "0 8px 6px",
-                borderBottom: "1px solid #f1f5f9",
+                color: "#7A827C",
+                padding: "0 8px 8px",
+                borderBottom: "1px solid #EFECE4",
               }}
             >
               IN THIS CHAPTER
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
               {activeEpisodesList.map((item, idx) => {
                 const isSelected = idx === activeEpisodeIdx;
                 const isDone = completedEpisodes.has(idx) || (selectedTrack === "mc" && idx < selectedMc);
@@ -2229,83 +2511,90 @@ export default function PodcastsView({
                     style={{
                       display: "flex",
                       alignItems: "center",
+                      justifyContent: "space-between",
                       gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "10px",
-                      border: "1.5px solid transparent",
-                      background: isSelected ? "#dbe6df" : "transparent",
+                      padding: "10px 12px",
+                      borderRadius: "12px",
+                      border: isSelected ? "1.5px solid #B7D3C4" : "1.5px solid transparent",
+                      background: isSelected ? "#E5EFE9" : "transparent",
                       cursor: "pointer",
                       textAlign: "left",
                       transition: "all 0.15s ease",
                     }}
                   >
-                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
-                    {isDone ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "#0f172a",
-                          color: "#ffffff",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : isSelected ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #0f172a",
-                          color: "#0f172a",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #cbd5e1",
-                        }}
-                      />
-                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>
+                      {isDone ? (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            background: "#375545",
+                            color: "#FFFFFF",
+                            fontSize: "11px",
+                            fontWeight: 800,
+                          }}
+                        >
+                          ✓
+                        </span>
+                      ) : isSelected ? (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            background: "#FFFFFF",
+                            border: "1.8px solid #375545",
+                            boxSizing: "border-box",
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "7px",
+                              height: "7px",
+                              borderRadius: "50%",
+                              background: "#375545",
+                              display: "block",
+                            }}
+                          />
+                        </span>
+                      ) : (
+                        <span
+                          style={{
+                            width: "18px",
+                            height: "18px",
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                            background: "transparent",
+                            border: "1.5px solid #C8C2B6",
+                          }}
+                        />
+                      )}
 
-                    {/* Podcast Episode Title */}
-                    <span
-                      style={{
-                        fontSize: "13px",
-                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                        color: isSelected ? "#0f172a" : "#475569",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                      }}
-                    >
-                      {cleanEpisodeTitle}
-                    </span>
+                      <span
+                        style={{
+                          fontSize: "12.5px",
+                          fontWeight: isSelected ? 700 : isDone ? 600 : 500,
+                          color: isSelected ? "#1E2822" : "#4A544E",
+                          lineHeight: 1.35,
+                          whiteSpace: "normal",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {cleanEpisodeTitle}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
@@ -2315,8 +2604,8 @@ export default function PodcastsView({
             <div
               style={{
                 marginTop: "10px",
-                paddingTop: "10px",
-                borderTop: "1px solid #f1f5f9",
+                paddingTop: "12px",
+                borderTop: "1px solid #EFECE4",
                 paddingLeft: "6px",
                 paddingRight: "6px",
               }}
@@ -2327,18 +2616,18 @@ export default function PodcastsView({
                   justifyContent: "space-between",
                   fontSize: "12px",
                   fontWeight: 600,
-                  color: "#64748b",
+                  color: "#6E7670",
                   marginBottom: "6px",
                 }}
               >
                 <span>Chapter progress</span>
-                <span style={{ color: "#0f172a", fontWeight: 700 }}>{listenProgressPercent}%</span>
+                <span style={{ color: "#1E2822", fontWeight: 700 }}>{listenProgressPercent}%</span>
               </div>
               <div
                 style={{
                   height: "6px",
                   width: "100%",
-                  background: "#f1f5f9",
+                  background: "#EFECE4",
                   borderRadius: "999px",
                   overflow: "hidden",
                 }}
@@ -2347,7 +2636,7 @@ export default function PodcastsView({
                   style={{
                     height: "100%",
                     width: `${listenProgressPercent}%`,
-                    background: accentColor,
+                    background: "#7BAE94",
                     borderRadius: "999px",
                     transition: "width 0.3s ease",
                   }}
@@ -2357,7 +2646,7 @@ export default function PodcastsView({
           </div>
         </div>
 
-        {/* ── RIGHT MAIN CONTENT AREA (Full width Player + Transcript, matching Read) ── */}
+        {/* ── RIGHT MAIN CONTENT AREA ── */}
         <div
           style={{
             flex: 1,
@@ -2368,58 +2657,18 @@ export default function PodcastsView({
             padding: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "20px",
+            gap: "16px",
           }}
         >
-          {/* Chapter Overview Meta Line (Matching Read) */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "8px",
-              paddingBottom: "8px",
-              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span
-                style={{
-                  background: "rgba(21, 128, 61, 0.08)",
-                  color: accentColor,
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
-                  fontWeight: 700,
-                }}
-              >
-                ⏱ {displayDuration ? `${Math.max(1, Math.round(displayDuration / 60))} min listen` : trackTypeLabel}
-              </span>
-              <span
-                style={{
-                  background: "#f1f5f9",
-                  color: "#475569",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
-                  fontWeight: 600,
-                }}
-              >
-                {totalEpisodes} {totalEpisodes === 1 ? "Podcast" : "Podcasts"}
-              </span>
-            </div>
-          </div>
-
-          {/* Active Podcast Section Header (Matching Read's SECTION X OF Y) */}
+          {/* Active Podcast Section Header */}
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
               <span
                 style={{
-                  fontSize: "12px",
+                  fontSize: "11.5px",
                   fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  color: accentColor,
+                  letterSpacing: "0.08em",
+                  color: "#375545",
                   textTransform: "uppercase",
                 }}
               >
@@ -2427,38 +2676,64 @@ export default function PodcastsView({
               </span>
             </div>
 
-            <h2
-              style={{
-                fontSize: "24px",
-                fontWeight: 800,
-                color: "#0f172a",
-                lineHeight: "1.3",
-                margin: "0",
-              }}
-            >
-              {displayTitle.replace(/^\d+\.\s*/, "")}
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+              <h2
+                style={{
+                  fontSize: "24px",
+                  fontWeight: 800,
+                  color: "#1E2822",
+                  lineHeight: "1.25",
+                  margin: "0",
+                }}
+              >
+                {displayTitle.replace(/^\d+\.\s*/, "")}
+              </h2>
+            </div>
           </div>
 
-          {/* Horizontal Player Bar */}
-          <div className="pod-exact-player-bar" style={{ marginBottom: 0 }}>
+          {/* Horizontal Player Bar with Connected Oscilloscope Waveform */}
+          <div
+            className="pod-exact-player-bar"
+            style={{
+              marginBottom: 0,
+              background: "#F9F6F0",
+              border: "1px solid #E4DEC9",
+              borderRadius: "20px",
+              padding: "12px 18px",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.04)",
+            }}
+          >
             {/* Left: Headphone Icon + Title + Episode Subtitle */}
             <div className="pod-player-left">
-              <div className="pod-player-headphone-badge">
+              <div
+                className="pod-player-headphone-badge"
+                style={{
+                  background: "#EAE4D7",
+                  color: "#2D3E36",
+                  borderRadius: "50%",
+                  width: "38px",
+                  height: "38px",
+                }}
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
                   <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
                 </svg>
               </div>
               <div className="pod-player-meta">
-                <span className="pod-player-title">{displayTitle}</span>
-                <span className="pod-player-subtitle">{displaySubtitle}</span>
+                <span className="pod-player-title" style={{ color: "#1E2822" }}>{displayTitle}</span>
+                <span className="pod-player-subtitle" style={{ color: "#6E7670" }}>{displaySubtitle}</span>
               </div>
             </div>
 
             {/* Transport Controls: ↺15, Play/Pause, 30↻, 1x */}
             <div className="pod-player-transport">
-              <button className="pod-transport-btn" onClick={handleRewind15} title="Rewind 15 seconds">
+              <button
+                className="pod-transport-btn"
+                onClick={handleRewind15}
+                title="Rewind 15 seconds"
+                style={{ borderColor: "#DED8CA", background: "#FFFFFF", color: "#2C3530" }}
+              >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="1 4 1 10 7 10" />
                   <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
@@ -2466,7 +2741,16 @@ export default function PodcastsView({
                 <span>15</span>
               </button>
 
-              <button className="pod-main-play-btn" onClick={handlePlayToggle} title={playing ? "Pause" : "Play"}>
+              <button
+                className="pod-main-play-btn"
+                onClick={handlePlayToggle}
+                title={playing ? "Pause" : "Play"}
+                style={{
+                  background: '#9CC0B4',
+                  color: '#18221D',
+                  boxShadow: "0 3px 10px rgba(123, 174, 148, 0.35)",
+                }}
+              >
                 {playing ? (
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
@@ -2479,7 +2763,12 @@ export default function PodcastsView({
                 )}
               </button>
 
-              <button className="pod-transport-btn" onClick={handleForward30} title="Forward 30 seconds">
+              <button
+                className="pod-transport-btn"
+                onClick={handleForward30}
+                title="Forward 30 seconds"
+                style={{ borderColor: "#DED8CA", background: "#FFFFFF", color: "#2C3530" }}
+              >
                 <span>30</span>
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="23 4 23 10 17 10" />
@@ -2487,41 +2776,107 @@ export default function PodcastsView({
                 </svg>
               </button>
 
-              <button className="pod-speed-pill" onClick={handleToggleSpeed} title="Playback speed">
-                {playbackRate}x
+              <button
+                className="pod-speed-pill"
+                onClick={handleToggleSpeed}
+                title="Playback speed"
+                style={{ borderColor: "#DED8CA", background: "#FFFFFF", color: "#2C3530" }}
+              >
+                {playbackRate}x ▾
               </button>
             </div>
 
-            {/* Waveform Scrubber + Timestamp */}
+            {/* Connected Zig-Zag / Oscilloscope Waveform Scrubber + Timestamp */}
             <div className="pod-player-waveform-wrap" onClick={handleWaveformClick} title="Click anywhere to seek">
-              <div className="pod-player-waveform-bars">
-                {PENCIL_WAVEFORM_BARS.map((h, i) => {
-                  const barPct = (i / PENCIL_WAVEFORM_BARS.length) * 100;
-                  const isBarActive = barPct <= progressPct;
-                  return (
-                    <div
-                      key={i}
-                      className={`pod-waveform-bar ${isBarActive ? "active" : ""}`}
-                      style={{ height: `${h}%` }}
+              <div
+                style={{
+                  position: "relative",
+                  flex: 1,
+                  height: "32px",
+                  display: "flex",
+                  alignItems: "center",
+                  minWidth: "140px",
+                }}
+              >
+                {/* Unplayed dark slate-charcoal smooth rounded-corner wave stroke */}
+                <svg
+                  viewBox={`0 0 ${OSCILLOSCOPE_WAVE.width} ${OSCILLOSCOPE_WAVE.height}`}
+                  preserveAspectRatio="none"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "block",
+                    overflow: "visible",
+                  }}
+                >
+                  <path
+                    fill="none"
+                    stroke="#647069"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                    d={OSCILLOSCOPE_WAVE.smoothPath}
+                  />
+                </svg>
+
+                {/* Played sage-green smooth rounded-corner wave stroke (clipped to progressPct%) */}
+                <div
+                  ref={progressFillRef}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    pointerEvents: "none",
+                    clipPath: `inset(0 ${Math.max(0, 100 - progressPct)}% 0 0)`,
+                  }}
+                >
+                  <svg
+                    viewBox={`0 0 ${OSCILLOSCOPE_WAVE.width} ${OSCILLOSCOPE_WAVE.height}`}
+                    preserveAspectRatio="none"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      display: "block",
+                      overflow: "visible",
+                    }}
+                  >
+                    <path
+                      fill="none"
+                      stroke="#375545"
+                      strokeWidth="2.4"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                      d={OSCILLOSCOPE_WAVE.smoothPath}
                     />
-                  );
-                })}
+                  </svg>
+                </div>
+
+                {/* Solid sage-green circular playhead dot */}
+                <div
+                  ref={playheadRef}
+                  style={{
+                    position: "absolute",
+                    top: "50%",
+                    left: `${progressPct}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: "9px",
+                    height: "9px",
+                    borderRadius: "50%",
+                    background: '#9CC0B4',
+                    pointerEvents: "none",
+                    zIndex: 3,
+                  }}
+                />
               </div>
-              <span className="pod-player-time">
-                {fmtTime(currentTime)} / {displayDuration ? fmtTime(displayDuration) : "--:--"}
+
+              <span className="pod-player-time" style={{ color: "#4A544E", fontWeight: 700 }}>
+                <span ref={currentTimeDisplayRef}>{fmtTime(currentTime)}</span> / {displayDuration ? fmtTime(displayDuration) : "--:--"}
               </span>
             </div>
 
-            {/* Right Controls: ⏱ Timer + Volume */}
+            {/* Right Controls: Volume */}
             <div className="pod-player-right">
-              <button className="pod-timer-btn" onClick={handleToggleSleepTimer} title={sleepTimerMinutes ? `Timer set for ${sleepTimerMinutes}m` : "Set sleep timer"}>
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <polyline points="12 6 12 12 16 14" />
-                </svg>
-                <span>{sleepTimerMinutes ? `${sleepTimerMinutes}m` : "Timer"}</span>
-              </button>
-
               <div className="pod-player-volume">
                 <button className="pod-vol-icon-btn" onClick={() => {
                   const next = !isMutedUi;
@@ -2534,8 +2889,8 @@ export default function PodcastsView({
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
                   )}
                 </button>
-                <div className="pod-vol-track">
-                  <div className="pod-vol-fill" style={{ width: `${(isMutedUi ? 0 : volume) * 100}%` }} />
+                <div className="pod-vol-track" style={{ background: "#DED8CA" }}>
+                  <div className='pod-vol-fill' style={{ width: `${(isMutedUi ? 0 : volume) * 100}%`, background: '#9CC0B4' }} />
                   <input
                     type="range"
                     min={0}
@@ -2552,12 +2907,22 @@ export default function PodcastsView({
           </div>
 
           {/* Full-Width Interactive Transcript Card */}
-          <div className="pod-transcript-card" style={{ width: "100%", boxSizing: "border-box" }}>
-            <div className="pod-transcript-header">
-              <div className="pod-transcript-title-wrap">
-                <strong className="pod-transcript-title">Transcript</strong>
+          <div
+            className="pod-transcript-card"
+            style={{
+              width: '100%',
+              boxSizing: 'border-box',
+              border: 'none',
+              borderRadius: '0px',
+              background: 'transparent',
+              boxShadow: 'none',
+            }}
+          >
+            <div className="pod-transcript-header" style={{ borderBottom: "1px solid #EFECE4" }}>
+              <div className="pod-transcript-title-wrap" style={{ display: "flex", alignItems: "baseline", gap: "12px" }}>
+                <strong className="pod-transcript-title" style={{ color: "#1E2822", fontSize: "15px" }}>Transcript</strong>
               </div>
-              <label className="pod-autofollow-label">
+              <label className="pod-autofollow-label" style={{ color: "#4A544E" }}>
                 <input
                   type="checkbox"
                   checked={autoFollow}
@@ -2575,7 +2940,7 @@ export default function PodcastsView({
                     if (!isWord) {
                       return <span key={idx}>{token}</span>;
                     }
-                    const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, "");
                     const def = getTermDefinition(cleanWord);
                     if (def) {
                       return (
@@ -2598,6 +2963,57 @@ export default function PodcastsView({
               )}
             </div>
           </div>
+
+          {/* Simple Bottom-Right Continuity Button (Just "Next" and the Name) */}
+          {(() => {
+            const hasNextEpisode = activeEpisodeIdx + 1 < activeEpisodesList.length;
+            const nextEpisodeTitle = hasNextEpisode
+              ? activeEpisodesList[activeEpisodeIdx + 1].title.replace(/^\d+\.\s*/, "")
+              : null;
+
+            if (!hasNextEpisode && !onNavigateToRead) return null;
+
+            return (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "2px" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (hasNextEpisode) {
+                      handleSelectEpisode(activeEpisodeIdx + 1);
+                    } else if (onNavigateToRead) {
+                      onNavigateToRead(activeSectionInfo.sectionNumber);
+                    }
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    padding: "10px 20px",
+                    borderRadius: "999px",
+                    border: '1px solid #7FA89B',
+                    background: '#9CC0B4',
+                    color: '#18221D',
+                    fontSize: "13.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(30, 40, 34, 0.08)",
+                    transition: "transform 0.15s ease, background 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#8EB7A0";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#9DC2AD";
+                  }}
+                >
+                  <span>
+                    Next · {hasNextEpisode ? nextEpisodeTitle : "Read Notes"}
+                  </span>
+                  <span style={{ fontSize: "15px", lineHeight: 1 }}>→</span>
+                </button>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

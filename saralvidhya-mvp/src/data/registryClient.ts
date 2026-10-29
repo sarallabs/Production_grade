@@ -213,6 +213,63 @@ export const registryClient = {
       return {};
     }
   },
+  /**
+   * Fetches the DB-driven fallback manifest and catalog from Firestore (`platformConfig/manifest` & `platformConfig/catalog`).
+   */
+  async getCloudManifest(tenantId: string): Promise<{ manifest: any; catalog: any }> {
+    const res = await fetch(`${API_BASE}/v2/t/${tenantId}/cloud-manifest`, {
+      headers: getCloudAuthHeaders(tenantId),
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to load cloud manifest for ${tenantId}: HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+
+  /**
+   * Fetches DB-driven Mock Test templates and PYQ question banks from Firestore.
+   */
+  async getPracticeFallback(tenantId: string, subjectId?: string): Promise<Record<string, any>> {
+    const url = new URL(`${API_BASE}/v2/t/${tenantId}/practice-fallback`);
+    if (subjectId) url.searchParams.set('subjectId', subjectId);
+    const res = await fetch(url.toString(), {
+      headers: getCloudAuthHeaders(tenantId),
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to load practice fallback for ${tenantId}: HTTP ${res.status}`);
+    }
+    return res.json();
+  },
+
+  /**
+   * Sends a batch of analytics telemetry events to Cloud Run + Firestore + GCP Cloud Logging.
+   */
+  async sendAnalyticsBatch(
+    tenantId: string,
+    payload: {
+      events: any[];
+      sessionId?: string;
+      userId?: string;
+      userEmail?: string;
+      displayName?: string;
+      path?: string;
+    }
+  ): Promise<boolean> {
+    try {
+      const res = await fetch(`${API_BASE}/v2/t/${tenantId}/events/batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getCloudAuthHeaders(tenantId),
+        },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  },
 };
 
 export { getRegistryChapterData, resolveAssetUrl } from './manifestService';

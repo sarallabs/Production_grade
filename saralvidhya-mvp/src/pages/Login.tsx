@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
-import { useTenant } from "@/tenant/TenantProvider";
-import { cloudStorage } from "@/context/CloudStateContext";
-const logoClean = `${import.meta.env.BASE_URL}logo-clean.png`;
+import {
+  useTenant,
+  API_BASE,
+  getCloudPublicImageUrl,
+  getCloudBoardLogoUrl,
+  getCloudUiCopy,
+} from '@/tenant/TenantProvider';
+import { cloudStorage, setCloudAuthContext } from '@/context/CloudStateContext';
+import { trackAuthEvent } from '@/utils/analytics';
+import universityConfig from '@/config/university_config.json';
 import "./Login.css";
 
 function Login() {
@@ -11,13 +18,68 @@ function Login() {
   const location = useLocation();
   const { tenantId, tenant, login: tenantLogin } = useTenant();
 
-  const from = (location.state as { from?: string })?.from || (tenantId ? `/${tenantId}` : "/");
+  const from = (location.state as { from?: string })?.from || "/";
 
   const [studentPassword, setStudentPassword] = useState("");
   const [studentError, setStudentError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
+  const uiCopy = getCloudUiCopy();
+  const logoClean = getCloudPublicImageUrl('/logo-clean.png');
+  const resolvedCollege = (() => {
+    const boardLogos = ((universityConfig as any).boardLogos || {}) as Record<string, string>;
+    const defaultLogoFile = ((universityConfig as any).defaultBoardLogo || "logo-angrau.png") as string;
+    const searchParams = new URLSearchParams(location.search);
+    const queryTenant = (searchParams.get("tenant") || searchParams.get("boardId") || "").toLowerCase();
+    const pathLower = location.pathname.toLowerCase();
+    const visibleBoards = (
+      cloudStorage.getItem("sv_visible_boards") ||
+      import.meta.env.VITE_VISIBLE_BOARDS ||
+      ""
+    ).toLowerCase();
+    const activeId = (tenantId || queryTenant || "").toLowerCase();
+
+    const cloudBoardLogo = activeId ? getCloudBoardLogoUrl(activeId) : undefined;
+    const customLogo =
+      tenant?.logoUrl ||
+      tenant?.branding?.logoUrl ||
+      (tenant as any)?.assets?.logoUrl ||
+      cloudBoardLogo;
+    if (customLogo) {
+      const resolvedId = (tenant?.id || activeId || "college").toLowerCase();
+      return {
+        id: resolvedId,
+        src: customLogo,
+        fallbackSrc: boardLogos[resolvedId]
+          ? `${import.meta.env.BASE_URL}${boardLogos[resolvedId]}`
+          : `${import.meta.env.BASE_URL}${defaultLogoFile}`,
+        alt: tenant?.name || tenant?.shortName || resolvedId.toUpperCase(),
+      };
+    }
+
+    for (const [boardKey, logoFile] of Object.entries(boardLogos)) {
+      const keyLower = boardKey.toLowerCase();
+      if (
+        activeId === keyLower ||
+        (visibleBoards.includes(keyLower) && !visibleBoards.includes(",")) ||
+        (!activeId && studentPassword.trim().toLowerCase().startsWith(keyLower.slice(0, 3)))
+      ) {
+        return {
+          id: keyLower,
+          src: `${import.meta.env.BASE_URL}${logoFile}`,
+          fallbackSrc: `${import.meta.env.BASE_URL}${logoFile}`,
+          alt: tenant?.name || tenant?.shortName || keyLower.toUpperCase(),
+        };
+      }
+    }
+    return {
+      id: "default",
+      src: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
+      fallbackSrc: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
+      alt: tenant?.name || tenant?.shortName || "College Logo",
+    };
+  })();
   useEffect(() => {
     // If onboarding (profile + questionnaire) is incomplete, clear bypass flags 
     // on visiting the login page so refreshing the browser returns to the login screen.
@@ -29,6 +91,7 @@ function Login() {
       cloudStorage.removeItem("username");
     }
   }, []);
+    trackAuthEvent('auth.login_view', { tenantId: tenantId || 'root' }, 'started');
 
   // LOGIN FUNCTION
   const handleStudentLogin = async (e: React.FormEvent) => {
@@ -36,11 +99,12 @@ function Login() {
     setStudentError("");
 
     if (!studentPassword) {
-      setStudentError("Please enter password");
+      setStudentError("Please enter access code");
       return;
     }
 
     setLoading(true);
+    trackAuthEvent('auth.login_attempt', { tenantId: tenantId || 'root' }, 'started');
 
     // If a tenant is active, authenticate against v2 registry backend
     if (tenantId) {
@@ -48,6 +112,7 @@ function Login() {
         const ok = await tenantLogin(studentPassword);
         if (ok) {
           cloudStorage.removeItem("sv_video_open_counts");
+          trackAuthEvent('auth.login_success', { tenantId }, 'success');
           cloudStorage.setItem("app_authenticated", "true");
           cloudStorage.setItem("app_role", "student");
           const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
@@ -62,25 +127,70 @@ function Login() {
           );
           cloudStorage.setItem("questionnaire_completed", "true");
 
-          const isSubdomain = window.location.hostname.includes(tenantId);
           const targetUrl =
-            from === "/login" || from === `/${tenantId}/login`
-              ? (isSubdomain ? "/" : `/${tenantId}`)
+            from === "/login" || from.endsWith("/login")
+              ? "/"
               : from;
-
           navigate(targetUrl, {
             replace: true,
           });
           return;
         } else {
+          trackAuthEvent('auth.login_failure', { tenantId, reason: 'Incorrect password' }, 'failure');
           setStudentError("Incorrect password");
           setLoading(false);
           return;
         }
       } catch (err: any) {
+        trackAuthEvent('auth.login_failure', { tenantId, reason: err.message || 'Error' }, 'failure');
         setStudentError(err.message || "Incorrect password");
         setLoading(false);
         return;
+      }
+    }
+
+    // If on central/root portal without a pre-selected tenantId, try matching against configured board tenants
+    const candidateTenants = Array.from(
+      new Set(
+        (((universityConfig as any).defaultVisibleBoards || []) as string[]).map((b) =>
+          b.toLowerCase().replace(/_university$/, "")
+        )
+      )
+    );
+
+    for (const candidate of candidateTenants) {
+      try {
+        const resp = await fetch(`${API_BASE}/v2/t/${candidate}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: studentPassword }),
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          if (data.token) {
+            cloudStorage.removeItem("sv_video_open_counts");
+            setCloudAuthContext(candidate, data.token);
+            cloudStorage.setItem("app_authenticated", "true");
+            cloudStorage.setItem("app_role", "student");
+            const displayName = data.tenant?.shortName
+              ? `${data.tenant.shortName} Student`
+              : `${candidate.toUpperCase()} Student`;
+            cloudStorage.setItem("username", displayName);
+            cloudStorage.setItem(
+              "saral_student_profile",
+              JSON.stringify({
+                firstName: displayName,
+                lastName: "",
+                bypassed: true,
+              })
+            );
+            cloudStorage.setItem("questionnaire_completed", "true");
+            navigate("/", { replace: true });
+            return;
+          }
+        }
+      } catch {
+        // try next candidate tenant
       }
     }
 
@@ -114,7 +224,7 @@ function Login() {
 
         navigate("/", { replace: true });
       } else {
-        setStudentError("Incorrect password");
+        setStudentError("Incorrect access code");
         setLoading(false);
       }
     }, 400);
@@ -123,7 +233,7 @@ function Login() {
   return (
     <div className="sv-login-page">
       <div className="sv-login-wrapper">
-        {/* LEFT SIDE: Saral Vidhya Tree Brand Logo */}
+        {/* LEFT SIDE: Saral Vidhya Production Lockup Image */}
         <div className="sv-login-brand">
           <img
             src={logoClean}
@@ -132,64 +242,113 @@ function Login() {
           />
         </div>
 
-        {/* RIGHT SIDE: Deep Sage Green Card */}
-        <div className="sv-login-card">
-          <h1 className="sv-login-title">Welcome</h1>
-
-          <form onSubmit={handleStudentLogin} className="sv-login-form">
-            <div className="sv-input-container">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                className="sv-password-input"
-                value={studentPassword}
-                onChange={(e) => {
-                  setStudentPassword(e.target.value);
-                  setStudentError("");
+        {/* RIGHT SIDE: Pine Deep Card + Floating College Logo + Feature Pills */}
+        <div className="sv-login-right">
+          <div className="sv-login-card-shell">
+            {/* College Logo Medallion upside the card */}
+            <div className="sv-college-logo-badge" title={resolvedCollege.alt}>
+              <img
+                src={resolvedCollege.src}
+                alt={resolvedCollege.alt}
+                className={`sv-college-logo-img sv-college-logo-img--${resolvedCollege.id}`}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (resolvedCollege.fallbackSrc && target.src !== resolvedCollege.fallbackSrc) {
+                    target.src = resolvedCollege.fallbackSrc;
+                  }
                 }}
-                autoFocus
               />
-
-              <button
-                type="button"
-                className="sv-password-toggle-btn"
-                onClick={() => setShowPassword((prev) => !prev)}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                title={showPassword ? "Hide password" : "Show password"}
-              >
-                {showPassword ? (
-                  /* Open eye */
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                ) : (
-                  /* Eyelashes / closed eye icon (matching reference screenshot) */
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M3 10.5C5.5 14 8.5 15.5 12 15.5C15.5 15.5 18.5 14 21 10.5" />
-                    <line x1="6" y1="13.5" x2="4.5" y2="16.5" />
-                    <line x1="10" y1="15" x2="9.5" y2="18.5" />
-                    <line x1="14" y1="15" x2="14.5" y2="18.5" />
-                    <line x1="18" y1="13.5" x2="19.5" y2="16.5" />
-                  </svg>
-                )}
-              </button>
             </div>
 
-            <button
-              type="submit"
-              className="sv-login-button"
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
+            <div className="sv-login-card">
+              <h1 className="sv-login-title">Welcome to Saral Vidhya</h1>
 
-            {studentError && (
-              <p className="sv-login-error">
-                {studentError}
-              </p>
-            )}
-          </form>
+              <form onSubmit={handleStudentLogin} className="sv-login-form">
+                <label className="sv-input-label" htmlFor="sv-access-code-input">
+                  ACCESS CODE
+                </label>
+                <div className="sv-input-container">
+                  <input
+                    id="sv-access-code-input"
+                    type={showPassword ? "text" : "password"}
+                    placeholder=""
+                    className="sv-password-input"
+                    value={studentPassword}
+                    onFocus={() =>
+                      trackAuthEvent('auth.password_focus', { tenantId: tenantId || 'root' }, 'started')
+                    }
+                    onChange={(e) => {
+                      setStudentPassword(e.target.value);
+                      setStudentError("");
+                    }}
+                    autoFocus
+                  />
+
+                  <button
+                    type="button"
+                    className="sv-password-toggle-btn"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    aria-label={showPassword ? "Hide access code" : "Show access code"}
+                    title={showPassword ? "Hide access code" : "Show access code"}
+                  >
+                    {showPassword ? (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                        <line x1="1" y1="1" x2="23" y2="23" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  className="sv-login-button"
+                  disabled={loading}
+                >
+                  {loading
+                    ? uiCopy.signingInButton || 'Entering...'
+                    : uiCopy.signInButton || 'Enter'}
+                </button>
+
+                {studentError && (
+                  <p className="sv-login-error">
+                    {studentError}
+                  </p>
+                )}
+              </form>
+            </div>
+          </div>
+
+          {/* Bottom Feature Pills: Learn, Practice, Prepare */}
+          <div className='sv-login-pills' aria-hidden='true'>
+            <div className='sv-login-pill'>
+              <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#9CC0B4' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z' />
+                <path d='M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z' />
+              </svg>
+              <span>Learn</span>
+            </div>
+            <div className='sv-login-pill'>
+              <svg width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='#E7B864' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z' />
+                <path d='m15 5 4 4' />
+              </svg>
+              <span>Practice</span>
+            </div>
+            <div className='sv-login-pill'>
+              <svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#B5BA9B' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                <circle cx='12' cy='12' r='9' />
+                <circle cx='12' cy='12' r='5' />
+                <circle cx='12' cy='12' r='1.5' fill='#B5BA9B' />
+              </svg>
+              <span>Prepare</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -14,6 +14,7 @@ export function AssessmentView({
   markdownContent,
   subjectId,
   chapterNumber,
+  chapterName,
   persona,
   onQuit,
   setPersona,
@@ -23,6 +24,7 @@ export function AssessmentView({
   markdownContent: string;
   subjectId: string;
   chapterNumber: number;
+  chapterName?: string;
   persona: string;
   onQuit: () => void;
   setPersona?: (p: string) => void;
@@ -39,11 +41,16 @@ export function AssessmentView({
   const [showExplanation, setShowExplanation] = useState(false);
   const [answered, setAnswered] = useState<boolean[]>([]);
   const autoNextTimeoutRef = useRef<any>(null);
+  const cardTopRef = useRef<HTMLDivElement | null>(null);
+  const footerRef = useRef<HTMLDivElement | null>(null);
 
   // User input states for active question
   const [submitted, setSubmitted] = useState(false);
   const [currentIsCorrect, setCurrentIsCorrect] = useState<boolean | null>(null);
 
+  const [retriesUsed, setRetriesUsed] = useState<Record<number, number>>({});
+  const [awaitingRetry, setAwaitingRetry] = useState(false);
+  const [weakCardsAdded, setWeakCardsAdded] = useState<Record<number, boolean>>({});
   // Question-specific interaction states
   const [selectedMCQ, setSelectedMCQ] = useState<number | null>(null);
   const [selectedMSQ, setSelectedMSQ] = useState<number[]>([]);
@@ -88,6 +95,8 @@ export function AssessmentView({
       setScore(0);
       setIsFinished(false);
       setAnswered(new Array(validQuestions.length).fill(false));
+      setRetriesUsed({});
+      setAwaitingRetry(false);
       setLoading(false);
     });
 
@@ -108,6 +117,10 @@ export function AssessmentView({
     setSelectedMSQ([]);
     setSelectedTF(null);
     setShowExplanation(false);
+    setAwaitingRetry(false);
+    setTimeout(() => {
+      cardTopRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 30);
 
     if (currentQ.type === "fill_blanks") {
       setFillInputs(new Array(currentQ.correctAnswers.length).fill(""));
@@ -176,25 +189,44 @@ export function AssessmentView({
     }
   };
 
+  const handleTryAgainAssessment = () => {
+    setRetriesUsed((prev) => ({ ...prev, [step]: (prev[step] || 0) + 1 }));
+    setAwaitingRetry(false);
+    setSubmitted(false);
+    setCurrentIsCorrect(null);
+    setSelectedMCQ(null);
+    setSelectedMSQ([]);
+    setSelectedTF(null);
+  };
+
   const markQuestionAnswered = (isAnswerCorrect: boolean) => {
+    const used = retriesUsed[step] || 0;
+    if (!isAnswerCorrect && used < 1) {
+      setSubmitted(true);
+      setCurrentIsCorrect(false);
+      setAwaitingRetry(true);
+      setTimeout(() => {
+        footerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 60);
+      return;
+    }
+
+    setAwaitingRetry(false);
     setSubmitted(true);
     setCurrentIsCorrect(isAnswerCorrect);
     setAnswered((prev) => {
       const next = [...prev];
-      next[step] = true;
+      if (!next[step]) {
+        if (isAnswerCorrect) {
+          setScore((s) => s + 1);
+        }
+        next[step] = true;
+      }
       return next;
     });
-
-    if (isAnswerCorrect) {
-      setScore((s) => s + 1);
-    }
-    setShowExplanation(true);
-
-    if (step === questions.length - 1) {
-      const finalScore = isAnswerCorrect ? score + 1 : score;
-      const pct = Math.round((finalScore / questions.length) * 100);
-      cloudStorage.setItem(`ekam_quiz_score_${subjectId}_${chapterNumber}`, pct.toString());
-    }
+    setTimeout(() => {
+      footerRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }, 60);
   };
 
   // --- MCQ handlers ---
@@ -368,10 +400,11 @@ export function AssessmentView({
   };
 
   const renderText = (text: string) => {
-    return <MarkdownView content={text} />;
+    return <MarkdownView content={text} isPurpleTheme={false} disableGlossary={true} />;
   };
 
   const attemptedCount = answered.filter(Boolean).length;
+  const wrongCount = Math.max(0, attemptedCount - score);
   const notAttemptedCount = questions.length - attemptedCount;
   const currentQ = questions[step];
 
@@ -472,8 +505,8 @@ export function AssessmentView({
                     padding: "11px 32px",
                     borderRadius: "24px",
                     border: "none",
-                    background: "#2D3E36",
-                    color: "#ffffff",
+                    background: '#E7B864',
+                    color: '#18221D',
                     cursor: "pointer",
                     fontWeight: "700",
                     fontSize: "14.5px",
@@ -498,629 +531,480 @@ export function AssessmentView({
       ) : (
         // Assessment Content
         <>
+          <style>{`
+            .assessment-view .quiz-q p,
+            .assessment-view .quiz-options p,
+            .assessment-view .assessment-explanation-md p {
+              margin: 0 !important;
+            }
+            .assessment-view .assessment-explanation-md p + p {
+              margin-top: 6px !important;
+            }
+          `}</style>
           <div
             style={{
               display: "flex",
               flexDirection: "row",
-              alignItems: "center",
+              alignItems: "flex-start",
               justifyContent: "center",
               width: "100%",
-              padding: "0 12px",
-              marginTop: "0px",
+              minHeight: "100%",
+              flexShrink: 0,
+              background: '#F8F5EE',
+              padding: "12px 20px 28px",
               boxSizing: "border-box",
+              fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif",
             }}
           >
-            {/* Assessment card styled to match reference theme */}
+            {/* Assessment Card matching Warm Cream & Terracotta/Sage Mockup */}
             <div
+              ref={cardTopRef}
               className="quiz-card assessment-view"
               style={{
                 width: "100%",
-                maxWidth: "min(96%, 1120px)",
-                maxHeight: "calc(100vh - 120px)",
+                maxWidth: "880px",
                 display: "flex",
                 flexDirection: "column",
-                overflowY: "hidden",
                 margin: "0 auto",
-                background: "#FAFBF9",
-                border: "1.5px solid #2D3E36",
+                background: "#FFFFFF",
+                border: "1px solid #E6E0D4",
                 borderRadius: "20px",
-                boxShadow: "0 10px 32px rgba(45, 62, 54, 0.08)",
+                boxShadow: "0 4px 20px rgba(30, 40, 34, 0.04)",
                 position: "relative",
-                padding: "16px 28px 14px 28px",
+                padding: "18px 26px 16px",
                 boxSizing: "border-box",
+                color: "#1E2822",
               }}
             >
-              {/* Header row: Question Number Badge (Left) & Difficulty Tag (Right) */}
+              {/* Top Header Row: Left Badges (4 / 20, Single Choice, Medium) + Right Score (✓ 3 correct · ✕ 1 wrong) */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
                   width: "100%",
-                  marginBottom: "4px",
+                  gap: "12px",
+                  flexWrap: "wrap",
                 }}
               >
-                {/* Top-Left: Question Number Badge & Type Tag */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  {/* Step Counter Pill */}
                   <div
                     style={{
-                      padding: "3px 12px",
-                      borderRadius: "8px",
+                      padding: "4px 12px",
+                      borderRadius: "999px",
                       background: "#FFFFFF",
-                      border: "1.5px solid #2D3E36",
-                      color: "#2D3E36",
-                      fontWeight: "700",
-                      fontSize: "13px",
-                      display: "flex",
+                      border: "1.5px solid #D8A97C",
+                      color: "#B46530",
+                      fontWeight: 700,
+                      fontSize: "12px",
+                      display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      boxShadow: "0 1px 3px rgba(45, 62, 54, 0.05)",
                     }}
                   >
                     {step + 1} / {questions.length}
                   </div>
 
-                  {currentQ?.type === "msq" ? (
-                    <div
-                      style={{
-                        padding: "3px 10px",
-                        borderRadius: "8px",
-                        background: "rgba(147, 51, 234, 0.08)",
-                        border: "1.5px solid #9333ea",
-                        color: "#7e22ce",
-                        fontWeight: "700",
-                        fontSize: "12px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-                      <span>Multiple Select (MSQ) — Select all that apply</span>
-                    </div>
-                  ) : (
-                    <div
-                      style={{
-                        padding: "3px 10px",
-                        borderRadius: "8px",
-                        background: "rgba(45, 62, 54, 0.06)",
-                        border: "1px solid rgba(45, 62, 54, 0.15)",
-                        color: "#2D3E36",
-                        fontWeight: "600",
-                        fontSize: "12px",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                      }}
-                    >
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>
-                      <span>Single Choice (MCQ)</span>
-                    </div>
-                  )}
+                  {/* Difficulty Pill */}
+                  <div
+                    style={{
+                      padding: "4px 12px",
+                      borderRadius: "999px",
+                      background: "#F4E5D2",
+                      color: "#8C5228",
+                      fontWeight: 700,
+                      fontSize: "11.5px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    {persona === "beginner"
+                      ? "Easy"
+                      : persona === "intermediate"
+                      ? "Medium"
+                      : persona === "advanced"
+                      ? "Hard"
+                      : "Medium"}
+                  </div>
                 </div>
 
-                {/* Top-Right Difficulty */}
+                {/* Top-Right Score Tally */}
                 <div
                   style={{
-                    color: "#2D3E36",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    textTransform: "capitalize",
-                    letterSpacing: "0.2px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
                   }}
                 >
-                  {persona === 'beginner' ? 'Easy' : persona === 'intermediate' ? 'Medium' : persona === 'advanced' ? 'Hard' : 'Easy'}
+                  <span style={{ color: "#2E6F4E" }}>✓ {score} correct</span>
+                  <span style={{ color: "#B8B2A6" }}>·</span>
+                  <span style={{ color: "#B86B3D" }}>✕ {wrongCount} wrong</span>
                 </div>
               </div>
-              {/* Single-column layout — explanation shown inline below options */}
+
+              {/* Thin Progress Bar */}
+              <div
+                style={{
+                  width: "100%",
+                  height: "5px",
+                  background: "#EFEBE1",
+                  borderRadius: "999px",
+                  overflow: "hidden",
+                  marginTop: "10px",
+                  marginBottom: "14px",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${Math.min(100, Math.round(((step + 1) / Math.max(1, questions.length)) * 100))}%`,
+                    height: "100%",
+                    background: "#D89B48",
+                    borderRadius: "999px",
+                    transition: "width 0.3s ease",
+                  }}
+                />
+              </div>
+
+              {/* Question Body & Options */}
               <div
                 style={{
                   display: "flex",
                   flexDirection: "column",
-                  gap: "0",
                   width: "100%",
                   flex: 1,
-                  minHeight: 0,
-                  alignItems: "stretch",
-                  marginTop: "0px",
-                  marginBottom: "2px",
                 }}
               >
-                {/* ── LEFT COLUMN: Question & Options ── */}
                 {(() => {
                   const cleanQText = (text: string) => {
                     if (!text) return "";
                     return text
-                      .replace(/^#+\s*/, '')
-                      .replace(/^\s*(?:\*\*)?(?:Question|q):\s*(?:\*\*)?\s*/i, '')
-                      .replace(/(?:\*\*)?(?:Options|options):\s*(?:\*\*)?\s*$/i, '')
-                      .replace(/\s*Options:\s*/gi, '')
-                      .replace(/\s*Question:\s*/gi, '')
+                      .replace(/^#+\s*/, "")
+                      .replace(/^\s*(?:\*\*)?(?:Question|q):\s*(?:\*\*)?\s*/i, "")
+                      .replace(/(?:\*\*)?(?:Options|options):\s*(?:\*\*)?\s*$/i, "")
+                      .replace(/\s*Options:\s*/gi, "")
+                      .replace(/\s*Question:\s*/gi, "")
                       .trim();
                   };
 
-                  const qRaw = cleanQText(currentQ.q || '');
-                  const opts = (currentQ as any).options || [];
-                  const maxOptLen = opts.reduce((max: number, o: any) => Math.max(max, (typeof o === 'string' ? o : o.text || '').length), 0);
-                  const totalCharLen = qRaw.length + opts.reduce((acc: number, o: any) => acc + (typeof o === 'string' ? o : o.text || '').length, 0);
-
-                  // Responsive sizing tuned for single screen fit without being tiny:
-                  const isExtreme = totalCharLen > 480 || maxOptLen > 140;
-                  const isUltraLong = !isExtreme && (totalCharLen > 320 || maxOptLen > 90);
-                  const isLongQ = !isExtreme && !isUltraLong && (totalCharLen > 180 || qRaw.length > 100);
-
-                  const qFontSize = isExtreme ? "15.5px" : isUltraLong ? "16.5px" : isLongQ ? "17.5px" : "18.5px";
-                  const optTextSize = isExtreme ? "14px" : isUltraLong ? "14.5px" : isLongQ ? "15px" : "15.5px";
-
-                  const qLineHeight = isExtreme ? "1.32" : isUltraLong ? "1.35" : isLongQ ? "1.38" : "1.42";
-                  const qMarginBottom = isExtreme ? "8px" : isUltraLong ? "10px" : isLongQ ? "12px" : "14px";
-
-                  const optGap = isExtreme ? "6px" : isUltraLong ? "8px" : isLongQ ? "9px" : "10px";
-                  const optPadding = isExtreme ? "8px 14px" : isUltraLong ? "9px 16px" : isLongQ ? "10px 18px" : "11px 20px";
-                  const optLineHeight = isExtreme ? "1.3" : isUltraLong ? "1.34" : isLongQ ? "1.38" : "1.4";
-
                   return (
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "flex-start",
-                        width: "100%",
-                        maxWidth: "100%",
-                        paddingRight: "2px",
-                        transform: "translate3d(0, 0, 0)",
-                        WebkitFontSmoothing: "antialiased",
-                        MozOsxFontSmoothing: "grayscale",
-                      }}
-                    >
-                      <div>
-                        {/* Question Title */}
-                        <div
-                          className="quiz-q"
-                          style={{
-                            fontSize: qFontSize,
-                            fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-                            fontWeight: "700",
-                            color: "#111827",
-                            lineHeight: qLineHeight,
-                            letterSpacing: "-0.1px",
-                            marginTop: "4px",
-                            marginBottom: qMarginBottom,
-                            willChange: "font-size, margin-bottom",
-                            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                          }}
-                        >
-                          {renderText(cleanQText(currentQ.q))}
-                        </div>
+                    <div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+                      {/* Question Stem */}
+                      <div
+                        className="quiz-q"
+                        style={{
+                          fontSize: "16px",
+                          fontWeight: 800,
+                          color: "#1E2822",
+                          lineHeight: 1.4,
+                          marginBottom: "12px",
+                        }}
+                      >
+                        {renderText(cleanQText(currentQ.q))}
+                      </div>
 
-                        {/* ── QUESTION TYPE RENDERERS ── */}
+                      {/* Type 1: MCQ */}
+                      {currentQ.type === "mcq" && (
+                        <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          {currentQ.options.map((option, idx) => {
+                            const isSelected = selectedMCQ === idx;
+                            const isCorrectAnswer = idx === currentQ.answer;
 
-                        {/* Type 1: MCQ */}
-                        {currentQ.type === "mcq" && (
-                          <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: optGap }}>
-                            {currentQ.options.map((option, idx) => {
-                              const isSelected = selectedMCQ === idx;
-                              const isCorrectAnswer = idx === currentQ.answer;
-                              const isEven = idx % 2 === 0;
+                            let bgStyle = "#FFFFFF";
+                            let borderStyle = "1px solid #EAE5DC";
+                            let radioBorder = "1.5px solid #C5BEB3";
+                            let radioDotColor = "transparent";
+                            let badgeBg = "#F2EFE9";
+                            let badgeColor = "#5A625C";
+                            let textColor = submitted ? "#6E766E" : "#1E2822";
+                            let textWeight = 600;
+                            let rightIcon: React.ReactNode = null;
 
-                              // Alternating lighter (#FFFFFF) and darker (#EAF0EC) shades:
-                              const defaultBg = isEven ? "#FFFFFF" : "#EAF0EC";
-                              const defaultBorder = isEven ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
-
-                              let bgStyle = isSelected ? "#CDE4D6" : defaultBg;
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : defaultBorder;
-                              let rightIcon = null;
-
-                              if (submitted) {
-                                if (isCorrectAnswer) {
-                                  bgStyle = "#E2F4E9";
-                                  borderStyle = "2px solid #2D3E36";
-                                  rightIcon = (
-                                    <span style={{ color: "#2D3E36", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
-                                      ✓
-                                    </span>
-                                  );
-                                } else if (isSelected) {
-                                  bgStyle = "#FDF0ED";
-                                  borderStyle = "2px solid #D9534F";
-                                  rightIcon = (
-                                    <span style={{ color: "#D9534F", fontWeight: "800", fontSize: "17px", marginLeft: "auto", paddingRight: "4px" }}>
-                                      ✕
-                                    </span>
-                                  );
-                                }
+                            if (!submitted && isSelected) {
+                              bgStyle = "#FAF2E9";
+                              borderStyle = "1.5px solid #C88A5A";
+                              radioBorder = "2px solid #B86B3D";
+                              radioDotColor = "#B86B3D";
+                              badgeBg = "#C27D4E";
+                              badgeColor = "#FFFFFF";
+                              textColor = "#1E2822";
+                              textWeight = 700;
+                            } else if (submitted) {
+                              if (isCorrectAnswer && !awaitingRetry) {
+                                bgStyle = "#EEF6F1";
+                                borderStyle = "1.5px solid #A3C9B3";
+                                radioBorder = "1.5px solid #4A8B69";
+                                radioDotColor = "#4A8B69";
+                                badgeBg = "#9DC5AE";
+                                badgeColor = "#1E3F2E";
+                                textColor = "#1E2822";
+                                textWeight = 700;
+                                rightIcon = (
+                                  <span style={{ color: "#2E6F4E", fontWeight: 800, fontSize: "15px", marginLeft: "auto" }}>
+                                    ✓
+                                  </span>
+                                );
+                              } else if (isSelected) {
+                                bgStyle = "#FCF3EC";
+                                borderStyle = "1.5px solid #CFA07E";
+                                radioBorder = "2px solid #B86B3D";
+                                radioDotColor = "#B86B3D";
+                                badgeBg = "#C27D4E";
+                                badgeColor = "#FFFFFF";
+                                textColor = "#1E2822";
+                                textWeight = 700;
+                                rightIcon = (
+                                  <span style={{ color: "#B86B3D", fontWeight: 800, fontSize: "14px", marginLeft: "auto" }}>
+                                    ✕
+                                  </span>
+                                );
                               }
+                            }
 
-                              return (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleMCQSelect(idx)}
-                                  disabled={submitted}
-                                  onMouseEnter={(e) => {
-                                    if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = "#D6E4DB";
-                                      e.currentTarget.style.borderColor = "#9EB5A6";
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = defaultBg;
-                                      e.currentTarget.style.borderColor = isEven ? "#D7E3DB" : "#BACEC1";
-                                    }
-                                  }}
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => handleMCQSelect(idx)}
+                                disabled={submitted}
+                                onMouseEnter={(e) => {
+                                  if (!submitted && !isSelected) {
+                                    e.currentTarget.style.background = "#FAF8F4";
+                                    e.currentTarget.style.borderColor = "#D5CEC2";
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!submitted && !isSelected) {
+                                    e.currentTarget.style.background = "#FFFFFF";
+                                    e.currentTarget.style.borderColor = "#EAE5DC";
+                                  }
+                                }}
+                                style={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "12px",
+                                  width: "100%",
+                                  padding: "10px 16px",
+                                  borderRadius: "12px",
+                                  border: borderStyle,
+                                  background: bgStyle,
+                                  cursor: submitted ? "default" : "pointer",
+                                  transition: "all 0.15s ease",
+                                  textAlign: "left",
+                                  boxSizing: "border-box",
+                                }}
+                              >
+                                {/* Circular Radio Indicator */}
+                                <div
                                   style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                    width: "100%",
-                                    padding: optPadding,
-                                    borderRadius: "10px",
-                                    border: borderStyle,
-                                    background: bgStyle,
-                                    cursor: submitted ? "default" : "pointer",
-                                    transition: "all 0.18s ease",
-                                    textAlign: "left",
-                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
-                                    boxSizing: "border-box",
-                                  }}
-                                >
-                                  {/* Circular Radio Button Indicator */}
-                                  <div
-                                    style={{
-                                      width: "18px",
-                                      height: "18px",
-                                      borderRadius: "50%",
-                                      border: isSelected ? "2px solid #2D3E36" : "1.5px solid #6E8576",
-                                      background: "#FFFFFF",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      flexShrink: 0,
-                                      transition: "all 0.15s ease",
-                                      boxSizing: "border-box",
-                                    }}
-                                  >
-                                    {isSelected && (
-                                      <div
-                                        style={{
-                                          width: "8px",
-                                          height: "8px",
-                                          borderRadius: "50%",
-                                          background: "#2D3E36",
-                                          transition: "all 0.15s ease",
-                                        }}
-                                      />
-                                    )}
-                                  </div>
-
-                                  {/* Letter Pill */}
-                                  <div
-                                    style={{
-                                      width: "24px",
-                                      height: "24px",
-                                      borderRadius: "6px",
-                                      background: isSelected ? "#B4D5C1" : (isEven ? "#EDF3EF" : "#D4E2D8"),
-                                      border: isSelected ? "1px solid #2D3E36" : (isEven ? "1px solid #D7E3DB" : "1px solid #BACEC1"),
-                                      color: isSelected ? "#16241C" : "#1E2F26",
-                                      fontWeight: "700",
-                                      fontSize: "13px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      flexShrink: 0,
-                                      transition: "background 0.15s ease",
-                                    }}
-                                  >
-                                    {String.fromCharCode(65 + idx)}
-                                  </div>
-
-                                  <div style={{ flex: 1, color: "#111A15", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
-                                    {renderText(option)}
-                                  </div>
-                                  {rightIcon}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Type: MSQ */}
-                        {currentQ.type === "msq" && (
-                          <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: optGap }}>
-                            <div style={{ fontSize: "12px", color: "#7e22ce", fontWeight: "600", marginBottom: "2px", display: "flex", alignItems: "center", gap: "5px" }}>
-                              <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: "#7e22ce" }} />
-                              <span>Select all correct options, then click <b>Submit Answer</b> below.</span>
-                            </div>
-                            {currentQ.options.map((option, idx) => {
-                              const isSelected = selectedMSQ.includes(idx);
-                              const isCorrectOption = currentQ.answer.includes(idx);
-                              const isEven = idx % 2 === 0;
-
-                              // Alternating lighter (#FFFFFF) and darker (#EAF0EC) shades:
-                              const defaultBg = isEven ? "#FFFFFF" : "#EAF0EC";
-                              const defaultBorder = isEven ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
-
-                              let bgStyle = isSelected ? "#CDE4D6" : defaultBg;
-                              let borderStyle = isSelected ? "2px solid #2D3E36" : defaultBorder;
-                              let rightIcon = null;
-
-                              if (submitted) {
-                                if (isCorrectOption) {
-                                  bgStyle = "#E2F4E9";
-                                  borderStyle = "2px solid #2D3E36";
-                                  rightIcon = <span style={{ color: "#2D3E36", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✓</span>;
-                                } else if (isSelected) {
-                                  bgStyle = "#FDF0ED";
-                                  borderStyle = "2px solid #D9534F";
-                                  rightIcon = <span style={{ color: "#D9534F", fontWeight: "800", marginLeft: "auto", fontSize: "17px" }}>✕</span>;
-                                }
-                              }
-
-                              return (
-                                <button
-                                  key={idx}
-                                  onClick={() => handleMSQToggle(idx)}
-                                  disabled={submitted}
-                                  onMouseEnter={(e) => {
-                                    if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = "#D6E4DB";
-                                      e.currentTarget.style.borderColor = "#9EB5A6";
-                                    }
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    if (!submitted && !isSelected) {
-                                      e.currentTarget.style.background = defaultBg;
-                                      e.currentTarget.style.borderColor = isEven ? "#D7E3DB" : "#BACEC1";
-                                    }
-                                  }}
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "12px",
-                                    width: "100%",
-                                    padding: optPadding,
-                                    borderRadius: "10px",
-                                    border: borderStyle,
-                                    background: bgStyle,
-                                    cursor: submitted ? "default" : "pointer",
-                                    transition: "all 0.18s ease",
-                                    textAlign: "left",
-                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
-                                    boxSizing: "border-box",
-                                  }}
-                                >
-                                  {/* Checkbox */}
-                                  <div
-                                    style={{
-                                      width: "18px",
-                                      height: "18px",
-                                      borderRadius: "4px",
-                                      border: isSelected ? "1.5px solid #2D3E36" : "1.5px solid #6E8576",
-                                      background: isSelected ? "#2D3E36" : "#FFFFFF",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      flexShrink: 0,
-                                      transition: "all 0.15s ease",
-                                    }}
-                                  >
-                                    {isSelected && (
-                                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-                                        <polyline points="20 6 9 17 4 12" />
-                                      </svg>
-                                    )}
-                                  </div>
-
-                                  <div
-                                    style={{
-                                      width: "24px",
-                                      height: "24px",
-                                      borderRadius: "6px",
-                                      background: isSelected ? "#B4D5C1" : (isEven ? "#EDF3EF" : "#D4E2D8"),
-                                      border: isSelected ? "1px solid #2D3E36" : (isEven ? "1px solid #D7E3DB" : "1px solid #BACEC1"),
-                                      color: isSelected ? "#16241C" : "#1E2F26",
-                                      fontWeight: "700",
-                                      fontSize: "13px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      flexShrink: 0,
-                                      transition: "background 0.15s ease",
-                                    }}
-                                  >
-                                    {String.fromCharCode(65 + idx)}
-                                  </div>
-
-                                  <div style={{ flex: 1, color: "#111A15", fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", fontWeight: "600", fontSize: optTextSize, lineHeight: optLineHeight }}>
-                                    {renderText(option)}
-                                  </div>
-                                  {rightIcon}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Type 2: True / False */}
-                        {currentQ.type === "true_false" && (
-                          <div style={{ display: "flex", gap: "14px", justifyContent: "center", marginTop: "12px" }}>
-                            {[true, false].map((val, tfIdx) => {
-                              const isSelected = selectedTF === val;
-                              const isCorrectAnswer = val === currentQ.answer;
-
-                              const defaultBg = tfIdx === 0 ? "#FFFFFF" : "#EAF0EC";
-                              const defaultBorder = tfIdx === 0 ? "1.5px solid #D7E3DB" : "1.5px solid #BACEC1";
-
-                              let btnBg = isSelected ? "#CDE4D6" : defaultBg;
-                              let btnBorder = isSelected ? "2px solid #2D3E36" : defaultBorder;
-                              let btnTextColor = "#111A15";
-
-                              if (submitted) {
-                                if (isCorrectAnswer) {
-                                  btnBorder = "2px solid #2D3E36";
-                                  btnBg = "#E2F4E9";
-                                } else if (isSelected) {
-                                  btnBorder = "2px solid #D9534F";
-                                  btnBg = "#FDF0ED";
-                                }
-                              }
-
-                              return (
-                                <button
-                                  key={val.toString()}
-                                  onClick={() => handleTFSelect(val)}
-                                  disabled={submitted}
-                                  style={{
-                                    flex: 1,
-                                    height: "64px",
-                                    borderRadius: "10px",
-                                    border: btnBorder,
-                                    background: btnBg,
-                                    color: btnTextColor,
-                                    fontSize: "1.05rem",
-                                    fontWeight: "700",
-                                    cursor: submitted ? "default" : "pointer",
-                                    transition: "all 0.2s ease",
+                                    width: "18px",
+                                    height: "18px",
+                                    borderRadius: "50%",
+                                    border: radioBorder,
+                                    background: "#FFFFFF",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
-                                    boxShadow: isSelected ? "0 3px 10px rgba(45, 62, 54, 0.12)" : "0 1px 3px rgba(45, 62, 54, 0.03)",
+                                    flexShrink: 0,
+                                    boxSizing: "border-box",
                                   }}
                                 >
-                                  {val ? "True" : "False"}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Type 3: Fill in the Blanks */}
-                        {currentQ.type === "fill_blanks" && (
-                          <div style={{ padding: "16px", background: "#FFFFFF", borderRadius: "12px", border: "1.5px solid #D5E2D9" }}>
-                            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", lineHeight: "2.2", fontSize: "1rem" }}>
-                              {currentQ.q.split("[blank]").map((segment, idx, arr) => (
-                                <React.Fragment key={idx}>
-                                  <span style={{ color: "#18221D", fontWeight: "500" }}>{segment}</span>
-                                  {idx < arr.length - 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => !submitted && setActiveBlankIndex(idx)}
+                                  {(isSelected || (submitted && isCorrectAnswer)) && (
+                                    <div
                                       style={{
-                                        minWidth: "70px",
-                                        padding: "2px 10px",
-                                        borderRadius: "6px",
-                                        border: activeBlankIndex === idx ? "2px solid #2D3E36" : "1.5px solid #D5E2D9",
-                                        background: fillInputs[idx] ? "#E8F3ED" : "#F5F8F6",
-                                        color: fillInputs[idx] ? "#2D3E36" : "#64748b",
-                                        fontWeight: "600",
-                                        fontSize: "0.95rem",
-                                        cursor: submitted ? "default" : "pointer",
+                                        width: "8px",
+                                        height: "8px",
+                                        borderRadius: "50%",
+                                        background: radioDotColor,
                                       }}
-                                    >
-                                      {fillInputs[idx] || `Blank ${idx + 1}`}
-                                    </button>
+                                    />
                                   )}
-                                </React.Fragment>
-                              ))}
-                            </div>
+                                </div>
 
-                            {!submitted && (
-                              <div style={{ marginTop: "16px" }}>
-                                <div style={{ fontSize: "12px", fontWeight: "700", color: "#2D3E36", textTransform: "uppercase", marginBottom: "8px" }}>
-                                  Word Bank
-                                </div>
-                                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                                  {fillChoices.map((choice, idx) => (
-                                    <button
-                                      key={idx}
-                                      type="button"
-                                      onClick={() => handleWordClick(choice)}
-                                      style={{
-                                        padding: "6px 14px",
-                                        borderRadius: "8px",
-                                        border: "1px solid #D5E2D9",
-                                        background: "#F5F8F6",
-                                        color: "#2D3E36",
-                                        fontWeight: "600",
-                                        fontSize: "0.9rem",
-                                        cursor: "pointer",
-                                      }}
-                                    >
-                                      {choice}
-                                    </button>
-                                  ))}
-                                </div>
-                                <button
-                                  onClick={handleFillSubmit}
-                                  disabled={fillInputs.some((val) => !val.trim())}
+                                {/* Letter Badge (A, B, C, D) */}
+                                <div
                                   style={{
-                                    marginTop: "16px",
-                                    padding: "8px 20px",
-                                    borderRadius: "18px",
-                                    border: "none",
-                                    background: "#2D3E36",
-                                    color: "#ffffff",
-                                    fontWeight: "700",
-                                    fontSize: "13.5px",
-                                    cursor: fillInputs.some((val) => !val.trim()) ? "default" : "pointer",
-                                    opacity: fillInputs.some((val) => !val.trim()) ? 0.5 : 1,
+                                    width: "24px",
+                                    height: "24px",
+                                    borderRadius: "6px",
+                                    background: badgeBg,
+                                    color: badgeColor,
+                                    fontWeight: 800,
+                                    fontSize: "12px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
                                   }}
                                 >
-                                  Check Answers
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                                  {String.fromCharCode(65 + idx)}
+                                </div>
 
-                        {/* Type 4: Match the Following */}
-                        {currentQ.type === "match_following" && (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                            <div style={{ fontSize: "13px", color: "#2D3E36", fontWeight: "600" }}>Match items on left with right:</div>
-                            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                              {currentQ.leftItems.map((lhs: string) => {
-                                const matchedRhs = matchSelections[lhs];
-                                const isCorrectMatch = matchedRhs === currentQ.correctPairs[lhs];
-                                return (
-                                  <div key={lhs} style={{ padding: "10px 14px", border: "1.5px solid #D5E2D9", borderRadius: "8px", background: "#F5F8F6" }}>
-                                    <div style={{ fontWeight: "700", color: "#18221D", fontSize: "14px" }}>{lhs}</div>
-                                    {matchedRhs && (
-                                      <div style={{ marginTop: "4px", fontSize: "13px", color: submitted ? (isCorrectMatch ? "#2D3E36" : "#D9534F") : "#2D3E36", fontWeight: "600" }}>
-                                        → {matchedRhs}
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                            {!submitted && (
+                                <div
+                                  style={{
+                                    flex: 1,
+                                    color: textColor,
+                                    fontWeight: textWeight,
+                                    fontSize: "14px",
+                                    lineHeight: 1.45,
+                                  }}
+                                >
+                                  {renderText(option)}
+                                </div>
+                                {rightIcon}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Type: MSQ */}
+                      {currentQ.type === "msq" && (
+                        <div className="quiz-options" style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                          <div style={{ fontSize: "12px", color: "#8C5228", fontWeight: 600, marginBottom: "2px" }}>
+                            Select all correct options, then click <b>Submit Answer</b> below.
+                          </div>
+                          {currentQ.options.map((option, idx) => {
+                            const isSelected = selectedMSQ.includes(idx);
+                            const isCorrectOption = currentQ.answer.includes(idx);
+
+                            let bgStyle = isSelected ? "#FAF2E9" : "#FFFFFF";
+                            let borderStyle = isSelected ? "1.5px solid #C88A5A" : "1px solid #EAE5DC";
+                            let badgeBg = isSelected ? "#C27D4E" : "#F2EFE9";
+                            let badgeColor = isSelected ? "#FFFFFF" : "#5A625C";
+                            let rightIcon: React.ReactNode = null;
+
+                            if (submitted) {
+                              if (isCorrectOption && !awaitingRetry) {
+                                bgStyle = "#EEF6F1";
+                                borderStyle = "1.5px solid #A3C9B3";
+                                badgeBg = "#9DC5AE";
+                                badgeColor = "#1E3F2E";
+                                rightIcon = <span style={{ color: "#2E6F4E", fontWeight: 800, marginLeft: "auto", fontSize: "15px" }}>✓</span>;
+                              } else if (isSelected) {
+                                bgStyle = "#FCF3EC";
+                                borderStyle = "1.5px solid #CFA07E";
+                                badgeBg = "#C27D4E";
+                                badgeColor = "#FFFFFF";
+                                rightIcon = <span style={{ color: "#B86B3D", fontWeight: 800, marginLeft: "auto", fontSize: "14px" }}>✕</span>;
+                              }
+                            }
+
+                            return (
                               <button
-                                onClick={handleMatchSubmit}
+                                key={idx}
+                                type="button"
+                                onClick={() => handleMSQToggle(idx)}
+                                disabled={submitted}
                                 style={{
-                                  marginTop: "12px",
-                                  padding: "8px 20px",
-                                  borderRadius: "18px",
-                                  border: "none",
-                                  background: "#2D3E36",
-                                  color: "#ffffff",
-                                  fontWeight: "700",
-                                  fontSize: "13.5px",
-                                  cursor: "pointer",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "12px",
+                                  width: "100%",
+                                  padding: "10px 16px",
+                                  borderRadius: "12px",
+                                  border: borderStyle,
+                                  background: bgStyle,
+                                  cursor: submitted ? "default" : "pointer",
+                                  transition: "all 0.15s ease",
+                                  textAlign: "left",
+                                  boxSizing: "border-box",
                                 }}
                               >
-                                Submit Matching
-                              </button>
-                            )}
-                          </div>
-                        )}
+                                <div
+                                  style={{
+                                    width: "18px",
+                                    height: "18px",
+                                    borderRadius: "4px",
+                                    border: isSelected ? "1.5px solid #B86B3D" : "1.5px solid #C5BEB3",
+                                    background: isSelected ? "#B86B3D" : "#FFFFFF",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {isSelected && (
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+                                      <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                  )}
+                                </div>
 
-                        {/* Type 5 & 6 Fallback */}
-                        {(currentQ.type === "sequencing" || currentQ.type === "labelling") && (
-                          <div style={{ fontSize: "14px", color: "#2D3E36" }}>
-                            Complete the question task to view answer status.
-                          </div>
-                        )}
-                      </div>
+                                <div
+                                  style={{
+                                    width: "24px",
+                                    height: "24px",
+                                    borderRadius: "6px",
+                                    background: badgeBg,
+                                    color: badgeColor,
+                                    fontWeight: 800,
+                                    fontSize: "12px",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {String.fromCharCode(65 + idx)}
+                                </div>
+
+                                <div style={{ flex: 1, color: "#1E2822", fontWeight: 600, fontSize: "14px", lineHeight: 1.45 }}>
+                                  {renderText(option)}
+                                </div>
+                                {rightIcon}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Type 2: True / False */}
+                      {currentQ.type === "true_false" && (
+                        <div style={{ display: "flex", gap: "14px", justifyContent: "center", marginTop: "12px" }}>
+                          {[true, false].map((val) => {
+                            const isSelected = selectedTF === val;
+                            const isCorrectAnswer = val === currentQ.answer;
+
+                            let btnBg = isSelected ? "#FAF2E9" : "#FFFFFF";
+                            let btnBorder = isSelected ? "1.5px solid #C88A5A" : "1px solid #EAE5DC";
+
+                            if (submitted) {
+                              if (isCorrectAnswer && !awaitingRetry) {
+                                btnBorder = "1.5px solid #A3C9B3";
+                                btnBg = "#EEF6F1";
+                              } else if (isSelected) {
+                                btnBorder = "1.5px solid #CFA07E";
+                                btnBg = "#FCF3EC";
+                              }
+                            }
+
+                            return (
+                              <button
+                                key={val.toString()}
+                                type="button"
+                                onClick={() => handleTFSelect(val)}
+                                disabled={submitted}
+                                style={{
+                                  flex: 1,
+                                  height: "56px",
+                                  borderRadius: "12px",
+                                  border: btnBorder,
+                                  background: btnBg,
+                                  color: "#1E2822",
+                                  fontSize: "15px",
+                                  fontWeight: 700,
+                                  cursor: submitted ? "default" : "pointer",
+                                }}
+                              >
+                                {val ? "True" : "False"}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1129,146 +1013,254 @@ export function AssessmentView({
                 {submitted && (
                   <div
                     style={{
-                      marginTop: "6px",
-                      borderRadius: "10px",
-                      border: `1.5px solid ${currentIsCorrect ? "#2D3E36" : "#D9534F"}`,
-                      background: currentIsCorrect ? "#F2F8F4" : "#FDF4F3",
-                      padding: "6px 12px",
+                      marginTop: "10px",
+                      borderRadius: "12px",
+                      border: currentIsCorrect ? "1px solid #C6DEC9" : "1px solid #E5C8AF",
+                      background: currentIsCorrect ? "#F3F8F5" : "#FCF6F0",
+                      padding: "10px 16px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "3px",
+                      gap: "4px",
                     }}
                   >
-                    {/* Status + correct option in one row */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                      <span style={{
-                        fontWeight: "800",
-                        fontSize: "12px",
-                        color: currentIsCorrect ? "#2D3E36" : "#D9534F",
-                        display: "flex", alignItems: "center", gap: "4px",
-                      }}>
-                        {currentIsCorrect ? "✓ Correct!" : "✕ Incorrect"}
-                      </span>
-                      {!currentIsCorrect && (
-                        <span style={{ fontSize: "11.5px", color: "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                          Correct option:
-                          <span style={{
-                            background: "#E8F0EB", color: "#2D3E36", fontWeight: "800",
-                            borderRadius: "4px", padding: "1px 6px", fontSize: "11px",
-                            border: "1px solid #2D3E36",
-                          }}>
-                            {typeof (currentQ as any).answer === 'number'
-                              ? String.fromCharCode(65 + (currentQ as any).answer)
-                              : Array.isArray((currentQ as any).answer)
-                                ? (currentQ as any).answer.map((a: number) => String.fromCharCode(65 + a)).join(', ')
-                                : (currentQ as any).correctAnswers
-                                  ? (currentQ as any).correctAnswers.join(', ')
-                                  : String((currentQ as any).answer || '')}
+                    {/* Status + correct option pill */}
+                    {awaitingRetry ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            fontSize: "12.5px",
+                            color: "#B86B3D",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <span>✕ Incorrect</span>
+                          <span style={{ fontWeight: 600, color: "#5A625C" }}>
+                            — {1 - (retriesUsed[step] || 0)} try-again {1 - (retriesUsed[step] || 0) === 1 ? "attempt" : "attempts"} left
                           </span>
                         </span>
-                      )}
-                    </div>
-                    {/* Explanation text */}
-                    <div style={{
-                      fontSize: "11.5px",
-                      color: "#1E293B",
-                      lineHeight: "1.36",
-                      fontWeight: "500",
-                      maxHeight: "65px",
-                      overflowY: "auto",
-                    }}>
-                      <MarkdownView
-                        content={
-                          (currentQ.explanation || "No explanation provided.")
-                            .replace(/^(?:\*\*)?(?:Explanation|Brief Explanation|Solution|Answer|Model Answer|Outline Answer|Rationale|وضاحت)(?:\*\*)?[:\s-]*\s*/gi, '')
-                            .replace(/Rationale:\*\*\s*(?:correct:)?/gi, '')
-                            .replace(/---\s*#/g, '')
-                            .trim() || "No explanation provided."
-                        }
-                      />
-                    </div>
+                        <button
+                          type="button"
+                          onClick={handleTryAgainAssessment}
+                          style={{
+                            padding: "5px 14px",
+                            borderRadius: "999px",
+                            border: "1.5px solid #C88A5A",
+                            background: "#FFFFFF",
+                            color: "#9A5226",
+                            fontWeight: 700,
+                            fontSize: "12px",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <span>↻</span>
+                          <span>Try Again ({1 - (retriesUsed[step] || 0)} left)</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {/* Status + correct option pill */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                          <span
+                            style={{
+                              fontWeight: 800,
+                              fontSize: "12.5px",
+                              color: currentIsCorrect ? "#2E6F4E" : "#B86B3D",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                            }}
+                          >
+                            {currentIsCorrect ? "✓ Correct" : "✕ Incorrect"}
+                          </span>
+                          {!currentIsCorrect && (
+                            <span
+                              style={{
+                                fontSize: "12.5px",
+                                color: "#5A625C",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              <span>— correct option:</span>
+                              <span
+                                style={{
+                                  background: "#DCECE2",
+                                  color: "#2E6F4E",
+                                  fontWeight: 800,
+                                  borderRadius: "5px",
+                                  padding: "2px 8px",
+                                  fontSize: "11px",
+                                }}
+                              >
+                                {typeof (currentQ as any).answer === "number"
+                                  ? String.fromCharCode(65 + (currentQ as any).answer)
+                                  : Array.isArray((currentQ as any).answer)
+                                  ? (currentQ as any).answer.map((a: number) => String.fromCharCode(65 + a)).join(", ")
+                                  : (currentQ as any).correctAnswers
+                                  ? (currentQ as any).correctAnswers.join(", ")
+                                  : String((currentQ as any).answer || "")}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Explanation Markdown */}
+                        <div
+                          className="assessment-explanation-md"
+                          style={{
+                            fontSize: "13px",
+                            color: "#2C3530",
+                            lineHeight: 1.5,
+                            fontWeight: 500,
+                          }}
+                        >
+                          <MarkdownView
+                            isPurpleTheme={false}
+                            disableGlossary={false}
+                            content={
+                              (currentQ.explanation || "No explanation provided.")
+                                .replace(
+                                  /^(?:\*\*)?(?:Explanation|Brief Explanation|Solution|Answer|Model Answer|Outline Answer|Rationale|وضاحت)(?:\*\*)?[:\s-]*\s*/gi,
+                                  ""
+                                )
+                                .replace(/Rationale:\*\*\s*(?:correct:)?/gi, "")
+                                .replace(/---\s*#/g, "")
+                                .trim() || "No explanation provided."
+                            }
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* Bottom Card Footer: MSQ Submit (if applicable) & Next Button (Right) */}
+              {/* Thin Horizontal Divider above Footer */}
               <div
+                style={{
+                  height: "1px",
+                  background: "#EFECE6",
+                  margin: "12px 0 10px",
+                  width: "100%",
+                }}
+              />
+
+              {/* Bottom Card Footer: Source (Left) + Weak Cards & Next Question (Right) */}
+              <div
+                ref={footerRef}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
-                  marginTop: "6px",
                   width: "100%",
+                  gap: "12px",
+                  flexWrap: "wrap",
                 }}
               >
-                <div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginLeft: "auto" }}>
                   {currentQ.type === "msq" && !submitted && (
                     <button
+                      type="button"
                       onClick={handleMSQSubmit}
                       disabled={selectedMSQ.length === 0}
                       style={{
-                        padding: "5px 14px",
-                        borderRadius: "14px",
+                        padding: "8px 18px",
+                        borderRadius: "999px",
                         border: "none",
-                        background: "#2D3E36",
-                        color: "#ffffff",
-                        fontWeight: "700",
-                        fontSize: "12px",
+                        background: '#E7B864',
+                        color: '#18221D',
+                        fontWeight: 700,
+                        fontSize: "12.5px",
                         cursor: selectedMSQ.length === 0 ? "not-allowed" : "pointer",
                         opacity: selectedMSQ.length === 0 ? 0.45 : 1,
-                        boxShadow: "0 3px 8px rgba(45, 62, 54, 0.2)",
-                        transition: "all 0.2s ease",
                       }}
                     >
                       Submit Answer →
                     </button>
                   )}
+
+                  {submitted && !awaitingRetry && !currentIsCorrect && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setWeakCardsAdded((prev) => ({ ...prev, [step]: true }));
+                        try {
+                          const key = `sv_weak_cards_${subjectId}_${chapterNumber}`;
+                          const existing = JSON.parse(cloudStorage.getItem(key) || "[]");
+                          if (!existing.some((item: any) => item.q === currentQ.q)) {
+                            existing.push({
+                              q: currentQ.q,
+                              explanation: currentQ.explanation || "",
+                              addedAt: Date.now(),
+                            });
+                            cloudStorage.setItem(key, JSON.stringify(existing));
+                          }
+                        } catch {
+                          // ignore storage errors
+                        }
+                      }}
+                      style={{
+                        padding: "8px 16px",
+                        borderRadius: "999px",
+                        border: "1.5px solid #D5A37E",
+                        background: weakCardsAdded[step] ? "#FAF2E9" : "#FFFFFF",
+                        color: "#A86334",
+                        fontWeight: 700,
+                        fontSize: "12px",
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <span>{weakCardsAdded[step] ? "✓" : "↻"}</span>
+                      <span>
+                        {weakCardsAdded[step] ? "Added to Revise weak cards" : "Add to Revise weak cards"}
+                      </span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleNext}
+                    disabled={!submitted}
+                    title={
+                      submitted
+                        ? step < questions.length - 1
+                          ? "Next"
+                          : "Finish Assessment"
+                        : "Select an answer to proceed"
+                    }
+                    style={{
+                      padding: "9px 22px",
+                      borderRadius: "999px",
+                      border: "none",
+                      background: '#E7B864',
+                      color: '#18221D',
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      justifyContent: "center",
+                      cursor: submitted ? "pointer" : "default",
+                      opacity: submitted ? 1 : 0.4,
+                      fontSize: "12.5px",
+                      fontWeight: 800,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    <span>{step < questions.length - 1 ? "Next ›" : "Finish ›"}</span>
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  disabled={!submitted}
-                  title={
-                    submitted
-                      ? (step < questions.length - 1 ? "Next Question" : "Finish Assessment")
-                      : "Select an answer to proceed"
-                  }
-                  aria-label={step < questions.length - 1 ? "Next Question" : "Finish Assessment"}
-                  style={{
-                    padding: submitted ? "5px 14px" : "5px 10px",
-                    height: "30px",
-                    borderRadius: "15px",
-                    border: "none",
-                    background: "#2D3E36",
-                    color: "#ffffff",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    justifyContent: "center",
-                    cursor: submitted ? "pointer" : "default",
-                    opacity: submitted ? 1 : 0.35,
-                    boxShadow: submitted ? "0 3px 8px rgba(45, 62, 54, 0.25)" : "none",
-                    transition: "transform 0.2s ease, opacity 0.2s ease",
-                    marginLeft: "auto",
-                    flexShrink: 0,
-                    fontSize: "12px",
-                    fontWeight: "700",
-                  }}
-                  onMouseEnter={(e) => {
-                    if (submitted) e.currentTarget.style.transform = "scale(1.05)";
-                  }}
-                  onMouseLeave={(e) => {
-                    if (submitted) e.currentTarget.style.transform = "scale(1)";
-                  }}
-                >
-                  <span>{step < questions.length - 1 ? "Next Question" : "Finish"}</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="9 18 15 12 9 6" />
-                  </svg>
-                </button>
               </div>
-
             </div>
 
             {/* Right Action Icons shown only on Last Assessment Question */}

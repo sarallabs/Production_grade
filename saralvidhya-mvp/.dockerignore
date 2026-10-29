@@ -1,4 +1,4 @@
-### Dependencies & package manager caches
+﻿### Dependencies & package manager caches
 node_modules
 npm-debug.log
 .npm
@@ -13,7 +13,7 @@ dist-deploy
 .gitattributes
 .githooks
 
-# ─── CREDENTIALS & SECRETS (NEVER BAKE INTO IMAGE) ───
+# â”€â”€â”€ CREDENTIALS & SECRETS (NEVER BAKE INTO IMAGE) â”€â”€â”€
 firebase-service-account.json
 *-service-account.json
 *.pem
@@ -22,7 +22,7 @@ firebase-service-account.json
 .env.*
 !.env.example
 
-# ─── Scratch / debug files ───
+# â”€â”€â”€ Scratch / debug files â”€â”€â”€
 fix.js
 fix.cjs
 fix[0-9]*.cjs
@@ -52,8 +52,6 @@ diff_backup.txt
 
 # Docs & metadata (not needed in image)
 README.md
-AGENTS.md
-CLAUDE.md
 Session_Documentation.md
 UPLOAD_AUDIO_GUIDE.md
 deploy_firebase.md
@@ -64,11 +62,6 @@ docs/
 # IDE / local tooling
 .vscode/
 .idea/
-.agents/
-.claude/
-.projectbrain.json
-.projectbrain_graph.json
-project_brain.py
 .wrangler/
 .vite-cache/
 .pytest_cache/

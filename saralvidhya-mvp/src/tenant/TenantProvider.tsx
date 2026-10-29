@@ -7,6 +7,7 @@ import {
   applyHydratedCloudState,
   getCloudAuthHeaders,
 } from '@/context/CloudStateContext';
+import { registerCloudGlossaryTerms } from '@/data/glossaryTerms';
 
 export interface TenantConfig {
   id: string;
@@ -25,6 +26,8 @@ export interface TenantConfig {
     faviconUrl?: string;
     loginBannerUrl?: string;
   };
+    publicImageUrls?: Record<string, string>;
+    boardLogoUrls?: Record<string, string>;
   branding: {
     appName: string;
     primaryColor: string;
@@ -52,6 +55,8 @@ export interface TenantConfig {
     bucket: string;
     prefix: string;
   };
+  uiCopy?: Record<string, any>;
+  translations?: Record<string, Record<string, string>>;
 }
 
 export interface TenantContextValue {
@@ -89,6 +94,7 @@ export const RESERVED_PATHS = new Set([
   'chapters',
   'subjects',
   'dashboard',
+  'production',
 ]);
 
 const GENERIC_HOST_PREFIXES = new Set([
@@ -99,8 +105,9 @@ const GENERIC_HOST_PREFIXES = new Set([
   'saralvidhya',
   'saralvidhya-mvp',
   'saralvidhya-api',
+  'saralvidhya-production',
+  'production',
 ]);
-
 import universityConfig from '@/config/university_config.json';
 
 /**
@@ -116,20 +123,7 @@ export function detectTenantId(): string | null {
     return aliases[clean]?.endsWith('_university') ? clean : aliases[clean] || clean;
   };
 
-  // 1. Path-based tenant detection (e.g. /:tenant/...)
-  const first = (window.location.pathname.split('/').filter(Boolean)[0] || '').toLowerCase();
-  if (first && !RESERVED_PATHS.has(first)) return normalizeTenant(first);
-
-  // 2. Query parameter tenant / boardId detection (e.g. /chapters?boardId=... or /study-table?boardId=...)
-  if (typeof window !== 'undefined' && window.location.search) {
-    const params = new URLSearchParams(window.location.search);
-    const paramTenant = params.get('tenant') || params.get('boardId');
-    if (paramTenant) {
-      return normalizeTenant(paramTenant);
-    }
-  }
-
-  // 3. Hostname / Subdomain pattern detection (e.g. saralvidhya-<tenant>.pages.dev or *.saralvidhya-<tenant>.pages.dev)
+  // 1. Hostname / Subdomain pattern detection (e.g. saralvidhya-<tenant>.web.app or <tenant>.saralvidhya.com)
   const hostname = (window.location.hostname || '').toLowerCase();
   const hyphenMatch =
     hostname.match(/(?:^|\.)saralvidhya-([a-z0-9_]+)\./) ||
@@ -160,6 +154,63 @@ export function detectTenantId(): string | null {
   return cloudStorage.getItem('current_tenant_id');
 }
 
+export function getFallbackTenantId(): string {
+  const active = detectTenantId();
+  if (active) return active;
+  const boards = ((universityConfig as any).defaultVisibleBoards || []) as string[];
+  const first = (boards[1] || boards[0] || 'default').toLowerCase().replace(/_university$/, '');
+  return first || 'default';
+}
+
+let activeCloudPlatformConfig: Record<string, any> | null = null;
+let activeCloudTenantConfig: TenantConfig | null = null;
+
+export function getCloudPlatformConfig(): Record<string, any> | null {
+  return activeCloudPlatformConfig;
+}
+
+export function getCloudUiCopy(): Record<string, any> {
+  return {
+    ...(activeCloudPlatformConfig?.uiCopy || {}),
+    ...(activeCloudTenantConfig?.uiCopy || {}),
+    studyTools: {
+      ...(activeCloudPlatformConfig?.uiCopy?.studyTools || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.studyTools || {}),
+      key_takeaways: "Takeaways",
+      prep_exam: "Exam Prep.",
+    },
+    toolbarLabels: {
+      ...(activeCloudPlatformConfig?.uiCopy?.toolbarLabels || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.toolbarLabels || {}),
+      key_takeaways: "Takeaways",
+      prep_exam: "Exam Prep.",
+    },
+    toolbarSections: {
+      ...(activeCloudPlatformConfig?.uiCopy?.toolbarSections || {}),
+      ...(activeCloudTenantConfig?.uiCopy?.toolbarSections || {}),
+    },
+  };
+}
+
+export function getCloudPublicImageUrl(localPath: string): string {
+  if (!localPath) return localPath;
+  const trimmed = localPath.trim();
+  const map =
+    activeCloudTenantConfig?.assets?.publicImageUrls ||
+    activeCloudPlatformConfig?.assets?.publicImageUrls ||
+    {};
+  const clean = trimmed.replace(/^\/+/, '');
+  return map[trimmed] || map[`/${clean}`] || map[clean] || trimmed;
+}
+
+export function getCloudBoardLogoUrl(boardId: string): string | undefined {
+  if (!boardId) return undefined;
+  const map =
+    activeCloudTenantConfig?.assets?.boardLogoUrls ||
+    activeCloudPlatformConfig?.assets?.boardLogoUrls ||
+    {};
+  return map[boardId] || map[boardId.toLowerCase()];
+}
 function applyTenantBrandingToDom(cfg: TenantConfig) {
   if (cfg.branding?.appName) {
     cfg.branding.appName =
@@ -260,6 +311,16 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
         const data = await resp.json();
         if (isMounted && data.tenant) {
+          if (data.platformConfig) {
+            activeCloudPlatformConfig = data.platformConfig;
+            if (data.platformConfig.glossaryTerms) {
+              registerCloudGlossaryTerms(data.platformConfig.glossaryTerms);
+            }
+          }
+          if (data.tenant.glossaryTerms) {
+            registerCloudGlossaryTerms(data.tenant.glossaryTerms);
+          }
+          activeCloudTenantConfig = data.tenant;
           applyTenantBrandingToDom(data.tenant);
           setTenant(data.tenant);
           cloudStorage.setItem(`tenant_cfg_${tenantId}`, JSON.stringify(data.tenant), true);
@@ -337,6 +398,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       cloudStorage.removeItem(`sv_session_${tenantId}`);
     }
     cloudStorage.removeItem('app_authenticated');
+    cloudStorage.removeItem('app_role');
+    cloudStorage.removeItem('app_user_id');
+    cloudStorage.removeItem('username');
+    cloudStorage.removeItem('questionnaire_completed');
     cloudStorage.removeItem('sv_video_open_counts');
     setCookieAuthenticated(false);
     setToken(null);
@@ -345,11 +410,9 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const tenantPath = useCallback(
     (path: string): string => {
-      const cleanPath = path.startsWith('/') ? path : `/${path}`;
-      if (!tenantId) return cleanPath;
-      return `/${tenantId}${cleanPath}`;
+      return path.startsWith('/') ? path : `/${path}`;
     },
-    [tenantId]
+    []
   );
 
   const contextValue = useMemo<TenantContextValue>(

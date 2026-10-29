@@ -2,6 +2,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useFocusMode } from '@/context/FocusModeContext';
 import MarkdownView from '@/components/MarkdownView';
+import { getFallbackTenantId, getCloudUiCopy } from '@/tenant/TenantProvider';
+import { registryClient } from '@/data/registryClient';
+import { trackCloudEvent } from '@/utils/analytics';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export interface QuestionData {
   id: number;
@@ -16,6 +20,8 @@ export interface QuestionData {
   year?: number;
   frequency?: number;
   repeatedYears?: string;
+  yearRange?: string;
+  examSession?: string;
 }
 
 export const MATH_MOCKED_QUESTIONS: QuestionData[] = [
@@ -276,131 +282,408 @@ export const QUESTIONS_MAP: Record<string, QuestionData[]> = {
   anu_characterization: ANU_CHARACTERIZATION_MOCKED_QUESTIONS,
 };
 
-export function QuestionCard({ question, onSOS }: { question: QuestionData; onSOS: () => void }) {
+export function QuestionCard({
+  question,
+  onSOS,
+  defaultExpanded = true,
+}: {
+  question: QuestionData;
+  onSOS: () => void;
+  defaultExpanded?: boolean;
+}) {
   const [isCompleted, setIsCompleted] = useState(false);
-  const [isLongAnswer, setIsLongAnswer] = useState(true);
+  const [isLongAnswer, setIsLongAnswer] = useState(false);
+  const [isAnswerHidden, setIsAnswerHidden] = useState(!defaultExpanded);
+
+  const plainPreview = useMemo(() => {
+    const raw = (question.shortAnswer || question.longAnswer || "").trim();
+    const cleaned = raw
+      .replace(/[#>*_`~-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    return cleaned.length > 165 ? `${cleaned.slice(0, 165)}...` : cleaned;
+  }, [question.shortAnswer, question.longAnswer]);
+
+  const budgetMinutes =
+    question.marks >= 10 ? "12–15" : question.marks >= 5 ? "6–8" : "2–3";
+
+  const yearRangeText = useMemo(() => {
+    if (question.yearRange) return question.yearRange;
+    if (question.repeatedYears) {
+      const yrs = question.repeatedYears
+        .split(",")
+        .map((s) => parseInt(s.trim().replace(/[^0-9]/g, "").slice(0, 4)))
+        .filter((n) => !isNaN(n));
+      if (yrs.length >= 2) {
+        const minY = Math.min(...yrs);
+        const maxY = Math.max(...yrs);
+        return minY === maxY ? `${maxY}` : `${minY}–${maxY}`;
+      }
+    }
+    return question.year ? `2020–${question.year}` : "2020–2024";
+  }, [question.yearRange, question.repeatedYears, question.year]);
 
   return (
-    <div style={{ flexShrink: 0, display: 'flex', gap: '16px', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
-
-      {/* Left red accent bar */}
-      <div style={{ width: '4px', background: '#fca5a5', position: 'absolute', left: 0, top: 0, bottom: 0 }} />
-
-      {/* Main Content */}
-      <div style={{ flex: 1, padding: '20px', paddingLeft: '24px', display: 'flex', flexDirection: 'column' }}>
-
-        {/* Question Row (Inline Q1) + Marks) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', flex: 1 }}>
-            <h2 style={{ fontSize: '16px', margin: 0, color: '#1e293b', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Q{question.id})</h2>
-            <div style={{ fontSize: '16px', color: '#0f172a', lineHeight: '1.5', fontWeight: 500, whiteSpace: 'pre-wrap' }}>
-              {question.text}
-            </div>
+    <div
+      onClick={() => {
+        if (isAnswerHidden) setIsAnswerHidden(false);
+      }}
+      style={{
+        flexShrink: 0,
+        display: "flex",
+        flexDirection: "column",
+        background: "#FFFFFF",
+        borderRadius: "16px",
+        boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+        border: "1px solid #E6E0D4",
+        padding: "20px 24px",
+        fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
+        color: "#1E2822",
+        cursor: isAnswerHidden ? "pointer" : "default",
+        transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+      }}
+    >
+      {/* Top Question Header Row */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: "16px",
+        }}
+      >
+        <div style={{ display: "flex", gap: "10px", alignItems: "baseline", flex: 1 }}>
+          <span
+            style={{
+              fontSize: "15.5px",
+              color: "#B46530",
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            Q{question.id})
+          </span>
+          <div
+            style={{
+              fontSize: "15.5px",
+              color: "#1E2822",
+              lineHeight: 1.45,
+              fontWeight: 700,
+            }}
+          >
+            {question.text}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: '16px', flexShrink: 0 }}>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ background: '#d1fae5', color: '#059669', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.chapter}</span>
-              {question.year && (
-                <span style={{ background: '#fef3c7', color: '#b45309', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>📅 {question.year}</span>
-              )}
-              {typeof question.frequency === 'number' && question.frequency > 1 && (
-                <span
-                  title={question.repeatedYears ? `Asked in: ${question.repeatedYears}` : undefined}
-                  style={{ background: '#ede9fe', color: '#6d28d9', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}
-                >
-                  🔁 Asked {question.frequency}×
-                </span>
-              )}
-            </div>
-            <span style={{ background: '#e2e8f0', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', color: '#334155', fontSize: '13px' }}>
+        </div>
+
+        {/* Right Metadata Badges + Mark Completed */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: "8px",
+            flexShrink: 0,
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <span
+              style={{
+                background: "#F2EFE9",
+                color: "#49524C",
+                padding: "4px 10px",
+                borderRadius: "6px",
+                fontSize: "11px",
+                fontWeight: 700,
+              }}
+            >
+              {question.chapter}
+            </span>
+
+            {typeof question.frequency === "number" && question.frequency > 1 && (
+              <span
+                title={question.repeatedYears ? `Asked in: ${question.repeatedYears}` : undefined}
+                style={{
+                  background: "#C27D4E",
+                  color: "#FFFFFF",
+                  padding: "4px 10px",
+                  borderRadius: "6px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                }}
+              >
+                Asked {question.frequency}x · {yearRangeText}
+              </span>
+            )}
+
+            {!isAnswerHidden && question.year && (
+              <span
+                style={{
+                  background: "#F2EFE9",
+                  color: "#49524C",
+                  padding: "4px 10px",
+                  borderRadius: "6px",
+                  fontSize: "11px",
+                  fontWeight: 700,
+                }}
+              >
+                {question.examSession || `End-Sem · Dec ${question.year}`}
+              </span>
+            )}
+
+            <span
+              style={{
+                background: "#F5EDE3",
+                color: "#8C5228",
+                padding: "4px 9px",
+                borderRadius: "6px",
+                fontWeight: 800,
+                fontSize: "11px",
+              }}
+            >
               {question.marks}M
             </span>
           </div>
-        </div>
 
-        {/* Actions Row (Directly under question) */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          {!isAnswerHidden && (
             <button
+              type="button"
               onClick={() => setIsCompleted(!isCompleted)}
               style={{
-                background: isCompleted ? '#f0fdf4' : '#f8fafc',
-                color: isCompleted ? '#15803d' : '#475569',
-                border: `1px solid ${isCompleted ? '#86efac' : '#cbd5e1'}`,
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                transition: 'all 0.2s',
+                background: isCompleted ? '#B5BA9B' : '#FFFFFF',
+                color: isCompleted ? '#18221D' : '#38423B',
+                border: isCompleted ? '1.5px solid #969C7C' : '1px solid #DFD9CE',
+                padding: "5px 14px",
+                borderRadius: "999px",
+                fontWeight: 700,
+                cursor: "pointer",
+                fontSize: "11.5px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                transition: "all 0.15s ease",
               }}
             >
-              {isCompleted ? '✓ Completed' : '○ Mark Completed'}
+              <span>✓</span>
+              <span>{isCompleted ? "Completed" : "Mark completed"}</span>
             </button>
+          )}
+        </div>
+      </div>
+
+      {/* Collapsed 1-Line Preview vs Expanded Callout + Model Answer */}
+      {isAnswerHidden ? (
+        <div
+          style={{
+            marginTop: "12px",
+            paddingLeft: "12px",
+            borderLeft: "3px solid #C8C1B4",
+            fontSize: "12.5px",
+            color: "#5A625C",
+            lineHeight: 1.5,
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+        >
+          {plainPreview || "Click to view model answer..."}
+        </div>
+      ) : (
+        <>
+          {/* Dashed Callout Banner: "Attempt before you read" */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              marginTop: "14px",
+              background: "#FCF9F4",
+              border: "1.5px dashed #DEC6B0",
+              borderRadius: "12px",
+              padding: "11px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "15px" }}>✍️</span>
+              <div>
+                <div style={{ fontSize: "12px", fontWeight: 800, color: "#1E2822" }}>
+                  Attempt before you read
+                </div>
+                <div style={{ fontSize: "11px", color: "#6E766E", marginTop: "1px" }}>
+                  {question.frequency && question.frequency > 1
+                    ? `This appeared ${question.frequency} times in 5 years — treat it as a mock-exam question.`
+                    : "High-yield university exam question — try outlining your answer before reading."}
+                </div>
+              </div>
+            </div>
+
             <button
-              onClick={onSOS}
-              title="Enter Focus Mode for this chapter"
+              type="button"
+              onClick={() => setIsAnswerHidden(true)}
               style={{
-                background: '#fee2e2',
-                color: '#b91c1c',
-                border: '1px solid #fca5a5',
-                padding: '6px 12px',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                transition: 'all 0.2s',
+                background: '#B5BA9B',
+                color: '#18221D',
+                border: "none",
+                borderRadius: "999px",
+                padding: "7px 16px",
+                fontSize: "11.5px",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
               }}
             >
-              <span style={{ background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', letterSpacing: '0.5px' }}>SOS</span>
+              {"Hide answer & try first"}
             </button>
           </div>
-        </div>
 
-        {/* Answer Box */}
-        <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '16px', border: '1px solid #bbf7d0', marginTop: 'auto', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: '4px', background: '#22c55e' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', paddingLeft: '8px' }}>
-            <h3 style={{ margin: 0, fontSize: '14px', color: '#166534', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 800 }}>Answer</h3>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', background: '#dcfce7', padding: '3px 6px', borderRadius: '20px' }}>
+          {/* Model Answer Container */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              marginTop: "14px",
+              background: "#FAF8F3",
+              border: "1px solid #EFECE4",
+              borderRadius: "12px",
+              padding: "18px 22px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "12px",
+              }}
+            >
               <span
-                onClick={() => setIsLongAnswer(false)}
-                style={{ cursor: 'pointer', padding: '3px 10px', borderRadius: '16px', background: !isLongAnswer ? '#fff' : 'transparent', fontWeight: !isLongAnswer ? 'bold' : '600', color: !isLongAnswer ? '#166534' : '#15803d', transition: 'all 0.2s', boxShadow: !isLongAnswer ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 800,
+                  color: "#6E766E",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
               >
-                Short
+                MODEL ANSWER
               </span>
-              <span
-                onClick={() => setIsLongAnswer(true)}
-                style={{ cursor: 'pointer', padding: '3px 10px', borderRadius: '16px', background: isLongAnswer ? '#fff' : 'transparent', fontWeight: isLongAnswer ? 'bold' : '600', color: isLongAnswer ? '#166534' : '#15803d', transition: 'all 0.2s', boxShadow: isLongAnswer ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+
+              <div
+                style={{
+                  display: "inline-flex",
+                  borderRadius: "8px",
+                  border: "1px solid #DFD9CE",
+                  overflow: "hidden",
+                  background: "#FFFFFF",
+                }}
               >
-                Long
+                <button
+                  type="button"
+                  onClick={() => setIsLongAnswer(false)}
+                  style={{
+                    cursor: "pointer",
+                    padding: "4px 12px",
+                    border: "none",
+                    background: !isLongAnswer ? '#B5BA9B' : '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                    color: !isLongAnswer ? '#18221D' : '#49524C',
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Short
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsLongAnswer(true)}
+                  style={{
+                    cursor: "pointer",
+                    padding: "4px 12px",
+                    border: "none",
+                    background: isLongAnswer ? '#B5BA9B' : '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '11.5px',
+                    color: isLongAnswer ? '#18221D' : '#49524C',
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  Long
+                </button>
+              </div>
+            </div>
+
+            <div style={{ fontSize: "14px", color: "#1E2822", lineHeight: 1.65 }}>
+              <MarkdownView
+                content={isLongAnswer ? question.longAnswer : question.shortAnswer}
+                isPurpleTheme={false}
+              />
+            </div>
+
+            <div
+              style={{
+                marginTop: "14px",
+                fontSize: "11.5px",
+                fontWeight: 700,
+                color: "#B46530",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <span>◷</span>
+              <span>
+                Exam budget · {budgetMinutes} minutes of writing time for this question
               </span>
             </div>
           </div>
-          <div style={{ fontSize: '15px', color: '#14532d', lineHeight: '1.6', paddingLeft: '8px' }}>
-            <MarkdownView content={isLongAnswer ? question.longAnswer : question.shortAnswer} />
-          </div>
-        </div>
-
-      </div>
+        </>
+      )}
     </div>
   );
 }
 
 export default function PreviousYearQuestions() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { startFocusMode } = useFocusMode();
   const [year, setYear] = useState('');
 
-  const subjectIdFromUrl = searchParams.get('sId') || searchParams.get('subjectId') || 'maths';
+  const savedCourseParams: Record<string, string> = (() => {
+    try { return JSON.parse(cloudStorage.getItem('sv_last_course_params') || '{}'); } catch { return {}; }
+  })();
+  const subjectIdFromUrl = searchParams.get('sId') || searchParams.get('subjectId') || savedCourseParams.sId || 'maths';
   const [selectedSubject, setSelectedSubject] = useState(subjectIdFromUrl);
 
+  useEffect(() => {
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+    }
+  }, []);
+  const [cloudPyqBySubject, setCloudPyqBySubject] = useState<Record<string, QuestionData[]>>({});
+  const [cloudAvailableSubjects, setCloudAvailableSubjects] = useState<Array<{ id: string; name: string }>>([]);
+  const [cloudSubjectMeta, setCloudSubjectMeta] = useState<Record<string, { title: string; subtitle: string }>>({});
+  const uiCopy = getCloudUiCopy();
+
+  useEffect(() => {
+    const tId = getFallbackTenantId();
+    registryClient
+      .getPracticeFallback(tId, selectedSubject)
+      .then((bank) => {
+        if (bank?.pyqQuestionsBySubject && typeof bank.pyqQuestionsBySubject === 'object') {
+          setCloudPyqBySubject((prev) => ({ ...prev, ...bank.pyqQuestionsBySubject }));
+        }
+        if (Array.isArray(bank?.availableSubjects) && bank.availableSubjects.length > 0) {
+          setCloudAvailableSubjects(bank.availableSubjects);
+        }
+        if (bank?.subjectMeta && typeof bank.subjectMeta === 'object') {
+          setCloudSubjectMeta((prev) => ({ ...prev, ...bank.subjectMeta }));
+        }
+      })
+      .catch(() => {});
+  }, [selectedSubject]);
   useEffect(() => {
     const sId = searchParams.get('sId') || searchParams.get('subjectId');
     if (sId && sId !== selectedSubject) {
@@ -410,14 +693,20 @@ export default function PreviousYearQuestions() {
 
   const handleSubjectChange = (newSubject: string) => {
     setSelectedSubject(newSubject);
-    setSearchParams(
-      (prev) => {
-        const next = new URLSearchParams(prev);
-        next.set('sId', newSubject);
-        return next;
+    trackCloudEvent(
+      'pyq.subject_select',
+      {
+        category: 'assessment',
+        subjectId: newSubject,
+        toolId: 'pyq',
+        label: newSubject,
       },
-      { replace: true }
+      true
     );
+    try {
+      const nextCourse = { ...savedCourseParams, sId: newSubject };
+      cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextCourse));
+    } catch {}
   };
 
   const handleSOS = (subjectId: string, chapterNumber: number) => {
@@ -425,7 +714,10 @@ export default function PreviousYearQuestions() {
     navigate(`/subjects/${subjectId}/chapter/${chapterNumber}`);
   };
 
-  const baseQuestions = QUESTIONS_MAP[selectedSubject] || [];
+  const baseQuestions =
+    cloudPyqBySubject[selectedSubject] || QUESTIONS_MAP[selectedSubject] || [];
+  const activeSubjectsList =
+    cloudAvailableSubjects.length > 0 ? cloudAvailableSubjects : AVAILABLE_SUBJECTS;
 
   const availableYearsForSubject = useMemo(() => {
     const years = baseQuestions
@@ -441,7 +733,9 @@ export default function PreviousYearQuestions() {
   }, [selectedSubject, availableYearsForSubject, year]);
 
   const displayQuestions = baseQuestions.filter(q => !year || q.year === parseInt(year));
-  const meta = SUBJECT_META[selectedSubject] || { title: 'Previous Year Questions', subtitle: '' };
+  const meta =
+    cloudSubjectMeta[selectedSubject] ||
+    SUBJECT_META[selectedSubject] || { title: 'Previous Year Questions', subtitle: '' };
 
   return (
     <div className="page pyq-page" style={{ padding: '24px', maxWidth: '1200px', margin: '0 auto', overflowY: 'auto', height: '100vh', boxSizing: 'border-box' }}>
@@ -450,7 +744,7 @@ export default function PreviousYearQuestions() {
         onClick={() => navigate(-1)}
         style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', marginBottom: '16px', fontSize: '16px', padding: 0 }}
       >
-        ← Back
+        {uiCopy.pyqBackButton || '← Back'}
       </button>
 
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>
@@ -462,7 +756,7 @@ export default function PreviousYearQuestions() {
             onChange={(e) => handleSubjectChange(e.target.value)}
             style={{ width: '100%', padding: '12px', borderRadius: '6px', border: '1px solid #ccc', backgroundColor: 'white' }}
           >
-            {AVAILABLE_SUBJECTS.map((sub) => (
+            {activeSubjectsList.map((sub) => (
               <option key={sub.id} value={sub.id}>
                 {sub.name}
               </option>
@@ -490,16 +784,16 @@ export default function PreviousYearQuestions() {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '32px', paddingBottom: '40px' }}>
         {displayQuestions.length > 0 ? (
-          displayQuestions.map((q) => (
+          displayQuestions.map((q, idx) => (
             <QuestionCard
-              key={q.id}
-              question={q}
+              key={q.id ?? idx}
+              question={{ ...q, id: idx + 1 }}
               onSOS={() => handleSOS(q.subjectId, q.chapterNumber)}
             />
           ))
         ) : (
           <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
-            No previous year questions found for the selected criteria.
+            {uiCopy.pyqEmptyState || 'No previous year questions found for the selected criteria.'}
           </div>
         )}
       </div>

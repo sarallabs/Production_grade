@@ -7,6 +7,8 @@ import {
   getChapters,
   getVisibleBoardIds,
   getRegistryTenantId,
+  resolveCloudImageSrc,
+  resolveChapterHeroFromRegistry,
   type Catalog,
   type CatalogBoard,
   type CatalogClass,
@@ -21,19 +23,64 @@ import { useTenant } from '@/tenant/TenantProvider';
 import { cloudStorage } from '@/context/CloudStateContext';
 import './ClassSubjectSelection.css';
 
+function getFallbackSubjectIconUrl(subject: CatalogSubject): string | undefined {
+  const lowerId = (subject.id || '').toLowerCase();
+  const lowerName = (subject.name || '').toLowerCase();
+  const lowerCode = (subject.code || '').toLowerCase();
+  if (lowerId.includes('dbms') || lowerName.includes('database') || lowerCode.includes('cs302')) {
+    return '/subject-dbms-icon.png';
+  }
+  if (lowerId.includes('ento') || lowerName.includes('entomology')) {
+    return '/subject-entomology-icon.png';
+  }
+  return undefined;
+}
+
+function resolveIconSrc(rawUrl: string, subjectId?: string): string {
+  return (
+    resolveCloudImageSrc(rawUrl, subjectId) ||
+    `${import.meta.env.BASE_URL}${rawUrl.replace(/^\//, '')}`
+  );
+}
+
 function SubjectIcon({ subject }: { subject: CatalogSubject }) {
-  if (subject.iconUrl) {
-    const src =
-      subject.iconUrl.startsWith('http://') ||
-      subject.iconUrl.startsWith('https://') ||
-      subject.iconUrl.startsWith('data:')
-        ? subject.iconUrl
-        : `${import.meta.env.BASE_URL}${subject.iconUrl.replace(/^\//, '')}`;
+  const [cloudIconUrl, setCloudIconUrl] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!subject.iconUrl && !subject.thumbnailUrl && !subject.bannerUrl) {
+      const firstCh = subject.chapterNumbers?.[0] ?? 1;
+      resolveChapterHeroFromRegistry(subject.id, firstCh).then((res) => {
+        if (!cancelled && (res?.thumbnailUrl || res?.heroImageUrl)) {
+          setCloudIconUrl(res.thumbnailUrl || res.heroImageUrl);
+        }
+      });
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [subject.id, subject.iconUrl, subject.thumbnailUrl, subject.bannerUrl, subject.chapterNumbers]);
+
+  const fallbackUrl = getFallbackSubjectIconUrl(subject);
+  const dbIconUrl =
+    subject.iconUrl || subject.thumbnailUrl || subject.bannerUrl || cloudIconUrl;
+  const effectiveIconUrl = dbIconUrl || fallbackUrl;
+
+  if (effectiveIconUrl) {
+    const src = resolveIconSrc(effectiveIconUrl, subject.id);
+    const fallbackSrc = fallbackUrl ? resolveIconSrc(fallbackUrl, subject.id) : undefined;
     return (
       <img
         src={src}
         alt={subject.name}
-        className={`sv-card-book-img ${subject.iconUrl.includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
+        className={`sv-card-book-img ${effectiveIconUrl.includes('dbms') || subject.id.toLowerCase().includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
+        onError={(e) => {
+          const img = e.currentTarget;
+          if (fallbackSrc && img.src !== window.location.origin + fallbackSrc && !img.dataset.fallbackApplied) {
+            img.dataset.fallbackApplied = 'true';
+            img.src = fallbackSrc;
+          }
+        }}
       />
     );
   }
@@ -193,26 +240,27 @@ export default function ClassSubjectSelection() {
 
   const handleSubjectClick = (subject: CatalogSubject, targetChapter?: number) => {
     if (!selectedBoard || !selectedClass) return;
-    const params = new URLSearchParams({
-      boardId: selectedBoard.id,
-      boardName: selectedBoard.shortName || selectedBoard.name,
-      cId: `${selectedBoard.id}_${selectedClass.id}`,
-      className: `${selectedBoard.shortName || selectedBoard.name} ${selectedClass.name}`,
-      sId: subject.id,
-      subjectName: subject.name,
-    });
+    const cId = `${selectedBoard.id}_${selectedClass.id}`;
+    const sId = subject.id;
     const userPersona = (cloudStorage.getItem('user_persona') || 'beginner').toLowerCase();
-    const cId = params.get('cId') || '';
-    const sId = params.get('sId') || '';
     if (cId && sId) {
       cloudStorage.setItem(`persona_${cId}_${sId}`, userPersona);
     }
 
-    params.set('persona', userPersona);
+    const courseParams: Record<string, string> = {
+      boardId: selectedBoard.id,
+      boardName: selectedBoard.shortName || selectedBoard.name,
+      cId,
+      className: `${selectedBoard.shortName || selectedBoard.name} ${selectedClass.name}`,
+      sId,
+      subjectName: subject.name,
+      persona: userPersona,
+    };
     if (targetChapter) {
-      params.set('chapter', targetChapter.toString());
+      courseParams.chapter = targetChapter.toString();
     }
-    navigate(tenantPath(`/chapters?${params.toString()}`));
+    cloudStorage.setItem('sv_last_course_params', JSON.stringify(courseParams));
+    navigate(tenantPath('/chapters'), { state: courseParams });
   };
 
   const handleBackToBoard = () => {
@@ -258,32 +306,6 @@ export default function ClassSubjectSelection() {
                 height={132}
               />
             </div>
-            {step > 0 && (
-              <div className="sv-breadcrumb">
-                <span className="sv-bc-sep">/</span>
-                {activeTenantId ? (
-                  <span className="sv-bc-current">{selectedBoard?.shortName || selectedBoard?.name}</span>
-                ) : (
-                  <span className="sv-bc-link" onClick={handleBackToBoard}>
-                    {selectedBoard?.shortName || selectedBoard?.name}
-                  </span>
-                )}
-                {step > 1 && (
-                  <>
-                    {!activeTenantId && (selectedBoard?.classes.length ?? 0) > 1 && (
-                      <>
-                        <span className="sv-bc-sep">/</span>
-                        <span className="sv-bc-link" onClick={handleBackToClass}>
-                          {selectedClass?.name}
-                        </span>
-                      </>
-                    )}
-                    <span className="sv-bc-sep">/</span>
-                    <span className="sv-bc-current">Subjects</span>
-                  </>
-                )}
-              </div>
-            )}
           </div>
           <div className="sv-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button
@@ -298,27 +320,27 @@ export default function ClassSubjectSelection() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1.5px solid #EF4444',
-                background: '#FEF2F2',
-                color: '#EF4444',
+                border: '1.5px solid #F5F2EB',
+                background: '#F5F2EB',
+                color: '#546C60',
                 cursor: 'pointer',
                 flexShrink: 0,
-                boxShadow: '0 1px 4px rgba(239, 68, 68, 0.12)',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.14)',
                 transition: 'all 0.2s ease',
               }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#FEE2E2';
+                (e.currentTarget as HTMLButtonElement).style.background = '#FFFFFF';
                 (e.currentTarget as HTMLButtonElement).style.transform = 'scale(1.08)';
               }}
               onMouseLeave={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = '#FEF2F2';
+                (e.currentTarget as HTMLButtonElement).style.background = '#F5F2EB';
                 (e.currentTarget as HTMLButtonElement).style.transform = 'none';
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EF4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
-                <polyline points="15 8 19 12 15 16" />
-                <line x1="9" y1="12" x2="19" y2="12" />
+              <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#546C60' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8' />
+                <polyline points='15 8 19 12 15 16' />
+                <line x1='9' y1='12' x2='19' y2='12' />
               </svg>
             </button>
             <button className="sv-profile-btn" onClick={() => navigate(tenantPath('/profile'))}>

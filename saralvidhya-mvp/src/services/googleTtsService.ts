@@ -15,7 +15,7 @@ import {
   CLOUD_API_BASE,
   getCloudAuthHeaders,
 } from '@/context/CloudStateContext';
-
+import { detectTenantId } from '@/tenant/TenantProvider';
 const GOOGLE_API_KEY: string =
   (import.meta as any).env?.VITE_GOOGLE_API_KEY ??
   (import.meta as any).env?.VITE_GEMINI_API_KEY ??
@@ -40,7 +40,7 @@ function getVoiceNameForGender(voice: VoiceConfig, isMale: boolean): string {
   return isMale ? voice.male : voice.female;
 }
 
-const CHUNK_SIZE = 4500; // Cloud TTS allows up to 5000 chars per request
+const CHUNK_SIZE = 820; // Keep SSML with <mark> tags strictly under Google Cloud TTS 5000-byte limit
 
 // ── Script detection ───────────────────────────────────────────────────────────
 export function detectLangCode(text: string, fallbackBcp47: string): string {
@@ -109,40 +109,74 @@ export function sanitizeForTts(raw: string): string {
   return t;
 }
 
-// ── Chunk splitter ─────────────────────────────────────────────────────────────
-function splitIntoChunks(text: string, maxLen: number): string[] {
-  if (text.length <= maxLen) return [text];
-
-  const chunks: string[] = [];
-  const sentences = text.split(/(?<=[.!?।؟])\s+/);
-  let current = '';
-  for (const s of sentences) {
-    if ((current + ' ' + s).trim().length <= maxLen) {
-      current = (current + ' ' + s).trim();
-    } else {
-      if (current) chunks.push(current);
-      if (s.length > maxLen) {
-        const words = s.split(' ');
-        let w = '';
-        for (const word of words) {
-          if ((w + ' ' + word).trim().length <= maxLen) {
-            w = (w + ' ' + word).trim();
-          } else {
-            if (w) chunks.push(w);
-            w = word;
-          }
-        }
-        if (w) chunks.push(w);
-        current = '';
-      } else {
-        current = s;
-      }
-    }
-  }
-  if (current) chunks.push(current);
-  return chunks.filter(c => c.trim().length > 0);
+// ── Chunk splitter (preserves exact character offsets in the source text) ───────
+interface TextChunkMeta {
+  text: string;
+  start: number;
 }
 
+function splitIntoChunksWithOffsets(text: string, maxLen: number): TextChunkMeta[] {
+  const chunks: TextChunkMeta[] = [];
+  const n = text.length;
+  let pos = 0;
+
+  while (pos < n) {
+    // Skip leading whitespace while keeping exact offset `pos`
+    while (pos < n && /\s/.test(text[pos])) pos++;
+    if (pos >= n) break;
+
+    let end = Math.min(n, pos + maxLen);
+    if (end < n) {
+      const slice = text.slice(pos, end);
+      // Prefer splitting after sentence-ending punctuation (. ! ? । ؟ or newline)
+      let splitRel = -1;
+      const sentenceRe = /[.!?।؟\n]\s+/g;
+      let m: RegExpExecArray | null;
+      while ((m = sentenceRe.exec(slice)) !== null) {
+        if (m.index + m[0].length >= 120) {
+          splitRel = m.index + 1;
+        }
+      }
+      // Next preference: split after comma/semicolon/colon/dash
+      if (splitRel === -1) {
+        const clauseRe = /[,;:—–-]\s+/g;
+        while ((m = clauseRe.exec(slice)) !== null) {
+          if (m.index + m[0].length >= 160) {
+            splitRel = m.index + 1;
+          }
+        }
+      }
+      // Fallback: last whitespace before `end`
+      if (splitRel === -1) {
+        const lastSpace = slice.lastIndexOf(' ');
+        const lastNl = slice.lastIndexOf('\n');
+        const wsIdx = Math.max(lastSpace, lastNl);
+        if (wsIdx > 0) splitRel = wsIdx;
+      }
+      if (splitRel > 0) {
+        end = pos + splitRel;
+      }
+    }
+
+    // Also cap word count to <= 115 words so SSML <mark> overhead never approaches 5000 bytes
+    const rawSlice = text.slice(pos, end);
+    const wordMatches = Array.from(rawSlice.matchAll(/\S+/g));
+    if (wordMatches.length > 115) {
+      const capWord = wordMatches[114];
+      if (capWord && capWord.index !== undefined) {
+        end = pos + capWord.index + capWord[0].length;
+      }
+    }
+
+    const chunkText = text.slice(pos, end);
+    if (chunkText.trim().length > 0) {
+      chunks.push({ text: chunkText, start: pos });
+    }
+    pos = end;
+  }
+
+  return chunks;
+}
 // ── Google Cloud TTS API call ──────────────────────────────────────────────────
 const inflightControllers = new Set<AbortController>();
 
@@ -156,43 +190,15 @@ async function synthesizeChunk(
   const gender = voice.ssmlGender ?? 'FEMALE';
   const selectedVoiceName = voice.name ?? getVoiceNameForGender(voice, gender === 'MALE');
 
-  // 1. Try Cloud Run /v2/t/:tenant/ai/tts endpoint (with GCS caching)
-  const activeTenantId = cloudStorage.getItem('current_tenant_id');
-  if (activeTenantId) {
-    try {
-      const controller = new AbortController();
-      inflightControllers.add(controller);
-      const timeout = setTimeout(() => controller.abort(), 12000);
-      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`, {
-        method: 'POST',
-        headers: getCloudAuthHeaders(activeTenantId),
-        body: JSON.stringify({
-          text,
-          languageCode: voice.languageCode,
-          voiceGender: gender === 'MALE' ? 'male' : 'female',
-        }),
-        signal: controller.signal,
-      }).finally(() => {
-        clearTimeout(timeout);
-        inflightControllers.delete(controller);
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.audioContent) {
-          const binary = atob(data.audioContent);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          const blob = new Blob([bytes], { type: 'audio/mp3' });
-          return { blobUrl: URL.createObjectURL(blob), wordTimings: [] };
-        }
-        if (data.audioUrl) {
-          return { blobUrl: data.audioUrl, wordTimings: [] };
-        }
-      }
-    } catch {
-      // fall through to direct TTS or browser speechSynthesis
-    }
-  }
+  const activeTenantId = detectTenantId() || cloudStorage.getItem('current_tenant_id');
+
+  const escapeXml = (s: string) =>
+    s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
 
   // Build SSML with <mark> tags before each word for timepoint tracking
   const words = text.split(/(\s+)/);
@@ -204,7 +210,7 @@ async function synthesizeChunk(
     if (part.trim()) {
       const markName = `w${charCursor}`;
       markMap[markName] = charCursor;
-      ssmlParts += `<mark name="${markName}"/>${part}`;
+      ssmlParts += `<mark name="${markName}"/>${escapeXml(part)}`;
     } else {
       ssmlParts += part;
     }
@@ -227,43 +233,62 @@ async function synthesizeChunk(
     enableTimePointing: ['SSML_MARK'],
   };
 
-  const targetEndpoint = activeTenantId
-    ? `${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`
-    : TTS_ENDPOINT;
+  let res: Response | null = null;
 
-  const requestHeaders: Record<string, string> = activeTenantId
-    ? getCloudAuthHeaders(activeTenantId)
-    : { 'Content-Type': 'application/json' };
-
-  const requestPayload = activeTenantId
-    ? {
-        ssml: ssmlParts,
-        languageCode: voice.languageCode,
-        voiceName: selectedVoiceName,
-        ssmlGender: gender,
-        speakingRate: 1.0,
-        enableTimePointing: true,
+  // 1. Primary: Cloud Run server-side TTS proxy (/v2/t/:tenant/ai/tts) with GCS caching + SSML timepoints
+  if (activeTenantId) {
+    try {
+      const controller = new AbortController();
+      inflightControllers.add(controller);
+      const timeout = setTimeout(() => controller.abort(), 12000);
+      const cloudRes = await fetch(`${CLOUD_API_BASE}/v2/t/${activeTenantId}/ai/tts`, {
+        method: 'POST',
+        headers: getCloudAuthHeaders(activeTenantId),
+        credentials: 'include',
+        body: JSON.stringify({
+          ssml: ssmlParts,
+          languageCode: voice.languageCode,
+          voiceName: selectedVoiceName,
+          ssmlGender: gender,
+          speakingRate: 1.0,
+          enableTimePointing: true,
+        }),
+        signal: controller.signal,
+      }).finally(() => {
+        clearTimeout(timeout);
+        inflightControllers.delete(controller);
+      });
+      if (cloudRes.ok) {
+        res = cloudRes;
       }
-    : body;
+    } catch {
+      // fall through to direct TTS if key configured
+    }
+  }
 
-  const controller = new AbortController();
-  inflightControllers.add(controller);
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  const res = await fetch(targetEndpoint, {
-    method: 'POST',
-    headers: requestHeaders,
-    body: JSON.stringify(requestPayload),
-    signal: controller.signal,
-  }).finally(() => {
-    clearTimeout(timeout);
-    inflightControllers.delete(controller);
-  });
+  // 2. Fallback: Direct Google Cloud TTS REST endpoint if VITE_GOOGLE_API_KEY is present
+  if (!res) {
+    if (!GOOGLE_API_KEY) {
+      throw new Error('Cloud Run TTS unavailable and no local VITE_GOOGLE_API_KEY configured');
+    }
+    const controller = new AbortController();
+    inflightControllers.add(controller);
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    res = await fetch(TTS_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    }).finally(() => {
+      clearTimeout(timeout);
+      inflightControllers.delete(controller);
+    });
+  }
 
   if (!res.ok) {
     const err = await res.text();
     throw new Error(`Cloud TTS error ${res.status}: ${err}`);
   }
-
   const data = await res.json();
   const base64Audio: string = data.audioContent;
   if (!base64Audio) throw new Error('No audioContent in response');
@@ -288,8 +313,8 @@ async function synthesizeChunk(
 // ── Player state ───────────────────────────────────────────────────────────────
 let currentAudio: HTMLAudioElement | null = null;
 let pendingBlobUrls: string[] = [];        // object URLs to revoke after playback
-let textChunks: string[] = [];             // plain text chunks queued for synthesis
-let chunkQueue: { text: string; start: number }[] = [];
+let chunkQueue: TextChunkMeta[] = [];
+let prefetchCache = new Map<number, Promise<{ blobUrl: string; wordTimings: WordTiming[] }>>();
 let currentVoice: VoiceConfig = DEFAULT_VOICE;
 let isPlaying = false;
 let isStopped = false;
@@ -298,12 +323,22 @@ let onProgressCallback: ((globalCharIndex: number) => void) | null = null;
 let onStartCallback: (() => void) | null = null;
 let didFireStart = false;
 let fallbackProgressTimer: number | null = null;
+let audioRafId: number | null = null;
 let runId = 0;
 let chunkProgressTimers = new Set<number>();
 let isPaused = false;
 let liveUtterance: SpeechSynthesisUtterance | null = null;
 
+function stopAudioRaf() {
+  if (audioRafId !== null) {
+    cancelAnimationFrame(audioRafId);
+    audioRafId = null;
+  }
+}
+
 function cleanup() {
+  stopAudioRaf();
+  prefetchCache.clear();
   pendingBlobUrls.forEach(u => URL.revokeObjectURL(u));
   pendingBlobUrls = [];
   if (currentAudio) { currentAudio.pause(); currentAudio.src = ''; currentAudio = null; }
@@ -484,9 +519,21 @@ async function fallbackSpeak(
     let startedAt = 0;
     let pausedMs = 0;
 
-    // Word starts inside this piece, used by the time estimator
+    // Weighted word starts inside this piece for smooth monotonic fallback estimation
     const wordStarts: number[] = [];
     { const wr = /\S+/g; let w: RegExpExecArray | null; while ((w = wr.exec(piece)) !== null) wordStarts.push(w.index); }
+    let highestWordChar = 0;
+
+    const emitMonotonic = (charOffsetInPiece: number) => {
+      if (!onProgress) return;
+      let wi = 0;
+      while (wi + 1 < wordStarts.length && wordStarts[wi + 1] <= charOffsetInPiece) wi++;
+      const snapped = wordStarts[wi] ?? 0;
+      if (snapped >= highestWordChar) {
+        highestWordChar = snapped;
+        onProgress(base + snapped);
+      }
+    };
 
     const stopEstimator = () => {
       if (fallbackProgressTimer != null) { window.clearInterval(fallbackProgressTimer); fallbackProgressTimer = null; }
@@ -499,15 +546,12 @@ async function fallbackSpeak(
         const d = now - lastTick; lastTick = now;
         if (isPaused) { pausedMs += d; return; }
         if (!onProgress) return;
-        // If real boundary events are actively firing (within 280ms), let them guide
-        if (lastBoundaryTime > 0 && now - lastBoundaryTime < 280) return;
         spokenMs += d;
+        // If native onboundary is actively firing within 550ms, let native events drive
+        if (lastBoundaryTime > 0 && now - lastBoundaryTime < 550) return;
         const ch = Math.min(piece.length - 1, Math.floor(spokenMs / msPerChar));
-        // snap to the start of the word containing ch
-        let wi = 0;
-        while (wi + 1 < wordStarts.length && wordStarts[wi + 1] <= ch) wi++;
-        onProgress(base + (wordStarts[wi] ?? 0));
-      }, 40);
+        emitMonotonic(ch);
+      }, 45);
     };
 
     const finish = () => {
@@ -516,17 +560,14 @@ async function fallbackSpeak(
       stopEstimator();
       if (watchdog != null) { window.clearTimeout(watchdog); watchdog = null; }
       if (myRun !== runId || isStopped) return;
-      // Calibrate speaking speed from this piece (ignore tiny/odd pieces)
       if (startedAt && piece.length > 25) {
         const actual = (Date.now() - startedAt - pausedMs) / piece.length;
         if (actual > 30 && actual < 200) msPerChar = msPerChar * 0.5 + actual * 0.5;
       }
       onProgress?.(base + piece.length);
       idx += 1;
-      // Let the engine settle before queuing the next utterance
       window.setTimeout(speakNext, 0);
     };
-    // Watchdog: if a piece never ends (voice stalled), skip ahead ourselves
     const armWatchdog = () => {
       if (watchdog != null) window.clearTimeout(watchdog);
       watchdog = window.setTimeout(() => {
@@ -534,7 +575,6 @@ async function fallbackSpeak(
         if (done || myRun !== runId) return;
         if (isPaused) { armWatchdog(); return; }
         if (window.speechSynthesis.speaking && extensions < 2) {
-          // Still audibly speaking — give it a bit more time
           extensions += 1;
           armWatchdog();
           return;
@@ -545,13 +585,14 @@ async function fallbackSpeak(
     };
     u.onstart = () => {
       startedAt = Date.now();
-      onProgress?.(base);
+      emitMonotonic(0);
       startEstimator();
     };
     u.onboundary = (e: SpeechSynthesisEvent) => {
       if (e.name === 'word' && onProgress) {
         lastBoundaryTime = Date.now();
-        onProgress(base + e.charIndex);
+        spokenMs = e.charIndex * msPerChar;
+        emitMonotonic(e.charIndex);
       }
     };
     u.onend = finish;
@@ -565,9 +606,60 @@ async function fallbackSpeak(
   speakNext();
 }
 
+/** Build cadence-weighted word fractions [0..1] when SSML mark timepoints are absent */
+function buildWeightedWordFractions(chunk: string): { charIndex: number; frac: number }[] {
+  const items: { charIndex: number; weight: number }[] = [];
+  const re = /\S+/g;
+  let m: RegExpExecArray | null;
+  let totalWeight = 0;
+  while ((m = re.exec(chunk)) !== null) {
+    const w = m[0];
+    // Weight by spoken syllable approximation + trailing punctuation pause
+    let weight = Math.max(2, w.length);
+    if (/[.!?।؟]["')\]}]*$/.test(w)) weight += 5.5;
+    else if (/[,;:—–]["')\]}]*$/.test(w)) weight += 2.8;
+    items.push({ charIndex: m.index, weight });
+    totalWeight += weight;
+  }
+  if (totalWeight <= 0) return [];
+  let acc = 0;
+  return items.map((it) => {
+    const frac = acc / totalWeight;
+    acc += it.weight;
+    return { charIndex: it.charIndex, frac };
+  });
+}
+
+function getSynthesizedChunkWithPrefetch(
+  meta: TextChunkMeta,
+  voice: VoiceConfig,
+): Promise<{ blobUrl: string; wordTimings: WordTiming[] }> {
+  const existing = prefetchCache.get(meta.start);
+  if (existing) {
+    prefetchCache.delete(meta.start);
+    return existing;
+  }
+  // Retry once on transient network/cold-start glitch before failing
+  return synthesizeChunk(meta.text, voice).catch(() => synthesizeChunk(meta.text, voice));
+}
+
+function warmNextChunk(voice: VoiceConfig) {
+  if (isStopped || chunkQueue.length === 0) return;
+  const nextMeta = chunkQueue[0];
+  if (!prefetchCache.has(nextMeta.start)) {
+    const p = synthesizeChunk(nextMeta.text, voice).catch(() =>
+      synthesizeChunk(nextMeta.text, voice),
+    );
+    // Attach no-op catch so unhandled rejection never logs if stopped early
+    p.catch(() => {});
+    prefetchCache.set(nextMeta.start, p);
+  }
+}
+
 // ── Sequential chunk player ────────────────────────────────────────────────────
 async function playNextChunk() {
   const localRunId = runId;
+  stopAudioRaf();
   if (isStopped || chunkQueue.length === 0) {
     if (!isStopped) {
       isPlaying = false;
@@ -581,63 +673,83 @@ async function playNextChunk() {
   const chunkMeta = chunkQueue.shift()!;
   const chunk = chunkMeta.text;
 
+  // Immediately start prefetching the following chunk in parallel
+  warmNextChunk(currentVoice);
+
   try {
-    const { blobUrl, wordTimings } = await synthesizeChunk(chunk, currentVoice);
+    const { blobUrl, wordTimings } = await getSynthesizedChunkWithPrefetch(chunkMeta, currentVoice);
     if (isStopped || localRunId !== runId) { URL.revokeObjectURL(blobUrl); return; }
 
+    // Ensure the next chunk after this one is also warming
+    warmNextChunk(currentVoice);
+
+    const weightedFractions = wordTimings.length === 0 ? buildWeightedWordFractions(chunk) : [];
     const audio = new Audio(blobUrl);
+    audio.preload = 'auto';
     currentAudio = audio;
     pendingBlobUrls.push(blobUrl);
-    let chunkProgressTimer: number | null = null;
-    const clearChunkProgressTimer = () => {
-      if (chunkProgressTimer != null) {
-        window.clearInterval(chunkProgressTimer);
-        chunkProgressTimers.delete(chunkProgressTimer);
-        chunkProgressTimer = null;
-      }
-    };
-    const startChunkProgressTimer = () => {
-      if (chunkProgressTimer != null) return;
-      // Only use interval as fallback when duration metadata is unavailable
-      chunkProgressTimer = window.setInterval(() => {
-        if (isPaused || !onProgressCallback) return;
-        if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-          // Duration is available — ontimeupdate handles it, clear this timer
-          clearChunkProgressTimer();
-          return;
-        }
-        // No duration metadata — estimate from elapsed time
-        const approxChars = Math.floor(audio.currentTime * 15);
-        onProgressCallback(chunkMeta.start + Math.min(chunk.length, Math.max(0, approxChars)));
-      }, 80);
-      chunkProgressTimers.add(chunkProgressTimer);
-    };
 
-    audio.ontimeupdate = () => {
-      if (!onProgressCallback) return;
-      const t = audio.currentTime;
+    let lastEmittedChar = -1;
+    const emitProgressAtTime = (t: number) => {
+      if (!onProgressCallback || localRunId !== runId || isStopped) return;
 
       if (wordTimings.length > 0) {
-        // ── Accurate: use SSML mark timepoints ──
-        // Find the last mark whose timeSeconds <= current time
+        // ── Exact SSML <mark> timepoints from Google Cloud Wavenet TTS ──
+        // 25ms visual lead so highlight lands right as the phoneme begins
+        const targetTime = t + 0.025;
         let lo = 0, hi = wordTimings.length - 1, best = 0;
         while (lo <= hi) {
           const mid = (lo + hi) >> 1;
-          if (wordTimings[mid].timeSeconds <= t) { best = mid; lo = mid + 1; }
+          if (wordTimings[mid].timeSeconds <= targetTime) { best = mid; lo = mid + 1; }
           else { hi = mid - 1; }
         }
-        onProgressCallback(chunkMeta.start + wordTimings[best].charIndex);
-      } else if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
-        // ── Fallback: linear interpolation ──
+        const globalChar = chunkMeta.start + wordTimings[best].charIndex;
+        if (globalChar !== lastEmittedChar) {
+          lastEmittedChar = globalChar;
+          onProgressCallback(globalChar);
+        }
+      } else if (audio.duration && isFinite(audio.duration) && audio.duration > 0 && weightedFractions.length > 0) {
+        // ── Cadence-weighted interpolation locked to audio.currentTime / audio.duration ──
         const ratio = Math.max(0, Math.min(1, t / audio.duration));
-        const spokenChars = Math.floor(ratio * chunk.length);
-        onProgressCallback(chunkMeta.start + spokenChars);
+        let lo = 0, hi = weightedFractions.length - 1, best = 0;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (weightedFractions[mid].frac <= ratio) { best = mid; lo = mid + 1; }
+          else { hi = mid - 1; }
+        }
+        const globalChar = chunkMeta.start + weightedFractions[best].charIndex;
+        if (globalChar !== lastEmittedChar) {
+          lastEmittedChar = globalChar;
+          onProgressCallback(globalChar);
+        }
+      } else {
+        const approxChars = Math.min(chunk.length - 1, Math.max(0, Math.floor(t * 14.5)));
+        const globalChar = chunkMeta.start + approxChars;
+        if (globalChar !== lastEmittedChar) {
+          lastEmittedChar = globalChar;
+          onProgressCallback(globalChar);
+        }
       }
+    };
+
+    const tickRaf = () => {
+      if (localRunId !== runId || isStopped || currentAudio !== audio) {
+        audioRafId = null;
+        return;
+      }
+      if (!isPaused && !audio.paused) {
+        emitProgressAtTime(audio.currentTime);
+      }
+      audioRafId = requestAnimationFrame(tickRaf);
+    };
+
+    audio.ontimeupdate = () => {
+      if (!isPaused) emitProgressAtTime(audio.currentTime);
     };
 
     audio.onended = () => {
       if (localRunId !== runId) return;
-      clearChunkProgressTimer();
+      stopAudioRaf();
       if (onProgressCallback) onProgressCallback(chunkMeta.start + chunk.length);
       URL.revokeObjectURL(blobUrl);
       pendingBlobUrls = pendingBlobUrls.filter(u => u !== blobUrl);
@@ -648,21 +760,23 @@ async function playNextChunk() {
     audio.onerror = () => {
       if (localRunId !== runId) return;
       console.warn('[CloudTTS] audio playback error — skipping chunk');
-      clearChunkProgressTimer();
+      stopAudioRaf();
       URL.revokeObjectURL(blobUrl);
       currentAudio = null;
-      playNextChunk(); // skip and continue
+      playNextChunk();
     };
 
     audio.onplay = () => {
       if (localRunId !== runId) return;
-      startChunkProgressTimer();
+      emitProgressAtTime(audio.currentTime);
+      stopAudioRaf();
+      audioRafId = requestAnimationFrame(tickRaf);
       if (!didFireStart) { onStartCallback?.(); didFireStart = true; }
     };
 
     audio.play().catch(() => {
       console.warn('[CloudTTS] play() rejected — falling back to speechSynthesis');
-      clearChunkProgressTimer();
+      stopAudioRaf();
       URL.revokeObjectURL(blobUrl);
       currentAudio = null;
       if (localRunId !== runId) return;
@@ -704,7 +818,7 @@ export function googleTtsSpeak(
   onStart?: () => void,
   onEnd?: () => void,
   onProgress?: (globalCharIndex: number) => void,
-  opts?: { raw?: boolean },
+  opts?: { raw?: boolean; startCharIndex?: number },
 ) {
   googleTtsStop();
   runId += 1;
@@ -712,11 +826,15 @@ export function googleTtsSpeak(
 
   // raw: caller already produced speakable text and needs progress indices
   // that map 1:1 onto it (read-aloud highlighting).
-  const clean = opts?.raw ? text.trim() ? text : '' : sanitizeForTts(text);
+  const clean = opts?.raw ? (text.trim() ? text : '') : sanitizeForTts(text);
   if (!clean) { onEnd?.(); return; }
 
+  const startOffset = Math.max(0, Math.min(clean.length - 1, opts?.startCharIndex ?? 0));
+  const targetText = startOffset > 0 ? clean.slice(startOffset) : clean;
+  if (!targetText.trim()) { onEnd?.(); return; }
+
   // Auto-detect language from script if content gives a clearer signal
-  const detectedBcp47 = detectLangCode(clean, bcp47Lang);
+  const detectedBcp47 = detectLangCode(targetText, bcp47Lang);
   const preferMale = cloudStorage.getItem('user_voice') === 'male';
   const selectedVoice = VOICE_MAP[detectedBcp47] ?? DEFAULT_VOICE;
   currentVoice = {
@@ -726,26 +844,28 @@ export function googleTtsSpeak(
   };
 
   const isGcpKey = GOOGLE_API_KEY.trim().startsWith('AIzaSy') || GOOGLE_API_KEY.trim().startsWith('AQ.');
-  const hasCloudTenant = Boolean(cloudStorage.getItem('current_tenant_id'));
-  if ((!isGcpKey && !hasCloudTenant) || opts?.raw) {
-    isStopped = false;
+  const hasCloudTenant = Boolean(detectTenantId() || cloudStorage.getItem('current_tenant_id'));
+  if (!isGcpKey && !hasCloudTenant) {
     isPlaying = true;
     onDoneCallback = null;
     onProgressCallback = null;
     onStartCallback = onStart ?? null;
     didFireStart = false;
-    fallbackSpeak(clean, currentVoice.languageCode, onEnd, onProgress);
+    fallbackSpeak(
+      targetText,
+      currentVoice.languageCode,
+      onEnd,
+      onProgress ? (idx) => onProgress(startOffset + idx) : undefined,
+    );
     return;
   }
 
-  textChunks = splitIntoChunks(clean, CHUNK_SIZE);
-  if (textChunks.length === 0) { onEnd?.(); return; }
-  let cursor = 0;
-  chunkQueue = textChunks.map((chunkText) => {
-    const start = cursor;
-    cursor += chunkText.length;
-    return { text: chunkText, start };
-  });
+  const rawChunks = splitIntoChunksWithOffsets(targetText, CHUNK_SIZE);
+  if (rawChunks.length === 0) { onEnd?.(); return; }
+  chunkQueue = rawChunks.map((c) => ({
+    text: c.text,
+    start: startOffset + c.start,
+  }));
 
   isStopped = false;
   isPlaying = true;
@@ -761,7 +881,6 @@ export function googleTtsStop() {
   isStopped = true;
   isPlaying = false;
   isPaused = false;
-  textChunks = [];
   chunkQueue = [];
   onDoneCallback = null;
   onProgressCallback = null;

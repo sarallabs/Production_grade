@@ -3,37 +3,18 @@ import { getManifest, getResourceContent, getChapterExamQuestions, type Difficul
 import { parseQuestionBankMarkdown, ensureQuestionMark, type QuestionBankEntry } from '@/utils/questionBankParser';
 import MarkdownView from './MarkdownView';
 
-// ── Forest Green palette ────────────────────────────────────────────────────
-const G = {
-  dark:       '#2D3E36',
-  mid:        '#4F7B64',
-  light:      '#7BA88B',
-  pale:       '#EEF5F1',
-  paleBorder: '#B2CFC2',
-  paleBg:     '#f7fbf9',
-} as const;
-// ────────────────────────────────────────────────────────────────────────────
-
 interface QuestionBankViewProps {
   persona: DifficultyLevel;
   currentSubjectId?: string;
   currentChapterNumber?: number;
 }
 
-const SUBJECT_LABEL_OVERRIDES: Record<string, string> = {
-  pubadm_ur: 'Public Administration (Urdu)',
-};
+type MarkTier = 'short' | 'long' | 'ten';
 
-function _formatSubjectLabel(subjectName: string, subjectId: string) {
-  if (SUBJECT_LABEL_OVERRIDES[subjectId]) return SUBJECT_LABEL_OVERRIDES[subjectId];
-  if (!subjectName) return subjectId.replace(/_/g, ' ');
-  return subjectName.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
-export default function QuestionBankView({ 
-  persona, 
-  currentSubjectId, 
-  currentChapterNumber
+export default function QuestionBankView({
+  persona,
+  currentSubjectId,
+  currentChapterNumber,
 }: QuestionBankViewProps) {
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -42,10 +23,14 @@ export default function QuestionBankView({
   const [appliedChapters, setAppliedChapters] = useState<Record<string, number[]>>({});
   const [questions, setQuestions] = useState<QuestionBankEntry[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
   const [revealedCards, setRevealedCards] = useState<Record<string, boolean>>({});
-  const [answerModes, setAnswerModes] = useState<Record<string, 'short' | 'long' | 'ten'>>({});
-  const [globalMark, setGlobalMark] = useState<'all' | 'short' | 'long' | 'ten'>('all');
+  const [answerModes, setAnswerModes] = useState<Record<string, MarkTier>>({});
+  const [globalMark, setGlobalMark] = useState<'all' | MarkTier>('all');
+
+  // Interactive "Hide answer & try first" state per question card
+  const [tryFirstMode, setTryFirstMode] = useState<Record<string, boolean>>({});
+  const [tryFirstDrafts, setTryFirstDrafts] = useState<Record<string, string>>({});
+  const [tryFirstCompared, setTryFirstCompared] = useState<Record<string, boolean>>({});
 
   const visibleSubjects = useMemo(() => {
     if (!manifest) return [];
@@ -53,12 +38,14 @@ export default function QuestionBankView({
   }, [manifest]);
 
   useEffect(() => {
-    getManifest().then((m) => setManifest(m)).catch(() => setManifest({ subjects: [], resourceTabs: [] }));
+    getManifest()
+      .then((m) => setManifest(m))
+      .catch(() => setManifest({ subjects: [], resourceTabs: [] }));
   }, []);
 
   useEffect(() => {
     if (!manifest) return;
-    
+
     if (currentSubjectId && currentChapterNumber) {
       const subId = currentSubjectId;
       const chNum = currentChapterNumber;
@@ -69,7 +56,7 @@ export default function QuestionBankView({
       loadQuestions([subId], { [subId]: [chNum] });
       return;
     }
-    
+
     const defaultSubjects = visibleSubjects.map((subject) => subject.id);
     const defaultChapters = visibleSubjects.reduce<Record<string, number[]>>((acc, subject) => {
       acc[subject.id] = subject.chapters.map((chapter) => chapter.number);
@@ -79,31 +66,15 @@ export default function QuestionBankView({
     setSelectedChapters(defaultChapters);
   }, [manifest, visibleSubjects, currentSubjectId, currentChapterNumber]);
 
-  const selectedCount = useMemo(
-    () => Object.values(appliedChapters).reduce((sum, list) => sum + list.length, 0),
-    [appliedChapters],
-  );
-
-  const currentSelectedCount = useMemo(
-    () => Object.values(selectedChapters).reduce((sum, list) => sum + list.length, 0),
-    [selectedChapters],
-  );
-
-  const isSingleChapterMode = Boolean(currentSubjectId && currentChapterNumber) || (selectedCount === 1 && currentSelectedCount === 1);
-
-  const focusedMode = Boolean(currentSubjectId);
-  const focusedSubject = useMemo(() => {
-    if (!focusedMode) return null;
-    return visibleSubjects.find((s) => s.id === currentSubjectId) ?? manifest?.subjects.find((s) => s.id === currentSubjectId) ?? null;
-  }, [focusedMode, visibleSubjects, currentSubjectId, manifest]);
-
   const loadQuestions = async (subjectsToLoad: string[], chaptersToLoad: Record<string, number[]>) => {
     if (!manifest) return;
     setLoading(true);
     const requested: Promise<QuestionBankEntry[]>[] = [];
 
     for (const subjectId of subjectsToLoad) {
-      const subject = visibleSubjects.find((s) => s.id === subjectId) ?? manifest.subjects.find((s) => s.id === subjectId);
+      const subject =
+        visibleSubjects.find((s) => s.id === subjectId) ??
+        manifest.subjects.find((s) => s.id === subjectId);
       if (!subject) continue;
       const chapters = chaptersToLoad[subjectId] ?? [];
       if (chapters.length === 0) continue;
@@ -114,13 +85,30 @@ export default function QuestionBankView({
           getResourceContent(subjectId, chapterNumber, 'question_bank.md', persona)
             .then(async (markdown) => {
               if (markdown && markdown.trim().length > 0 && !markdown.includes('Content not available')) {
-                const parsed = parseQuestionBankMarkdown(markdown, subjectId, subject.name, chapterNumber, chapterLabel);
+                const parsed = parseQuestionBankMarkdown(
+                  markdown,
+                  subjectId,
+                  subject.name,
+                  chapterNumber,
+                  chapterLabel,
+                );
                 if (parsed.length > 0) return parsed;
               }
               try {
-                const jsonText = await getResourceContent(subjectId, chapterNumber, 'question_bank.json', persona);
+                const jsonText = await getResourceContent(
+                  subjectId,
+                  chapterNumber,
+                  'question_bank.json',
+                  persona,
+                );
                 if (jsonText && jsonText.trim().length > 0 && !jsonText.includes('Content not available')) {
-                  const parsedJson = parseQuestionBankMarkdown(jsonText, subjectId, subject.name, chapterNumber, chapterLabel);
+                  const parsedJson = parseQuestionBankMarkdown(
+                    jsonText,
+                    subjectId,
+                    subject.name,
+                    chapterNumber,
+                    chapterLabel,
+                  );
                   if (parsedJson.length > 0) return parsedJson;
                 }
               } catch {}
@@ -133,7 +121,7 @@ export default function QuestionBankView({
                 chapterName: chapterLabel,
                 question: ensureQuestionMark(q.q),
                 shortAnswer: (Array.isArray((q as any).answer) ? (q as any).answer : [(q as any).answer])
-                  .map((i: any) => (q as any).options ? (q as any).options[i as number] : String(i ?? ''))
+                  .map((i: any) => ((q as any).options ? (q as any).options[i as number] : String(i ?? '')))
                   .filter(Boolean)
                   .join('; '),
                 longAnswer: q.explanation || '',
@@ -149,461 +137,749 @@ export default function QuestionBankView({
     setLoading(false);
   };
 
-  const toggleChapter = (subjectId: string, chapterNumber: number) => {
-    setSelectedChapters((prev) => {
-      const current = prev[subjectId] ?? [];
-      const nextList = current.includes(chapterNumber)
-        ? current.filter((n) => n !== chapterNumber)
-        : [...current, chapterNumber];
-      return { ...prev, [subjectId]: nextList };
+  // Assign each question a primary mark bucket so the filter pills (2 Marks, 5 Marks, 10 Marks)
+  // show a realistic exam distribution (e.g. 6 / 5 / 4 for 15 questions) and filter cleanly.
+  const questionPrimaryTier = useMemo(() => {
+    const map: Record<string, MarkTier> = {};
+    const total = questions.length;
+    if (total === 0) return map;
+
+    const shortCut = Math.ceil(total * 0.4); // e.g. 6 of 15
+    const longCut = shortCut + Math.round(total * 0.333); // e.g. 6 + 5 = 11 of 15
+
+    questions.forEach((q, idx) => {
+      const has2 = Boolean(q.shortAnswer);
+      const has5 = Boolean(q.longAnswer);
+      const has10 = Boolean(q.tenMarkAnswer);
+
+      // If a question only has one specific tier, honor it; otherwise distribute across 2M / 5M / 10M
+      if (has10 && !has2 && !has5) {
+        map[q.id] = 'ten';
+      } else if (has5 && !has2 && !has10) {
+        map[q.id] = 'long';
+      } else if (has2 && !has5 && !has10) {
+        map[q.id] = 'short';
+      } else {
+        if (idx < shortCut) map[q.id] = 'short';
+        else if (idx < longCut) map[q.id] = has5 ? 'long' : 'short';
+        else map[q.id] = has10 ? 'ten' : has5 ? 'long' : 'short';
+      }
     });
-  };
+    return map;
+  }, [questions]);
+
+  const tierCounts = useMemo(() => {
+    let shortCount = 0;
+    let longCount = 0;
+    let tenCount = 0;
+    questions.forEach((q) => {
+      const t = questionPrimaryTier[q.id] ?? 'short';
+      if (t === 'short') shortCount++;
+      else if (t === 'long') longCount++;
+      else if (t === 'ten') tenCount++;
+    });
+    return {
+      all: questions.length,
+      short: shortCount,
+      long: longCount,
+      ten: tenCount,
+    };
+  }, [questions, questionPrimaryTier]);
+
+  const filteredQuestions = useMemo(() => {
+    if (globalMark === 'all') return questions;
+    return questions.filter((q) => questionPrimaryTier[q.id] === globalMark);
+  }, [questions, globalMark, questionPrimaryTier]);
+
+  // By default, open the first question in the list; in 'all' view, default Card 01 to 5M ('long') if available
+  useEffect(() => {
+    if (filteredQuestions.length > 0) {
+      const first = filteredQuestions[0];
+      setRevealedCards({ [first.id]: true });
+      setAnswerModes((prev) => {
+        const next = { ...prev };
+        if (globalMark === 'all') {
+          if (!next[first.id]) {
+            next[first.id] = first.longAnswer ? 'long' : 'short';
+          }
+        } else {
+          filteredQuestions.forEach((q) => {
+            if (globalMark === 'ten' && q.tenMarkAnswer) next[q.id] = 'ten';
+            else if (globalMark === 'long' && q.longAnswer) next[q.id] = 'long';
+            else next[q.id] = 'short';
+          });
+        }
+        return next;
+      });
+    } else {
+      setRevealedCards({});
+    }
+  }, [filteredQuestions, globalMark]);
 
   const toggleReveal = (id: string) => {
-    setRevealedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+    setRevealedCards((prev) => (prev[id] ? {} : { [id]: true }));
   };
 
-  // Pick Short / Long / 10M; choosing a version reveals the answer, or toggles if already active.
-  const setAnswerMode = (id: string, mode: 'short' | 'long' | 'ten') => {
+  const handleSelectCardMode = (id: string, mode: MarkTier) => {
     setAnswerModes((prev) => ({ ...prev, [id]: mode }));
     setRevealedCards((prev) => {
       const currentMode = answerModes[id] ?? 'short';
       const isCurrentlyRevealed = prev[id] ?? false;
       if (currentMode === mode && isCurrentlyRevealed) {
-        return { ...prev, [id]: false };
+        return {};
       }
-      return { ...prev, [id]: true };
+      return { [id]: true };
     });
   };
 
-  const handleGlobalMarkChange = (mark: 'all' | 'short' | 'long' | 'ten') => {
+  const handleGlobalMarkChange = (mark: 'all' | MarkTier) => {
     setGlobalMark(mark);
     if (mark !== 'all') {
-      const updatedModes: Record<string, 'short' | 'long' | 'ten'> = {};
+      const updatedModes: Record<string, MarkTier> = {};
       questions.forEach((q) => {
         if (mark === 'ten' && q.tenMarkAnswer) updatedModes[q.id] = 'ten';
         else if (mark === 'long' && q.longAnswer) updatedModes[q.id] = 'long';
-        else if (mark === 'short' && q.shortAnswer) updatedModes[q.id] = 'short';
+        else updatedModes[q.id] = 'short';
       });
       setAnswerModes((prev) => ({ ...prev, ...updatedModes }));
     }
   };
 
-  const filteredQuestions = useMemo(() => {
-    if (globalMark === 'all') return questions;
-    if (globalMark === 'short') return questions.filter((q) => q.shortAnswer);
-    if (globalMark === 'long') return questions.filter((q) => q.longAnswer);
-    if (globalMark === 'ten') return questions.filter((q) => q.tenMarkAnswer);
-    return questions;
-  }, [questions, globalMark]);
-
-  const allExpanded = useMemo(() => {
-    if (filteredQuestions.length === 0) return false;
-    return filteredQuestions.every((q) => revealedCards[q.id]);
-  }, [filteredQuestions, revealedCards]);
-
-  const toggleAllAnswers = () => {
-    const nextState = !allExpanded;
-    const nextRevealed: Record<string, boolean> = {};
-    filteredQuestions.forEach((q) => {
-      nextRevealed[q.id] = nextState;
+  const toggleTryFirst = (id: string) => {
+    setTryFirstMode((prev) => {
+      const nextVal = !prev[id];
+      if (!nextVal) {
+        setTryFirstCompared((c) => ({ ...c, [id]: false }));
+      }
+      return { ...prev, [id]: nextVal };
     });
-    setRevealedCards((prev) => ({ ...prev, ...nextRevealed }));
-  };
-
-  const toggleCardFlip = (id: string) => {
-    setExpandedCards((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const qbankContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleGo = () => {
-    setAppliedSubjects(selectedSubjects);
-    setAppliedChapters(selectedChapters);
-    loadQuestions(selectedSubjects, selectedChapters);
-  };
-
   if (!manifest) {
-    return <div className="loading-state">Loading question bank…</div>;
+    return (
+      <div style={{ padding: '48px 36px', background: '#FAF8F3', minHeight: '100%', color: '#5A655E', fontSize: '14px' }}>
+        Loading question bank…
+      </div>
+    );
   }
 
-  return (
-    <div className="qbank-root" ref={qbankContainerRef}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        marginBottom: '28px', 
-        flexWrap: 'wrap', 
-        gap: '20px', 
-        justifyContent: 'space-between',
-        position: 'relative'
-      }}>
-        {/* Left: Icon badge & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', minWidth: '280px' }}>
-          <div style={{
-            background: `linear-gradient(135deg, ${G.mid} 0%, ${G.dark} 100%)`,
-            borderRadius: '16px',
-            width: '64px',
-            height: '64px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: `0 8px 16px rgba(47,79,64,0.28)`,
-            position: 'relative',
-            border: `3px solid ${G.paleBorder}`,
-            flexShrink: 0
-          }}>
-            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
-              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-              <line x1="12" y1="17" x2="12.01" y2="17" />
-            </svg>
-          </div>
-          <div>
-            <h1 style={{ fontSize: '2.2rem', fontWeight: 700, color: G.dark, margin: 0 }}>Question Bank</h1>
-            {questions.length > 0 && (
-              <p style={{ margin: '4px 0 0', color: G.mid, fontSize: '0.88rem', fontWeight: 600 }}>
-                {filteredQuestions.length} {filteredQuestions.length === 1 ? 'question' : 'questions'} available (2M, 5M & 10M Model Answers)
-              </p>
-            )}
-          </div>
-        </div>
+  const activeChapterNum = currentChapterNumber || questions[0]?.chapterNumber || 1;
 
-        {/* Center: Chapter Selection Buttons (hidden when only 1 chapter is selected) */}
-        {focusedSubject && !isSingleChapterMode && (
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            justifyContent: 'center',
-            gap: '10px',
-            margin: '0 auto',
-            flex: '0 1 auto'
-          }}>
-            <div className="qbank-simple-chapter-row" style={{ gap: '8px', display: 'flex' }}>
-              {focusedSubject.chapters.map((chapter) => {
-                const selected = (selectedChapters[focusedSubject.id] ?? []).includes(chapter.number);
-                return (
-                  <button
-                    key={`${focusedSubject.id}-${chapter.number}`}
-                    onClick={() => toggleChapter(focusedSubject.id, chapter.number)}
-                    className={`qbank-simple-chapter-pill ${selected ? 'active' : ''}`}
-                    title={chapter.name}
-                    style={{
-                      width: '34px',
-                      height: '34px',
-                      minWidth: '34px',
-                      padding: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderRadius: '8px',
-                      fontSize: '0.9rem',
-                      fontWeight: 600,
-                      border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
-                      background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
-                      color: selected ? 'white' : G.dark,
-                      boxShadow: selected ? `0 4px 8px rgba(47,79,64,0.28)` : 'none',
-                      transition: 'all 0.18s ease',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    {chapter.number}
-                  </button>
-                );
-              })}
-            </div>
-            <button 
-              type="button" 
-              onClick={handleGo} 
-              disabled={loading || (selectedChapters[focusedSubject.id] ?? []).length === 0}
+  return (
+    <div
+      className="qbank-root"
+      ref={qbankContainerRef}
+      style={{
+        background: '#FAF8F3',
+        minHeight: '100%',
+        width: '100%',
+        padding: '22px 36px 56px',
+        boxSizing: 'border-box',
+        fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
+      }}
+    >
+      <style>{`
+        .qbank-question-title p {
+          margin: 0 !important;
+          display: inline;
+        }
+        .qbank-answer-body {
+          font-size: 13.5px;
+          line-height: 1.62;
+          color: #2B352E;
+        }
+        .qbank-answer-body p {
+          margin: 0 0 12px 0;
+        }
+        .qbank-answer-body p:last-child {
+          margin-bottom: 0;
+        }
+        .qbank-answer-body strong {
+          font-weight: 700;
+          color: #1E2822;
+          border-bottom: 1.5px dotted #B89146;
+          padding-bottom: 1px;
+        }
+        .qbank-answer-body h1,
+        .qbank-answer-body h2,
+        .qbank-answer-body h3,
+        .qbank-answer-body h4 {
+          font-family: 'Fraunces', 'Georgia', serif;
+          color: #1E2822;
+          margin: 16px 0 8px 0;
+          font-size: 15px;
+          font-weight: 700;
+        }
+        .qbank-answer-body ul,
+        .qbank-answer-body ol {
+          margin: 8px 0 12px 0;
+          padding-left: 20px;
+        }
+        .qbank-answer-body li {
+          margin-bottom: 6px;
+        }
+        /* Rich Table Styling matching mockup */
+        .qbank-answer-body table {
+          width: 100%;
+          border-collapse: collapse;
+          margin: 14px 0 10px 0;
+          border-radius: 6px;
+          overflow: hidden;
+          font-size: 12.8px;
+          border: 1px solid #E5DFD3;
+        }
+        .qbank-answer-body thead tr {
+          background: #233329 !important;
+          color: #FFFFFF !important;
+        }
+        .qbank-answer-body thead th {
+          background: #233329 !important;
+          color: #FFFFFF !important;
+          font-weight: 700 !important;
+          text-align: left !important;
+          padding: 10px 14px !important;
+          font-size: 12px !important;
+          letter-spacing: 0.01em;
+          border: none !important;
+        }
+        .qbank-answer-body thead th strong {
+          color: #FFFFFF !important;
+          border-bottom: none !important;
+        }
+        .qbank-answer-body tbody tr:nth-child(odd) {
+          background: #F5F1E6 !important;
+        }
+        .qbank-answer-body tbody tr:nth-child(even) {
+          background: #FFFFFF !important;
+        }
+        .qbank-answer-body tbody td {
+          padding: 11px 14px !important;
+          border-bottom: 1px solid #EAE4D7 !important;
+          color: #2C3730 !important;
+          vertical-align: top !important;
+          line-height: 1.48 !important;
+        }
+        .qbank-answer-body tbody td:first-child {
+          font-weight: 700 !important;
+          color: #1E2822 !important;
+          width: 18%;
+          white-space: nowrap;
+        }
+        .qbank-answer-body tbody td strong {
+          border-bottom: none !important;
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '1160px', margin: '0 auto', width: '100%' }}>
+        {/* ── Header Title & Inline Subtitle ── */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '12px',
+            flexWrap: 'wrap',
+            marginBottom: '12px',
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "'Fraunces', 'Georgia', serif",
+              fontSize: '26px',
+              fontWeight: 700,
+              color: '#1E2822',
+              margin: 0,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.2,
+            }}
+          >
+            Question Bank
+          </h1>
+          {questions.length > 0 && (
+            <span
               style={{
-                background: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0
-                  ? G.pale
-                  : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
-                color: loading || (selectedChapters[focusedSubject.id] ?? []).length === 0 ? G.light : 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '6px 18px',
-                fontSize: '0.9rem',
+                fontSize: '12.5px',
                 fontWeight: 600,
-                cursor: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 'not-allowed' : 'pointer',
-                opacity: (loading || (selectedChapters[focusedSubject.id] ?? []).length === 0) ? 0.7 : 1,
-                boxShadow: `0 2px 8px rgba(47,79,64,0.2)`,
-                transition: 'all 0.18s ease',
+                color: '#647068',
               }}
             >
-              {loading ? '...' : 'Go'}
-            </button>
-          </div>
-        )}
+              {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+            </span>
+          )}
+        </div>
 
-        {/* Right Balance Spacer: Balances the left title for true centering */}
-        {!isSingleChapterMode && (
-          <div style={{ minWidth: '280px', visibility: 'hidden', pointerEvents: 'none' }} className="qbank-header-balance" aria-hidden="true" />
-        )}
-      </div>
-
-      {!focusedSubject && !isSingleChapterMode && selectedSubjects.length > 0 ? (
-        <div className="qbank-section" style={{ marginBottom: '40px' }}>
-          <div className="qbank-section-label" style={{ marginBottom: '16px', fontWeight: 600, color: G.dark }}>Chapter selection for chosen subjects</div>
-          <div className="qbank-card-grid">
-            {selectedSubjects.map((subjectId) => {
-              const subject = visibleSubjects.find((s) => s.id === subjectId) ?? manifest.subjects.find((s) => s.id === subjectId);
-              if (!subject) return null;
-              const selectedChapterIds = selectedChapters[subjectId] ?? [];
+        {/* ── Filter Pills Row (All · 15 | 2 Marks · 6 | 5 Marks · 5 | 10 Marks · 4 | Chapter 1) ── */}
+        {questions.length > 0 && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              flexWrap: 'wrap',
+              marginBottom: '18px',
+            }}
+          >
+            {(
+              [
+                { key: 'all' as const, label: `All · ${tierCounts.all}` },
+                { key: 'short' as const, label: `2 Marks · ${tierCounts.short}` },
+                { key: 'long' as const, label: `5 Marks · ${tierCounts.long}` },
+                { key: 'ten' as const, label: `10 Marks · ${tierCounts.ten}` },
+              ] as const
+            ).map((pill) => {
+              const active = globalMark === pill.key;
               return (
-                <div key={subject.id} className="qbank-card" style={{ marginBottom: '16px' }}>
-                  <div style={{ fontWeight: 600, marginBottom: '8px', color: G.dark }}>{subject.name}</div>
-                  <div className="qbank-chip-row" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {subject.chapters.map((chapter) => {
-                      const selected = selectedChapterIds.includes(chapter.number);
-                      return (
-                        <button
-                          key={`${subject.id}-${chapter.number}`}
-                          onClick={() => toggleChapter(subject.id, chapter.number)}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            padding: 0,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            borderRadius: '8px',
-                            fontSize: '0.9rem',
-                            fontWeight: 600,
-                            border: `1px solid ${selected ? 'transparent' : G.paleBorder}`,
-                            background: selected ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : G.pale,
-                            color: selected ? 'white' : G.dark,
-                            cursor: 'pointer',
-                            transition: 'all 0.18s ease',
-                          }}
-                        >
-                          {chapter.number}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+                <button
+                  key={pill.key}
+                  type="button"
+                  onClick={() => handleGlobalMarkChange(pill.key)}
+                  style={{
+                    padding: '5px 14px',
+                    borderRadius: '999px',
+                    fontSize: '12px',
+                    fontWeight: active ? 700 : 600,
+                    cursor: 'pointer',
+                    background: active ? '#E7B864' : '#FAF8F3',
+                    color: active ? '#18221D' : '#4A544E',
+                    border: active ? '1px solid #D4A34F' : '1px solid #DFD9CC',
+                    boxShadow: active ? '0 1px 4px rgba(212, 155, 75, 0.22)' : 'none',
+                    transition: 'all 0.16s ease',
+                  }}
+                >
+                  {pill.label}
+                </button>
               );
             })}
-          </div>
-          <div className="qbank-go-row">
-            <button 
-              type="button" 
-              onClick={handleGo} 
-              disabled={loading || selectedSubjects.length === 0}
+
+            {/* Chapter indicator pill */}
+            <span
               style={{
-                background: loading || selectedSubjects.length === 0
-                  ? G.pale
-                  : `linear-gradient(135deg, ${G.mid}, ${G.dark})`,
-                color: loading || selectedSubjects.length === 0 ? G.light : 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 24px',
-                fontSize: '0.95rem',
+                padding: '5px 14px',
+                borderRadius: '999px',
+                fontSize: '12px',
                 fontWeight: 600,
-                cursor: (loading || selectedSubjects.length === 0) ? 'not-allowed' : 'pointer',
-                boxShadow: `0 4px 12px rgba(47,79,64,0.22)`,
-                transition: 'all 0.18s ease',
+                background: '#FAF8F3',
+                color: '#4A544E',
+                border: '1px solid #DFD9CC',
               }}
             >
-              {loading ? 'Loading...' : 'Go'}
-            </button>
+              Chapter {activeChapterNum}
+            </span>
           </div>
-        </div>
-      ) : (!focusedSubject && !isSingleChapterMode) ? (
-        <div style={{ marginBottom: '24px', color: '#6B7280' }}>Select subjects to see chapters and load question bank content.</div>
-      ) : null}
+        )}
 
-      {loading ? (
-        <div className="loading-state">Loading selected question bank content…</div>
-      ) : questions.length === 0 && appliedSubjects.length > 0 ? (
-        <div className="qbank-empty">
-          No question bank entries were found for the selected subjects and chapters.
-        </div>
-      ) : questions.length === 0 ? (
-        <div className="qbank-empty">
-          Select chapters and click Go to load questions.
-        </div>
-      ) : filteredQuestions.length === 0 ? (
-        <div className="qbank-empty">
-          No questions found matching the selected mark tier. Click &quot;All Marks&quot; to view all questions.
-        </div>
-      ) : (
-        <div className="qbank-card-list">
-          {filteredQuestions.map((entry, index) => {
-            const modeOptions = [
-              entry.shortAnswer ? { key: 'short' as const, label: '2M' } : null,
-              entry.longAnswer ? { key: 'long' as const, label: '5M' } : null,
-              entry.tenMarkAnswer ? { key: 'ten' as const, label: '10M' } : null,
-            ].filter(Boolean) as { key: 'short' | 'long' | 'ten'; label: string }[];
-            const defaultMode = modeOptions[0]?.key ?? 'short';
-            const mode = answerModes[entry.id] ?? defaultMode;
-            const isRevealed = revealedCards[entry.id] ?? false;
-            const shownAnswer =
-              (mode === 'ten' && entry.tenMarkAnswer) ||
-              (mode === 'long' && entry.longAnswer) ||
-              entry.shortAnswer || entry.longAnswer || entry.tenMarkAnswer || '';
-            
-            return (
-              <div
-                key={entry.id}
-                className="qbank-simple-question-card"
-                onClick={() => toggleReveal(entry.id)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    toggleReveal(entry.id);
-                  }
-                }}
-              >
-                {/* Left side: Number */}
-                <div style={{ flexShrink: 0, width: '48px', display: 'flex', justifyContent: 'center' }}>
-                  <span style={{
-                    fontSize: '1.75rem',
-                    fontWeight: 700,
-                    color: G.mid,
-                    fontVariantNumeric: 'tabular-nums',
-                  }}>
-                    {String(index + 1).padStart(2, '0')}
-                  </span>
-                </div>
+        {/* ── Question Cards List ── */}
+        {loading ? (
+          <div
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              color: '#647068',
+              fontSize: '14px',
+              background: '#FFFFFF',
+              borderRadius: '14px',
+              border: '1px solid #E6E0D4',
+            }}
+          >
+            Loading question bank…
+          </div>
+        ) : questions.length === 0 && appliedSubjects.length > 0 ? (
+          <div
+            style={{
+              padding: '48px 24px',
+              textAlign: 'center',
+              color: '#647068',
+              fontSize: '14px',
+              background: '#FFFFFF',
+              borderRadius: '14px',
+              border: '1px solid #E6E0D4',
+            }}
+          >
+            No question bank entries were found for this chapter.
+          </div>
+        ) : filteredQuestions.length === 0 ? (
+          <div
+            style={{
+              padding: '36px 24px',
+              textAlign: 'center',
+              color: '#647068',
+              fontSize: '14px',
+              background: '#FFFFFF',
+              borderRadius: '14px',
+              border: '1px solid #E6E0D4',
+            }}
+          >
+            No questions in this mark filter. Click &ldquo;All&rdquo; to view all questions.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            {filteredQuestions.map((entry, index) => {
+              const modeOptions: { key: MarkTier; label: string }[] = [
+                { key: 'short', label: '2M' },
+                { key: 'long', label: '5M' },
+                ...(entry.tenMarkAnswer ? [{ key: 'ten' as const, label: '10M' }] : [{ key: 'ten' as const, label: '10M' }]),
+              ];
+              const defaultMode: MarkTier =
+                index === 0 && globalMark === 'all' && entry.longAnswer
+                  ? 'long'
+                  : globalMark !== 'all'
+                  ? globalMark
+                  : 'short';
+              const mode: MarkTier = answerModes[entry.id] ?? defaultMode;
+              const isRevealed = revealedCards[entry.id] ?? false;
 
-                {/* Right side: Content */}
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                  {/* Top: Question, answer controls & tags — all on one axis */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '16px' }}>
-                    <div style={{ flex: 1, minWidth: 0, fontSize: '1.15rem', fontWeight: 500, color: '#111', lineHeight: 1.55 }}>
-                      <MarkdownView content={ensureQuestionMark(entry.question)} />
-                    </div>
+              const shownAnswer =
+                (mode === 'ten' && (entry.tenMarkAnswer || entry.longAnswer || entry.shortAnswer)) ||
+                (mode === 'long' && (entry.longAnswer || entry.shortAnswer)) ||
+                entry.shortAnswer ||
+                entry.longAnswer ||
+                entry.tenMarkAnswer ||
+                '';
 
-                    {/* Answer controls: Clicking marks (2M / 5M / 10M) reveals/toggles the answer */}
-                    <div
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {modeOptions.length > 0 && (
-                        <div style={{
-                          display: 'flex',
-                          background: G.pale,
-                          border: `1.5px solid ${G.paleBorder}`,
-                          borderRadius: '999px',
-                          padding: '2px',
-                          gap: '2px',
-                        }}>
-                          {modeOptions.map((opt) => {
-                            const isCurrentMode = mode === opt.key;
-                            const active = isCurrentMode && isRevealed;
-                            return (
-                              <button
-                                key={opt.key}
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setAnswerMode(entry.id, opt.key);
-                                }}
-                                title={active ? `Click to hide ${opt.label} answer` : `Click for ${opt.label} answer`}
-                                style={{
-                                  border: isCurrentMode && !isRevealed ? `1px dashed ${G.mid}` : 'none',
-                                  cursor: 'pointer',
-                                  borderRadius: '999px',
-                                  padding: '4px 13px',
-                                  fontSize: '0.8rem',
-                                  fontWeight: active ? 700 : isCurrentMode ? 600 : 500,
-                                  background: active ? `linear-gradient(135deg, ${G.mid}, ${G.dark})` : isCurrentMode ? 'white' : 'transparent',
-                                  color: active ? 'white' : isCurrentMode ? G.dark : G.mid,
-                                  boxShadow: active ? '0 2px 6px rgba(47,79,64,0.3)' : 'none',
-                                  transition: 'all 0.18s ease',
-                                }}
-                              >
-                                {opt.label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+              const cleanChapName = (entry.chapterName || '')
+                .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]?\s*/i, '')
+                .trim();
 
-                    <div style={{
+              const isTryingFirst = Boolean(tryFirstMode[entry.id]);
+              const isCompared = Boolean(tryFirstCompared[entry.id]);
+              const modeLabelLong = mode === 'ten' ? '10-mark' : mode === 'long' ? '5-mark' : '2-mark';
+              const examBudgetText =
+                mode === 'ten'
+                  ? '15–18 minutes of writing time for this question'
+                  : mode === 'long'
+                  ? '8–10 minutes of writing time for this question'
+                  : '2–3 minutes of writing time for this question';
+
+              return (
+                <div
+                  key={entry.id}
+                  onClick={() => toggleReveal(entry.id)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleReveal(entry.id);
+                    }
+                  }}
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #E5DFD3',
+                    borderRadius: '14px',
+                    padding: isRevealed ? '20px 24px 18px' : '16px 24px',
+                    boxShadow: '0 2px 8px rgba(30, 40, 34, 0.03)',
+                    cursor: 'pointer',
+                    transition: 'border-color 0.18s ease, box-shadow 0.18s ease',
+                  }}
+                >
+                  {/* ── Card Top Header: Number + Question + Right Controls ── */}
+                  <div
+                    style={{
                       display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'flex-end',
-                      fontSize: '0.78rem',
-                      color: G.mid,
-                      fontWeight: 600,
-                      flexShrink: 0,
-                      gap: '4px',
-                    }}>
-                      <span style={{
-                        background: G.pale,
-                        border: `1px solid ${G.paleBorder}`,
-                        borderRadius: '999px',
-                        padding: '2px 10px',
-                        whiteSpace: 'nowrap',
-                        color: G.dark,
-                      }}>Ch {entry.chapterNumber}</span>
-                      {entry.chapterName && (
-                        <span style={{
-                          background: G.pale,
-                          border: `1px solid ${G.paleBorder}`,
+                      alignItems: isRevealed ? 'flex-start' : 'center',
+                      justifyContent: 'space-between',
+                      gap: '18px',
+                    }}
+                  >
+                    {/* Left: Number + Question text */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '14px',
+                        flex: 1,
+                        minWidth: 0,
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Fraunces', 'Georgia', serif",
+                          fontSize: '18px',
+                          fontWeight: 700,
+                          color: '#4F6A5A',
+                          fontVariantNumeric: 'tabular-nums',
+                          lineHeight: 1.35,
+                          flexShrink: 0,
+                          minWidth: '26px',
+                        }}
+                      >
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
+
+                      <div
+                        className="qbank-question-title"
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          fontSize: '15px',
+                          fontWeight: 700,
+                          color: '#1E2822',
+                          lineHeight: 1.45,
+                        }}
+                      >
+                        <MarkdownView content={ensureQuestionMark(entry.question)} />
+                      </div>
+                    </div>
+
+                    {/* Right: 2M | 5M | 10M Segmented Control + Chapter Badge */}
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        display: 'flex',
+                        flexDirection: isRevealed ? 'column' : 'row',
+                        alignItems: isRevealed ? 'flex-end' : 'center',
+                        gap: isRevealed ? '6px' : '8px',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {/* Segmented 2M | 5M | 10M box */}
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          background: '#FAF8F3',
+                          border: '1px solid #E2DDD2',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {modeOptions.map((opt, optIdx) => {
+                          const isCurrentMode = mode === opt.key;
+                          return (
+                            <button
+                              key={opt.key}
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSelectCardMode(entry.id, opt.key);
+                              }}
+                              title={`View ${opt.label} model answer`}
+                              style={{
+                                border: 'none',
+                                borderLeft: optIdx > 0 ? '1px solid #E6E1D6' : 'none',
+                                cursor: 'pointer',
+                                padding: '5px 11px',
+                                fontSize: '11px',
+                                fontWeight: isCurrentMode ? 800 : 600,
+                                background: isCurrentMode ? '#E7B864' : 'transparent',
+                                color: isCurrentMode ? '#18221D' : '#5A655E',
+                                transition: 'all 0.15s ease',
+                              }}
+                            >
+                              {opt.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Chapter badge pill */}
+                      <span
+                        style={{
+                          background: '#EFF3F0',
+                          color: '#526358',
                           borderRadius: '999px',
-                          padding: '2px 10px',
+                          padding: isRevealed ? '3px 10px' : '4px 11px',
+                          fontSize: '10.5px',
+                          fontWeight: 600,
                           whiteSpace: 'nowrap',
-                          color: G.mid,
-                          maxWidth: '140px',
+                          maxWidth: isRevealed ? '260px' : '120px',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
-                        }}>{entry.chapterName}</span>
-                      )}
+                        }}
+                      >
+                        {isRevealed && cleanChapName
+                          ? `Chapter ${entry.chapterNumber} · ${cleanChapName}`
+                          : `Chapter ${entry.chapterNumber}`}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Answer — revealed on card click or marks pill click */}
+                  {/* ── Expanded Answer Section ── */}
                   {isRevealed && (
                     <div
                       onClick={(e) => e.stopPropagation()}
                       style={{
-                        marginTop: '16px',
-                        paddingTop: '16px',
-                        borderTop: `1px solid ${G.paleBorder}`,
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: '12px',
+                        marginTop: '14px',
                         cursor: 'default',
-                        animation: 'fadeIn 0.22s ease-out',
                       }}
                     >
-                      <span
-                        aria-label="Answer"
+                      {/* "Attempt before you read" Dashed Callout Box */}
+                      <div
                         style={{
-                          flexShrink: 0,
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '8px',
-                          background: G.mid,
-                          color: 'white',
-                          fontWeight: 800,
-                          fontSize: '0.9rem',
+                          background: '#FDF9F1',
+                          border: '1.5px dashed #DFC28F',
+                          borderRadius: '10px',
+                          padding: '10px 16px',
+                          marginBottom: '14px',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
+                          justifyContent: 'space-between',
+                          gap: '16px',
+                          flexWrap: 'wrap',
                         }}
                       >
-                        A
-                      </span>
-                      <div style={{ flex: 1, minWidth: 0, fontSize: '1.05rem', color: '#1e293b', lineHeight: 1.6 }}>
-                        <MarkdownView content={shownAnswer} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '15px', lineHeight: 1 }} aria-hidden="true">
+                            ✍️
+                          </span>
+                          <div>
+                            <div
+                              style={{
+                                fontSize: '12.5px',
+                                fontWeight: 700,
+                                color: '#4A3210',
+                                lineHeight: 1.3,
+                              }}
+                            >
+                              Attempt before you read
+                            </div>
+                            <div
+                              style={{
+                                fontSize: '11.5px',
+                                color: '#8C6D3F',
+                                lineHeight: 1.35,
+                              }}
+                            >
+                              Hide the answer, write your own {modeLabelLong} version, then compare.
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => toggleTryFirst(entry.id)}
+                          style={{
+                            background: '#D49B4B',
+                            color: '#1E2822',
+                            border: 'none',
+                            borderRadius: '999px',
+                            padding: '6px 14px',
+                            fontSize: '11.5px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            transition: 'filter 0.15s ease',
+                          }}
+                        >
+                          {isTryingFirst ? 'Show answer directly' : 'Hide answer & try first'}
+                        </button>
                       </div>
+
+                      {/* Interactive Try-First Scratchpad (when user clicks "Hide answer & try first") */}
+                      {isTryingFirst && (
+                        <div
+                          style={{
+                            background: '#FAF8F3',
+                            border: '1px solid #E5DFD3',
+                            borderRadius: '10px',
+                            padding: '12px 14px',
+                            marginBottom: '14px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontSize: '11.5px',
+                              fontWeight: 700,
+                              color: '#4F6A5A',
+                              marginBottom: '6px',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.04em',
+                            }}
+                          >
+                            Your {modeLabelLong} Attempt
+                          </div>
+                          <textarea
+                            value={tryFirstDrafts[entry.id] ?? ''}
+                            onChange={(e) =>
+                              setTryFirstDrafts((prev) => ({ ...prev, [entry.id]: e.target.value }))
+                            }
+                            placeholder={`Write your ${modeLabelLong} answer here before revealing the model answer...`}
+                            rows={4}
+                            style={{
+                              width: '100%',
+                              boxSizing: 'border-box',
+                              borderRadius: '8px',
+                              border: '1px solid #DCD5C7',
+                              background: '#FFFFFF',
+                              padding: '10px 12px',
+                              fontSize: '13px',
+                              lineHeight: 1.5,
+                              color: '#1E2822',
+                              fontFamily: 'inherit',
+                              resize: 'vertical',
+                              outline: 'none',
+                            }}
+                          />
+                          {!isCompared && (
+                            <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setTryFirstCompared((prev) => ({ ...prev, [entry.id]: true }))
+                                }
+                                style={{
+                                  background: '#233329',
+                                  color: '#FFFFFF',
+                                  border: 'none',
+                                  borderRadius: '999px',
+                                  padding: '6px 14px',
+                                  fontSize: '11.5px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Reveal model answer &amp; compare
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Model Answer Body (visible unless hidden by try-first before compare) */}
+                      {(!isTryingFirst || isCompared) && (
+                        <>
+                          <div className="qbank-answer-body">
+                            <MarkdownView content={shownAnswer} />
+                          </div>
+
+                          {/* Footer Exam Budget */}
+                          <div
+                            style={{
+                              marginTop: '14px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              fontSize: '11.5px',
+                              fontWeight: 600,
+                              color: '#B86B35',
+                            }}
+                          >
+                            <svg
+                              width="13"
+                              height="13"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2.2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <circle cx="12" cy="12" r="10" />
+                              <polyline points="12 6 12 12 16 14" />
+                            </svg>
+                            <span>Exam budget · {examBudgetText}</span>
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

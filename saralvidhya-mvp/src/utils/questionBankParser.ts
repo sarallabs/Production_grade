@@ -24,12 +24,27 @@ const PILLAR_TITLES: Record<string, string> = {
   pillar_5_diagnostic_synthesis: 'Diagnostic Synthesis',
 };
 
+/** Strips any embedded "Marking Scheme" / "Marking Rubric" heading and its markdown table from an answer string. */
+export function stripMarkingScheme(md?: string): string {
+  if (!md) return '';
+  return md
+    .replace(
+      /(?:^|\n)\s*(?:#{1,6}\s*|\*\*)?(?:Marking\s+(?:Scheme|Rubric)|Evaluation\s+Scheme)(?:\*\*)?[:\s]*\r?\n(?:\s*\r?\n)*(?:\|[^\n]*\|\r?\n)+/gi,
+      '\n',
+    )
+    .replace(
+      /(?:^|\n)\s*(?:#{1,6}\s*|\*\*)?(?:Marking\s+(?:Scheme|Rubric))(?:\*\*)?[:\s]*[^\n]*(?:\r?\n|$)/gi,
+      '\n',
+    )
+    .trim();
+}
+
 /** Converts the nested `essay_answer_10mark` JSON object (or plain string/array) into markdown. */
 function formatTenMarkAnswer(raw: any): string {
   if (!raw) return '';
-  if (typeof raw === 'string') return raw;
-  if (Array.isArray(raw)) return raw.join('\n\n');
-  if (typeof raw !== 'object') return String(raw);
+  if (typeof raw === 'string') return stripMarkingScheme(raw);
+  if (Array.isArray(raw)) return stripMarkingScheme(raw.join('\n\n'));
+  if (typeof raw !== 'object') return stripMarkingScheme(String(raw));
 
   const getPillarTitle = (k: string) => {
     return (
@@ -42,14 +57,6 @@ function formatTenMarkAnswer(raw: any): string {
   };
 
   const parts: string[] = [];
-  const rubric = raw.marking_rubric;
-  if (rubric && typeof rubric === 'object') {
-    const rows = Object.entries(rubric)
-      .filter(([k]) => k !== 'total_marks')
-      .map(([k, v]) => `| ${getPillarTitle(k)} | ${v} |`);
-    const total = rubric.total_marks ? `| **Total** | **${rubric.total_marks}** |` : '';
-    parts.push(['**Marking Scheme**', '', '| Section | Marks |', '| :--- | :--- |', ...rows, total].filter((l) => l !== undefined).join('\n'));
-  }
   for (const [key, value] of Object.entries(raw)) {
     if (key === 'marking_rubric' || typeof value !== 'string' || !value.trim()) continue;
     const title = getPillarTitle(key);
@@ -57,7 +64,7 @@ function formatTenMarkAnswer(raw: any): string {
     const body = /^\s+\|\s*$/m.test(value) && !value.includes('```') ? '```\n' + value + '\n```' : value;
     parts.push(`### ${title}\n\n${body}`);
   }
-  return parts.join('\n\n');
+  return stripMarkingScheme(parts.join('\n\n'));
 }
 
 export function ensureQuestionMark(text: string): string {
@@ -226,8 +233,8 @@ export function parseQuestionBankMarkdown(
             chapterNumber,
             chapterName,
             question: ensureQuestionMark(qText),
-            shortAnswer: shortAns,
-            longAnswer: longAns || shortAns,
+            shortAnswer: stripMarkingScheme(shortAns),
+            longAnswer: stripMarkingScheme(longAns || shortAns),
             tenMarkAnswer: formatTenMarkAnswer(q.essay_answer_10mark || q.long_answer_10mark || q.ten_mark_answer || q.answer_10mark) || undefined,
           };
         });
@@ -275,7 +282,7 @@ export function parseQuestionBankMarkdown(
         for (let mIdx = 0; mIdx < markers.length; mIdx++) {
           const cur = markers[mIdx];
           const nextStart = mIdx + 1 < markers.length ? markers[mIdx + 1].start : blockEnd;
-          const text = block.slice(cur.contentStart, nextStart).trim();
+          const text = stripMarkingScheme(block.slice(cur.contentStart, nextStart).trim());
           if (cur.tier === 'short') shortAnswer = text;
           else if (cur.tier === 'long') longAnswer = text;
           else if (cur.tier === 'ten') tenMarkAnswer = text;
@@ -283,7 +290,7 @@ export function parseQuestionBankMarkdown(
       } else {
         const mAns = block.match(/(?:^|\n)(?:###?\s*|\*\*)\s*(?:Detailed Walkthrough\s+)?(?:Answer|Solution|Explanation|Model Answer)[:\s\*]*[^\n]*/i);
         if (mAns && mAns.index !== undefined) {
-          const ansText = block.slice(mAns.index + mAns[0].length, blockEnd).trim();
+          const ansText = stripMarkingScheme(block.slice(mAns.index + mAns[0].length, blockEnd).trim());
           shortAnswer = ansText;
           longAnswer = ansText;
         }
@@ -337,7 +344,7 @@ export function parseQuestionBankMarkdown(
 
   return parsed.map((p, index) => {
     const keyAnswer = answerKeyMap[index + 1] || '';
-    const fullAnswer = p.answer || keyAnswer;
+    const fullAnswer = stripMarkingScheme(p.answer || keyAnswer);
     const cleanAnswer = fullAnswer.replace(/^[a-dA-D][\)\.]\s*/i, '').trim();
     const answerLines = cleanAnswer.split(/\n/).map(l => l.trim()).filter(Boolean);
     const short = answerLines[0] || cleanAnswer;

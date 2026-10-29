@@ -1,38 +1,72 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { cloudStorage } from '@/context/CloudStateContext';
+import {
+  cloudStorage,
+  CLOUD_API_BASE,
+  getCloudAuthHeaders,
+} from '@/context/CloudStateContext';
+import { detectTenantId } from '@/tenant/TenantProvider';
 
 export default function GlobalLeaderboard() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<{ name: string, points: number, isMe: boolean }[]>([]);
+  const [users, setUsers] = useState<{ name: string; points: number; isMe: boolean }[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
     const dummyUsers = [
-      { name: "Rahul Sharma", points: 8500, isMe: false },
-      { name: "Aisha Khan", points: 9200, isMe: false },
-      { name: "Tariq Ali", points: 6400, isMe: false },
-      { name: "Sneha Reddy", points: 7100, isMe: false },
-      { name: "Rohan Patel", points: 5300, isMe: false },
+      { name: 'Rahul Sharma', points: 8500, isMe: false },
+      { name: 'Aisha Khan', points: 9200, isMe: false },
+      { name: 'Tariq Ali', points: 6400, isMe: false },
+      { name: 'Sneha Reddy', points: 7100, isMe: false },
+      { name: 'Rohan Patel', points: 5300, isMe: false },
     ];
 
     let myTotalPoints = 0;
-    // Iterate over all possible subjects in cloud storage and sum scores
     for (let i = 0; i < cloudStorage.length; i++) {
-        const key = cloudStorage.key(i);
-        if (key && key.startsWith('ekam_quiz_score_')) {
-            myTotalPoints += parseInt(cloudStorage.getItem(key) || '0', 10);
-        }
+      const key = cloudStorage.key(i);
+      if (key && key.startsWith('ekam_quiz_score_')) {
+        myTotalPoints += parseInt(cloudStorage.getItem(key) || '0', 10);
+      }
     }
-    
-    // Scale points to make it logically equivalent to the dummy user totals
     myTotalPoints = myTotalPoints * 5;
 
-    // Combine and sort
-    const all = [...dummyUsers, { name: "You (Student)", points: myTotalPoints, isMe: true }];
-    all.sort((a, b) => b.points - a.points);
-    setUsers(all);
-  }, []);
+    const fallbackList = [
+      ...dummyUsers,
+      { name: 'You (Student)', points: myTotalPoints, isMe: true },
+    ].sort((a, b) => b.points - a.points);
+    setUsers(fallbackList);
 
+    const activeTenant = detectTenantId() || cloudStorage.getItem('current_tenant_id');
+    if (activeTenant) {
+      fetch(`${CLOUD_API_BASE}/v2/t/${activeTenant}/leaderboard`, {
+        method: 'GET',
+        headers: getCloudAuthHeaders(activeTenant),
+        credentials: 'include',
+      })
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (cancelled || !Array.isArray(data?.leaderboard) || data.leaderboard.length === 0) {
+            return;
+          }
+          const cloudEntries = data.leaderboard.map((entry: any) => ({
+            name: String(entry.name || 'Student'),
+            points: entry.isMe
+              ? Math.max(Number(entry.points || 0), myTotalPoints)
+              : Number(entry.points || 0),
+            isMe: Boolean(entry.isMe),
+          }));
+          cloudEntries.sort((a: any, b: any) => b.points - a.points);
+          setUsers(cloudEntries);
+        })
+        .catch(() => {
+          // Keep local cloudStorage-computed leaderboard on network error
+        });
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const topThree = useMemo(() => users.slice(0, 3), [users]);
   const rest = useMemo(() => users.slice(3), [users]);
 
