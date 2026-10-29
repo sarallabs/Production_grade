@@ -162,24 +162,34 @@ export default function VideosView({
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [registryVideos, setRegistryVideos] = useState<ChapterVideo[]>([]);
+  const [isRegistryLoaded, setIsRegistryLoaded] = useState(false);
+  const playerReadyRef = useRef(false);
+  const iframeLoadedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
-    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
-      const regList = reg?.chapter?.videos || (reg as any)?.videos;
-      if (cancelled || !Array.isArray(regList) || regList.length === 0) return;
-      setRegistryVideos(
-        regList.map((v: any, idx: number) => ({
-          index: v.order ?? idx + 1,
-          id: v.id || `vid_${idx + 1}`,
-          title: v.title,
-          ytId: v.videoId || v.ytId || "",
-          duration: v.duration,
-          thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
-          dir: "",
-          topics: v.topics,
-        })),
-      );
-    });
+    setIsRegistryLoaded(false);
+    getRegistryChapterData(subjectId, chapterNumber)
+      .then((reg) => {
+        const regList = reg?.chapter?.videos || (reg as any)?.videos;
+        if (cancelled) return;
+        if (Array.isArray(regList) && regList.length > 0) {
+          setRegistryVideos(
+            regList.map((v: any, idx: number) => ({
+              index: v.order ?? idx + 1,
+              id: v.id || `vid_${idx + 1}`,
+              title: v.title,
+              ytId: v.videoId || v.ytId || "",
+              duration: v.duration,
+              thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
+              dir: "",
+              topics: v.topics,
+            })),
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsRegistryLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
@@ -421,9 +431,9 @@ export default function VideosView({
   }, [isParentSegmented, activeVideoIndex, videos.length, subjectId, chapterNumber]);
 
   useEffect(() => {
-    if (!isHydrated || videos.length === 0) return;
+    if (!isHydrated || !isRegistryLoaded || !currentVideo?.ytId) return;
     cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(robustActive));
-  }, [robustActive, subjectId, chapterNumber, isHydrated, videos.length]);
+  }, [robustActive, subjectId, chapterNumber, isHydrated, isRegistryLoaded, currentVideo?.ytId]);
   const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
   const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
     try {
@@ -525,15 +535,6 @@ export default function VideosView({
             setDuration(parsed.duration);
             setProgress(Math.min(100, (parsed.currentTime / parsed.duration) * 100));
           }
-          if (!isPlaying && playerRef.current && typeof playerRef.current.seekTo === "function") {
-            try {
-              const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
-              if (Math.abs(cur - parsed.currentTime) > 2) {
-                playerRef.current.seekTo(parsed.currentTime, true);
-                playerRef.current.pauseVideo?.();
-              }
-            } catch {}
-          }
         }
       } catch {
         // ignore
@@ -550,8 +551,9 @@ export default function VideosView({
   // YouTube Player setup
   useEffect(() => {
     hasStartedPlayingRef.current = false;
-    if (!currentVideo?.ytId) return;
-
+    playerReadyRef.current = false;
+    iframeLoadedRef.current = false;
+    if (!isRegistryLoaded || !currentVideo?.ytId) return;
     if (!(window as any).YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -592,30 +594,13 @@ export default function VideosView({
     const initPlayer = () => {
       const elementId = `yt-player-${currentVideo.ytId}`;
       const el = document.getElementById(elementId);
-      if (!el || el.tagName === "IFRAME") return;
-
-      const initialStartSec = Math.floor(readSavedSec());
+      if (!el) return;
 
       try {
         playerRef.current = new (window as any).YT.Player(elementId, {
-          height: "100%",
-          width: "100%",
-          videoId: currentVideo.ytId,
-          playerVars: {
-            origin: window.location.origin,
-            rel: 0,
-            modestbranding: 1,
-            enablejsapi: 1,
-            controls: 0,
-            disablekb: 1,
-            cc_load_policy: 0,
-            cc_lang_pref: "none",
-            playsinline: 1,
-            iv_load_policy: 3,
-            ...(initialStartSec > 1 ? { start: initialStartSec } : {}),
-          },
           events: {
             onReady: (event: any) => {
+              playerReadyRef.current = true;
               try {
                 if (event.target) {
                   if (typeof event.target.unloadModule === "function") {
@@ -744,7 +729,7 @@ export default function VideosView({
     };
 
     const handleUnloadSave = () => {
-      if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+      if (playerReadyRef.current && playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
         try {
           const cur = playerRef.current.getCurrentTime();
           const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
@@ -766,11 +751,16 @@ export default function VideosView({
     document.addEventListener("visibilitychange", handleVisibilitySave);
 
     checkInterval = setInterval(() => {
-      if ((window as any).YT && (window as any).YT.Player && document.getElementById(`yt-player-${currentVideo.ytId}`)) {
+      if (
+        iframeLoadedRef.current &&
+        (window as any).YT &&
+        (window as any).YT.Player &&
+        document.getElementById(`yt-player-${currentVideo.ytId}`)
+      ) {
         clearInterval(checkInterval);
         initPlayer();
       }
-    }, 200);
+    }, 150);
 
     return () => {
       clearInterval(checkInterval);
@@ -782,18 +772,15 @@ export default function VideosView({
         progressIntervalRef.current = null;
       }
       handleUnloadSave();
-      if (playerRef.current && typeof playerRef.current.destroy === "function") {
-        try {
-          playerRef.current.destroy();
-        } catch (e) {}
-        playerRef.current = null;
-      }
+      playerReadyRef.current = false;
+      iframeLoadedRef.current = false;
+      playerRef.current = null;
     };
-  }, [currentVideo?.ytId, robustActive, markWatched, onComplete, subjectId, chapterNumber]);
+  }, [isRegistryLoaded, currentVideo?.ytId, robustActive, markWatched, onComplete, subjectId, chapterNumber]);
 
   // Player controls
   const handlePlayPause = () => {
-    if (!playerRef.current) return;
+    if (!playerRef.current || !playerReadyRef.current) return;
     if (isPlaying) {
       playerRef.current.pauseVideo();
     } else {
@@ -1398,7 +1385,7 @@ export default function VideosView({
     >
       {/* YouTube Iframe wrapped in keyed container so React cleanly unmounts on video switch */}
       <div
-        key={`yt-wrap-${currentVideo.ytId}`}
+        key={`yt-wrap-${subjectId}-${chapterNumber}-${robustActive}-${currentVideo.ytId}`}
         style={{
           position: "absolute",
           inset: 0,
@@ -1410,14 +1397,22 @@ export default function VideosView({
           transition: "opacity 0.25s ease",
         }}
       >
-        <div
-          id={`yt-player-${currentVideo.ytId}`}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: 0,
-          }}
-        />
+        {isRegistryLoaded && currentVideo.ytId ? (
+          <iframe
+            id={`yt-player-${currentVideo.ytId}`}
+            title={displayTitle}
+            src={`https://www.youtube.com/embed/${currentVideo.ytId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&rel=0&modestbranding=1&controls=0&disablekb=1&cc_load_policy=0&cc_lang_pref=none&playsinline=1&iv_load_policy=3`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            onLoad={() => {
+              iframeLoadedRef.current = true;
+            }}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
+          />
+        ) : null}
       </div>
 
       {/* Dark forest-green ambient slate overlay when paused */}
