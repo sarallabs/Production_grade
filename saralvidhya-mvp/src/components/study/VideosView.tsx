@@ -2587,291 +2587,6 @@ export default function VideosView({
         >
           {/* 16:9 Main Video Player in the Middle */}
           {renderVideoPlayer(true, false, robustActive)}
-          {/* ── SCREEN 2: KEY MOMENTS (Left) + UP NEXT IN THIS CHAPTER (Right) ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "1.12fr 1fr",
-              gap: "16px",
-              marginTop: "6px",
-            }}
-          >
-            {/* Left Card: Key Moments */}
-            <div
-              style={{
-                background: "#FFFFFF",
-                border: "1px solid #E6E0D4",
-                borderRadius: "16px",
-                padding: "20px 22px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "8px",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "15.5px",
-                    fontWeight: 800,
-                    color: "#1E2822",
-                  }}
-                >
-                  Key Moments
-                </h3>
-                <span
-                  style={{
-                    fontSize: "11.5px",
-                    fontWeight: 600,
-                    color: "#7C8780",
-                  }}
-                >
-                  Click a timestamp to jump
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {keyMomentsList.map((km, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => seekToSecond(km.timeSec)}
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: "12px",
-                      padding: "12px 0",
-                      borderTop: idx === 0 ? "none" : "1px solid #F0ECE3",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <span
-                      style={{
-                        background: "#FAF2E9",
-                        color: "#B46530",
-                        fontSize: "11.5px",
-                        fontWeight: 800,
-                        padding: "4px 9px",
-                        borderRadius: "6px",
-                        fontVariantNumeric: "tabular-nums",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {km.timeStr}
-                    </span>
-
-                    <div
-                      style={{
-                        fontSize: "13px",
-                        color: "#2D3831",
-                        lineHeight: 1.45,
-                      }}
-                    >
-                      <strong style={{ fontWeight: 800, color: "#1E2822" }}>
-                        {`${km.lead}: `}
-                      </strong>
-                      <span>{km.detail}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right Card: Up Next in This Chapter */}
-            <div
-              style={{
-                background: "#FFFFFF",
-                border: "1px solid #E6E0D4",
-                borderRadius: "16px",
-                padding: "20px 22px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "14px",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.02)",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: "8px",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: "15.5px",
-                    fontWeight: 800,
-                    color: "#1E2822",
-                  }}
-                >
-                  Up Next in This Chapter
-                </h3>
-                <span
-                  style={{
-                    fontSize: "11.5px",
-                    fontWeight: 600,
-                    color: "#7C8780",
-                  }}
-                >
-                  {`${totalVideos}-video playlist`}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                {upcomingPlaylist.length > 0 ? (
-                  upcomingPlaylist.map((item, upIdx) => (
-                    <div
-                      key={item.idx}
-                      onClick={() => handleSelectVideo(item.idx)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "10px 0",
-                        borderTop: upIdx === 0 ? "none" : "1px solid #F0ECE3",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {/* Dark Forest Thumbnail Badge */}
-                      <div
-                        style={{
-                          width: "44px",
-                          height: "30px",
-                          borderRadius: "7px",
-                          background: "#35473E",
-                          color: "#FFFFFF",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {upIdx === 0 ? (
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="#FFFFFF">
-                            <polygon points="6,4 20,12 6,20" />
-                          </svg>
-                        ) : (
-                          <span>{upIdx + 1}</span>
-                        )}
-                      </div>
-
-                      {/* Title + Duration */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 800,
-                            color: "#1E2822",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {item.title}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: "11.5px",
-                            color: "#7C8780",
-                            marginTop: "2px",
-                          }}
-                        >
-                          {`${item.durationStr}${upIdx === 0 ? " · plays after this video" : ""}`}
-                        </div>
-                      </div>
-
-                      {/* Right Play Circle */}
-                      <div
-                        style={{
-                          width: "30px",
-                          height: "30px",
-                          borderRadius: "50%",
-                          background: upIdx === 0 ? "#9DC2AD" : "#FFFFFF",
-                          border: upIdx === 0 ? "none" : "1px solid #E2DDD3",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                        }}
-                      >
-                        <svg
-                          width="10"
-                          height="10"
-                          viewBox="0 0 24 24"
-                          fill={upIdx === 0 ? "#182C22" : "#37423B"}
-                          style={{ marginLeft: "1px" }}
-                        >
-                          <polygon points="6,4 20,12 6,20" />
-                        </svg>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  segmentsList.map((seg, sIdx) => (
-                    <div
-                      key={seg.index}
-                      onClick={() => seekToSecond(seg.startSec)}
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "12px",
-                        padding: "10px 0",
-                        borderTop: sIdx === 0 ? "none" : "1px solid #F0ECE3",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <div
-                        style={{
-                          width: "44px",
-                          height: "30px",
-                          borderRadius: "7px",
-                          background: "#35473E",
-                          color: "#FFFFFF",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          fontSize: "12px",
-                          fontWeight: 700,
-                          flexShrink: 0,
-                        }}
-                      >
-                        {sIdx === 0 ? "▶" : sIdx + 1}
-                      </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            fontSize: "13px",
-                            fontWeight: 800,
-                            color: "#1E2822",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {seg.title}
-                        </div>
-                        <div style={{ fontSize: "11.5px", color: "#7C8780", marginTop: "2px" }}>
-                          {`${seg.timeRangeStr} · ${seg.durationLabel}`}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* ── SCREEN 2 BOTTOM FOOTER: Quick Check (Left) + Next Video CTA (Right) ── */}
           <div
             style={{
@@ -2992,161 +2707,142 @@ export default function VideosView({
           </div>
         </div>
 
-        {/* ── RIGHT TIMESTAMPS / SEGMENTS COLUMN ── */}
+        {/* ── RIGHT SUBTLE TIMESTAMPS COLUMN ── */}
         <div
           style={{
-            width: "288px",
+            width: "268px",
             flexShrink: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
           }}
         >
-          {/* Top Pill matching Left Watching Guide Pill */}
-          <div
-            style={{
-              background: "#9CC0B4",
-              color: "#18221D",
-              borderRadius: "999px",
-              padding: "10px 18px",
-              fontSize: "13px",
-              fontWeight: 700,
-              textAlign: "center",
-              letterSpacing: "0.01em",
-              boxShadow: "0 2px 6px rgba(29, 43, 36, 0.12)",
-            }}
-          >
-            Video Timestamps
-          </div>
-
-          {/* White Segments / Timestamps Card */}
           <div
             style={{
               background: "#FFFFFF",
-              borderRadius: "16px",
-              padding: "16px 14px",
-              border: "1px solid #E6E0D4",
-              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+              borderRadius: "14px",
+              padding: "14px 14px",
+              border: "1px solid #EAE5DC",
+              boxShadow: "0 1px 6px rgba(30, 40, 34, 0.02)",
               display: "flex",
               flexDirection: "column",
-              gap: "10px",
+              gap: "8px",
             }}
           >
             <div
               style={{
-                fontSize: "10.5px",
-                fontWeight: 800,
-                letterSpacing: "0.07em",
-                color: "#6E7B73",
-                textTransform: "uppercase",
-                padding: "0 4px 2px 4px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 4px 6px 4px",
+                borderBottom: "1px solid #F2EFE9",
               }}
             >
-              SEGMENTS IN THIS VIDEO — CLICK TO JUMP
+              <span
+                style={{
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  color: "#7C8780",
+                  textTransform: "uppercase",
+                }}
+              >
+                Timestamps
+              </span>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 500,
+                  color: "#9AA39D",
+                }}
+              >
+                Click to jump
+              </span>
             </div>
 
             <div
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
+                gap: "4px",
               }}
             >
               {segmentsList.map((seg, idx) => {
                 const isNowPlaying = idx === activeSegmentIdx;
-                const isUpNext = idx === activeSegmentIdx + 1;
-                const isWatchedSeg = idx < activeSegmentIdx;
 
                 return (
                   <div
                     key={seg.index}
                     onClick={() => seekToSecond(seg.startSec)}
                     style={{
-                      background: isNowPlaying ? "#EAF3EE" : "#FFFFFF",
-                      border: isNowPlaying ? "1.5px solid #8AB89E" : "1px solid #E6E0D4",
-                      borderRadius: "13px",
-                      padding: "12px 14px",
+                      background: isNowPlaying ? "#F3F8F5" : "transparent",
+                      border: isNowPlaying ? "1px solid #DCEAE2" : "1px solid transparent",
+                      borderRadius: "10px",
+                      padding: "9px 10px",
                       cursor: "pointer",
                       display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: "8px",
-                      transition: "all 0.18s ease",
-                      boxShadow: isNowPlaying
-                        ? "0 4px 14px rgba(45, 62, 54, 0.06)"
-                        : "0 2px 6px rgba(0, 0, 0, 0.02)",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      transition: "background 0.15s ease, border-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isNowPlaying) {
+                        e.currentTarget.style.background = "#FAF8F4";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isNowPlaying) {
+                        e.currentTarget.style.background = "transparent";
+                      }
                     }}
                   >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      {/* Segment Icon */}
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        {idx === 0 ? (
-                          <span style={{ fontSize: "15px", lineHeight: 1 }}>🌿</span>
-                        ) : idx === 1 ? (
-                          <span style={{ fontSize: "15px", lineHeight: 1 }}>🛡️</span>
-                        ) : (
-                          <span style={{ fontSize: "15px", lineHeight: 1 }}>👥</span>
-                        )}
-                      </div>
+                    {/* Subtle Timestamp Pill */}
+                    <span
+                      style={{
+                        background: isNowPlaying ? "#E2EFE8" : "#F4F1EA",
+                        color: isNowPlaying ? "#2F5944" : "#6E7B73",
+                        fontSize: "10.5px",
+                        fontWeight: 600,
+                        padding: "3px 7px",
+                        borderRadius: "5px",
+                        fontVariantNumeric: "tabular-nums",
+                        flexShrink: 0,
+                        marginTop: "1px",
+                      }}
+                    >
+                      {formatTime(seg.startSec)}
+                    </span>
 
-                      {/* Segment Title */}
+                    {/* Topic Name & Subtle Duration */}
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "3px",
+                      }}
+                    >
                       <div
                         style={{
-                          fontSize: "13px",
-                          fontWeight: 800,
-                          color: "#1E2822",
-                          lineHeight: 1.35,
+                          fontSize: "12px",
+                          fontWeight: isNowPlaying ? 600 : 500,
+                          color: isNowPlaying ? "#1E2822" : "#3E4A43",
+                          lineHeight: 1.38,
                         }}
                       >
                         {seg.title}
                       </div>
 
-                      {/* Time Range + Duration */}
                       <div
                         style={{
-                          fontSize: "11.5px",
-                          fontWeight: 600,
-                          color: "#6E7B73",
+                          fontSize: "10.5px",
+                          fontWeight: 400,
+                          color: "#8F9993",
                           fontVariantNumeric: "tabular-nums",
                         }}
                       >
-                        {`${seg.timeRangeStr} · ${seg.durationLabel}`}
+                        {seg.durationLabel}
                       </div>
-                    </div>
-
-                    {/* Segment Status Badge */}
-                    <div>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          background: isNowPlaying
-                            ? "#9DC2AD"
-                            : isWatchedSeg
-                              ? "#DCECE3"
-                              : "#EFECE6",
-                          color: isNowPlaying
-                            ? "#182C22"
-                            : isWatchedSeg
-                              ? "#26593E"
-                              : "#6E7B73",
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          letterSpacing: "0.05em",
-                          padding: "4px 10px",
-                          borderRadius: "999px",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {isNowPlaying
-                          ? "▶ NOW PLAYING"
-                          : isUpNext
-                            ? "UP NEXT"
-                            : isWatchedSeg
-                              ? "✓ WATCHED"
-                              : "NOT WATCHED"}
-                      </span>
                     </div>
                   </div>
                 );
