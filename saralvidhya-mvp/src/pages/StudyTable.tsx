@@ -4976,12 +4976,36 @@ export default function StudyTable() {
                           >
                             <style>{`
                               .sv-tool-group-card .sv-tool-group-title {
-                                transform: translate3d(0, 28px, 0) scale(1.52);
+                                transform: translate3d(0, 28px, 0) scale(1.45);
                                 transform-origin: center center;
-                                transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+                                transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
                                 will-change: transform;
                                 z-index: 2;
                                 pointer-events: none;
+                              }
+                              .sv-tool-group-card .sv-tool-group-lead-icon {
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                width: 18px;
+                                height: 17px;
+                                overflow: hidden;
+                                opacity: 0.82;
+                                flex-shrink: 0;
+                                transform: translate3d(0, 0, 0) scale(1);
+                                transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), margin 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+                              }
+                              .sv-tool-group-card .sv-tool-group-lead-icon-inner {
+                                display: inline-flex;
+                                align-items: center;
+                                justify-content: center;
+                                transform: scale(0.46);
+                                transform-origin: center center;
+                                flex-shrink: 0;
+                              }
+                              .sv-tool-group-card .sv-tool-group-title-text {
+                                display: inline-block;
+                                transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
                               }
                               .sv-tool-group-card .sv-tool-group-options {
                                 display: flex;
@@ -5001,6 +5025,14 @@ export default function StudyTable() {
                               .sv-tool-group-card:focus-within .sv-tool-group-title {
                                 transform: translate3d(0, 0, 0) scale(1);
                               }
+                              .sv-tool-group-card.is-active .sv-tool-group-lead-icon,
+                              .sv-tool-group-card:hover .sv-tool-group-lead-icon,
+                              .sv-tool-group-card:focus-within .sv-tool-group-lead-icon {
+                                width: 0px;
+                                opacity: 0;
+                                margin-right: -6px;
+                                transform: translate3d(-10px, 0, 0) scale(0.65);
+                              }
                               .sv-tool-group-card.is-active .sv-tool-group-options,
                               .sv-tool-group-card:hover .sv-tool-group-options,
                               .sv-tool-group-card:focus-within .sv-tool-group-options {
@@ -5011,9 +5043,20 @@ export default function StudyTable() {
                             `}</style>
 
                             {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
-                            <div className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`} style={groupCardStyle(isLearnActive, '#9CC0B4')}>
+                            <div
+                              className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`}
+                              style={groupCardStyle(isLearnActive, '#9CC0B4')}
+                              onClick={() => {
+                                if (!isLearnActive) setActiveTool('summary');
+                              }}
+                            >
                               <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
-                                <span>Learn</span>
+                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                  <span className="sv-tool-group-lead-icon-inner">
+                                    {getNodeIcon('summary', '#9CC0B4', true)}
+                                  </span>
+                                </span>
+                                <span className="sv-tool-group-title-text">Learn</span>
                                 {isSegmented && (
                                   <span
                                     title={activeVideo?.title}
@@ -5023,7 +5066,7 @@ export default function StudyTable() {
                                   </span>
                                 )}
                               </div>
-                              <div className="sv-tool-group-options">
+                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
                                 {renderNode('summary', 'Read', '#9CC0B4')}
                                 {renderNode('podcasts', 'Listen', '#9CC0B4')}
                                 {renderNode('videos', 'Watch', '#9CC0B4')}
@@ -5031,11 +5074,22 @@ export default function StudyTable() {
                             </div>
 
                             {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
-                            <div className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`} style={groupCardStyle(isPracticeActive, '#E7B864')}>
+                            <div
+                              className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`}
+                              style={groupCardStyle(isPracticeActive, '#E7B864')}
+                              onClick={() => {
+                                if (!isPracticeActive) setActiveTool('revision_flashcards');
+                              }}
+                            >
                               <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
-                                Practice
+                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                  <span className="sv-tool-group-lead-icon-inner">
+                                    {getNodeIcon('revision_flashcards', '#E7B864', true)}
+                                  </span>
+                                </span>
+                                <span className="sv-tool-group-title-text">Practice</span>
                               </div>
-                              <div className="sv-tool-group-options">
+                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
                                 {renderNode('revision_flashcards', 'Revise', '#E7B864')}
                                 {renderNode('assessment', 'Assessment', '#E7B864')}
                                 {renderNode('qbank', 'Q. Bank', '#E7B864')}
@@ -5043,11 +5097,22 @@ export default function StudyTable() {
                             </div>
 
                             {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
-                            <div className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`} style={groupCardStyle(isPrepareActive, '#B5BA9B')}>
+                            <div
+                              className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`}
+                              style={groupCardStyle(isPrepareActive, '#B5BA9B')}
+                              onClick={() => {
+                                if (!isPrepareActive) setActiveTool('pyq');
+                              }}
+                            >
                               <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
-                                Prepare
+                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                  <span className="sv-tool-group-lead-icon-inner">
+                                    {getNodeIcon('pyq', '#B5BA9B', true)}
+                                  </span>
+                                </span>
+                                <span className="sv-tool-group-title-text">Prepare</span>
                               </div>
-                              <div className="sv-tool-group-options">
+                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
                                 {renderNode('pyq', 'PYQs', '#B5BA9B')}
                                 {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
                                 {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
@@ -5055,11 +5120,22 @@ export default function StudyTable() {
                             </div>
 
                             {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
-                            <div className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`} style={groupCardStyle(isResourcesActive, '#D9A382')}>
+                            <div
+                              className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`}
+                              style={groupCardStyle(isResourcesActive, '#D9A382')}
+                              onClick={() => {
+                                if (!isResourcesActive) setActiveTool('mindmap');
+                              }}
+                            >
                               <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
-                                Resources
+                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                  <span className="sv-tool-group-lead-icon-inner">
+                                    {getNodeIcon('mindmap', '#D9A382', true)}
+                                  </span>
+                                </span>
+                                <span className="sv-tool-group-title-text">Resources</span>
                               </div>
-                              <div className="sv-tool-group-options">
+                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
                                 {renderNode('mindmap', 'Mindmaps', '#D9A382')}
                                 {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
                                 {renderNode('ask', 'Ask me', '#D9A382')}

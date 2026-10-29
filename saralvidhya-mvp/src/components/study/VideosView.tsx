@@ -1800,71 +1800,6 @@ export default function VideosView({
         </div>
       )}
 
-      {/* Top Overlay Pills (Resumed Pill on Left, Cut Availability Pill on Right) */}
-      <div
-        style={{
-          position: "absolute",
-          top: "16px",
-          left: "18px",
-          right: "18px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "12px",
-          zIndex: 6,
-          pointerEvents: "none",
-          opacity: showControls || !isPlaying ? 1 : 0,
-          transition: "opacity 0.25s ease",
-        }}
-      >
-        <div
-          style={{
-            background: "#9DC2AD",
-            color: "#182C22",
-            borderRadius: "999px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 700,
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.18)",
-          }}
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="9" />
-            <polyline points="12 7 12 12 15 14" />
-          </svg>
-          <span
-            style={{
-              maxWidth: "340px",
-              whiteSpace: "nowrap",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-            }}
-          >
-            {totalVideos > 1
-              ? `${displayTitle} · ${formatTime(effectiveDurationSec)}`
-              : `Ready · ${formatTime(effectiveDurationSec)}`}
-          </span>
-        </div>
-
-        <div
-          style={{
-            background: "rgba(22, 33, 27, 0.72)",
-            backdropFilter: "blur(6px)",
-            WebkitBackdropFilter: "blur(6px)",
-            border: "1px solid rgba(255, 255, 255, 0.18)",
-            color: "#E5EFE9",
-            borderRadius: "999px",
-            padding: "6px 14px",
-            fontSize: "12px",
-            fontWeight: 600,
-          }}
-        >
-          {`Video ${robustActive + 1} of ${totalVideos} · ${segmentsList.length} Segments · ${totalChapterWatchFormatted} total`}
-        </div>
-      </div>
 
       {/* Transparent Click overlay covering video */}
       <div
@@ -2663,58 +2598,6 @@ export default function VideosView({
             boxSizing: "border-box",
           }}
         >
-          <div
-            style={{
-              background: "#FFFFFF",
-              borderRadius: "16px",
-              border: "1px solid #E6E0D4",
-              padding: "20px 22px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "16px",
-              flexWrap: "wrap",
-              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 800,
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    color: "#2F5944",
-                    background: "#E8F1EC",
-                    padding: "3px 8px",
-                    borderRadius: "999px",
-                  }}
-                >
-                  Shorts · Coming Soon
-                </span>
-                <span style={{ fontSize: "12px", color: "#7B867F", fontWeight: 500 }}>
-                  Vertical 60s Concept Clips
-                </span>
-              </div>
-              <div style={{ fontSize: "15px", fontWeight: 700, color: "#1E2822" }}>
-                Quick Revision Shorts for {chapterName}
-              </div>
-            </div>
-            <span
-              style={{
-                fontSize: "12px",
-                fontWeight: 600,
-                color: "#6E7B73",
-                background: "#F5F2EB",
-                border: "1px solid #E4DFD3",
-                padding: "6px 12px",
-                borderRadius: "999px",
-              }}
-            >
-              {videos.length > 0 ? `${Math.min(4, Math.max(3, videos.length))} Shorts Planned` : "4 Shorts Planned"}
-            </span>
-          </div>
 
           <div
             style={{
