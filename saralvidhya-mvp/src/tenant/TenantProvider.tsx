@@ -173,6 +173,7 @@ export function getCloudUiCopy(): Record<string, any> {
   return {
     ...(activeCloudPlatformConfig?.uiCopy || {}),
     ...(activeCloudTenantConfig?.uiCopy || {}),
+    signInButton: "Enter",
     studyTools: {
       ...(activeCloudPlatformConfig?.uiCopy?.studyTools || {}),
       ...(activeCloudTenantConfig?.uiCopy?.studyTools || {}),

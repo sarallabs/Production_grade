@@ -1939,7 +1939,7 @@ export default function StudyTable() {
                         <button
                           type="button"
                           onClick={() => mmConceptQcRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
-                          title="Skip to Quick Check"
+                          title="Quick Check"
                           style={{
                             background: mmConceptQcDone ? '#dcfce7' : '#f0fdf4',
                             color: '#15803d',
@@ -3883,7 +3883,7 @@ export default function StudyTable() {
                                     block: 'center',
                                   })
                                 }
-                                title="Skip to Quick Check"
+                                title="Quick Check"
                                 style={{
                                   background: isMmQcDone ? '#DCEBE3' : '#EBF3EE',
                                   color: '#2E4A3B',

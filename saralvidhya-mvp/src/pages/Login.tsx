@@ -316,9 +316,7 @@ function Login() {
                   className="sv-login-button"
                   disabled={loading}
                 >
-                  {loading
-                    ? uiCopy.signingInButton || 'Entering...'
-                    : uiCopy.signInButton || 'Enter'}
+                  {loading ? 'Entering...' : 'Enter'}
                 </button>
 
                 {studentError && (

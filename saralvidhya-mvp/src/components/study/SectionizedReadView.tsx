@@ -617,8 +617,8 @@ function SectionizedReadViewInner({
                         e.stopPropagation();
                         handleScrollToQuickCheck(idx);
                       }}
-                      title={`Jump to Quick Check (${displayTitle})`}
-                      aria-label={`Jump to Quick Check for ${displayTitle}`}
+                      title="Quick Check"
+                      aria-label="Quick Check"
                       style={{
                         width: '26px',
                         height: '26px',
@@ -826,7 +826,7 @@ function SectionizedReadViewInner({
                       <button
                         type="button"
                         onClick={() => handleScrollToQuickCheck(idx)}
-                        title="Skip to Quick Check"
+                        title="Quick Check"
                         style={{
                           background: isQcDone ? '#DCEBE3' : '#EBF3EE',
                           color: '#2E4A3B',

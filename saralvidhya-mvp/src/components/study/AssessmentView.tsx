@@ -828,13 +828,18 @@ export function AssessmentView({
                             const isCorrectAnswer = idx === currentQ.answer;
                             const isPreviouslyWrong = (disabledMCQByStep[step] || []).includes(idx);
                             const isOptionDisabled = submitted || isPreviouslyWrong;
+                            const isEvenOption = idx % 2 === 0;
+                            const baseBg = isEvenOption ? "#FFFFFF" : "#FAF6EE";
+                            const baseBorderColor = isEvenOption ? "#EAE5DC" : "#E3DCD0";
+                            const hoverBg = isEvenOption ? "#FAF8F3" : "#F5EFE3";
+                            const hoverBorderColor = isEvenOption ? "#D5CEC2" : "#CFC5B4";
 
-                            let bgStyle = "#FFFFFF";
-                            let borderStyle = "1px solid #EAE5DC";
+                            let bgStyle = baseBg;
+                            let borderStyle = `1px solid ${baseBorderColor}`;
                             let radioBorder = "1.5px solid #C5BEB3";
                             let radioDotColor = "transparent";
-                            let badgeBg = "#F2EFE9";
-                            let badgeColor = "#5A625C";
+                            let badgeBg = isEvenOption ? "#F2EFE9" : "#EAE4D8";
+                            let badgeColor = isEvenOption ? "#5A625C" : "#505852";
                             let textColor = submitted ? "#6E766E" : "#1E2822";
                             let textWeight = 600;
                             let rightIcon: React.ReactNode = null;
@@ -904,14 +909,14 @@ export function AssessmentView({
                                 disabled={isOptionDisabled}
                                 onMouseEnter={(e) => {
                                   if (!submitted && !isSelected && !isPreviouslyWrong) {
-                                    e.currentTarget.style.background = "#FAF8F4";
-                                    e.currentTarget.style.borderColor = "#D5CEC2";
+                                    e.currentTarget.style.background = hoverBg;
+                                    e.currentTarget.style.borderColor = hoverBorderColor;
                                   }
                                 }}
                                 onMouseLeave={(e) => {
                                   if (!submitted && !isSelected && !isPreviouslyWrong) {
-                                    e.currentTarget.style.background = "#FFFFFF";
-                                    e.currentTarget.style.borderColor = "#EAE5DC";
+                                    e.currentTarget.style.background = baseBg;
+                                    e.currentTarget.style.borderColor = baseBorderColor;
                                   }
                                 }}
                                 style={{
@@ -1004,11 +1009,14 @@ export function AssessmentView({
                           {currentQ.options.map((option, idx) => {
                             const isSelected = selectedMSQ.includes(idx);
                             const isCorrectOption = currentQ.answer.includes(idx);
+                            const isEvenOption = idx % 2 === 0;
+                            const baseBg = isEvenOption ? "#FFFFFF" : "#FAF6EE";
+                            const baseBorder = isEvenOption ? "1px solid #EAE5DC" : "1px solid #E3DCD0";
 
-                            let bgStyle = isSelected ? "#FAF2E9" : "#FFFFFF";
-                            let borderStyle = isSelected ? "1.5px solid #C88A5A" : "1px solid #EAE5DC";
-                            let badgeBg = isSelected ? "#C27D4E" : "#F2EFE9";
-                            let badgeColor = isSelected ? "#FFFFFF" : "#5A625C";
+                            let bgStyle = isSelected ? "#FAF2E9" : baseBg;
+                            let borderStyle = isSelected ? "1.5px solid #C88A5A" : baseBorder;
+                            let badgeBg = isSelected ? "#C27D4E" : isEvenOption ? "#F2EFE9" : "#EAE4D8";
+                            let badgeColor = isSelected ? "#FFFFFF" : isEvenOption ? "#5A625C" : "#505852";
                             let rightIcon: React.ReactNode = null;
 
                             if (submitted) {
@@ -1099,14 +1107,19 @@ export function AssessmentView({
                       {/* Type 2: True / False */}
                       {currentQ.type === "true_false" && (
                         <div style={{ display: "flex", gap: "14px", justifyContent: "center", marginTop: "12px" }}>
-                          {[true, false].map((val) => {
+                          {[true, false].map((val, tfIdx) => {
                             const isSelected = selectedTF === val;
                             const isCorrectAnswer = val === currentQ.answer;
                             const isPreviouslyWrong = (disabledTFByStep[step] || []).includes(val);
                             const isOptionDisabled = submitted || isPreviouslyWrong;
+                            const isEvenTf = tfIdx % 2 === 0;
 
-                            let btnBg = isSelected ? "#FAF2E9" : "#FFFFFF";
-                            let btnBorder = isSelected ? "1.5px solid #C88A5A" : "1px solid #EAE5DC";
+                            let btnBg = isSelected ? "#FAF2E9" : isEvenTf ? "#FFFFFF" : "#FAF6EE";
+                            let btnBorder = isSelected
+                              ? "1.5px solid #C88A5A"
+                              : isEvenTf
+                                ? "1px solid #EAE5DC"
+                                : "1px solid #E3DCD0";
                             let btnColor = "#1E2822";
 
                             if (isPreviouslyWrong && !isSelected) {
