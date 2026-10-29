@@ -1039,9 +1039,9 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                   height: "54px",
                   borderRadius: "11px",
                   padding: "3px 8px 4px",
-                  border: isActive ? "2px solid #E7B864" : "2px solid transparent",
-                  background: isActive ? "#FFFDF9" : "transparent",
-                  boxShadow: isActive ? "0 3px 10px rgba(231, 184, 100, 0.22)" : "none",
+                  border: isActive ? "2px solid #7C8F6A" : "2px solid transparent",
+                  background: isActive ? "#F5F8F2" : "transparent",
+                  boxShadow: isActive ? "0 3px 10px rgba(84, 108, 96, 0.20)" : "none",
                   cursor: "pointer",
                   transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
                   overflow: "visible",
@@ -1159,10 +1159,13 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       width: "100%",
                       padding: "10px 12px",
                       borderRadius: "12px",
-                      background: isSelected ? "#FAF3EB" : "#FFFFFF",
+                      background: isSelected ? "#F3F6F1" : "#FFFFFF",
                       border: isSelected
-                        ? "1.5px solid #C88A5A"
+                        ? "1.5px solid #7C8F6A"
                         : "1px solid #E6E0D4",
+                      boxShadow: isSelected
+                        ? "0 3px 10px rgba(84, 108, 96, 0.14)"
+                        : "none",
                       cursor: "pointer",
                       textAlign: "left",
                       transition: "all 0.16s ease",
@@ -1182,7 +1185,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                           width: "32px",
                           height: "32px",
                           borderRadius: "8px",
-                          background: isSelected ? "#BD7D52" : "#EAE6DF",
+                          background: isSelected ? "#546C60" : "#EAE6DF",
                           color: isSelected ? "#FFFFFF" : "#49524C",
                           display: "flex",
                           alignItems: "center",
@@ -1201,7 +1204,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                             style={{
                               fontSize: "9.5px",
                               fontWeight: 800,
-                              color: "#B46530",
+                              color: "#4A6356",
                               letterSpacing: "0.06em",
                               textTransform: "uppercase",
                               marginBottom: "1px",
@@ -1226,7 +1229,7 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                           style={{
                             fontSize: "11px",
                             fontWeight: 600,
-                            color: isSelected ? "#B46530" : "#7A807A",
+                            color: isSelected ? "#4A6356" : "#7A807A",
                             marginTop: "1px",
                           }}
                         >
@@ -1312,13 +1315,16 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       padding: "13px 16px",
                       borderRadius: "12px",
                       background: isUpNext
-                        ? "#FCF9F5"
+                        ? "#F4F7F3"
                         : isDone
                         ? "#FAF9F6"
                         : "#FFFFFF",
                       border: isUpNext
-                        ? "1.5px solid #C88A5A"
+                        ? "1.5px solid #7C8F6A"
                         : "1px solid #E6E0D4",
+                      boxShadow: isUpNext
+                        ? "0 2px 10px rgba(84, 108, 96, 0.12)"
+                        : "none",
                       transition: "all 0.15s ease",
                     }}
                   >
@@ -1340,9 +1346,9 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                           height: "18px",
                           borderRadius: "5px",
                           border: isDone
-                            ? "1.5px solid #2D4A3E"
-                            : "1.5px solid #C5BEB3",
-                          background: isDone ? "#2D4A3E" : "#FFFFFF",
+                            ? "1.5px solid #546C60"
+                            : "1.5px solid #BFC8C1",
+                          background: isDone ? "#546C60" : "#FFFFFF",
                           color: "#FFFFFF",
                           display: "flex",
                           alignItems: "center",
@@ -1404,8 +1410,9 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                       {isUpNext && (
                         <span
                           style={{
-                            background: "#F5E4D3",
-                            color: "#B46530",
+                            background: "#E4ECE3",
+                            color: "#3F594C",
+                            border: "1px solid #C2D4C0",
                             fontSize: "10px",
                             fontWeight: 800,
                             padding: "3px 8px",
@@ -1437,16 +1444,29 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
                             onSwitchTool(task.toolTarget);
                           }
                         }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = "#546C60";
+                          e.currentTarget.style.color = "#FFFFFF";
+                          e.currentTarget.style.borderColor = "#546C60";
+                          e.currentTarget.style.boxShadow = "0 2px 8px rgba(84, 108, 96, 0.22)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = isUpNext ? "#EBF1EA" : "#FAF8F4";
+                          e.currentTarget.style.color = isUpNext ? "#2D4438" : "#1E2822";
+                          e.currentTarget.style.borderColor = isUpNext ? "#7C8F6A" : "#DCE3DA";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
                         style={{
-                          background: "#FAF8F4",
-                          border: "1px solid #E2DBD0",
+                          background: isUpNext ? "#EBF1EA" : "#FAF8F4",
+                          border: isUpNext ? "1px solid #7C8F6A" : "1px solid #DCE3DA",
                           borderRadius: "999px",
                           padding: "6px 14px",
                           fontSize: "12px",
                           fontWeight: 700,
-                          color: "#1E2822",
+                          color: isUpNext ? "#2D4438" : "#1E2822",
                           cursor: "pointer",
                           whiteSpace: "nowrap",
+                          transition: "all 0.16s ease",
                         }}
                       >
                         Open →
