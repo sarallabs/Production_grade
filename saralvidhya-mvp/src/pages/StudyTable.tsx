@@ -439,22 +439,34 @@ export default function StudyTable() {
   const navigate = useNavigate();
   const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
   const { isHydrated } = useCloudState();
-  const [cloudSyncRev, setCloudSyncRev] = useState(0);
-  useEffect(() => cloudStorage.subscribe(() => setCloudSyncRev((r) => r + 1)), []);
   useEffect(() => {
-    try {
-      const savedDone = cloudStorage.getItem('sv_mm_qc_done');
-      if (savedDone) setMmCompletedQuickChecks(new Set(JSON.parse(savedDone)));
-    } catch {}
-    try {
-      const savedAns = cloudStorage.getItem('sv_mm_qc_answers');
-      if (savedAns) setMmQcAnswers(JSON.parse(savedAns));
-    } catch {}
-    try {
-      const savedStudied = cloudStorage.getItem('sv_mm_studied_v2');
-      if (savedStudied) setMmStudiedBranches(JSON.parse(savedStudied));
-    } catch {}
-  }, [cloudSyncRev]);
+    let prevDone = cloudStorage.getItem('sv_mm_qc_done');
+    let prevAns = cloudStorage.getItem('sv_mm_qc_answers');
+    let prevStudied = cloudStorage.getItem('sv_mm_studied_v2');
+    return cloudStorage.subscribe(() => {
+      try {
+        const savedDone = cloudStorage.getItem('sv_mm_qc_done');
+        if (savedDone && savedDone !== prevDone) {
+          prevDone = savedDone;
+          setMmCompletedQuickChecks(new Set(JSON.parse(savedDone)));
+        }
+      } catch {}
+      try {
+        const savedAns = cloudStorage.getItem('sv_mm_qc_answers');
+        if (savedAns && savedAns !== prevAns) {
+          prevAns = savedAns;
+          setMmQcAnswers(JSON.parse(savedAns));
+        }
+      } catch {}
+      try {
+        const savedStudied = cloudStorage.getItem('sv_mm_studied_v2');
+        if (savedStudied && savedStudied !== prevStudied) {
+          prevStudied = savedStudied;
+          setMmStudiedBranches(JSON.parse(savedStudied));
+        }
+      } catch {}
+    });
+  }, []);
   const location = useLocation();
   const navState = (location.state as Record<string, any>) || {};
   const [searchParams] = useSearchParams();

@@ -450,9 +450,12 @@ export default function VideosView({
   });
 
   useEffect(() => {
+    let lastRaw: string | null = null;
     const syncCompleted = () => {
       try {
         const raw = cloudStorage.getItem(completedStorageKey);
+        if (raw === lastRaw) return;
+        lastRaw = raw;
         if (raw) {
           const parsed = JSON.parse(raw);
           if (Array.isArray(parsed)) {
@@ -463,7 +466,7 @@ export default function VideosView({
       } catch {
         // ignore
       }
-      setCompletedVideos(new Set());
+      setCompletedVideos((prev) => (prev.size === 0 ? prev : new Set()));
     };
     syncCompleted();
     return cloudStorage.subscribe(syncCompleted);
@@ -486,8 +489,10 @@ export default function VideosView({
   );
 
   const onVideoWatchedRef = useRef(onVideoWatched);
+  const onCompleteRef = useRef(onComplete);
   useEffect(() => {
     onVideoWatchedRef.current = onVideoWatched;
+    onCompleteRef.current = onComplete;
   });
 
   const notifiedWatchedSetRef = useRef<Set<string>>(new Set());
@@ -500,6 +505,25 @@ export default function VideosView({
     onVideoWatchedRef.current?.(videoIndex, advance);
   }, [markVideoDone, subjectId, chapterNumber]);
 
+  const markWatchedRef = useRef(markWatched);
+  useEffect(() => {
+    markWatchedRef.current = markWatched;
+  }, [markWatched]);
+
+  const sendYtIframeCommand = useCallback(
+    (func: string, args: any[] = []) => {
+      try {
+        if (currentVideo?.ytId) {
+          const iframeEl = document.getElementById(`yt-player-${currentVideo.ytId}`) as HTMLIFrameElement | null;
+          iframeEl?.contentWindow?.postMessage(
+            JSON.stringify({ event: "command", func, args }),
+            "*",
+          );
+        }
+      } catch {}
+    },
+    [currentVideo?.ytId],
+  );
   // Format time utility
   const formatTime = (sec: number) => {
     if (isNaN(sec) || sec < 0) return "00:00";
@@ -729,7 +753,7 @@ export default function VideosView({
                         setProgress(pct);
                         persistVideoSec(cur, dur, false);
                         if (pct >= WATCHED_THRESHOLD_PCT && hasStartedPlayingRef.current) {
-                          markWatched(robustActive + 1, false);
+                          markWatchedRef.current(robustActive + 1, false);
                         }
                       }
                     }
@@ -758,6 +782,7 @@ export default function VideosView({
                 activePlaybackSessionYtIdRef.current = null;
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
+                  clearInterval(progressIntervalRef.current);
                   progressIntervalRef.current = null;
                 }
                 try {
@@ -766,8 +791,8 @@ export default function VideosView({
                 } catch {}
                 if (hasStartedPlayingRef.current) {
                   hasStartedPlayingRef.current = false;
-                  markWatched(robustActive + 1, true);
-                  if (onComplete) onComplete();
+                  markWatchedRef.current(robustActive + 1, true);
+                  if (onCompleteRef.current) onCompleteRef.current();
                 }
               } else if (state === YT?.PlayerState?.PAUSED || state === 2) {
                 if (isSeekingRef.current) {
@@ -821,11 +846,12 @@ export default function VideosView({
     document.addEventListener("visibilitychange", handleVisibilitySave);
 
     checkInterval = setInterval(() => {
+      const el = document.getElementById(`yt-player-${currentVideo.ytId}`);
       if (
-        iframeLoadedRef.current &&
+        (iframeLoadedRef.current || el) &&
         (window as any).YT &&
         (window as any).YT.Player &&
-        document.getElementById(`yt-player-${currentVideo.ytId}`)
+        el
       ) {
         clearInterval(checkInterval);
         initPlayer();
@@ -842,71 +868,97 @@ export default function VideosView({
         progressIntervalRef.current = null;
       }
       handleUnloadSave();
+      try {
+        playerRef.current?.destroy?.();
+      } catch {}
       playerReadyRef.current = false;
-      iframeLoadedRef.current = false;
       playerRef.current = null;
     };
-  }, [isRegistryLoaded, currentVideo?.ytId, robustActive, markWatched, onComplete, subjectId, chapterNumber]);
-
+  }, [isRegistryLoaded, currentVideo?.ytId, robustActive, subjectId, chapterNumber]);
   // Player controls
   const handlePlayPause = () => {
     if (isPlaying && isCurrentlyFullscreen()) {
       playerRef.current?.pauseVideo?.();
+      sendYtIframeCommand("pauseVideo", []);
     } else {
       if (!isCurrentlyFullscreen()) {
         enterFullscreen(currentVideo?.ytId);
       }
       if (!playerRef.current || !playerReadyRef.current) {
         autoPlayOnReadyRef.current = true;
+        if (restoredVideoTimeRef.current > 1) {
+          sendYtIframeCommand("seekTo", [restoredVideoTimeRef.current, true]);
+        }
+        sendYtIframeCommand("playVideo", []);
         return;
       }
       if (!hasStartedPlayingRef.current && restoredVideoTimeRef.current > 1) {
         try {
           playerRef.current.seekTo?.(restoredVideoTimeRef.current, true);
+          sendYtIframeCommand("seekTo", [restoredVideoTimeRef.current, true]);
         } catch {}
       }
-      playerRef.current.playVideo();
+      playerRef.current.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     }
   };
 
   const handleRewind10 = () => {
-    if (!playerRef.current) return;
     isSeekingRef.current = true;
     showSeekBadge("-10s");
-    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
+    const cur =
+      playerRef.current && typeof playerRef.current.getCurrentTime === "function"
+        ? playerRef.current.getCurrentTime()
+        : currentTime;
     const target = Math.max(0, cur - 10);
-    playerRef.current.seekTo?.(target, true);
+    lastSeekTargetRef.current = { time: target, ts: Date.now() };
+    playerRef.current?.seekTo?.(target, true);
+    sendYtIframeCommand("seekTo", [target, true]);
     setCurrentTime(target);
-    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const dur =
+      (playerRef.current && typeof playerRef.current.getDuration === "function"
+        ? playerRef.current.getDuration()
+        : duration) || effectiveDurationSec;
     if (dur > 0) setProgress((target / dur) * 100);
     setIsPlaying(true);
     try {
-      playerRef.current.playVideo?.();
+      playerRef.current?.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     } catch (e) {}
     setTimeout(() => {
       try {
         playerRef.current?.playVideo?.();
+        sendYtIframeCommand("playVideo", []);
       } catch (e) {}
     }, 60);
   };
 
   const handleForward10 = () => {
-    if (!playerRef.current) return;
     isSeekingRef.current = true;
     showSeekBadge("+10s");
-    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
-    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const cur =
+      playerRef.current && typeof playerRef.current.getCurrentTime === "function"
+        ? playerRef.current.getCurrentTime()
+        : currentTime;
+    const dur =
+      (playerRef.current && typeof playerRef.current.getDuration === "function"
+        ? playerRef.current.getDuration()
+        : duration) || effectiveDurationSec;
     const target = Math.min(dur || 900, cur + 10);
-    playerRef.current.seekTo?.(target, true);
+    lastSeekTargetRef.current = { time: target, ts: Date.now() };
+    playerRef.current?.seekTo?.(target, true);
+    sendYtIframeCommand("seekTo", [target, true]);
     setCurrentTime(target);
     if (dur > 0) setProgress((target / dur) * 100);
     setIsPlaying(true);
     try {
-      playerRef.current.playVideo?.();
+      playerRef.current?.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     } catch (e) {}
     setTimeout(() => {
       try {
         playerRef.current?.playVideo?.();
+        sendYtIframeCommand("playVideo", []);
       } catch (e) {}
     }, 60);
   };
@@ -1422,6 +1474,10 @@ export default function VideosView({
           );
         } catch {}
       }
+      sendYtIframeCommand("seekTo", [clamped, true]);
+      sendYtIframeCommand("playVideo", []);
+      setIsPlaying(true);
+      isPlayingRef.current = true;
       if (!playerRef.current || !playerReadyRef.current) {
         autoPlayOnReadyRef.current = true;
         return;
@@ -1429,21 +1485,20 @@ export default function VideosView({
       if (playerRef.current?.seekTo) {
         try {
           playerRef.current.seekTo(clamped, true);
-          setIsPlaying(true);
-          isPlayingRef.current = true;
           playerRef.current.playVideo?.();
         } catch {}
         setTimeout(() => {
           if (isCurrentlyFullscreen()) {
             try {
               playerRef.current?.playVideo?.();
+              sendYtIframeCommand("playVideo", []);
             } catch {}
           }
         }, 60);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [effectiveDurationSec, currentVideo?.ytId, videoTimeStorageKey],
+    [effectiveDurationSec, currentVideo?.ytId, videoTimeStorageKey, sendYtIframeCommand],
   );
 
   // Video switching handler for multi-video
@@ -2012,41 +2067,46 @@ export default function VideosView({
             onMouseDown={(e) => {
               e.stopPropagation();
               const barEl = e.currentTarget;
-              const seekFromClientX = (clientX: number) => {
+              const computeTargetSec = (clientX: number): { sec: number; dur: number } | null => {
                 const rect = barEl.getBoundingClientRect();
-                if (rect.width <= 0) return;
+                if (rect.width <= 0) return null;
                 const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
                 const pct = clickX / rect.width;
                 const dur =
                   (playerRef.current && typeof playerRef.current.getDuration === "function"
                     ? playerRef.current.getDuration()
                     : 0) || effectiveDurationSec;
-                seekToSecond(Math.round(pct * dur));
+                return { sec: Math.round(pct * dur), dur };
               };
-              seekFromClientX(e.clientX);
+
+              const initial = computeTargetSec(e.clientX);
+              if (initial) {
+                lastSeekTargetRef.current = { time: initial.sec, ts: Date.now() };
+                setCurrentTime(initial.sec);
+                if (initial.dur > 0) setProgress((initial.sec / initial.dur) * 100);
+              }
 
               const handleMouseMove = (moveEvt: MouseEvent) => {
-                seekFromClientX(moveEvt.clientX);
+                const pos = computeTargetSec(moveEvt.clientX);
+                if (pos) {
+                  lastSeekTargetRef.current = { time: pos.sec, ts: Date.now() };
+                  setCurrentTime(pos.sec);
+                  if (pos.dur > 0) setProgress((pos.sec / pos.dur) * 100);
+                }
               };
               const handleMouseUp = (upEvt: MouseEvent) => {
-                seekFromClientX(upEvt.clientX);
                 window.removeEventListener("mousemove", handleMouseMove);
                 window.removeEventListener("mouseup", handleMouseUp);
+                const finalPos = computeTargetSec(upEvt.clientX) || initial;
+                if (finalPos) {
+                  seekToSecond(finalPos.sec);
+                }
               };
               window.addEventListener("mousemove", handleMouseMove);
               window.addEventListener("mouseup", handleMouseUp);
             }}
             onClick={(e) => {
               e.stopPropagation();
-              const rect = e.currentTarget.getBoundingClientRect();
-              if (rect.width <= 0) return;
-              const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-              const pct = clickX / rect.width;
-              const dur =
-                (playerRef.current && typeof playerRef.current.getDuration === "function"
-                  ? playerRef.current.getDuration()
-                  : 0) || effectiveDurationSec;
-              seekToSecond(Math.round(pct * dur));
             }}
             title="Click or drag to seek"
             style={{
