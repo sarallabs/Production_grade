@@ -50,6 +50,8 @@ export function AssessmentView({
 
   const [retriesUsed, setRetriesUsed] = useState<Record<number, number>>({});
   const [awaitingRetry, setAwaitingRetry] = useState(false);
+  const [disabledMCQByStep, setDisabledMCQByStep] = useState<Record<number, number[]>>({});
+  const [disabledTFByStep, setDisabledTFByStep] = useState<Record<number, boolean[]>>({});
   const [weakCardsAdded, setWeakCardsAdded] = useState<Record<number, boolean>>({});
   // Question-specific interaction states
   const [selectedMCQ, setSelectedMCQ] = useState<number | null>(null);
@@ -96,6 +98,8 @@ export function AssessmentView({
       setIsFinished(false);
       setAnswered(new Array(validQuestions.length).fill(false));
       setRetriesUsed({});
+      setDisabledMCQByStep({});
+      setDisabledTFByStep({});
       setAwaitingRetry(false);
       setLoading(false);
     });
@@ -190,6 +194,18 @@ export function AssessmentView({
   };
 
   const handleTryAgainAssessment = () => {
+    if (selectedMCQ !== null) {
+      setDisabledMCQByStep((prev) => {
+        const existing = prev[step] || [];
+        return existing.includes(selectedMCQ) ? prev : { ...prev, [step]: [...existing, selectedMCQ] };
+      });
+    }
+    if (selectedTF !== null) {
+      setDisabledTFByStep((prev) => {
+        const existing = prev[step] || [];
+        return existing.includes(selectedTF) ? prev : { ...prev, [step]: [...existing, selectedTF] };
+      });
+    }
     setRetriesUsed((prev) => ({ ...prev, [step]: (prev[step] || 0) + 1 }));
     setAwaitingRetry(false);
     setSubmitted(false);
@@ -232,8 +248,8 @@ export function AssessmentView({
   // --- MCQ handlers ---
   const handleMCQSelect = (idx: number) => {
     if (submitted) return;
+    if ((disabledMCQByStep[step] || []).includes(idx)) return;
     setSelectedMCQ(idx);
-    const currentQ = questions[step] as any;
     const correct = idx === currentQ.answer;
     markQuestionAnswered(correct);
   };
@@ -260,8 +276,8 @@ export function AssessmentView({
   // --- True / False handlers ---
   const handleTFSelect = (val: boolean) => {
     if (submitted) return;
+    if ((disabledTFByStep[step] || []).includes(val)) return;
     setSelectedTF(val);
-    const currentQ = questions[step] as any;
     const correct = val === currentQ.answer;
     markQuestionAnswered(correct);
   };
@@ -711,6 +727,8 @@ export function AssessmentView({
                           {currentQ.options.map((option, idx) => {
                             const isSelected = selectedMCQ === idx;
                             const isCorrectAnswer = idx === currentQ.answer;
+                            const isPreviouslyWrong = (disabledMCQByStep[step] || []).includes(idx);
+                            const isOptionDisabled = submitted || isPreviouslyWrong;
 
                             let bgStyle = "#FFFFFF";
                             let borderStyle = "1px solid #EAE5DC";
@@ -721,6 +739,22 @@ export function AssessmentView({
                             let textColor = submitted ? "#6E766E" : "#1E2822";
                             let textWeight = 600;
                             let rightIcon: React.ReactNode = null;
+
+                            if (isPreviouslyWrong && !isSelected) {
+                              bgStyle = "#F3F4F6";
+                              borderStyle = "1.5px dashed #CBD5E1";
+                              radioBorder = "1.5px solid #CBD5E1";
+                              radioDotColor = "transparent";
+                              badgeBg = "#E2E8F0";
+                              badgeColor = "#94A3B8";
+                              textColor = "#94A3B8";
+                              textWeight = 500;
+                              rightIcon = (
+                                <span style={{ color: "#94A3B8", fontWeight: 700, fontSize: "13px", marginLeft: "auto" }}>
+                                  ✕
+                                </span>
+                              );
+                            }
 
                             if (!submitted && isSelected) {
                               bgStyle = "#FAF2E9";
@@ -768,15 +802,15 @@ export function AssessmentView({
                                 key={idx}
                                 type="button"
                                 onClick={() => handleMCQSelect(idx)}
-                                disabled={submitted}
+                                disabled={isOptionDisabled}
                                 onMouseEnter={(e) => {
-                                  if (!submitted && !isSelected) {
+                                  if (!submitted && !isSelected && !isPreviouslyWrong) {
                                     e.currentTarget.style.background = "#FAF8F4";
                                     e.currentTarget.style.borderColor = "#D5CEC2";
                                   }
                                 }}
                                 onMouseLeave={(e) => {
-                                  if (!submitted && !isSelected) {
+                                  if (!submitted && !isSelected && !isPreviouslyWrong) {
                                     e.currentTarget.style.background = "#FFFFFF";
                                     e.currentTarget.style.borderColor = "#EAE5DC";
                                   }
@@ -790,7 +824,8 @@ export function AssessmentView({
                                   borderRadius: "12px",
                                   border: borderStyle,
                                   background: bgStyle,
-                                  cursor: submitted ? "default" : "pointer",
+                                  cursor: isPreviouslyWrong && !submitted ? "not-allowed" : submitted ? "default" : "pointer",
+                                  opacity: isPreviouslyWrong && !isSelected ? 0.6 : 1,
                                   transition: "all 0.15s ease",
                                   textAlign: "left",
                                   boxSizing: "border-box",
@@ -803,7 +838,7 @@ export function AssessmentView({
                                     height: "18px",
                                     borderRadius: "50%",
                                     border: radioBorder,
-                                    background: "#FFFFFF",
+                                    background: isPreviouslyWrong && !isSelected ? "#F1F5F9" : "#FFFFFF",
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -811,7 +846,7 @@ export function AssessmentView({
                                     boxSizing: "border-box",
                                   }}
                                 >
-                                  {(isSelected || (submitted && isCorrectAnswer)) && (
+                                  {(isSelected || (submitted && isCorrectAnswer && !awaitingRetry)) && (
                                     <div
                                       style={{
                                         width: "8px",
@@ -849,6 +884,7 @@ export function AssessmentView({
                                     fontWeight: textWeight,
                                     fontSize: "14px",
                                     lineHeight: 1.45,
+                                    textDecoration: isPreviouslyWrong && !isSelected ? "line-through" : "none",
                                   }}
                                 >
                                   {renderText(option)}
@@ -967,17 +1003,28 @@ export function AssessmentView({
                           {[true, false].map((val) => {
                             const isSelected = selectedTF === val;
                             const isCorrectAnswer = val === currentQ.answer;
+                            const isPreviouslyWrong = (disabledTFByStep[step] || []).includes(val);
+                            const isOptionDisabled = submitted || isPreviouslyWrong;
 
                             let btnBg = isSelected ? "#FAF2E9" : "#FFFFFF";
                             let btnBorder = isSelected ? "1.5px solid #C88A5A" : "1px solid #EAE5DC";
+                            let btnColor = "#1E2822";
+
+                            if (isPreviouslyWrong && !isSelected) {
+                              btnBg = "#F3F4F6";
+                              btnBorder = "1.5px dashed #CBD5E1";
+                              btnColor = "#94A3B8";
+                            }
 
                             if (submitted) {
                               if (isCorrectAnswer && !awaitingRetry) {
                                 btnBorder = "1.5px solid #A3C9B3";
                                 btnBg = "#EEF6F1";
+                                btnColor = "#1E2822";
                               } else if (isSelected) {
                                 btnBorder = "1.5px solid #CFA07E";
                                 btnBg = "#FCF3EC";
+                                btnColor = "#1E2822";
                               }
                             }
 
@@ -986,17 +1033,19 @@ export function AssessmentView({
                                 key={val.toString()}
                                 type="button"
                                 onClick={() => handleTFSelect(val)}
-                                disabled={submitted}
+                                disabled={isOptionDisabled}
                                 style={{
                                   flex: 1,
                                   height: "56px",
                                   borderRadius: "12px",
                                   border: btnBorder,
                                   background: btnBg,
-                                  color: "#1E2822",
+                                  color: btnColor,
                                   fontSize: "15px",
                                   fontWeight: 700,
-                                  cursor: submitted ? "default" : "pointer",
+                                  textDecoration: isPreviouslyWrong && !isSelected ? "line-through" : "none",
+                                  opacity: isPreviouslyWrong && !isSelected ? 0.6 : 1,
+                                  cursor: isPreviouslyWrong && !submitted ? "not-allowed" : submitted ? "default" : "pointer",
                                 }}
                               >
                                 {val ? "True" : "False"}

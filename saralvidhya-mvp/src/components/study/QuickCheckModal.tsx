@@ -52,11 +52,13 @@ function QuickCheckModalInner({
   });
   const [retriesUsedByQ, setRetriesUsedByQ] = useState<Record<number, number>>({});
   const [pendingWrongByQ, setPendingWrongByQ] = useState<Record<number, string | null>>({});
+  const [disabledWrongKeysByQ, setDisabledWrongKeysByQ] = useState<Record<number, string[]>>({});
 
   useEffect(() => {
     setCurrentIdx(0);
     setRetriesUsedByQ({});
     setPendingWrongByQ({});
+    setDisabledWrongKeysByQ({});
   }, [qList.length, currentSectionNumber, sectionTitle]);
 
   useEffect(() => {
@@ -89,6 +91,7 @@ function QuickCheckModalInner({
 
   const handleSelectOption = (qIdx: number, key: string, isCorrect: boolean) => {
     if (selectedByQ[qIdx] || pendingWrongByQ[qIdx]) return;
+    if ((disabledWrongKeysByQ[qIdx] || []).includes(key)) return;
     const usedRetries = retriesUsedByQ[qIdx] || 0;
     if (!isCorrect && usedRetries < 1) {
       setPendingWrongByQ((prev) => ({ ...prev, [qIdx]: key }));
@@ -106,6 +109,13 @@ function QuickCheckModalInner({
   };
 
   const handleTryAgain = (qIdx: number) => {
+    const prevWrongKey = pendingWrongByQ[qIdx];
+    if (prevWrongKey) {
+      setDisabledWrongKeysByQ((prev) => {
+        const existing = prev[qIdx] || [];
+        return existing.includes(prevWrongKey) ? prev : { ...prev, [qIdx]: [...existing, prevWrongKey] };
+      });
+    }
     setRetriesUsedByQ((prev) => ({ ...prev, [qIdx]: (prev[qIdx] || 0) + 1 }));
     setPendingWrongByQ((prev) => ({ ...prev, [qIdx]: null }));
   };
@@ -312,6 +322,8 @@ function QuickCheckModalInner({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
                   {qItem.options.map((opt, optIdx) => {
                     const isSelected = selectedKey === opt.key;
+                    const isPreviouslyWrong = (disabledWrongKeysByQ[qIdx] || []).includes(opt.key);
+                    const isOptionDisabled = isSubmitted || isPreviouslyWrong;
                     const isEven = optIdx % 2 === 0;
 
                     let optBorder = isEven ? 'rgba(255, 255, 255, 0.16)' : 'rgba(255, 255, 255, 0.22)';
@@ -319,6 +331,14 @@ function QuickCheckModalInner({
                     let optColor = '#F1F7F4';
                     let pillBg = isEven ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.2)';
                     let pillColor = '#FFFFFF';
+
+                    if (isPreviouslyWrong && !isSelected) {
+                      optBorder = 'rgba(255, 255, 255, 0.12)';
+                      optBg = 'rgba(15, 23, 42, 0.26)';
+                      optColor = 'rgba(203, 213, 225, 0.45)';
+                      pillBg = 'rgba(255, 255, 255, 0.07)';
+                      pillColor = 'rgba(203, 213, 225, 0.42)';
+                    }
 
                     if (isSelected && !isSubmitted) {
                       optBorder = '2px solid #A8DBC8';
@@ -355,7 +375,7 @@ function QuickCheckModalInner({
                         key={opt.key}
                         type="button"
                         onClick={() => handleSelectOption(qIdx, opt.key, opt.is_correct)}
-                        disabled={isSubmitted}
+                        disabled={isOptionDisabled}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -367,12 +387,15 @@ function QuickCheckModalInner({
                           border:
                             typeof optBorder === 'string' && optBorder.startsWith('2px')
                               ? optBorder
-                              : `1.5px solid ${optBorder}`,
+                              : isPreviouslyWrong && !isSelected
+                                ? `1.5px dashed ${optBorder}`
+                                : `1.5px solid ${optBorder}`,
                           background: optBg,
                           color: optColor,
                           fontSize: '14.5px',
                           fontWeight: isSelected ? 600 : 500,
-                          cursor: isSubmitted ? 'default' : 'pointer',
+                          cursor: isPreviouslyWrong && !isSubmitted ? 'not-allowed' : isSubmitted ? 'default' : 'pointer',
+                          opacity: isPreviouslyWrong && !isSelected ? 0.55 : 1,
                           transition: 'all 0.16s ease',
                           boxSizing: 'border-box',
                         }}
@@ -396,7 +419,19 @@ function QuickCheckModalInner({
                         >
                           {String.fromCharCode(65 + optIdx)}
                         </div>
-                        <span style={{ flex: 1 }}>{opt.text}</span>
+                        <span
+                          style={{
+                            flex: 1,
+                            textDecoration: isPreviouslyWrong && !isSelected ? 'line-through' : 'none',
+                          }}
+                        >
+                          {opt.text}
+                        </span>
+                        {isPreviouslyWrong && !isSelected && (
+                          <span style={{ color: 'rgba(203, 213, 225, 0.45)', fontWeight: 700, fontSize: '13px', marginLeft: 'auto' }}>
+                            ✕
+                          </span>
+                        )}
                       </button>
                     );
                   })}
