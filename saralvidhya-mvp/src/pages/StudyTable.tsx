@@ -441,6 +441,20 @@ export default function StudyTable() {
   const { isHydrated } = useCloudState();
   const [cloudSyncRev, setCloudSyncRev] = useState(0);
   useEffect(() => cloudStorage.subscribe(() => setCloudSyncRev((r) => r + 1)), []);
+  useEffect(() => {
+    try {
+      const savedDone = cloudStorage.getItem('sv_mm_qc_done');
+      if (savedDone) setMmCompletedQuickChecks(new Set(JSON.parse(savedDone)));
+    } catch {}
+    try {
+      const savedAns = cloudStorage.getItem('sv_mm_qc_answers');
+      if (savedAns) setMmQcAnswers(JSON.parse(savedAns));
+    } catch {}
+    try {
+      const savedStudied = cloudStorage.getItem('sv_mm_studied_v2');
+      if (savedStudied) setMmStudiedBranches(JSON.parse(savedStudied));
+    } catch {}
+  }, [cloudSyncRev]);
   const location = useLocation();
   const navState = (location.state as Record<string, any>) || {};
   const [searchParams] = useSearchParams();
@@ -2949,7 +2963,7 @@ export default function StudyTable() {
                       }}
                       nodeIcons={mmIcons}
                       selectedTopic={mmDrawerOpen ? activeSelectedBranch : null}
-                      studiedTopics={[]}
+                      studiedTopics={mmStudiedBranches[chStudyKey] || []}
                       onSelectTopic={(lbl, depth, parentLbl) => {
                         if (isNebBiologyChap6 && MINDMAP_MAPPING[lbl.toLowerCase().trim()]) {
                           if (mmAudioRef.current) mmAudioRef.current.pause();

@@ -511,6 +511,18 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [rapidReviewOpen, setRapidReviewOpen] = useState(false);
   const [rapidReviewIndex, setRapidReviewIndex] = useState(0);
+  const [cloudRev, setCloudRev] = useState(0);
+  useEffect(() => {
+    return cloudStorage.subscribe(() => {
+      setCloudRev((r) => r + 1);
+      try {
+        const savedM = cloudStorage.getItem(storageKeyMastered);
+        if (savedM) {
+          setMasteredIds(JSON.parse(savedM));
+        }
+      } catch {}
+    });
+  }, [storageKeyMastered]);
 
   const parsed = useMemo(() => {
     const base = parseTakeawaysContent(content, chapterName, subjectId, chapterNumber);
@@ -552,7 +564,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
       // ignore parse errors
     }
     return base;
-  }, [content, chapterName, subjectId, chapterNumber]);
+  }, [content, chapterName, subjectId, chapterNumber, cloudRev]);
 
   // Default Section 1 expanded, others collapsed (matching the mockup)
   useEffect(() => {
@@ -571,8 +583,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
       });
       setExpandedSections(initialExpanded);
     }
-  }, [storageKeyMastered, parsed.sections]);
-
+  }, [storageKeyMastered, parsed.sections.length]);
   const saveMastered = (next: Record<string, boolean>) => {
     setMasteredIds(next);
     try {

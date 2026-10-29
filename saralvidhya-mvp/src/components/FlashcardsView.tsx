@@ -3,6 +3,7 @@ import { googleTtsSpeak, googleTtsStop } from '@/services/googleTtsService';
 import MarkdownView from '@/components/MarkdownView';
 import { GCS_API_BASE } from '@/data/manifestService';
 import type { ToolId } from '@/components/ToolsMenu';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 interface Card {
   id?: string;
@@ -62,7 +63,21 @@ export default function FlashcardsView({
   onLevelDownPersona,
   isPurpleTheme = false
 }: Props) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const fcStorageKey = `sv_fc_idx_${subjectId || 'english'}_ch${chapterNumber || 1}_${persona || 'beginner'}`;
+  const readSavedFcIdx = useCallback(() => {
+    try {
+      const raw = cloudStorage.getItem(fcStorageKey);
+      if (raw !== null) {
+        const parsed = parseInt(raw, 10);
+        if (Number.isFinite(parsed) && parsed >= 0) {
+          return cards && cards.length > 0 ? Math.min(parsed, cards.length - 1) : parsed;
+        }
+      }
+    } catch {}
+    return 0;
+  }, [fcStorageKey, cards]);
+
+  const [currentIndex, setCurrentIndex] = useState<number>(() => readSavedFcIdx());
   const [speakingIdx, setSpeakingIdx] = useState<number | null>(null);
   const [animationDirection, setAnimationDirection] = useState<'next' | 'prev' | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -74,19 +89,29 @@ export default function FlashcardsView({
   const [isZoomed, setIsZoomed] = useState(false);
   const lang = SUBJECT_LANG[subjectId] ?? 'en-IN';
 
-  // Reset to first card whenever cards array (persona) changes
+  // Restore saved card index whenever cards array (persona/chapter) changes or cloud state hydrates
   useEffect(() => {
-    setCurrentIndex(0);
+    setCurrentIndex(readSavedFcIdx());
     setIsFlipped(false);
     setImgFailed(false);
     setIsZoomed(false);
-  }, [cards]);
+  }, [cards, readSavedFcIdx]);
+
+  useEffect(() => {
+    return cloudStorage.subscribe(() => {
+      const savedIdx = readSavedFcIdx();
+      setCurrentIndex((prev) => (prev === 0 && savedIdx > 0 ? savedIdx : prev));
+    });
+  }, [readSavedFcIdx]);
 
   useEffect(() => {
     setIsFlipped(false);
     setImgFailed(false);
     setIsZoomed(false);
-  }, [currentIndex]);
+    try {
+      cloudStorage.setItem(fcStorageKey, String(currentIndex));
+    } catch {}
+  }, [currentIndex, fcStorageKey]);
 
   const totalCards = cards?.length || 0;
   const currentCard = cards[currentIndex];
@@ -148,6 +173,9 @@ export default function FlashcardsView({
 
   const nextCard = useCallback(() => {
     if (currentIndex === totalCards - 1) {
+      try {
+        cloudStorage.setItem(fcStorageKey, '0');
+      } catch {}
       if (onFlashcardsCompleted) {
         onFlashcardsCompleted();
       }

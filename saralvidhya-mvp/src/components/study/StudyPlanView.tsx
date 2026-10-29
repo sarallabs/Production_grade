@@ -813,9 +813,18 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
 
   const storageKey = `sv_study_plan_progress_${subjectId}_ch${chapterNumber}`;
   const replanKey = `sv_study_plan_start_${subjectId}_ch${chapterNumber}`;
+  const dayKey = `sv_study_plan_day_${subjectId}_ch${chapterNumber}`;
 
   const [activePace, setActivePace] = useState<PaceLevel>(persona || "beginner");
-  const [selectedDayNum, setSelectedDayNum] = useState<number>(1);
+  const [selectedDayNum, setSelectedDayNum] = useState<number>(() => {
+    try {
+      const savedDay = cloudStorage.getItem(dayKey);
+      const parsedDay = savedDay ? parseInt(savedDay, 10) : NaN;
+      return Number.isFinite(parsedDay) && parsedDay >= 1 ? parsedDay : 1;
+    } catch {
+      return 1;
+    }
+  });
   const [showReplanInfo, setShowReplanInfo] = useState<boolean>(false);
   const [replanNotice, setReplanNotice] = useState<string | null>(null);
 
@@ -844,14 +853,36 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
   });
 
   useEffect(() => {
-    try {
-      const saved = cloudStorage.getItem(storageKey);
-      setCompletedTaskIds(saved ? JSON.parse(saved) : {});
-    } catch {
-      setCompletedTaskIds({});
-    }
-  }, [storageKey]);
+    const syncFromCloud = () => {
+      try {
+        const saved = cloudStorage.getItem(storageKey);
+        if (saved) {
+          setCompletedTaskIds(JSON.parse(saved));
+        } else {
+          setCompletedTaskIds((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+        }
+      } catch {}
+      try {
+        const savedStart = cloudStorage.getItem(replanKey);
+        if (savedStart) setPlanStartIso(savedStart);
+      } catch {}
+      try {
+        const savedDay = cloudStorage.getItem(dayKey);
+        const parsedDay = savedDay ? parseInt(savedDay, 10) : NaN;
+        if (Number.isFinite(parsedDay) && parsedDay >= 1) {
+          setSelectedDayNum(parsedDay);
+        }
+      } catch {}
+    };
+    syncFromCloud();
+    return cloudStorage.subscribe(syncFromCloud);
+  }, [storageKey, replanKey, dayKey]);
 
+  useEffect(() => {
+    try {
+      cloudStorage.setItem(dayKey, String(selectedDayNum));
+    } catch {}
+  }, [dayKey, selectedDayNum]);
   const toggleTask = (taskId: string) => {
     setCompletedTaskIds((prev) => {
       const next = { ...prev, [taskId]: !prev[taskId] };

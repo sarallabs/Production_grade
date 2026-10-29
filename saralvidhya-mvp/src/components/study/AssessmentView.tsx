@@ -4,6 +4,7 @@ import { getAssessments } from "@/data/contentRepository";
 import { parseQuestionBank } from "@/utils/quizParser";
 import { type AssessmentQuestion } from "@/utils/assessmentTypes";
 import { StudyToolLoadingWaitScreen } from "@/pages/StudyTable";
+import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * AssessmentView Component
@@ -91,19 +92,91 @@ export function AssessmentView({
       }
 
       setQuestions(validQuestions);
-      setStep(0);
-      setScore(0);
-      setIsFinished(false);
-      setAnswered(new Array(validQuestions.length).fill(false));
-      setRetriesUsed({});
-      setDisabledMCQByStep({});
-      setDisabledTFByStep({});
+      const storageKey = `sv_assessment_state_${subjectId}_ch${chapterNumber}_${persona}${videoDir ? `_${videoDir}` : ""}`;
+      let restored = false;
+      try {
+        const raw = cloudStorage.getItem(storageKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.questionCount === validQuestions.length && validQuestions.length > 0) {
+            setStep(Math.min(Math.max(0, parsed.step || 0), validQuestions.length - 1));
+            setScore(parsed.score || 0);
+            setIsFinished(Boolean(parsed.isFinished));
+            setAnswered(
+              Array.isArray(parsed.answered) && parsed.answered.length === validQuestions.length
+                ? parsed.answered
+                : new Array(validQuestions.length).fill(false)
+            );
+            setRetriesUsed(parsed.retriesUsed || {});
+            setDisabledMCQByStep(parsed.disabledMCQByStep || {});
+            setDisabledTFByStep(parsed.disabledTFByStep || {});
+            restored = true;
+          }
+        }
+      } catch {}
+      if (!restored) {
+        setStep(0);
+        setScore(0);
+        setIsFinished(false);
+        setAnswered(new Array(validQuestions.length).fill(false));
+        setRetriesUsed({});
+        setDisabledMCQByStep({});
+        setDisabledTFByStep({});
+      }
       setAwaitingRetry(false);
       setLoading(false);
     });
 
     return () => { isMounted = false; };
   }, [subjectId, chapterNumber, persona, markdownContent, videoDir]);
+
+  const assessmentStorageKey = `sv_assessment_state_${subjectId}_ch${chapterNumber}_${persona}${videoDir ? `_${videoDir}` : ""}`;
+
+  useEffect(() => {
+    return cloudStorage.subscribe(() => {
+      if (loading || questions.length === 0) return;
+      try {
+        const raw = cloudStorage.getItem(assessmentStorageKey);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed && parsed.questionCount === questions.length) {
+          setStep((prevStep) => {
+            if (prevStep === 0 && score === 0 && !answered.some(Boolean) && !isFinished) {
+              setScore(parsed.score || 0);
+              setIsFinished(Boolean(parsed.isFinished));
+              if (Array.isArray(parsed.answered) && parsed.answered.length === questions.length) {
+                setAnswered(parsed.answered);
+              }
+              setRetriesUsed(parsed.retriesUsed || {});
+              setDisabledMCQByStep(parsed.disabledMCQByStep || {});
+              setDisabledTFByStep(parsed.disabledTFByStep || {});
+              return Math.min(Math.max(0, parsed.step || 0), questions.length - 1);
+            }
+            return prevStep;
+          });
+        }
+      } catch {}
+    });
+  }, [assessmentStorageKey, loading, questions.length, score, answered, isFinished]);
+
+  useEffect(() => {
+    if (loading || questions.length === 0) return;
+    try {
+      cloudStorage.setItem(
+        assessmentStorageKey,
+        JSON.stringify({
+          questionCount: questions.length,
+          step,
+          score,
+          isFinished,
+          answered,
+          retriesUsed,
+          disabledMCQByStep,
+          disabledTFByStep,
+        })
+      );
+    } catch {}
+  }, [assessmentStorageKey, loading, questions.length, step, score, isFinished, answered, retriesUsed, disabledMCQByStep, disabledTFByStep]);
 
   // Reset inputs when step changes
   useEffect(() => {
@@ -537,6 +610,34 @@ export function AssessmentView({
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="9 18 15 12 9 6" />
                   </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStep(0);
+                    setScore(0);
+                    setIsFinished(false);
+                    setAnswered(new Array(questions.length).fill(false));
+                    setRetriesUsed({});
+                    setDisabledMCQByStep({});
+                    setDisabledTFByStep({});
+                    setAwaitingRetry(false);
+                    try {
+                      cloudStorage.removeItem(assessmentStorageKey);
+                    } catch {}
+                  }}
+                  style={{
+                    padding: "8px 20px",
+                    borderRadius: "999px",
+                    border: "1px solid #DFD9CE",
+                    background: "#FFFFFF",
+                    color: "#435D50",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    fontSize: "12.5px",
+                  }}
+                >
+                  Retake Assessment
                 </button>
               </div>
             );

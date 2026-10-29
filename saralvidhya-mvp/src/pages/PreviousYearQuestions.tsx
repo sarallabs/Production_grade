@@ -291,7 +291,23 @@ export function QuestionCard({
   onSOS: () => void;
   defaultExpanded?: boolean;
 }) {
-  const [isCompleted, setIsCompleted] = useState(false);
+  const pyqDoneKey = `sv_pyq_done_${question.subjectId || 'subj'}_ch${question.chapterNumber || 0}_q${question.id}`;
+  const [isCompleted, setIsCompleted] = useState<boolean>(() => {
+    try {
+      return cloudStorage.getItem(pyqDoneKey) === 'true';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    const sync = () => {
+      try {
+        setIsCompleted(cloudStorage.getItem(pyqDoneKey) === 'true');
+      } catch {}
+    };
+    sync();
+    return cloudStorage.subscribe(sync);
+  }, [pyqDoneKey]);
   const [isLongAnswer, setIsLongAnswer] = useState(false);
   const [isAnswerHidden, setIsAnswerHidden] = useState(!defaultExpanded);
 
@@ -449,7 +465,7 @@ export function QuestionCard({
           {!isAnswerHidden && (
             <button
               type="button"
-              onClick={() => setIsCompleted(!isCompleted)}
+              onClick={() => { const next = !isCompleted; setIsCompleted(next); try { cloudStorage.setItem(pyqDoneKey, next ? 'true' : 'false'); } catch {} }}
               style={{
                 background: isCompleted ? "#546C60" : '#FFFFFF',
                 color: isCompleted ? "#FFFFFF" : '#38423B',

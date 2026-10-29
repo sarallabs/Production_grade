@@ -18,6 +18,7 @@ import {
 import { getFallbackTenantId } from '@/tenant/TenantProvider';
 import { registryClient } from '@/data/registryClient';
 import { trackCloudEvent } from '@/utils/analytics';
+import { cloudStorage } from '@/context/CloudStateContext';
 
 export interface MockQuestion {
   id: string;
@@ -412,7 +413,21 @@ function DescriptiveQuestionCard({
   expandedRubric: boolean;
   onToggleRubric: () => void;
 }) {
-  const [inputMode, setInputMode] = useState<"type" | "scan" | "draw" | "image">("type");
+  const qModeKey = `sv_exam_qmode_${question.id}`;
+  const [inputMode, setInputMode] = useState<"type" | "scan" | "draw" | "image">(() => {
+    try {
+      const savedMode = cloudStorage.getItem(qModeKey);
+      if (savedMode === "type" || savedMode === "scan" || savedMode === "draw" || savedMode === "image") {
+        return savedMode;
+      }
+    } catch {}
+    return "type";
+  });
+  useEffect(() => {
+    try {
+      cloudStorage.setItem(qModeKey, inputMode);
+    } catch {}
+  }, [qModeKey, inputMode]);
   const [scannedPages, setScannedPages] = useState<ScannedPageItem[]>(DEFAULT_SCANNED_PAGES);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -1421,12 +1436,91 @@ export default function MockTestView({
     }
   };
 
+  const examStorageKey = `sv_exam_state_${subjectId}_ch${chapterNumber || 1}_${isPrepExam ? "prep" : isPreFinalTest ? "prefinal" : "mock"}`;
+
+  const applySavedExamState = useCallback(() => {
+    try {
+      const raw = cloudStorage.getItem(examStorageKey);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      if (!saved || typeof saved !== "object") return false;
+      if (Array.isArray(saved.selectedUnitNumbers) && saved.selectedUnitNumbers.length > 0) {
+        setSelectedUnitNumbers(saved.selectedUnitNumbers);
+      }
+      if (typeof saved.isTimedMode === "boolean") {
+        setIsTimedMode(saved.isTimedMode);
+      }
+      if (Array.isArray(saved.questions) && saved.questions.length > 0 && saved.showSetupScreen === false) {
+        setQuestions(saved.questions);
+        setCurrentQuestionIdx(
+          typeof saved.currentQuestionIdx === "number"
+            ? Math.min(Math.max(0, saved.currentQuestionIdx), saved.questions.length - 1)
+            : 0
+        );
+        setAnswers(saved.answers || {});
+        setTextAnswers(saved.textAnswers || {});
+        const dur = saved.durationSeconds || 1500;
+        const left = typeof saved.secondsLeft === "number" ? saved.secondsLeft : dur;
+        setDurationSeconds(dur);
+        setSecondsLeft(left);
+        const sub = Boolean(saved.isSubmitted);
+        setIsSubmitted(sub);
+        setTimerRunning(!sub && (isPrepExam ? Boolean(saved.isTimedMode) : true) && left > 0);
+        setShowSetupScreen(false);
+        return true;
+      }
+    } catch {}
+    return false;
+  }, [examStorageKey, isPrepExam]);
+
   useEffect(() => {
-    if (isPrepExam) {
+    const restored = applySavedExamState();
+    if (!restored && isPrepExam) {
       setSelectedUnitNumbers([chapterNumber || 1]);
       setShowSetupScreen(true);
     }
-  }, [isPrepExam, subjectId, chapterNumber]);
+  }, [isPrepExam, subjectId, chapterNumber, applySavedExamState]);
+
+  useEffect(() => {
+    return cloudStorage.subscribe(() => {
+      if (showSetupScreen && questions.length === 0) {
+        applySavedExamState();
+      }
+    });
+  }, [showSetupScreen, questions.length, applySavedExamState]);
+
+  useEffect(() => {
+    if (loading) return;
+    try {
+      cloudStorage.setItem(
+        examStorageKey,
+        JSON.stringify({
+          showSetupScreen,
+          selectedUnitNumbers,
+          isTimedMode,
+          questions,
+          currentQuestionIdx,
+          answers,
+          textAnswers,
+          durationSeconds,
+          secondsLeft,
+          isSubmitted,
+        })
+      );
+    } catch {}
+  }, [
+    examStorageKey,
+    loading,
+    showSetupScreen,
+    selectedUnitNumbers,
+    isTimedMode,
+    questions,
+    currentQuestionIdx,
+    answers,
+    textAnswers,
+    durationSeconds,
+    isSubmitted,
+  ]);
   useEffect(() => {
     if (!timerRunning || secondsLeft <= 0) return;
     const interval = setInterval(() => {
@@ -2565,22 +2659,50 @@ export default function MockTestView({
                   You answered {answeredCount} of {questions.length} questions. Inspect model answers below or finish.
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onComplete}
-                style={{
-                  background: "#546C60",
-                  color: "#FFFFFF",
-                  border: "none",
-                  borderRadius: "999px",
-                  padding: "8px 20px",
-                  fontSize: "12.5px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
-              >
-                {"Finish & Continue →"}
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSetupScreen(true);
+                    setIsSubmitted(false);
+                    setTimerRunning(false);
+                    setQuestions([]);
+                    setAnswers({});
+                    setTextAnswers({});
+                    try {
+                      cloudStorage.removeItem(examStorageKey);
+                    } catch {}
+                  }}
+                  style={{
+                    background: "#FFFFFF",
+                    color: "#2D4438",
+                    border: "1px solid #C5D6CC",
+                    borderRadius: "999px",
+                    padding: "8px 16px",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {"New Exam"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onComplete}
+                  style={{
+                    background: "#546C60",
+                    color: "#FFFFFF",
+                    border: "none",
+                    borderRadius: "999px",
+                    padding: "8px 20px",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {"Finish & Continue →"}
+                </button>
+              </div>
             </div>
           )}
 
