@@ -621,12 +621,24 @@ export default function VideosView({
                       setProgress((savedSec / dur) * 100);
                     }
                   }
-                  if (autoPlayOnReadyRef.current && typeof event.target.playVideo === "function") {
+                  const fsReady = !!(
+                    document.fullscreenElement ||
+                    (document as any).webkitFullscreenElement ||
+                    (document as any).mozFullScreenElement ||
+                    (document as any).msFullscreenElement ||
+                    isFullscreenRef.current
+                  );
+                  if (autoPlayOnReadyRef.current && fsReady && typeof event.target.playVideo === "function") {
                     autoPlayOnReadyRef.current = false;
                     if (savedSec > 1 && typeof event.target.seekTo === "function") {
                       event.target.seekTo(savedSec, true);
                     }
                     event.target.playVideo();
+                  } else if (!fsReady) {
+                    autoPlayOnReadyRef.current = false;
+                    try {
+                      event.target.pauseVideo?.();
+                    } catch {}
                   }
                 }
               } catch (err) {}
@@ -634,7 +646,29 @@ export default function VideosView({
             onStateChange: (event: any) => {
               const state = event.data;
               const YT = (window as any).YT;
+              const fsNow = !!(
+                document.fullscreenElement ||
+                (document as any).webkitFullscreenElement ||
+                (document as any).mozFullScreenElement ||
+                (document as any).msFullscreenElement ||
+                isFullscreenRef.current
+              );
               if (state === YT?.PlayerState?.PLAYING || state === 1) {
+                if (!fsNow) {
+                  isSeekingRef.current = false;
+                  autoPlayOnReadyRef.current = false;
+                  setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  if (progressIntervalRef.current) {
+                    clearInterval(progressIntervalRef.current);
+                    progressIntervalRef.current = null;
+                  }
+                  try {
+                    event?.target?.pauseVideo?.();
+                    playerRef.current?.pauseVideo?.();
+                  } catch {}
+                  return;
+                }
                 isSeekingRef.current = false;
                 recordVideoOpen(currentVideo.ytId);
                 if (!isCcEnabledRef.current && playerRef.current) {
@@ -659,6 +693,27 @@ export default function VideosView({
                 setIsPlaying(true);
                 if (!progressIntervalRef.current) {
                   progressIntervalRef.current = setInterval(() => {
+                    const stillFs = !!(
+                      document.fullscreenElement ||
+                      (document as any).webkitFullscreenElement ||
+                      (document as any).mozFullScreenElement ||
+                      (document as any).msFullscreenElement ||
+                      isFullscreenRef.current
+                    );
+                    if (!stillFs) {
+                      isSeekingRef.current = false;
+                      autoPlayOnReadyRef.current = false;
+                      setIsPlaying(false);
+                      isPlayingRef.current = false;
+                      try {
+                        playerRef.current?.pauseVideo?.();
+                      } catch {}
+                      if (progressIntervalRef.current) {
+                        clearInterval(progressIntervalRef.current);
+                        progressIntervalRef.current = null;
+                      }
+                      return;
+                    }
                     if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
                       const cur = playerRef.current.getCurrentTime();
                       const dur = playerRef.current.getDuration();
@@ -676,13 +731,23 @@ export default function VideosView({
                   }, 500);
                 }
               } else if (state === YT?.PlayerState?.BUFFERING || state === 3) {
+                if (!fsNow) {
+                  isSeekingRef.current = false;
+                  autoPlayOnReadyRef.current = false;
+                  setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  try {
+                    event?.target?.pauseVideo?.();
+                    playerRef.current?.pauseVideo?.();
+                  } catch {}
+                  return;
+                }
                 // Buffering during seek or playback
                 if (isSeekingRef.current && playerRef.current) {
                   try {
                     playerRef.current.playVideo?.();
                   } catch (e) {}
                 }
-              } else if (state === YT?.PlayerState?.ENDED || state === 0) {
                 isSeekingRef.current = false;
                 activePlaybackSessionYtIdRef.current = null;
                 setIsPlaying(false);
@@ -969,11 +1034,40 @@ export default function VideosView({
     } catch (e) {}
   };
 
-  const exitFullscreen = () => {
+  const forcePauseOnExitFullscreen = () => {
     activePlaybackSessionYtIdRef.current = null;
-    try {
-      playerRef.current?.pauseVideo?.();
-    } catch (e) {}
+    isSeekingRef.current = false;
+    autoPlayOnReadyRef.current = false;
+    setIsFullscreen(false);
+    isFullscreenRef.current = false;
+    setIsPlaying(false);
+    isPlayingRef.current = false;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    const pauseNow = () => {
+      try {
+        playerRef.current?.pauseVideo?.();
+      } catch (e) {}
+      try {
+        if (currentVideo?.ytId) {
+          const iframeEl = document.getElementById(`yt-player-${currentVideo.ytId}`) as HTMLIFrameElement | null;
+          iframeEl?.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
+        }
+      } catch (e) {}
+    };
+    pauseNow();
+    setTimeout(() => {
+      if (!isFullscreenRef.current) pauseNow();
+    }, 150);
+    setTimeout(() => {
+      if (!isFullscreenRef.current) pauseNow();
+    }, 400);
+  };
+
+  const exitFullscreen = () => {
+    forcePauseOnExitFullscreen();
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
@@ -984,8 +1078,6 @@ export default function VideosView({
       } else if ((document as any).msExitFullscreen) {
         (document as any).msExitFullscreen();
       }
-      setIsFullscreen(false);
-      isFullscreenRef.current = false;
     } catch (e) {}
   };
 
@@ -1016,13 +1108,11 @@ export default function VideosView({
         (document as any).msFullscreenElement
       );
       if (!fs) {
-        activePlaybackSessionYtIdRef.current = null;
-        try {
-          playerRef.current?.pauseVideo?.();
-        } catch (e) {}
+        forcePauseOnExitFullscreen();
+      } else {
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
       }
-      setIsFullscreen(fs);
-      isFullscreenRef.current = fs;
     };
     document.addEventListener("fullscreenchange", handler);
     document.addEventListener("webkitfullscreenchange", handler);
@@ -1034,7 +1124,7 @@ export default function VideosView({
       document.removeEventListener("mozfullscreenchange", handler);
       document.removeEventListener("MSFullscreenChange", handler);
     };
-  }, []);
+  }, [currentVideo?.ytId]);
 
   const isPlayingRef = useRef(isPlaying);
   useEffect(() => {
@@ -1083,13 +1173,7 @@ export default function VideosView({
 
       if (e.code === "Space" || e.key === " " || e.key === "k" || e.key === "K") {
         e.preventDefault();
-        if (playerRef.current) {
-          if (isPlayingRef.current) {
-            playerRef.current.pauseVideo?.();
-          } else {
-            playerRef.current.playVideo?.();
-          }
-        }
+        handlePlayPause();
       } else if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
         e.preventDefault();
         handleForward10();
@@ -1405,7 +1489,7 @@ export default function VideosView({
           height: "100%",
           border: 0,
           pointerEvents: "none",
-          opacity: isPlaying && isFullscreen ? 1 : 0.18,
+          opacity: isFullscreen ? 1 : 0,
           transition: "opacity 0.25s ease",
         }}
       >
@@ -1427,32 +1511,40 @@ export default function VideosView({
         ) : null}
       </div>
 
-      {/* Dark forest-green ambient slate overlay when paused or not in fullscreen */}
-      {(!isPlaying || !isFullscreen) && (
+      {/* Clean Video Thumbnail Cover when not in fullscreen (no YouTube buttons/chrome) */}
+      {!isFullscreen && (
         <div
           style={{
             position: "absolute",
             inset: 0,
             background: "radial-gradient(ellipse at center, rgba(46, 66, 56, 0.88) 0%, rgba(25, 38, 31, 0.96) 100%)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
             pointerEvents: "none",
             zIndex: 1,
+            overflow: "hidden",
           }}
         >
-          <span
+          {(currentVideo.thumbnailUrl || currentVideo.ytId) && (
+            <img
+              src={currentVideo.thumbnailUrl || `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`}
+              alt={displayTitle}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
+                userSelect: "none",
+              }}
+            />
+          )}
+          <div
             style={{
-              fontSize: isFullscreen ? "46px" : "34px",
-              fontWeight: 800,
-              letterSpacing: "0.04em",
-              color: "rgba(255, 255, 255, 0.14)",
-              userSelect: "none",
-              textTransform: "uppercase",
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(14, 22, 18, 0.36) 0%, rgba(14, 22, 18, 0.14) 45%, rgba(14, 22, 18, 0.68) 100%)",
             }}
-          >
-            {subjectShortWatermark}
-          </span>
+          />
         </div>
       )}
 
@@ -1770,7 +1862,7 @@ export default function VideosView({
           <span style={{ fontSize: "10px" }}>10</span>
         </button>
 
-        {/* Inline Horizontal Seek Bar with Segment Dividers */}
+        {/* Inline Horizontal Seek Bar with Segment Dividers & Subtle Fullscreen Timestamp Popups */}
         <div
           onClick={(e) => {
             e.stopPropagation();
@@ -1789,6 +1881,105 @@ export default function VideosView({
             cursor: "pointer",
           }}
         >
+          {/* Subtle Timestamp & Topic Name Popups right above the progress bar in Fullscreen mode */}
+          {isFullscreen && segmentsList.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: "20px",
+                height: "28px",
+                pointerEvents: "none",
+                zIndex: 14,
+              }}
+            >
+              {segmentsList.map((seg, idx) => {
+                const startPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(92, Math.max(0, (seg.startSec / effectiveDurationSec) * 100))
+                    : (idx / segmentsList.length) * 100;
+                const endPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(100, Math.max(startPct + 8, (seg.endSec / effectiveDurationSec) * 100))
+                    : ((idx + 1) / segmentsList.length) * 100;
+                const maxWidthPct = Math.max(10, endPct - startPct - 1.2);
+                const isCurrentSeg = activeSegmentIdx === idx;
+                return (
+                  <div
+                    key={`fs-seg-popup-${seg.index}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      seekToSecond(seg.startSec);
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: `${startPct}%`,
+                      bottom: 0,
+                      maxWidth: `calc(${maxWidthPct}% - 6px)`,
+                      pointerEvents: "auto",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: isCurrentSeg ? "rgba(20, 32, 26, 0.76)" : "rgba(16, 24, 20, 0.58)",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
+                        border: isCurrentSeg
+                          ? "1px solid rgba(157, 194, 173, 0.34)"
+                          : "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "5px",
+                        padding: "2.5px 7px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        maxWidth: "100%",
+                        boxSizing: "border-box",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.22)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          color: "#9DC2AD",
+                          fontVariantNumeric: "tabular-nums",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {formatTime(seg.startSec)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 500,
+                          color: "rgba(255, 255, 255, 0.86)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {seg.title}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        width: "1px",
+                        height: "4px",
+                        marginLeft: "6px",
+                        background: isCurrentSeg ? "rgba(157, 194, 173, 0.55)" : "rgba(255, 255, 255, 0.22)",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           <div
             style={{
               position: "relative",
@@ -1819,7 +2010,6 @@ export default function VideosView({
                 />
               );
             })}
-
             {/* Progress Fill */}
             <div
               style={{
