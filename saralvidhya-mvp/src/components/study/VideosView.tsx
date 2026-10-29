@@ -780,10 +780,16 @@ export default function VideosView({
 
   // Player controls
   const handlePlayPause = () => {
-    if (!playerRef.current || !playerReadyRef.current) return;
-    if (isPlaying) {
-      playerRef.current.pauseVideo();
+    if (isPlaying && isCurrentlyFullscreen()) {
+      playerRef.current?.pauseVideo?.();
     } else {
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(currentVideo?.ytId);
+      }
+      if (!playerRef.current || !playerReadyRef.current) {
+        autoPlayOnReadyRef.current = true;
+        return;
+      }
       if (!hasStartedPlayingRef.current && restoredVideoTimeRef.current > 1) {
         try {
           playerRef.current.seekTo?.(restoredVideoTimeRef.current, true);
@@ -1042,10 +1048,7 @@ export default function VideosView({
   // - Center click: Toggle Play / Pause
   const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCurrentlyFullscreen()) {
-      enterFullscreen(currentVideo?.ytId);
-      if (!isPlayingRef.current && playerRef.current) {
-        playerRef.current.playVideo?.();
-      }
+      handlePlayPause();
       return;
     }
 
@@ -1302,10 +1305,18 @@ export default function VideosView({
 
   const seekToSecond = useCallback(
     (targetSec: number) => {
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(currentVideo?.ytId);
+      }
       const clamped = Math.max(0, Math.min(effectiveDurationSec, targetSec));
+      restoredVideoTimeRef.current = clamped;
       setCurrentTime(clamped);
       if (effectiveDurationSec > 0) {
         setProgress((clamped / effectiveDurationSec) * 100);
+      }
+      if (!playerRef.current || !playerReadyRef.current) {
+        autoPlayOnReadyRef.current = true;
+        return;
       }
       if (playerRef.current?.seekTo) {
         try {
@@ -1314,7 +1325,8 @@ export default function VideosView({
         } catch {}
       }
     },
-    [effectiveDurationSec],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveDurationSec, currentVideo?.ytId],
   );
 
   // Video switching handler for multi-video
@@ -1393,7 +1405,7 @@ export default function VideosView({
           height: "100%",
           border: 0,
           pointerEvents: "none",
-          opacity: isPlaying ? 1 : 0.18,
+          opacity: isPlaying && isFullscreen ? 1 : 0.18,
           transition: "opacity 0.25s ease",
         }}
       >
@@ -1415,8 +1427,8 @@ export default function VideosView({
         ) : null}
       </div>
 
-      {/* Dark forest-green ambient slate overlay when paused */}
-      {!isPlaying && (
+      {/* Dark forest-green ambient slate overlay when paused or not in fullscreen */}
+      {(!isPlaying || !isFullscreen) && (
         <div
           style={{
             position: "absolute",
@@ -1507,7 +1519,7 @@ export default function VideosView({
       <div
         onClick={(e) => {
           e.stopPropagation();
-          handlePlayPause();
+          handleVideoClick(e);
         }}
         style={{
           position: "absolute",
@@ -1558,8 +1570,8 @@ export default function VideosView({
         </div>
       )}
 
-      {/* Center Sage Play Button Overlay when Paused */}
-      {!isPlaying && (
+      {/* Center Sage Play Button Overlay when Paused or in Thumbnail view */}
+      {(!isPlaying || !isFullscreen) && (
         <button
           type="button"
           onClick={(e) => {
