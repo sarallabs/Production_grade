@@ -172,7 +172,7 @@ export default function VoiceInputModal({
         if (activeRecorderRef.current.isRecording) {
           await activeRecorderRef.current.stop();
         }
-      } catch {}
+      } catch { }
       activeRecorderRef.current = null;
     }
     setIsRecording(false);
@@ -246,7 +246,7 @@ export default function VoiceInputModal({
 
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch {}
+      } catch { }
 
       // 6. Polling loop: update seconds, metering, and smart silence detection
       pollingIntervalRef.current = setInterval(() => {
@@ -282,7 +282,7 @@ export default function VoiceInputModal({
           if (elapsedSec >= 20) {
             stopRecordingAndTranscribe();
           }
-        } catch {}
+        } catch { }
       }, 70);
     } catch (err: any) {
       console.warn('[VoiceInputModal] Start recording failed:', err);
@@ -312,7 +312,7 @@ export default function VoiceInputModal({
     try {
       try {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      } catch {}
+      } catch { }
 
       // Stop native recording and get final status/URL
       const stopStatus = await recorder.stop();
@@ -374,7 +374,7 @@ export default function VoiceInputModal({
           setStatusMessage('Got it! AI is answering out loud... 🔊');
           try {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          } catch {}
+          } catch { }
 
           setTimeout(() => {
             onTranscript(text);
@@ -407,7 +407,7 @@ export default function VoiceInputModal({
   const handleSelectQuickPrompt = (prompt: string) => {
     try {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch {}
+    } catch { }
     setTranscribedText(prompt);
     setStatusMessage('Got it! AI is answering out loud... 🔊');
     cleanupActiveRecorder();
@@ -422,23 +422,23 @@ export default function VoiceInputModal({
 
   const colors = isDark
     ? {
-        modalBg: '#1B2720',
-        primaryText: '#FFFFFF',
-        subText: '#9CB8A8',
-        transcriptBox: '#23332A',
-        chipBg: '#23332A',
-        chipBorder: '#344A3D',
-        chipText: '#E6F0EA',
-      }
+      modalBg: '#1B2720',
+      primaryText: '#FFFFFF',
+      subText: '#9CB8A8',
+      transcriptBox: '#23332A',
+      chipBg: '#23332A',
+      chipBorder: '#344A3D',
+      chipText: '#E6F0EA',
+    }
     : {
-        modalBg: '#FFFFFF',
-        primaryText: '#182B21',
-        subText: '#5A7063',
-        transcriptBox: '#F2FAF5',
-        chipBg: '#F0F8F3',
-        chipBorder: '#D2E8DB',
-        chipText: '#147A43',
-      };
+      modalBg: '#FFFFFF',
+      primaryText: '#182B21',
+      subText: '#5A7063',
+      transcriptBox: '#F2FAF5',
+      chipBg: '#F0F8F3',
+      chipBorder: '#D2E8DB',
+      chipText: '#147A43',
+    };
 
   // Compute live visual heights for the 17 voice shower bars based on live hardware metering
   // Metering normalized between -65dB (silence) and -10dB (loud)
@@ -545,6 +545,7 @@ export default function VoiceInputModal({
                 const curveFactor = Math.max(0.2, 1 - distFromCenter * 0.11);
                 // Bar height from 4px minimum to 44px peak
                 const barHeight = isRecording && normalizedLevel > 0.03
+
                   ? Math.round(4 + normalizedLevel * 40 * curveFactor)
                   : 4;
 

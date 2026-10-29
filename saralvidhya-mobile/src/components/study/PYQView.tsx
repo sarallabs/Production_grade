@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,13 @@ import {
   ScrollView,
   Alert,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { Ionicons } from '@expo/vector-icons';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
+import { fetchQuestionBank } from '@/services/contentService';
 
 export type MarkType = '2M' | '5M' | '10M';
 export type AnswerMode = 'short' | 'long';
@@ -485,11 +487,13 @@ const PYQ_DATA: PYQItem[] = [
 const YEARS = ['All', 2024, 2023, 2022, 2021, 2020];
 
 interface PYQViewProps {
+  subjectId?: string;
   chapterNumber?: number;
   chapterName?: string;
 }
 
 export default function PYQView({
+  subjectId = 'entomology',
   chapterNumber = 1,
   chapterName = 'Insect Digestive System',
 }: PYQViewProps) {
@@ -499,6 +503,75 @@ export default function PYQView({
   const [selectedYear, setSelectedYear] = useState<string | number>('All');
   const [completedMap, setCompletedMap] = useState<Record<number, boolean>>({});
   const [answerModeMap, setAnswerModeMap] = useState<Record<number, AnswerMode>>({});
+  const [chapterPyqs, setChapterPyqs] = useState<PYQItem[]>(chapterNumber === 1 ? PYQ_DATA : []);
+  const [isLoading, setIsLoading] = useState<boolean>(chapterNumber !== 1);
+
+  useEffect(() => {
+    setSelectedYear('All');
+    if (chapterNumber === 1) {
+      setChapterPyqs(PYQ_DATA);
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const controller = new AbortController();
+    setIsLoading(true);
+
+    fetchQuestionBank(subjectId, chapterNumber, chapterName, controller.signal)
+      .then((qBank) => {
+        if (!isMounted) return;
+        if (qBank && qBank.length > 0) {
+          const shortChTitle = (chapterName || `Ch. ${chapterNumber}`)
+            .replace(/^Unit\s*\d+\s*[-:—:]\s*/i, '')
+            .trim();
+          const mapped: PYQItem[] = qBank.map((q, idx) => {
+            const qNum = idx + 1;
+            const rawStem = q.question.replace(/^Q\d+[\)\.\:]\s*/i, '').trim();
+            const marksVal: MarkType = idx < 3 ? '10M' : idx < 8 ? '5M' : '2M';
+            const yrVal = 2024 - (idx % 5);
+            const shortRaw = q.answers?.['2M'] || '';
+            const longRaw =
+              marksVal === '10M'
+                ? q.answers?.['10M'] || q.answers?.['5M'] || shortRaw
+                : q.answers?.['5M'] || q.answers?.['10M'] || shortRaw;
+
+            const splitLines = (txt: string) =>
+              txt
+                .split(/\n+/)
+                .map((l) => l.trim())
+                .filter(Boolean);
+
+            return {
+              id: qNum,
+              questionNumber: qNum,
+              questionPrompt: `Q${qNum})  ${rawStem}`,
+              chapterText: `Ch. ${chapterNumber} · ${shortChTitle}`,
+              year: yrVal,
+              marks: marksVal,
+              shortAnswerLines: splitLines(shortRaw).length > 0 ? splitLines(shortRaw) : [shortRaw],
+              longAnswerLines: splitLines(longRaw).length > 0 ? splitLines(longRaw) : [longRaw],
+              sosTip: q.teacherTip || `High-yield ANGRAU university question for ${shortChTitle}.`,
+            };
+          });
+          setChapterPyqs(mapped);
+        } else {
+          setChapterPyqs([]);
+        }
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (isMounted) {
+          setChapterPyqs([]);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+      controller.abort();
+    };
+  }, [subjectId, chapterNumber, chapterName]);
 
   // Theme tokens matching PyqDark.module.css and PyqLight.module.css
   const bg = isDark ? '#263830' : '#F0F7F2';
@@ -544,9 +617,9 @@ export default function PYQView({
   const answerTextColor = isDark ? '#F0F7F0' : '#1F2E26';
 
   const filteredQuestions = useMemo(() => {
-    if (selectedYear === 'All' || selectedYear === 'All Years') return PYQ_DATA;
-    return PYQ_DATA.filter((q) => q.year === selectedYear);
-  }, [selectedYear]);
+    if (selectedYear === 'All' || selectedYear === 'All Years') return chapterPyqs;
+    return chapterPyqs.filter((q) => q.year === selectedYear);
+  }, [selectedYear, chapterPyqs]);
 
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
   const scrollViewHeightRef = useRef<number>(Dimensions.get('window').height);
@@ -654,6 +727,14 @@ export default function PYQView({
         </View>
 
         {/* Question Cards List */}
+        {isLoading ? (
+          <View style={{ paddingVertical: 48, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="large" color={activePillBg} />
+            <Text style={{ marginTop: 12, color: subtextColor, fontSize: 13, fontWeight: '600' }}>
+              Loading Chapter {chapterNumber} PYQs...
+            </Text>
+          </View>
+        ) : (
         <View style={styles.cardsList}>
           {filteredQuestions.map((item) => {
             const isCompleted = !!completedMap[item.id];
@@ -846,6 +927,7 @@ export default function PYQView({
             );
           })}
         </View>
+        )}
       </ScrollView>
     </View>
   );

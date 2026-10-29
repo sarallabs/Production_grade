@@ -48,6 +48,7 @@ interface CourseContextType {
   selectSubject: (subject: Subject) => void;
   selectSubjectById: (subjectId: string) => Promise<Subject | null>;
   selectChapter: (chapter: Chapter) => void;
+  selectChapterByNumber: (chapterNumber: number) => void;
   markResourceCompleted: (subjectId: string, chapterNumber: number, resourceType: string) => Promise<void>;
   isResourceCompleted: (subjectId: string, chapterNumber: number, resourceType: string) => boolean;
   refreshProgress: () => Promise<void>;
@@ -65,6 +66,7 @@ const CourseContext = createContext<CourseContextType>({
   selectSubject: () => {},
   selectSubjectById: async () => null,
   selectChapter: () => {},
+  selectChapterByNumber: () => {},
   markResourceCompleted: async () => {},
   isResourceCompleted: () => false,
   refreshProgress: async () => {},
@@ -103,10 +105,11 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       });
       setCourses(updatedCourses);
 
-      // 3. Restore last selected course & subject from storage
-      const [savedCourseId, savedSubjectId] = await Promise.all([
+      // 3. Restore last selected course, subject & chapter from storage
+      const [savedCourseId, savedSubjectId, savedChapterNum] = await Promise.all([
         storage.getItem<string>('saral_selected_course_id'),
         storage.getItem<string>('saral_selected_subject_id'),
+        storage.getItem<number>('saral_selected_chapter_num'),
       ]);
 
       const activeCourse =
@@ -120,7 +123,13 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       setSelectedSubject(activeSubject);
 
       if (activeSubject && activeSubject.chapters?.length > 0) {
-        setSelectedChapter(activeSubject.chapters[0]);
+        setSelectedChapter((prev) => {
+          const targetNum = prev?.number || savedChapterNum || 1;
+          return (
+            activeSubject.chapters.find((c) => c.number === targetNum) ||
+            activeSubject.chapters[0]
+          );
+        });
       }
     } catch (e) {
       console.warn('[CourseContext] Failed to load catalog', e);
@@ -137,10 +146,13 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const firstSubject = subjects.find((s) => course.subjectIds.includes(s.id)) || subjects[0];
     if (firstSubject) {
       setSelectedSubject(firstSubject);
-      await storage.setItem('saral_selected_subject_id', firstSubject.id);
       if (firstSubject.chapters?.length > 0) {
-        setSelectedChapter(firstSubject.chapters[0]);
+        setSelectedChapter((prev) => {
+          const matched = prev ? firstSubject.chapters.find((c) => c.number === prev.number) : null;
+          return matched || firstSubject.chapters[0];
+        });
       }
+      await storage.setItem('saral_selected_subject_id', firstSubject.id);
     }
   };
 
@@ -153,11 +165,20 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const selectSubject = async (subject: Subject) => {
+    const isSameSubject = selectedSubject?.id === subject.id;
     setSelectedSubject(subject);
-    await storage.setItem('saral_selected_subject_id', subject.id);
     if (subject.chapters?.length > 0) {
-      setSelectedChapter(subject.chapters[0]);
+      setSelectedChapter((prev) => {
+        if (prev) {
+          const matched = subject.chapters.find((c) => c.number === prev.number);
+          if (matched && (isSameSubject || subject.chapters.some((c) => c.name === prev.name))) {
+            return matched;
+          }
+        }
+        return subject.chapters[0];
+      });
     }
+    await storage.setItem('saral_selected_subject_id', subject.id);
   };
 
   const selectSubjectById = async (subjectId: string): Promise<Subject | null> => {
@@ -172,6 +193,37 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const selectChapter = (chapter: Chapter) => {
     setSelectedChapter(chapter);
+    storage.setItem('saral_selected_chapter_num', chapter.number).catch(() => {});
+  };
+
+  const selectChapterByNumber = (chapterNumber: number) => {
+    const activeSubj = selectedSubject || subjects[0];
+    const found = activeSubj?.chapters?.find((c) => c.number === chapterNumber);
+    if (found) {
+      setSelectedChapter(found);
+    } else {
+      setSelectedChapter((prev) =>
+        prev?.number === chapterNumber
+          ? prev
+          : {
+              number: chapterNumber,
+              dir: `chapter_${String(chapterNumber).padStart(2, '0')}`,
+              name:
+                chapterNumber === 1
+                  ? 'Digestive System'
+                  : chapterNumber === 2
+                  ? 'Metamorphosis'
+                  : chapterNumber === 3
+                  ? 'Weathering'
+                  : chapterNumber === 4
+                  ? 'Pollination'
+                  : `Chapter ${chapterNumber}`,
+              description: '',
+              completed: [],
+            }
+      );
+    }
+    storage.setItem('saral_selected_chapter_num', chapterNumber).catch(() => {});
   };
 
   const markResourceCompleted = async (
@@ -188,10 +240,14 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       );
       setSubjects(updatedSubjects);
 
-      // Update current selected subject in memory
+      // Update current selected subject and chapter in memory
       const cur = updatedSubjects.find((s) => s.id === subjectId);
       if (cur) {
         setSelectedSubject({ ...cur });
+        const updatedCh = cur.chapters?.find((c) => c.number === chapterNumber);
+        if (updatedCh) {
+          setSelectedChapter((prev) => (prev?.number === chapterNumber ? { ...updatedCh } : prev));
+        }
       }
 
       // Update courses progress
@@ -253,6 +309,7 @@ export const CourseProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         selectSubject,
         selectSubjectById,
         selectChapter,
+        selectChapterByNumber,
         markResourceCompleted,
         isResourceCompleted,
         refreshProgress,

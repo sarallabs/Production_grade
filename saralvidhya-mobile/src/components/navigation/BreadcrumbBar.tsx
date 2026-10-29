@@ -32,7 +32,7 @@ export default function BreadcrumbBar({
   subjectName,
   chapterNumber,
   chapterTitle,
-  showBack = true,
+  showBack = false,
   onBackPress,
   onPress,
   style,
@@ -41,19 +41,6 @@ export default function BreadcrumbBar({
   const router = useRouter();
   const { isDark } = useAppTheme();
   const { selectedSubject, selectedChapter } = useCourseContext();
-
-  const handleBack = () => {
-    try {
-      Haptics.selectionAsync().catch(() => {});
-    } catch {}
-    if (onBackPress) {
-      onBackPress();
-    } else if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.push('/subjects');
-    }
-  };
 
   const handlePress = () => {
     if (onPress) {
@@ -80,25 +67,11 @@ export default function BreadcrumbBar({
     .replace(/^Chapter\s+\d+[:\s\-\.]*/i, '')
     .trim();
 
-  const textColor = isDark ? '#E5E7EB' : '#2D3E36';
   const subtextColor = isDark ? '#A6C5B3' : '#617269';
 
   return (
     <View style={[styles.container, compact && styles.containerCompact, style]}>
       <View style={styles.row}>
-        {showBack && (
-          <TouchableOpacity
-            onPress={handleBack}
-            style={styles.backBtn}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            activeOpacity={0.7}
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-          >
-            <Ionicons name="arrow-back" size={17} color={textColor} />
-          </TouchableOpacity>
-        )}
-
         <TouchableOpacity
           onPress={handlePress}
           activeOpacity={onPress ? 0.7 : 1}

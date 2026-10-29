@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { BorderRadius } from '@/constants/theme';
 
@@ -33,7 +34,9 @@ const ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: 
  */
 export default function SideRail({ state, descriptors, navigation }: SideRailProps) {
   const { isDark } = useAppTheme();
+  const { selectedChapter } = useCourseContext();
   const insets = useSafeAreaInsets();
+  const activeChapterParam = selectedChapter?.number ? String(selectedChapter.number) : undefined;
 
   const bg = isDark ? '#16231B' : '#FFFFFF';
   const border = isDark ? '#2D4538' : '#E2EBE5';
@@ -41,10 +44,11 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
   const inactiveTint = isDark ? '#8A9E92' : '#5E7A6B';
   const activePillBg = isDark ? '#23392D' : '#DCECE2';
 
-  // Filter out auxiliary/hidden routes like study, leaderboard, profile with href: null
+  // Filter out auxiliary/hidden routes like index, study, leaderboard, profile
+  const hiddenRouteNames = new Set(['index', 'study', 'leaderboard', 'profile']);
   const visibleRoutes = state.routes.filter((route) => {
     const opts = (descriptors[route.key]?.options as any) || {};
-    return opts.href !== null;
+    return opts.href !== null && !hiddenRouteNames.has(route.name);
   });
 
   return (
@@ -79,10 +83,10 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
             const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
             if (!focused && !event.defaultPrevented) {
               const defaultParams: Record<string, any> = {
-                learn: { segment: 'read' },
-                practice: { part: 'revise' },
-                prepare: { segment: 'pyq' },
-                resources: { segment: 'mindmaps' },
+                learn: { segment: 'read', ...(activeChapterParam ? { chapter: activeChapterParam } : {}) },
+                practice: { part: 'revise', ...(activeChapterParam ? { chapter: activeChapterParam } : {}) },
+                prepare: { segment: 'pyq', ...(activeChapterParam ? { chapter: activeChapterParam } : {}) },
+                resources: { segment: 'mindmaps', ...(activeChapterParam ? { chapter: activeChapterParam } : {}) },
               };
               (navigation as any).navigate(route.name, defaultParams[route.name]);
             }
@@ -120,14 +124,14 @@ export default function SideRail({ state, descriptors, navigation }: SideRailPro
         })}
       </View>
 
-      {/* Bottom Help '?' Button */}
+      {/* Bottom Profile Button */}
       <View style={styles.bottomSection}>
         <Pressable
           style={[styles.helpBtn, { borderColor: border }]}
-          onPress={() => {}}
-          accessibilityLabel="Help"
+          onPress={() => (navigation as any).navigate('profile')}
+          accessibilityLabel="My Profile and Themes"
         >
-          <Text style={[styles.helpText, { color: isDark ? '#FFFFFF' : '#1C2E24' }]}>?</Text>
+          <Ionicons name="person-outline" size={18} color={isDark ? '#FFFFFF' : '#1C2E24'} />
         </Pressable>
       </View>
     </View>

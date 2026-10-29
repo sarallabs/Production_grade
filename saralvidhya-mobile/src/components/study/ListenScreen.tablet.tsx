@@ -733,20 +733,6 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
             <Text style={[styles.subheaderBadge, { color: mutedTextColor }]}>
               {subheaderLabel}
             </Text>
-            {mode === 'microcasts' && (
-              <TouchableOpacity
-                style={styles.seeAllBtn}
-                onPress={() => {
-                  try {
-                    Haptics.selectionAsync().catch(() => {});
-                  } catch {}
-                }}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.seeAllText, { color: brandGreen }]}>See all</Text>
-                <Ionicons name="arrow-forward" size={15} color={brandGreen} />
-              </TouchableOpacity>
-            )}
           </View>
 
           {/* ── 3. MODE: DETAILED & QUICK LISTEN (TWO-COLUMN SPLIT LAYOUT) ─── */}
@@ -1099,59 +1085,70 @@ The insect gut has three distinct zones: the foregut, midgut, and hindgut. Each 
                           </View>
                         </TouchableOpacity>
 
-                        {/* Scrubber */}
-                        <View style={[styles.scrubberTrack, { backgroundColor: isDark ? '#24352B' : '#E0EDE5', height: 4, borderRadius: 2, marginTop: 4 }]}>
+                        {/* Player Controls Row: ↶15 | Play/Pause | 15↷ | 1x | Timestamp */}
+                        <View style={styles.detailedControlsRow}>
+                          <View style={styles.leftControlsGroup}>
+                            {/* Replay 15s */}
+                            <TouchableOpacity
+                              style={[styles.roundSkipBtn, { backgroundColor: mintActiveBg }]}
+                              onPress={handleReplay15s}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={[styles.skipNumberText, { color: textColor }]}>↶15</Text>
+                            </TouchableOpacity>
+
+                            {/* Main Play / Pause Circle */}
+                            <TouchableOpacity
+                              style={[styles.mainPlayCircle, { backgroundColor: brandGreen }]}
+                              onPress={handleTogglePlay}
+                              activeOpacity={0.85}
+                            >
+                              <Ionicons
+                                name={isPlaying ? 'pause' : 'play'}
+                                size={24}
+                                color="#FFFFFF"
+                                style={{ marginLeft: isPlaying ? 0 : 2 }}
+                              />
+                            </TouchableOpacity>
+
+                            {/* Forward 15s */}
+                            <TouchableOpacity
+                              style={[styles.roundSkipBtn, { backgroundColor: mintActiveBg }]}
+                              onPress={handleForward15s}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={[styles.skipNumberText, { color: textColor }]}>15↷</Text>
+                            </TouchableOpacity>
+
+                            {/* Speed Button */}
+                            <TouchableOpacity
+                              style={styles.speedBtn}
+                              onPress={handleCycleSpeed}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[styles.speedText, { color: textColor }]}>
+                                {currentSpeed}x
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          {/* Monospace Timestamp */}
+                          <Text style={[styles.detailedTimestamp, { color: mutedTextColor }]}>
+                            {formatSec(currentSec)} / {item.durationFormatted.replace(/^00:/, '')}
+                          </Text>
+                        </View>
+
+                        {/* Scrubber Progress Bar */}
+                        <View style={[styles.scrubberTrack, { backgroundColor: isDark ? '#24352B' : '#E2EBE5' }]}>
                           <View
                             style={[
                               styles.scrubberFill,
                               {
                                 backgroundColor: brandGreen,
                                 width: `${progressRatio * 100}%`,
-                                height: 4,
-                                borderRadius: 2,
                               },
                             ]}
                           />
-                        </View>
-
-                        {/* Controls */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 2 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                            <TouchableOpacity
-                              style={[styles.replayBtn, { borderColor: cardBorder, width: 32, height: 32, borderRadius: 8 }]}
-                              onPress={handleReplay15s}
-                              activeOpacity={0.75}
-                            >
-                              <Ionicons name="refresh" size={14} color={mutedTextColor} />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.mainPlayCircle, { backgroundColor: brandGreen, width: 34, height: 34, borderRadius: 17 }]}
-                              onPress={handleTogglePlay}
-                              activeOpacity={0.85}
-                            >
-                              <Ionicons
-                                name={isPlaying ? 'pause' : 'play'}
-                                size={16}
-                                color="#FFFFFF"
-                                style={!isPlaying ? { marginLeft: 1.5 } : undefined}
-                              />
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                              style={[styles.speedBtn, { paddingHorizontal: 8, paddingVertical: 4 }]}
-                              onPress={handleCycleSpeed}
-                              activeOpacity={0.7}
-                            >
-                              <Text style={[styles.speedText, { color: brandGreen, fontSize: 13 }]}>
-                                {currentSpeed}x
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-
-                          <Text style={[styles.detailedTimestamp, { color: mutedTextColor, fontSize: 12 }]}>
-                            {formatSec(currentSec)} / {item.durationFormatted.replace(/^00:/, '')}
-                          </Text>
                         </View>
                       </View>
                     );

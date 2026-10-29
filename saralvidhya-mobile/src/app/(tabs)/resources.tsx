@@ -18,6 +18,7 @@ import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
 import TopNavBar, { NavSegment } from '@/components/navigation/TopNavBar';
+import BreadcrumbBar from '@/components/navigation/BreadcrumbBar';
 import AskMeWelcomeView from '@/components/study/AskMeWelcomeView';
 import MindMapRadialDiagramView from '@/components/study/MindMapRadialDiagramView';
 import KeyTakeawaysView from '@/components/study/KeyTakeawaysView';
@@ -34,7 +35,13 @@ export default function ResourcesScreen() {
   const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const { selectedSubject, selectedCourse } = useCourseContext();
+  const {
+    selectedSubject,
+    selectedChapter,
+    selectChapter,
+    selectChapterByNumber,
+    markResourceCompleted,
+  } = useCourseContext();
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<string>(
@@ -43,25 +50,43 @@ export default function ResourcesScreen() {
       : 'mindmaps'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
-    params.chapter ? parseInt(params.chapter, 10) : 1
+    params.chapter ? parseInt(params.chapter, 10) : (selectedChapter?.number || 1)
   );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
 
   useEffect(() => {
-    if (params.chapter) {
-      const parsed = parseInt(params.chapter, 10);
-      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
-        setSelectedChapterNum(parsed);
-      }
-    }
     if (params.segment && ['ask_me', 'mindmaps', 'key_takeaways'].includes(params.segment)) {
       setActiveSegment(params.segment);
     }
-  }, [params.chapter, params.segment]);
+  }, [params.segment]);
+
+  useEffect(() => {
+    if (params.chapter) {
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed)) {
+        setSelectedChapterNum(parsed);
+        if (selectedChapter?.number !== parsed) {
+          selectChapterByNumber(parsed);
+        }
+      }
+    }
+  }, [params.chapter]);
+
+  useEffect(() => {
+    if (selectedChapter?.number && selectedChapter.number !== selectedChapterNum) {
+      setSelectedChapterNum(selectedChapter.number);
+    }
+  }, [selectedChapter?.number]);
 
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
+
+  // Dynamically record chapter progress as the user goes through Mind Maps, Key Takeaways, or Ask Me
+  useEffect(() => {
+    if (!activeSubject?.id || !currentChapter?.number) return;
+    markResourceCompleted(activeSubject.id, currentChapter.number, activeSegment);
+  }, [activeSubject?.id, currentChapter?.number, activeSegment]);
 
   const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const cardBg = isDark ? '#1E2B24' : '#FFFFFF';
@@ -86,6 +111,21 @@ export default function ResourcesScreen() {
           }
         }}
         showProfile={true}
+      />
+
+      {/* Consistent Breadcrumb Line */}
+      <BreadcrumbBar
+        subjectName={activeSubject.name}
+        chapterNumber={currentChapter.number}
+        chapterTitle={currentChapter.name}
+        onPress={() => setShowChapterModal(true)}
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/subjects');
+          }
+        }}
       />
 
       {/* Main Content Area */}
@@ -154,6 +194,7 @@ export default function ResourcesScreen() {
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSelectedChapterNum(ch.number);
+                      selectChapter(ch);
                       setShowChapterModal(false);
                     }}
                     activeOpacity={0.7}

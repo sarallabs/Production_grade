@@ -43,6 +43,7 @@ export default function AssessmentView({
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isEvaluated, setIsEvaluated] = useState(false);
   const [retriesUsedRecord, setRetriesUsedRecord] = useState<Record<string | number, number>>({});
+  const [disabledOptionsRecord, setDisabledOptionsRecord] = useState<Record<string | number, number[]>>({});
   const [isAwaitingRetry, setIsAwaitingRetry] = useState(false);
   const [userAnswersRecord, setUserAnswersRecord] = useState<Record<string, number[]>>({});
   const [isQuizComplete, setIsQuizComplete] = useState(false);
@@ -62,6 +63,7 @@ export default function AssessmentView({
           setSelectedOptions([]);
           setIsEvaluated(false);
           setRetriesUsedRecord({});
+          setDisabledOptionsRecord({});
           setIsAwaitingRetry(false);
           setUserAnswersRecord({});
           setIsQuizComplete(false);
@@ -117,8 +119,12 @@ export default function AssessmentView({
     (Array.isArray(currentQ?.correctAnswers) && currentQ.correctAnswers.length > 1)
   );
 
+  const qKey = currentQ?.id ?? currentIndex;
+  const disabledOptionsForCurrentQ = disabledOptionsRecord[qKey] || [];
+
   const handleSelectOption = (idx: number) => {
     if (isEvaluated) return; // Do not allow changing answers after evaluation
+    if (disabledOptionsForCurrentQ.includes(idx)) return; // Do not allow re-selecting a previously wrong option
     Haptics.selectionAsync();
 
     if (isMultiple) {
@@ -140,11 +146,14 @@ export default function AssessmentView({
         currentQ.correctAnswers.length === 1 &&
         currentQ.correctAnswers.includes(idx);
 
-      const qKey = currentQ?.id ?? currentIndex;
       const usedRetries = retriesUsedRecord[qKey] || 0;
 
       if (!isCorrect && usedRetries < 1) {
-        // 1st wrong attempt: enter retry state without revealing correct answer
+        // 1st wrong attempt: record this wrong option as disabled & enter retry state
+        setDisabledOptionsRecord((prev) => ({
+          ...prev,
+          [qKey]: Array.from(new Set([...(prev[qKey] || []), idx])),
+        }));
         setIsEvaluated(true);
         setIsAwaitingRetry(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -185,11 +194,19 @@ export default function AssessmentView({
       selectedOptions.length === currentQ.correctAnswers.length &&
       selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
 
-    const qKey = currentQ?.id ?? currentIndex;
     const usedRetries = retriesUsedRecord[qKey] || 0;
 
     if (!isCorrect && usedRetries < 1) {
-      // 1st wrong attempt for MSQ
+      // 1st wrong attempt for MSQ: disable wrong selected options
+      const wrongPicked = selectedOptions.filter(
+        (optIdx) => !currentQ.correctAnswers.includes(optIdx)
+      );
+      if (wrongPicked.length > 0) {
+        setDisabledOptionsRecord((prev) => ({
+          ...prev,
+          [qKey]: Array.from(new Set([...(prev[qKey] || []), ...wrongPicked])),
+        }));
+      }
       setIsEvaluated(true);
       setIsAwaitingRetry(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -213,7 +230,6 @@ export default function AssessmentView({
 
   const handleTryAgainAssessment = () => {
     Haptics.selectionAsync();
-    const qKey = currentQ?.id ?? currentIndex;
     setRetriesUsedRecord((prev) => ({
       ...prev,
       [qKey]: (prev[qKey] || 0) + 1,
@@ -287,6 +303,7 @@ export default function AssessmentView({
     setSelectedOptions([]);
     setIsEvaluated(false);
     setRetriesUsedRecord({});
+    setDisabledOptionsRecord({});
     setIsAwaitingRetry(false);
     setUserAnswersRecord({});
     setIsQuizComplete(false);
@@ -495,10 +512,11 @@ export default function AssessmentView({
             const isSelected = selectedOptions.includes(idx);
             const letter = OPTION_LETTERS[idx] || `${idx + 1}`;
             const isCorrectAnswer = currentQ.correctAnswers.includes(idx);
+            const isDisabledWrongOption = disabledOptionsForCurrentQ.includes(idx);
 
             // Feedback states
             const showAsCorrect = isEvaluated && !isAwaitingRetry && isCorrectAnswer;
-            const showAsWrong = isEvaluated && isSelected && !isCorrectAnswer;
+            const showAsWrong = (isEvaluated && isSelected && !isCorrectAnswer) || isDisabledWrongOption;
 
             let cardBg = isDark ? '#21362B' : '#FFFFFF';
             let cardBorderColor = isDark ? '#4D6E57' : '#C7DBCF';
@@ -539,8 +557,10 @@ export default function AssessmentView({
                     backgroundColor: cardBg,
                     borderColor: cardBorderColor,
                   },
+                  isDisabledWrongOption && !isAwaitingRetry && { opacity: 0.5 },
                 ]}
                 onPress={() => handleSelectOption(idx)}
+                disabled={isDisabledWrongOption || isEvaluated}
                 activeOpacity={0.85}
               >
                 {/* Option Selector: Checkbox for MSQ, Radio Circle for MCQ */}

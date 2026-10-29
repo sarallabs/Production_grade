@@ -17,6 +17,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppTheme } from '@/context/ThemeContext';
 import { useAuth, PersonaType } from '@/context/AuthContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { speechService } from '@/services/speechService';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import MarkdownReader from './MarkdownReader';
@@ -51,6 +52,7 @@ interface StudyGuideReaderProps {
   subjectName?: string;
   subjectId?: string;
   initialTopic?: string;
+  initialStudyMode?: 'essentials' | 'in_depth';
   onBackPress?: () => void;
   onBookmarkPress?: () => void;
   onOpenListen?: (mode: 'quick' | 'detailed') => void;
@@ -265,6 +267,7 @@ export default function StudyGuideReader({
   subjectName = 'Entomology',
   subjectId = 'ento_131',
   initialTopic,
+  initialStudyMode,
   onBackPress,
   onBookmarkPress,
   onOpenListen,
@@ -272,7 +275,9 @@ export default function StudyGuideReader({
 }: StudyGuideReaderProps) {
   const { isDark } = useAppTheme();
   const { persona, updatePersona } = useAuth();
+  const { markResourceCompleted } = useCourseContext();
   const { isTablet } = useDeviceLayout();
+  const hasRecordedScrollRef = useRef<Record<number, boolean>>({});
 
   // Dynamically compute the chapter title if not explicitly provided
   const defaultTitle =
@@ -295,6 +300,7 @@ export default function StudyGuideReader({
         subjectName={subjectName}
         subjectId={subjectId}
         initialTopic={initialTopic}
+        initialStudyMode={initialStudyMode}
         onBackPress={onBackPress}
         onBookmarkPress={onBookmarkPress}
         onOpenListen={onOpenListen}
@@ -304,7 +310,21 @@ export default function StudyGuideReader({
   }
 
   // Mode: 'essentials' vs 'in_depth'
-  const [studyMode, setStudyMode] = useState<'essentials' | 'in_depth'>('essentials');
+  const [studyMode, setStudyMode] = useState<'essentials' | 'in_depth'>(
+    initialStudyMode || 'essentials'
+  );
+
+  useEffect(() => {
+    if (initialStudyMode && (initialStudyMode === 'essentials' || initialStudyMode === 'in_depth')) {
+      setStudyMode(initialStudyMode);
+    }
+  }, [initialStudyMode]);
+
+  useEffect(() => {
+    if (studyMode === 'in_depth' && subjectId && chapterNumber) {
+      markResourceCompleted(subjectId, Number(chapterNumber), 'read_indepth');
+    }
+  }, [studyMode, subjectId, chapterNumber]);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [isDiagramZoomed, setIsDiagramZoomed] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -394,7 +414,10 @@ export default function StudyGuideReader({
 
   const [isReadingGuideOpen, setIsReadingGuideOpen] = useState(false);
   const [sectionsContainerY, setSectionsContainerY] = useState(0);
-  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, { y: number; height: number }>>({});
+  const sectionsContainerYRef = useRef(0);
+  const sectionLayoutsRef = useRef<Record<number, number>>({});
+  const [quickCheckLayouts, setQuickCheckLayouts] = useState<Record<number, { relativeY: number; height: number }>>({});
+  const quickCheckLayoutsRef = useRef<Record<number, { relativeY: number; height: number }>>({});
 
   const handleScrollToSection = (targetIndex: number) => {
     if (targetIndex >= 0 && targetIndex < sections.length) {
@@ -483,10 +506,11 @@ export default function StudyGuideReader({
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       } catch {}
       setActiveSectionIndex(secIdx);
-      const qcLayout = quickCheckLayouts[secIdx];
-      const relativeY = qcLayout?.y ?? sectionLayouts[secIdx];
-      if (typeof relativeY === 'number') {
-        const absoluteY = sectionsContainerY + relativeY;
+      const sectionY = sectionLayoutsRef.current[secIdx] ?? sectionLayouts[secIdx];
+      const qcLayout = quickCheckLayoutsRef.current[secIdx] ?? quickCheckLayouts[secIdx];
+      const containerY = sectionsContainerYRef.current || sectionsContainerY;
+      if (typeof sectionY === 'number') {
+        const absoluteY = containerY + sectionY + (qcLayout?.relativeY ?? 0);
         const cardH = qcLayout?.height || 360;
         const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
         const targetY = cardH >= viewH - 60
@@ -498,6 +522,9 @@ export default function StudyGuideReader({
   };
 
   const handleQcAnswer = (sectionNumber: number, isCorrect: boolean, secIdx?: number) => {
+    if (subjectId && chapterNumber) {
+      markResourceCompleted(subjectId, Number(chapterNumber), 'quick_check');
+    }
     if (isCorrect) {
       setCompletedQuickChecks((prev) => {
         const next = new Set(prev);
@@ -506,24 +533,26 @@ export default function StudyGuideReader({
       });
     }
 
-    // Scroll so the quick check card is positioned in the center of the page
+    // Scroll so the answered quick check card is positioned cleanly in view
     if (typeof secIdx === 'number') {
-      const qcLayout = quickCheckLayouts[secIdx];
-      if (qcLayout) {
-        const absoluteY = sectionsContainerY + qcLayout.y;
-        const cardH = qcLayout.height || 380;
-        const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
-        const targetY = cardH >= viewH - 60
-          ? Math.max(0, absoluteY - 20)
-          : Math.max(0, absoluteY - (viewH - cardH) / 2);
+      setTimeout(() => {
+        const sectionY = sectionLayoutsRef.current[secIdx] ?? sectionLayouts[secIdx];
+        const qcLayout = quickCheckLayoutsRef.current[secIdx] ?? quickCheckLayouts[secIdx];
+        const containerY = sectionsContainerYRef.current || sectionsContainerY;
+        if (typeof sectionY === 'number') {
+          const absoluteY = containerY + sectionY + (qcLayout?.relativeY ?? 0);
+          const cardH = qcLayout?.height || 380;
+          const viewH = scrollViewHeightRef.current || Dimensions.get('window').height;
+          const targetY = cardH >= viewH - 60
+            ? Math.max(0, absoluteY - 20)
+            : Math.max(0, absoluteY - (viewH - cardH) / 2);
 
-        setTimeout(() => {
           scrollViewRef.current?.scrollTo({
             y: targetY,
             animated: true,
           });
-        }, 120);
-      }
+        }
+      }, 120);
     }
   };
 
@@ -603,6 +632,12 @@ export default function StudyGuideReader({
         keyboardShouldPersistTaps="handled"
         onScroll={(e) => {
           const scrollY = e.nativeEvent.contentOffset.y;
+          if (scrollY > 380 && !hasRecordedScrollRef.current[Number(chapterNumber)]) {
+            hasRecordedScrollRef.current[Number(chapterNumber)] = true;
+            if (subjectId && chapterNumber) {
+              markResourceCompleted(subjectId, Number(chapterNumber), 'read_scrolled');
+            }
+          }
           let currentIdx = 0;
           for (let i = 0; i < sections.length; i++) {
             const layoutY = sectionLayouts[i];
@@ -918,7 +953,9 @@ export default function StudyGuideReader({
         <View
           style={styles.sectionsContainer}
           onLayout={(e) => {
-            setSectionsContainerY(e.nativeEvent.layout.y);
+            const containerY = e.nativeEvent.layout.y;
+            sectionsContainerYRef.current = containerY;
+            setSectionsContainerY(containerY);
           }}
         >
           {sections.map((sec, idx) => (
@@ -926,6 +963,7 @@ export default function StudyGuideReader({
               key={`${sec.id}-${idx}`}
               onLayout={(e) => {
                 const layoutY = e.nativeEvent.layout.y;
+                sectionLayoutsRef.current[idx] = layoutY;
                 setSectionLayouts((prev) => ({ ...prev, [idx]: layoutY }));
               }}
               style={styles.sectionBlock}
@@ -1005,11 +1043,12 @@ export default function StudyGuideReader({
               {sec.quickChecks && sec.quickChecks.length > 0 && (
                 <View
                   onLayout={(e) => {
-                    const blockY = sectionLayouts[idx] || 0;
                     const { y: cardRelativeY, height: cardHeight } = e.nativeEvent.layout;
+                    const entry = { relativeY: cardRelativeY, height: cardHeight };
+                    quickCheckLayoutsRef.current[idx] = entry;
                     setQuickCheckLayouts((prev) => ({
                       ...prev,
-                      [idx]: { y: blockY + cardRelativeY, height: cardHeight },
+                      [idx]: entry,
                     }));
                   }}
                 >

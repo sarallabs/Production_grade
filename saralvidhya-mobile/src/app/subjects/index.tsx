@@ -232,6 +232,28 @@ export default function MySubjectsScreen() {
             {activeSubject?.name || 'Entomology'}
           </Text>
         </View>
+
+        <TouchableOpacity
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            borderWidth: 1.5,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.5)' : '#4D6256',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onPress={() => {
+            try { Haptics.selectionAsync().catch(() => {}); } catch {}
+            router.navigate('/(tabs)/profile');
+          }}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel="My Profile and Themes"
+        >
+          <Ionicons name="person-outline" size={18} color={headerTextColor} />
+        </TouchableOpacity>
       </View>
 
       {loading ? (

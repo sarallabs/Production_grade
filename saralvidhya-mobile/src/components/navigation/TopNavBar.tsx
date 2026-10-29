@@ -54,7 +54,7 @@ export default function TopNavBar({
 
   const handleProfilePress = () => {
     try { Haptics.selectionAsync().catch(() => {}); } catch {}
-    router.push('/(tabs)/profile');
+    router.navigate('/(tabs)/profile');
   };
 
   const handleBackPress = () => {
@@ -195,21 +195,15 @@ export default function TopNavBar({
 
         {/* Center Toggle Pills (Matches User's Screenshots) */}
         <View style={styles.centerSlot}>
-          {segments.length <= 4 ? (
-            <View style={styles.pillsScrollContent}>
-              {segments.map(renderPill)}
-            </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={styles.pillsScrollContent}
-              style={styles.pillsScroll}
-            >
-              {segments.map(renderPill)}
-            </ScrollView>
-          )}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.pillsScrollContent}
+            style={styles.pillsScroll}
+          >
+            {segments.map(renderPill)}
+          </ScrollView>
         </View>
 
         {/* Right Slot: Circular Profile Avatar (Matches Screenshot) */}
@@ -218,6 +212,7 @@ export default function TopNavBar({
             <TouchableOpacity
               style={[styles.avatarButton, { borderColor: avatarBorder }]}
               onPress={handleProfilePress}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="My Profile and Rankings"
@@ -248,18 +243,21 @@ const styles = StyleSheet.create({
     minWidth: 36,
     justifyContent: 'center',
     alignItems: 'flex-start',
-    zIndex: 10,
+    zIndex: 20,
   },
   sideSlotRight: {
     minWidth: 36,
     justifyContent: 'center',
     alignItems: 'flex-end',
-    zIndex: 10,
+    zIndex: 20,
+    elevation: 4,
   },
   centerSlot: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+    marginHorizontal: 6,
   },
   pillsScroll: {
     flexGrow: 0,

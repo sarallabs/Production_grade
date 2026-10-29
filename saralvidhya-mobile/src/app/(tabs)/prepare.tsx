@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 
 import { useAppTheme } from '@/context/ThemeContext';
+import { useAuth } from '@/context/AuthContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { useCourseContext } from '@/context/CourseContext';
 import { ANGRAU_SUBJECTS } from '@/api/manifestService';
@@ -33,8 +34,15 @@ export default function PrepareScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ chapter?: string; segment?: string }>();
   const { isDark } = useAppTheme();
+  const { persona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
-  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
+  const {
+    selectedSubject,
+    selectedChapter,
+    selectChapter,
+    selectChapterByNumber,
+    markResourceCompleted,
+  } = useCourseContext();
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
   const [activeSegment, setActiveSegment] = useState<string>(
@@ -43,32 +51,57 @@ export default function PrepareScreen() {
       : 'pyq'
   );
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
-    params.chapter ? parseInt(params.chapter, 10) : 1
+    params.chapter ? parseInt(params.chapter, 10) : (selectedChapter?.number || 1)
   );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
 
   useEffect(() => {
-    if (params.chapter) {
-      const parsed = parseInt(params.chapter, 10);
-      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
-        setSelectedChapterNum(parsed);
-      }
-    }
     if (params.segment && ['study_plan', 'pyq', 'prep_exam'].includes(params.segment)) {
       setActiveSegment(params.segment);
     }
-  }, [params.chapter, params.segment]);
+  }, [params.segment]);
+
+  useEffect(() => {
+    if (params.chapter) {
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed)) {
+        setSelectedChapterNum(parsed);
+        if (selectedChapter?.number !== parsed) {
+          selectChapterByNumber(parsed);
+        }
+      }
+    }
+  }, [params.chapter]);
+
+  useEffect(() => {
+    if (selectedChapter?.number && selectedChapter.number !== selectedChapterNum) {
+      setSelectedChapterNum(selectedChapter.number);
+    }
+  }, [selectedChapter?.number]);
 
   // Preparation Exam 2-step flow state: 'selection' (screen 1) -> 'exam' (screen 2)
   const [prepExamStep, setPrepExamStep] = useState<'selection' | 'exam'>('selection');
   const [examConfig, setExamConfig] = useState<{ selectedUnits: number[]; questionCount: number }>({
-    selectedUnits: [1],
+    selectedUnits: [selectedChapterNum || 1],
     questionCount: 10,
   });
+
+  useEffect(() => {
+    setExamConfig((prev) => ({
+      ...prev,
+      selectedUnits: [selectedChapterNum || 1],
+    }));
+  }, [selectedChapterNum]);
 
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
+
+  // Dynamically record chapter progress as the user goes through PYQs, Preparation Exam, or Study Plan
+  useEffect(() => {
+    if (!activeSubject?.id || !currentChapter?.number) return;
+    markResourceCompleted(activeSubject.id, currentChapter.number, activeSegment);
+  }, [activeSubject?.id, currentChapter?.number, activeSegment]);
 
   const subjectUnits =
     activeSubject.chapters && activeSubject.chapters.length > 0
@@ -99,8 +132,9 @@ export default function PrepareScreen() {
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       {/* 1. TOP TOOLBAR: [ Back Arrow ] [ PYQ's | Preparation Exam | Study Plan ] [ Profile ]
-          Only hidden when in timed full-screen exam or full-bleed Study Plan view */}
-      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && activeSegment !== 'study_plan' && (
+          Always visible so users can freely toggle across all three Prepare features.
+          Only hidden when the user is actively inside the timed full-screen exam. */}
+      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && (
         <TopNavBar
           segments={PREPARE_SEGMENTS}
           activeSegment={activeSegment}
@@ -122,12 +156,13 @@ export default function PrepareScreen() {
         />
       )}
 
-      {/* Consistent Breadcrumb Line (hidden for full-bleed Study Plan) */}
-      {activeSegment !== 'study_plan' && (
+      {/* Consistent Breadcrumb Line */}
+      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && (
         <BreadcrumbBar
           subjectName={activeSubject.name}
           chapterNumber={currentChapter.number}
           chapterTitle={currentChapter.name}
+          onPress={() => setShowChapterModal(true)}
           onBackPress={() => {
             if (router.canGoBack()) {
               router.back();
@@ -141,6 +176,7 @@ export default function PrepareScreen() {
       {/* Main Content Area based on Active Segment */}
       {activeSegment === 'pyq' ? (
         <PYQView
+          subjectId={activeSubject.id}
           chapterNumber={currentChapter.number}
           chapterName={currentChapter.name}
         />
@@ -149,6 +185,7 @@ export default function PrepareScreen() {
           /* SCREEN 1: SELECTION SCREEN */
           <PreparationExamSelectionView
             units={subjectUnits}
+            defaultUnit={currentChapter.number}
             pageTitle="Preparation Exam"
             backLabel="Back to Study Table"
             hideHeader={true}
@@ -190,28 +227,39 @@ export default function PrepareScreen() {
           subjectName={activeSubject.name}
           totalChapters={activeSubject.chapters?.length || 4}
           completedResources={currentChapter.completed || []}
+          persona={persona}
+          onChangePersona={(newPersona) => {
+            updatePersona(newPersona).catch(() => {});
+          }}
           onBack={() => setActiveSegment('pyq')}
           onMarkModuleCompleted={() => {
             markResourceCompleted(activeSubject.id, currentChapter.number, 'study_plan');
           }}
           onOpenTask={(task) => {
             const chStr = currentChapter.number.toString();
-            if (task.type === 'listen' || (task as any).category === 'podcasts') {
-              router.push('/listen');
-            } else if (task.type === 'video' || (task as any).category === 'videos') {
+            if (task.category === 'podcasts' || task.type === 'listen') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'listen', mode: 'quick', chapter: chStr } });
+            } else if (task.category === 'videos' || task.type === 'video') {
               router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: chStr } });
-            } else if (task.type === 'mindmap' || (task as any).category === 'mindmap') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'mindmap', chapter: chStr } });
-            } else if (task.type === 'detailed' || (task as any).category === 'detailed') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'detailed', chapter: chStr } });
-            } else if (task.type === 'review' || (task as any).category === 'summary') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
-            } else if (task.type === 'flashcard' || (task as any).category === 'flashcards') {
-              router.push({ pathname: '/(tabs)/practice', params: { segment: 'flashcards', chapter: chStr } });
-            } else if (task.type === 'quiz' || (task as any).category === 'assessment') {
-              router.push({ pathname: '/(tabs)/practice', params: { segment: 'mock', chapter: chStr } });
+            } else if (task.category === 'mindmap' || task.type === 'mindmap') {
+              router.push({ pathname: '/(tabs)/resources', params: { segment: 'mindmaps', chapter: chStr } });
+            } else if (task.category === 'key_takeaways' || task.type === 'takeaways') {
+              router.push({ pathname: '/(tabs)/resources', params: { segment: 'key_takeaways', chapter: chStr } });
+            } else if (task.category === 'detailed' || task.type === 'detailed') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', readMode: 'in_depth', chapter: chStr } });
+            } else if (task.category === 'summary' || task.type === 'review') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', readMode: 'essentials', chapter: chStr } });
+            } else if (task.category === 'flashcards' || task.type === 'flashcard') {
+              router.push({ pathname: '/(tabs)/practice', params: { part: 'revise', chapter: chStr } });
+            } else if (task.category === 'assessment' || task.type === 'quiz') {
+              router.push({ pathname: '/(tabs)/practice', params: { part: 'assessments', chapter: chStr } });
+            } else if (task.category === 'qbank' || task.type === 'qbank') {
+              router.push({ pathname: '/(tabs)/practice', params: { part: 'question_bank', chapter: chStr } });
+            } else if (task.category === 'prep_exam' || task.type === 'prep_exam') {
+              setPrepExamStep('selection');
+              setActiveSegment('prep_exam');
             } else {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', readMode: 'essentials', chapter: chStr } });
             }
           }}
         />
@@ -249,6 +297,7 @@ export default function PrepareScreen() {
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSelectedChapterNum(ch.number);
+                      selectChapter(ch);
                       setShowChapterModal(false);
                     }}
                   >

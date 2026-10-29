@@ -38,7 +38,13 @@ export default function PracticeScreen() {
   const { isDark } = useAppTheme();
   const { persona, updatePersona } = useAuth();
   const { isTablet } = useDeviceLayout();
-  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
+  const {
+    selectedSubject,
+    selectedChapter,
+    selectChapter,
+    selectChapterByNumber,
+    markResourceCompleted,
+  } = useCourseContext();
   const params = useLocalSearchParams<{ chapter?: string; part?: string }>();
   const activeSubject = selectedSubject || ANGRAU_SUBJECTS[0];
 
@@ -52,7 +58,7 @@ export default function PracticeScreen() {
   );
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
-    params.chapter ? parseInt(params.chapter, 10) : 1
+    params.chapter ? parseInt(params.chapter, 10) : (selectedChapter?.number || 1)
   );
   const [showChapterModal, setShowChapterModal] = useState<boolean>(false);
   const [flashcardsList, setFlashcardsList] = useState<Flashcard[]>([]);
@@ -67,11 +73,20 @@ export default function PracticeScreen() {
   useEffect(() => {
     if (params.chapter) {
       const parsed = parseInt(params.chapter, 10);
-      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
+      if (!isNaN(parsed)) {
         setSelectedChapterNum(parsed);
+        if (selectedChapter?.number !== parsed) {
+          selectChapterByNumber(parsed);
+        }
       }
     }
-  }, [params.chapter, selectedChapterNum]);
+  }, [params.chapter]);
+
+  useEffect(() => {
+    if (selectedChapter?.number && selectedChapter.number !== selectedChapterNum) {
+      setSelectedChapterNum(selectedChapter.number);
+    }
+  }, [selectedChapter?.number]);
 
   useEffect(() => {
     if (activePart !== 'revise') return;
@@ -104,6 +119,12 @@ export default function PracticeScreen() {
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
 
+  // Dynamically record chapter progress as the user goes through Revise, Assessments, or Question Bank
+  useEffect(() => {
+    if (!activeSubject?.id || !currentChapter?.number) return;
+    markResourceCompleted(activeSubject.id, currentChapter.number, activePart);
+  }, [activeSubject?.id, currentChapter?.number, activePart]);
+
   // Theme tokens
   const screenBg = isDark ? '#2D3E36' : '#FFF6F1';
   const toggleBg = isDark ? '#1E2B24' : '#E8F2EB';
@@ -134,6 +155,7 @@ export default function PracticeScreen() {
         subjectName={activeSubject.name}
         chapterNumber={currentChapter.number}
         chapterTitle={currentChapter.name}
+        onPress={() => setShowChapterModal(true)}
         onBackPress={() => {
           if (router.canGoBack()) {
             router.back();
@@ -226,6 +248,7 @@ export default function PracticeScreen() {
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSelectedChapterNum(ch.number);
+                      selectChapter(ch);
                       setShowChapterModal(false);
                     }}
                   >

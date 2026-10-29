@@ -75,10 +75,10 @@ export default function LandingScreen() {
       ]).start();
     });
 
-    // 2. Auto-transition progress bar (2.5 seconds)
+    // 2. Auto-transition progress bar (5 seconds)
     const progressAnimation = RNAnimated.timing(progressAnim, {
       toValue: 1,
-      duration: 2500,
+      duration: 5000,
       useNativeDriver: false,
     });
 
@@ -119,12 +119,8 @@ export default function LandingScreen() {
         barStyle={isDark ? 'light-content' : 'dark-content'}
       />
 
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <View style={styles.badgeContainer}>
-          <Text style={[styles.badgeText, { color: subtextColor }]}>ANGRAU OFFICIAL</Text>
-        </View>
-      </View>
+      {/* Top Bar spacer */}
+      <View style={styles.topBar} />
 
       {/* Center Logo Showcase (matching reference PNGs) */}
       <View style={styles.centerSection}>

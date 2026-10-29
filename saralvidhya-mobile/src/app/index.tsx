@@ -18,5 +18,5 @@ export default function RootIndex() {
     return <Redirect href="/(auth)/login" />;
   }
 
-  return <Redirect href="/courses" />;
+  return <Redirect href="/landing" />;
 }

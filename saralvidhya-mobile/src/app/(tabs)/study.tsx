@@ -85,13 +85,19 @@ export default function StudyTableScreen() {
   const { isDark } = useAppTheme();
   const router = useRouter();
   const { isTablet, isLandscape } = useDeviceLayout();
-  const { selectedSubject, subjects } = useCourseContext();
+  const {
+    selectedSubject,
+    selectedChapter,
+    selectChapter,
+    selectChapterByNumber,
+    subjects,
+  } = useCourseContext();
 
   const activeSubject =
     (params.subjectId ? subjects.find((s) => s.id === params.subjectId) : selectedSubject) ||
     ANGRAU_SUBJECTS[0];
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
-    params.chapter ? parseInt(params.chapter, 10) : 1
+    params.chapter ? parseInt(params.chapter, 10) : (selectedChapter?.number || 1)
   );
   const [activeTool, setActiveTool] = useState<StudyToolId>('summary');
   const [showChapterModal, setShowChapterModal] = useState(false);
@@ -103,16 +109,28 @@ export default function StudyTableScreen() {
   const [isLoadingContent, setIsLoadingContent] = useState<boolean>(true);
 
   useEffect(() => {
-    if (params.chapter) {
-      const parsed = parseInt(params.chapter, 10);
-      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
-        setSelectedChapterNum(parsed);
-      }
-    }
     if (params.tool && STUDY_TOOLS.some((t) => t.id === params.tool)) {
       setActiveTool(params.tool as StudyToolId);
     }
-  }, [params.chapter, params.tool, selectedChapterNum]);
+  }, [params.tool]);
+
+  useEffect(() => {
+    if (params.chapter) {
+      const parsed = parseInt(params.chapter, 10);
+      if (!isNaN(parsed)) {
+        setSelectedChapterNum(parsed);
+        if (selectedChapter?.number !== parsed) {
+          selectChapterByNumber(parsed);
+        }
+      }
+    }
+  }, [params.chapter]);
+
+  useEffect(() => {
+    if (selectedChapter?.number && selectedChapter.number !== selectedChapterNum) {
+      setSelectedChapterNum(selectedChapter.number);
+    }
+  }, [selectedChapter?.number]);
 
   useEffect(() => {
     let isMounted = true;
@@ -209,6 +227,7 @@ export default function StudyTableScreen() {
                     Haptics.selectionAsync();
                     if (ch.number === selectedChapterNum) return;
                     setSelectedChapterNum(ch.number);
+                    selectChapter(ch);
                     router.setParams({ chapter: String(ch.number) });
                   }}
                   activeOpacity={0.7}
@@ -516,6 +535,7 @@ export default function StudyTableScreen() {
                     onPress={() => {
                       Haptics.selectionAsync();
                       setSelectedChapterNum(ch.number);
+                      selectChapter(ch);
                       setShowChapterModal(false);
                     }}
                   >

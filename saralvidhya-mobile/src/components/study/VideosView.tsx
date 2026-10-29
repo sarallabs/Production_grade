@@ -360,11 +360,15 @@ export default function VideosView({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1.0);
   const [showSpeedModal, setShowSpeedModal] = useState(false);
-  const [showCaptions, setShowCaptions] = useState(false);
+  // Start with CC ON by default; user can toggle it OFF/ON at any time
+  const [showCaptions, setShowCaptions] = useState(true);
+  const showCaptionsRef = useRef<boolean>(true);
   const [captionToastText, setCaptionToastText] = useState<string | null>(null);
   const captionToastTimerRef = useRef<any>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [containerWidth, setContainerWidth] = useState(0);
+  const [inlineScrubberWidth, setInlineScrubberWidth] = useState(0);
+  const [fsScrubberWidth, setFsScrubberWidth] = useState(0);
 
   // Auto-hide controls state (YouTube style)
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -375,17 +379,34 @@ export default function VideosView({
   const currentTimeRef = useRef<number>(0);
   const hasStartedRef = useRef<boolean>(false);
 
+  // Helper to execute arbitrary JS inside the YouTube player WebView without seeking
+  const runPlayerCommand = useCallback((jsCode: string) => {
+    if (playerFsRef.current?.seekTo) {
+      try {
+        (playerFsRef.current.seekTo as any)(
+          -999,
+          `false); try { ${jsCode} } catch(e){} true; //`
+        );
+      } catch {}
+    }
+  }, []);
+
   const handleToggleCaptions = useCallback(() => {
     Haptics.selectionAsync();
-    setShowCaptions((prev) => {
-      const next = !prev;
-      setCaptionToastText(next ? 'Subtitles on' : 'Subtitles off');
-      if (captionToastTimerRef.current) clearTimeout(captionToastTimerRef.current);
-      captionToastTimerRef.current = setTimeout(() => {
-        setCaptionToastText(null);
-      }, 2000);
-      return next;
-    });
+    const next = !showCaptionsRef.current;
+    showCaptionsRef.current = next;
+    setShowCaptions(next);
+    setCaptionToastText(next ? 'Subtitles on' : 'Subtitles off');
+    if (captionToastTimerRef.current) clearTimeout(captionToastTimerRef.current);
+    captionToastTimerRef.current = setTimeout(() => {
+      setCaptionToastText(null);
+    }, 2000);
+
+    // Immediately apply captions ON or OFF inside the live YouTube player without reloading
+    runPlayerCommand(
+      `window.__saralCCEnabled = ${next ? 'true' : 'false'}; if (typeof window.__saralApplyCC === 'function') { window.__saralApplyCC(${next ? 'true' : 'false'}); }`
+    );
+
     // Reset control hide timer so UI remains visible while interacting
     if (hideControlsTimerRef.current) clearTimeout(hideControlsTimerRef.current);
     setControlsVisible(true);
@@ -393,7 +414,7 @@ export default function VideosView({
     hideControlsTimerRef.current = setTimeout(() => {
       setControlsVisible(false);
     }, 3500);
-  }, [fadeAnim]);
+  }, [fadeAnim, runPlayerCommand]);
 
   // Orientation handling: Lock to landscape for fullscreen, restore portrait/default on exit
   const lockLandscape = useCallback(async () => {
@@ -575,33 +596,50 @@ export default function VideosView({
     await lockLandscape();
   }, [resetHideTimer, lockLandscape]);
 
-  const handlePlayerStateChange = useCallback((state: string) => {
-    if (state === 'playing') {
-      hasStartedRef.current = true;
-      setIsPlayingVideo(true);
-    } else if (state === 'paused') {
-      if (hasStartedRef.current) {
+  const handlePlayerStateChange = useCallback(
+    (state: string) => {
+      if (state === 'playing') {
+        hasStartedRef.current = true;
+        setIsPlayingVideo(true);
+        // Re-enforce current caption state & playback speed as soon as playback starts
+        const ccOn = showCaptionsRef.current;
+        runPlayerCommand(
+          `window.__saralCCEnabled = ${ccOn ? 'true' : 'false'}; if (typeof window.__saralApplyCC === 'function') { window.__saralApplyCC(${ccOn ? 'true' : 'false'}); } if (typeof player !== 'undefined' && player && player.setPlaybackRate) { player.setPlaybackRate(${playbackSpeed}); }`
+        );
+      } else if (state === 'paused') {
+        if (hasStartedRef.current) {
+          setIsPlayingVideo(false);
+        }
+      } else if (state === 'ended') {
+        hasStartedRef.current = false;
         setIsPlayingVideo(false);
+        currentTimeRef.current = 0;
+        setCurrentTime(0);
       }
-    } else if (state === 'ended') {
-      hasStartedRef.current = false;
-      setIsPlayingVideo(false);
-      currentTimeRef.current = 0;
-      setCurrentTime(0);
-    }
-  }, []);
+    },
+    [runPlayerCommand, playbackSpeed]
+  );
 
-  const handlePlayerReady = useCallback(() => {
+  const handlePlayerReady = useCallback(async () => {
     hasStartedRef.current = true;
     setIsPlayingVideo(true);
     // Explicit seek forces YouTube iframe to buffer and start playing immediately
     const startSec = currentTimeRef.current > 0 ? currentTimeRef.current : 0.1;
+    const ccOn = showCaptionsRef.current;
     if (playerFsRef.current?.seekTo) {
       try {
         (playerFsRef.current.seekTo as any)(
           startSec,
-          'true); try { player.playVideo(); } catch(e){} true; //'
+          `true); try { if (typeof player !== 'undefined' && player && typeof player.seekTo === 'function' && !player.__saralWrappedSeek) { var __os = player.seekTo.bind(player); player.seekTo = function(s, a){ if (s === -999) return; return __os(s, a); }; player.__saralWrappedSeek = true; } player.playVideo(); window.__saralCCEnabled = ${ccOn ? 'true' : 'false'}; if (typeof window.__saralApplyCC === 'function') { window.__saralApplyCC(${ccOn ? 'true' : 'false'}); } } catch(e){} true; //`
         );
+      } catch {}
+    }
+    if (playerFsRef.current?.getDuration) {
+      try {
+        const d = await playerFsRef.current.getDuration();
+        if (typeof d === 'number' && !isNaN(d) && d > 0) {
+          setDuration(Math.floor(d));
+        }
       } catch {}
     }
   }, []);
@@ -617,14 +655,7 @@ export default function VideosView({
       const cur = currentTimeRef.current || currentTime || 0;
       if (!next) {
         // Paused: explicitly command YouTube iframe to pause via reliable injection
-        if (playerFsRef.current?.seekTo) {
-          try {
-            (playerFsRef.current.seekTo as any)(
-              cur,
-              'true); try { player.pauseVideo(); } catch(e){} true; //'
-            );
-          } catch {}
-        }
+        runPlayerCommand('if (typeof player !== "undefined" && player && player.pauseVideo) { player.pauseVideo(); }');
         if (playerFsRef.current?.pauseVideo) {
           try { playerFsRef.current.pauseVideo(); } catch {}
         }
@@ -635,14 +666,7 @@ export default function VideosView({
       } else {
         hasStartedRef.current = true;
         // Playing: explicitly command YouTube iframe to play via reliable injection
-        if (playerFsRef.current?.seekTo) {
-          try {
-            (playerFsRef.current.seekTo as any)(
-              cur,
-              'true); try { player.playVideo(); } catch(e){} true; //'
-            );
-          } catch {}
-        }
+        runPlayerCommand(`if (typeof player !== "undefined" && player && player.playVideo) { player.playVideo(); }`);
         if (playerFsRef.current?.playVideo) {
           try { playerFsRef.current.playVideo(); } catch {}
         }
@@ -650,7 +674,7 @@ export default function VideosView({
       }
       return next;
     });
-  }, [isFullScreen, handlePlayFullscreen, currentTime, fadeAnim, resetHideTimer]);
+  }, [isFullScreen, handlePlayFullscreen, currentTime, fadeAnim, resetHideTimer, runPlayerCommand]);
 
   const handleSeekRewind = useCallback(async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -693,9 +717,20 @@ export default function VideosView({
   }, [currentTime, totalDurationSecs, resetHideTimer]);
 
   const handleScrubberPress = useCallback(
-    (evt: any) => {
+    (evt: any, isFull?: boolean) => {
       const locationX = evt.nativeEvent.locationX;
-      const trackWidth = containerWidth > 0 ? containerWidth - 32 : 320;
+      const fallbackWidth = isFull
+        ? Math.max(windowWidth, windowHeight) - 32
+        : containerWidth > 0
+        ? containerWidth - 32
+        : 320;
+      const trackWidth = isFull
+        ? fsScrubberWidth > 0
+          ? fsScrubberWidth
+          : fallbackWidth
+        : inlineScrubberWidth > 0
+        ? inlineScrubberWidth
+        : fallbackWidth;
       if (trackWidth <= 0) return;
       const ratio = Math.max(0, Math.min(1, locationX / trackWidth));
       const newSec = Math.round(ratio * totalDurationSecs);
@@ -706,20 +741,36 @@ export default function VideosView({
       }
       resetHideTimer();
     },
-    [containerWidth, totalDurationSecs, resetHideTimer]
+    [containerWidth, inlineScrubberWidth, fsScrubberWidth, windowWidth, windowHeight, totalDurationSecs, resetHideTimer]
   );
 
   const handleToggleMute = useCallback(() => {
     Haptics.selectionAsync();
-    setIsMuted((prev) => !prev);
+    setIsMuted((prev) => {
+      const next = !prev;
+      runPlayerCommand(
+        next
+          ? 'if (typeof player !== "undefined" && player && player.mute) { player.mute(); }'
+          : 'if (typeof player !== "undefined" && player && player.unMute) { player.unMute(); if (player.setVolume) player.setVolume(100); }'
+      );
+      return next;
+    });
     resetHideTimer();
-  }, [resetHideTimer]);
+  }, [resetHideTimer, runPlayerCommand]);
 
-  // Real-time synchronization interval to track playback and keep time synced in fullscreen
+  // Real-time synchronization interval to track playback and keep time & duration synced in fullscreen
   useEffect(() => {
     let interval: any = null;
     if (isPlayingVideo && isFullScreen) {
       interval = setInterval(async () => {
+        if (playerFsRef.current?.getDuration && duration === 0) {
+          try {
+            const d = await playerFsRef.current.getDuration();
+            if (typeof d === 'number' && !isNaN(d) && d > 0) {
+              setDuration(Math.floor(d));
+            }
+          } catch {}
+        }
         if (playerFsRef.current?.getCurrentTime) {
           try {
             const t = await playerFsRef.current.getCurrentTime();
@@ -745,7 +796,7 @@ export default function VideosView({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isPlayingVideo, isFullScreen, totalDurationSecs]);
+  }, [isPlayingVideo, isFullScreen, totalDurationSecs, duration]);
 
   // Guarantee playback starts when entering fullscreen
   useEffect(() => {
@@ -841,32 +892,76 @@ export default function VideosView({
   const injectedCcScript = useMemo(() => {
     return `
       (function() {
-        function configureCaptions() {
-          if (typeof player !== 'undefined' && player && typeof player.loadModule === 'function') {
+        if (!window.__saralMsgBridged) {
+          window.__saralMsgBridged = true;
+          document.addEventListener('message', function(e) {
             try {
-              if (${showCaptions ? 'true' : 'false'}) {
-                player.loadModule('captions');
-                try {
-                  var tracks = player.getOption('captions', 'tracklist') || [];
-                  if (tracks.length > 0) {
-                    player.setOption('captions', 'track', tracks[0]);
-                  } else {
-                    player.setOption('captions', 'track', { languageCode: 'en' });
-                  }
-                } catch(err) {
-                  player.setOption('captions', 'track', { languageCode: 'en' });
-                }
-                player.setOption('captions', 'fontSize', 1);
-              } else {
-                player.unloadModule('captions');
-                player.setOption('captions', 'track', {});
-              }
-            } catch(e) {}
-          } else {
-            setTimeout(configureCaptions, 200);
-          }
+              window.dispatchEvent(new MessageEvent('message', { data: e.data }));
+            } catch(err) {}
+          });
         }
-        configureCaptions();
+
+        if (typeof window.__saralCCEnabled === 'undefined') {
+          window.__saralCCEnabled = ${showCaptionsRef.current ? 'true' : 'false'};
+        }
+
+        window.__saralApplyCC = function(enabled) {
+          window.__saralCCEnabled = Boolean(enabled);
+          if (typeof player === 'undefined' || !player) return;
+          try {
+            if (window.__saralCCEnabled) {
+              if (typeof player.loadModule === 'function') {
+                try { player.loadModule('captions'); } catch(e) {}
+                try { player.loadModule('cc'); } catch(e) {}
+              }
+              if (typeof player.setOption === 'function') {
+                var tracks = [];
+                try { tracks = player.getOption('captions', 'tracklist') || []; } catch(e) {}
+                var track = (tracks && tracks.length > 0) ? tracks[0] : { languageCode: 'en' };
+                try { player.setOption('captions', 'track', track); } catch(e) {}
+                try { player.setOption('cc', 'track', track); } catch(e) {}
+                try { player.setOption('captions', 'fontSize', 1); } catch(e) {}
+              }
+            } else {
+              if (typeof player.setOption === 'function') {
+                try { player.setOption('captions', 'track', {}); } catch(e) {}
+                try { player.setOption('cc', 'track', {}); } catch(e) {}
+              }
+              if (typeof player.unloadModule === 'function') {
+                try { player.unloadModule('captions'); } catch(e) {}
+                try { player.unloadModule('cc'); } catch(e) {}
+              }
+            }
+          } catch(e) {}
+        };
+
+        if (!window.__saralCCInterval) {
+          window.__saralCCInterval = setInterval(function() {
+            if (typeof player !== 'undefined' && player) {
+              if (typeof player.seekTo === 'function' && !player.__saralWrappedSeek) {
+                var origSeek = player.seekTo.bind(player);
+                player.seekTo = function(sec, allow) {
+                  if (sec === -999) return;
+                  return origSeek(sec, allow);
+                };
+                player.__saralWrappedSeek = true;
+              }
+              if (!window.__saralCCEnabled) {
+                window.__saralApplyCC(false);
+              } else {
+                try {
+                  var curTrack = (typeof player.getOption === 'function') ? player.getOption('captions', 'track') : null;
+                  if (!curTrack || !curTrack.languageCode) {
+                    window.__saralApplyCC(true);
+                  }
+                } catch(e) {
+                  window.__saralApplyCC(true);
+                }
+              }
+            }
+          }, 400);
+        }
+
         try {
           var st = document.createElement('style');
           st.innerHTML = '.caption-window, .ytp-caption-window-bottom { margin-bottom: 12px !important; }';
@@ -875,7 +970,7 @@ export default function VideosView({
       })();
       true;
     `;
-  }, [showCaptions]);
+  }, []);
 
   // Shared Bottom Controls Bar Component (Matching User's PNG + Clean No-Overlap Spacing)
   const renderControlsBar = (isFull: boolean) => {
@@ -890,7 +985,11 @@ export default function VideosView({
         {/* Blue Scrubber Progress Bar */}
         <TouchableOpacity
           activeOpacity={1}
-          onPress={handleScrubberPress}
+          onLayout={(e) => {
+            const w = e.nativeEvent.layout.width;
+            if (w > 0) setInlineScrubberWidth(w);
+          }}
+          onPress={(e) => handleScrubberPress(e, isFull)}
           style={styles.scrubberTouchArea}
         >
           <View style={styles.scrubberTrack}>
@@ -1348,21 +1447,16 @@ export default function VideosView({
                   WHAT YOU’LL LEARN
                 </Text>
               </View>
-              <Text style={[styles.topicsCount, { color: textMuted }]}>
-                {`${currentLesson.topicsWhatYouLearn.length} TOPICS`}
-              </Text>
             </View>
 
-            {/* 4. TOPIC BULLET POINT CARDS (01, 02, 03, 04, 05) */}
+            {/* 4. TOPIC BULLET POINT CARDS */}
             <View style={styles.topicCardsList}>
               {currentLesson.topicsWhatYouLearn.map((topic) => (
                 <View
                   key={topic.number}
                   style={[styles.topicCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
                 >
-                  <View style={[styles.topicIconTile, { backgroundColor: iconTileBg }]}>
-                    <Ionicons name="checkmark-circle" size={18} color={brandGreen} />
-                  </View>
+                  <View style={[styles.topicBulletPoint, { backgroundColor: brandGreen }]} />
                   <View style={styles.topicInfoWrap}>
                     <Text style={[styles.topicTitle, { color: textDark }]} numberOfLines={2}>
                       {topic.title}
@@ -1371,7 +1465,6 @@ export default function VideosView({
                       {topic.subtitle}
                     </Text>
                   </View>
-                  <Text style={[styles.topicNumber, { color: brandGreen }]}>{topic.number}</Text>
                 </View>
               ))}
             </View>
@@ -1399,7 +1492,7 @@ export default function VideosView({
             {Platform.OS === 'web' ? (
               React.createElement('iframe', {
                 key: `fs-${currentLesson.ytId}-${showCaptions ? 'cc1' : 'cc0'}`,
-                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0&cc_load_policy=${showCaptions ? 1 : 0}&cc_lang_pref=en&start=${Math.floor(currentTimeRef.current || 0)}`,
+                src: `https://www.youtube.com/embed/${currentLesson.ytId}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&controls=0&cc_load_policy=${showCaptions ? 1 : 0}${showCaptions ? '&cc_lang_pref=en' : ''}&start=${Math.floor(currentTimeRef.current || 0)}`,
                 width: '100%',
                 height: '100%',
                 style: { border: 0, display: 'block', backgroundColor: '#000000' },
@@ -1410,7 +1503,7 @@ export default function VideosView({
               })
             ) : (
               <YoutubePlayer
-                key={`fs-player-${currentLesson.ytId}-${showCaptions ? 'cc1' : 'cc0'}`}
+                key={`fs-player-${currentLesson.ytId}`}
                 ref={playerFsRef}
                 height={renderedFsHeight}
                 width={renderedFsWidth}
@@ -1432,7 +1525,7 @@ export default function VideosView({
                   controls: false,
                   preventFullScreen: true,
                   showClosedCaptions: showCaptions,
-                  cc_lang_pref: 'en',
+                  cc_lang_pref: showCaptions ? 'en' : '',
                   iv_load_policy: 3,
                   start: Math.floor(currentTimeRef.current || 0),
                 }}
@@ -1551,7 +1644,11 @@ export default function VideosView({
               {/* Blue Scrubber Progress Bar */}
               <TouchableOpacity
                 activeOpacity={1}
-                onPress={handleScrubberPress}
+                onLayout={(e) => {
+                  const w = e.nativeEvent.layout.width;
+                  if (w > 0) setFsScrubberWidth(w);
+                }}
+                onPress={(e) => handleScrubberPress(e, true)}
                 style={styles.scrubberTouchArea}
                 hitSlop={{ top: 10, bottom: 10 }}
               >
@@ -1727,6 +1824,9 @@ export default function VideosView({
                       onPress={() => {
                         Haptics.selectionAsync();
                         setPlaybackSpeed(speed);
+                        runPlayerCommand(
+                          `if (typeof player !== "undefined" && player && player.setPlaybackRate) { player.setPlaybackRate(${speed}); }`
+                        );
                         setShowSpeedModal(false);
                         resetHideTimer();
                       }}
@@ -1770,6 +1870,72 @@ export default function VideosView({
           )}
         </View>
       </Modal>
+
+      {/* Portrait Speed Selector Modal (if user taps Settings gear before entering fullscreen) */}
+      {!isFullScreen && showSpeedModal && (
+        <TouchableOpacity
+          style={styles.inPlayerSpeedBackdrop}
+          activeOpacity={1}
+          onPress={() => setShowSpeedModal(false)}
+        >
+          <View style={[styles.inPlayerSpeedCard, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+            <View style={styles.inPlayerSpeedHeader}>
+              <Text style={[styles.inPlayerSpeedTitle, { color: textDark }]}>Playback Speed</Text>
+              <TouchableOpacity onPress={() => setShowSpeedModal(false)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={20} color={textMuted} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.speedOptionsGrid}>
+              {[0.5, 0.75, 1.0, 1.25, 1.5, 2.0].map((speed) => (
+                <TouchableOpacity
+                  key={speed}
+                  style={[
+                    styles.speedPillOption,
+                    playbackSpeed === speed && styles.speedPillOptionActive,
+                  ]}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setPlaybackSpeed(speed);
+                    setShowSpeedModal(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.speedPillText,
+                      { color: textDark },
+                      playbackSpeed === speed && { color: '#FFFFFF', fontWeight: '700' },
+                    ]}
+                  >
+                    {speed === 1.0 ? '1.0x (Normal)' : `${speed}x`}
+                  </Text>
+                  {playbackSpeed === speed && (
+                    <Ionicons name="checkmark" size={16} color="#FFFFFF" style={{ marginLeft: 4 }} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Portrait Subtitles Toast Indicator */}
+      {!isFullScreen && captionToastText && (
+        <View style={styles.captionsIndicatorWrap} pointerEvents="none">
+          <View
+            style={[
+              styles.captionsIndicator,
+              { borderColor: showCaptions ? '#4ADE80' : '#94A3B8' },
+            ]}
+          >
+            <Ionicons
+              name={showCaptions ? 'chatbox-ellipses-outline' : 'chatbox-outline'}
+              size={14}
+              color={showCaptions ? '#4ADE80' : '#94A3B8'}
+            />
+            <Text style={styles.captionsIndicatorText}>{captionToastText}</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -2269,9 +2435,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderRadius: 16,
     borderWidth: 1,
-    padding: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     alignItems: 'flex-start',
     gap: 12,
+  },
+  topicBulletPoint: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    marginTop: 7,
   },
   topicIconTile: {
     width: 32,

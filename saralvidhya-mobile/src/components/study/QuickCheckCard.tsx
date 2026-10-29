@@ -35,6 +35,7 @@ export default function QuickCheckCard({
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
   const [retriesUsedByQ, setRetriesUsedByQ] = useState<Record<number, number>>({});
   const [pendingWrongByQ, setPendingWrongByQ] = useState<Record<number, string | null>>({});
+  const [disabledWrongByQ, setDisabledWrongByQ] = useState<Record<number, string[]>>({});
 
   if (!questions || questions.length === 0) {
     return null;
@@ -68,8 +69,10 @@ export default function QuickCheckCard({
     }
   };
 
+  const disabledWrongKeys = disabledWrongByQ[currentQuestionIndex] || [];
+
   const handleSelectOption = (key: string, isCorrect: boolean) => {
-    if (isSubmitted || isPendingRetry) return;
+    if (isSubmitted || isPendingRetry || disabledWrongKeys.includes(key)) return;
 
     const usedRetries = retriesUsedByQ[currentQuestionIndex] || 0;
     if (!isCorrect && usedRetries < 1) {
@@ -77,6 +80,13 @@ export default function QuickCheckCard({
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
       } catch {}
       setPendingWrongByQ((prev) => ({ ...prev, [currentQuestionIndex]: key }));
+      setDisabledWrongByQ((prev) => {
+        const existing = prev[currentQuestionIndex] || [];
+        return {
+          ...prev,
+          [currentQuestionIndex]: existing.includes(key) ? existing : [...existing, key],
+        };
+      });
       return;
     }
 
@@ -172,6 +182,7 @@ export default function QuickCheckCard({
           const optKey = (opt.key || String.fromCharCode(65 + optIdx)).toUpperCase();
           const isSelected = selectedKey === optKey;
           const isPendingWrong = pendingWrongKey === optKey;
+          const isDisabledWrong = disabledWrongKeys.includes(optKey);
           const isCorrect = optKey === cleanCorrectKey;
 
           let optBorder = optionDefaultBorder;
@@ -187,14 +198,14 @@ export default function QuickCheckCard({
               optBadgeBg = '#16A34A';
               optBadgeText = '#FFFFFF';
               textColor = isDark ? '#86EFAC' : '#15803D';
-            } else if (isSelected && !isCorrect) {
+            } else if ((isSelected || isDisabledWrong) && !isCorrect) {
               optBorder = '#EF4444';
               optBg = isDark ? '#331717' : '#FEF2F2';
               optBadgeBg = '#EF4444';
               optBadgeText = '#FFFFFF';
               textColor = isDark ? '#FCA5A5' : '#B91C1C';
             }
-          } else if (isPendingRetry && isPendingWrong) {
+          } else if ((isPendingRetry && isPendingWrong) || isDisabledWrong) {
             optBorder = '#EF4444';
             optBg = isDark ? '#331717' : '#FEF2F2';
             optBadgeBg = '#EF4444';
@@ -211,13 +222,16 @@ export default function QuickCheckCard({
                   backgroundColor: optBg,
                   borderColor: optBorder,
                   borderWidth:
-                    (isSubmitted && (isCorrect || isSelected)) || (isPendingRetry && isPendingWrong)
+                    (isSubmitted && (isCorrect || isSelected || isDisabledWrong)) ||
+                    (isPendingRetry && isPendingWrong) ||
+                    isDisabledWrong
                       ? 2
                       : 1.5,
+                  opacity: isDisabledWrong && !isPendingRetry && !isSelected ? 0.5 : 1,
                 },
               ]}
               onPress={() => handleSelectOption(optKey, isCorrect)}
-              disabled={isSubmitted || isPendingRetry}
+              disabled={isSubmitted || isPendingRetry || isDisabledWrong}
               activeOpacity={0.8}
             >
               {/* Option Letter Badge (A, B, C, D) */}
@@ -242,10 +256,10 @@ export default function QuickCheckCard({
               {isSubmitted && isCorrect && (
                 <Ionicons name="checkmark-circle" size={20} color="#16A34A" />
               )}
-              {isSubmitted && isSelected && !isCorrect && (
+              {isSubmitted && (isSelected || isDisabledWrong) && !isCorrect && (
                 <Ionicons name="close-circle" size={20} color="#EF4444" />
               )}
-              {isPendingRetry && isPendingWrong && (
+              {!isSubmitted && ((isPendingRetry && isPendingWrong) || isDisabledWrong) && (
                 <Ionicons name="close-circle" size={20} color="#EF4444" />
               )}
             </TouchableOpacity>

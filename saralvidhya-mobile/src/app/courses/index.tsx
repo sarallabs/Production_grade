@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@/context/AuthContext';
 import { useAppTheme } from '@/context/ThemeContext';
@@ -24,23 +25,45 @@ export default function CourseSelectionScreen() {
   const { user } = useAuth();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const { selectSubject, selectChapter } = useCourseContext();
+  const { subjects, selectSubject, selectChapter, refreshProgress } = useCourseContext();
 
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [entomologySubject, setEntomologySubject] = useState<Subject | null>(null);
 
+  // Keep entomologySubject live-synced with CourseContext subjects whenever progress changes
+  useEffect(() => {
+    if (subjects && subjects.length > 0) {
+      const ento = subjects.find((s) => s.id === 'ento_131') || subjects[0];
+      if (ento) {
+        setEntomologySubject({
+          ...ento,
+          chapters: ento.chapters ? ento.chapters.map((c) => ({ ...c, completed: [...(c.completed || [])] })) : [],
+        });
+        setLoading(false);
+      }
+    }
+  }, [subjects]);
+
   const loadEntomologyData = useCallback(async () => {
     try {
       const allSubjs = await manifestService.getSubjects();
       const ento = allSubjs.find((s) => s.id === 'ento_131') || allSubjs[0];
-      setEntomologySubject(ento ? { ...ento } : null);
+      setEntomologySubject(
+        ento
+          ? {
+              ...ento,
+              chapters: ento.chapters ? ento.chapters.map((c) => ({ ...c, completed: [...(c.completed || [])] })) : [],
+            }
+          : null
+      );
+      await refreshProgress();
     } catch (e) {
       console.warn('Failed to load entomology subject', e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [refreshProgress]);
 
   useEffect(() => {
     loadEntomologyData();
@@ -124,6 +147,27 @@ export default function CourseSelectionScreen() {
             <Text style={[styles.greetingText, { color: headerTextColor }]}>
               Welcome, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
             </Text>
+            <TouchableOpacity
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 17,
+                borderWidth: 1.5,
+                borderColor: isDark ? 'rgba(255, 255, 255, 0.5)' : '#4D6256',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => {
+                try { Haptics.selectionAsync().catch(() => {}); } catch {}
+                router.navigate('/(tabs)/profile');
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel="My Profile and Themes"
+            >
+              <Ionicons name="person-outline" size={18} color={headerTextColor} />
+            </TouchableOpacity>
           </View>
 
           {/* Section Title */}

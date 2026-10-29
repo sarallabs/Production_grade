@@ -27,7 +27,7 @@ export default function LoginScreen() {
   const { isTablet } = useDeviceLayout();
   const scrollViewRef = useRef<React.ElementRef<typeof ScrollView>>(null);
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -63,7 +63,7 @@ export default function LoginScreen() {
 
     // Validate access passcode
     if (trimmed !== VALID_PASSCODE && trimmed.toUpperCase() !== VALID_PASSCODE) {
-      setError('Invalid access code. Please enter ANGRAU@2026');
+      setError('Invalid access code. Please try again.');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
@@ -145,7 +145,7 @@ export default function LoginScreen() {
             <View style={styles.inputBox}>
               <TextInput
                 style={styles.input}
-                placeholder="ANGRAU@2026"
+                placeholder="Enter access code"
                 placeholderTextColor="#9CA3AF"
                 value={password}
                 secureTextEntry={!showPassword}
@@ -188,13 +188,6 @@ export default function LoginScreen() {
                 />
               </TouchableOpacity>
             </View>
-
-            {/* Quick passcode hint helper */}
-            <TouchableOpacity onPress={fillDefaultPasscode} style={styles.quickHintRow}>
-              <Text style={styles.quickHintText}>
-                Passcode: <Text style={styles.quickHintBold}>ANGRAU@2026</Text> (tap to fill)
-              </Text>
-            </TouchableOpacity>
 
             {/* Enter Button */}
             <TouchableOpacity
@@ -402,7 +395,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#BA6E43',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 10,
+    marginTop: 16,
     marginBottom: 14,
     shadowColor: '#BA6E43',
     shadowOffset: { width: 0, height: 3 },

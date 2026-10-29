@@ -78,11 +78,17 @@ export default function LearnScreen() {
   const insets = useSafeAreaInsets();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
-  const { selectedSubject, selectedCourse, markResourceCompleted } = useCourseContext();
+  const {
+    selectedSubject,
+    selectedChapter,
+    selectChapterByNumber,
+    markResourceCompleted,
+  } = useCourseContext();
   const params = useLocalSearchParams<{
     chapter?: string;
     segment?: string;
     mode?: string;
+    readMode?: string;
     topic?: string;
     autoPlay?: string;
   }>();
@@ -96,7 +102,7 @@ export default function LearnScreen() {
   );
 
   const [selectedChapterNum, setSelectedChapterNum] = useState<number>(
-    params.chapter ? parseInt(params.chapter, 10) : 1
+    params.chapter ? parseInt(params.chapter, 10) : (selectedChapter?.number || 1)
   );
 
   useEffect(() => {
@@ -111,15 +117,37 @@ export default function LearnScreen() {
   useEffect(() => {
     if (params.chapter) {
       const parsed = parseInt(params.chapter, 10);
-      if (!isNaN(parsed) && parsed !== selectedChapterNum) {
+      if (!isNaN(parsed)) {
         setSelectedChapterNum(parsed);
+        if (selectedChapter?.number !== parsed) {
+          selectChapterByNumber(parsed);
+        }
       }
     }
-  }, [params.chapter, selectedChapterNum]);
+  }, [params.chapter]);
+
+  useEffect(() => {
+    if (selectedChapter?.number && selectedChapter.number !== selectedChapterNum) {
+      setSelectedChapterNum(selectedChapter.number);
+    }
+  }, [selectedChapter?.number]);
 
   const currentChapter =
     activeSubject.chapters.find((c) => c.number === selectedChapterNum) ||
     activeSubject.chapters[0];
+
+  // Dynamically record chapter progress as the user navigates through Read, Listen, and Watch
+  useEffect(() => {
+    if (!activeSubject?.id || !currentChapter?.number) return;
+    if (activeSegment === 'read') {
+      markResourceCompleted(activeSubject.id, currentChapter.number, 'read');
+    } else if (activeSegment === 'listen') {
+      const resourceKey = listenInitialMode === 'microcasts' ? 'microcasts' : 'listen';
+      markResourceCompleted(activeSubject.id, currentChapter.number, resourceKey);
+    } else if (activeSegment === 'watch') {
+      markResourceCompleted(activeSubject.id, currentChapter.number, 'watch');
+    }
+  }, [activeSubject?.id, currentChapter?.number, activeSegment, listenInitialMode]);
 
   // DevMode CSS background: #f0f7f3
   const screenBg = isDark ? '#121E17' : '#F0F7F3';
@@ -130,23 +158,21 @@ export default function LearnScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
-      {/* 1. TOP TOOLBAR: Shown on mobile phones only; tablet design begins directly with breadcrumb */}
-      {!isTablet && (
-        <TopNavBar
-          segments={LEARN_SEGMENTS}
-          activeSegment={activeSegment}
-          onSegmentChange={(segId) => setActiveSegment(segId as any)}
-          pillar="learn"
-          onBackPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.push('/subjects');
-            }
-          }}
-          showProfile={true}
-        />
-      )}
+      {/* 1. TOP TOOLBAR: Always visible for Read / Listen / Watch + Profile */}
+      <TopNavBar
+        segments={LEARN_SEGMENTS}
+        activeSegment={activeSegment}
+        onSegmentChange={(segId) => setActiveSegment(segId as any)}
+        pillar="learn"
+        onBackPress={() => {
+          if (router.canGoBack()) {
+            router.back();
+          } else {
+            router.push('/subjects');
+          }
+        }}
+        showProfile={true}
+      />
 
       {/* 2. MAIN ACTIVE VIEW - Wrapped in SafeErrorBoundary */}
       {activeSegment === 'watch' ? (
@@ -183,12 +209,19 @@ export default function LearnScreen() {
         <SafeErrorBoundary sectionName="Study Guide" key={`read_${selectedChapterNum}_${params.topic || ''}`}>
           <View style={{ flex: 1 }}>
             <StudyGuideReader
-              key={`study_reader_${selectedChapterNum}_${currentChapter.name}_${params.topic || ''}`}
+              key={`study_reader_${selectedChapterNum}_${currentChapter.name}_${params.topic || ''}_${params.readMode || ''}`}
               chapterNumber={selectedChapterNum}
               chapterTitle={currentChapter.name}
               subjectName={activeSubject.name}
               subjectId={activeSubject.id}
               initialTopic={params.topic}
+              initialStudyMode={
+                params.readMode === 'in_depth'
+                  ? 'in_depth'
+                  : params.readMode === 'essentials'
+                  ? 'essentials'
+                  : undefined
+              }
               onBackPress={() => {
                 if (router.canGoBack()) {
                   router.back();

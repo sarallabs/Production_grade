@@ -49,6 +49,73 @@ export interface CourseOverviewData {
   subjects: CourseSubjectProgress[];
 }
 
+const DEFAULT_ENTOMOLOGY_CHAPTERS: Chapter[] = [
+  {
+    number: 1,
+    name: 'Digestive System',
+    title: 'Digestive System',
+    dir: 'chapter_01',
+    description: 'Authoritative course content for Digestive System from ANGRAU Cloud Repository.',
+    completed: [],
+    availableResources: ['summary', 'detailed', 'audio', 'videos', 'flashcards', 'quiz'],
+    resourceCount: 4,
+    topicCount: 5,
+    topics: [],
+    estimatedMinutes: 50,
+    estimatedTime: '50min',
+    heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/media/hero.png`,
+    heroImageUrl: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_01/media/hero.png`,
+  },
+  {
+    number: 2,
+    name: 'Metamorphosis',
+    title: 'Metamorphosis',
+    dir: 'chapter_02',
+    description: 'Authoritative course content for Metamorphosis from ANGRAU Cloud Repository.',
+    completed: [],
+    availableResources: ['summary', 'detailed', 'audio', 'videos', 'flashcards', 'quiz'],
+    resourceCount: 4,
+    topicCount: 6,
+    topics: [],
+    estimatedMinutes: 60,
+    estimatedTime: '60min',
+    heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/media/hero.png`,
+    heroImageUrl: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_02/media/hero.png`,
+  },
+  {
+    number: 3,
+    name: 'Weathering',
+    title: 'Weathering',
+    dir: 'chapter_03',
+    description: 'Authoritative course content for Weathering from ANGRAU Cloud Repository.',
+    completed: [],
+    availableResources: ['summary', 'detailed', 'audio', 'videos', 'flashcards', 'quiz'],
+    resourceCount: 4,
+    topicCount: 5,
+    topics: [],
+    estimatedMinutes: 50,
+    estimatedTime: '50min',
+    heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
+    heroImageUrl: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_03/media/hero.png`,
+  },
+  {
+    number: 4,
+    name: 'Pollination',
+    title: 'Pollination',
+    dir: 'chapter_04',
+    description: 'Authoritative course content for Pollination from ANGRAU Cloud Repository.',
+    completed: [],
+    availableResources: ['summary', 'detailed', 'audio', 'videos', 'flashcards', 'quiz'],
+    resourceCount: 4,
+    topicCount: 6,
+    topics: [],
+    estimatedMinutes: 60,
+    estimatedTime: '60min',
+    heroImage: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
+    heroImageUrl: `${GCS_API_BASE}/api/content/angrau/entomology/chapter_04/media/hero.png`,
+  },
+];
+
 export let ANGRAU_SUBJECTS: Subject[] = [
   {
     id: 'ento_131',
@@ -58,11 +125,13 @@ export let ANGRAU_SUBJECTS: Subject[] = [
     semester: 'Semester 3',
     university: 'Acharya N.G. Ranga Agricultural University',
     progressPercent: 0,
-    chapters: [],
+    chapters: DEFAULT_ENTOMOLOGY_CHAPTERS,
   },
 ];
 
 const USER_PROGRESS_KEY = 'saral_student_progress_v2';
+const SUBJECTS_CACHE_KEY = 'saral_pure_api_cached_subjects_v2';
+let hasFetchedLiveMetadataInSession = false;
 
 export async function getStudentChapterProgress(): Promise<Record<string, string[]>> {
   try {
@@ -79,6 +148,32 @@ export async function saveStudentChapterProgress(progress: Record<string, string
   } catch (e) {
     console.warn('[ManifestService] Failed to save student progress:', e);
   }
+}
+
+function syncSubjectsWithUserProgress(
+  subjects: Subject[],
+  userProgress: Record<string, string[]>
+): Subject[] {
+  return subjects.map((subj) => {
+    const baseChapters =
+      subj.chapters && subj.chapters.length > 0 ? subj.chapters : DEFAULT_ENTOMOLOGY_CHAPTERS;
+    const chaptersWithProgress = baseChapters.map((ch) => {
+      const chPad = String(ch.number).padStart(2, '0');
+      const key = `${subj.id}_chapter_${chPad}`;
+      const completedPillars = userProgress[key] || ch.completed || [];
+      return {
+        ...ch,
+        completed: [...completedPillars],
+      };
+    });
+    const updatedSubj: Subject = {
+      ...subj,
+      chapters: chaptersWithProgress,
+      progressPercent: 0,
+    };
+    updatedSubj.progressPercent = manifestService.calculateSubjectProgress(updatedSubj);
+    return updatedSubj;
+  });
 }
 
 async function fetchLiveChapters(): Promise<Chapter[]> {
@@ -101,8 +196,8 @@ async function fetchLiveChapters(): Promise<Chapter[]> {
 
         chapters.push({
           number: meta.chapter_number || ch,
-          name: meta.chapter_name || `Chapter ${ch}`,
-          title: meta.chapter_name || `Chapter ${ch}`,
+          name: meta.chapter_name || DEFAULT_ENTOMOLOGY_CHAPTERS[ch - 1]?.name || `Chapter ${ch}`,
+          title: meta.chapter_name || DEFAULT_ENTOMOLOGY_CHAPTERS[ch - 1]?.title || `Chapter ${ch}`,
           dir: `chapter_${chPad}`,
           description: `Authoritative course content for ${meta.chapter_name || `Chapter ${ch}`} from ANGRAU Cloud Repository.`,
           completed: userCompleted,
@@ -124,35 +219,52 @@ async function fetchLiveChapters(): Promise<Chapter[]> {
 }
 
 export const manifestService = {
-  async getSubjects(): Promise<Subject[]> {
-    const cacheKey = 'saral_pure_api_cached_subjects_v2';
+  async getSubjects(forceNetwork: boolean = false): Promise<Subject[]> {
     const userProgress = await getStudentChapterProgress();
 
-    const syncWithUserProgress = (subjects: Subject[]): Subject[] => {
-      return subjects.map((subj) => {
-        if (!subj.chapters) return subj;
-        const chaptersWithProgress = subj.chapters.map((ch) => {
-          const chPad = String(ch.number).padStart(2, '0');
-          const key = `${subj.id}_chapter_${chPad}`;
-          const completedPillars = userProgress[key] || ch.completed || [];
-          return {
-            ...ch,
-            completed: completedPillars,
-          };
-        });
-        const updatedSubj: Subject = {
-          ...subj,
-          chapters: chaptersWithProgress,
-          progressPercent: 0,
-        };
-        updatedSubj.progressPercent = manifestService.calculateSubjectProgress(updatedSubj);
-        return updatedSubj;
-      });
-    };
+    // Fast path: if we already have all 4 chapters in memory, sync with latest userProgress immediately
+    if (!forceNetwork && hasFetchedLiveMetadataInSession && ANGRAU_SUBJECTS[0]?.chapters?.length === 4) {
+      const immediate = syncSubjectsWithUserProgress(ANGRAU_SUBJECTS, userProgress);
+      ANGRAU_SUBJECTS = immediate;
+      return immediate;
+    }
+
+    const cached = await storage.getItem<Subject[]>(SUBJECTS_CACHE_KEY);
+    if (!forceNetwork && cached && cached.length > 0 && cached[0]?.chapters?.length === 4) {
+      const synced = syncSubjectsWithUserProgress(cached, userProgress);
+      ANGRAU_SUBJECTS = synced;
+      if (!hasFetchedLiveMetadataInSession) {
+        hasFetchedLiveMetadataInSession = true;
+        // Refresh metadata in the background without blocking UI rendering
+        fetchLiveChapters()
+          .then(async (liveChapters) => {
+            if (liveChapters.length === 4) {
+              const latestProgress = await getStudentChapterProgress();
+              const liveSubject: Subject = {
+                id: 'ento_131',
+                code: 'ENTO 131',
+                name: 'Entomology',
+                credits: '3 (2+1)',
+                semester: 'Semester 3',
+                university: 'Acharya N.G. Ranga Agricultural University',
+                chapters: liveChapters,
+                progressPercent: 0,
+              };
+              const updated = syncSubjectsWithUserProgress([liveSubject], latestProgress);
+              ANGRAU_SUBJECTS = updated;
+              await storage.setItem(SUBJECTS_CACHE_KEY, updated);
+            }
+          })
+          .catch(() => {});
+      }
+      return synced;
+    }
 
     try {
       const liveChapters = await fetchLiveChapters();
       if (liveChapters.length > 0) {
+        hasFetchedLiveMetadataInSession = true;
+        const latestProgress = await getStudentChapterProgress();
         const liveSubject: Subject = {
           id: 'ento_131',
           code: 'ENTO 131',
@@ -163,23 +275,22 @@ export const manifestService = {
           chapters: liveChapters,
           progressPercent: 0,
         };
-        const result = syncWithUserProgress([liveSubject]);
+        const result = syncSubjectsWithUserProgress([liveSubject], latestProgress);
         ANGRAU_SUBJECTS = result;
-        await storage.setItem(cacheKey, result);
+        await storage.setItem(SUBJECTS_CACHE_KEY, result);
         return result;
       }
     } catch (err) {
       console.warn('[ManifestService] Failed live fetch, checking local cache:', err);
     }
 
-    const cached = await storage.getItem<Subject[]>(cacheKey);
     if (cached && cached.length > 0) {
-      const synced = syncWithUserProgress(cached);
+      const synced = syncSubjectsWithUserProgress(cached, userProgress);
       ANGRAU_SUBJECTS = synced;
       return synced;
     }
 
-    const fallbackSynced = syncWithUserProgress(ANGRAU_SUBJECTS);
+    const fallbackSynced = syncSubjectsWithUserProgress(ANGRAU_SUBJECTS, userProgress);
     ANGRAU_SUBJECTS = fallbackSynced;
     return fallbackSynced;
   },
@@ -189,25 +300,42 @@ export const manifestService = {
       return { percentage: 0, statusColor: '#9CA3AF' };
     }
 
-    // Map any recorded resource types into the 4 primary learning pillars
-    const pillars = new Set<string>();
+    // Track distinct learning milestones as the user goes through the chapter
+    const milestones = new Set<string>();
     for (const item of chapter.completed) {
       const lower = item.toLowerCase();
-      if (lower === 'read' || lower === 'summary' || lower === 'detailed' || lower === 'notes') {
-        pillars.add('read');
+      if (lower === 'read' || lower === 'read_visit' || lower === 'read_essentials') {
+        milestones.add('read');
+      } else if (lower === 'read_scrolled') {
+        milestones.add('read_scrolled');
+      } else if (lower === 'read_indepth' || lower === 'detailed_view' || lower === 'detailed') {
+        milestones.add('read_indepth');
+      } else if (lower === 'quick_check' || lower.startsWith('quick_check_')) {
+        milestones.add('quick_check');
+      } else if (lower === 'summary' || lower === 'notes' || lower === 'read_complete') {
+        milestones.add('summary');
+      } else if (lower === 'audio' || lower === 'listen' || lower === 'podcast' || lower === 'listen_essentials' || lower === 'listen_indepth') {
+        milestones.add('listen');
+      } else if (lower === 'microcast' || lower === 'microcasts') {
+        milestones.add('microcasts');
       } else if (lower === 'videos' || lower === 'watch' || lower === 'video') {
-        pillars.add('videos');
-      } else if (lower === 'audio' || lower === 'listen' || lower === 'podcast' || lower === 'microcast') {
-        pillars.add('audio');
-      } else if (lower === 'practice' || lower === 'flashcards' || lower === 'quiz' || lower === 'assessment') {
-        pillars.add('practice');
+        milestones.add('watch');
+      } else if (lower === 'practice' || lower === 'flashcards' || lower === 'revise') {
+        milestones.add('revise');
+      } else if (lower === 'quiz' || lower === 'assessment' || lower === 'assessments' || lower === 'question_bank') {
+        milestones.add('assessments');
+      } else if (lower === 'prepare' || lower === 'pyq' || lower === 'prep_exam' || lower === 'study_plan') {
+        milestones.add('prepare');
+      } else if (lower === 'resources' || lower === 'mindmaps' || lower === 'key_takeaways' || lower === 'ask_me') {
+        milestones.add('resources');
       } else {
-        pillars.add(lower);
+        milestones.add(lower);
       }
     }
 
-    const total = 4;
-    const completedCount = pillars.size;
+    // 8 milestones represent 100% mastery of a unit (~12.5% per milestone as the student goes through the chapter)
+    const total = 8;
+    const completedCount = milestones.size;
     const pct = Math.min(100, Math.round((completedCount / total) * 100));
     const statusColor = pct === 100 ? '#22c55e' : pct > 0 ? '#3b82f6' : '#9CA3AF';
     return { percentage: pct, statusColor };
@@ -226,7 +354,7 @@ export const manifestService = {
   async getCourseOverview(courseName: string = 'Entomology'): Promise<CourseOverviewData> {
     const subjects = await manifestService.getSubjects();
     const ento = subjects[0];
-    
+
     // The dynamic units of Entomology (Digestive System, Metamorphosis, Weathering, Pollination) from database
     const unitProgressList: CourseSubjectProgress[] = (ento?.chapters || []).map((ch) => {
       const chProgress = manifestService.calculateChapterProgress(ch);
@@ -240,7 +368,7 @@ export const manifestService = {
       };
     });
 
-    const overallProgress = ento ? manifestService.calculateSubjectProgress(ento) : 50;
+    const overallProgress = ento ? manifestService.calculateSubjectProgress(ento) : 0;
 
     return {
       courseId: 'ento_131',
@@ -274,19 +402,16 @@ export const manifestService = {
     userProgress[chKey] = current;
     await saveStudentChapterProgress(userProgress);
 
-    const subjects = await manifestService.getSubjects();
-    const subject = subjects.find(
-      (s) => s.id === subjectId || s.code.toLowerCase().replace(/\s+/g, '_') === subjectId
-    );
-    if (subject && subject.chapters) {
-      const chapter = subject.chapters.find((c) => c.number === chapterNumber);
-      if (chapter) {
-        chapter.completed = current;
-      }
-      subject.progressPercent = manifestService.calculateSubjectProgress(subject);
-      await storage.setItem('saral_pure_api_cached_subjects_v2', subjects);
-    }
-    return subjects;
+    // Immediately sync in-memory and cached subjects without blocking on network metadata calls
+    const baseSubjects =
+      ANGRAU_SUBJECTS && ANGRAU_SUBJECTS.length > 0 && ANGRAU_SUBJECTS[0]?.chapters?.length > 0
+        ? ANGRAU_SUBJECTS
+        : (await storage.getItem<Subject[]>(SUBJECTS_CACHE_KEY)) || ANGRAU_SUBJECTS;
+
+    const updatedSubjects = syncSubjectsWithUserProgress(baseSubjects, userProgress);
+    ANGRAU_SUBJECTS = updatedSubjects;
+    await storage.setItem(SUBJECTS_CACHE_KEY, updatedSubjects);
+    return updatedSubjects;
   },
 
   async toggleChapterResource(
@@ -341,4 +466,3 @@ export const manifestService = {
     return fallbackText;
   },
 };
-

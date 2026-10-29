@@ -127,6 +127,50 @@ export default function ProfileScreen() {
                 </Text>
               </View>
 
+              {/* App Theme & Focus Mode Switcher right on My Profile */}
+              <View
+                style={[
+                  styles.sectionCard,
+                  { backgroundColor: cardBg, borderColor: cardBorder },
+                ]}
+              >
+                <Text style={[styles.sectionLabel, { color: subtextColor }]}>APP THEME & FOCUS MODE</Text>
+                <View style={styles.themeOptionsRow}>
+                  {(['light', 'dark', 'focus'] as const).map((mode) => {
+                    const isSelected = themeMode === mode;
+                    return (
+                      <TouchableOpacity
+                        key={mode}
+                        style={[
+                          styles.themePill,
+                          { backgroundColor: tagBg },
+                          isSelected && styles.themePillActive,
+                        ]}
+                        onPress={() => {
+                          Haptics.selectionAsync();
+                          setThemeMode(mode);
+                        }}
+                      >
+                        <Ionicons
+                          name={mode === 'light' ? 'sunny' : mode === 'dark' ? 'moon' : 'eye-off'}
+                          size={16}
+                          color={isSelected ? '#ffffff' : subtextColor}
+                        />
+                        <Text
+                          style={[
+                            styles.themePillText,
+                            { color: isSelected ? '#FFFFFF' : subtextColor },
+                            isSelected && styles.themePillTextActive,
+                          ]}
+                        >
+                          {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+
               {/* Study Stats Grid */}
               <View style={styles.statsRow}>
                 <View style={[styles.statBox, { backgroundColor: cardBg, borderColor: cardBorder }]}>

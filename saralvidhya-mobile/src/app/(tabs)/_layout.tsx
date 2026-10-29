@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { useAppTheme } from '@/context/ThemeContext';
+import { useCourseContext } from '@/context/CourseContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import SideRail from '@/components/navigation/SideRail';
 import {
@@ -15,6 +16,8 @@ import {
 export default function TabsLayout() {
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
+  const { selectedChapter } = useCourseContext();
+  const activeChapterParam = selectedChapter?.number ? String(selectedChapter.number) : undefined;
 
   // Color scheme matching Figma DevMode CSS (.bottomNavigation):
   // Light Mode: Background #FFF6F1, Border #D1E3D9, Active #147A43, Inactive #617269
@@ -57,7 +60,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
 
@@ -66,7 +70,10 @@ export default function TabsLayout() {
         name="learn"
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate('learn', { segment: 'read' });
+            navigation.navigate('learn', {
+              segment: 'read',
+              ...(activeChapterParam ? { chapter: activeChapterParam } : {}),
+            });
           },
         })}
         options={{
@@ -83,7 +90,10 @@ export default function TabsLayout() {
         name="practice"
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate('practice', { part: 'revise' });
+            navigation.navigate('practice', {
+              part: 'revise',
+              ...(activeChapterParam ? { chapter: activeChapterParam } : {}),
+            });
           },
         })}
         options={{
@@ -100,7 +110,10 @@ export default function TabsLayout() {
         name="prepare"
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate('prepare', { segment: 'pyq' });
+            navigation.navigate('prepare', {
+              segment: 'pyq',
+              ...(activeChapterParam ? { chapter: activeChapterParam } : {}),
+            });
           },
         })}
         options={{
@@ -117,7 +130,10 @@ export default function TabsLayout() {
         name="resources"
         listeners={({ navigation }) => ({
           tabPress: () => {
-            navigation.navigate('resources', { segment: 'mindmaps' });
+            navigation.navigate('resources', {
+              segment: 'mindmaps',
+              ...(activeChapterParam ? { chapter: activeChapterParam } : {}),
+            });
           },
         })}
         options={{
@@ -133,19 +149,22 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="study"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          href: null,
+          tabBarButton: () => null,
+          tabBarItemStyle: { display: 'none' },
         }}
       />
     </Tabs>

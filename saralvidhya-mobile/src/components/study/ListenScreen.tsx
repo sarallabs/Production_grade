@@ -836,9 +836,6 @@ export default function ListenScreen({
           /* Microcasts Header */
           <View style={styles.listenChapterHeader}>
             <Text style={[styles.listenChapterTitle, { color: textDark }]}>Microcasts</Text>
-            <Text style={[styles.pageSubtitle, { color: isDark ? '#A6C5B3' : '#637375', marginTop: 2 }]}>
-              Short audio lessons for focused learning
-            </Text>
           </View>
         ) : (
           /* Chapter Title Header */
@@ -1118,7 +1115,7 @@ export default function ListenScreen({
           /* VIEW C: MICROCASTS VIEW (Figma DevMode .microcastsMobile412918)            */
           /* ========================================================================= */
           <View style={styles.microcastsView}>
-            {/* Header row: MICROCASTS · STANDARD DEPTH / 5 lessons matched / See all */}
+            {/* Header row: MICROCASTS · STANDARD DEPTH / 5 lessons matched */}
             <View style={styles.microSectionRow}>
               <View>
                 <Text style={[styles.sectionEyebrow, { color: '#175945' }]}>
@@ -1128,9 +1125,6 @@ export default function ListenScreen({
                   5 lessons matched
                 </Text>
               </View>
-              <TouchableOpacity activeOpacity={0.7}>
-                <Text style={[styles.seeAll, { color: '#00996E' }]}>See all</Text>
-              </TouchableOpacity>
             </View>
 
             {/* List of Microcast Lesson Cards (Cards play inline directly with no separate player) */}
@@ -1160,7 +1154,7 @@ export default function ListenScreen({
                         <View style={[styles.microEpisodeNumberActive, { backgroundColor: '#00996E' }]}>
                           <Ionicons
                             name={isPlaying ? 'pause' : 'play'}
-                            size={14}
+                            size={16}
                             color="#FFFFFF"
                             style={!isPlaying ? { marginLeft: 1.5 } : undefined}
                           />
@@ -1187,62 +1181,98 @@ export default function ListenScreen({
                         </View>
                       </TouchableOpacity>
 
-                      {/* Integrated Playback Scrubber Track */}
-                      <View style={[styles.inlinePlaybackTrack, { backgroundColor: isDark ? '#263B30' : '#DBE5E0' }]}>
-                        <View
-                          style={[
-                            styles.inlinePlaybackProgress,
-                            { width: `${progressPercent}%`, backgroundColor: '#00996E' },
-                          ]}
-                        />
-                      </View>
-
-                      {/* Integrated Controls Row */}
-                      <View style={styles.inlineControlsRow}>
-                        <View style={styles.inlineControlsLeft}>
-                          <TouchableOpacity
-                            style={[
-                              styles.inlineReplayBtn,
-                              {
-                                backgroundColor: cardBg,
-                                borderColor: isDark ? '#2D4538' : '#DBE5E0',
-                              },
-                            ]}
-                            onPress={() => handleSkip(-15)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            activeOpacity={0.7}
-                          >
-                            <Ionicons name="refresh" size={11} color={isDark ? '#FFFFFF' : '#1A282D'} />
-                            <Text style={[styles.inlineReplayText, { color: isDark ? '#FFFFFF' : '#1A282D' }]}>-15s</Text>
-                          </TouchableOpacity>
-
-                          <TouchableOpacity
-                            style={[styles.inlinePlayPauseBtn, { backgroundColor: '#00996E' }]}
-                            onPress={() => handleSelectAndPlayMicrocast(ep.id)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            activeOpacity={0.75}
-                          >
-                            <Ionicons
-                              name={isPlaying ? 'pause' : 'play'}
-                              size={13}
-                              color="#FFFFFF"
-                              style={!isPlaying ? { marginLeft: 1.5 } : undefined}
+                      {/* Integrated In-Depth Style Player Controls */}
+                      <View
+                        style={[
+                          styles.unifiedPlayerCard,
+                          {
+                            backgroundColor: cardBg,
+                            borderColor: isDark ? '#2D4538' : '#D5E6DC',
+                            marginTop: 4,
+                            marginBottom: 0,
+                          },
+                        ]}
+                      >
+                        {/* Top: Full-Width Scrubber Progress Bar */}
+                        <TouchableOpacity
+                          activeOpacity={1}
+                          onPress={handleScrubberPress}
+                          onLayout={(e) => setScrubberWidth(e.nativeEvent.layout.width)}
+                          style={styles.playerScrubberTouch}
+                        >
+                          <View style={[styles.playerScrubberTrack, { backgroundColor: isDark ? '#263B30' : '#D2E6DC' }]}>
+                            <View
+                              style={[
+                                styles.playerScrubberFill,
+                                { width: `${progressPercent}%`, backgroundColor: '#00996E' },
+                              ]}
                             />
-                          </TouchableOpacity>
+                          </View>
+                        </TouchableOpacity>
 
+                        {/* Bottom: Main Player Controls Row */}
+                        <View style={styles.playerControlsRow}>
+                          {/* Left: Speed Toggle (Bold Clean Text) */}
                           <TouchableOpacity
-                            style={styles.inlineSpeedBtn}
                             onPress={handleCycleSpeed}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
                             activeOpacity={0.7}
+                            style={styles.playerSpeedBtn}
                           >
-                            <Text style={styles.inlineSpeedText}>{SPEED_OPTIONS[speedIndex]}x</Text>
+                            <Text style={[styles.playerSpeedText, { color: textDark }]}>
+                              {SPEED_OPTIONS[speedIndex]}×
+                            </Text>
                           </TouchableOpacity>
-                        </View>
 
-                        <Text style={[styles.inlineTimeText, { color: isDark ? '#A6C5B3' : '#637375' }]}>
-                          {formatSeconds(currentSec)} / {ep.durationLabel}
-                        </Text>
+                          {/* Center Cluster: Rewind 15s, Play/Pause, Forward 15s */}
+                          <View style={styles.playerCenterGroup}>
+                            {/* Skip -15s */}
+                            <TouchableOpacity
+                              style={[
+                                styles.playerSkipCircle,
+                                { backgroundColor: isDark ? 'rgba(0, 153, 110, 0.22)' : '#E6F3EB' },
+                              ]}
+                              onPress={() => handleSkip(-15)}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={[styles.playerSkipLabel, { color: textDark }]}>↶15</Text>
+                            </TouchableOpacity>
+
+                            {/* Play / Pause Button */}
+                            <TouchableOpacity
+                              style={styles.playerPlayCircle}
+                              onPress={() => handleSelectAndPlayMicrocast(ep.id)}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              activeOpacity={0.8}
+                            >
+                              <Ionicons
+                                name={isPlaying ? 'pause' : 'play'}
+                                size={25}
+                                color="#FFFFFF"
+                                style={!isPlaying ? { marginLeft: 2.5 } : undefined}
+                              />
+                            </TouchableOpacity>
+
+                            {/* Skip +15s */}
+                            <TouchableOpacity
+                              style={[
+                                styles.playerSkipCircle,
+                                { backgroundColor: isDark ? 'rgba(0, 153, 110, 0.22)' : '#E6F3EB' },
+                              ]}
+                              onPress={() => handleSkip(15)}
+                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                              activeOpacity={0.75}
+                            >
+                              <Text style={[styles.playerSkipLabel, { color: textDark }]}>15↷</Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          {/* Right: Timestamp */}
+                          <Text style={[styles.playerTimeText, { color: isDark ? '#A6C5B3' : '#475569' }]}>
+                            {formatSeconds(currentSec)} / {ep.durationLabel}
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   );
@@ -1289,7 +1319,7 @@ export default function ListenScreen({
                     </View>
 
                     <View style={[styles.microPlayIconWrap, { backgroundColor: isDark ? '#1C2B23' : '#E8F7ED' }]}>
-                      <Ionicons name="play" size={13} color="#00996E" style={{ marginLeft: 1.5 }} />
+                      <Ionicons name="play" size={16} color="#00996E" style={{ marginLeft: 1.5 }} />
                     </View>
                   </TouchableOpacity>
                 );
@@ -1797,22 +1827,22 @@ const styles = StyleSheet.create({
   },
   /* Microcasts Layout (.microcastsMobile412918) */
   microcastsView: {
-    gap: 12,
+    gap: 14,
   },
   microSectionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
     paddingHorizontal: 2,
   },
   sectionEyebrow: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   filterSummary: {
-    fontSize: 11,
+    fontSize: 13,
     marginTop: 2,
   },
   seeAll: {
@@ -1820,71 +1850,74 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   microList: {
-    gap: 8,
+    gap: 12,
   },
   microLessonCard: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    minHeight: 55,
+    minHeight: 78,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 14,
   },
   microEpisodeNumberActive: {
-    width: 29,
-    height: 29,
-    borderRadius: 14.5,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
   microEpisodeNumberActiveText: {
     color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   microEpisodeNumberInactive: {
-    width: 29,
-    height: 29,
-    borderRadius: 14.5,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   microEpisodeNumberInactiveText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
   },
   microLessonInfo: {
     flex: 1,
-    gap: 2,
+    gap: 4,
   },
   microEpisodeTitle: {
-    fontSize: 11,
+    fontSize: 15,
+    lineHeight: 20,
     fontWeight: '600',
   },
   microEpisodeMetadata: {
-    fontSize: 9,
+    fontSize: 12.5,
+    lineHeight: 17,
   },
   /* Active Inline Playing Card Styles */
   microLessonCardActive: {
     flexDirection: 'column',
     alignItems: 'stretch',
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    gap: 10,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
     borderWidth: 1.5,
   },
   microCardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 14,
   },
   microPlayIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },

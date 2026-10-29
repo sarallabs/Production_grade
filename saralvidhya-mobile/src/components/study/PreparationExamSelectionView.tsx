@@ -45,6 +45,7 @@ export const DEFAULT_UNITS: UnitItem[] = [
 
 interface PreparationExamSelectionViewProps {
   units?: UnitItem[];
+  defaultUnit?: number;
   pageTitle?: string;
   backLabel?: string;
   hideHeader?: boolean;
@@ -54,6 +55,7 @@ interface PreparationExamSelectionViewProps {
 
 export default function PreparationExamSelectionView({
   units = DEFAULT_UNITS,
+  defaultUnit = 1,
   pageTitle = 'Preparation Exam',
   backLabel = 'Back to Study Table',
   hideHeader = false,
@@ -64,8 +66,14 @@ export default function PreparationExamSelectionView({
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const [selectedUnits, setSelectedUnits] = useState<number[]>([1]);
+  const [selectedUnits, setSelectedUnits] = useState<number[]>([defaultUnit]);
   const [questionCount, setQuestionCount] = useState<number>(10);
+
+  React.useEffect(() => {
+    if (defaultUnit) {
+      setSelectedUnits([defaultUnit]);
+    }
+  }, [defaultUnit]);
 
   // Exact 1:1 color palettes matching the Figma/PNG design
   const colors = isDark
