@@ -1555,11 +1555,8 @@ export default function VideosView({
       style={{
         position: "relative",
         width: "100%",
-        height: isFullscreen ? "100%" : "clamp(280px, calc(100vh - 255px), 425px)",
+        height: isFullscreen ? "100%" : "clamp(300px, calc(100vh - 230px), 470px)",
         flexShrink: 0,
-        background: "radial-gradient(ellipse at center, #2E4238 0%, #1B2821 100%)",
-        borderRadius: isFullscreen ? "0px" : "16px",
-        overflow: "hidden",
         boxShadow: isFullscreen ? "none" : "0 8px 26px rgba(20, 32, 26, 0.14)",
         display: "flex",
         flexDirection: "column",
@@ -2313,11 +2310,11 @@ export default function VideosView({
         paddingRight: "4px",
       }}
     >
-      {/* ── Two-Column Watch Layout (Screen 1 Top + Screen 2 Scrolled Down) ── */}
+      {/* ── Three-Column Watch Layout (Left: Watching Guide | Middle: Video | Right: Timestamps/Segments) ── */}
       <div
         style={{
           display: "flex",
-          gap: "26px",
+          gap: "20px",
           width: "100%",
           margin: 0,
           padding: "4px 0 36px 0",
@@ -2578,142 +2575,18 @@ export default function VideosView({
           </div>
         </div>
 
-        {/* ── RIGHT MAIN CONTENT COLUMN (Screen 1 + Screen 2 on Scroll) ── */}
+        {/* ── MIDDLE MAIN VIDEO COLUMN ── */}
         <div
           style={{
             flex: 1,
             minWidth: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
+            gap: "14px",
           }}
         >
-          {/* 16:9 Main Video Player (Aligned directly with Watching Guide, single-view fit with Segments below) */}
+          {/* 16:9 Main Video Player in the Middle */}
           {renderVideoPlayer(true, false, robustActive)}
-
-          {/* ── SEGMENTS IN THIS VIDEO — CLICK TO JUMP (Visible in single view right under thumbnail) ── */}
-          <div style={{ marginTop: "2px", display: "flex", flexDirection: "column", gap: "8px" }}>
-            <div
-              style={{
-                fontSize: "10.5px",
-                fontWeight: 800,
-                letterSpacing: "0.08em",
-                color: "#6E7B73",
-                textTransform: "uppercase",
-              }}
-            >
-              SEGMENTS IN THIS VIDEO — CLICK TO JUMP
-            </div>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: `repeat(${Math.min(3, segmentsList.length)}, minmax(0, 1fr))`,
-                gap: "12px",
-              }}
-            >
-              {segmentsList.map((seg, idx) => {
-                const isNowPlaying = idx === activeSegmentIdx;
-                const isUpNext = idx === activeSegmentIdx + 1;
-                const isWatchedSeg = idx < activeSegmentIdx;
-
-                return (
-                  <div
-                    key={seg.index}
-                    onClick={() => seekToSecond(seg.startSec)}
-                    style={{
-                      background: isNowPlaying ? "#EAF3EE" : "#FFFFFF",
-                      border: isNowPlaying ? "1.5px solid #8AB89E" : "1px solid #E6E0D4",
-                      borderRadius: "13px",
-                      padding: "12px 15px",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      justifyContent: "space-between",
-                      gap: "8px",
-                      transition: "all 0.18s ease",
-                      boxShadow: isNowPlaying
-                        ? "0 4px 14px rgba(45, 62, 54, 0.06)"
-                        : "0 2px 6px rgba(0, 0, 0, 0.02)",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                      {/* Segment Icon */}
-                      <div style={{ display: "flex", alignItems: "center" }}>
-                        {idx === 0 ? (
-                          <span style={{ fontSize: "16px", lineHeight: 1 }}>🌿</span>
-                        ) : idx === 1 ? (
-                          <span style={{ fontSize: "16px", lineHeight: 1 }}>🛡️</span>
-                        ) : (
-                          <span style={{ fontSize: "16px", lineHeight: 1 }}>👥</span>
-                        )}
-                      </div>
-
-                      {/* Segment Title */}
-                      <div
-                        style={{
-                          fontSize: "13.5px",
-                          fontWeight: 800,
-                          color: "#1E2822",
-                          lineHeight: 1.35,
-                        }}
-                      >
-                        {seg.title}
-                      </div>
-
-                      {/* Time Range + Duration */}
-                      <div
-                        style={{
-                          fontSize: "11.5px",
-                          fontWeight: 600,
-                          color: "#6E7B73",
-                          fontVariantNumeric: "tabular-nums",
-                        }}
-                      >
-                        {`${seg.timeRangeStr} · ${seg.durationLabel}`}
-                      </div>
-                    </div>
-
-                    {/* Segment Status Badge */}
-                    <div>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          background: isNowPlaying
-                            ? "#9DC2AD"
-                            : isWatchedSeg
-                              ? "#DCECE3"
-                              : "#EFECE6",
-                          color: isNowPlaying
-                            ? "#182C22"
-                            : isWatchedSeg
-                              ? "#26593E"
-                              : "#6E7B73",
-                          fontSize: "10px",
-                          fontWeight: 800,
-                          letterSpacing: "0.05em",
-                          padding: "4px 10px",
-                          borderRadius: "999px",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {isNowPlaying
-                          ? "▶ NOW PLAYING"
-                          : isUpNext
-                            ? "UP NEXT"
-                            : isWatchedSeg
-                              ? "✓ WATCHED"
-                              : "NOT WATCHED"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
           {/* ── SCREEN 2: KEY MOMENTS (Left) + UP NEXT IN THIS CHAPTER (Right) ── */}
           <div
             style={{
@@ -3116,6 +2989,169 @@ export default function VideosView({
                 {`${nextVideoObj?.title || displayTitle} →`}
               </div>
             </button>
+          </div>
+        </div>
+
+        {/* ── RIGHT TIMESTAMPS / SEGMENTS COLUMN ── */}
+        <div
+          style={{
+            width: "288px",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          {/* Top Pill matching Left Watching Guide Pill */}
+          <div
+            style={{
+              background: "#9CC0B4",
+              color: "#18221D",
+              borderRadius: "999px",
+              padding: "10px 18px",
+              fontSize: "13px",
+              fontWeight: 700,
+              textAlign: "center",
+              letterSpacing: "0.01em",
+              boxShadow: "0 2px 6px rgba(29, 43, 36, 0.12)",
+            }}
+          >
+            Video Timestamps
+          </div>
+
+          {/* White Segments / Timestamps Card */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "16px 14px",
+              border: "1px solid #E6E0D4",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+            <div
+              style={{
+                fontSize: "10.5px",
+                fontWeight: 800,
+                letterSpacing: "0.07em",
+                color: "#6E7B73",
+                textTransform: "uppercase",
+                padding: "0 4px 2px 4px",
+              }}
+            >
+              SEGMENTS IN THIS VIDEO — CLICK TO JUMP
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              {segmentsList.map((seg, idx) => {
+                const isNowPlaying = idx === activeSegmentIdx;
+                const isUpNext = idx === activeSegmentIdx + 1;
+                const isWatchedSeg = idx < activeSegmentIdx;
+
+                return (
+                  <div
+                    key={seg.index}
+                    onClick={() => seekToSecond(seg.startSec)}
+                    style={{
+                      background: isNowPlaying ? "#EAF3EE" : "#FFFFFF",
+                      border: isNowPlaying ? "1.5px solid #8AB89E" : "1px solid #E6E0D4",
+                      borderRadius: "13px",
+                      padding: "12px 14px",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                      transition: "all 0.18s ease",
+                      boxShadow: isNowPlaying
+                        ? "0 4px 14px rgba(45, 62, 54, 0.06)"
+                        : "0 2px 6px rgba(0, 0, 0, 0.02)",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {/* Segment Icon */}
+                      <div style={{ display: "flex", alignItems: "center" }}>
+                        {idx === 0 ? (
+                          <span style={{ fontSize: "15px", lineHeight: 1 }}>🌿</span>
+                        ) : idx === 1 ? (
+                          <span style={{ fontSize: "15px", lineHeight: 1 }}>🛡️</span>
+                        ) : (
+                          <span style={{ fontSize: "15px", lineHeight: 1 }}>👥</span>
+                        )}
+                      </div>
+
+                      {/* Segment Title */}
+                      <div
+                        style={{
+                          fontSize: "13px",
+                          fontWeight: 800,
+                          color: "#1E2822",
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        {seg.title}
+                      </div>
+
+                      {/* Time Range + Duration */}
+                      <div
+                        style={{
+                          fontSize: "11.5px",
+                          fontWeight: 600,
+                          color: "#6E7B73",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {`${seg.timeRangeStr} · ${seg.durationLabel}`}
+                      </div>
+                    </div>
+
+                    {/* Segment Status Badge */}
+                    <div>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          background: isNowPlaying
+                            ? "#9DC2AD"
+                            : isWatchedSeg
+                              ? "#DCECE3"
+                              : "#EFECE6",
+                          color: isNowPlaying
+                            ? "#182C22"
+                            : isWatchedSeg
+                              ? "#26593E"
+                              : "#6E7B73",
+                          fontSize: "10px",
+                          fontWeight: 800,
+                          letterSpacing: "0.05em",
+                          padding: "4px 10px",
+                          borderRadius: "999px",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {isNowPlaying
+                          ? "▶ NOW PLAYING"
+                          : isUpNext
+                            ? "UP NEXT"
+                            : isWatchedSeg
+                              ? "✓ WATCHED"
+                              : "NOT WATCHED"}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
