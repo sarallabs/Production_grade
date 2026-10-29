@@ -90,6 +90,8 @@ import { getRegistryTenantId } from "@/data/manifestService";
 import { useTenant, getCloudUiCopy } from "@/tenant/TenantProvider";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
 import { cloudStorage, useCloudState } from "@/context/CloudStateContext";
+import MockTestView from "@/components/study/MockTestView";
+import { AssessmentView } from "@/components/study/AssessmentView";
 const MindMapView = React.lazy(() => import("@/components/MindMapView"));
 const FlashcardsView = React.lazy(() => import("@/components/FlashcardsView"));
 const QuestionBankView = React.lazy(() => import("@/components/QuestionBankView"));
@@ -98,11 +100,7 @@ const StudyPlanView = React.lazy(() => import("@/components/study/StudyPlanView"
 const AskBotView = React.lazy(() => import("@/components/study/AskBotView"));
 const PodcastsView = React.lazy(() => import("@/components/study/PodcastsView"));
 const PYQView = React.lazy(() => import("@/components/study/PYQView"));
-const MockTestView = React.lazy(() => import("@/components/study/MockTestView"));
 const VideosView = React.lazy(() => import("@/components/study/VideosView"));
-const AssessmentView = React.lazy(() =>
-  import("@/components/study/AssessmentView").then((m) => ({ default: m.AssessmentView }))
-);
 const SwotView = React.lazy(() => import("@/components/study/SwotView"));
 const LeaderboardView = React.lazy(() => import("@/components/study/LeaderboardView"));
 
@@ -549,10 +547,8 @@ export default function StudyTable() {
     googleTtsStop();
     setUiPersona(level);
     trackPersonaChange(persona, level);
-    React.startTransition(() => {
-      setPersonaState(level);
-      updateSavedCourseParams({ persona: level });
-    });
+    updateSavedCourseParams({ persona: level });
+    setPersonaState(level);
   }, [persona, updateSavedCourseParams]);
   const PERSONAS: { key: DifficultyLevel; label: string; imgSrc: string }[] = [
     { key: "beginner", label: "Beginner", imgSrc: `${import.meta.env.BASE_URL}personas/beginner.png` },
@@ -938,10 +934,8 @@ export default function StudyTable() {
       setPodcastTargetMcIndex(null);
       setPodcastTargetTrack(null);
     }
-    React.startTransition(() => {
-      setActiveToolState(tool);
-      updateSavedCourseParams({ tool });
-    });
+    updateSavedCourseParams({ tool });
+    setActiveToolState(tool);
     trackToolUsage({
       tool,
       subjectId,
@@ -1409,13 +1403,23 @@ export default function StudyTable() {
 
     // SectionizedReadView manages its own fetch + cache for cloud summary/detailed
     // without needing videosLoaded or StudyTable's loading spinner
-    if (isCloudSubject && (activeTool === "summary" || activeTool === "detailed")) {
-      setLoading(false);
-      return;
-    }
+    const isSelfLoadingTool =
+      activeTool === "videos" ||
+      activeTool === "podcasts" ||
+      activeTool === "pyq" ||
+      activeTool === "prep_exam" ||
+      activeTool === "mocktest" ||
+      activeTool === "pre_final_test" ||
+      activeTool === "ask" ||
+      activeTool === "swot" ||
+      activeTool === "leaderboard" ||
+      (isCloudSubject && (activeTool === "summary" || activeTool === "detailed" || activeTool === "assessment"));
 
-    if (activeTool === "videos") {
+    if (isSelfLoadingTool) {
       setLoading(false);
+      if (activeTool !== "videos") {
+        return;
+      }
     } else {
       setLoading(true);
       setContent(null);
@@ -4769,16 +4773,31 @@ export default function StudyTable() {
                     const activeThemeColor = themeColor;
                     const activeBorderColor = themeColor;
 
+                    const activateNodeTool = (e: React.MouseEvent<HTMLDivElement>) => {
+                      e.stopPropagation();
+                      if (!locked) {
+                        if (toolId === "mocktest" || toolId === "prep_exam") {
+                          setMockTestVariant(toolId === "prep_exam" ? "prep" : "mock");
+                        }
+                        setActiveTool(toolId);
+                      }
+                    };
+
                     return (
                       <div
                         key={toolId}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!locked) {
-                            if (toolId === "mocktest" || toolId === "prep_exam") {
-                              setMockTestVariant(toolId === "prep_exam" ? "prep" : "mock");
-                            }
-                            setActiveTool(toolId);
+                        role="button"
+                        tabIndex={0}
+                        onMouseDown={(e) => {
+                          if (e.button === 0) {
+                            activateNodeTool(e);
+                          }
+                        }}
+                        onClick={activateNodeTool}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            activateNodeTool(e as any);
                           }
                         }}
                         style={{
@@ -4797,7 +4816,7 @@ export default function StudyTable() {
                             : 'none',
                           cursor: locked ? 'not-allowed' : 'pointer',
                           opacity: 1,
-                          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                          transition: 'background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease',
                           position: 'relative',
                           gap: '1px',
                           flex: '1 1 0',
@@ -4807,15 +4826,15 @@ export default function StudyTable() {
                           minHeight: '56px',
                           maxHeight: '56px',
                           boxSizing: 'border-box',
+                          userSelect: 'none',
+                          WebkitUserSelect: 'none',
                         }}
                         title={labelOverride || GUIDED_LABELS[toolId]}
                         onMouseEnter={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = isDarkToolbar ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.04)';
-                          (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)';
                         } : undefined}
                         onMouseLeave={!active && !locked ? (e) => {
                           (e.currentTarget as HTMLDivElement).style.background = 'transparent';
-                          (e.currentTarget as HTMLDivElement).style.transform = 'none';
                         } : undefined}
                       >
                         <div style={{
@@ -4828,7 +4847,8 @@ export default function StudyTable() {
                           transform: active ? 'scale(0.95)' : 'scale(0.88)',
                           filter: active ? `drop-shadow(0 2px 8px ${themeColor}90)` : 'none',
                           opacity: active ? 1 : 0.72,
-                          flexShrink: 0
+                          flexShrink: 0,
+                          pointerEvents: 'none',
                         }}>
                           {getNodeIcon(toolId, themeColor, active)}
                         </div>
@@ -4848,6 +4868,7 @@ export default function StudyTable() {
                           minHeight: '22px',
                           maxHeight: '22px',
                           width: '100%',
+                          pointerEvents: 'none',
                         }}>
                           {labelOverride || GUIDED_LABELS[toolId]}
                         </span>
@@ -4861,6 +4882,7 @@ export default function StudyTable() {
                               height: '2.5px',
                               borderRadius: '2px',
                               background: activeBorderColor,
+                              pointerEvents: 'none',
                             }}
                           />
                         )}
@@ -5027,10 +5049,10 @@ export default function StudyTable() {
                                 width: 100%;
                                 flex: 1 1 auto;
                                 opacity: 0;
-                                transform: translate3d(0, 12px, 0) scale3d(0.94, 0.94, 1);
+                                transform: translate3d(0, 4px, 0) scale3d(0.97, 0.97, 1);
                                 transform-origin: center bottom;
-                                pointer-events: none;
-                                transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+                                pointer-events: auto;
+                                transition: opacity 0.24s cubic-bezier(0.16, 1, 0.3, 1), transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
                                 will-change: opacity, transform;
                                 backface-visibility: hidden;
                                 -webkit-backface-visibility: hidden;
@@ -5055,105 +5077,118 @@ export default function StudyTable() {
                               }
                             `}</style>
 
-                            {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
-                            <div
-                              className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`}
-                              style={groupCardStyle(isLearnActive, '#9CC0B4')}
-                              onClick={() => {
-                                if (!isLearnActive) setActiveTool('summary');
-                              }}
-                            >
-                              <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
-                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                  <span className="sv-tool-group-lead-icon-inner">
-                                    {getNodeIcon('summary', '#9CC0B4', true)}
-                                  </span>
-                                </span>
-                                <span className="sv-tool-group-title-text">Learn</span>
-                                {isSegmented && (
-                                  <span
-                                    title={activeVideo?.title}
-                                    style={{ background: '#9CC0B4', color: '#18221D', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
+                            {(() => {
+                              const selectCardToolByPosition = (
+                                e: React.MouseEvent<HTMLDivElement>,
+                                tools: [ToolId, ToolId, ToolId],
+                              ) => {
+                                e.stopPropagation();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const relX = rect.width > 0 ? (e.clientX - rect.left) / rect.width : 0;
+                                const picked: ToolId =
+                                  relX < 0.34 ? tools[0] : relX < 0.67 ? tools[1] : tools[2];
+                                if (picked === 'mocktest' || picked === 'prep_exam') {
+                                  setMockTestVariant(picked === 'prep_exam' ? 'prep' : 'mock');
+                                }
+                                setActiveTool(picked);
+                              };
+
+                              return (
+                                <>
+                                  {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
+                                  <div
+                                    className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`}
+                                    style={groupCardStyle(isLearnActive, '#9CC0B4')}
+                                    onClick={(e) => selectCardToolByPosition(e, ['summary', 'podcasts', 'videos'])}
                                   >
-                                    Video {videoIndex}/{chapterVideos.length}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
-                                {renderNode('summary', 'Read', '#9CC0B4')}
-                                {renderNode('podcasts', 'Listen', '#9CC0B4')}
-                                {renderNode('videos', 'Watch', '#9CC0B4')}
-                              </div>
-                            </div>
+                                    <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
+                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                        <span className="sv-tool-group-lead-icon-inner">
+                                          {getNodeIcon('summary', '#9CC0B4', true)}
+                                        </span>
+                                      </span>
+                                      <span className="sv-tool-group-title-text">Learn</span>
+                                      {isSegmented && (
+                                        <span
+                                          title={activeVideo?.title}
+                                          style={{ background: '#9CC0B4', color: '#18221D', borderRadius: '4px', padding: '1px 5px', fontSize: '9.5px', fontWeight: 800 }}
+                                        >
+                                          Video {videoIndex}/{chapterVideos.length}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="sv-tool-group-options">
+                                      {renderNode('summary', 'Read', '#9CC0B4')}
+                                      {renderNode('podcasts', 'Listen', '#9CC0B4')}
+                                      {renderNode('videos', 'Watch', '#9CC0B4')}
+                                    </div>
+                                  </div>
 
-                            {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
-                            <div
-                              className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`}
-                              style={groupCardStyle(isPracticeActive, '#E7B864')}
-                              onClick={() => {
-                                if (!isPracticeActive) setActiveTool('revision_flashcards');
-                              }}
-                            >
-                              <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
-                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                  <span className="sv-tool-group-lead-icon-inner">
-                                    {getNodeIcon('revision_flashcards', '#E7B864', true)}
-                                  </span>
-                                </span>
-                                <span className="sv-tool-group-title-text">Practice</span>
-                              </div>
-                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
-                                {renderNode('revision_flashcards', 'Revise', '#E7B864')}
-                                {renderNode('assessment', 'Assessment', '#E7B864')}
-                                {renderNode('qbank', 'Q. Bank', '#E7B864')}
-                              </div>
-                            </div>
+                                  {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
+                                  <div
+                                    className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`}
+                                    style={groupCardStyle(isPracticeActive, '#E7B864')}
+                                    onClick={(e) => selectCardToolByPosition(e, ['revision_flashcards', 'assessment', 'qbank'])}
+                                  >
+                                    <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
+                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                        <span className="sv-tool-group-lead-icon-inner">
+                                          {getNodeIcon('revision_flashcards', '#E7B864', true)}
+                                        </span>
+                                      </span>
+                                      <span className="sv-tool-group-title-text">Practice</span>
+                                    </div>
+                                    <div className="sv-tool-group-options">
+                                      {renderNode('revision_flashcards', 'Revise', '#E7B864')}
+                                      {renderNode('assessment', 'Assessment', '#E7B864')}
+                                      {renderNode('qbank', 'Q. Bank', '#E7B864')}
+                                    </div>
+                                  </div>
 
-                            {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
-                            <div
-                              className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`}
-                              style={groupCardStyle(isPrepareActive, '#B5BA9B')}
-                              onClick={() => {
-                                if (!isPrepareActive) setActiveTool('pyq');
-                              }}
-                            >
-                              <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
-                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                  <span className="sv-tool-group-lead-icon-inner">
-                                    {getNodeIcon('pyq', '#B5BA9B', true)}
-                                  </span>
-                                </span>
-                                <span className="sv-tool-group-title-text">Prepare</span>
-                              </div>
-                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
-                                {renderNode('pyq', 'PYQs', '#B5BA9B')}
-                                {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
-                                {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
-                              </div>
-                            </div>
+                                  {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
+                                  <div
+                                    className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`}
+                                    style={groupCardStyle(isPrepareActive, '#B5BA9B')}
+                                    onClick={(e) => selectCardToolByPosition(e, ['pyq', 'prep_exam', 'study_plan'])}
+                                  >
+                                    <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
+                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                        <span className="sv-tool-group-lead-icon-inner">
+                                          {getNodeIcon('pyq', '#B5BA9B', true)}
+                                        </span>
+                                      </span>
+                                      <span className="sv-tool-group-title-text">Prepare</span>
+                                    </div>
+                                    <div className="sv-tool-group-options">
+                                      {renderNode('pyq', 'PYQs', '#B5BA9B')}
+                                      {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
+                                      {renderNode('study_plan', 'Study Plan', '#B5BA9B')}
+                                    </div>
+                                  </div>
 
-                            {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
-                            <div
-                              className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`}
-                              style={groupCardStyle(isResourcesActive, '#D9A382')}
-                              onClick={() => {
-                                if (!isResourcesActive) setActiveTool('mindmap');
-                              }}
-                            >
-                              <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
-                                <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                  <span className="sv-tool-group-lead-icon-inner">
-                                    {getNodeIcon('mindmap', '#D9A382', true)}
-                                  </span>
-                                </span>
-                                <span className="sv-tool-group-title-text">Resources</span>
-                              </div>
-                              <div className="sv-tool-group-options" onClick={(e) => e.stopPropagation()}>
-                                {renderNode('mindmap', 'Mindmaps', '#D9A382')}
-                                {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
-                                {renderNode('ask', 'Ask me', '#D9A382')}
-                              </div>
-                            </div>
+                                  {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
+                                  <div
+                                    className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`}
+                                    style={groupCardStyle(isResourcesActive, '#D9A382')}
+                                    onClick={(e) => selectCardToolByPosition(e, ['mindmap', 'key_takeaways', 'ask'])}
+                                  >
+                                    <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
+                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
+                                        <span className="sv-tool-group-lead-icon-inner">
+                                          {getNodeIcon('mindmap', '#D9A382', true)}
+                                        </span>
+                                      </span>
+                                      <span className="sv-tool-group-title-text">Resources</span>
+                                    </div>
+                                    <div className="sv-tool-group-options">
+                                      {renderNode('mindmap', 'Mindmaps', '#D9A382')}
+                                      {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
+                                      {renderNode('ask', 'Ask me', '#D9A382')}
+                                    </div>
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
                         );
                       })()}
