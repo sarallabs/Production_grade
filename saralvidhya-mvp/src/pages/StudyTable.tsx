@@ -4975,11 +4975,19 @@ export default function StudyTable() {
                             }}
                           >
                             <style>{`
+                              .sv-tool-group-card {
+                                transform: translateZ(0);
+                                backface-visibility: hidden;
+                                -webkit-backface-visibility: hidden;
+                              }
                               .sv-tool-group-card .sv-tool-group-title {
-                                transform: translate3d(0, 28px, 0) scale(1.45);
+                                position: relative;
+                                transform: translate3d(0, 28px, 0) scale3d(1.62, 1.62, 1);
                                 transform-origin: center center;
-                                transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1), color 0.22s ease;
+                                transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s ease;
                                 will-change: transform;
+                                backface-visibility: hidden;
+                                -webkit-backface-visibility: hidden;
                                 z-index: 2;
                                 pointer-events: none;
                               }
@@ -4989,23 +4997,28 @@ export default function StudyTable() {
                                 justify-content: center;
                                 width: 18px;
                                 height: 17px;
-                                overflow: hidden;
-                                opacity: 0.82;
+                                margin-right: 4px;
+                                opacity: 0.86;
                                 flex-shrink: 0;
-                                transform: translate3d(0, 0, 0) scale(1);
-                                transition: width 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.22s ease, transform 0.32s cubic-bezier(0.22, 1, 0.36, 1), margin 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+                                transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+                                will-change: transform, opacity;
+                                backface-visibility: hidden;
+                                -webkit-backface-visibility: hidden;
+                                transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
                               }
                               .sv-tool-group-card .sv-tool-group-lead-icon-inner {
                                 display: inline-flex;
                                 align-items: center;
                                 justify-content: center;
-                                transform: scale(0.46);
+                                transform: scale3d(0.46, 0.46, 1);
                                 transform-origin: center center;
                                 flex-shrink: 0;
                               }
                               .sv-tool-group-card .sv-tool-group-title-text {
                                 display: inline-block;
-                                transition: transform 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+                                transform: translate3d(0, 0, 0);
+                                will-change: transform;
+                                transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                               }
                               .sv-tool-group-card .sv-tool-group-options {
                                 display: flex;
@@ -5014,30 +5027,30 @@ export default function StudyTable() {
                                 width: 100%;
                                 flex: 1 1 auto;
                                 opacity: 0;
-                                transform: translate3d(0, 10px, 0) scale(0.94);
+                                transform: translate3d(0, 12px, 0) scale3d(0.94, 0.94, 1);
                                 transform-origin: center bottom;
                                 pointer-events: none;
-                                transition: opacity 0.24s cubic-bezier(0.22, 1, 0.36, 1), transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+                                transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                                 will-change: opacity, transform;
+                                backface-visibility: hidden;
+                                -webkit-backface-visibility: hidden;
                               }
                               .sv-tool-group-card.is-active .sv-tool-group-title,
                               .sv-tool-group-card:hover .sv-tool-group-title,
                               .sv-tool-group-card:focus-within .sv-tool-group-title {
-                                transform: translate3d(0, 0, 0) scale(1);
+                                transform: translate3d(-11px, 0, 0) scale3d(1, 1, 1);
                               }
                               .sv-tool-group-card.is-active .sv-tool-group-lead-icon,
                               .sv-tool-group-card:hover .sv-tool-group-lead-icon,
                               .sv-tool-group-card:focus-within .sv-tool-group-lead-icon {
-                                width: 0px;
                                 opacity: 0;
-                                margin-right: -6px;
-                                transform: translate3d(-10px, 0, 0) scale(0.65);
+                                transform: translate3d(-12px, 0, 0) scale3d(0.5, 0.5, 1);
                               }
                               .sv-tool-group-card.is-active .sv-tool-group-options,
                               .sv-tool-group-card:hover .sv-tool-group-options,
                               .sv-tool-group-card:focus-within .sv-tool-group-options {
                                 opacity: 1;
-                                transform: translate3d(0, 0, 0) scale(1);
+                                transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
                                 pointer-events: auto;
                               }
                             `}</style>

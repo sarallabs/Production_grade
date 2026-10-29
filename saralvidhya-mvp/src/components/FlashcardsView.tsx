@@ -349,30 +349,6 @@ export default function FlashcardsView({
             transition: "transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease",
           }}
         >
-          {/* Top-Left Corner Counter Pill (e.g. 1 / 10) */}
-          <div
-            style={{
-              position: "absolute",
-              top: "10px",
-              left: "16px",
-              background: "#FFFDF9",
-              border: isPurpleTheme ? '1.5px solid #C026D3' : '1.5px solid #E7B864',
-              borderRadius: '10px',
-              color: isPurpleTheme ? '#86198F' : '#8A6218',
-              fontWeight: 800,
-              fontSize: "12.5px",
-              padding: "4px 13px",
-              zIndex: 12,
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 2px 6px rgba(158, 99, 50, 0.08)",
-              pointerEvents: "none",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {`${currentIndex + 1} / ${totalCards}`}
-          </div>
 
           {(() => {
             let finalUrl = currentCard?.infographicUrl || extractedImgUrl;
@@ -422,54 +398,55 @@ export default function FlashcardsView({
                   }
                 `}</style>
 
-                {/* ── GPU-Accelerated Question Block (Fills card initially, smoothly shrinks & glides to top on click) ── */}
+                {/* ── 100% GPU-Composited Question Block (Pure translate3d + scale3d, zero layout/font reflow) ── */}
                 <div
                   style={{
                     width: '100%',
-                    minHeight: isFlipped ? '0%' : '92%',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                     zIndex: 5,
-                    padding: isFlipped ? '2px 0 0' : '24px 32px',
+                    padding: '6px 16px 2px',
                     boxSizing: 'border-box',
-                    willChange: 'min-height, padding, transform',
+                    transformOrigin: 'center top',
+                    transform: isFlipped
+                      ? 'translate3d(0, 0px, 0) scale3d(0.9, 0.9, 1)'
+                      : 'translate3d(0, 25vh, 0) scale3d(1.56, 1.56, 1)',
+                    willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
-                    transition:
-                      'min-height 0.52s cubic-bezier(0.22, 1, 0.36, 1), padding 0.52s cubic-bezier(0.22, 1, 0.36, 1), transform 0.52s cubic-bezier(0.22, 1, 0.36, 1)',
+                    perspective: 1000,
+                    WebkitPerspective: 1000,
+                    transition: 'transform 0.44s cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  {/* Question Text */}
+                  {/* Question Text (15% larger in initial unclicked state via GPU scale3d, constant maxWidth so text never re-wraps) */}
                   <div
                     className='flashcard-question-text'
                     style={{
-                      fontSize: isFlipped
-                        ? (cleanTitle.length > 85 ? '16.5px' : '18px')
-                        : (cleanTitle.length > 180
-                            ? 'clamp(20px, 2vw, 26px)'
-                            : cleanTitle.length > 120
-                              ? 'clamp(22px, 2.3vw, 29px)'
-                              : cleanTitle.length > 75
-                                ? 'clamp(24px, 2.6vw, 32px)'
-                                : 'clamp(27px, 3vw, 36px)'),
+                      fontSize: cleanTitle.length > 180
+                        ? '17px'
+                        : cleanTitle.length > 120
+                          ? '18.5px'
+                          : cleanTitle.length > 85
+                            ? '19.5px'
+                            : '21px',
                       fontWeight: 800,
                       color: '#16201A',
-                      lineHeight: isFlipped ? 1.26 : 1.35,
+                      lineHeight: 1.32,
                       textAlign: 'center',
-                      maxWidth: isFlipped ? '90%' : '94%',
+                      maxWidth: '62%',
                       width: '100%',
-                      letterSpacing: isFlipped ? '-0.015em' : '-0.025em',
-                      transition:
-                        'font-size 0.48s cubic-bezier(0.22, 1, 0.36, 1), line-height 0.48s ease, max-width 0.48s ease, letter-spacing 0.48s ease',
+                      letterSpacing: '-0.02em',
+                      WebkitFontSmoothing: 'antialiased',
                     }}
                   >
                     <MarkdownView content={cleanTitle} />
                   </div>
                 </div>
-                {/* ── GPU-Accelerated Answer + Infographic Section (Pulled up smoothly from below) ── */}
+                {/* ── 100% GPU-Composited Answer + Infographic Section (Pure translate3d + scale3d + opacity) ── */}
                 <div
                   style={{
                     width: "100%",
@@ -484,13 +461,15 @@ export default function FlashcardsView({
                     willChange: "transform, opacity",
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
+                    perspective: 1000,
+                    WebkitPerspective: 1000,
                     transform: isFlipped
-                      ? "translate3d(0, 0px, 0)"
-                      : "translate3d(0, 42vh, 0)",
+                      ? "translate3d(0, 0px, 0) scale3d(1, 1, 1)"
+                      : "translate3d(0, 28vh, 0) scale3d(0.96, 0.96, 1)",
                     opacity: isFlipped ? 1 : 0,
                     pointerEvents: isFlipped ? "auto" : "none",
                     transition:
-                      "transform 0.54s cubic-bezier(0.22, 1, 0.36, 1) 0.02s, opacity 0.42s cubic-bezier(0.22, 1, 0.36, 1) 0.04s",
+                      "transform 0.46s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1)",
                     overflow: "hidden",
                   }}
                 >
@@ -577,84 +556,115 @@ export default function FlashcardsView({
           })()}
         </div>
 
-        {/* Right Navigation Button OR Action Icons on Last Card */}
-        {currentIndex < totalCards - 1 ? (
-          <button
-            type="button"
-            className="flashcard-nav-button"
-            onClick={nextCard}
-            aria-label="Next card"
+        {/* Right Side Column: Subtle x/10 Counter Outside Flashcard + Right Navigation Button / Action */}
+        <div
+          style={{
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+            alignSelf: "stretch",
+            minWidth: "44px",
+          }}
+        >
+          {/* Subtle x / 10 numbering outside the flashcard box (right side, no border/background) */}
+          <span
             style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "50%",
-              border: "none",
-              background: "#ffffff",
-              color: "#0f172a",
-              fontWeight: "800",
-              fontSize: "18px",
-              boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-              alignSelf: "center",
-              transition: "all 0.2s ease",
+              position: "absolute",
+              top: "10px",
+              right: "2px",
+              color: isPurpleTheme ? "#7E4A88" : "#6E7871",
+              fontWeight: 600,
+              fontSize: "12.5px",
+              letterSpacing: "0.01em",
+              fontVariantNumeric: "tabular-nums",
+              whiteSpace: "nowrap",
+              userSelect: "none",
+              pointerEvents: "none",
+              opacity: 0.85,
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        ) : (
-          /* On the last flashcard, show the Up next: Assessment button */
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "8px",
-              flexShrink: 0,
-              alignSelf: "center",
-            }}
-          >
+            {`${currentIndex + 1} / ${totalCards}`}
+          </span>
+
+          {currentIndex < totalCards - 1 ? (
             <button
               type="button"
-              onClick={() => onSelectTool ? onSelectTool("assessment") : onFlashcardsCompleted?.()}
+              className="flashcard-nav-button"
+              onClick={nextCard}
+              aria-label="Next card"
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "10px 18px",
-                borderRadius: "999px",
-                background: '#E7B864',
-                color: '#18221D',
-                fontWeight: 700,
-                fontSize: "13.5px",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
                 border: "none",
+                background: "#ffffff",
+                color: "#0f172a",
+                fontWeight: "800",
+                fontSize: "18px",
+                boxShadow: "0 4px 14px rgba(0, 0, 0, 0.1)",
                 cursor: "pointer",
-                boxShadow: "0 4px 14px rgba(79, 123, 100, 0.35)",
-                transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                transition: "transform 0.2s ease, box-shadow 0.2s ease",
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 6px 20px rgba(79, 123, 100, 0.45)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "none";
-                e.currentTarget.style.boxShadow = "0 4px 14px rgba(79, 123, 100, 0.35)";
-              }}
-              title="Proceed to Assessment"
             >
-              <span>Up next: Assessment</span>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
-          </div>
-        )}
+          ) : (
+            /* On the last flashcard, show the Up next: Assessment button */
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "8px",
+                flexShrink: 0,
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => onSelectTool ? onSelectTool("assessment") : onFlashcardsCompleted?.()}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 18px",
+                  borderRadius: "999px",
+                  background: '#E7B864',
+                  color: '#18221D',
+                  fontWeight: 700,
+                  fontSize: "13.5px",
+                  border: "none",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 14px rgba(79, 123, 100, 0.35)",
+                  transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
+                  whiteSpace: "nowrap",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(79, 123, 100, 0.45)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "0 4px 14px rgba(79, 123, 100, 0.35)";
+                }}
+                title="Proceed to Assessment"
+              >
+                <span>Up next: Assessment</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Full-Screen Infographic Lightbox Modal */}
