@@ -42,6 +42,8 @@ export default function AssessmentView({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOptions, setSelectedOptions] = useState<number[]>([]);
   const [isEvaluated, setIsEvaluated] = useState(false);
+  const [retriesUsedRecord, setRetriesUsedRecord] = useState<Record<string | number, number>>({});
+  const [isAwaitingRetry, setIsAwaitingRetry] = useState(false);
   const [userAnswersRecord, setUserAnswersRecord] = useState<Record<string, number[]>>({});
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [measuredMaxHeight, setMeasuredMaxHeight] = useState<number | null>(null);
@@ -59,6 +61,8 @@ export default function AssessmentView({
           setCurrentIndex(0);
           setSelectedOptions([]);
           setIsEvaluated(false);
+          setRetriesUsedRecord({});
+          setIsAwaitingRetry(false);
           setUserAnswersRecord({});
           setIsQuizComplete(false);
           setMeasuredMaxHeight(null);
@@ -127,15 +131,29 @@ export default function AssessmentView({
         }
       });
     } else {
-      // Single Choice (MCQ): select option & directly reveal answer immediately
+      // Single Choice (MCQ): select option & check correctness
       const newSelection = [idx];
       setSelectedOptions(newSelection);
-      setIsEvaluated(true);
 
       const isCorrect =
         Array.isArray(currentQ?.correctAnswers) &&
         currentQ.correctAnswers.length === 1 &&
         currentQ.correctAnswers.includes(idx);
+
+      const qKey = currentQ?.id ?? currentIndex;
+      const usedRetries = retriesUsedRecord[qKey] || 0;
+
+      if (!isCorrect && usedRetries < 1) {
+        // 1st wrong attempt: enter retry state without revealing correct answer
+        setIsEvaluated(true);
+        setIsAwaitingRetry(true);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        return;
+      }
+
+      // Final evaluation (correct on 1st/2nd try or 2nd wrong attempt)
+      setIsAwaitingRetry(false);
+      setIsEvaluated(true);
 
       if (isCorrect) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -162,12 +180,24 @@ export default function AssessmentView({
       return;
     }
 
-    setIsEvaluated(true);
-
     const isCorrect =
       Array.isArray(currentQ.correctAnswers) &&
       selectedOptions.length === currentQ.correctAnswers.length &&
       selectedOptions.every((val) => currentQ.correctAnswers.includes(val));
+
+    const qKey = currentQ?.id ?? currentIndex;
+    const usedRetries = retriesUsedRecord[qKey] || 0;
+
+    if (!isCorrect && usedRetries < 1) {
+      // 1st wrong attempt for MSQ
+      setIsEvaluated(true);
+      setIsAwaitingRetry(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
+    }
+
+    setIsAwaitingRetry(false);
+    setIsEvaluated(true);
 
     if (isCorrect) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -181,6 +211,18 @@ export default function AssessmentView({
     }));
   };
 
+  const handleTryAgainAssessment = () => {
+    Haptics.selectionAsync();
+    const qKey = currentQ?.id ?? currentIndex;
+    setRetriesUsedRecord((prev) => ({
+      ...prev,
+      [qKey]: (prev[qKey] || 0) + 1,
+    }));
+    setIsAwaitingRetry(false);
+    setIsEvaluated(false);
+    setSelectedOptions([]);
+  };
+
   const goToQuestion = (targetIndex: number) => {
     if (targetIndex < 0 || targetIndex >= questions.length) return;
     Haptics.selectionAsync();
@@ -190,9 +232,11 @@ export default function AssessmentView({
     if (recordedAns !== undefined) {
       setSelectedOptions(recordedAns);
       setIsEvaluated(true);
+      setIsAwaitingRetry(false);
     } else {
       setSelectedOptions([]);
       setIsEvaluated(false);
+      setIsAwaitingRetry(false);
     }
   };
 
@@ -220,6 +264,11 @@ export default function AssessmentView({
   };
 
   const handleActionButton = () => {
+    if (isAwaitingRetry) {
+      handleTryAgainAssessment();
+      return;
+    }
+
     if (!isEvaluated) {
       if (isMultiple) {
         handleSubmitAnswer();
@@ -237,6 +286,8 @@ export default function AssessmentView({
     setCurrentIndex(0);
     setSelectedOptions([]);
     setIsEvaluated(false);
+    setRetriesUsedRecord({});
+    setIsAwaitingRetry(false);
     setUserAnswersRecord({});
     setIsQuizComplete(false);
   };
@@ -446,7 +497,7 @@ export default function AssessmentView({
             const isCorrectAnswer = currentQ.correctAnswers.includes(idx);
 
             // Feedback states
-            const showAsCorrect = isEvaluated && isCorrectAnswer;
+            const showAsCorrect = isEvaluated && !isAwaitingRetry && isCorrectAnswer;
             const showAsWrong = isEvaluated && isSelected && !isCorrectAnswer;
 
             let cardBg = isDark ? '#21362B' : '#FFFFFF';
@@ -613,58 +664,110 @@ export default function AssessmentView({
           <View
             style={[
               styles.answerFeedbackPanel,
-              {
-                backgroundColor: isQuestionCorrect
-                  ? isDark
-                    ? '#214730'
-                    : '#E5F7EB'
-                  : isDark
-                    ? '#573330'
-                    : '#FDF2F0',
-                borderColor: isQuestionCorrect
-                  ? isDark
-                    ? '#59B87A'
-                    : '#337A52'
-                  : isDark
-                    ? '#F04A45'
-                    : '#D33C30',
-              },
-            ]}
-          >
-            <View style={styles.feedbackTopRow}>
-              <Text
-                style={[
-                  styles.feedbackStatus,
-                  {
-                    color: isQuestionCorrect
+              isAwaitingRetry
+                ? {
+                    backgroundColor: isDark ? 'rgba(254, 243, 199, 0.12)' : '#FEF3C7',
+                    borderColor: isDark ? 'rgba(251, 191, 36, 0.4)' : '#FCD34D',
+                  }
+                : {
+                    backgroundColor: isQuestionCorrect
+                      ? isDark
+                        ? '#214730'
+                        : '#E5F7EB'
+                      : isDark
+                        ? '#573330'
+                        : '#FDF2F0',
+                    borderColor: isQuestionCorrect
                       ? isDark
                         ? '#59B87A'
                         : '#337A52'
                       : isDark
-                        ? '#FF8C82'
+                        ? '#F04A45'
                         : '#D33C30',
                   },
-                ]}
-              >
-                {isQuestionCorrect ? '✓  Correct' : '✕  Incorrect'}
-              </Text>
-              <Text
-                style={[
-                  styles.correctAnswerLabel,
-                  { color: isDark ? '#BAD1BF' : '#1F2E29' },
-                ]}
-              >
-                {`Correct option:  ${correctLetterString}`}
-              </Text>
-            </View>
-            <Text
-              style={[
-                styles.feedbackExplanation,
-                { color: isDark ? '#F0F7F0' : '#1F2E29' },
-              ]}
-            >
-              {currentQ.explanation}
-            </Text>
+            ]}
+          >
+            {isAwaitingRetry ? (
+              <View style={styles.feedbackRetryRow}>
+                <View style={styles.feedbackRetryTextWrap}>
+                  <Text
+                    style={[
+                      styles.feedbackStatus,
+                      { color: isDark ? '#FDE68A' : '#92400E' },
+                    ]}
+                  >
+                    ✕ Incorrect
+                  </Text>
+                  <Text
+                    style={[
+                      styles.feedbackRetrySub,
+                      { color: isDark ? '#FCD34D' : '#78350F' },
+                    ]}
+                  >
+                    — 1 try-again attempt left
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.assessmentTryAgainBtn,
+                    {
+                      backgroundColor: isDark ? '#FDE68A' : '#FFFFFF',
+                      borderColor: isDark ? '#FDE68A' : '#F59E0B',
+                    },
+                  ]}
+                  onPress={handleTryAgainAssessment}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="refresh" size={13} color={isDark ? '#78350F' : '#92400E'} />
+                  <Text
+                    style={[
+                      styles.assessmentTryAgainBtnText,
+                      { color: isDark ? '#78350F' : '#92400E' },
+                    ]}
+                  >
+                    Try Again (1 left)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <>
+                <View style={styles.feedbackTopRow}>
+                  <Text
+                    style={[
+                      styles.feedbackStatus,
+                      {
+                        color: isQuestionCorrect
+                          ? isDark
+                            ? '#59B87A'
+                            : '#337A52'
+                          : isDark
+                            ? '#FF8C82'
+                            : '#D33C30',
+                      },
+                    ]}
+                  >
+                    {isQuestionCorrect ? '✓  Correct' : '✕  Incorrect'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.correctAnswerLabel,
+                      { color: isDark ? '#BAD1BF' : '#1F2E29' },
+                    ]}
+                  >
+                    {`Correct option:  ${correctLetterString}`}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    styles.feedbackExplanation,
+                    { color: isDark ? '#F0F7F0' : '#1F2E29' },
+                  ]}
+                >
+                  {currentQ.explanation}
+                </Text>
+              </>
+            )}
           </View>
         )}
 
@@ -693,12 +796,14 @@ export default function AssessmentView({
             />
           </TouchableOpacity>
 
-          {/* Submit / Next / Finish Button */}
+          {/* Submit / Next / Finish / Try Again Button */}
           <TouchableOpacity
             style={[
               styles.submitButton,
               {
-                backgroundColor: !isEvaluated
+                backgroundColor: isAwaitingRetry
+                  ? '#D9A55C'
+                  : !isEvaluated
                   ? isMultiple
                     ? selectedOptions.length === 0
                       ? isDark
@@ -718,7 +823,9 @@ export default function AssessmentView({
               style={[
                 styles.submitButtonText,
                 {
-                  color: !isEvaluated
+                  color: isAwaitingRetry
+                    ? '#FFFFFF'
+                    : !isEvaluated
                     ? isMultiple
                       ? selectedOptions.length === 0
                         ? isDark
@@ -732,7 +839,9 @@ export default function AssessmentView({
                 },
               ]}
             >
-              {isMultiple && !isEvaluated
+              {isAwaitingRetry
+                ? 'Try Again (1 left)'
+                : isMultiple && !isEvaluated
                 ? 'Submit'
                 : currentIndex === questions.length - 1
                 ? 'Finish Assessment'
@@ -991,6 +1100,37 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     fontWeight: '500',
+  },
+  feedbackRetryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: 10,
+    paddingVertical: 4,
+  },
+  feedbackRetryTextWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  feedbackRetrySub: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  assessmentTryAgainBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  assessmentTryAgainBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   /* 6. Bottom Navigation & Submit Row */
   bottomActionRow: {

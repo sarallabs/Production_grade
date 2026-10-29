@@ -33,6 +33,8 @@ export default function QuickCheckCard({
   const { isDark } = useAppTheme();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, string>>({});
+  const [retriesUsedByQ, setRetriesUsedByQ] = useState<Record<number, number>>({});
+  const [pendingWrongByQ, setPendingWrongByQ] = useState<Record<number, string | null>>({});
 
   if (!questions || questions.length === 0) {
     return null;
@@ -40,6 +42,8 @@ export default function QuickCheckCard({
 
   const currentQuestion = questions[currentQuestionIndex] || questions[0];
   const selectedKey = selectedAnswers[currentQuestionIndex] || null;
+  const pendingWrongKey = pendingWrongByQ[currentQuestionIndex] || null;
+  const isPendingRetry = Boolean(pendingWrongKey);
   const isSubmitted = Boolean(selectedKey);
 
   const totalQuestions = questions.length;
@@ -65,7 +69,18 @@ export default function QuickCheckCard({
   };
 
   const handleSelectOption = (key: string, isCorrect: boolean) => {
-    if (isSubmitted) return;
+    if (isSubmitted || isPendingRetry) return;
+
+    const usedRetries = retriesUsedByQ[currentQuestionIndex] || 0;
+    if (!isCorrect && usedRetries < 1) {
+      try {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      } catch {}
+      setPendingWrongByQ((prev) => ({ ...prev, [currentQuestionIndex]: key }));
+      return;
+    }
+
+    setPendingWrongByQ((prev) => ({ ...prev, [currentQuestionIndex]: null }));
 
     try {
       if (isCorrect) {
@@ -78,6 +93,17 @@ export default function QuickCheckCard({
     const updated = { ...selectedAnswers, [currentQuestionIndex]: key };
     setSelectedAnswers(updated);
     onAnswerSubmitted?.(isCorrect, key, currentQuestionIndex);
+  };
+
+  const handleTryAgain = () => {
+    try {
+      Haptics.selectionAsync().catch(() => {});
+    } catch {}
+    setRetriesUsedByQ((prev) => ({
+      ...prev,
+      [currentQuestionIndex]: (prev[currentQuestionIndex] || 0) + 1,
+    }));
+    setPendingWrongByQ((prev) => ({ ...prev, [currentQuestionIndex]: null }));
   };
 
   // Theme colors
@@ -145,6 +171,7 @@ export default function QuickCheckCard({
         {currentQuestion.options.map((opt, optIdx) => {
           const optKey = (opt.key || String.fromCharCode(65 + optIdx)).toUpperCase();
           const isSelected = selectedKey === optKey;
+          const isPendingWrong = pendingWrongKey === optKey;
           const isCorrect = optKey === cleanCorrectKey;
 
           let optBorder = optionDefaultBorder;
@@ -167,6 +194,12 @@ export default function QuickCheckCard({
               optBadgeText = '#FFFFFF';
               textColor = isDark ? '#FCA5A5' : '#B91C1C';
             }
+          } else if (isPendingRetry && isPendingWrong) {
+            optBorder = '#EF4444';
+            optBg = isDark ? '#331717' : '#FEF2F2';
+            optBadgeBg = '#EF4444';
+            optBadgeText = '#FFFFFF';
+            textColor = isDark ? '#FCA5A5' : '#B91C1C';
           }
 
           return (
@@ -177,11 +210,14 @@ export default function QuickCheckCard({
                 {
                   backgroundColor: optBg,
                   borderColor: optBorder,
-                  borderWidth: isSubmitted && (isCorrect || isSelected) ? 2 : 1.5,
+                  borderWidth:
+                    (isSubmitted && (isCorrect || isSelected)) || (isPendingRetry && isPendingWrong)
+                      ? 2
+                      : 1.5,
                 },
               ]}
               onPress={() => handleSelectOption(optKey, isCorrect)}
-              disabled={isSubmitted}
+              disabled={isSubmitted || isPendingRetry}
               activeOpacity={0.8}
             >
               {/* Option Letter Badge (A, B, C, D) */}
@@ -202,17 +238,55 @@ export default function QuickCheckCard({
                 {opt.text}
               </Text>
 
-              {/* Status Icon Indicator when submitted */}
+              {/* Status Icon Indicator when submitted or pending retry */}
               {isSubmitted && isCorrect && (
                 <Ionicons name="checkmark-circle" size={20} color="#16A34A" />
               )}
               {isSubmitted && isSelected && !isCorrect && (
                 <Ionicons name="close-circle" size={20} color="#EF4444" />
               )}
+              {isPendingRetry && isPendingWrong && (
+                <Ionicons name="close-circle" size={20} color="#EF4444" />
+              )}
             </TouchableOpacity>
           );
         })}
       </View>
+
+      {/* Pending Retry Banner (shown on 1st wrong attempt only) */}
+      {isPendingRetry && (
+        <View
+          style={[
+            styles.retryBanner,
+            {
+              backgroundColor: isDark ? 'rgba(254, 243, 199, 0.12)' : '#FEF3C7',
+              borderColor: isDark ? 'rgba(251, 191, 36, 0.4)' : '#FCD34D',
+            },
+          ]}
+        >
+          <View style={styles.retryBannerTextWrap}>
+            <Text style={[styles.retryBannerText, { color: isDark ? '#FDE68A' : '#78350F' }]}>
+              ✕ Not quite right — you have 1 retry attempt remaining.
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.tryAgainButton,
+              {
+                backgroundColor: isDark ? '#FDE68A' : '#FFFFFF',
+                borderColor: isDark ? '#FDE68A' : '#F59E0B',
+              },
+            ]}
+            onPress={handleTryAgain}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="refresh" size={13} color={isDark ? '#78350F' : '#92400E'} />
+            <Text style={[styles.tryAgainButtonText, { color: isDark ? '#78350F' : '#92400E' }]}>
+              Try Again
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* 4. Diagnostic Rationale / Explanation Box */}
       {isSubmitted && (
@@ -457,6 +531,41 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 12,
     gap: 6,
+  },
+  retryBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 2,
+    marginBottom: 12,
+    gap: 10,
+    flexWrap: 'wrap',
+  },
+  retryBannerTextWrap: {
+    flex: 1,
+    minWidth: 180,
+  },
+  retryBannerText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    lineHeight: 18,
+  },
+  tryAgainButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  tryAgainButtonText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   rationaleHeader: {
     flexDirection: 'row',
