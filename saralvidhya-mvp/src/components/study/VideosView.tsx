@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import MarkdownView from "@/components/MarkdownView";
 import { getResourceContent, type Chapter, type ChapterVideo, type DifficultyLevel } from "@/data/contentRepository";
 import { getRegistryChapterData } from "@/data/manifestService";
-import { cloudStorage } from "@/context/CloudStateContext";
-
+import { cloudStorage, useCloudState } from "@/context/CloudStateContext";
 const WATCHED_THRESHOLD_PCT = 90;
 
 export interface VideosViewProps {
@@ -150,11 +149,18 @@ export default function VideosView({
   isVideoPlayableAt,
   onSelectVideoIndex,
 }: VideosViewProps) {
-  const [activeVideo, setActiveVideo] = useState(0);
+  const { isHydrated } = useCloudState();
+  const [activeVideo, setActiveVideo] = useState(() => {
+    const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    if (savedIdx != null) {
+      const idx = parseInt(savedIdx, 10);
+      if (!isNaN(idx) && idx >= 0) return idx;
+    }
+    return 0;
+  });
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
-  const [registryVideos, setRegistryVideos] = useState<ChapterVideo[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -394,25 +400,30 @@ export default function VideosView({
   const currentVideo = videos[robustActive] || videos[0];
   const isSingleVideo = videos.length <= 1;
 
-  // Active index sync from parent or cloud storage
+  // Active index sync from parent (only for segmented chapters) or cloud storage
+  const isParentSegmented = Boolean(chapterVideos && chapterVideos.length > 0);
   useEffect(() => {
-    if (activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
+    if (isParentSegmented && activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
       setActiveVideo(activeVideoIndex - 1);
       return;
     }
-    const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
-    if (savedIdx != null) {
-      const idx = parseInt(savedIdx, 10);
-      if (!isNaN(idx) && idx >= 0 && idx < videos.length) {
-        setActiveVideo(idx);
+    const syncSavedVideoIdx = () => {
+      const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+      if (savedIdx != null) {
+        const idx = parseInt(savedIdx, 10);
+        if (!isNaN(idx) && idx >= 0 && (videos.length === 0 || idx < videos.length)) {
+          setActiveVideo((prev) => (prev !== idx ? idx : prev));
+        }
       }
-    }
-  }, [activeVideoIndex, videos.length, subjectId, chapterNumber]);
+    };
+    syncSavedVideoIdx();
+    return cloudStorage.subscribe(syncSavedVideoIdx);
+  }, [isParentSegmented, activeVideoIndex, videos.length, subjectId, chapterNumber]);
 
   useEffect(() => {
+    if (!isHydrated || videos.length === 0) return;
     cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(robustActive));
-  }, [robustActive, subjectId, chapterNumber]);
-
+  }, [robustActive, subjectId, chapterNumber, isHydrated, videos.length]);
   const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
   const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
     try {
@@ -500,6 +511,10 @@ export default function VideosView({
         const raw = cloudStorage.getItem(videoTimeStorageKey);
         if (!raw) {
           restoredVideoTimeRef.current = 0;
+          if (!isPlaying) {
+            setCurrentTime(0);
+            setProgress(0);
+          }
           return;
         }
         const parsed = JSON.parse(raw);
@@ -510,6 +525,15 @@ export default function VideosView({
             setDuration(parsed.duration);
             setProgress(Math.min(100, (parsed.currentTime / parsed.duration) * 100));
           }
+          if (!isPlaying && playerRef.current && typeof playerRef.current.seekTo === "function") {
+            try {
+              const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
+              if (Math.abs(cur - parsed.currentTime) > 2) {
+                playerRef.current.seekTo(parsed.currentTime, true);
+                playerRef.current.pauseVideo?.();
+              }
+            } catch {}
+          }
         }
       } catch {
         // ignore
@@ -517,7 +541,7 @@ export default function VideosView({
     };
     applySavedVideoTime();
     return cloudStorage.subscribe(() => {
-      if (!isPlaying && restoredVideoTimeRef.current <= 0) {
+      if (!isPlaying) {
         applySavedVideoTime();
       }
     });
@@ -601,11 +625,14 @@ export default function VideosView({
                     event.target.setOption("captions", "track", {});
                   }
                   const dur = typeof event.target.getDuration === "function" ? event.target.getDuration() : 0;
-                  const savedSec = readSavedSec();
+                  const savedSec = Math.max(readSavedSec(), restoredVideoTimeRef.current);
+                  if (savedSec > 1) {
+                    restoredVideoTimeRef.current = savedSec;
+                    setCurrentTime(savedSec);
+                  }
                   if (dur > 0) {
                     setDuration(dur);
                     if (savedSec > 1 && savedSec < dur - 2) {
-                      setCurrentTime(savedSec);
                       setProgress((savedSec / dur) * 100);
                     }
                   }
@@ -632,10 +659,10 @@ export default function VideosView({
                   } catch (e) {}
                 }
                 if (!hasStartedPlayingRef.current && playerRef.current) {
-                  const savedSec = readSavedSec();
+                  const savedSec = Math.max(readSavedSec(), restoredVideoTimeRef.current);
                   const curNow = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
                   const durNow = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
-                  if (savedSec > 2 && curNow < 2 && (durNow <= 0 || savedSec < durNow - 3)) {
+                  if (savedSec > 1 && Math.abs(curNow - savedSec) > 2 && (durNow <= 0 || savedSec < durNow - 2)) {
                     try {
                       playerRef.current.seekTo?.(savedSec, true);
                       setCurrentTime(savedSec);
@@ -716,19 +743,7 @@ export default function VideosView({
       }
     };
 
-    checkInterval = setInterval(() => {
-      if ((window as any).YT && (window as any).YT.Player && document.getElementById(`yt-player-${currentVideo.ytId}`)) {
-        clearInterval(checkInterval);
-        initPlayer();
-      }
-    }, 200);
-
-    return () => {
-      clearInterval(checkInterval);
-      if (progressIntervalRef.current) {
-        clearInterval(progressIntervalRef.current);
-        progressIntervalRef.current = null;
-      }
+    const handleUnloadSave = () => {
       if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
         try {
           const cur = playerRef.current.getCurrentTime();
@@ -738,6 +753,35 @@ export default function VideosView({
           }
         } catch {}
       }
+    };
+
+    const handleVisibilitySave = () => {
+      if (document.visibilityState === "hidden") {
+        handleUnloadSave();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnloadSave);
+    window.addEventListener("pagehide", handleUnloadSave);
+    document.addEventListener("visibilitychange", handleVisibilitySave);
+
+    checkInterval = setInterval(() => {
+      if ((window as any).YT && (window as any).YT.Player && document.getElementById(`yt-player-${currentVideo.ytId}`)) {
+        clearInterval(checkInterval);
+        initPlayer();
+      }
+    }, 200);
+
+    return () => {
+      clearInterval(checkInterval);
+      window.removeEventListener("beforeunload", handleUnloadSave);
+      window.removeEventListener("pagehide", handleUnloadSave);
+      document.removeEventListener("visibilitychange", handleVisibilitySave);
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+      handleUnloadSave();
       if (playerRef.current && typeof playerRef.current.destroy === "function") {
         try {
           playerRef.current.destroy();
@@ -753,6 +797,11 @@ export default function VideosView({
     if (isPlaying) {
       playerRef.current.pauseVideo();
     } else {
+      if (!hasStartedPlayingRef.current && restoredVideoTimeRef.current > 1) {
+        try {
+          playerRef.current.seekTo?.(restoredVideoTimeRef.current, true);
+        } catch {}
+      }
       playerRef.current.playVideo();
     }
   };
@@ -809,6 +858,15 @@ export default function VideosView({
     playerRef.current.seekTo?.(newTime, true);
     setCurrentTime(newTime);
     setProgress(ratio * 100);
+    restoredVideoTimeRef.current = newTime;
+    if (videoTimeStorageKey && newTime > 1) {
+      try {
+        cloudStorage.setItem(
+          videoTimeStorageKey,
+          JSON.stringify({ currentTime: newTime, duration: dur, updatedAt: Date.now() }),
+        );
+      } catch {}
+    }
     if (isPlayingRef.current) {
       playerRef.current.playVideo?.();
     }

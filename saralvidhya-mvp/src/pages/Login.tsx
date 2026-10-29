@@ -8,7 +8,7 @@ import {
   getCloudBoardLogoUrl,
   getCloudUiCopy,
 } from '@/tenant/TenantProvider';
-import { cloudStorage, setCloudAuthContext } from '@/context/CloudStateContext';
+import { cloudStorage, setCloudAuthContext, useCloudState } from '@/context/CloudStateContext';
 import { trackAuthEvent } from '@/utils/analytics';
 import universityConfig from '@/config/university_config.json';
 import "./Login.css";
@@ -17,7 +17,7 @@ function Login() {
   const navigate = useNavigate();
   const location = useLocation();
   const { tenantId, tenant, login: tenantLogin } = useTenant();
-
+  const { refreshCloudState } = useCloudState();
   const from = (location.state as { from?: string })?.from || "/";
 
   const [studentPassword, setStudentPassword] = useState("");
@@ -111,21 +111,22 @@ function Login() {
       try {
         const ok = await tenantLogin(studentPassword);
         if (ok) {
-          cloudStorage.removeItem("sv_video_open_counts");
           trackAuthEvent('auth.login_success', { tenantId }, 'success');
-          cloudStorage.setItem("app_authenticated", "true");
-          cloudStorage.setItem("app_role", "student");
+          cloudStorage.setItem("app_authenticated", "true", true);
+          cloudStorage.setItem("app_role", "student", true);
           const displayName = tenant?.shortName ? `${tenant.shortName} Student` : "Student";
-          cloudStorage.setItem("username", displayName);
+          cloudStorage.setItem("username", displayName, true);
           cloudStorage.setItem(
             "saral_student_profile",
             JSON.stringify({
               firstName: displayName,
               lastName: "",
               bypassed: true,
-            })
+            }),
+            true
           );
-          cloudStorage.setItem("questionnaire_completed", "true");
+          cloudStorage.setItem("questionnaire_completed", "true", true);
+          await refreshCloudState(tenantId);
 
           const targetUrl =
             from === "/login" || from.endsWith("/login")
@@ -168,24 +169,29 @@ function Login() {
         if (resp.ok) {
           const data = await resp.json();
           if (data.token) {
-            cloudStorage.removeItem("sv_video_open_counts");
             setCloudAuthContext(candidate, data.token);
-            cloudStorage.setItem("app_authenticated", "true");
-            cloudStorage.setItem("app_role", "student");
+            cloudStorage.setItem("app_authenticated", "true", true);
+            cloudStorage.setItem("app_role", "student", true);
             const displayName = data.tenant?.shortName
               ? `${data.tenant.shortName} Student`
               : `${candidate.toUpperCase()} Student`;
-            cloudStorage.setItem("username", displayName);
+            cloudStorage.setItem("username", displayName, true);
             cloudStorage.setItem(
               "saral_student_profile",
               JSON.stringify({
                 firstName: displayName,
                 lastName: "",
                 bypassed: true,
-              })
+              }),
+              true
             );
-            cloudStorage.setItem("questionnaire_completed", "true");
-            navigate("/", { replace: true });
+            cloudStorage.setItem("questionnaire_completed", "true", true);
+            await refreshCloudState(candidate);
+            const targetUrl =
+              from === "/login" || from.endsWith("/login")
+                ? "/"
+                : from;
+            navigate(targetUrl, { replace: true });
             return;
           }
         }

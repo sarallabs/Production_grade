@@ -226,60 +226,80 @@ function clearInvalidCloudToken(tid: string) {
   }
 }
 
-function scheduleCloudKvFlush() {
+function flushCloudKvImmediate(keepalive = false) {
   if (!activeTenantIdInternal || !meEndpointsAvailable || !hasValidCloudToken(activeTenantIdInternal)) return;
-  if (syncTimer) clearTimeout(syncTimer);
+  if (syncTimer) {
+    clearTimeout(syncTimer);
+    syncTimer = null;
+  }
   const tid = activeTenantIdInternal;
-  syncTimer = setTimeout(async () => {
-    if (!hasValidCloudToken(tid)) return;
-    const batch = { ...pendingClientStateUpdates };
-    for (const k of Object.keys(pendingClientStateUpdates)) {
-      delete pendingClientStateUpdates[k];
-    }
-    if (Object.keys(batch).length === 0) return;
+  const batch = { ...pendingClientStateUpdates };
+  for (const k of Object.keys(pendingClientStateUpdates)) {
+    delete pendingClientStateUpdates[k];
+  }
+  if (Object.keys(batch).length === 0) return;
 
-    const payload: Record<string, any> = {
-      clientState: batch,
-    };
+  const payload: Record<string, any> = {
+    clientState: batch,
+  };
 
-    if (batch.user_persona) {
-      const p = batch.user_persona.toLowerCase();
-      if (p === 'beginner' || p === 'intermediate' || p === 'advanced') {
-        payload.persona = p;
-      }
+  if (batch.user_persona) {
+    const p = batch.user_persona.toLowerCase();
+    if (p === 'beginner' || p === 'intermediate' || p === 'advanced') {
+      payload.persona = p;
     }
-    if (batch.onboarding_completed !== undefined) {
-      payload.onboardingCompleted = batch.onboarding_completed === 'true';
-    }
-    if (batch.questionnaire_completed !== undefined) {
-      payload.questionnaireCompleted = batch.questionnaire_completed === 'true';
-    }
-    if (batch.user_profile) {
-      try {
-        const prof = JSON.parse(batch.user_profile);
-        if (prof.name) payload.displayName = prof.name;
-        if (prof.email) payload.email = prof.email;
-        if (prof.rollNumber || prof.studentId) payload.studentId = prof.rollNumber || prof.studentId;
-      } catch {
-        // ignore JSON error
-      }
-    }
-
+  }
+  if (batch.onboarding_completed !== undefined) {
+    payload.onboardingCompleted = batch.onboarding_completed === 'true';
+  }
+  if (batch.questionnaire_completed !== undefined) {
+    payload.questionnaireCompleted = batch.questionnaire_completed === 'true';
+  }
+  if (batch.user_profile) {
     try {
-      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/preferences`, {
-        method: 'PATCH',
-        headers: getCloudAuthHeaders(tid),
-        body: JSON.stringify(payload),
-      });
+      const prof = JSON.parse(batch.user_profile);
+      if (prof.name) payload.displayName = prof.name;
+      if (prof.email) payload.email = prof.email;
+      if (prof.rollNumber || prof.studentId) payload.studentId = prof.rollNumber || prof.studentId;
+    } catch {
+      // ignore JSON error
+    }
+  }
+
+  fetch(`${CLOUD_API_BASE}/v2/t/${tid}/me/preferences`, {
+    method: 'PATCH',
+    headers: getCloudAuthHeaders(tid),
+    body: JSON.stringify(payload),
+    keepalive,
+  })
+    .then((res) => {
       if (res.status === 404) {
         meEndpointsAvailable = false;
       } else if (res.status === 401) {
         clearInvalidCloudToken(tid);
       }
-    } catch {
+    })
+    .catch(() => {
       // Cloud sync is best-effort when offline
-    }
+    });
+}
+
+function scheduleCloudKvFlush() {
+  if (!activeTenantIdInternal || !meEndpointsAvailable || !hasValidCloudToken(activeTenantIdInternal)) return;
+  if (syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => {
+    flushCloudKvImmediate(false);
   }, 250);
+}
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => flushCloudKvImmediate(true));
+  window.addEventListener('pagehide', () => flushCloudKvImmediate(true));
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      flushCloudKvImmediate(true);
+    }
+  });
 }
 
 /**
@@ -418,6 +438,59 @@ export function applyHydratedCloudState(state: CloudUserState) {
         if (existingTools.size > 0) {
           guidedMap[baseKey] = Array.from(existingTools);
         }
+
+        if (chProg.audioProgress && typeof chProg.audioProgress === 'object') {
+          const uid = state.user?.userId || 'anonymous';
+          for (const [trackKey, entry] of Object.entries(chProg.audioProgress)) {
+            if (!entry || typeof entry.currentTime !== 'number' || entry.currentTime <= 0) continue;
+            const resolvedId = trackKey.includes('_ch')
+              ? trackKey
+              : `${subjectId}_ch${chNum}_${state.preferences?.persona || 'intermediate'}_${trackKey}`;
+            const sharedKey = `audio_progress_shared_${resolvedId}`;
+            const userKey = `audio_progress_${uid}_${resolvedId}`;
+            const entryTs = entry.updatedAt ? new Date(entry.updatedAt).getTime() : 0;
+            let shouldWrite = !memoryKv.has(sharedKey);
+            if (!shouldWrite && entryTs > 0) {
+              try {
+                const existing = JSON.parse(memoryKv.get(sharedKey) || '{}');
+                if (!existing.updatedAt || entryTs > Number(existing.updatedAt)) {
+                  shouldWrite = true;
+                }
+              } catch {
+                shouldWrite = true;
+              }
+            }
+            if (shouldWrite) {
+              const progPayload = JSON.stringify({
+                userId: uid,
+                lessonId: resolvedId,
+                currentTime: entry.currentTime,
+                duration: entry.duration || 0,
+                updatedAt: entryTs || Date.now(),
+                wasPaused: true,
+              });
+              memoryKv.set(userKey, progPayload);
+              memoryKv.set(sharedKey, progPayload);
+            }
+          }
+        }
+
+        if (chProg.videoProgress && typeof chProg.videoProgress === 'object') {
+          for (const [vidKey, vEntry] of Object.entries(chProg.videoProgress)) {
+            if (!vEntry || typeof vEntry.currentTime !== 'number' || vEntry.currentTime <= 0) continue;
+            const vStorageKey = `sv_video_time_${subjectId}_ch${chNum}_${vidKey}`;
+            if (!memoryKv.has(vStorageKey)) {
+              memoryKv.set(
+                vStorageKey,
+                JSON.stringify({
+                  currentTime: vEntry.currentTime,
+                  duration: vEntry.duration || 0,
+                  updatedAt: vEntry.updatedAt ? new Date(vEntry.updatedAt).getTime() : Date.now(),
+                })
+              );
+            }
+          }
+        }
       }
     }
     memoryKv.set('sv_guided_progress', JSON.stringify(guidedMap));
@@ -428,16 +501,17 @@ export function applyHydratedCloudState(state: CloudUserState) {
     const p = state.lastActive.podcast;
     const chNumMatch = p.chapterId.match(/(\d+)/);
     const chNum = p.chapterNumber || (chNumMatch ? Number(chNumMatch[1]) : 1);
+    const activePersona = state.preferences?.persona || 'intermediate';
     const resolvedLessonId = p.trackId && p.trackId.includes('_ch')
       ? p.trackId
-      : `${p.subjectId}_ch${chNum}_${state.preferences?.persona || 'intermediate'}_${p.trackId}`;
+      : `${p.subjectId}_ch${chNum}_${activePersona}_${p.trackId}`;
     const globalPodcast = {
       userId: state.user.userId,
       lessonId: resolvedLessonId,
       subjectId: p.subjectId,
       chapterNumber: chNum,
       chapterName: p.chapterTitle || p.title || `Chapter ${chNum}`,
-      persona: state.preferences?.persona || 'intermediate',
+      persona: activePersona,
       track: p.title || p.trackId,
       currentTime: p.currentTime,
       updatedAt: new Date(p.updatedAt || Date.now()).getTime(),
@@ -456,6 +530,15 @@ export function applyHydratedCloudState(state: CloudUserState) {
       });
       memoryKv.set(`audio_progress_${state.user.userId}_${resolvedLessonId}`, progPayload);
       memoryKv.set(`audio_progress_shared_${resolvedLessonId}`, progPayload);
+    }
+    const mcMatch = resolvedLessonId.match(/_mc_(\d+)$/);
+    if (mcMatch) {
+      if (!memoryKv.has(`last_mc_${p.subjectId}_${chNum}`)) {
+        memoryKv.set(`last_mc_${p.subjectId}_${chNum}`, mcMatch[1]);
+      }
+      if (!memoryKv.has(`last_track_${p.subjectId}_${chNum}_${activePersona}`)) {
+        memoryKv.set(`last_track_${p.subjectId}_${chNum}_${activePersona}`, 'mc');
+      }
     }
   }
   notifyListeners();
@@ -512,6 +595,7 @@ export async function syncAudioProgressToCloud(payload: {
   currentTime: number;
   duration: number;
   completed?: boolean;
+  keepalive?: boolean;
 }): Promise<void> {
   const tid = payload.tenantId || activeTenantIdInternal;
   if (!tid || !hasValidCloudToken(tid)) return;
@@ -521,6 +605,7 @@ export async function syncAudioProgressToCloud(payload: {
         method: 'PUT',
         headers: getCloudAuthHeaders(tid),
         body: JSON.stringify(payload),
+        keepalive: Boolean(payload.keepalive),
       });
       if (res.status === 401) {
         clearInvalidCloudToken(tid);
@@ -538,6 +623,7 @@ export async function syncAudioProgressToCloud(payload: {
         tool: 'audio',
         data: payload,
       }),
+      keepalive: Boolean(payload.keepalive),
     });
   } catch {
     // ignore network errors
@@ -615,12 +701,18 @@ export const CloudStateProvider: React.FC<{
   const refreshCloudState = useCallback(
     async (tenantIdOverride?: string | null): Promise<CloudUserState | null> => {
       const tid = tenantIdOverride || tenantId || activeTenantIdInternal;
-      if (!tid || !meEndpointsAvailable || !hasValidCloudToken(tid)) {
+      if (!tid || !meEndpointsAvailable) {
         setIsHydrated(true);
+        return hydratedStateInternal;
+      }
+      if (!hasValidCloudToken(tid)) {
         return hydratedStateInternal;
       }
       if (inflightStatePromise) {
         return inflightStatePromise;
+      }
+      if (!hydratedStateInternal) {
+        setIsHydrated(false);
       }
       inflightStatePromise = (async () => {
         try {

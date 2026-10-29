@@ -102,6 +102,11 @@ export async function saveProgress(
     cloudStorage.setItem(`global_last_podcast_${userId}`, JSON.stringify(globalData));
     cloudStorage.setItem('global_last_podcast_shared', JSON.stringify(globalData));
 
+    if (metadata.mcIndex !== undefined) {
+      cloudStorage.setItem(`last_mc_${metadata.subjectId}_${metadata.chapterNumber}`, String(metadata.mcIndex));
+      cloudStorage.setItem(`last_track_${metadata.subjectId}_${metadata.chapterNumber}_${metadata.persona}`, 'mc');
+    }
+
     const chapterId = `chapter_${String(metadata.chapterNumber || 1).padStart(2, '0')}`;
     await syncAudioProgressToCloud({
       subjectId: metadata.subjectId,
@@ -113,6 +118,7 @@ export async function saveProgress(
       currentTime,
       duration,
       completed: duration > 0 && currentTime / duration >= 0.9,
+      keepalive: wasPaused,
     });
   }
 }
@@ -163,13 +169,19 @@ export function useAudioProgress(
     const restore = async () => {
       const progress = await loadProgress(userId, lessonId);
       if (!mounted || !audio || !progress) return;
-      const durationKnown = Number.isFinite(audio.duration);
+      const durationKnown = Number.isFinite(audio.duration) && audio.duration > 0;
       if (progress.currentTime <= 0 || (durationKnown && progress.currentTime >= audio.duration))
         return;
 
+      onResumeTime?.(progress.currentTime);
+
       const seekToSavedTime = () => {
         if (!audio) return;
-        audio.currentTime = progress.currentTime;
+        try {
+          audio.currentTime = progress.currentTime;
+        } catch {
+          // ignore if not seekable yet
+        }
         onResumeTime?.(progress.currentTime);
       };
 
@@ -208,7 +220,8 @@ export function useAudioProgress(
     };
 
     const handleSaveBeforeUnload = () => {
-      saveProgressRef.current?.(audio.currentTime, audio.duration || 0, audio.paused);
+      if (!audio || !isLoadedRef.current || audio.currentTime <= 0 || audio.ended) return;
+      saveProgressRef.current?.(audio.currentTime, audio.duration || 0, true);
     };
 
     const handleVisibilityChange = () => {

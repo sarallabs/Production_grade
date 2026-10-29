@@ -89,7 +89,7 @@ import ReadingHighlightView from "@/components/study/ReadingHighlightView";
 import { getRegistryTenantId } from "@/data/manifestService";
 import { useTenant, getCloudUiCopy } from "@/tenant/TenantProvider";
 import { resolveAssetUrl, getRegistryChapterData } from "@/data/registryClient";
-import { cloudStorage } from "@/context/CloudStateContext";
+import { cloudStorage, useCloudState } from "@/context/CloudStateContext";
 const MindMapView = React.lazy(() => import("@/components/MindMapView"));
 const FlashcardsView = React.lazy(() => import("@/components/FlashcardsView"));
 const QuestionBankView = React.lazy(() => import("@/components/QuestionBankView"));
@@ -438,6 +438,9 @@ export default function StudyTable() {
   );
   const navigate = useNavigate();
   const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
+  const { isHydrated } = useCloudState();
+  const [cloudSyncRev, setCloudSyncRev] = useState(0);
+  useEffect(() => cloudStorage.subscribe(() => setCloudSyncRev((r) => r + 1)), []);
   const location = useLocation();
   const navState = (location.state as Record<string, any>) || {};
   const [searchParams] = useSearchParams();
@@ -447,20 +450,32 @@ export default function StudyTable() {
     "boardId", "boardName", "cId", "className", "sId", "subjectName",
     "semesterName", "chapter", "chapterName", "persona", "tool", "video", "section"
   ];
-  const savedCourseParams: Record<string, string> = (() => {
+  const savedCourseParams: Record<string, string> = useMemo(() => {
     try { return JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
-  })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cloudSyncRev]);
   const updateSavedCourseParams = useCallback((patch: Record<string, string>) => {
     try {
       const current = JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}");
       const next = { ...current, ...patch };
       cloudStorage.setItem("sv_last_course_params", JSON.stringify(next));
+      if (typeof window !== "undefined" && window.history.state) {
+        const nextUsr = { ...(window.history.state.usr || {}), ...patch };
+        window.history.replaceState({ ...window.history.state, usr: nextUsr }, "", window.location.pathname);
+      }
     } catch {}
   }, []);
   const subjectId =
     navState.sId || searchParams.get("sId") || searchParams.get("subjectId") || savedCourseParams.sId || "english";
   useEffect(() => {
-    const merged: Record<string, string> = { ...savedCourseParams };
+    if (window.location.search) {
+      window.history.replaceState(window.history.state, "", window.location.pathname);
+    }
+    if (!isHydrated) return;
+    const current = (() => {
+      try { return JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}"); } catch { return {}; }
+    })();
+    const merged: Record<string, string> = { ...current };
     COURSE_PARAM_KEYS.forEach((k) => {
       const fromNav = navState[k];
       const fromUrl = searchParams.get(k);
@@ -470,11 +485,8 @@ export default function StudyTable() {
     if (merged.sId) {
       cloudStorage.setItem("sv_last_course_params", JSON.stringify(merged));
     }
-    if (window.location.search) {
-      window.history.replaceState(window.history.state, "", window.location.pathname);
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+  }, [searchParams, isHydrated]);
   const treeLogoSrc = subjectId?.startsWith('neb_')
     ? `${import.meta.env.BASE_URL}neb-logo.png`
     : `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
@@ -491,8 +503,13 @@ export default function StudyTable() {
   const [uiPersona, setUiPersona] = useState<DifficultyLevel>(
     PERSONA_TO_LEVEL[personaRaw] || "intermediate",
   );
+  const userModifiedPersonaRef = useRef(false);
+  const userModifiedChapterRef = useRef(false);
+  const userModifiedVideoRef = useRef(false);
+  const userModifiedToolRef = useRef(false);
 
   const setPersona = useCallback((level: DifficultyLevel) => {
+    userModifiedPersonaRef.current = true;
     // Stop any active TTS/audio before switching persona
     googleTtsStop();
     setUiPersona(level);
@@ -520,6 +537,7 @@ export default function StudyTable() {
   });
   const chapterNumber = chapterNumberState;
   const setChapterNumber = (num: number) => {
+    userModifiedChapterRef.current = true;
     setChapterNumberState(num);
     updateSavedCourseParams({ chapter: String(num) });
   };
@@ -594,6 +612,7 @@ export default function StudyTable() {
   const activeVideoDir = isSegmented ? activeVideo?.dir : undefined;
 
   const setVideoIndex = (index: number) => {
+    userModifiedVideoRef.current = true;
     setVideoIndexState(index);
     updateSavedCourseParams({ video: index.toString() });
   };
@@ -678,6 +697,36 @@ export default function StudyTable() {
     if (rawTool === "foundation") return "mindmap";
     return rawTool || "summary";
   });
+
+  useEffect(() => {
+    if (!savedCourseParams || Object.keys(savedCourseParams).length === 0) return;
+    if (!userModifiedChapterRef.current && !navState.chapter && !searchParams.get("chapter") && savedCourseParams.chapter) {
+      const ch = parseInt(savedCourseParams.chapter, 10);
+      if (!isNaN(ch) && ch >= 1 && ch !== chapterNumberState) {
+        setChapterNumberState(ch);
+      }
+    }
+    if (!userModifiedPersonaRef.current && !navState.persona && !searchParams.get("persona") && savedCourseParams.persona) {
+      const pLevel = PERSONA_TO_LEVEL[savedCourseParams.persona];
+      if (pLevel && pLevel !== persona) {
+        setPersonaState(pLevel);
+        setUiPersona(pLevel);
+      }
+    }
+    if (!userModifiedVideoRef.current && !navState.video && !searchParams.get("video") && savedCourseParams.video) {
+      const vIdx = parseInt(savedCourseParams.video, 10);
+      if (!isNaN(vIdx) && vIdx >= 1 && vIdx !== videoIndexState) {
+        setVideoIndexState(vIdx);
+      }
+    }
+    if (!userModifiedToolRef.current && !navState.tool && !searchParams.get("tool") && savedCourseParams.tool) {
+      const nextTool = (savedCourseParams.tool === "foundation" ? "mindmap" : savedCourseParams.tool) as ToolId;
+      if (nextTool && nextTool !== activeTool) {
+        setActiveToolState(nextTool);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedCourseParams]);
 
   // Prefetch mindmap topic notes in background only when mindmap or foundation tool is active
   useEffect(() => {
@@ -842,6 +891,7 @@ export default function StudyTable() {
   // `completedOverride` lets a caller that just marked a step done unlock the
   // next one in the same tick, before the completedTools state has re-rendered.
   const setActiveTool = (tool: ToolId, completedOverride?: ToolId[]) => {
+    userModifiedToolRef.current = true;
     const completed = completedOverride ?? completedTools;
     if (tool !== activeTool) {
       triggerToolTransition(tool);

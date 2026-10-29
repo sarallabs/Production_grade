@@ -28,8 +28,7 @@ import {
   type ReadFigure,
 } from "@/data/sectionizedReadService";
 import { getRegistryChapterData } from "@/data/manifestService";
-import { cloudStorage } from "@/context/CloudStateContext";
-
+import { cloudStorage, useCloudState } from "@/context/CloudStateContext";
 // 120 pencil-skinny bars forming a natural audio waveform curve
 const PENCIL_WAVEFORM_BARS: number[] = Array.from({ length: 120 }, (_, i) => {
   const t = i / 120;
@@ -389,6 +388,7 @@ export default function PodcastsView({
     }
   };
 
+  const { isHydrated } = useCloudState();
   const [selectedTrack, setSelectedTrack] = useState<string>(
     getSavedTrack(),
   );
@@ -401,25 +401,36 @@ export default function PodcastsView({
   });
 
   useEffect(() => {
-    if (initialMcIndex != null) return;
-    const syncSavedMc = () => {
-      const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
-      if (savedMc != null) {
-        const parsed = parseInt(savedMc, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-          setSelectedMc((prev) => (prev !== parsed ? parsed : prev));
+    const syncSavedTrackAndMc = () => {
+      if (!resumeTrack) {
+        const savedTrk = cloudStorage.getItem(`last_track_${subjectId}_${chapterNumber}_${persona}`);
+        if (savedTrk === "mc" || savedTrk === "ql" || savedTrk === "dl" || savedTrk === "short" || savedTrk === "long") {
+          setSelectedTrack((prev) => (prev !== savedTrk ? savedTrk : prev));
+        }
+      }
+      if (initialMcIndex == null) {
+        const savedMc = cloudStorage.getItem(`last_mc_${subjectId}_${chapterNumber}`);
+        if (savedMc != null) {
+          const parsed = parseInt(savedMc, 10);
+          if (!isNaN(parsed) && parsed >= 0) {
+            setSelectedMc((prev) => (prev !== parsed ? parsed : prev));
+          }
         }
       }
     };
-    syncSavedMc();
-    return cloudStorage.subscribe(syncSavedMc);
-  }, [subjectId, chapterNumber, initialMcIndex]);
+    syncSavedTrackAndMc();
+    return cloudStorage.subscribe(syncSavedTrackAndMc);
+  }, [subjectId, chapterNumber, persona, initialMcIndex, resumeTrack]);
 
   useEffect(() => {
-    if (!isRegistryResolved) return;
+    if (!isRegistryResolved || !isHydrated) return;
     cloudStorage.setItem(`last_mc_${subjectId}_${chapterNumber}`, String(selectedMc));
-  }, [selectedMc, subjectId, chapterNumber, isRegistryResolved]);
+  }, [selectedMc, subjectId, chapterNumber, isRegistryResolved, isHydrated]);
 
+  useEffect(() => {
+    if (!isRegistryResolved || !isHydrated || !selectedTrack) return;
+    cloudStorage.setItem(`last_track_${subjectId}_${chapterNumber}_${persona}`, selectedTrack);
+  }, [selectedTrack, subjectId, chapterNumber, persona, isRegistryResolved, isHydrated]);
   const completedStorageKey = `sv_listen_done_${subjectId}_ch${chapterNumber}_${selectedTrack}`;
   const [completedEpisodes, setCompletedEpisodes] = useState<Set<number>>(() => {
     try {
@@ -934,19 +945,28 @@ export default function PodcastsView({
     setIsTrackGridExpanded(true);
   }, [selectedTrack]);
 
+  const isPlayerMounted = available === true && transcript !== null;
+
   const handleResumeAudioTime = useCallback(
     (restoredTime: number) => {
       currentTimeRef.current = restoredTime;
       setCurrentTime(restoredTime);
+      requestAnimationFrame(() => {
+        const dur = audioDurationRef.current || displayDuration || 60;
+        if (dur > 0) {
+          updateProgress(restoredTime, dur);
+        }
+      });
     },
-    [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [displayDuration],
   );
 
   useAudioProgress(
     userId,
     lessonId,
     audioRef,
-    available === true,
+    isPlayerMounted,
     metadata,
     handleResumeAudioTime,
   );
@@ -968,6 +988,10 @@ export default function PodcastsView({
             audioDurationRef.current = parsed.duration;
             setAudioDuration(parsed.duration);
           }
+          const effectiveDur = parsed.duration || audioDurationRef.current || displayDuration || 60;
+          requestAnimationFrame(() => {
+            updateProgress(parsed.currentTime, effectiveDur);
+          });
           const audio = audioRef.current;
           if (audio && audio.paused) {
             const seekAudio = () => {
@@ -977,6 +1001,10 @@ export default function PodcastsView({
               } catch {
                 // wait for metadata
               }
+              const dur = audio.duration && isFinite(audio.duration) && audio.duration > 0
+                ? audio.duration
+                : effectiveDur;
+              updateProgress(parsed.currentTime, dur);
             };
             if (audio.readyState >= 1) {
               seekAudio();
@@ -996,7 +1024,8 @@ export default function PodcastsView({
         tryRestore();
       }
     });
-  }, [available, lessonId, userId, isPlaying]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [available, isPlayerMounted, lessonId, userId, isPlaying]);
   /** Resolve filenames via registry chapterFiles signed URLs first, then fallback */
   const getFileNames = useCallback((track: string): { audio: string; transcript: string; jsonTranscript?: string; fromRegistry?: boolean } => {
     // 1. Registry signed URLs (100% cloud-native contract/v1)
@@ -1196,6 +1225,23 @@ export default function PodcastsView({
     };
   }, [subjectId, chapterNumber, persona, selectedTrack, chapterDir, selectedMc, selectedDl, selectedQl, getFileNames, isRegistryResolved]);
 
+  const hasSavedProgressForLesson = useCallback(
+    (targetLessonId: string): boolean => {
+      const raw =
+        cloudStorage.getItem(`audio_progress_${userId}_${targetLessonId}`) ||
+        cloudStorage.getItem(`audio_progress_shared_${targetLessonId}`) ||
+        cloudStorage.getItem(`audio_progress_anonymous_${targetLessonId}`);
+      if (!raw) return false;
+      try {
+        const parsed = JSON.parse(raw);
+        return Boolean(parsed && typeof parsed.currentTime === "number" && parsed.currentTime > 0);
+      } catch {
+        return false;
+      }
+    },
+    [userId],
+  );
+
   const isTrackMount = useRef(true);
   // ── Reset player when track selection changes ──
   useEffect(() => {
@@ -1204,17 +1250,24 @@ export default function PodcastsView({
       return;
     }
     const audio = audioRef.current;
+    const hasSaved = hasSavedProgressForLesson(lessonId);
     if (audio) {
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
+      if (!hasSaved) {
+        currentTimeRef.current = 0;
+        setCurrentTime(0);
+      }
+      setAudioDuration(0);
+      audioDurationRef.current = 0;
+      audio.load();
+    } else if (!hasSaved) {
       currentTimeRef.current = 0;
       setCurrentTime(0);
-      setAudioDuration(0);
-      audio.load();
     }
     setSelectedModuleOverride(null);
-  }, [selectedTrack, selectedMc, selectedDl, selectedQl]);
+  }, [selectedTrack, selectedMc, selectedDl, selectedQl, lessonId, hasSavedProgressForLesson]);
 
   const isPersonaMount = useRef(true);
   // ── Reset player when persona changes ──
@@ -1224,15 +1277,19 @@ export default function PodcastsView({
       return;
     }
     const audio = audioRef.current;
+    const hasSaved = hasSavedProgressForLesson(lessonId);
     if (audio) {
       audio.pause();
       setIsPlaying(false);
       onPlayingChange?.(false);
-      currentTimeRef.current = 0;
-      setCurrentTime(0);
+      if (!hasSaved) {
+        currentTimeRef.current = 0;
+        setCurrentTime(0);
+      }
       setAudioDuration(0);
+      audioDurationRef.current = 0;
     }
-  }, [persona]);
+  }, [persona, lessonId, hasSavedProgressForLesson]);
   const isNebMount = useRef(true);
   // ── Reset NEB Nepal and Nagarjuna University player when track, persona, subject, or chapter changes ──
   useEffect(() => {
@@ -1241,17 +1298,23 @@ export default function PodcastsView({
       return;
     }
     if (!subjectId || (!subjectId.startsWith("neb_") && subjectId !== "management")) return;
+    const hasSaved = hasSavedProgressForLesson(lessonId);
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
-      audio.currentTime = 0;
+      if (!hasSaved) {
+        audio.currentTime = 0;
+      }
     }
     setIsPlaying(false);
     onPlayingChange?.(false);
-    setCurrentTime(0);
+    if (!hasSaved) {
+      currentTimeRef.current = 0;
+      setCurrentTime(0);
+    }
     setAudioDuration(0);
-  }, [subjectId, chapterNumber, persona, selectedTrack, selectedMc]);
-
+    audioDurationRef.current = 0;
+  }, [subjectId, chapterNumber, persona, selectedTrack, selectedMc, lessonId, hasSavedProgressForLesson]);
   // ── Audio event listeners ──
   // Progress is updated via rAF to avoid 4Hz React re-renders freezing the UI.
   // We update the DOM directly for the waveform and only call setCurrentTime
@@ -1414,9 +1477,11 @@ export default function PodcastsView({
         const seekEnd = audio.seekable.end(audio.seekable.length - 1);
         if (isFinite(seekEnd) && seekEnd > 0) dur = seekEnd;
       }
-      if (dur > 0 && dur !== audioDurationRef.current) {
-        audioDurationRef.current = dur;
-        setAudioDuration(dur);
+      if (dur > 0) {
+        if (dur !== audioDurationRef.current) {
+          audioDurationRef.current = dur;
+          setAudioDuration(dur);
+        }
         const effectiveTime = audio.currentTime > 0 ? audio.currentTime : currentTimeRef.current;
         updateProgress(effectiveTime, dur);
       }
@@ -1486,8 +1551,7 @@ export default function PodcastsView({
         rafRef.current = null;
       }
     };
-  }, [selectedTrack, autoPlay, available, displayDuration, cleanText.length, updateProgress]);
-
+  }, [selectedTrack, autoPlay, available, isPlayerMounted, displayDuration, cleanText.length, updateProgress]);
   // Synchronize playhead, waveform, and active word when user returns to tab after leaving
   useEffect(() => {
     const handleVisibility = () => {
@@ -1703,8 +1767,7 @@ export default function PodcastsView({
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [onPlayingChange, available]);
-
+  }, [onPlayingChange, available, isPlayerMounted]);
   // ── TTS Transport Actions ──
   const handleTtsPlay = () => {
     if (subjectId === "management") return;

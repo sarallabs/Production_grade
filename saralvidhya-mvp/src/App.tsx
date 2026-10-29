@@ -3,7 +3,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Layout from './components/Layout';
 import { FocusModeProvider } from './context/FocusModeContext';
 import { TenantProvider, useTenant } from './tenant/TenantProvider';
-import { cloudStorage } from './context/CloudStateContext';
+import { cloudStorage, useCloudState } from './context/CloudStateContext';
 import branding from './config/branding.json';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -44,8 +44,9 @@ function AdminGuard({ children }: { children: JSX.Element }) {
 /** Redirect to /login if not authenticated */
 function AuthGuard({ children }: { children: JSX.Element }) {
   const location = useLocation();
-  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
-  if (isLoading) {
+  const { isLoading, isAuthenticated: tenantAuthed } = useTenant();
+  const { isHydrated } = useCloudState();
+  if (isLoading || ((isAuthenticated() || tenantAuthed) && !isHydrated)) {
     return <LoadingSpinner />;
   }
   if (!isAuthenticated() && !tenantAuthed) {
@@ -54,14 +55,18 @@ function AuthGuard({ children }: { children: JSX.Element }) {
   return children;
 }
 
-/** Redirect to / if already authenticated (for login page) */
+/** Redirect to / (or original destination) if already authenticated (for login page) */
 function GuestOnly({ children }: { children: JSX.Element }) {
-  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
-  if (isLoading) {
+  const location = useLocation();
+  const { isLoading, isAuthenticated: tenantAuthed } = useTenant();
+  const { isHydrated } = useCloudState();
+  if (isLoading || ((isAuthenticated() || tenantAuthed) && !isHydrated)) {
     return <LoadingSpinner />;
   }
   if (isAuthenticated() || tenantAuthed) {
-    return <Navigate to="/" replace />;
+    const from = (location.state as { from?: string })?.from;
+    const targetUrl = from && from !== '/login' && !from.endsWith('/login') ? from : '/';
+    return <Navigate to={targetUrl} replace />;
   }
   return children;
 }
