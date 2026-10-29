@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import MarkdownView from "@/components/MarkdownView";
 import { getResourceContent, type Chapter, type ChapterVideo, type DifficultyLevel } from "@/data/contentRepository";
 import { getRegistryChapterData } from "@/data/manifestService";
-import { cloudStorage, useCloudState } from "@/context/CloudStateContext";
+import { cloudStorage, useCloudState, syncToolProgressToCloud } from "@/context/CloudStateContext";
 const WATCHED_THRESHOLD_PCT = 90;
 
 export interface VideosViewProps {
@@ -156,6 +156,7 @@ export default function VideosView({
       const idx = parseInt(savedIdx, 10);
       if (!isNaN(idx) && idx >= 0) return idx;
     }
+    if (activeVideoIndex && activeVideoIndex >= 1) return activeVideoIndex - 1;
     return 0;
   });
   const [currentTime, setCurrentTime] = useState(0);
@@ -168,25 +169,41 @@ export default function VideosView({
   useEffect(() => {
     let cancelled = false;
     setIsRegistryLoaded(false);
+    setRegistryVideos([]);
     getRegistryChapterData(subjectId, chapterNumber)
       .then((reg) => {
         const regList = reg?.chapter?.videos || (reg as any)?.videos;
+        const chTopics = (reg?.chapter as any)?.topics || [];
         if (cancelled) return;
         if (Array.isArray(regList) && regList.length > 0) {
           setRegistryVideos(
-            regList.map((v: any, idx: number) => ({
-              index: v.order ?? idx + 1,
-              id: v.id || `vid_${idx + 1}`,
-              title: v.title,
-              ytId: v.videoId || v.ytId || "",
-              duration: v.duration,
-              thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
-              dir: "",
-              topics: v.topics,
-            })),
+            regList.map((v: any, idx: number) => {
+              const matchingTopic = chTopics[idx];
+              const dbSubtopics =
+                Array.isArray(matchingTopic?.subtopics) && matchingTopic.subtopics.length > 0
+                  ? matchingTopic.subtopics
+                  : undefined;
+              const dbDur =
+                v.duration ||
+                (matchingTopic?.estimatedMinutes ? `${matchingTopic.estimatedMinutes}:00` : undefined);
+              const rawYt = String(v.videoId || v.ytId || v.videoUrl || v.url || "").trim();
+              const ytMatch = rawYt.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+              const resolvedYtId = ytMatch ? ytMatch[1] : rawYt;
+              return {
+                index: v.order ?? idx + 1,
+                id: v.id || `vid_${idx + 1}`,
+                title: v.title || matchingTopic?.label || matchingTopic?.title || `Part ${idx + 1}`,
+                ytId: resolvedYtId,
+                duration: dbDur,
+                thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
+                dir: v.id || `vid_${idx + 1}`,
+                topics: Array.isArray(v.topics) && v.topics.length > 0 ? v.topics : dbSubtopics,
+              };
+            }),
           );
         }
       })
+      .catch(() => {})
       .finally(() => {
         if (!cancelled) setIsRegistryLoaded(true);
       });
@@ -217,12 +234,14 @@ export default function VideosView({
   });
   const activePlaybackSessionYtIdRef = useRef<string | null>(null);
 
-  const recordVideoOpen = useCallback((ytId?: string) => {
-    if (!ytId) return;
-    if (activePlaybackSessionYtIdRef.current === ytId) return;
-    activePlaybackSessionYtIdRef.current = ytId;
+  const recordVideoOpen = useCallback((ytId?: string, vidIndexOneBased?: number) => {
+    const keyId = ytId || (vidIndexOneBased ? `video_${vidIndexOneBased}` : "");
+    if (!keyId) return;
+    const sessionKey = `${vidIndexOneBased || 1}:${keyId}`;
+    if (activePlaybackSessionYtIdRef.current === sessionKey) return;
+    activePlaybackSessionYtIdRef.current = sessionKey;
     setVideoOpenCounts((prev) => {
-      const next = { ...prev, [ytId]: (prev[ytId] || 0) + 1 };
+      const next = { ...prev, [keyId]: (prev[keyId] || 0) + 1 };
       try {
         cloudStorage.setItem("sv_video_open_counts", JSON.stringify(next));
       } catch {
@@ -230,7 +249,13 @@ export default function VideosView({
       }
       return next;
     });
-  }, []);
+    void syncToolProgressToCloud({
+      subjectId,
+      chapterId: `chapter_${String(chapterNumber).padStart(2, "0")}`,
+      visited: true,
+      openedVideoId: keyId,
+    });
+  }, [subjectId, chapterNumber]);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -253,28 +278,61 @@ export default function VideosView({
 
   // 1. Build video list from registry / chapterVideos / manifest subjectChapters prop first
   const videos = useMemo(() => {
+    const ytIdsFromMd: string[] = [];
+    if (youtubeLinksContent) {
+      const ytRegex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
+      let match;
+      while ((match = ytRegex.exec(youtubeLinksContent)) !== null) {
+        if (match[1] && !ytIdsFromMd.includes(match[1])) {
+          ytIdsFromMd.push(match[1]);
+        }
+      }
+    }
+
+    const extractYt = (raw?: string): string => {
+      if (!raw) return "";
+      const trimmed = String(raw).trim();
+      if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
+      const m = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : trimmed;
+    };
+
     const manifestVids = subjectChapters?.find((c) => c.number === chapterNumber)?.videos || [];
     const mappedManifestVids = manifestVids.map((v) => ({
       title: v.title,
-      ytId: v.videoId || "",
+      ytId: extractYt(v.videoId || (v as any).ytId || v.videoUrl || v.url),
       topics: v.topics,
       duration: v.duration,
       thumbnailUrl: v.thumbnailUrl || v.thumbnail,
     }));
-    const sourceVideos =
-      chapterVideos && chapterVideos.length > 0
-        ? chapterVideos
-        : registryVideos.length > 0
-          ? registryVideos
+    const primarySource =
+      registryVideos.length > 0
+        ? registryVideos
+        : chapterVideos && chapterVideos.length > 0
+          ? chapterVideos
           : mappedManifestVids;
-    if (sourceVideos.length > 0) {
-      return sourceVideos.map((v) => ({
-        title: v.title,
-        ytId: v.ytId,
-        topics: v.topics,
-        duration: v.duration,
-        thumbnailUrl: v.thumbnailUrl,
-      }));
+    if (primarySource.length > 0) {
+      const firstValidYt =
+        primarySource.map((v) => extractYt(v.ytId || (v as any).videoId || (v as any).videoUrl || (v as any).url)).find(Boolean) ||
+        ytIdsFromMd[0] ||
+        "";
+      return primarySource.map((v, idx) => {
+        const regMatch = registryVideos[idx];
+        const chMatch = chapterVideos?.[idx];
+        const resolvedYt =
+          extractYt(v.ytId || (v as any).videoId || (v as any).videoUrl || (v as any).url) ||
+          extractYt(regMatch?.ytId) ||
+          extractYt(chMatch?.ytId) ||
+          ytIdsFromMd[idx] ||
+          firstValidYt;
+        return {
+          title: v.title || regMatch?.title || chMatch?.title || `Part ${idx + 1}`,
+          ytId: resolvedYt,
+          topics: (v.topics && v.topics.length > 0 ? v.topics : regMatch?.topics) || chMatch?.topics,
+          duration: v.duration || regMatch?.duration || chMatch?.duration,
+          thumbnailUrl: v.thumbnailUrl || regMatch?.thumbnailUrl || chMatch?.thumbnailUrl,
+        };
+      });
     }
     let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string }[] = [];
     if (subjectId === "anu_physics") {
@@ -411,30 +469,36 @@ export default function VideosView({
   const currentVideo = videos[robustActive] || videos[0];
   const isSingleVideo = videos.length <= 1;
 
-  // Active index sync from parent (only for segmented chapters) or cloud storage
-  const isParentSegmented = Boolean(chapterVideos && chapterVideos.length > 0);
+  // Active index sync with cloud storage (DB-driven source of truth)
   useEffect(() => {
-    if (isParentSegmented && activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
+    let lastObservedRaw = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    if (lastObservedRaw != null) {
+      const idx = parseInt(lastObservedRaw, 10);
+      if (!isNaN(idx) && idx >= 0 && (videos.length <= 1 || idx < videos.length)) {
+        setActiveVideo((prev) => (prev !== idx ? idx : prev));
+      }
+    } else if (activeVideoIndex && activeVideoIndex >= 1 && (videos.length <= 1 || activeVideoIndex <= videos.length)) {
       setActiveVideo(activeVideoIndex - 1);
-      return;
     }
     const syncSavedVideoIdx = () => {
       const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+      if (savedIdx === lastObservedRaw) return;
+      lastObservedRaw = savedIdx;
       if (savedIdx != null) {
         const idx = parseInt(savedIdx, 10);
-        if (!isNaN(idx) && idx >= 0 && (videos.length === 0 || idx < videos.length)) {
+        if (!isNaN(idx) && idx >= 0 && (videos.length <= 1 || idx < videos.length)) {
           setActiveVideo((prev) => (prev !== idx ? idx : prev));
         }
       }
     };
-    syncSavedVideoIdx();
     return cloudStorage.subscribe(syncSavedVideoIdx);
-  }, [isParentSegmented, activeVideoIndex, videos.length, subjectId, chapterNumber]);
+  }, [videos.length, subjectId, chapterNumber, activeVideoIndex]);
 
   useEffect(() => {
     if (!isHydrated || !isRegistryLoaded || !currentVideo?.ytId) return;
+    if (activeVideo >= videos.length && videos.length <= 1) return;
     cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(robustActive));
-  }, [robustActive, subjectId, chapterNumber, isHydrated, isRegistryLoaded, currentVideo?.ytId]);
+  }, [robustActive, activeVideo, videos.length, subjectId, chapterNumber, isHydrated, isRegistryLoaded, currentVideo?.ytId]);
   const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
   const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
     try {
@@ -514,7 +578,8 @@ export default function VideosView({
     (func: string, args: any[] = []) => {
       try {
         if (currentVideo?.ytId) {
-          const iframeEl = document.getElementById(`yt-player-${currentVideo.ytId}`) as HTMLIFrameElement | null;
+          const iframeEl = (document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`) ||
+            document.getElementById(`yt-player-${currentVideo.ytId}`)) as HTMLIFrameElement | null;
           iframeEl?.contentWindow?.postMessage(
             JSON.stringify({ event: "command", func, args }),
             "*",
@@ -522,7 +587,7 @@ export default function VideosView({
         }
       } catch {}
     },
-    [currentVideo?.ytId],
+    [currentVideo?.ytId, robustActive],
   );
   // Format time utility
   const formatTime = (sec: number) => {
@@ -532,9 +597,18 @@ export default function VideosView({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
-  const videoTimeStorageKey = currentVideo?.ytId
-    ? `sv_video_time_${subjectId}_ch${chapterNumber}_${currentVideo.ytId}`
-    : "";
+  const getVideoTimeKey = useCallback(
+    (vidIdx: number, ytId?: string) => {
+      if (!ytId) return "";
+      const hasDuplicateYtId = videos.filter((v) => v.ytId === ytId).length > 1;
+      return hasDuplicateYtId
+        ? `sv_video_time_${subjectId}_ch${chapterNumber}_v${vidIdx + 1}_${ytId}`
+        : `sv_video_time_${subjectId}_ch${chapterNumber}_${ytId}`;
+    },
+    [videos, subjectId, chapterNumber],
+  );
+
+  const videoTimeStorageKey = getVideoTimeKey(robustActive, currentVideo?.ytId);
   const lastVideoTimeSaveRef = useRef<number>(0);
   const restoredVideoTimeRef = useRef<number>(0);
 
@@ -553,12 +627,14 @@ export default function VideosView({
           return;
         }
         const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime > 1) {
+        if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
           restoredVideoTimeRef.current = parsed.currentTime;
           setCurrentTime(parsed.currentTime);
           if (typeof parsed.duration === "number" && parsed.duration > 0) {
             setDuration(parsed.duration);
             setProgress(Math.min(100, (parsed.currentTime / parsed.duration) * 100));
+          } else {
+            setProgress(0);
           }
         }
       } catch {
@@ -587,14 +663,14 @@ export default function VideosView({
     }
 
     let checkInterval: any;
-    const timeKey = `sv_video_time_${subjectId}_ch${chapterNumber}_${currentVideo.ytId}`;
+    const timeKey = videoTimeStorageKey;
 
     const readSavedSec = (): number => {
       try {
-        const raw = cloudStorage.getItem(timeKey);
+        const raw = timeKey ? cloudStorage.getItem(timeKey) : null;
         if (raw) {
           const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime > 1) {
+          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
             return parsed.currentTime;
           }
         }
@@ -603,7 +679,7 @@ export default function VideosView({
     };
 
     const persistVideoSec = (cur: number, dur: number, force = false) => {
-      if (!timeKey || cur <= 0) return;
+      if (!timeKey || cur < 0) return;
       const now = Date.now();
       if (!force && now - lastVideoTimeSaveRef.current < 3000) return;
       lastVideoTimeSaveRef.current = now;
@@ -617,11 +693,16 @@ export default function VideosView({
     };
 
     const initPlayer = () => {
-      const elementId = `yt-player-${currentVideo.ytId}`;
+      const elementId = `yt-player-${robustActive}-${currentVideo.ytId}`;
       const el = document.getElementById(elementId);
       if (!el) return;
 
       try {
+        if (playerRef.current && typeof playerRef.current.destroy === "function") {
+          try {
+            playerRef.current.destroy();
+          } catch {}
+        }
         playerRef.current = new (window as any).YT.Player(elementId, {
           events: {
             onReady: (event: any) => {
@@ -635,14 +716,19 @@ export default function VideosView({
                     event.target.setOption("captions", "track", {});
                   }
                   const dur = typeof event.target.getDuration === "function" ? event.target.getDuration() : 0;
-                  const savedSec = Math.max(readSavedSec(), restoredVideoTimeRef.current);
-                  if (savedSec > 1) {
+                  const recentSeek =
+                    lastSeekTargetRef.current.ts > 0 && Date.now() - lastSeekTargetRef.current.ts < 8000
+                      ? lastSeekTargetRef.current.time
+                      : null;
+                  const savedSec =
+                    recentSeek !== null ? recentSeek : Math.max(readSavedSec(), restoredVideoTimeRef.current);
+                  if (savedSec >= 0) {
                     restoredVideoTimeRef.current = savedSec;
                     setCurrentTime(savedSec);
                   }
                   if (dur > 0) {
                     setDuration(dur);
-                    if (savedSec > 1 && savedSec < dur - 2) {
+                    if (savedSec > 0 && savedSec < dur - 2) {
                       setProgress((savedSec / dur) * 100);
                     }
                   }
@@ -655,7 +741,7 @@ export default function VideosView({
                   );
                   if (autoPlayOnReadyRef.current && fsReady && typeof event.target.playVideo === "function") {
                     autoPlayOnReadyRef.current = false;
-                    if (savedSec > 1 && typeof event.target.seekTo === "function") {
+                    if (savedSec >= 0 && typeof event.target.seekTo === "function") {
                       event.target.seekTo(savedSec, true);
                     }
                     event.target.playVideo();
@@ -695,7 +781,7 @@ export default function VideosView({
                   return;
                 }
                 isSeekingRef.current = false;
-                recordVideoOpen(currentVideo.ytId);
+                recordVideoOpen(currentVideo.ytId, robustActive + 1);
                 if (!isCcEnabledRef.current && playerRef.current) {
                   try {
                     playerRef.current.unloadModule?.("captions");
@@ -703,10 +789,15 @@ export default function VideosView({
                   } catch (e) {}
                 }
                 if (!hasStartedPlayingRef.current && playerRef.current) {
-                  const savedSec = Math.max(readSavedSec(), restoredVideoTimeRef.current);
+                  const recentSeek =
+                    lastSeekTargetRef.current.ts > 0 && Date.now() - lastSeekTargetRef.current.ts < 8000
+                      ? lastSeekTargetRef.current.time
+                      : null;
+                  const savedSec =
+                    recentSeek !== null ? recentSeek : Math.max(readSavedSec(), restoredVideoTimeRef.current);
                   const curNow = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
                   const durNow = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
-                  if (savedSec > 1 && Math.abs(curNow - savedSec) > 2 && (durNow <= 0 || savedSec < durNow - 2)) {
+                  if (savedSec >= 0 && Math.abs(curNow - savedSec) > 2 && (durNow <= 0 || savedSec < durNow - 2)) {
                     try {
                       playerRef.current.seekTo?.(savedSec, true);
                       setCurrentTime(savedSec);
@@ -846,7 +937,7 @@ export default function VideosView({
     document.addEventListener("visibilitychange", handleVisibilitySave);
 
     checkInterval = setInterval(() => {
-      const el = document.getElementById(`yt-player-${currentVideo.ytId}`);
+      const el = document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`);
       if (
         (iframeLoadedRef.current || el) &&
         (window as any).YT &&
@@ -1109,7 +1200,8 @@ export default function VideosView({
       } catch (e) {}
       try {
         if (currentVideo?.ytId) {
-          const iframeEl = document.getElementById(`yt-player-${currentVideo.ytId}`) as HTMLIFrameElement | null;
+          const iframeEl = (document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`) ||
+            document.getElementById(`yt-player-${currentVideo.ytId}`)) as HTMLIFrameElement | null;
           iframeEl?.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
         }
       } catch (e) {}
@@ -1345,7 +1437,7 @@ export default function VideosView({
         ];
       }
     }
-    return rawTopics.slice(0, 3);
+    return rawTopics.slice(0, 6);
   }, [currentVideo, displayTitle, chapterName]);
 
   // Helper to parse duration strings like "04:12", "4:12", "10:15min", "12 min" into total seconds
@@ -1466,7 +1558,7 @@ export default function VideosView({
       if (dur > 0) {
         setProgress((clamped / dur) * 100);
       }
-      if (videoTimeStorageKey && clamped > 1) {
+      if (videoTimeStorageKey) {
         try {
           cloudStorage.setItem(
             videoTimeStorageKey,
@@ -1501,23 +1593,68 @@ export default function VideosView({
     [effectiveDurationSec, currentVideo?.ytId, videoTimeStorageKey, sendYtIframeCommand],
   );
 
-  // Video switching handler for multi-video
+  // Video switching handler for multi-video chapters
   const handleSelectVideo = (index: number) => {
-    if (index === robustActive) return;
+    if (index < 0 || index >= videos.length || index === robustActive) return;
+    if (playerReadyRef.current && playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+      try {
+        const cur = playerRef.current.getCurrentTime();
+        const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+        if (cur > 1 && videoTimeStorageKey) {
+          cloudStorage.setItem(
+            videoTimeStorageKey,
+            JSON.stringify({ currentTime: cur, duration: dur || effectiveDurationSec, updatedAt: Date.now() }),
+          );
+        }
+      } catch {}
+    }
     try {
       playerRef.current?.pauseVideo?.();
+      sendYtIframeCommand("pauseVideo", []);
     } catch {}
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
     activePlaybackSessionYtIdRef.current = null;
-    setCurrentTime(0);
-    setDuration(0);
-    setProgress(0);
+    hasStartedPlayingRef.current = false;
+    isSeekingRef.current = false;
+    autoPlayOnReadyRef.current = false;
+
+    // Persist new active video index to cloudStorage FIRST so synchronous listeners see the updated index
+    cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(index));
+
+    const targetVid = videos[index];
+    const targetTimeKey = getVideoTimeKey(index, targetVid?.ytId);
+    let restoredSec = 0;
+    let restoredDur = parseDurationSec(targetVid?.duration, 210);
+    if (targetTimeKey) {
+      try {
+        const raw = cloudStorage.getItem(targetTimeKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
+            restoredSec = parsed.currentTime;
+          }
+          if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
+            restoredDur = parsed.duration;
+          }
+        }
+      } catch {}
+    }
+    restoredVideoTimeRef.current = restoredSec;
+    lastSeekTargetRef.current = { time: restoredSec, ts: 0 };
+    setCurrentTime(restoredSec);
+    setDuration(restoredDur);
+    setProgress(restoredDur > 0 && restoredSec > 0 ? Math.min(100, (restoredSec / restoredDur) * 100) : 0);
     setIsPlaying(false);
+    isPlayingRef.current = false;
+
     setActiveVideo(index);
     if (onSelectVideoIndex) {
       onSelectVideoIndex(index + 1);
     }
   };
-
   const cutLabelUpper =
     persona === "beginner"
       ? "ESSENTIALS CUT"
@@ -1580,7 +1717,7 @@ export default function VideosView({
       >
         {isRegistryLoaded && currentVideo.ytId ? (
           <iframe
-            id={`yt-player-${currentVideo.ytId}`}
+            id={`yt-player-${robustActive}-${currentVideo.ytId}`}
             title={displayTitle}
             src={`https://www.youtube.com/embed/${currentVideo.ytId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&rel=0&modestbranding=1&controls=0&disablekb=1&cc_load_policy=0&cc_lang_pref=none&playsinline=1&iv_load_policy=3`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1668,9 +1805,16 @@ export default function VideosView({
             <circle cx="12" cy="12" r="9" />
             <polyline points="12 7 12 12 15 14" />
           </svg>
-          <span>
-            {currentTime > 0
-              ? `Resumed at ${formatTime(currentTime)}`
+          <span
+            style={{
+              maxWidth: "340px",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {totalVideos > 1
+              ? `${displayTitle} · ${formatTime(effectiveDurationSec)}`
               : `Ready · ${formatTime(effectiveDurationSec)}`}
           </span>
         </div>
@@ -2266,14 +2410,34 @@ export default function VideosView({
   const isVideoDone = (idx: number) =>
     completedVideos.has(idx) || Boolean(isVideoWatchedAt?.(idx + 1)) || (videos.length === 1 && isCompleted);
 
-  const completedCount = videos.reduce((acc, _, idx) => acc + (isVideoDone(idx) ? 1 : 0), 0);
-  const activePartialFraction = isVideoDone(robustActive)
-    ? 0
-    : Math.min(1, Math.max(0.2, progress / 100));
-  const watchProgressPercent = Math.min(
-    100,
-    Math.max(20, Math.round(((completedCount + activePartialFraction) / totalVideos) * 100)),
-  );
+  const watchProgressPercent = useMemo(() => {
+    if (totalVideos <= 0) return 0;
+    let totalFraction = 0;
+    for (let idx = 0; idx < videos.length; idx++) {
+      if (isVideoDone(idx)) {
+        totalFraction += 1;
+      } else if (idx === robustActive) {
+        totalFraction += Math.min(1, Math.max(0, progress / 100));
+      } else {
+        const tKey = getVideoTimeKey(idx, videos[idx]?.ytId);
+        if (tKey) {
+          try {
+            const raw = cloudStorage.getItem(tKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const cTime = Number(parsed?.currentTime || 0);
+              const cDur = Number(parsed?.duration || parseDurationSec(videos[idx]?.duration, 210));
+              if (cTime > 0 && cDur > 0) {
+                totalFraction += Math.min(1, cTime / cDur);
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+    return Math.min(100, Math.round((totalFraction / totalVideos) * 100));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videos, totalVideos, robustActive, progress, completedVideos, isCompleted, getVideoTimeKey, parseDurationSec]);
 
   const upcomingPlaylist = useMemo(() => {
     const items: { idx: number; title: string; durationStr: string }[] = [];
@@ -2332,23 +2496,6 @@ export default function VideosView({
             gap: "12px",
           }}
         >
-          {/* Top Dark Forest-Green Pill: Watching Guide */}
-          <div
-            style={{
-              background: '#9CC0B4',
-              color: '#18221D',
-              borderRadius: "999px",
-              padding: "10px 18px",
-              fontSize: "13px",
-              fontWeight: 700,
-              textAlign: "center",
-              letterSpacing: "0.01em",
-              boxShadow: "0 2px 6px rgba(29, 43, 36, 0.12)",
-            }}
-          >
-            Watching Guide
-          </div>
-
           {/* White Chapter Video Playlist Card */}
           <div
             style={{
@@ -2380,17 +2527,34 @@ export default function VideosView({
               {videos.map((vid, idx) => {
                 const isSelected = idx === robustActive;
                 const isWatched = isVideoDone(idx);
+                let savedVidDur = 0;
+                if (!isSelected) {
+                  const tKey = getVideoTimeKey(idx, vid.ytId);
+                  if (tKey) {
+                    try {
+                      const raw = cloudStorage.getItem(tKey);
+                      if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
+                          savedVidDur = Math.round(parsed.duration);
+                        }
+                      }
+                    } catch {}
+                  }
+                }
                 const vidSec =
                   isSelected && duration > 0
                     ? Math.round(duration)
-                    : parseDurationSec(vid.duration, 210);
+                    : savedVidDur > 0
+                      ? savedVidDur
+                      : parseDurationSec(vid.duration, 210);
                 const vidDurFormatted = formatTime(vidSec);
 
                 // Determine right status label: HERE, UP NEXT, 2ND, 3RD, 4TH, or DONE
                 let statusBadge = "";
                 if (isSelected) {
                   statusBadge = "HERE";
-                } else if (isWatched && idx < robustActive) {
+                } else if (isWatched) {
                   statusBadge = "DONE";
                 } else {
                   const queueOffset =
@@ -2403,8 +2567,16 @@ export default function VideosView({
 
                 return (
                   <div
-                    key={vid.ytId || idx}
+                    key={`video-item-${idx}-${vid.ytId || idx}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleSelectVideo(idx)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectVideo(idx);
+                      }
+                    }}
                     style={{
                       display: "flex",
                       alignItems: "flex-start",
@@ -2412,8 +2584,9 @@ export default function VideosView({
                       padding: "10px 10px",
                       borderRadius: "12px",
                       cursor: "pointer",
+                      border: isSelected ? "1px solid #C5D9CD" : "1px solid transparent",
                       background: isSelected ? "#EFF5F1" : "transparent",
-                      transition: "background 0.18s ease",
+                      transition: "all 0.18s ease",
                     }}
                   >
                     {/* Left Radio / Check Icon */}
@@ -2493,41 +2666,12 @@ export default function VideosView({
                           marginTop: "4px",
                         }}
                       >
-                        {`• ${vidDurFormatted}${
-                          isSelected
-                            ? ` · resumed at ${formatTime(currentTime)}`
-                            : ""
-                        }`}
+                        {`• ${vidDurFormatted}`}
                       </div>
                     </div>
                   </div>
                 );
               })}
-            </div>
-
-            {/* Resumed Status Pill inside Sidebar Card */}
-            <div
-              style={{
-                background: "#EFF5F1",
-                border: "1px solid #DCE8E0",
-                borderRadius: "999px",
-                padding: "8px 12px",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                color: "#2D3E36",
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                marginTop: "4px",
-              }}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="9" />
-                <polyline points="12 7 12 12 15 14" />
-              </svg>
-              <span>
-                {`${isPlaying ? "Playing" : "Resumed"} · Video ${robustActive + 1} at ${formatTime(currentTime)}`}
-              </span>
             </div>
 
             {/* Chapter Progress Footer */}
@@ -2587,124 +2731,6 @@ export default function VideosView({
         >
           {/* 16:9 Main Video Player in the Middle */}
           {renderVideoPlayer(true, false, robustActive)}
-          {/* ── SCREEN 2 BOTTOM FOOTER: Quick Check (Left) + Next Video CTA (Right) ── */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "16px",
-              marginTop: "6px",
-              flexWrap: "wrap",
-            }}
-          >
-            {/* Left Dashed Card: Quick Check · 3 questions */}
-            <button
-              type="button"
-              onClick={() => onComplete?.()}
-              style={{
-                background: "#FAF8F3",
-                border: "1.5px dashed #C7C1B4",
-                borderRadius: "12px",
-                padding: "12px 18px",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                cursor: "pointer",
-                textAlign: "left",
-                transition: "background 0.18s ease, border-color 0.18s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#F3EFE6";
-                e.currentTarget.style.borderColor = "#9DC2AD";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#FAF8F3";
-                e.currentTarget.style.borderColor = "#C7C1B4";
-              }}
-            >
-              <div
-                style={{
-                  width: "22px",
-                  height: "22px",
-                  borderRadius: "6px",
-                  background: "#22C55E",
-                  color: "#FFFFFF",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <div>
-                <div style={{ fontSize: "13px", fontWeight: 800, color: "#1E2822" }}>
-                  Quick Check · 3 questions
-                </div>
-                <div style={{ fontSize: "11.5px", color: "#6E7B73", marginTop: "1px" }}>
-                  Active recall after every video — about 90 seconds
-                </div>
-              </div>
-            </button>
-
-            {/* Right Sage Pill CTA: Next · Video X of Y */}
-            <button
-              type="button"
-              onClick={() => {
-                if (hasNextVideo) {
-                  handleSelectVideo(robustActive + 1);
-                } else if (totalVideos > 1) {
-                  handleSelectVideo(0);
-                } else {
-                  onComplete?.();
-                }
-              }}
-              style={{
-                background: '#9CC0B4',
-                border: "none",
-                borderRadius: "12px",
-                padding: "12px 24px",
-                cursor: "pointer",
-                textAlign: "center",
-                minWidth: "260px",
-                boxShadow: "0 2px 10px rgba(45, 62, 54, 0.1)",
-                transition: "transform 0.15s ease, filter 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.filter = "brightness(0.96)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.filter = "brightness(1)";
-              }}
-            >
-              <div
-                style={{
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  color: "#23372C",
-                }}
-              >
-                {hasNextVideo
-                  ? `Next · Video ${robustActive + 2} of ${totalVideos}`
-                  : totalVideos > 1
-                    ? `Replay · Video 1 of ${totalVideos}`
-                    : "Complete Watch"}
-              </div>
-              <div
-                style={{
-                  fontSize: "13.5px",
-                  fontWeight: 800,
-                  color: "#14241B",
-                  marginTop: "2px",
-                }}
-              >
-                {`${nextVideoObj?.title || displayTitle} →`}
-              </div>
-            </button>
-          </div>
         </div>
 
         {/* ── RIGHT SUBTLE TIMESTAMPS COLUMN ── */}

@@ -471,23 +471,6 @@ function SectionizedReadViewInner({
           zIndex: 10,
         }}
       >
-        {/* Reading Guide Header Pill — Pine-deep (#2E3B33) */}
-        <div
-          style={{
-            background: '#9CC0B4',
-            color: '#18221D',
-            borderRadius: '999px',
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 700,
-            textAlign: 'center',
-            letterSpacing: '0.01em',
-            boxShadow: '0 2px 6px rgba(46, 59, 51, 0.16)',
-          }}
-        >
-          {completedCount > 0 ? 'Resumed where you left off' : 'Reading Guide'}
-        </div>
-
         {/* Section Checklist Card */}
         <div
           style={{

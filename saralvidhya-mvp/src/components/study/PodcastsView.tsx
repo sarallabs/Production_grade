@@ -2515,23 +2515,6 @@ export default function PodcastsView({
             zIndex: 10,
           }}
         >
-          {/* Dark Forest Listening Guide Pill */}
-          <div
-            style={{
-              background: '#9CC0B4',
-              color: '#18221D',
-              borderRadius: "999px",
-              padding: "9px 16px",
-              fontSize: "12.5px",
-              fontWeight: 700,
-              textAlign: "center",
-              letterSpacing: "0.01em",
-              boxShadow: "0 2px 6px rgba(30, 40, 34, 0.12)",
-            }}
-          >
-            {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Listening Guide"}
-          </div>
-
           {/* IN THIS CHAPTER Checklist Card */}
           <div
             style={{

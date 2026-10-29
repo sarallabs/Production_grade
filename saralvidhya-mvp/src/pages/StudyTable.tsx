@@ -640,7 +640,9 @@ export default function StudyTable() {
   // 1-based index of the video being studied. Drives both which assets load and
   // which progress bucket the guided flow reads.
   const [videoIndexState, setVideoIndexState] = useState<number>(() => {
-    return Math.max(1, parseInt(String(navState.video || searchParams.get("video") || savedCourseParams.video || "1"), 10) || 1);
+    const savedLastIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    const fromSavedIdx = savedLastIdx != null && !isNaN(parseInt(savedLastIdx, 10)) ? String(parseInt(savedLastIdx, 10) + 1) : null;
+    return Math.max(1, parseInt(String(navState.video || searchParams.get("video") || fromSavedIdx || savedCourseParams.video || "1"), 10) || 1);
   });
   const videoIndex = videoIndexState;
   const activeVideo = chapterVideos.find((v) => v.index === videoIndex) ?? chapterVideos[0];
@@ -1412,8 +1414,12 @@ export default function StudyTable() {
       return;
     }
 
-    setLoading(true);
-    setContent(null);
+    if (activeTool === "videos") {
+      setLoading(false);
+    } else {
+      setLoading(true);
+      setContent(null);
+    }
 
     // Hold off until the video registry has settled. Firing now would fetch
     // chapter-scoped paths for a chapter whose assets live under a video
@@ -4149,6 +4155,7 @@ export default function StudyTable() {
             chapterVideos={chapterVideos}
             activeVideoIndex={videoIndex}
             onSelectVideoIndex={(index) => {
+              cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(Math.max(0, index - 1)));
               setVideoIndex(index);
               setCompletedTools(completedToolsFor(index));
             }}
