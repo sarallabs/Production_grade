@@ -439,11 +439,20 @@ export default function StudyTable() {
   const navigate = useNavigate();
   const { tenantId: contextTenantId, logout: tenantLogout } = useTenant();
   const { isHydrated } = useCloudState();
+  const [cloudSyncRev, setCloudSyncRev] = useState(0);
   useEffect(() => {
+    let prevCourseParams = cloudStorage.getItem('sv_last_course_params');
     let prevDone = cloudStorage.getItem('sv_mm_qc_done');
     let prevAns = cloudStorage.getItem('sv_mm_qc_answers');
     let prevStudied = cloudStorage.getItem('sv_mm_studied_v2');
     return cloudStorage.subscribe(() => {
+      try {
+        const curCourseParams = cloudStorage.getItem('sv_last_course_params');
+        if (curCourseParams !== prevCourseParams) {
+          prevCourseParams = curCourseParams;
+          setCloudSyncRev((r) => r + 1);
+        }
+      } catch {}
       try {
         const savedDone = cloudStorage.getItem('sv_mm_qc_done');
         if (savedDone && savedDone !== prevDone) {
