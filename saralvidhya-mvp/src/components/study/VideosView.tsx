@@ -161,7 +161,7 @@ export default function VideosView({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
-
+  const [registryVideos, setRegistryVideos] = useState<ChapterVideo[]>([]);
   useEffect(() => {
     let cancelled = false;
     getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
