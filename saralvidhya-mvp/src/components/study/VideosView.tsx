@@ -189,13 +189,23 @@ export default function VideosView({
               const rawYt = String(v.videoId || v.ytId || v.videoUrl || v.url || "").trim();
               const ytMatch = rawYt.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
               const resolvedYtId = ytMatch ? ytMatch[1] : rawYt;
+              const rawThumb = String(v.thumbnailUrl || v.thumbnail || "").trim();
+              const isSharedHeroThumb =
+                !rawThumb ||
+                rawThumb === reg?.chapter?.heroImageUrl ||
+                rawThumb === (reg?.chapter as any)?.thumbnailUrl ||
+                /\/hero\.|\/cover\./i.test(rawThumb);
               return {
                 index: v.order ?? idx + 1,
                 id: v.id || `vid_${idx + 1}`,
                 title: v.title || matchingTopic?.label || matchingTopic?.title || `Part ${idx + 1}`,
                 ytId: resolvedYtId,
                 duration: dbDur,
-                thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
+                thumbnailUrl: !isSharedHeroThumb
+                  ? rawThumb
+                  : resolvedYtId
+                    ? `https://i.ytimg.com/vi/${resolvedYtId}/hqdefault.jpg`
+                    : undefined,
                 dir: v.id || `vid_${idx + 1}`,
                 topics: Array.isArray(v.topics) && v.topics.length > 0 ? v.topics : dbSubtopics,
               };
@@ -213,6 +223,7 @@ export default function VideosView({
   }, [subjectId, chapterNumber]);
 
   // Custom Player State
+  const [watchMode, setWatchMode] = useState<"videos" | "clips">("videos");
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [volume, setVolume] = useState(100);
@@ -325,12 +336,18 @@ export default function VideosView({
           extractYt(chMatch?.ytId) ||
           ytIdsFromMd[idx] ||
           firstValidYt;
+        const candidateThumb = String(v.thumbnailUrl || regMatch?.thumbnailUrl || chMatch?.thumbnailUrl || "").trim();
+        const isHeroThumb = !candidateThumb || /\/hero\.|\/cover\./i.test(candidateThumb);
         return {
           title: v.title || regMatch?.title || chMatch?.title || `Part ${idx + 1}`,
           ytId: resolvedYt,
           topics: (v.topics && v.topics.length > 0 ? v.topics : regMatch?.topics) || chMatch?.topics,
           duration: v.duration || regMatch?.duration || chMatch?.duration,
-          thumbnailUrl: v.thumbnailUrl || regMatch?.thumbnailUrl || chMatch?.thumbnailUrl,
+          thumbnailUrl: !isHeroThumb
+            ? candidateThumb
+            : resolvedYt
+              ? `https://i.ytimg.com/vi/${resolvedYt}/hqdefault.jpg`
+              : undefined,
         };
       });
     }
@@ -1747,7 +1764,20 @@ export default function VideosView({
         >
           {(currentVideo.thumbnailUrl || currentVideo.ytId) && (
             <img
-              src={currentVideo.thumbnailUrl || `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`}
+              key={`vid-thumb-${robustActive}-${currentVideo.ytId}`}
+              src={
+                currentVideo.ytId && (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
+                  ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+                  : currentVideo.thumbnailUrl || `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+              }
+              onError={(e) => {
+                if (currentVideo.ytId) {
+                  const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
+                }
+              }}
               alt={displayTitle}
               style={{
                 width: "100%",
@@ -2474,7 +2504,381 @@ export default function VideosView({
         paddingRight: "4px",
       }}
     >
-      {/* ── Three-Column Watch Layout (Left: Watching Guide | Middle: Video | Right: Timestamps/Segments) ── */}
+      {/* ── Top Header Bar: Left Chapter Title + Middle-Top Toggle (Videos | Clips) ── */}
+      <div
+        className="videos-sticky-top"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          flexWrap: "wrap",
+          paddingBottom: "10px",
+          marginBottom: "12px",
+          borderBottom: "1px solid #E6E1D6",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13.5px",
+            color: "#6E7670",
+            fontWeight: 500,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <strong
+            style={{
+              color: "#1E2822",
+              fontWeight: 700,
+              fontSize: "0.84rem",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={chapterName}
+          >
+            {chapterName}
+          </strong>
+        </div>
+
+        {/* Centered Segmented Toggle: Videos | Clips */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+          <div
+            role="tablist"
+            aria-label="Watch mode selector"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#FFFFFF",
+              borderRadius: "9999px",
+              padding: "4px",
+              border: "1px solid #DED8CA",
+              boxShadow: "0 1px 3px rgba(30, 40, 34, 0.05)",
+              gap: "2px",
+            }}
+          >
+            {(
+              [
+                {
+                  key: "videos" as const,
+                  label: "Videos",
+                  icon: (active: boolean) => (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={active ? "#FFFFFF" : "#4A554E"}
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="3" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill={active ? "#FFFFFF" : "#4A554E"} stroke="none" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "clips" as const,
+                  label: "Clips",
+                  icon: (active: boolean) => (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={active ? "#FFFFFF" : "#4A554E"}
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill={active ? "#FFFFFF" : "#4A554E"} stroke="none" />
+                    </svg>
+                  ),
+                },
+              ]
+            ).map(({ key, label, icon }) => {
+              const isActive = watchMode === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    if (key === "clips" && isPlaying) {
+                      try {
+                        playerRef.current?.pauseVideo?.();
+                        sendYtIframeCommand("pauseVideo", []);
+                      } catch {}
+                      setIsPlaying(false);
+                      isPlayingRef.current = false;
+                    }
+                    setWatchMode(key);
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "6px 16px",
+                    borderRadius: "9999px",
+                    border: "none",
+                    outline: "none",
+                    background: isActive ? "#2D3E36" : "transparent",
+                    color: isActive ? "#FFFFFF" : "#4A554E",
+                    fontSize: "13px",
+                    fontWeight: isActive ? 700 : 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    userSelect: "none",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {icon(isActive)}
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
+      </div>
+
+      {watchMode === "clips" ? (
+        /* ── Clips (Shorts) Placeholder View ── */
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            width: "100%",
+            padding: "8px 0 36px 0",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              border: "1px solid #E6E0D4",
+              padding: "20px 22px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "16px",
+              flexWrap: "wrap",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 800,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    color: "#2F5944",
+                    background: "#E8F1EC",
+                    padding: "3px 8px",
+                    borderRadius: "999px",
+                  }}
+                >
+                  Shorts · Coming Soon
+                </span>
+                <span style={{ fontSize: "12px", color: "#7B867F", fontWeight: 500 }}>
+                  Vertical 60s Concept Clips
+                </span>
+              </div>
+              <div style={{ fontSize: "15px", fontWeight: 700, color: "#1E2822" }}>
+                Quick Revision Shorts for {chapterName}
+              </div>
+            </div>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: 600,
+                color: "#6E7B73",
+                background: "#F5F2EB",
+                border: "1px solid #E4DFD3",
+                padding: "6px 12px",
+                borderRadius: "999px",
+              }}
+            >
+              {videos.length > 0 ? `${Math.min(4, Math.max(3, videos.length))} Shorts Planned` : "4 Shorts Planned"}
+            </span>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))",
+              gap: "16px",
+              width: "100%",
+            }}
+          >
+            {(videos.length > 0
+              ? videos.slice(0, 4).map((v, i) => ({
+                  title: v.title?.replace(/^Part\s*\d+\s*:\s*/i, "") || `Concept Short ${i + 1}`,
+                  subtitle: v.topics?.[0] || "Key exam concept & visual intuition",
+                  duration: ["0:45", "0:55", "0:50", "0:58"][i % 4],
+                }))
+              : [
+                  { title: "Core Concept Intuition", subtitle: "60-second visual walkthrough", duration: "0:45" },
+                  { title: "Architecture & Key Flow", subtitle: "Quick diagram breakdown", duration: "0:55" },
+                  { title: "Common Exam Pitfalls", subtitle: "Fast revision check", duration: "0:50" },
+                  { title: "Rapid Formula & Rule Recap", subtitle: "One-minute takeaway", duration: "0:58" },
+                ]
+            ).map((clip, idx) => (
+              <div
+                key={`clip-placeholder-${idx}`}
+                style={{
+                  aspectRatio: "9 / 15",
+                  borderRadius: "16px",
+                  border: "1px solid #DDD7C9",
+                  background:
+                    idx % 2 === 0
+                      ? "linear-gradient(165deg, #24352D 0%, #18241E 60%, #121B17 100%)"
+                      : "linear-gradient(165deg, #2B3D34 0%, #1B2922 60%, #141E19 100%)",
+                  position: "relative",
+                  overflow: "hidden",
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  boxShadow: "0 6px 18px rgba(20, 32, 26, 0.08)",
+                  userSelect: "none",
+                }}
+              >
+                {/* Top Row: Short number + duration */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 2 }}>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "#D3E4DA",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      padding: "3px 8px",
+                      borderRadius: "999px",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    {`Short #${idx + 1}`}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 600,
+                      color: "#E4EFE9",
+                      background: "rgba(0, 0, 0, 0.32)",
+                      padding: "2px 7px",
+                      borderRadius: "6px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {clip.duration}
+                  </span>
+                </div>
+
+                {/* Center Placeholder Icon */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    zIndex: 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "50%",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.18)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#D8E8DF",
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill="currentColor" stroke="none" />
+                    </svg>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 600,
+                      letterSpacing: "0.04em",
+                      color: "rgba(216, 232, 223, 0.72)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Placeholder
+                  </span>
+                </div>
+
+                {/* Bottom Clip Title & Topic */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    zIndex: 2,
+                    background: "rgba(15, 23, 19, 0.55)",
+                    padding: "10px 11px",
+                    borderRadius: "11px",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "12.5px",
+                      fontWeight: 700,
+                      color: "#F4F7F5",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {clip.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 400,
+                      color: "#A7BBAE",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {clip.subtitle}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+      /* ── Three-Column Watch Layout (Left: Watching Guide | Middle: Video | Right: Timestamps/Segments) ── */
       <div
         style={{
           display: "flex",
@@ -2877,6 +3281,7 @@ export default function VideosView({
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

@@ -941,17 +941,25 @@ export async function getChapterVideos(
     );
     const ch = sub?.chapters.find((c) => c.number === chapterNumber);
     if (ch?.videos && ch.videos.length > 0) {
-      const mapped = ch.videos.map((v, idx) => ({
-        index: v.order ?? idx + 1,
-        id: v.id || `video_${idx + 1}`,
-        title: v.title || `Video ${idx + 1}`,
-        ytId: v.videoId || '',
-        videoUrl: v.videoUrl || v.url,
-        thumbnailUrl: v.thumbnailUrl || v.thumbnail,
-        dir: v.id || `video_${idx + 1}`,
-        topics: v.topics,
-        duration: v.duration,
-      }));
+      const mapped = ch.videos.map((v, idx) => {
+        const rawThumb = String(v.thumbnailUrl || v.thumbnail || '').trim();
+        const isHeroThumb = !rawThumb || /\/hero\.|\/cover\./i.test(rawThumb);
+        return {
+          index: v.order ?? idx + 1,
+          id: v.id || `video_${idx + 1}`,
+          title: v.title || `Video ${idx + 1}`,
+          ytId: v.videoId || '',
+          videoUrl: v.videoUrl || v.url,
+          thumbnailUrl: !isHeroThumb
+            ? rawThumb
+            : v.videoId
+              ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`
+              : undefined,
+          dir: v.id || `video_${idx + 1}`,
+          topics: v.topics,
+          duration: v.duration,
+        };
+      });
       chapterVideosCache[key] = mapped;
       return mapped;
     }
