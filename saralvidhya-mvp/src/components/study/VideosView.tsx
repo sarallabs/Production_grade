@@ -240,8 +240,9 @@ export default function VideosView({
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
   const isSeekingRef = useRef<boolean>(false);
+  const lastSeekTargetRef = useRef<{ time: number; ts: number }>({ time: 0, ts: 0 });
+  const seekResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seekFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const showSeekBadge = (type: "-10s" | "+10s" | "skip") => {
     setSeekFeedback(type);
     if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
@@ -718,6 +719,10 @@ export default function VideosView({
                       const cur = playerRef.current.getCurrentTime();
                       const dur = playerRef.current.getDuration();
                       if (dur > 0) {
+                        const sinceSeek = Date.now() - lastSeekTargetRef.current.ts;
+                        if (sinceSeek < 1500 && Math.abs(cur - lastSeekTargetRef.current.time) > 3) {
+                          return;
+                        }
                         const pct = (cur / dur) * 100;
                         setCurrentTime(cur);
                         setDuration(dur);
@@ -748,11 +753,11 @@ export default function VideosView({
                     playerRef.current.playVideo?.();
                   } catch (e) {}
                 }
+              } else if (state === YT?.PlayerState?.ENDED || state === 0) {
                 isSeekingRef.current = false;
                 activePlaybackSessionYtIdRef.current = null;
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
-                  clearInterval(progressIntervalRef.current);
                   progressIntervalRef.current = null;
                 }
                 try {
@@ -1392,11 +1397,30 @@ export default function VideosView({
       if (!isCurrentlyFullscreen()) {
         enterFullscreen(currentVideo?.ytId);
       }
-      const clamped = Math.max(0, Math.min(effectiveDurationSec, targetSec));
+      const dur =
+        (playerRef.current && typeof playerRef.current.getDuration === "function"
+          ? playerRef.current.getDuration()
+          : 0) || effectiveDurationSec;
+      const clamped = Math.max(0, Math.min(dur > 0 ? dur : targetSec, targetSec));
+      isSeekingRef.current = true;
+      hasStartedPlayingRef.current = true;
+      lastSeekTargetRef.current = { time: clamped, ts: Date.now() };
+      if (seekResetTimerRef.current) clearTimeout(seekResetTimerRef.current);
+      seekResetTimerRef.current = setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 1200);
       restoredVideoTimeRef.current = clamped;
       setCurrentTime(clamped);
-      if (effectiveDurationSec > 0) {
-        setProgress((clamped / effectiveDurationSec) * 100);
+      if (dur > 0) {
+        setProgress((clamped / dur) * 100);
+      }
+      if (videoTimeStorageKey && clamped > 1) {
+        try {
+          cloudStorage.setItem(
+            videoTimeStorageKey,
+            JSON.stringify({ currentTime: clamped, duration: dur || effectiveDurationSec, updatedAt: Date.now() }),
+          );
+        } catch {}
       }
       if (!playerRef.current || !playerReadyRef.current) {
         autoPlayOnReadyRef.current = true;
@@ -1405,12 +1429,21 @@ export default function VideosView({
       if (playerRef.current?.seekTo) {
         try {
           playerRef.current.seekTo(clamped, true);
+          setIsPlaying(true);
+          isPlayingRef.current = true;
           playerRef.current.playVideo?.();
         } catch {}
+        setTimeout(() => {
+          if (isCurrentlyFullscreen()) {
+            try {
+              playerRef.current?.playVideo?.();
+            } catch {}
+          }
+        }, 60);
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [effectiveDurationSec, currentVideo?.ytId],
+    [effectiveDurationSec, currentVideo?.ytId, videoTimeStorageKey],
   );
 
   // Video switching handler for multi-video
@@ -1864,21 +1897,12 @@ export default function VideosView({
 
         {/* Inline Horizontal Seek Bar with Segment Dividers & Subtle Fullscreen Timestamp Popups */}
         <div
-          onClick={(e) => {
-            e.stopPropagation();
-            const rect = e.currentTarget.getBoundingClientRect();
-            const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
-            const pct = rect.width > 0 ? clickX / rect.width : 0;
-            seekToSecond(Math.round(pct * effectiveDurationSec));
-          }}
-          title="Click to seek"
           style={{
             position: "relative",
             flex: 1,
-            height: "18px",
+            height: "24px",
             display: "flex",
             alignItems: "center",
-            cursor: "pointer",
           }}
         >
           {/* Subtle Timestamp & Topic Name Popups right above the progress bar in Fullscreen mode */}
@@ -1888,7 +1912,7 @@ export default function VideosView({
                 position: "absolute",
                 left: 0,
                 right: 0,
-                bottom: "20px",
+                bottom: "22px",
                 height: "28px",
                 pointerEvents: "none",
                 zIndex: 14,
@@ -1908,6 +1932,9 @@ export default function VideosView({
                 return (
                   <div
                     key={`fs-seg-popup-${seg.index}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
                     onClick={(e) => {
                       e.stopPropagation();
                       seekToSecond(seg.startSec);
@@ -1980,60 +2007,118 @@ export default function VideosView({
             </div>
           )}
 
+          {/* Clickable & Draggable Seek Track Hit Area */}
           <div
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              const barEl = e.currentTarget;
+              const seekFromClientX = (clientX: number) => {
+                const rect = barEl.getBoundingClientRect();
+                if (rect.width <= 0) return;
+                const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                const pct = clickX / rect.width;
+                const dur =
+                  (playerRef.current && typeof playerRef.current.getDuration === "function"
+                    ? playerRef.current.getDuration()
+                    : 0) || effectiveDurationSec;
+                seekToSecond(Math.round(pct * dur));
+              };
+              seekFromClientX(e.clientX);
+
+              const handleMouseMove = (moveEvt: MouseEvent) => {
+                seekFromClientX(moveEvt.clientX);
+              };
+              const handleMouseUp = (upEvt: MouseEvent) => {
+                seekFromClientX(upEvt.clientX);
+                window.removeEventListener("mousemove", handleMouseMove);
+                window.removeEventListener("mouseup", handleMouseUp);
+              };
+              window.addEventListener("mousemove", handleMouseMove);
+              window.addEventListener("mouseup", handleMouseUp);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              const rect = e.currentTarget.getBoundingClientRect();
+              if (rect.width <= 0) return;
+              const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+              const pct = clickX / rect.width;
+              const dur =
+                (playerRef.current && typeof playerRef.current.getDuration === "function"
+                  ? playerRef.current.getDuration()
+                  : 0) || effectiveDurationSec;
+              seekToSecond(Math.round(pct * dur));
+            }}
+            title="Click or drag to seek"
             style={{
               position: "relative",
               width: "100%",
-              height: "5px",
-              background: "rgba(255, 255, 255, 0.24)",
-              borderRadius: "999px",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              zIndex: 15,
             }}
           >
-            {/* Segment Boundary Ticks */}
-            {segmentsList.slice(1).map((seg) => {
-              const tickPct =
-                effectiveDurationSec > 0
-                  ? Math.min(98, Math.max(2, (seg.startSec / effectiveDurationSec) * 100))
-                  : 0;
-              return (
-                <div
-                  key={`tick-${seg.index}`}
-                  style={{
-                    position: "absolute",
-                    left: `${tickPct}%`,
-                    top: "-1px",
-                    width: "2px",
-                    height: "7px",
-                    background: "rgba(18, 28, 23, 0.85)",
-                    zIndex: 2,
-                  }}
-                />
-              );
-            })}
-            {/* Progress Fill */}
             <div
               style={{
-                height: "100%",
-                width: `${Math.min(100, Math.max(0, effectiveDurationSec > 0 ? (currentTime / effectiveDurationSec) * 100 : progress))}%`,
-                background: "#9DC2AD",
-                borderRadius: "999px",
                 position: "relative",
+                width: "100%",
+                height: "5px",
+                background: "rgba(255, 255, 255, 0.24)",
+                borderRadius: "999px",
+                pointerEvents: "none",
               }}
             >
-              {/* Scrubber White Thumb */}
+              {/* Segment Boundary Ticks */}
+              {segmentsList.slice(1).map((seg) => {
+                const tickPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(98, Math.max(2, (seg.startSec / effectiveDurationSec) * 100))
+                    : 0;
+                return (
+                  <div
+                    key={`tick-${seg.index}`}
+                    style={{
+                      position: "absolute",
+                      left: `${tickPct}%`,
+                      top: "-1px",
+                      width: "2px",
+                      height: "7px",
+                      background: "rgba(18, 28, 23, 0.85)",
+                      zIndex: 2,
+                      pointerEvents: "none",
+                    }}
+                  />
+                );
+              })}
+
+              {/* Progress Fill */}
               <div
                 style={{
-                  position: "absolute",
-                  right: "-6px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  width: "13px",
-                  height: "13px",
-                  borderRadius: "50%",
-                  background: "#FFFFFF",
-                  boxShadow: "0 1px 4px rgba(0, 0, 0, 0.5)",
+                  height: "100%",
+                  width: `${Math.min(100, Math.max(0, effectiveDurationSec > 0 ? (currentTime / effectiveDurationSec) * 100 : progress))}%`,
+                  background: "#9DC2AD",
+                  borderRadius: "999px",
+                  position: "relative",
+                  pointerEvents: "none",
                 }}
-              />
+              >
+                {/* Scrubber White Thumb */}
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "-6px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "13px",
+                    height: "13px",
+                    borderRadius: "50%",
+                    background: "#FFFFFF",
+                    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.5)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
