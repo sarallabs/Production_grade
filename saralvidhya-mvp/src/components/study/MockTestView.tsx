@@ -506,7 +506,7 @@ function DescriptiveQuestionCard({
               width: "30px",
               height: "30px",
               borderRadius: "8px",
-              background: "#BD7D52",
+              background: "#546C60",
               color: "#FFFFFF",
               fontWeight: 800,
               fontSize: "12px",
@@ -577,9 +577,9 @@ function DescriptiveQuestionCard({
                 gap: "6px",
                 padding: "6px 14px",
                 borderRadius: "999px",
-                background: isActive ? "#FAF2E9" : "#FFFFFF",
-                border: isActive ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
-                color: isActive ? "#A86334" : "#38423B",
+                background: isActive ? "#EBF1EA" : "#FFFFFF",
+                border: isActive ? "1.5px solid #546C60" : "1px solid #E2DDD3",
+                color: isActive ? "#2D4438" : "#38423B",
                 fontSize: "12px",
                 fontWeight: isActive ? 700 : 600,
                 cursor: "pointer",
@@ -617,8 +617,8 @@ function DescriptiveQuestionCard({
             transition: "border-color 0.18s ease, box-shadow 0.18s ease",
           }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = "#C88A5A";
-            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(200, 138, 90, 0.12)";
+            e.currentTarget.style.borderColor = "#546C60";
+            e.currentTarget.style.boxShadow = "0 0 0 3px rgba(84, 108, 96, 0.14)";
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = "#DFD9CE";
@@ -799,8 +799,8 @@ function DescriptiveQuestionCard({
         <div
           style={{
             marginTop: "6px",
-            background: "#FAF6F0",
-            border: "1px solid #E5C8AF",
+            background: "#F4F7F3",
+            border: "1px solid #C5D6CC",
             borderRadius: "12px",
             padding: "14px 18px",
           }}
@@ -813,7 +813,7 @@ function DescriptiveQuestionCard({
               marginBottom: expandedRubric ? "10px" : 0,
             }}
           >
-            <span style={{ fontSize: "13px", fontWeight: 700, color: "#9A542A" }}>
+            <span style={{ fontSize: "13px", fontWeight: 700, color: "#2D4438" }}>
               {"Official Model Answer & Evaluation Rubric"}
             </span>
             <button
@@ -822,7 +822,7 @@ function DescriptiveQuestionCard({
               style={{
                 background: "none",
                 border: "none",
-                color: "#B46530",
+                color: "#435D50",
                 fontSize: "12px",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -933,12 +933,12 @@ function DescriptiveQuestionCard({
                 padding: "8px 22px",
                 borderRadius: "999px",
                 border: "none",
-                background: "#BD7D52",
+                background: "#546C60",
                 color: "#FFFFFF",
                 fontSize: "13px",
                 fontWeight: 700,
                 cursor: "pointer",
-                boxShadow: "0 2px 8px rgba(189, 125, 82, 0.25)",
+                boxShadow: "0 2px 8px rgba(84, 108, 96, 0.24)",
               }}
             >
               {isLastQuestion ? "Submit →" : "Next →"}
@@ -1606,8 +1606,8 @@ export default function MockTestView({
                     }}
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                      <rect x="4" y="4" width="16" height="16" rx="3" fill="#FFFFFF" stroke="#B46530" strokeWidth="1.8" />
-                      <path d="M4 8.5H20" stroke="#B46530" strokeWidth="1.8" />
+                      <rect x="4" y="4" width="16" height="16" rx="3" fill="#FFFFFF" stroke="#546C60" strokeWidth="1.8" />
+                      <path d="M4 8.5H20" stroke="#546C60" strokeWidth="1.8" />
                       <line x1="8" y1="13" x2="16" y2="13" stroke="#6E766E" strokeWidth="1.6" strokeLinecap="round" />
                       <line x1="8" y1="16.5" x2="13" y2="16.5" stroke="#6E766E" strokeWidth="1.6" strokeLinecap="round" />
                     </svg>
@@ -1661,7 +1661,7 @@ export default function MockTestView({
                         style={{
                           flex: allUnits.length === 1 ? 1 : undefined,
                           background: "#FFFFFF",
-                          border: isSelected ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
+                          border: isSelected ? "1.5px solid #546C60" : "1px solid #E2DDD3",
                           borderRadius: "14px",
                           padding: "20px 22px",
                           cursor: "pointer",
@@ -1709,8 +1709,8 @@ export default function MockTestView({
                               width: "22px",
                               height: "22px",
                               borderRadius: "50%",
-                              background: isSelected ? "#C27D4E" : "#FFFFFF",
-                              border: isSelected ? "1.5px solid #C27D4E" : "1.5px solid #C8C1B4",
+                              background: isSelected ? "#546C60" : "#FFFFFF",
+                              border: isSelected ? "1.5px solid #546C60" : "1.5px solid #C8C1B4",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -1773,8 +1773,8 @@ export default function MockTestView({
                         style={{
                           padding: "7px 8px",
                           borderRadius: "9px",
-                          border: isTimedMode ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
-                          background: isTimedMode ? "#FAF2E9" : "#FFFFFF",
+                          border: isTimedMode ? "1.5px solid #546C60" : "1px solid #E2DDD3",
+                          background: isTimedMode ? "#F2F6F3" : "#FFFFFF",
                           cursor: "pointer",
                           display: "flex",
                           flexDirection: "column",
@@ -1786,7 +1786,7 @@ export default function MockTestView({
                           style={{
                             fontSize: "12px",
                             fontWeight: 800,
-                            color: isTimedMode ? "#A86334" : "#1E2822",
+                            color: isTimedMode ? "#2D4438" : "#1E2822",
                           }}
                         >
                           ◷ Timed
@@ -1795,7 +1795,7 @@ export default function MockTestView({
                           style={{
                             fontSize: "10px",
                             fontWeight: 500,
-                            color: isTimedMode ? "#A86334" : "#6E766E",
+                            color: isTimedMode ? "#435D50" : "#6E766E",
                           }}
                         >
                           clock runs — trains pacing
@@ -1808,8 +1808,8 @@ export default function MockTestView({
                         style={{
                           padding: "7px 8px",
                           borderRadius: "9px",
-                          border: !isTimedMode ? "1.5px solid #C88A5A" : "1px solid #E2DDD3",
-                          background: !isTimedMode ? "#FAF2E9" : "#FFFFFF",
+                          border: !isTimedMode ? "1.5px solid #546C60" : "1px solid #E2DDD3",
+                          background: !isTimedMode ? "#F2F6F3" : "#FFFFFF",
                           cursor: "pointer",
                           display: "flex",
                           flexDirection: "column",
@@ -1821,7 +1821,7 @@ export default function MockTestView({
                           style={{
                             fontSize: "12px",
                             fontWeight: 800,
-                            color: !isTimedMode ? "#A86334" : "#1E2822",
+                            color: !isTimedMode ? "#2D4438" : "#1E2822",
                           }}
                         >
                           Untimed
@@ -1830,7 +1830,7 @@ export default function MockTestView({
                           style={{
                             fontSize: "10px",
                             fontWeight: 500,
-                            color: !isTimedMode ? "#A86334" : "#6E766E",
+                            color: !isTimedMode ? "#435D50" : "#6E766E",
                           }}
                         >
                           practice at your pace
@@ -1876,9 +1876,9 @@ export default function MockTestView({
                             borderRadius: "999px",
                             fontSize: "10.5px",
                             fontWeight: 700,
-                            background: fmt.highlight ? "#FAF2E9" : "#FFFFFF",
-                            border: fmt.highlight ? "1px solid #E5C8AF" : "1px solid #E2DDD3",
-                            color: fmt.highlight ? "#A86334" : "#38423B",
+                            background: fmt.highlight ? "#EBF1EA" : "#FFFFFF",
+                            border: fmt.highlight ? "1px solid #C2D4C0" : "1px solid #E2DDD3",
+                            color: fmt.highlight ? "#2D4438" : "#38423B",
                           }}
                         >
                           <span style={{ fontSize: "10.5px" }}>{fmt.icon}</span>
@@ -1894,8 +1894,8 @@ export default function MockTestView({
                     onClick={handleStartExam}
                     style={{
                       width: "100%",
-                      background: '#B5BA9B',
-                      color: '#18221D',
+                      background: "#546C60",
+                      color: "#FFFFFF",
                       border: "none",
                       borderRadius: "11px",
                       padding: "11px 22px",
@@ -1906,11 +1906,11 @@ export default function MockTestView({
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "6px",
-                      boxShadow: "0 3px 10px rgba(189, 125, 82, 0.25)",
+                      boxShadow: "0 3px 10px rgba(84, 108, 96, 0.24)",
                       transition: "background 0.15s ease",
                     }}
-                    onMouseOver={(e) => (e.currentTarget.style.background = "#A8683F")}
-                    onMouseOut={(e) => (e.currentTarget.style.background = "#BD7D52")}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#43584D")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "#546C60")}
                   >
                     <span>Start →</span>
                   </button>
@@ -2545,8 +2545,8 @@ export default function MockTestView({
           {isSubmitted && (
             <div
               style={{
-                background: "#FAF3EB",
-                border: "1.5px solid #C88A5A",
+                background: "#F2F6F3",
+                border: "1.5px solid #546C60",
                 borderRadius: "14px",
                 padding: "14px 20px",
                 marginBottom: "18px",
@@ -2558,7 +2558,7 @@ export default function MockTestView({
               }}
             >
               <div>
-                <div style={{ fontSize: "14px", fontWeight: 800, color: "#9A542A" }}>
+                <div style={{ fontSize: "14px", fontWeight: 800, color: "#2D4438" }}>
                   ✓ Exam Submitted — Review Your Answers
                 </div>
                 <div style={{ fontSize: "12px", color: "#6E766E", marginTop: "2px" }}>
@@ -2569,7 +2569,7 @@ export default function MockTestView({
                 type="button"
                 onClick={onComplete}
                 style={{
-                  background: "#BD7D52",
+                  background: "#546C60",
                   color: "#FFFFFF",
                   border: "none",
                   borderRadius: "999px",
@@ -2592,8 +2592,8 @@ export default function MockTestView({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "10px",
-                  background: "#FAF2E9",
-                  border: "1px solid #E5C8AF",
+                  background: "#EBF1EA",
+                  border: "1px solid #C5D6CC",
                   borderRadius: "10px",
                   padding: "6px 12px",
                 }}
@@ -2603,7 +2603,7 @@ export default function MockTestView({
                     fontSize: "11px",
                     fontWeight: 800,
                     letterSpacing: "0.06em",
-                    color: "#A86334",
+                    color: "#2D4438",
                     textTransform: "uppercase",
                   }}
                 >
@@ -2611,7 +2611,7 @@ export default function MockTestView({
                 </span>
                 <span
                   style={{
-                    background: "#BD7D52",
+                    background: "#546C60",
                     color: "#FFFFFF",
                     fontSize: "11px",
                     fontWeight: 700,
@@ -2642,19 +2642,19 @@ export default function MockTestView({
                           height: "26px",
                           borderRadius: "7px",
                           border: isCurr
-                            ? "1.5px solid #BD7D52"
+                            ? "1.5px solid #546C60"
                             : hasAns
-                            ? "1px solid #C88A5A"
+                            ? "1px solid #7C8F6A"
                             : "1px solid #E2DDD3",
                           background: isCurr
-                            ? "#BD7D52"
+                            ? "#546C60"
                             : hasAns
-                            ? "#FAF2E9"
+                            ? "#EBF1EA"
                             : "#FFFFFF",
                           color: isCurr
                             ? "#FFFFFF"
                             : hasAns
-                            ? "#A86334"
+                            ? "#2D4438"
                             : "#6E766E",
                           fontSize: "11px",
                           fontWeight: 700,
@@ -2732,7 +2732,7 @@ export default function MockTestView({
                           width: "30px",
                           height: "30px",
                           borderRadius: "8px",
-                          background: "#BD7D52",
+                          background: "#546C60",
                           color: "#FFFFFF",
                           fontWeight: 800,
                           fontSize: "12px",
@@ -2757,10 +2757,10 @@ export default function MockTestView({
                       const isSelected = userSelected.includes(optIdx);
                       const isOptCorrect = correct.includes(optIdx);
 
-                      let optBg = isSelected ? "#FAF2E9" : "#FFFFFF";
-                      let optBorder = isSelected ? "1.5px solid #C88A5A" : "1px solid #E6E0D4";
+                      let optBg = isSelected ? "#F2F6F3" : "#FFFFFF";
+                      let optBorder = isSelected ? "1.5px solid #546C60" : "1px solid #E6E0D4";
                       let optColor = "#1E2822";
-                      let badgeBg = isSelected ? "#BD7D52" : "#F3EFE8";
+                      let badgeBg = isSelected ? "#546C60" : "#F3EFE8";
                       let badgeColor = isSelected ? "#FFFFFF" : "#49524C";
 
                       if (isSubmitted) {
@@ -2876,12 +2876,12 @@ export default function MockTestView({
                           padding: "8px 22px",
                           borderRadius: "999px",
                           border: "none",
-                          background: "#BD7D52",
+                          background: "#546C60",
                           color: "#FFFFFF",
                           fontSize: "13px",
                           fontWeight: 700,
                           cursor: "pointer",
-                          boxShadow: "0 2px 8px rgba(189, 125, 82, 0.25)",
+                          boxShadow: "0 2px 8px rgba(84, 108, 96, 0.24)",
                         }}
                       >
                         {currentQuestionIdx === questions.length - 1 ? "Submit →" : "Next →"}

@@ -356,7 +356,7 @@ export function QuestionCard({
           <span
             style={{
               fontSize: "15.5px",
-              color: "#B46530",
+              color: "#435D50",
               fontWeight: 800,
               whiteSpace: "nowrap",
               flexShrink: 0,
@@ -405,7 +405,7 @@ export function QuestionCard({
               <span
                 title={question.repeatedYears ? `Asked in: ${question.repeatedYears}` : undefined}
                 style={{
-                  background: "#C27D4E",
+                  background: "#546C60",
                   color: "#FFFFFF",
                   padding: "4px 10px",
                   borderRadius: "6px",
@@ -434,8 +434,8 @@ export function QuestionCard({
 
             <span
               style={{
-                background: "#F5EDE3",
-                color: "#8C5228",
+                background: "#E8EFEA",
+                color: "#2D4438",
                 padding: "4px 9px",
                 borderRadius: "6px",
                 fontWeight: 800,
@@ -451,9 +451,9 @@ export function QuestionCard({
               type="button"
               onClick={() => setIsCompleted(!isCompleted)}
               style={{
-                background: isCompleted ? '#B5BA9B' : '#FFFFFF',
-                color: isCompleted ? '#18221D' : '#38423B',
-                border: isCompleted ? '1.5px solid #969C7C' : '1px solid #DFD9CE',
+                background: isCompleted ? "#546C60" : '#FFFFFF',
+                color: isCompleted ? "#FFFFFF" : '#38423B',
+                border: isCompleted ? "1.5px solid #546C60" : '1px solid #DFD9CE',
                 padding: "5px 14px",
                 borderRadius: "999px",
                 fontWeight: 700,
@@ -496,8 +496,8 @@ export function QuestionCard({
             onClick={(e) => e.stopPropagation()}
             style={{
               marginTop: "14px",
-              background: "#FCF9F4",
-              border: "1.5px dashed #DEC6B0",
+              background: "#F4F7F5",
+              border: "1.5px dashed #B5C7BD",
               borderRadius: "12px",
               padding: "11px 16px",
               display: "flex",
@@ -525,8 +525,8 @@ export function QuestionCard({
               type="button"
               onClick={() => setIsAnswerHidden(true)}
               style={{
-                background: '#B5BA9B',
-                color: '#18221D',
+                background: "#546C60",
+                color: "#FFFFFF",
                 border: "none",
                 borderRadius: "999px",
                 padding: "7px 16px",
@@ -587,10 +587,10 @@ export function QuestionCard({
                     cursor: "pointer",
                     padding: "4px 12px",
                     border: "none",
-                    background: !isLongAnswer ? '#B5BA9B' : '#FFFFFF',
+                    background: !isLongAnswer ? "#546C60" : '#FFFFFF',
                     fontWeight: 700,
                     fontSize: '11.5px',
-                    color: !isLongAnswer ? '#18221D' : '#49524C',
+                    color: !isLongAnswer ? "#FFFFFF" : '#49524C',
                     transition: "all 0.15s ease",
                   }}
                 >
@@ -603,10 +603,10 @@ export function QuestionCard({
                     cursor: "pointer",
                     padding: "4px 12px",
                     border: "none",
-                    background: isLongAnswer ? '#B5BA9B' : '#FFFFFF',
+                    background: isLongAnswer ? "#546C60" : '#FFFFFF',
                     fontWeight: 700,
                     fontSize: '11.5px',
-                    color: isLongAnswer ? '#18221D' : '#49524C',
+                    color: isLongAnswer ? "#FFFFFF" : '#49524C',
                     transition: "all 0.15s ease",
                   }}
                 >
@@ -627,7 +627,7 @@ export function QuestionCard({
                 marginTop: "14px",
                 fontSize: "11.5px",
                 fontWeight: 700,
-                color: "#B46530",
+                color: "#435D50",
                 display: "flex",
                 alignItems: "center",
                 gap: "6px",
