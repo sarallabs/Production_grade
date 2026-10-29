@@ -1431,36 +1431,16 @@ export default function StudyTable() {
     } else if (activeTool === "flashcards" || activeTool === "revision_flashcards") {
       getFlashcards(internalSubId, chapterNumber, persona, activeVideoDir)
         .then((cards) => {
-          let weakCards: any[] = [];
-          try {
-            const rawWeak = cloudStorage.getItem(`sv_weak_cards_${subjectId}_${chapterNumber}`);
-            const parsedWeak = rawWeak ? JSON.parse(rawWeak) : [];
-            if (Array.isArray(parsedWeak)) {
-              weakCards = parsedWeak
-                .filter((w: any) => w && w.question && w.answer)
-                .map((w: any, idx: number) => ({
-                  id: w.id || `weak-${idx}`,
-                  question: w.question,
-                  answer: w.answer,
-                  topic: w.topic ? `Weak Card · ${w.topic}` : "Weak Card · From Assessment",
-                  level: persona,
-                }));
-            }
-          } catch {}
-
           const baseCards = Array.isArray(cards) ? cards : [];
-          const existingQs = new Set(baseCards.map((c: any) => (c.question || "").trim().toLowerCase()));
-          const uniqueWeak = weakCards.filter((w) => !existingQs.has((w.question || "").trim().toLowerCase()));
-
           if (activeTool === "revision_flashcards") {
-            const taggedCards = [...uniqueWeak, ...baseCards.map((c) => ({ ...c, level: persona }))];
+            const taggedCards = [...baseCards.map((c) => ({ ...c, level: persona }))];
             for (let i = taggedCards.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
               [taggedCards[i], taggedCards[j]] = [taggedCards[j], taggedCards[i]];
             }
             apply(taggedCards);
           } else {
-            apply([...uniqueWeak, ...baseCards]);
+            apply(baseCards);
           }
         })
         .catch(() => apply([]));

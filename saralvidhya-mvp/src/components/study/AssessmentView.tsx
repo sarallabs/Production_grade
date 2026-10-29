@@ -4,7 +4,6 @@ import { getAssessments } from "@/data/contentRepository";
 import { parseQuestionBank } from "@/utils/quizParser";
 import { type AssessmentQuestion } from "@/utils/assessmentTypes";
 import { StudyToolLoadingWaitScreen } from "@/pages/StudyTable";
-import { cloudStorage } from "@/context/CloudStateContext";
 
 /**
  * AssessmentView Component
@@ -52,7 +51,6 @@ export function AssessmentView({
   const [awaitingRetry, setAwaitingRetry] = useState(false);
   const [disabledMCQByStep, setDisabledMCQByStep] = useState<Record<number, number[]>>({});
   const [disabledTFByStep, setDisabledTFByStep] = useState<Record<number, boolean[]>>({});
-  const [weakCardsAdded, setWeakCardsAdded] = useState<Record<number, boolean>>({});
   // Question-specific interaction states
   const [selectedMCQ, setSelectedMCQ] = useState<number | null>(null);
   const [selectedMSQ, setSelectedMSQ] = useState<number[]>([]);
@@ -1233,48 +1231,6 @@ export function AssessmentView({
                       }}
                     >
                       Submit Answer →
-                    </button>
-                  )}
-
-                  {submitted && !awaitingRetry && !currentIsCorrect && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setWeakCardsAdded((prev) => ({ ...prev, [step]: true }));
-                        try {
-                          const key = `sv_weak_cards_${subjectId}_${chapterNumber}`;
-                          const existing = JSON.parse(cloudStorage.getItem(key) || "[]");
-                          if (!existing.some((item: any) => item.q === currentQ.q)) {
-                            existing.push({
-                              q: currentQ.q,
-                              explanation: currentQ.explanation || "",
-                              addedAt: Date.now(),
-                            });
-                            cloudStorage.setItem(key, JSON.stringify(existing));
-                          }
-                        } catch {
-                          // ignore storage errors
-                        }
-                      }}
-                      style={{
-                        padding: "8px 16px",
-                        borderRadius: "999px",
-                        border: "1.5px solid #D5A37E",
-                        background: weakCardsAdded[step] ? "#FAF2E9" : "#FFFFFF",
-                        color: "#A86334",
-                        fontWeight: 700,
-                        fontSize: "12px",
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      <span>{weakCardsAdded[step] ? "✓" : "↻"}</span>
-                      <span>
-                        {weakCardsAdded[step] ? "Added to Revise weak cards" : "Add to Revise weak cards"}
-                      </span>
                     </button>
                   )}
 
