@@ -384,6 +384,9 @@ export default function FlashcardsView({
                     font-size: inherit !important;
                     line-height: inherit !important;
                     font-weight: inherit !important;
+                    white-space: inherit !important;
+                    overflow: inherit !important;
+                    text-overflow: inherit !important;
                   }
                   .flashcard-answer-text div,
                   .flashcard-answer-text span {
@@ -398,7 +401,7 @@ export default function FlashcardsView({
                   }
                 `}</style>
 
-                {/* ── 100% GPU-Composited Question Block (Pure translate3d + scale3d, zero layout/font reflow) ── */}
+                {/* ── 100% GPU-Composited Question Block (Pure translate3d transition, single-line full horizontal width when clicked) ── */}
                 <div
                   style={{
                     width: '100%',
@@ -408,12 +411,12 @@ export default function FlashcardsView({
                     justifyContent: 'center',
                     flexShrink: 0,
                     zIndex: 5,
-                    padding: '6px 16px 2px',
+                    padding: isFlipped ? '4px 8px 0px' : '6px 16px 2px',
                     boxSizing: 'border-box',
                     transformOrigin: 'center top',
                     transform: isFlipped
-                      ? 'translate3d(0, 0px, 0) scale3d(0.9, 0.9, 1)'
-                      : 'translate3d(0, 25vh, 0) scale3d(1.56, 1.56, 1)',
+                      ? 'translate3d(0, 0px, 0) scale3d(1, 1, 1)'
+                      : 'translate3d(0, 26vh, 0) scale3d(1, 1, 1)',
                     willChange: 'transform',
                     backfaceVisibility: 'hidden',
                     WebkitBackfaceVisibility: 'hidden',
@@ -422,29 +425,56 @@ export default function FlashcardsView({
                     transition: 'transform 0.44s cubic-bezier(0.22, 1, 0.36, 1)',
                   }}
                 >
-                  {/* Question Text (15% larger in initial unclicked state via GPU scale3d, constant maxWidth so text never re-wraps) */}
+                  {/* Question Text (15% larger when unclicked; full horizontal width single-line when clicked) */}
                   <div
                     className='flashcard-question-text'
                     style={{
-                      fontSize: cleanTitle.length > 180
-                        ? '17px'
-                        : cleanTitle.length > 120
-                          ? '18.5px'
-                          : cleanTitle.length > 85
-                            ? '19.5px'
-                            : '21px',
+                      fontSize: isFlipped
+                        ? (cleanTitle.length > 115
+                            ? 'clamp(14px, 1.35vw, 17px)'
+                            : cleanTitle.length > 85
+                              ? 'clamp(15.5px, 1.5vw, 18.5px)'
+                              : 'clamp(17px, 1.65vw, 20px)')
+                        : (cleanTitle.length > 180
+                            ? 'clamp(23px, 2.3vw, 29px)'
+                            : cleanTitle.length > 120
+                              ? 'clamp(25px, 2.6vw, 33px)'
+                              : cleanTitle.length > 75
+                                ? 'clamp(28px, 3vw, 36px)'
+                                : 'clamp(31px, 3.4vw, 41px)'),
                       fontWeight: 800,
                       color: '#16201A',
-                      lineHeight: 1.32,
+                      lineHeight: isFlipped ? 1.25 : 1.34,
                       textAlign: 'center',
-                      maxWidth: '62%',
+                      maxWidth: isFlipped ? '98%' : '90%',
                       width: '100%',
-                      letterSpacing: '-0.02em',
+                      whiteSpace: isFlipped && cleanTitle.length <= 135 ? 'nowrap' : 'normal',
+                      overflow: isFlipped && cleanTitle.length <= 135 ? 'hidden' : 'visible',
+                      textOverflow: isFlipped && cleanTitle.length <= 135 ? 'ellipsis' : 'clip',
+                      letterSpacing: isFlipped ? '-0.015em' : '-0.025em',
                       WebkitFontSmoothing: 'antialiased',
                     }}
                   >
                     <MarkdownView content={cleanTitle} />
                   </div>
+
+                  {/* Subtle "Click" prompt under the question in the unclicked stage */}
+                  {!isFlipped && (
+                    <div
+                      style={{
+                        marginTop: '12px',
+                        fontSize: '12px',
+                        fontWeight: 500,
+                        color: '#949E97',
+                        letterSpacing: '0.02em',
+                        opacity: 0.78,
+                        pointerEvents: 'none',
+                        userSelect: 'none',
+                      }}
+                    >
+                      Click
+                    </div>
+                  )}
                 </div>
                 {/* ── 100% GPU-Composited Answer + Infographic Section (Pure translate3d + scale3d + opacity) ── */}
                 <div
