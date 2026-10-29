@@ -5,106 +5,284 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Image,
   Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppTheme } from '@/context/ThemeContext';
 import { useDeviceLayout } from '@/hooks/use-device-layout';
 import { fetchStudyPlan } from '@/services/contentService';
+import { storage } from '@/utils/storage';
+
+const TREE_LOGO = require('@/assets/images/saral-tree.png');
+const PERSONA_BEGINNER = require('@/assets/images/personas/persona_beginner.png');
+const PERSONA_INTERMEDIATE = require('@/assets/images/personas/persona_intermediate.png');
+const PERSONA_ADVANCED = require('@/assets/images/personas/persona_advanced.png');
+
+export type PaceLevel = 'beginner' | 'intermediate' | 'advanced';
 
 export interface StudyPlanTask {
   id: string;
   title: string;
+  subtitle?: string;
   category: string;
   duration: string;
+  durationMins: number;
   actionLabel: string;
   completed?: boolean;
-  type: 'mindmap' | 'review' | 'video' | 'quiz';
+  type: 'listen' | 'video' | 'mindmap' | 'review' | 'detailed' | 'flashcard' | 'quiz';
+  toolTarget?: string;
 }
 
-export const DEFAULT_STUDY_TASKS: StudyPlanTask[] = [
-  {
-    id: 'task_1',
-    title: 'Mindmaps (L0-L1)',
-    category: 'Mindmap',
-    duration: '10m',
-    actionLabel: 'Open →',
-    type: 'mindmap',
-  },
-  {
-    id: 'task_2',
-    title: 'Key Takeaways',
-    category: 'Review',
-    duration: '15m',
-    actionLabel: 'Open →',
-    type: 'review',
-  },
-  {
-    id: 'task_3',
-    title: 'Video Script (Part 1)',
-    category: 'Video',
-    duration: '20m',
-    actionLabel: 'Watch →',
-    type: 'video',
-  },
-  {
-    id: 'task_4',
-    title: 'Easy MCQ Quiz',
-    category: 'Quiz',
-    duration: '15m',
-    actionLabel: 'Start →',
-    type: 'quiz',
-  },
-];
+export interface StudyDayPlan {
+  dayNumber: number;
+  title: string;
+  subtopic?: string;
+  totalMinutes: number;
+  tasks: StudyPlanTask[];
+}
 
-function parseStudyPlanTasks(markdown: string, chapterNum: number, chapterTitle: string): StudyPlanTask[] {
-  const tasks: StudyPlanTask[] = [];
-  const lines = markdown.split('\n');
-  let count = 0;
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if ((trimmed.startsWith('- [ ]') || trimmed.startsWith('•') || trimmed.startsWith('*') || /^\d+\.\s+\*\*/.test(trimmed)) && trimmed.length > 10) {
-      count++;
-      const clean = trimmed.replace(/^[-*•\d\.\s\[\]]+/, '').replace(/\*\*/g, '').trim();
-      const type: 'mindmap' | 'review' | 'video' | 'quiz' =
-        clean.toLowerCase().includes('video') || clean.toLowerCase().includes('lecture') ? 'video' :
-        clean.toLowerCase().includes('mindmap') || clean.toLowerCase().includes('diagram') ? 'mindmap' :
-        clean.toLowerCase().includes('quiz') || clean.toLowerCase().includes('mcq') || clean.toLowerCase().includes('mock') ? 'quiz' : 'review';
-      
-      const actionLabel =
-        type === 'video' ? 'Watch →' :
-        type === 'mindmap' ? 'Open →' :
-        type === 'quiz' ? 'Start →' : 'Review →';
+export interface StudyBlueprint {
+  id: string;
+  pace: PaceLevel;
+  name: string;
+  badge: string;
+  subtitle: string;
+  totalMinutes: number;
+  days: StudyDayPlan[];
+}
 
-      tasks.push({
-        id: `task_${chapterNum}_${count}`,
-        title: clean.length > 55 ? clean.slice(0, 52) + '...' : clean,
-        category: type === 'video' ? 'Video Lecture' : type === 'mindmap' ? 'Mind Map' : type === 'quiz' ? 'Assessment' : 'Revision',
-        duration: count % 2 === 0 ? '15m' : '20m',
-        actionLabel,
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function getWeekdayForDayOffset(startDate: Date, offsetDays: number): string {
+  const d = new Date(startDate);
+  d.setDate(d.getDate() + Math.max(0, offsetDays));
+  return WEEKDAY_SHORT[d.getDay()];
+}
+
+function detectTaskType(text: string): {
+  type: StudyPlanTask['type'];
+  category: string;
+  toolTarget: string;
+  primary: string;
+  secondary: string;
+} {
+  const lower = text.toLowerCase();
+  if (lower.includes('listen') || lower.includes('podcast') || lower.includes('microcast') || lower.includes('audio')) {
+    return { type: 'listen', category: 'podcasts', toolTarget: 'podcasts', primary: 'Listen', secondary: 'Audio walkthrough' };
+  }
+  if (lower.includes('watch') || lower.includes('video') || lower.includes('lecture')) {
+    return { type: 'video', category: 'videos', toolTarget: 'videos', primary: 'Watch', secondary: 'Concept video' };
+  }
+  if (lower.includes('mindmap') || lower.includes('mind map') || lower.includes('diagram')) {
+    return { type: 'mindmap', category: 'mindmap', toolTarget: 'mindmap', primary: 'Mindmap', secondary: 'Visual hierarchy' };
+  }
+  if (lower.includes('detailed') || lower.includes('in-depth') || lower.includes('deep dive')) {
+    return { type: 'detailed', category: 'detailed', toolTarget: 'detailed', primary: 'Detailed Study', secondary: 'In-depth Read' };
+  }
+  if (lower.includes('quick') || lower.includes('summary') || lower.includes('essentials')) {
+    return { type: 'review', category: 'summary', toolTarget: 'summary', primary: 'Quick Study', secondary: 'Essentials Read' };
+  }
+  if (lower.includes('flashcard')) {
+    return { type: 'flashcard', category: 'flashcards', toolTarget: 'flashcards', primary: 'Flashcards', secondary: 'Recall practice' };
+  }
+  if (lower.includes('quiz') || lower.includes('mcq') || lower.includes('msq') || lower.includes('assessment')) {
+    return { type: 'quiz', category: 'assessment', toolTarget: 'assessment', primary: 'Assessment', secondary: 'Self-check quiz' };
+  }
+  return { type: 'review', category: 'summary', toolTarget: 'summary', primary: 'Quick Study', secondary: 'Essentials Read' };
+}
+
+function parseMinutesFromText(text: string, fallback: number = 10): number {
+  const m =
+    text.match(/\((\d+)\s*(?:m|min|mins|minutes)\)/i) ||
+    text.match(/(\d+)\s*(?:m|min|mins|minutes)\b/i);
+  return m ? parseInt(m[1], 10) : fallback;
+}
+
+function ensureRichDayTasks(
+  dayNumber: number,
+  dayTitle: string,
+  rawTasks: Partial<StudyPlanTask>[] = []
+): StudyDayPlan {
+  const categoryOrder: StudyPlanTask['type'][] = [
+    'listen',
+    'video',
+    'mindmap',
+    'review',
+    'detailed',
+    'flashcard',
+  ];
+
+  const defaultMeta: Record<StudyPlanTask['type'], { title: string; subtitle: string; mins: number }> = {
+    listen: { title: 'Listen', subtitle: 'Audio walkthrough', mins: 6 },
+    video: { title: 'Watch', subtitle: 'Concept video', mins: 9 },
+    mindmap: { title: 'Mindmap', subtitle: 'Visual hierarchy', mins: 10 },
+    review: { title: 'Quick Study', subtitle: 'Essentials Read', mins: 10 },
+    detailed: { title: 'Detailed Study', subtitle: 'In-depth Read', mins: 15 },
+    flashcard: { title: 'Flashcards', subtitle: 'Recall practice', mins: 7 },
+    quiz: { title: 'Assessment', subtitle: 'Self-check quiz', mins: 12 },
+  };
+
+  const tasksMap = new Map<StudyPlanTask['type'], StudyPlanTask>();
+
+  for (const raw of rawTasks) {
+    if (!raw.title) continue;
+    const detected = detectTaskType(raw.title);
+    const durationMins = raw.durationMins || parseMinutesFromText(raw.duration || '', defaultMeta[detected.type]?.mins || 10);
+    const task: StudyPlanTask = {
+      id: raw.id || `d${dayNumber}_${detected.type}`,
+      title: detected.primary,
+      subtitle: raw.subtitle || detected.secondary,
+      category: detected.category,
+      duration: `${durationMins} min`,
+      durationMins,
+      actionLabel: 'Open →',
+      type: detected.type,
+      toolTarget: detected.toolTarget,
+    };
+    tasksMap.set(detected.type, task);
+  }
+
+  // Ensure all 6 multimodal core cards exist to match the exact rich study plan UI
+  const finalTasks: StudyPlanTask[] = [];
+  for (const type of categoryOrder) {
+    if (tasksMap.has(type)) {
+      finalTasks.push(tasksMap.get(type)!);
+    } else {
+      const meta = defaultMeta[type];
+      finalTasks.push({
+        id: `d${dayNumber}_${type}`,
+        title: meta.title,
+        subtitle: meta.subtitle,
+        category: type === 'listen' ? 'podcasts' : type === 'video' ? 'videos' : type === 'mindmap' ? 'mindmap' : type === 'detailed' ? 'detailed' : type === 'flashcard' ? 'flashcards' : 'summary',
+        duration: `${meta.mins} min`,
+        durationMins: meta.mins,
+        actionLabel: 'Open →',
         type,
+        toolTarget: type === 'listen' ? 'podcasts' : type === 'video' ? 'videos' : type === 'mindmap' ? 'mindmap' : type === 'detailed' ? 'detailed' : type === 'flashcard' ? 'flashcards' : 'summary',
       });
-      if (tasks.length >= 6) break;
     }
   }
 
-  if (tasks.length === 0) {
-    const cleanName = chapterTitle.replace(/^chapter\s*\d+\s*[-:·]?\s*/i, '');
-    return [
-      { id: `task_${chapterNum}_1`, title: `${cleanName} — Mindmaps & Structural Flow`, category: 'Mindmap', duration: '10m', actionLabel: 'Open →', type: 'mindmap' },
-      { id: `task_${chapterNum}_2`, title: `Key Takeaways & Core Concepts of ${cleanName}`, category: 'Review', duration: '15m', actionLabel: 'Review →', type: 'review' },
-      { id: `task_${chapterNum}_3`, title: `Video Masterclass: ${cleanName}`, category: 'Video', duration: '20m', actionLabel: 'Watch →', type: 'video' },
-      { id: `task_${chapterNum}_4`, title: `${cleanName} — Assessments (MCQ & MSQ)`, category: 'Quiz', duration: '15m', actionLabel: 'Start →', type: 'quiz' },
-    ];
-  }
-  return tasks;
+  const totalMinutes = finalTasks.reduce((acc, t) => acc + t.durationMins, 0);
+
+  return {
+    dayNumber,
+    title: dayTitle || `Module ${dayNumber}`,
+    subtopic: dayNumber === 1 ? 'Developmental stages' : dayNumber === 2 ? 'Histological anatomy' : dayNumber === 3 ? 'Peritrophic physiology' : 'Integrated revision',
+    totalMinutes,
+    tasks: finalTasks,
+  };
 }
 
-interface StudyPlanViewProps {
+function parseMarkdownStudyPlan(
+  rawMarkdown: string,
+  chapterTitle: string
+): { blueprints: Record<PaceLevel, StudyBlueprint>; title: string } {
+  const cleanTitle = (chapterTitle || 'Morphogenesis').replace(/^chapter\s*\d+\s*[-:·]?\s*/i, '').trim();
+
+  // Default day titles
+  const defaultDayTitles = [
+    'Morphogenesis',
+    'Wall Histology & Epithelium',
+    'Enzyme Secretions & Osmoregulation',
+    'Malpighian Tubules & Cryptonephry',
+    'Specialized Adaptations',
+    'Foregut Architecture',
+    'Midgut Cytology',
+    'Filter Chamber & Symbionts',
+    'Comparative Morphology',
+    'Physiological Control Mechanisms',
+    'Integrated Exam Drills',
+    'High-Yield Concept Synthesis',
+    'Mastery & Final Review',
+  ];
+
+  const parsedDays: StudyDayPlan[] = [];
+
+  if (rawMarkdown && rawMarkdown.length > 50) {
+    const lines = rawMarkdown.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('|') && /Day\s+\d+/i.test(trimmed)) {
+        const cells = trimmed
+          .split('|')
+          .map((c) => c.trim())
+          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        if (cells.length >= 3) {
+          const dayMatch = cells[0].match(/Day\s+(\d+)/i);
+          if (dayMatch) {
+            const dayNum = parseInt(dayMatch[1], 10);
+            const topic = cells[1].replace(/[\*\_\[\]]/g, '').trim();
+            const pathText = cells[2] || '';
+            const rawParts = pathText
+              .replace(/\$\\to\$/g, '→')
+              .replace(/\\to\b/g, '→')
+              .split(/\s*(?:→|\+)\s*/)
+              .map((s) => s.trim())
+              .filter(Boolean);
+
+            const rawTasks: Partial<StudyPlanTask>[] = rawParts.map((part, pIdx) => {
+              const cleaned = part.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').replace(/[\*\_]/g, '').trim();
+              const mins = parseMinutesFromText(cleaned, 10);
+              return {
+                id: `d${dayNum}_t${pIdx + 1}`,
+                title: cleaned,
+                durationMins: mins,
+              };
+            });
+
+            parsedDays.push(ensureRichDayTasks(dayNum, topic || defaultDayTitles[dayNum - 1] || `Module ${dayNum}`, rawTasks));
+          }
+        }
+      }
+    }
+  }
+
+  // Synthesize the 3 standard blueprints (matching user's 13-day plan in screenshot)
+  const buildBlueprint = (pace: PaceLevel, count: number, name: string, tagline: string): StudyBlueprint => {
+    const days: StudyDayPlan[] = [];
+    for (let i = 0; i < count; i++) {
+      const dayNum = i + 1;
+      const existing = parsedDays[i];
+      if (existing) {
+        days.push({
+          ...existing,
+          dayNumber: dayNum,
+        });
+      } else {
+        const topic = defaultDayTitles[i] || `${cleanTitle} · Part ${dayNum}`;
+        days.push(ensureRichDayTasks(dayNum, topic));
+      }
+    }
+    const totalMinutes = days.reduce((acc, d) => acc + d.totalMinutes, 0);
+    return {
+      id: `bp_${pace}`,
+      pace,
+      name,
+      badge: `${count}d`,
+      subtitle: `${count}-day plan · ~${Math.round(totalMinutes / count)} min/day`,
+      totalMinutes,
+      days,
+    };
+  };
+
+  return {
+    title: cleanTitle,
+    blueprints: {
+      beginner: buildBlueprint('beginner', 13, 'Comprehensive', '50 min/day'),
+      intermediate: buildBlueprint('intermediate', 9, 'Balanced', '55 min/day'),
+      advanced: buildBlueprint('advanced', 5, 'Crash Course', '65 min/day'),
+    },
+  };
+}
+
+export interface StudyPlanViewProps {
   subjectId?: string;
   chapterNumber?: number;
   chapterTitle?: string;
@@ -122,59 +300,41 @@ interface StudyPlanViewProps {
   onMarkModuleCompleted?: () => void;
   onOpenTask?: (task: StudyPlanTask) => void;
   onBack?: () => void;
+  hideHeader?: boolean;
 }
 
 export default function StudyPlanView({
   subjectId = 'entomology',
   chapterNumber = 1,
-  chapterTitle = '',
-  unitCode,
-  unitName = 'Digestive System',
+  chapterTitle = 'Morphogenesis',
   subjectName = 'Entomology',
-  totalChapters,
-  totalMins,
-  totalTasksCount,
-  modulesCount,
-  currentDay = 1,
-  totalDays,
-  startDate,
-  completedResources,
-  onMarkModuleCompleted,
   onOpenTask,
   onBack,
 }: StudyPlanViewProps) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { isDark } = useAppTheme();
   const { isTablet } = useDeviceLayout();
 
-  const displayTitle = (chapterTitle || unitName || 'Digestive System').trim();
-  const activeDay = chapterNumber || currentDay || 1;
-  const activeTotalDays = totalChapters || modulesCount || totalDays || 4;
-  const activeModulesCount = totalChapters || modulesCount || 4;
-
-  const today = useMemo(() => new Date(), []);
-  const formattedStartDate = useMemo(() => {
-    if (startDate && startDate !== '15 Oct 2026') return startDate;
-    return today.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-  }, [startDate, today]);
-
-  const formattedTodayDate = useMemo(() => {
-    return today.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-    });
-  }, [today]);
-
-  const [tasks, setTasks] = useState<StudyPlanTask[]>(() =>
-    parseStudyPlanTasks('', activeDay, displayTitle)
-  );
+  const [activePace, setActivePace] = useState<PaceLevel>('beginner');
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
   const [completedTaskIds, setCompletedTaskIds] = useState<Record<string, boolean>>({});
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [studyPlanData, setStudyPlanData] = useState<{
+    blueprints: Record<PaceLevel, StudyBlueprint>;
+    title: string;
+  }>(() => parseMarkdownStudyPlan('', chapterTitle));
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Storage key for persisting completed tasks across app launches
+  const storageProgressKey = `sv_study_plan_tasks_${subjectId}_${chapterNumber}`;
+
+  useEffect(() => {
+    storage.getItem<Record<string, boolean>>(storageProgressKey).then((saved) => {
+      if (saved && typeof saved === 'object') {
+        setCompletedTaskIds(saved);
+      }
+    });
+  }, [storageProgressKey]);
 
   useEffect(() => {
     let isMounted = true;
@@ -184,12 +344,8 @@ export default function StudyPlanView({
     fetchStudyPlan(subjectId, chapterNumber, controller.signal)
       .then((markdown) => {
         if (isMounted) {
-          if (markdown && markdown.length > 50) {
-            const parsed = parseStudyPlanTasks(markdown, activeDay, displayTitle);
-            setTasks(parsed);
-          } else {
-            setTasks(parseStudyPlanTasks('', activeDay, displayTitle));
-          }
+          const parsed = parseMarkdownStudyPlan(markdown || '', chapterTitle);
+          setStudyPlanData(parsed);
           setIsLoading(false);
         }
       })
@@ -198,7 +354,7 @@ export default function StudyPlanView({
           console.warn('[StudyPlanView] Error fetching study plan:', err);
         }
         if (isMounted) {
-          setTasks(parseStudyPlanTasks('', activeDay, displayTitle));
+          setStudyPlanData(parseMarkdownStudyPlan('', chapterTitle));
           setIsLoading(false);
         }
       });
@@ -207,489 +363,434 @@ export default function StudyPlanView({
       isMounted = false;
       controller.abort();
     };
-  }, [subjectId, chapterNumber, activeDay, displayTitle]);
+  }, [subjectId, chapterNumber, chapterTitle]);
 
-  useEffect(() => {
-    if (completedResources && completedResources.length > 0) {
-      setCompletedTaskIds((prev) => {
-        const updated = { ...prev };
-        tasks.forEach((t) => {
-          if (
-            completedResources.includes(t.type) ||
-            (t.type === 'video' && completedResources.includes('videos')) ||
-            (t.type === 'review' && completedResources.includes('read')) ||
-            (t.type === 'quiz' && completedResources.includes('practice'))
-          ) {
-            updated[t.id] = true;
-          }
-        });
-        return updated;
-      });
-    }
-  }, [completedResources, tasks]);
+  const activeBlueprint = studyPlanData.blueprints[activePace];
+  const days = activeBlueprint?.days || [];
+  const currentDayPlan = days[selectedDayIndex] || days[0];
 
-  const todayEstimatedMins = useMemo(() => {
-    return tasks.reduce((sum, t) => {
-      const m = parseInt(t.duration.replace(/\D/g, ''), 10);
-      return sum + (isNaN(m) ? 15 : m);
-    }, 0);
-  }, [tasks]);
+  const today = useMemo(() => new Date(), []);
 
-  const activeTotalMins = totalMins || (todayEstimatedMins * activeTotalDays);
-  const activeTotalTasks = totalTasksCount || (tasks.length * activeTotalDays);
+  // Compute stats for current day
+  const currentDayTasks = currentDayPlan?.tasks || [];
+  const dayDoneCount = currentDayTasks.filter((t) => completedTaskIds[t.id]).length;
+  const dayTotalCount = currentDayTasks.length;
+  const dayTotalMins = currentDayPlan?.totalMinutes || 57;
 
-  const completedTodayCount = tasks.filter((t) => completedTaskIds[t.id]).length;
-  const todayProgressPercent = tasks.length > 0 ? Math.round((completedTodayCount / tasks.length) * 100) : 0;
-  const overallDoneCount = completedTodayCount;
-  const overallProgressPercent = Math.min(100, Math.round((overallDoneCount / activeTotalTasks) * 100));
-  const isAllTodayTasksCompleted = tasks.length > 0 && tasks.every((t) => completedTaskIds[t.id]);
+  // Compute stats for overall blueprint
+  const allBlueprintTasks = useMemo(() => {
+    const list: StudyPlanTask[] = [];
+    days.forEach((d) => list.push(...d.tasks));
+    return list;
+  }, [days]);
 
-  const toggleTaskCompleted = (taskId: string) => {
-    Haptics.selectionAsync();
-    setCompletedTaskIds((prev) => ({
-      ...prev,
-      [taskId]: !prev[taskId],
-    }));
+  const totalPlanTasksCount = allBlueprintTasks.length || 70;
+  const overallDoneCount = allBlueprintTasks.filter((t) => completedTaskIds[t.id]).length;
+  const overallProgressPercent = totalPlanTasksCount > 0
+    ? Math.round((overallDoneCount / totalPlanTasksCount) * 100)
+    : 0;
+
+  const toggleTask = (taskId: string) => {
+    try {
+      Haptics.selectionAsync().catch(() => {});
+    } catch {}
+    setCompletedTaskIds((prev) => {
+      const next = { ...prev, [taskId]: !prev[taskId] };
+      storage.setItem(storageProgressKey, next).catch(() => {});
+      return next;
+    });
   };
 
-  const handleMarkModuleDone = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    if (isAllTodayTasksCompleted) {
-      setCompletedTaskIds({});
-    } else {
-      const updated: Record<string, boolean> = {};
-      tasks.forEach((t) => {
-        updated[t.id] = true;
-      });
-      setCompletedTaskIds(updated);
-      onMarkModuleCompleted?.();
+  const handleContinue = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+    } catch {}
+
+    // Find the first incomplete task for current day
+    const firstIncomplete = currentDayTasks.find((t) => !completedTaskIds[t.id]);
+    if (firstIncomplete) {
+      handleOpenTask(firstIncomplete);
+    } else if (selectedDayIndex < days.length - 1) {
+      // Advance to next day
+      setSelectedDayIndex((prev) => prev + 1);
     }
   };
 
-  // Exact color palettes from Figma DevMode CSS exports
-  const colors = isDark
-    ? {
-        screenBg: '#2D3E36',
-        cardBg: '#1E2B24',
-        cardBorder: '#3D5449',
-        cardSecondaryBg: '#253B30',
-        primaryText: '#e8f2ee',
-        secondaryText: '#8fa39a',
-        accentGreen: '#BE7E57',
-        progressTrack: '#3D5449',
-        progressFill: '#BE7E57',
-        buttonPrimaryBg: '#BE7E57',
-        buttonPrimaryText: '#ffffff',
-        actionBtnBg: '#3B2A20',
-        actionBtnBorder: '#5C3E2F',
-        actionBtnText: '#E09A70',
-        checkboxBorder: '#3D5449',
-        checkboxCheckedBg: '#BE7E57',
-      }
-    : {
-        screenBg: '#FFF6F1',
-        cardBg: '#FFFFFF',
-        cardBorder: '#E5DDD8',
-        cardSecondaryBg: '#FAF1EB',
-        primaryText: '#24382f',
-        secondaryText: '#66786e',
-        accentGreen: '#BE7E57',
-        progressTrack: '#E8D0C3',
-        progressFill: '#BE7E57',
-        buttonPrimaryBg: '#BE7E57',
-        buttonPrimaryText: '#ffffff',
-        actionBtnBg: '#FAF1EB',
-        actionBtnBorder: '#E8D0C3',
-        actionBtnText: '#8C4F2B',
-        checkboxBorder: '#E8D0C3',
-        checkboxCheckedBg: '#BE7E57',
-      };
+  const handleOpenTask = (task: StudyPlanTask) => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    } catch {}
+
+    if (onOpenTask) {
+      onOpenTask(task);
+      return;
+    }
+
+    // Default intelligent fallbacks routing based on task type
+    const chStr = chapterNumber.toString();
+    switch (task.type) {
+      case 'listen':
+        router.push('/listen');
+        break;
+      case 'video':
+        router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: chStr } });
+        break;
+      case 'mindmap':
+        router.push({ pathname: '/(tabs)/learn', params: { segment: 'mindmap', chapter: chStr } });
+        break;
+      case 'review':
+        router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
+        break;
+      case 'detailed':
+        router.push({ pathname: '/(tabs)/learn', params: { segment: 'detailed', chapter: chStr } });
+        break;
+      case 'flashcard':
+        router.push({ pathname: '/(tabs)/practice', params: { segment: 'flashcards', chapter: chStr } });
+        break;
+      case 'quiz':
+        router.push({ pathname: '/(tabs)/practice', params: { segment: 'mock', chapter: chStr } });
+        break;
+      default:
+        router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
+        break;
+    }
+  };
+
+  // Color tokens tailored to matching the exact uploaded UI design
+  const screenBg = isDark ? '#16221C' : '#FAF8F3';
+  const cardBg = isDark ? '#1E2D25' : '#FFFFFF';
+  const cardBorder = isDark ? '#2E4438' : '#ECE8E2';
+  const textDark = isDark ? '#F1F6F3' : '#18221D';
+  const textMuted = isDark ? '#8DA697' : '#718277';
+  const activeDayPillBg = isDark ? '#35291E' : '#FAF2EB';
+  const activeDayPillBorder = isDark ? '#8B5B3B' : '#DFC4AE';
+  const activeDayPillText = isDark ? '#F5C198' : '#8C532B';
+  const activeDayPillSub = isDark ? '#DFC4AE' : '#945E37';
+  const activeTaskCardBorder = isDark ? '#8B5B3B' : '#DFC4AE';
+  const openBtnBg = isDark ? '#2B2219' : '#F7F0E8';
+  const openBtnBorder = isDark ? '#594130' : '#E8DDD3';
+  const openBtnText = isDark ? '#E8B68E' : '#18221D';
+  const forestGreen = '#3B5849';
 
   return (
     <ScrollView
-      style={[styles.container, { backgroundColor: colors.screenBg }]}
+      style={[styles.container, { backgroundColor: screenBg }]}
       contentContainerStyle={[
         styles.scrollContent,
         {
-          paddingTop: insets.top + (Platform.OS === 'android' ? 12 : 6),
-          paddingBottom: insets.bottom + 24,
+          paddingTop: Math.max(insets.top + 6, 16),
+          paddingBottom: insets.bottom + 36,
         },
         isTablet && styles.tabletContainer,
       ]}
       showsVerticalScrollIndicator={false}
     >
-      <View style={styles.mainStack}>
-        {/* Top Header Row: H2 Heading (side box logo removed) */}
-        <View style={styles.headerRow}>
+      {/* ── 1. TOP BRAND HEADER: TREE LOGO & USER AVATAR (A) ── */}
+      <View style={styles.topBrandRow}>
+        <View style={styles.brandLeft}>
           {onBack && (
             <TouchableOpacity
-              style={[
-                styles.backButton,
-                {
-                  backgroundColor: colors.cardSecondaryBg,
-                  borderColor: colors.cardBorder,
-                },
-              ]}
+              style={styles.backBtn}
               onPress={onBack}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               activeOpacity={0.7}
             >
-              <Text style={[styles.backArrowText, { color: colors.accentGreen }]}>←</Text>
+              <Ionicons name="arrow-back" size={20} color={textDark} />
             </TouchableOpacity>
           )}
-
-          <View style={styles.headerTextWrap}>
-            <Text style={[styles.chapterTitleH2, { color: colors.primaryText }]}>
-              {displayTitle.toUpperCase()}
-            </Text>
-          </View>
+          <Image source={TREE_LOGO} style={styles.treeLogo} resizeMode="contain" />
+          <Text style={[styles.brandTitle, { color: textDark }]}>Saral Vidhya</Text>
         </View>
 
-        {/* Overall Progress Banner Card */}
-        <View
+        <TouchableOpacity
+          style={styles.avatarCircle}
+          onPress={() => router.push('/(tabs)/profile')}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.avatarLetter}>A</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* ── 2. THREE BOOK MILESTONE / PERSONA CARDS (Centered) ── */}
+      <View style={styles.milestonesRow}>
+        {/* Beginner */}
+        <TouchableOpacity
           style={[
-            styles.overallCard,
+            styles.milestoneCard,
             {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
+              backgroundColor: activePace === 'beginner' ? (isDark ? '#263C30' : '#D4E2D8') : cardBg,
+              borderColor: activePace === 'beginner' ? (isDark ? '#4D755D' : '#ADC5B4') : cardBorder,
             },
           ]}
+          onPress={() => {
+            try {
+              Haptics.selectionAsync().catch(() => {});
+            } catch {}
+            setActivePace('beginner');
+            setSelectedDayIndex(0);
+          }}
+          activeOpacity={0.85}
         >
-          <View style={styles.overallLeft}>
-            <Text style={[styles.minsTotalText, { color: colors.primaryText }]}>
-              {activeTotalMins} mins total
-            </Text>
-            <Text style={[styles.startDateText, { color: colors.secondaryText }]}>
-              Start · {formattedStartDate}
-            </Text>
-          </View>
+          <Image source={PERSONA_BEGINNER} style={styles.milestoneIcon} resizeMode="contain" />
+        </TouchableOpacity>
 
-          <View style={styles.overallRight}>
-            <Text style={[styles.doneFractionText, { color: colors.primaryText }]}>
-              {overallDoneCount} / {activeTotalTasks} done
-            </Text>
-            <View style={[styles.overallTrack, { backgroundColor: colors.progressTrack }]}>
-              <View
-                style={[
-                  styles.overallFill,
-                  {
-                    backgroundColor: colors.progressFill,
-                    width: `${Math.max(4, overallProgressPercent)}%`,
-                  },
-                ]}
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Study Plan Overview Heading */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.primaryText }]}>
-            Study plan overview
-          </Text>
-          <Text style={[styles.sectionSub, { color: colors.secondaryText }]}>
-            {activeTotalDays}-day {subjectName} learning plan
-          </Text>
-        </View>
-
-        {/* 3 Summary Stat Cards: Total Time | Total Tasks | Modules */}
-        <View style={styles.statCardsRow}>
-          {/* Card 1: Total Time */}
-          <View
-            style={[
-              styles.statCard,
-              { backgroundColor: colors.cardSecondaryBg },
-            ]}
-          >
-            <Text style={[styles.statLabel, { color: colors.accentGreen }]}>
-              TOTAL TIME
-            </Text>
-            <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {activeTotalMins} min
-            </Text>
-            <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              {Math.round(activeTotalMins / activeTotalDays)} min/day
-            </Text>
-          </View>
-
-          {/* Card 2: Total Tasks */}
-          <View
-            style={[
-              styles.statCard,
-              { backgroundColor: colors.cardSecondaryBg },
-            ]}
-          >
-            <Text style={[styles.statLabel, { color: colors.accentGreen }]}>
-              TOTAL TASKS
-            </Text>
-            <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {activeTotalTasks}
-            </Text>
-            <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              Across {activeTotalDays} days
-            </Text>
-          </View>
-
-          {/* Card 3: Modules */}
-          <View
-            style={[
-              styles.statCard,
-              { backgroundColor: colors.cardSecondaryBg },
-            ]}
-          >
-            <Text style={[styles.statLabel, { color: colors.accentGreen }]}>
-              MODULES
-            </Text>
-            <Text style={[styles.statValue, { color: colors.primaryText }]}>
-              {activeModulesCount}
-            </Text>
-            <Text style={[styles.statSub, { color: colors.secondaryText }]}>
-              {subjectName} Units
-            </Text>
-          </View>
-        </View>
-
-        {/* Study Focus Card */}
-        <View
+        {/* Intermediate */}
+        <TouchableOpacity
           style={[
-            styles.studyFocusCard,
+            styles.milestoneCard,
             {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
+              backgroundColor: activePace === 'intermediate' ? (isDark ? '#263C30' : '#D4E2D8') : cardBg,
+              borderColor: activePace === 'intermediate' ? (isDark ? '#4D755D' : '#ADC5B4') : cardBorder,
             },
           ]}
+          onPress={() => {
+            try {
+              Haptics.selectionAsync().catch(() => {});
+            } catch {}
+            setActivePace('intermediate');
+            setSelectedDayIndex(0);
+          }}
+          activeOpacity={0.85}
         >
-          <View style={styles.focusHeaderRow}>
-            <Text style={[styles.focusCardTitle, { color: colors.primaryText }]}>
-              Study focus
-            </Text>
-            <View
+          <Image source={PERSONA_INTERMEDIATE} style={styles.milestoneIcon} resizeMode="contain" />
+        </TouchableOpacity>
+
+        {/* Advanced */}
+        <TouchableOpacity
+          style={[
+            styles.milestoneCard,
+            {
+              backgroundColor: activePace === 'advanced' ? (isDark ? '#263C30' : '#D4E2D8') : cardBg,
+              borderColor: activePace === 'advanced' ? (isDark ? '#4D755D' : '#ADC5B4') : cardBorder,
+            },
+          ]}
+          onPress={() => {
+            try {
+              Haptics.selectionAsync().catch(() => {});
+            } catch {}
+            setActivePace('advanced');
+            setSelectedDayIndex(0);
+          }}
+          activeOpacity={0.85}
+        >
+          <Image source={PERSONA_ADVANCED} style={styles.milestoneIcon} resizeMode="contain" />
+        </TouchableOpacity>
+      </View>
+
+      {/* ── 3. SECTION LABEL: YOUR STUDY PLAN ── */}
+      <Text style={[styles.eyebrowTitle, { color: textMuted }]}>YOUR STUDY PLAN</Text>
+
+      {/* ── 4. DAY SELECTOR ROW: [ D1 Today ] [ D2 Thu ] [ D3 Fri ] ... ── */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.daysScrollRow}
+      >
+        {days.map((d, idx) => {
+          const isSelected = idx === selectedDayIndex;
+          const dayNumber = d.dayNumber || idx + 1;
+          const dayPillTitle = `D${dayNumber}`;
+          const dayPillSub = idx === 0 ? 'Today' : getWeekdayForDayOffset(today, idx);
+
+          return (
+            <TouchableOpacity
+              key={`day_${idx}`}
               style={[
                 styles.dayPill,
-                { backgroundColor: colors.cardSecondaryBg },
-              ]}
-            >
-              <Text style={[styles.dayPillText, { color: colors.accentGreen }]}>
-                Day {activeDay}
-              </Text>
-            </View>
-          </View>
-
-          <Text style={[styles.focusDesc, { color: colors.secondaryText }]}>
-            Focus on the core concepts first, then reinforce with review and practice.
-          </Text>
-
-          <View style={styles.focusPillsRow}>
-            <View
-              style={[
-                styles.focusSubPill,
-                { backgroundColor: colors.cardSecondaryBg },
-              ]}
-            >
-              <Text style={[styles.focusSubPillLabel, { color: colors.accentGreen }]}>
-                FOCUS
-              </Text>
-              <Text style={[styles.focusSubPillValue, { color: colors.primaryText }]}>
-                {displayTitle.split(' ')[0] || 'Core'}
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.focusSubPill,
-                { backgroundColor: colors.cardSecondaryBg },
-              ]}
-            >
-              <Text style={[styles.focusSubPillLabel, { color: colors.accentGreen }]}>
-                REVIEW
-              </Text>
-              <Text style={[styles.focusSubPillValue, { color: colors.primaryText }]}>
-                15 min
-              </Text>
-            </View>
-
-            <View
-              style={[
-                styles.focusSubPill,
-                { backgroundColor: colors.cardSecondaryBg },
-              ]}
-            >
-              <Text style={[styles.focusSubPillLabel, { color: colors.accentGreen }]}>
-                PRACTICE
-              </Text>
-              <Text style={[styles.focusSubPillValue, { color: colors.primaryText }]}>
-                Quiz
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Today's Section Header */}
-        <View style={styles.todayHeader}>
-          <Text style={[styles.todayTitle, { color: colors.primaryText }]}>
-            Today · Day {activeDay} of {activeTotalDays}
-          </Text>
-          <Text style={[styles.todaySub, { color: colors.secondaryText }]}>
-            {formattedTodayDate}  ·  {todayEstimatedMins} minutes
-          </Text>
-        </View>
-
-        {/* Current Module Banner */}
-        <View
-          style={[
-            styles.moduleCard,
-            {
-              backgroundColor: colors.cardBg,
-              borderColor: colors.cardBorder,
-            },
-          ]}
-        >
-          <View style={styles.moduleTextWrap}>
-            <Text style={[styles.moduleLabel, { color: colors.accentGreen }]}>
-              Module {activeDay}
-            </Text>
-            <Text style={[styles.moduleName, { color: colors.primaryText }]}>
-              {displayTitle}
-            </Text>
-          </View>
-
-          <TouchableOpacity
-            style={[
-              styles.markDoneButton,
-              isAllTodayTasksCompleted
-                ? {
-                    backgroundColor: colors.cardSecondaryBg,
-                    borderWidth: 1,
-                    borderColor: colors.accentGreen,
-                  }
-                : { backgroundColor: colors.buttonPrimaryBg },
-            ]}
-            onPress={handleMarkModuleDone}
-            activeOpacity={0.8}
-          >
-            <Text
-              style={[
-                styles.markDoneText,
-                isAllTodayTasksCompleted
-                  ? { color: colors.accentGreen }
-                  : { color: colors.buttonPrimaryText },
-              ]}
-            >
-              {isAllTodayTasksCompleted ? '✓ Completed' : 'Mark done'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Today's Progress Banner */}
-        <View
-          style={[
-            styles.todayProgressBanner,
-            { backgroundColor: colors.cardSecondaryBg },
-          ]}
-        >
-          <Text style={[styles.todayProgressLabel, { color: colors.accentGreen }]}>
-            TODAY'S PROGRESS
-          </Text>
-
-          <View style={styles.todayProgressRow}>
-            <Text style={[styles.todayTasksText, { color: colors.primaryText }]}>
-              {completedTodayCount} of {tasks.length} tasks completed
-            </Text>
-            <Text style={[styles.todayPercentText, { color: colors.secondaryText }]}>
-              {todayProgressPercent}%
-            </Text>
-          </View>
-
-          <View style={[styles.todayTrack, { backgroundColor: colors.progressTrack }]}>
-            <View
-              style={[
-                styles.todayFill,
                 {
-                  backgroundColor: colors.progressFill,
-                  width: `${todayProgressPercent}%`,
+                  backgroundColor: isSelected ? activeDayPillBg : cardBg,
+                  borderColor: isSelected ? activeDayPillBorder : cardBorder,
+                  borderWidth: isSelected ? 1.8 : 1.2,
                 },
               ]}
-            />
-          </View>
+              onPress={() => {
+                try {
+                  Haptics.selectionAsync().catch(() => {});
+                } catch {}
+                setSelectedDayIndex(idx);
+              }}
+              activeOpacity={0.8}
+            >
+              <Text
+                style={[
+                  styles.dayPillTitle,
+                  { color: isSelected ? activeDayPillText : textDark },
+                ]}
+              >
+                {dayPillTitle}
+              </Text>
+              <Text
+                style={[
+                  styles.dayPillSub,
+                  { color: isSelected ? activeDayPillSub : textMuted },
+                ]}
+              >
+                {dayPillSub}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* ── 5. CURRENT DAY TITLE & STATS HEADER ── */}
+      <View style={styles.dayHeaderRow}>
+        <View style={styles.dayHeaderLeft}>
+          <Text style={[styles.dayTitleText, { color: textDark }]} numberOfLines={1}>
+            {`Day ${currentDayPlan?.dayNumber || 1} · ${currentDayPlan?.title || 'Morphogenesis'}`}
+          </Text>
+          <Text style={[styles.daySubtopicText, { color: textMuted }]}>
+            {currentDayPlan?.subtopic || 'Developmental stages'}
+          </Text>
         </View>
 
-        {/* 4 Daily Tasks Checklist */}
+        <Text style={[styles.dayDoneStatsText, { color: textMuted }]}>
+          {`${dayDoneCount}/${dayTotalCount} done · ~${dayTotalMins} min`}
+        </Text>
+      </View>
+
+      {/* ── 6. TASK CARDS LIST ── */}
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color={forestGreen} />
+          <Text style={[styles.loadingText, { color: textMuted }]}>
+            Loading study tasks...
+          </Text>
+        </View>
+      ) : (
         <View style={styles.tasksList}>
-          {tasks.map((task) => {
-            const isCompleted = !!completedTaskIds[task.id];
+          {currentDayTasks.map((task, tIdx) => {
+            const isChecked = Boolean(completedTaskIds[task.id]);
+            // First task or first uncompleted task has the subtle active border
+            const isActiveCard = tIdx === 0 && !isChecked;
+
             return (
               <View
                 key={task.id}
                 style={[
-                  styles.taskItemCard,
+                  styles.taskCard,
                   {
-                    backgroundColor: colors.cardBg,
-                    borderColor: colors.cardBorder,
+                    backgroundColor: cardBg,
+                    borderColor: isActiveCard ? activeTaskCardBorder : cardBorder,
+                    borderWidth: isActiveCard ? 1.8 : 1.2,
                   },
                 ]}
               >
-                {/* Interactive Checkbox */}
+                {/* Square Rounded Checkbox */}
                 <TouchableOpacity
                   style={[
-                    styles.checkbox,
-                    isCompleted
-                      ? {
-                          backgroundColor: colors.checkboxCheckedBg,
-                          borderColor: colors.checkboxCheckedBg,
-                        }
-                      : {
-                          backgroundColor: colors.cardBg,
-                          borderColor: colors.checkboxBorder,
-                        },
+                    styles.checkboxSquare,
+                    {
+                      borderColor: isChecked ? forestGreen : (isDark ? '#465F51' : '#D0D9D3'),
+                      backgroundColor: isChecked ? forestGreen : 'transparent',
+                    },
                   ]}
-                  onPress={() => toggleTaskCompleted(task.id)}
-                  activeOpacity={0.7}
+                  onPress={() => toggleTask(task.id)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.75}
                 >
-                  {isCompleted && (
-                    <Ionicons name="checkmark" size={14} color="#ffffff" />
-                  )}
+                  {isChecked && <Ionicons name="checkmark" size={13} color="#FFFFFF" />}
                 </TouchableOpacity>
 
-                {/* Title & Duration */}
-                <View style={styles.taskTextContent}>
+                {/* Task Details */}
+                <View style={styles.taskTextCol}>
                   <Text
                     style={[
                       styles.taskTitle,
-                      {
-                        color: colors.primaryText,
-                        textDecorationLine: isCompleted ? 'line-through' : 'none',
-                        opacity: isCompleted ? 0.6 : 1,
-                      },
+                      { color: textDark },
+                      isChecked && styles.taskTitleCompleted,
                     ]}
                   >
                     {task.title}
                   </Text>
-                  <Text style={[styles.taskSub, { color: colors.secondaryText }]}>
-                    {task.category} · {task.duration}
+                  <Text style={[styles.taskSubtitle, { color: textMuted }]}>
+                    {task.subtitle || 'Essential resource'}
                   </Text>
                 </View>
 
-                {/* Open / Watch / Start CTA Button */}
-                <TouchableOpacity
-                  style={[
-                    styles.taskActionBtn,
-                    {
-                      backgroundColor: colors.actionBtnBg,
-                      borderColor: colors.actionBtnBorder,
-                    },
-                  ]}
-                  onPress={() => {
-                    Haptics.selectionAsync();
-                    if (onOpenTask) onOpenTask(task);
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <Text style={[styles.taskActionText, { color: colors.actionBtnText }]}>
-                    {task.actionLabel}
+                {/* Duration & Open Button */}
+                <View style={styles.taskActionCol}>
+                  <Text style={[styles.durationText, { color: textMuted }]}>
+                    {task.duration}
                   </Text>
-                </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.openPillBtn,
+                      {
+                        backgroundColor: openBtnBg,
+                        borderColor: openBtnBorder,
+                      },
+                    ]}
+                    onPress={() => handleOpenTask(task)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.openPillBtnText, { color: openBtnText }]}>
+                      Open →
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             );
           })}
+        </View>
+      )}
+
+      {/* ── 7. BOTTOM PROGRESS SUMMARY CARD ── */}
+      <View
+        style={[
+          styles.bottomSummaryCard,
+          {
+            backgroundColor: cardBg,
+            borderColor: cardBorder,
+          },
+        ]}
+      >
+        <View style={styles.summaryTopRow}>
+          <Text style={[styles.summaryTitle, { color: textDark }]} numberOfLines={1}>
+            {studyPlanData.title || 'Metamorphosis & Diapause'}
+          </Text>
+          <Text style={[styles.summaryPercentText, { color: textDark }]}>
+            {`${overallProgressPercent}%`}
+          </Text>
+        </View>
+
+        <Text style={[styles.summarySub, { color: textMuted }]}>
+          {activeBlueprint?.subtitle || '13-day plan · ~50 min/day'}
+        </Text>
+
+        {/* Progress Track */}
+        <View
+          style={[
+            styles.summaryTrack,
+            { backgroundColor: isDark ? '#283B30' : '#EFEAE3' },
+          ]}
+        >
+          <View
+            style={[
+              styles.summaryFill,
+              {
+                backgroundColor: forestGreen,
+                width: `${Math.max(overallProgressPercent > 0 ? 4 : 0, overallProgressPercent)}%`,
+              },
+            ]}
+          />
+        </View>
+
+        {/* Bottom Actions Row */}
+        <View style={styles.summaryBottomRow}>
+          <Text style={[styles.tasksDoneText, { color: textMuted }]}>
+            {`${overallDoneCount}/${totalPlanTasksCount} tasks done`}
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.continueButton, { backgroundColor: forestGreen }]}
+            onPress={handleContinue}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.continueButtonText}>
+              {`Continue Day ${currentDayPlan?.dayNumber || 1} →`}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     </ScrollView>
@@ -701,309 +802,298 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingHorizontal: 0,
   },
   tabletContainer: {
-    maxWidth: 540,
-    width: '100%',
+    maxWidth: 680,
     alignSelf: 'center',
-  },
-  mainStack: {
     width: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
   },
-  headerRow: {
+
+  /* 1. Top Brand Header */
+  topBrandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  brandLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    marginTop: 4,
-    marginBottom: 2,
   },
-  backButton: {
+  backBtn: {
+    marginRight: 4,
+    padding: 4,
+  },
+  treeLogo: {
+    width: 28,
+    height: 28,
+  },
+  brandTitle: {
+    fontSize: 18.5,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  avatarCircle: {
     width: 36,
     height: 36,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 18,
+    backgroundColor: '#E5EDE7',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backArrowText: {
-    fontSize: 18,
+  avatarLetter: {
+    fontSize: 15,
     fontWeight: '700',
+    color: '#345744',
   },
-  headerTextWrap: {
-    flex: 1,
+
+  /* 2. Milestones / Personas */
+  milestonesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: 14,
+    marginBottom: 22,
   },
-  chapterTitleH2: {
-    fontSize: 22,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-    lineHeight: 28,
-  },
-  overallCard: {
-    width: '100%',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  overallLeft: {
-    flexDirection: 'column',
-    gap: 3,
-  },
-  minsTotalText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  startDateText: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  overallRight: {
-    flexDirection: 'column',
-    alignItems: 'flex-end',
-    gap: 5,
-  },
-  doneFractionText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  overallTrack: {
-    width: 120,
-    height: 5,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  overallFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  sectionHeader: {
-    flexDirection: 'column',
-    gap: 2,
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  sectionSub: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  statCardsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  statCard: {
-    flex: 1,
-    borderRadius: 11,
-    paddingVertical: 10,
-    paddingHorizontal: 10,
-    flexDirection: 'column',
-    gap: 3,
-  },
-  statLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.3,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  statSub: {
-    fontSize: 9,
-    fontWeight: '500',
-  },
-  studyFocusCard: {
+  milestoneCard: {
+    width: 58,
+    height: 58,
     borderRadius: 14,
-    borderWidth: 1,
-    padding: 14,
-    flexDirection: 'column',
-    gap: 8,
-  },
-  focusHeaderRow: {
-    flexDirection: 'row',
+    borderWidth: 1.2,
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
   },
-  focusCardTitle: {
-    fontSize: 13,
-    fontWeight: '700',
+  milestoneIcon: {
+    width: 38,
+    height: 38,
+  },
+
+  /* 3. Eyebrow */
+  eyebrowTitle: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+  },
+
+  /* 4. Days Selector */
+  daysScrollRow: {
+    paddingHorizontal: 20,
+    gap: 10,
+    paddingBottom: 4,
+    marginBottom: 22,
   },
   dayPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 999,
-  },
-  dayPillText: {
-    fontSize: 9.5,
-    fontWeight: '700',
-  },
-  focusDesc: {
-    fontSize: 11,
-    lineHeight: 16,
-    fontWeight: '500',
-  },
-  focusPillsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
-  },
-  focusSubPill: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    flexDirection: 'column',
-    gap: 2,
-  },
-  focusSubPillLabel: {
-    fontSize: 8.5,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  focusSubPillValue: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  todayHeader: {
-    flexDirection: 'column',
-    gap: 2,
-    marginTop: 4,
-  },
-  todayTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  todaySub: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  moduleCard: {
-    width: '100%',
-    borderRadius: 13,
-    borderWidth: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  moduleTextWrap: {
-    flex: 1,
-    flexDirection: 'column',
-    gap: 3,
-  },
-  moduleLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  moduleName: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  markDoneButton: {
-    height: 32,
-    paddingHorizontal: 14,
-    borderRadius: 9,
+    width: 62,
+    height: 62,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 8,
   },
-  markDoneText: {
-    fontSize: 11,
-    fontWeight: '700',
+  dayPillTitle: {
+    fontSize: 14.5,
+    fontWeight: '800',
   },
-  todayProgressBanner: {
-    borderRadius: 11,
-    padding: 12,
-    flexDirection: 'column',
-    gap: 6,
-  },
-  todayProgressLabel: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: 0.4,
-  },
-  todayProgressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  todayTasksText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  todayPercentText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  todayTrack: {
-    width: '100%',
-    height: 4,
-    borderRadius: 2,
-    overflow: 'hidden',
+  dayPillSub: {
+    fontSize: 11.5,
+    fontWeight: '600',
     marginTop: 2,
   },
-  todayFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  tasksList: {
-    flexDirection: 'column',
-    gap: 8,
-  },
-  taskItemCard: {
-    borderRadius: 11,
-    borderWidth: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+
+  /* 5. Day Info Header */
+  dayHeaderRow: {
+    paddingHorizontal: 20,
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 16,
     gap: 12,
   },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-    borderWidth: 1.5,
+  dayHeaderLeft: {
+    flex: 1,
+  },
+  dayTitleText: {
+    fontSize: 21,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  daySubtopicText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginTop: 3,
+  },
+  dayDoneStatsText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    paddingTop: 3,
+  },
+
+  /* 6. Tasks List */
+  tasksList: {
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  taskCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 1,
+      },
+    }),
+  },
+  checkboxSquare: {
+    width: 21,
+    height: 21,
+    borderRadius: 6,
+    borderWidth: 1.8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  taskTextContent: {
+  taskTextCol: {
     flex: 1,
-    flexDirection: 'column',
-    gap: 2,
   },
   taskTitle: {
-    fontSize: 12,
+    fontSize: 15,
     fontWeight: '700',
+    lineHeight: 20,
   },
-  taskSub: {
-    fontSize: 10,
+  taskTitleCompleted: {
+    textDecorationLine: 'line-through',
+    opacity: 0.65,
+  },
+  taskSubtitle: {
+    fontSize: 12.5,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  taskActionCol: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  durationText: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  taskActionBtn: {
-    height: 28,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+  openPillBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 13,
+    borderRadius: 999,
     borderWidth: 1,
+  },
+  openPillBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+  },
+
+  /* 7. Bottom Summary Card */
+  bottomSummaryCard: {
+    marginHorizontal: 20,
+    marginTop: 18,
+    borderRadius: 18,
+    borderWidth: 1.2,
+    padding: 18,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 2,
+      },
+    }),
+  },
+  summaryTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  summaryTitle: {
+    fontSize: 16.5,
+    fontWeight: '800',
+    flex: 1,
+  },
+  summaryPercentText: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  summarySub: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: 2,
+    marginBottom: 12,
+  },
+  summaryTrack: {
+    height: 7,
+    borderRadius: 4,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  summaryFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  summaryBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 14,
+    gap: 12,
+  },
+  tasksDoneText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+  },
+  continueButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: 999,
+  },
+  continueButtonText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  /* Loading State */
+  loadingContainer: {
+    paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 10,
   },
-  taskActionText: {
-    fontSize: 10,
-    fontWeight: '700',
+  loadingText: {
+    fontSize: 13,
+    fontWeight: '500',
   },
 });

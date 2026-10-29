@@ -99,9 +99,8 @@ export default function PrepareScreen() {
   return (
     <View style={[styles.container, { backgroundColor: screenBg }]}>
       {/* 1. TOP TOOLBAR: [ Back Arrow ] [ PYQ's | Preparation Exam | Study Plan ] [ Profile ]
-          Always visible so users can freely toggle across all three Prepare features.
-          Only hidden when the user is actively inside the timed full-screen exam. */}
-      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && (
+          Only hidden when in timed full-screen exam or full-bleed Study Plan view */}
+      {!(activeSegment === 'prep_exam' && prepExamStep === 'exam') && activeSegment !== 'study_plan' && (
         <TopNavBar
           segments={PREPARE_SEGMENTS}
           activeSegment={activeSegment}
@@ -123,19 +122,21 @@ export default function PrepareScreen() {
         />
       )}
 
-      {/* Consistent Breadcrumb Line */}
-      <BreadcrumbBar
-        subjectName={activeSubject.name}
-        chapterNumber={currentChapter.number}
-        chapterTitle={currentChapter.name}
-        onBackPress={() => {
-          if (router.canGoBack()) {
-            router.back();
-          } else {
-            router.push('/subjects');
-          }
-        }}
-      />
+      {/* Consistent Breadcrumb Line (hidden for full-bleed Study Plan) */}
+      {activeSegment !== 'study_plan' && (
+        <BreadcrumbBar
+          subjectName={activeSubject.name}
+          chapterNumber={currentChapter.number}
+          chapterTitle={currentChapter.name}
+          onBackPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.push('/subjects');
+            }
+          }}
+        />
+      )}
 
       {/* Main Content Area based on Active Segment */}
       {activeSegment === 'pyq' ? (
@@ -189,18 +190,28 @@ export default function PrepareScreen() {
           subjectName={activeSubject.name}
           totalChapters={activeSubject.chapters?.length || 4}
           completedResources={currentChapter.completed || []}
+          onBack={() => setActiveSegment('pyq')}
           onMarkModuleCompleted={() => {
             markResourceCompleted(activeSubject.id, currentChapter.number, 'study_plan');
           }}
           onOpenTask={(task) => {
-            if (task.type === 'video') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'review') {
-              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'quiz') {
-              router.push({ pathname: '/(tabs)/practice', params: { part: 'assessments', chapter: currentChapter.number.toString() } });
-            } else if (task.type === 'mindmap') {
-              router.push({ pathname: '/(tabs)/resources', params: { segment: 'mindmaps', chapter: currentChapter.number.toString() } });
+            const chStr = currentChapter.number.toString();
+            if (task.type === 'listen' || (task as any).category === 'podcasts') {
+              router.push('/listen');
+            } else if (task.type === 'video' || (task as any).category === 'videos') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'watch', chapter: chStr } });
+            } else if (task.type === 'mindmap' || (task as any).category === 'mindmap') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'mindmap', chapter: chStr } });
+            } else if (task.type === 'detailed' || (task as any).category === 'detailed') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'detailed', chapter: chStr } });
+            } else if (task.type === 'review' || (task as any).category === 'summary') {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
+            } else if (task.type === 'flashcard' || (task as any).category === 'flashcards') {
+              router.push({ pathname: '/(tabs)/practice', params: { segment: 'flashcards', chapter: chStr } });
+            } else if (task.type === 'quiz' || (task as any).category === 'assessment') {
+              router.push({ pathname: '/(tabs)/practice', params: { segment: 'mock', chapter: chStr } });
+            } else {
+              router.push({ pathname: '/(tabs)/learn', params: { segment: 'read', chapter: chStr } });
             }
           }}
         />
