@@ -529,12 +529,12 @@ export default function StudyTable() {
   const [dbSubjectName, setDbSubjectName] = useState<string | null>(null);
   const subjectName = dbSubjectName || navState.subjectName || searchParams.get("subjectName") || savedCourseParams.subjectName || "Subject";
   const semesterName = navState.semesterName || searchParams.get("semesterName") || savedCourseParams.semesterName || "";
-  const personaRaw = navState.persona || searchParams.get("persona") || savedCourseParams.persona || "intermediate";
+  const personaRaw = searchParams.get("persona") || "beginner";
   const [persona, setPersonaState] = useState<DifficultyLevel>(
-    PERSONA_TO_LEVEL[personaRaw] || "intermediate",
+    PERSONA_TO_LEVEL[personaRaw] || "beginner",
   );
   const [uiPersona, setUiPersona] = useState<DifficultyLevel>(
-    PERSONA_TO_LEVEL[personaRaw] || "intermediate",
+    PERSONA_TO_LEVEL[personaRaw] || "beginner",
   );
   const userModifiedPersonaRef = useRef(false);
   const userModifiedChapterRef = useRef(false);
@@ -739,13 +739,6 @@ export default function StudyTable() {
         setChapterNumberState(ch);
       }
     }
-    if (!userModifiedPersonaRef.current && !navState.persona && !searchParams.get("persona") && savedCourseParams.persona) {
-      const pLevel = PERSONA_TO_LEVEL[savedCourseParams.persona];
-      if (pLevel && pLevel !== persona) {
-        setPersonaState(pLevel);
-        setUiPersona(pLevel);
-      }
-    }
     if (!userModifiedVideoRef.current && !navState.video && !searchParams.get("video") && savedCourseParams.video) {
       const vIdx = parseInt(savedCourseParams.video, 10);
       if (!isNaN(vIdx) && vIdx >= 1 && vIdx !== videoIndexState) {
@@ -768,7 +761,7 @@ export default function StudyTable() {
     const cfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
     if (!cfg || !cfg.topics) return;
 
-    const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'intermediate';
+    const normLevel = ['beginner', 'intermediate', 'advanced'].includes(persona) ? persona : 'beginner';
     const chDir = `chapter_${String(chapterNumber).padStart(2, '0')}`;
     const subBase = getSubjectBaseUrl(subjectId);
 
@@ -1182,6 +1175,9 @@ export default function StudyTable() {
   useEffect(() => {
     // Stop reading whenever we switch tools to prevent overlapping audio
     googleTtsStop();
+    // Default every tool to Beginner persona when entering/switching tools
+    setUiPersona("beginner");
+    setPersonaState("beginner");
 
     if (activeTool !== "qbank") {
       setQbankReadAloudText("");
@@ -5536,7 +5532,7 @@ export default function StudyTable() {
             {activeTool !== "mocktest" && activeTool !== "pre_final_test" && activeTool !== "ask" && activeTool !== "podcasts" && activeTool !== "prep_exam" && activeTool !== "key_takeaways" && activeTool !== "study_plan" && (
               <div
                 style={{
-                  display: (activeTool === "mindmap" || activeTool === "qbank" || activeTool === "videos") ? "none" : "flex",
+                  display: (activeTool === "mindmap" || activeTool === "qbank" || activeTool === "pyq" || activeTool === "videos") ? "none" : "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   position: "relative",

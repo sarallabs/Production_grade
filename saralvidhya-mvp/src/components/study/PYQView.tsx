@@ -351,126 +351,139 @@ export default function PYQView({
       style={{
         background: 'transparent',
         minHeight: '100%',
-        padding: '8px 16px 40px',
+        flexShrink: 0,
+        width: '100%',
+        padding: '0 16px 40px',
         boxSizing: "border-box",
         fontFamily: "'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif",
       }}
     >
-      {/* Top Year Filter Pills */}
+      {/* Sticky Years & Marks Breadcrumb */}
       <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: "10px",
+          position: "sticky",
+          top: 0,
+          zIndex: 30,
+          background: "#FAF8F3",
+          padding: "10px 0 12px",
+          marginBottom: "18px",
+          borderBottom: "1px solid rgba(226, 221, 211, 0.75)",
         }}
       >
+        {/* Top Year Filter Pills */}
         <div
-          className="pyq-year-selector"
           style={{
             display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
+            alignItems: "center",
             justifyContent: "center",
+            marginBottom: availableMarks.length > 0 ? "10px" : "0px",
           }}
         >
-          <button
-            type="button"
-            onClick={() => setSelectedYear("All Years")}
+          <div
+            className="pyq-year-selector"
             style={{
-              padding: "6px 18px",
-              borderRadius: "999px",
-              border: selectedYear === 'All Years' ? "1.5px solid #546C60" : '1px solid #E2DDD3',
-              background: selectedYear === 'All Years' ? "#546C60" : '#FFFFFF',
-              color: selectedYear === 'All Years' ? "#FFFFFF" : '#38423B',
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              justifyContent: "center",
             }}
           >
-            All Years
-          </button>
-          {availableYearsForSubject.map((yearVal) => {
-            const isSelected = selectedYear === yearVal.toString();
-            return (
-              <button
-                key={yearVal}
-                type="button"
-                onClick={() => setSelectedYear(yearVal.toString())}
-                style={{
-                  padding: "6px 16px",
-                  borderRadius: "999px",
-                  border: isSelected ? "1.5px solid #546C60" : '1px solid #E2DDD3',
-                  background: isSelected ? "#546C60" : '#FFFFFF',
-                  color: isSelected ? "#FFFFFF" : '#38423B',
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {yearVal}
-              </button>
-            );
-          })}
+            <button
+              type="button"
+              onClick={() => setSelectedYear("All Years")}
+              style={{
+                padding: "6px 18px",
+                borderRadius: "999px",
+                border: selectedYear === 'All Years' ? "1.5px solid #546C60" : '1px solid #E2DDD3',
+                background: selectedYear === 'All Years' ? "#546C60" : '#FFFFFF',
+                color: selectedYear === 'All Years' ? "#FFFFFF" : '#38423B',
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              All
+            </button>
+            {availableYearsForSubject.map((yearVal) => {
+              const isSelected = selectedYear === yearVal.toString();
+              return (
+                <button
+                  key={yearVal}
+                  type="button"
+                  onClick={() => setSelectedYear(yearVal.toString())}
+                  style={{
+                    padding: "6px 16px",
+                    borderRadius: "999px",
+                    border: isSelected ? "1.5px solid #546C60" : '1px solid #E2DDD3',
+                    background: isSelected ? "#546C60" : '#FFFFFF',
+                    color: isSelected ? "#FFFFFF" : '#38423B',
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {yearVal}
+                </button>
+              );
+            })}
+          </div>
         </div>
+
+        {/* Second Row: Marks Filter Pills */}
+        {availableMarks.length > 0 && (
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              justifyContent: "center",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setSelectedMarks(null)}
+              style={{
+                padding: "5px 16px",
+                borderRadius: "999px",
+                border: selectedMarks === null ? "1.5px solid #546C60" : '1px solid #E2DDD3',
+                background: selectedMarks === null ? "#546C60" : '#FFFFFF',
+                color: selectedMarks === null ? "#FFFFFF" : '#38423B',
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              All
+            </button>
+            {availableMarks.map((m) => {
+              const isSelected = selectedMarks === m;
+              return (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setSelectedMarks(m)}
+                  style={{
+                    padding: "5px 15px",
+                    borderRadius: "999px",
+                    border: isSelected ? "1.5px solid #546C60" : '1px solid #E2DDD3',
+                    background: isSelected ? "#546C60" : '#FFFFFF',
+                    color: isSelected ? "#FFFFFF" : '#38423B',
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {m}M
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
-
-      {/* Second Row: Marks Filter Pills */}
-      {availableMarks.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            marginBottom: "22px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setSelectedMarks(null)}
-            style={{
-              padding: "5px 16px",
-              borderRadius: "999px",
-              border: selectedMarks === null ? "1.5px solid #546C60" : '1px solid #E2DDD3',
-              background: selectedMarks === null ? "#546C60" : '#FFFFFF',
-              color: selectedMarks === null ? "#FFFFFF" : '#38423B',
-              fontSize: "12px",
-              fontWeight: 700,
-              cursor: "pointer",
-              transition: "all 0.15s ease",
-            }}
-          >
-            All Marks
-          </button>
-          {availableMarks.map((m) => {
-            const isSelected = selectedMarks === m;
-            return (
-              <button
-                key={m}
-                type="button"
-                onClick={() => setSelectedMarks(m)}
-                style={{
-                  padding: "5px 15px",
-                  borderRadius: "999px",
-                  border: isSelected ? "1.5px solid #546C60" : '1px solid #E2DDD3',
-                  background: isSelected ? "#546C60" : '#FFFFFF',
-                  color: isSelected ? "#FFFFFF" : '#38423B',
-                  fontSize: "12px",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {m}M
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {/* PYQ Question Cards List */}
       <div
         style={{

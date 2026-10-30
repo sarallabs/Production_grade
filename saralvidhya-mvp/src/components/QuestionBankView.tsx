@@ -200,7 +200,7 @@ export default function QuestionBankView({
         const next = { ...prev };
         if (globalMark === 'all') {
           if (!next[first.id]) {
-            next[first.id] = first.longAnswer ? 'long' : 'short';
+            next[first.id] = 'short';
           }
         } else {
           filteredQuestions.forEach((q) => {
@@ -274,6 +274,7 @@ export default function QuestionBankView({
       style={{
         background: '#FAF8F3',
         minHeight: '100%',
+        flexShrink: 0,
         width: '100%',
         padding: '22px 36px 56px',
         boxSizing: 'border-box',
@@ -299,8 +300,6 @@ export default function QuestionBankView({
         .qbank-answer-body strong {
           font-weight: 700;
           color: #1E2822;
-          border-bottom: 1.5px dotted #B89146;
-          padding-bottom: 1px;
         }
         .qbank-answer-body h1,
         .qbank-answer-body h2,
@@ -374,13 +373,14 @@ export default function QuestionBankView({
 
       <div style={{ maxWidth: '1160px', margin: '0 auto', width: '100%' }}>
         {/* ── Header Title & Inline Subtitle ── */}
+        {/* ── Header Title & Inline Subtitle (scrolls out of view) ── */}
         <div
           style={{
             display: 'flex',
             alignItems: 'baseline',
             gap: '12px',
             flexWrap: 'wrap',
-            marginBottom: '12px',
+            marginBottom: '6px',
           }}
         >
           <h1
@@ -409,15 +409,22 @@ export default function QuestionBankView({
           )}
         </div>
 
-        {/* ── Filter Pills Row (All · 15 | 2 Marks · 6 | 5 Marks · 5 | 10 Marks · 4 | Chapter 1) ── */}
+        {/* ── Sticky Centered Marks Filter Breadcrumb Row ── */}
         {questions.length > 0 && (
           <div
             style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 30,
+              background: '#FAF8F3',
+              padding: '10px 0 12px',
+              marginBottom: '14px',
+              borderBottom: '1px solid rgba(223, 217, 204, 0.65)',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'center',
               gap: '8px',
               flexWrap: 'wrap',
-              marginBottom: '18px',
             }}
           >
             {(
@@ -521,11 +528,7 @@ export default function QuestionBankView({
                 ...(entry.tenMarkAnswer ? [{ key: 'ten' as const, label: '10M' }] : [{ key: 'ten' as const, label: '10M' }]),
               ];
               const defaultMode: MarkTier =
-                index === 0 && globalMark === 'all' && entry.longAnswer
-                  ? 'long'
-                  : globalMark !== 'all'
-                  ? globalMark
-                  : 'short';
+                globalMark !== 'all' ? globalMark : 'short';
               const mode: MarkTier = answerModes[entry.id] ?? defaultMode;
               const isRevealed = revealedCards[entry.id] ?? false;
 
@@ -541,16 +544,12 @@ export default function QuestionBankView({
                 .replace(/^(Chapter|Unit)\s*\d+\s*[:·\-–—]?\s*/i, '')
                 .trim();
 
-              const isTryingFirst = Boolean(tryFirstMode[entry.id]);
-              const isCompared = Boolean(tryFirstCompared[entry.id]);
-              const modeLabelLong = mode === 'ten' ? '10-mark' : mode === 'long' ? '5-mark' : '2-mark';
               const examBudgetText =
                 mode === 'ten'
-                  ? '15–18 minutes of writing time for this question'
+                  ? '15–18 mins'
                   : mode === 'long'
-                  ? '8–10 minutes of writing time for this question'
-                  : '2–3 minutes of writing time for this question';
-
+                  ? '8–10 mins'
+                  : '2–3 mins';
               return (
                 <div
                   key={entry.id}
@@ -704,174 +703,37 @@ export default function QuestionBankView({
                         cursor: 'default',
                       }}
                     >
-                      {/* "Attempt before you read" Dashed Callout Box */}
-                      <div
-                        style={{
-                          background: '#FDF9F1',
-                          border: '1.5px dashed #DFC28F',
-                          borderRadius: '10px',
-                          padding: '10px 16px',
-                          marginBottom: '14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '16px',
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{ fontSize: '15px', lineHeight: 1 }} aria-hidden="true">
-                            ✍️
-                          </span>
-                          <div>
-                            <div
-                              style={{
-                                fontSize: '12.5px',
-                                fontWeight: 700,
-                                color: '#4A3210',
-                                lineHeight: 1.3,
-                              }}
-                            >
-                              Attempt before you read
-                            </div>
-                            <div
-                              style={{
-                                fontSize: '11.5px',
-                                color: '#8C6D3F',
-                                lineHeight: 1.35,
-                              }}
-                            >
-                              Hide the answer, write your own {modeLabelLong} version, then compare.
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => toggleTryFirst(entry.id)}
-                          style={{
-                            background: '#D49B4B',
-                            color: '#1E2822',
-                            border: 'none',
-                            borderRadius: '999px',
-                            padding: '6px 14px',
-                            fontSize: '11.5px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                            flexShrink: 0,
-                            transition: 'filter 0.15s ease',
-                          }}
-                        >
-                          {isTryingFirst ? 'Show answer directly' : 'Hide answer & try first'}
-                        </button>
+                      <div className="qbank-answer-body">
+                        <MarkdownView content={shownAnswer} />
                       </div>
 
-                      {/* Interactive Try-First Scratchpad (when user clicks "Hide answer & try first") */}
-                      {isTryingFirst && (
-                        <div
-                          style={{
-                            background: '#FAF8F3',
-                            border: '1px solid #E5DFD3',
-                            borderRadius: '10px',
-                            padding: '12px 14px',
-                            marginBottom: '14px',
-                          }}
+                      {/* Footer Exam Budget */}
+                      <div
+                        style={{
+                          marginTop: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '11.5px',
+                          fontWeight: 600,
+                          color: '#B86B35',
+                        }}
+                      >
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         >
-                          <div
-                            style={{
-                              fontSize: '11.5px',
-                              fontWeight: 700,
-                              color: '#4F6A5A',
-                              marginBottom: '6px',
-                              textTransform: 'uppercase',
-                              letterSpacing: '0.04em',
-                            }}
-                          >
-                            Your {modeLabelLong} Attempt
-                          </div>
-                          <textarea
-                            value={tryFirstDrafts[entry.id] ?? ''}
-                            onChange={(e) =>
-                              setTryFirstDrafts((prev) => ({ ...prev, [entry.id]: e.target.value }))
-                            }
-                            placeholder={`Write your ${modeLabelLong} answer here before revealing the model answer...`}
-                            rows={4}
-                            style={{
-                              width: '100%',
-                              boxSizing: 'border-box',
-                              borderRadius: '8px',
-                              border: '1px solid #DCD5C7',
-                              background: '#FFFFFF',
-                              padding: '10px 12px',
-                              fontSize: '13px',
-                              lineHeight: 1.5,
-                              color: '#1E2822',
-                              fontFamily: 'inherit',
-                              resize: 'vertical',
-                              outline: 'none',
-                            }}
-                          />
-                          {!isCompared && (
-                            <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'flex-end' }}>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setTryFirstCompared((prev) => ({ ...prev, [entry.id]: true }))
-                                }
-                                style={{
-                                  background: '#233329',
-                                  color: '#FFFFFF',
-                                  border: 'none',
-                                  borderRadius: '999px',
-                                  padding: '6px 14px',
-                                  fontSize: '11.5px',
-                                  fontWeight: 700,
-                                  cursor: 'pointer',
-                                }}
-                              >
-                                Reveal model answer &amp; compare
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Model Answer Body (visible unless hidden by try-first before compare) */}
-                      {(!isTryingFirst || isCompared) && (
-                        <>
-                          <div className="qbank-answer-body">
-                            <MarkdownView content={shownAnswer} />
-                          </div>
-
-                          {/* Footer Exam Budget */}
-                          <div
-                            style={{
-                              marginTop: '14px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '6px',
-                              fontSize: '11.5px',
-                              fontWeight: 600,
-                              color: '#B86B35',
-                            }}
-                          >
-                            <svg
-                              width="13"
-                              height="13"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <circle cx="12" cy="12" r="10" />
-                              <polyline points="12 6 12 12 16 14" />
-                            </svg>
-                            <span>Exam budget · {examBudgetText}</span>
-                          </div>
-                        </>
-                      )}
+                          <circle cx="12" cy="12" r="10" />
+                          <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                        <span>Exam budget: {examBudgetText}</span>
+                      </div>
                     </div>
                   )}
                 </div>

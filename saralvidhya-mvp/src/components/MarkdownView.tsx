@@ -124,7 +124,7 @@ function extractRawText(node: any): string {
   return '';
 }
 
-function MarkdownViewInner({ content, isPurpleTheme = true, disableGlossary = false }: Props) {
+function MarkdownViewInner({ content, isPurpleTheme = true, disableGlossary = true }: Props) {
   const processedContent = useMemo(() => preprocessMathContent(content), [content]);
 
   const accentDotted = isPurpleTheme ? '#7c3aed' : '#16a34a';

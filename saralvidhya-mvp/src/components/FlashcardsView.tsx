@@ -455,7 +455,7 @@ export default function FlashcardsView({
                       WebkitFontSmoothing: 'antialiased',
                     }}
                   >
-                    <MarkdownView content={cleanTitle} />
+                    <MarkdownView content={cleanTitle} disableGlossary={false} />
                   </div>
 
                   {/* Subtle "Click" prompt under the question in the unclicked stage */}
@@ -533,7 +533,7 @@ export default function FlashcardsView({
                       className="flashcard-answer-text"
                       style={{ maxWidth: "1020px", width: "100%", textAlign: "center" }}
                     >
-                      <MarkdownView content={safeBack} />
+                      <MarkdownView content={safeBack} disableGlossary={false} />
                     </div>
                   </div>
 

@@ -212,7 +212,7 @@ function ReadingHighlightViewInner({
         }}
         aria-hidden="true"
       />
-      <MarkdownView content={content} isPurpleTheme={isPurpleTheme} />
+      <MarkdownView content={content} isPurpleTheme={isPurpleTheme} disableGlossary={false} />
     </div>
   );
 }

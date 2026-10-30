@@ -1720,7 +1720,7 @@ export default function AskBotView({
                   >
                     {visibleParagraphs.map((p, pIdx) => (
                       <div key={pIdx} className="saral-ask-v2-md">
-                        <MarkdownView content={p} isPurpleTheme={false} />
+                        <MarkdownView content={p} isPurpleTheme={false} disableGlossary={false} />
                       </div>
                     ))}
                   </div>

@@ -507,55 +507,6 @@ export function QuestionCard({
         </div>
       ) : (
         <>
-          {/* Dashed Callout Banner: "Attempt before you read" */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              marginTop: "14px",
-              background: "#F4F7F5",
-              border: "1.5px dashed #B5C7BD",
-              borderRadius: "12px",
-              padding: "11px 16px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-              <span style={{ fontSize: "15px" }}>✍️</span>
-              <div>
-                <div style={{ fontSize: "12px", fontWeight: 800, color: "#1E2822" }}>
-                  Attempt before you read
-                </div>
-                <div style={{ fontSize: "11px", color: "#6E766E", marginTop: "1px" }}>
-                  {question.frequency && question.frequency > 1
-                    ? `This appeared ${question.frequency} times in 5 years — treat it as a mock-exam question.`
-                    : "High-yield university exam question — try outlining your answer before reading."}
-                </div>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setIsAnswerHidden(true)}
-              style={{
-                background: "#546C60",
-                color: "#FFFFFF",
-                border: "none",
-                borderRadius: "999px",
-                padding: "7px 16px",
-                fontSize: "11.5px",
-                fontWeight: 700,
-                cursor: "pointer",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {"Hide answer & try first"}
-            </button>
-          </div>
-
           {/* Model Answer Container */}
           <div
             onClick={(e) => e.stopPropagation()}

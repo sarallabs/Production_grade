@@ -2986,17 +2986,6 @@ export default function PodcastsView({
                     if (!isWord) {
                       return <span key={idx}>{token}</span>;
                     }
-                    const cleanWord = token.toLowerCase().replace(/[^a-z0-9]/g, "");
-                    const def = getTermDefinition(cleanWord);
-                    if (def) {
-                      return (
-                        <span key={idx} className="transcript-word">
-                          <DottedTerm definition={def} isPurpleTheme={false}>
-                            {token}
-                          </DottedTerm>
-                        </span>
-                      );
-                    }
                     return (
                       <span key={idx} className="transcript-word">
                         {token}

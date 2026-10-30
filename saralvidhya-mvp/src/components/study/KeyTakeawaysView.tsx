@@ -1686,10 +1686,6 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
         .kt-card-body strong {
           color: #1E2822;
           font-weight: 700;
-          text-decoration: underline;
-          text-decoration-style: dotted;
-          text-decoration-color: #B87340;
-          text-underline-offset: 3px;
         }
       `}</style>
     </div>
