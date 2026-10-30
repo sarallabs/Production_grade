@@ -4983,6 +4983,128 @@ export default function StudyTable() {
                           width: '100%',
                         });
 
+                        const getSectionLeadIcon = (
+                          section: 'learn' | 'practice' | 'prepare' | 'resources',
+                          color: string,
+                        ) => {
+                          switch (section) {
+                            case 'learn':
+                              // Graduation Cap / Mortarboard with tassel
+                              return (
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M12 3L2 8l10 5 10-5-10-5z"
+                                    fill={`${color}2E`}
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M6 10.2v5.2c0 1.9 2.7 3.6 6 3.6s6-1.7 6-3.6v-5.2"
+                                    fill={`${color}18`}
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M20 8.5v6.5"
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                  />
+                                  <circle cx="20" cy="16.2" r="1.3" fill={color} />
+                                </svg>
+                              );
+                            case 'practice':
+                              // Target / Bullseye with arrow
+                              return (
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                  <circle
+                                    cx="11.5"
+                                    cy="12.5"
+                                    r="8"
+                                    fill={`${color}22`}
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                  />
+                                  <circle
+                                    cx="11.5"
+                                    cy="12.5"
+                                    r="4.6"
+                                    fill={`${color}18`}
+                                    stroke={color}
+                                    strokeWidth="1.6"
+                                  />
+                                  <circle cx="11.5" cy="12.5" r="1.8" fill={color} />
+                                  <path
+                                    d="M19.5 4.5L13 11"
+                                    stroke={color}
+                                    strokeWidth="1.85"
+                                    strokeLinecap="round"
+                                  />
+                                  <path
+                                    d="M16.5 4.5h3v3"
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              );
+                            case 'prepare':
+                              // Exam Readiness Shield with Star & Checkmark
+                              return (
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M12 2.8L4.5 6v5.6c0 5.1 3.2 9.5 7.5 10.9 4.3-1.4 7.5-5.8 7.5-10.9V6L12 2.8z"
+                                    fill={`${color}26`}
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M9 12.3l2.1 2.1 4.2-4.4"
+                                    stroke={color}
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              );
+                            case 'resources':
+                              // Layered Resource Stack / Library
+                              return (
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+                                  <path
+                                    d="M12 3.2L3 7.7l9 4.5 9-4.5-9-4.5z"
+                                    fill={`${color}2E`}
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M3 12.2l9 4.5 9-4.5"
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path
+                                    d="M3 16.5l9 4.5 9-4.5"
+                                    stroke={color}
+                                    strokeWidth="1.75"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              );
+                          }
+                        };
+
                         return (
                           <div
                             style={{
@@ -5004,43 +5126,39 @@ export default function StudyTable() {
                               }
                               .sv-tool-group-card .sv-tool-group-title {
                                 position: relative;
-                                transform: translate3d(0, 28px, 0) scale3d(1.62, 1.62, 1);
+                                transform: translate3d(var(--sv-title-idle-x, -74px), 2px, 0) scale3d(0.9, 0.9, 1);
                                 transform-origin: center center;
-                                transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s ease;
+                                transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s ease, opacity 0.22s ease;
                                 will-change: transform;
                                 backface-visibility: hidden;
                                 -webkit-backface-visibility: hidden;
                                 z-index: 2;
                                 pointer-events: none;
                               }
-                              .sv-tool-group-card .sv-tool-group-lead-icon {
-                                display: inline-flex;
+                              .sv-tool-group-card .sv-tool-group-center-icon {
+                                position: absolute;
+                                top: 50%;
+                                left: 50%;
+                                width: 42px;
+                                height: 42px;
+                                display: flex;
                                 align-items: center;
                                 justify-content: center;
-                                width: 18px;
-                                height: 17px;
-                                margin-right: 4px;
-                                opacity: 0.86;
-                                flex-shrink: 0;
-                                transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
+                                opacity: 0.94;
+                                transform: translate3d(-50%, -42%, 0) scale3d(1, 1, 1);
+                                transform-origin: center center;
+                                pointer-events: none;
+                                z-index: 1;
                                 will-change: transform, opacity;
                                 backface-visibility: hidden;
                                 -webkit-backface-visibility: hidden;
-                                transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-                              }
-                              .sv-tool-group-card .sv-tool-group-lead-icon-inner {
-                                display: inline-flex;
-                                align-items: center;
-                                justify-content: center;
-                                transform: scale3d(0.46, 0.46, 1);
-                                transform-origin: center center;
-                                flex-shrink: 0;
+                                transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+                                filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.18));
                               }
                               .sv-tool-group-card .sv-tool-group-title-text {
                                 display: inline-block;
+                                letter-spacing: 0.01em;
                                 transform: translate3d(0, 0, 0);
-                                will-change: transform;
-                                transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1);
                               }
                               .sv-tool-group-card .sv-tool-group-options {
                                 display: flex;
@@ -5060,13 +5178,13 @@ export default function StudyTable() {
                               .sv-tool-group-card.is-active .sv-tool-group-title,
                               .sv-tool-group-card:hover .sv-tool-group-title,
                               .sv-tool-group-card:focus-within .sv-tool-group-title {
-                                transform: translate3d(-11px, 0, 0) scale3d(1, 1, 1);
+                                transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
                               }
-                              .sv-tool-group-card.is-active .sv-tool-group-lead-icon,
-                              .sv-tool-group-card:hover .sv-tool-group-lead-icon,
-                              .sv-tool-group-card:focus-within .sv-tool-group-lead-icon {
+                              .sv-tool-group-card.is-active .sv-tool-group-center-icon,
+                              .sv-tool-group-card:hover .sv-tool-group-center-icon,
+                              .sv-tool-group-card:focus-within .sv-tool-group-center-icon {
                                 opacity: 0;
-                                transform: translate3d(-12px, 0, 0) scale3d(0.5, 0.5, 1);
+                                transform: translate3d(-50%, -62%, 0) scale3d(0.52, 0.52, 1);
                               }
                               .sv-tool-group-card.is-active .sv-tool-group-options,
                               .sv-tool-group-card:hover .sv-tool-group-options,
@@ -5098,15 +5216,13 @@ export default function StudyTable() {
                                   {/* 1. LEARN SECTION (3 items: Read, Listen, Watch) - Mint (#9CC0B4) */}
                                   <div
                                     className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`}
-                                    style={groupCardStyle(isLearnActive, '#9CC0B4')}
+                                    style={{
+                                      ...groupCardStyle(isLearnActive, '#9CC0B4'),
+                                      ['--sv-title-idle-x' as any]: isSegmented ? '-54px' : '-82px',
+                                    }}
                                     onClick={(e) => selectCardToolByPosition(e, ['summary', 'podcasts', 'videos'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
-                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                        <span className="sv-tool-group-lead-icon-inner">
-                                          {getNodeIcon('summary', '#9CC0B4', true)}
-                                        </span>
-                                      </span>
                                       <span className="sv-tool-group-title-text">Learn</span>
                                       {isSegmented && (
                                         <span
@@ -5116,6 +5232,9 @@ export default function StudyTable() {
                                           Video {videoIndex}/{chapterVideos.length}
                                         </span>
                                       )}
+                                    </div>
+                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                      {getSectionLeadIcon('learn', '#9CC0B4')}
                                     </div>
                                     <div className="sv-tool-group-options">
                                       {renderNode('summary', 'Read', '#9CC0B4')}
@@ -5127,16 +5246,17 @@ export default function StudyTable() {
                                   {/* 2. PRACTICE SECTION (3 items: Revise, Assessment, Question Bank) - Amber Gold (#E7B864) */}
                                   <div
                                     className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`}
-                                    style={groupCardStyle(isPracticeActive, '#E7B864')}
+                                    style={{
+                                      ...groupCardStyle(isPracticeActive, '#E7B864'),
+                                      ['--sv-title-idle-x' as any]: '-76px',
+                                    }}
                                     onClick={(e) => selectCardToolByPosition(e, ['revision_flashcards', 'assessment', 'qbank'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
-                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                        <span className="sv-tool-group-lead-icon-inner">
-                                          {getNodeIcon('revision_flashcards', '#E7B864', true)}
-                                        </span>
-                                      </span>
                                       <span className="sv-tool-group-title-text">Practice</span>
+                                    </div>
+                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                      {getSectionLeadIcon('practice', '#E7B864')}
                                     </div>
                                     <div className="sv-tool-group-options">
                                       {renderNode('revision_flashcards', 'Revise', '#E7B864')}
@@ -5148,16 +5268,17 @@ export default function StudyTable() {
                                   {/* 3. PREPARE SECTION (3 items: PYQ, Preparation Exam, Study Plan) - Sage Cream (#B5BA9B) */}
                                   <div
                                     className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`}
-                                    style={groupCardStyle(isPrepareActive, '#B5BA9B')}
+                                    style={{
+                                      ...groupCardStyle(isPrepareActive, '#B5BA9B'),
+                                      ['--sv-title-idle-x' as any]: '-76px',
+                                    }}
                                     onClick={(e) => selectCardToolByPosition(e, ['pyq', 'prep_exam', 'study_plan'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
-                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                        <span className="sv-tool-group-lead-icon-inner">
-                                          {getNodeIcon('pyq', '#B5BA9B', true)}
-                                        </span>
-                                      </span>
                                       <span className="sv-tool-group-title-text">Prepare</span>
+                                    </div>
+                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                      {getSectionLeadIcon('prepare', '#B5BA9B')}
                                     </div>
                                     <div className="sv-tool-group-options">
                                       {renderNode('pyq', 'PYQs', '#B5BA9B')}
@@ -5169,16 +5290,17 @@ export default function StudyTable() {
                                   {/* 4. RESOURCES SECTION (3 items: Mindmaps, Key Takeaways, Ask me) - Logo Peach (#D9A382) */}
                                   <div
                                     className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`}
-                                    style={groupCardStyle(isResourcesActive, '#D9A382')}
+                                    style={{
+                                      ...groupCardStyle(isResourcesActive, '#D9A382'),
+                                      ['--sv-title-idle-x' as any]: '-70px',
+                                    }}
                                     onClick={(e) => selectCardToolByPosition(e, ['mindmap', 'key_takeaways', 'ask'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
-                                      <span className="sv-tool-group-lead-icon" aria-hidden="true">
-                                        <span className="sv-tool-group-lead-icon-inner">
-                                          {getNodeIcon('mindmap', '#D9A382', true)}
-                                        </span>
-                                      </span>
                                       <span className="sv-tool-group-title-text">Resources</span>
+                                    </div>
+                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                      {getSectionLeadIcon('resources', '#D9A382')}
                                     </div>
                                     <div className="sv-tool-group-options">
                                       {renderNode('mindmap', 'Mindmaps', '#D9A382')}
