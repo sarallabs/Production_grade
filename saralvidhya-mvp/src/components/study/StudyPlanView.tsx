@@ -929,6 +929,30 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     }
   }, [activeBlueprint, selectedDayNum]);
 
+  const headerTitle = useMemo(() => {
+    const codeMatch = parsed.title.match(/^([A-Z]{3,6}\s*\d{2,3})/i);
+    if (codeMatch) {
+      return `${codeMatch[1].toUpperCase()} — CH ${chapterNumber}`;
+    }
+    if (subjectName) {
+      return `${subjectName} — CH ${chapterNumber}`;
+    }
+    return `CH ${chapterNumber} — ${chapterName || parsed.title}`;
+  }, [parsed.title, subjectName, chapterNumber, chapterName]);
+
+  const headerChapterTitle = useMemo(() => {
+    const raw = (chapterName || parsed.title || "")
+      .replace(/^Study Plan:\s*/i, "")
+      .replace(/^[A-Z]{3,6}\s*\d{2,3}\s*[:—–-]\s*/i, "")
+      .trim();
+    return raw || "Chapter Study Plan";
+  }, [chapterName, parsed.title]);
+
+  const planStartDate = useMemo(() => {
+    const d = new Date(planStartIso);
+    return isNaN(d.getTime()) ? new Date() : d;
+  }, [planStartIso]);
+
   if (!activeBlueprint || activeBlueprint.days.length === 0) {
     return (
       <div
@@ -995,30 +1019,6 @@ export const StudyPlanView: React.FC<StudyPlanViewProps> = ({
     15,
     Math.round(activeBlueprint.totalMinutes / Math.max(1, activeBlueprint.days.length))
   );
-
-  const headerTitle = useMemo(() => {
-    const codeMatch = parsed.title.match(/^([A-Z]{3,6}\s*\d{2,3})/i);
-    if (codeMatch) {
-      return `${codeMatch[1].toUpperCase()} — CH ${chapterNumber}`;
-    }
-    if (subjectName) {
-      return `${subjectName} — CH ${chapterNumber}`;
-    }
-    return `CH ${chapterNumber} — ${chapterName || parsed.title}`;
-  }, [parsed.title, subjectName, chapterNumber, chapterName]);
-
-  const headerChapterTitle = useMemo(() => {
-    const raw = (chapterName || parsed.title || "")
-      .replace(/^Study Plan:\s*/i, "")
-      .replace(/^[A-Z]{3,6}\s*\d{2,3}\s*[:—–-]\s*/i, "")
-      .trim();
-    return raw || "Chapter Study Plan";
-  }, [chapterName, parsed.title]);
-
-  const planStartDate = useMemo(() => {
-    const d = new Date(planStartIso);
-    return isNaN(d.getTime()) ? new Date() : d;
-  }, [planStartIso]);
 
   const finishDateLabel = formatTargetDate(
     planStartDate,

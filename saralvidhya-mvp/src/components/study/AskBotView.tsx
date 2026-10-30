@@ -506,32 +506,18 @@ export default function AskBotView({
     loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty),
   );
 
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => {
-    const initial = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
-    return initial[0]?.id || null;
-  });
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   const [isHistoryOpen, setIsHistoryOpen] = useState<boolean>(false);
 
-  const [messages, setMessages] = useState<ChatMessage[]>(() => {
-    const initial = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
-    if (initial.length > 0 && initial[0].messages.length > 0) {
-      return initial[0].messages.slice(-30);
-    }
-    return [];
-  });
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  // Reload sessions when chapter/subject changes
+  // Reload sessions when chapter/subject changes (always start in a fresh chat)
   useEffect(() => {
     const loaded = loadChapterSessions(sessionsStorageKey, subjectId, _chapterNumber, chapterName, _difficulty);
     setSessions(loaded);
-    if (loaded.length > 0) {
-      setActiveSessionId(loaded[0].id);
-      setMessages(loaded[0].messages.slice(-30));
-    } else {
-      setActiveSessionId(null);
-      setMessages([]);
-    }
+    setActiveSessionId(null);
+    setMessages([]);
   }, [sessionsStorageKey, subjectId, _chapterNumber]);
 
   // Hydrate sessions when CloudStateContext finishes syncing from Firestore
@@ -541,8 +527,6 @@ export default function AskBotView({
       if (loaded.length === 0) return;
       setSessions((prev) => {
         if (prev.length === 0) {
-          setActiveSessionId((currId) => currId || loaded[0].id);
-          setMessages((currMsgs) => (currMsgs.length === 0 ? loaded[0].messages.slice(-30) : currMsgs));
           return loaded;
         }
         const byId = new Map<string, ChatSession>();
@@ -1476,103 +1460,6 @@ export default function AskBotView({
                 </div>
               </div>
 
-              {/* Subtle Recent Sessions (Max 2) */}
-              {sessions.length > 0 && (
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                    marginTop: "2px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <span
-                      style={{
-                        fontSize: "11.5px",
-                        fontWeight: 500,
-                        color: "#7A827C",
-                      }}
-                    >
-                      Recent
-                    </span>
-                    {sessions.length > 2 && (
-                      <button
-                        type="button"
-                        onClick={() => setIsHistoryOpen(true)}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#6B766F",
-                          fontSize: "11.5px",
-                          fontWeight: 500,
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
-                      >
-                        All history →
-                      </button>
-                    )}
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                    {sessions.slice(0, 2).map((sess) => (
-                      <button
-                        key={sess.id}
-                        type="button"
-                        onClick={() => handleSelectSession(sess)}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          gap: "12px",
-                          padding: "8px 12px",
-                          borderRadius: "10px",
-                          background: "rgba(255, 255, 255, 0.7)",
-                          border: "1px solid #E8E4DB",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "background 0.15s ease",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = "#FFFFFF";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = "rgba(255, 255, 255, 0.7)";
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "12.5px",
-                            fontWeight: 500,
-                            color: "#38423C",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {sess.title}
-                        </span>
-                        <span
-                          style={{
-                            fontSize: "11px",
-                            color: "#88908B",
-                            fontWeight: 400,
-                            flexShrink: 0,
-                          }}
-                        >
-                          {formatSessionTime(sess.updatedAt)}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
           {messages.map((m, idx) => {
