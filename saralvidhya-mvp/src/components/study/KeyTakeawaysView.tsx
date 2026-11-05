@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import MarkdownView from "../MarkdownView";
 import { cloudStorage } from "@/context/CloudStateContext";
+import { MongoCheatSheetPanel, MongoHandsOnLabPanel } from "./MongoCheatSheetAndLab";
+import { DbmsCheatSheetPanel, DbmsHandsOnLabPanel } from "./DbmsCheatSheetAndLab";
 
 export interface KeyTakeawaysViewProps {
   content: string;
@@ -507,6 +509,7 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
   const [filterMode, setFilterMode] = useState<"all" | "unreviewed" | "mastered" | "high_yield">("all");
   const [selectedSectionId, setSelectedSectionId] = useState<string>("all");
   const [layoutMode, setLayoutMode] = useState<"bento" | "list">("bento");
+  const [activeSubTab, setActiveSubTab] = useState<"takeaways" | "cheat_sheet" | "hands_on_lab">("takeaways");
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   const [rapidReviewOpen, setRapidReviewOpen] = useState(false);
@@ -726,6 +729,52 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
             {chapterName || parsed.title}
           </h1>
         </div>
+        {/* Center: 3-Way Mode Toggle (Key Takeaways | Cheat Sheet | Hands-On Lab) for VVIT MongoDB & MLRIT DBMS */}
+        {((subjectId || "").toLowerCase().includes("mongo") || (subjectId || "").toLowerCase().includes("dbms")) && (
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#EFE9DC",
+              border: "1px solid #DFD6C5",
+              borderRadius: "11px",
+              padding: "3px",
+              gap: "3px",
+            }}
+          >
+            {(
+              [
+                { id: "takeaways", label: "🔑 Key Takeaways" },
+                { id: "cheat_sheet", label: "📋 Cheat Sheet" },
+                { id: "hands_on_lab", label: "🧪 Hands-On Lab" },
+              ] as const
+            ).map((tab) => {
+              const isTabActive = activeSubTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setActiveSubTab(tab.id)}
+                  style={{
+                    padding: "6px 14px",
+                    borderRadius: "8px",
+                    border: isTabActive ? "1px solid #D9A382" : "1px solid transparent",
+                    background: isTabActive ? "#FFFFFF" : "transparent",
+                    color: isTabActive ? "#1E2822" : "#5B635D",
+                    fontSize: "12.5px",
+                    fontWeight: isTabActive ? 800 : 600,
+                    fontFamily: "inherit",
+                    cursor: "pointer",
+                    boxShadow: isTabActive ? "0 1px 4px rgba(0,0,0,0.06)" : "none",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div
           style={{
@@ -741,7 +790,21 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
         </div>
       </div>
 
-      {/* ── ROW 2: Search, Status Filter Pills, View Switcher & Rapid Review CTA ── */}
+      {activeSubTab === "cheat_sheet" ? (
+        (subjectId || "").toLowerCase().includes("dbms") ? (
+          <DbmsCheatSheetPanel />
+        ) : (
+          <MongoCheatSheetPanel />
+        )
+      ) : activeSubTab === "hands_on_lab" ? (
+        (subjectId || "").toLowerCase().includes("dbms") ? (
+          <DbmsHandsOnLabPanel />
+        ) : (
+          <MongoHandsOnLabPanel />
+        )
+      ) : (
+        <>
+          {/* ── ROW 2: Search, Status Filter Pills, View Switcher & Rapid Review CTA ── */}
       <div
         style={{
           background: "#FAF7F2",
@@ -1674,6 +1737,8 @@ export const KeyTakeawaysView: React.FC<KeyTakeawaysViewProps> = ({
             );
           })()}
         </div>
+      )}
+        </>
       )}
 
       <style>{`
