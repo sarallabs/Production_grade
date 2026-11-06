@@ -1,7 +1,0 @@
-.gcloudignore
-.git
-node_modules/
-data/
-scratch*/
-src/
-*.md
