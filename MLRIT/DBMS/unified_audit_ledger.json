@@ -1,0 +1,326 @@
+{
+  "total_checks": 36,
+  "passed_checks": 36,
+  "failed_checks": 0,
+  "checks": [
+    {
+      "check_id": "FILE-NAMING-01",
+      "name": "Standard naming pattern (DBMS_UNIT_I_...) across all generated markdown files",
+      "status": "PASS",
+      "details": "Checked 29 files. Non-conforming: []"
+    },
+    {
+      "check_id": "CLEAN-MD-01",
+      "name": "Clean markdown start with # Heading and zero metadata header lines",
+      "status": "PASS",
+      "details": "All markdown files start cleanly with zero metadata headers."
+    },
+    {
+      "check_id": "CLEAN-MD-02",
+      "name": "Zero YAML frontmatter at file origin across all markdown files",
+      "status": "PASS",
+      "details": "No YAML frontmatter detected in any file."
+    },
+    {
+      "check_id": "DUAL-ARTIFACT-01",
+      "name": "Dual-artifact pairing: every .md has a corresponding .json manifest",
+      "status": "PASS",
+      "details": "All 29 markdown files have paired JSON manifests."
+    },
+    {
+      "check_id": "DUMMY-ISOLATION-01",
+      "name": "Strict isolation: zero files generated in or referencing _Dummy/",
+      "status": "PASS",
+      "details": "Strict _Dummy isolation verified across all files."
+    },
+    {
+      "check_id": "DEF-VERBATIM-01",
+      "name": "Textbook verbatim definition preserved for Database & DBMS in all 3 personas",
+      "status": "PASS",
+      "details": "Canonical text verified in Beginner, Intermediate, and Advanced detailed study."
+    },
+    {
+      "check_id": "DEF-VERBATIM-02",
+      "name": "Textbook verbatim definition preserved for Instances and Schemas in all 3 personas",
+      "status": "PASS",
+      "details": "Canonical text verified in Beginner, Intermediate, and Advanced detailed study."
+    },
+    {
+      "check_id": "DEF-VERBATIM-03",
+      "name": "Textbook verbatim definition preserved for Weak Entity Sets in all 3 personas",
+      "status": "PASS",
+      "details": "Canonical text verified in Beginner, Intermediate, and Advanced detailed study."
+    },
+    {
+      "check_id": "DEF-VERBATIM-04",
+      "name": "Textbook verbatim definition preserved for Superkeys & Candidate Keys in all 3 personas",
+      "status": "PASS",
+      "details": "Canonical text verified in Beginner, Intermediate, and Advanced detailed study."
+    },
+    {
+      "check_id": "DEF-VERBATIM-05",
+      "name": "Textbook verbatim definition preserved for Entity Integrity in all 3 personas",
+      "status": "PASS",
+      "details": "Canonical text verified in Beginner, Intermediate, and Advanced detailed study."
+    },
+    {
+      "check_id": "CEFR-VOCAB-01",
+      "name": "Beginner persona complies with A2-B1 CEFR English with physical analogies and simple phrasing",
+      "status": "PASS",
+      "details": "Beginner text incorporates intuitive physical analogies and accessible sentence structures."
+    },
+    {
+      "check_id": "CEFR-VOCAB-02",
+      "name": "Intermediate persona complies with B2-C1 CEFR English with DDL schemas and system design",
+      "status": "PASS",
+      "details": "Intermediate text incorporates explicit SQL DDL schemas and multi-tier architectures."
+    },
+    {
+      "check_id": "CEFR-VOCAB-03",
+      "name": "Advanced persona complies with C2 CEFR English with formal mathematics and engine internals",
+      "status": "PASS",
+      "details": "Advanced text incorporates formal set-theoretic definitions, slotted pages, and WAL invariants."
+    },
+    {
+      "check_id": "READ-WORD-BUDGET-01",
+      "name": "Detailed Study Beginner word count >= 4,000 words (Actual: 4388)",
+      "status": "PASS",
+      "details": "Beginner word count: 4388 words (threshold >= 4,000)."
+    },
+    {
+      "check_id": "READ-WORD-BUDGET-02",
+      "name": "Detailed Study Intermediate word count >= 6,000 words (Actual: 6943)",
+      "status": "PASS",
+      "details": "Intermediate word count: 6943 words (threshold >= 6,000)."
+    },
+    {
+      "check_id": "READ-WORD-BUDGET-03",
+      "name": "Detailed Study Advanced word count >= 10,000 words (Actual: 11926)",
+      "status": "PASS",
+      "details": "Advanced word count: 11926 words (threshold >= 10,000)."
+    },
+    {
+      "check_id": "TOPIC-FILE-COUNT-01",
+      "name": "Exactly 18 topic files generated in Topic_Level/ (Actual: 18)",
+      "status": "PASS",
+      "details": "Found 18 topic markdown files across 6 topics * 3 personas."
+    },
+    {
+      "check_id": "TOPIC-WORD-BUDGET-01",
+      "name": "Substantive academic depth across all 18 topic files (each >= 1,200 words)",
+      "status": "PASS",
+      "details": "All 18 topic files meet depth: range 1397 to 2825 words."
+    },
+    {
+      "check_id": "MERMAID-SYNTAX-01",
+      "name": "All Mermaid diagram blocks have valid type declaration and syntax (Total: 125)",
+      "status": "PASS",
+      "details": "Verified 125 valid Mermaid diagrams."
+    },
+    {
+      "check_id": "MERMAID-DENSITY-01",
+      "name": "Mermaid diagrams present across flashcards and structural sections",
+      "status": "PASS",
+      "details": "Total Mermaid diagrams generated: 125."
+    },
+    {
+      "check_id": "VISUAL-EMBED-COUNT-01",
+      "name": "Detailed Study Beginner embeds exactly 9 designated visuals (Actual: 9)",
+      "status": "PASS",
+      "details": "Found 9 embedded visuals in Beginner Detailed Study."
+    },
+    {
+      "check_id": "VISUAL-EMBED-COUNT-02",
+      "name": "Detailed Study Intermediate embeds 18 to 27 designated visuals (Actual: 25)",
+      "status": "PASS",
+      "details": "Found 25 embedded visuals in Intermediate Detailed Study."
+    },
+    {
+      "check_id": "VISUAL-EMBED-COUNT-03",
+      "name": "Detailed Study Advanced embeds all 30 designated visuals (Actual: 30)",
+      "status": "PASS",
+      "details": "Found 30 embedded visuals in Advanced Detailed Study."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-01",
+      "name": "Topic_1_Database_Fundamentals embeds 6 designated visuals (Actual: 6)",
+      "status": "PASS",
+      "details": "Topic 1 visual count: 6 (expected 6)."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-02",
+      "name": "Topic_2_Conceptual_Database_Design embeds 5 designated visuals (Actual: 5)",
+      "status": "PASS",
+      "details": "Topic 2 visual count: 5 (expected 5)."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-03",
+      "name": "Topic_3_Advanced_ER_EER embeds 5 designated visuals (Actual: 5)",
+      "status": "PASS",
+      "details": "Topic 3 visual count: 5 (expected 5)."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-04",
+      "name": "Topic_4_Relational_Model_Constraints embeds 4 designated visuals (Actual: 4)",
+      "status": "PASS",
+      "details": "Topic 4 visual count: 4 (expected 4)."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-05",
+      "name": "Topic_5_Logical_Database_Design embeds 5 designated visuals (Actual: 5)",
+      "status": "PASS",
+      "details": "Topic 5 visual count: 5 (expected 5)."
+    },
+    {
+      "check_id": "VISUAL-TOPIC-EMBED-06",
+      "name": "Topic_6_Relational_Querying_Views embeds 4 designated visuals (Actual: 4)",
+      "status": "PASS",
+      "details": "Topic 6 visual count: 4 (expected 4)."
+    },
+    {
+      "check_id": "MASTER-MINDMAP-EXCLUSION-01",
+      "name": "Master Mindmap (NotebookLM Mind Map.png) strictly excluded from markdown embeds",
+      "status": "PASS",
+      "details": "Master Mindmap cleanly excluded from all markdown embeds."
+    },
+    {
+      "check_id": "BASE64-RFC2045-01",
+      "name": "All Base64 data URIs formatted with 76-column RFC 2045 line chunking",
+      "status": "PASS",
+      "details": "100% of Base64 strings adhere to RFC 2045 76-column chunking."
+    },
+    {
+      "check_id": "POST-VISUAL-NARRATIVE-01",
+      "name": "All visual embeds followed by analytical explanatory text (zero orphaned visuals)",
+      "status": "PASS",
+      "details": "Every visual is followed by analytical explanatory narrative."
+    },
+    {
+      "check_id": "KATEX-SYNTAX-01",
+      "name": "KaTeX equations clean with zero parse errors, undefined commands, or unescaped &",
+      "status": "PASS",
+      "details": "All mathematical expressions are 100% clean and KaTeX-compliant."
+    },
+    {
+      "check_id": "FLASHCARD-CARD-COUNT-01",
+      "name": "Persona Flashcards count: Beg=10 (10), Int=10 (10), Adv=10 (10) [Total = 30]",
+      "status": "PASS",
+      "details": "Card counts verified: Beginner=10, Intermediate=10, Advanced=10 (Total: 30)."
+    },
+    {
+      "check_id": "FLASHCARD-REVISE-COUNT-01",
+      "name": "Master Revision Deck has exactly 30 cards and all 30 cards embed WebP visuals (Actual cards: 30, visuals: 30)",
+      "status": "PASS",
+      "details": "Master revision verified: 30 cards, Leitner boxes [1, 2, 3, 4, 5], 30 embedded WebP visuals."
+    },
+    {
+      "check_id": "FLASHCARD-WEBP-INVARIANT-01",
+      "name": "Every single question in all flashcard suites contains an Infographic in WebP encoded format",
+      "status": "PASS",
+      "details": "100% of flashcard questions contain a valid WebP encoded infographic."
+    }
+  ],
+  "artifact_inventory": {
+    "detailed_study_md": [
+      "DBMS_UNIT_I_Detailed_Study_advanced.md",
+      "DBMS_UNIT_I_Detailed_Study_beginner.md",
+      "DBMS_UNIT_I_Detailed_Study_intermediate.md"
+    ],
+    "detailed_study_json": [
+      "DBMS_UNIT_I_Detailed_Study_advanced.json",
+      "DBMS_UNIT_I_Detailed_Study_beginner.json",
+      "DBMS_UNIT_I_Detailed_Study_intermediate.json"
+    ],
+    "topic_level_md": [
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_advanced.md",
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_beginner.md",
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_intermediate.md",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_advanced.md",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_beginner.md",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_intermediate.md",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_advanced.md",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_beginner.md",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_intermediate.md",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_advanced.md",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_beginner.md",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_intermediate.md",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_advanced.md",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_beginner.md",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_intermediate.md",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_advanced.md",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_beginner.md",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_intermediate.md"
+    ],
+    "topic_level_json": [
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_advanced.json",
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_beginner.json",
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_intermediate.json",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_advanced.json",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_beginner.json",
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_intermediate.json",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_advanced.json",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_beginner.json",
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_intermediate.json",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_advanced.json",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_beginner.json",
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_intermediate.json",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_advanced.json",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_beginner.json",
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_intermediate.json",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_advanced.json",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_beginner.json",
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_intermediate.json"
+    ],
+    "flashcard_md": [
+      "DBMS_UNIT_I_Flashcards_advanced.md",
+      "DBMS_UNIT_I_Flashcards_beginner.md",
+      "DBMS_UNIT_I_Flashcards_intermediate.md",
+      "DBMS_UNIT_I_Flashcards_revise.md"
+    ],
+    "flashcard_json": [
+      "DBMS_UNIT_I_Flashcards_advanced.json",
+      "DBMS_UNIT_I_Flashcards_beginner.json",
+      "DBMS_UNIT_I_Flashcards_intermediate.json",
+      "DBMS_UNIT_I_Flashcards_revise.json"
+    ],
+    "revise_md": [
+      "DBMS_UNIT_I_Flashcards_advanced.md",
+      "DBMS_UNIT_I_Flashcards_beginner.md",
+      "DBMS_UNIT_I_Flashcards_intermediate.md",
+      "DBMS_UNIT_I_Flashcards_revise.md"
+    ],
+    "revise_json": [
+      "DBMS_UNIT_I_Flashcards_advanced.json",
+      "DBMS_UNIT_I_Flashcards_beginner.json",
+      "DBMS_UNIT_I_Flashcards_intermediate.json",
+      "DBMS_UNIT_I_Flashcards_revise.json"
+    ]
+  },
+  "metrics_summary": {
+    "detailed_study_words": {
+      "beginner": 4388,
+      "intermediate": 6943,
+      "advanced": 11926
+    },
+    "topic_word_counts": {
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_advanced.md": 2806,
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_beginner.md": 2113,
+      "Topic_1_Database_Fundamentals\\DBMS_UNIT_I_Topic_1_intermediate.md": 2184,
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_advanced.md": 1673,
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_beginner.md": 1748,
+      "Topic_2_Conceptual_Database_Design\\DBMS_UNIT_I_Topic_2_intermediate.md": 1909,
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_advanced.md": 2173,
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_beginner.md": 1654,
+      "Topic_3_Advanced_ER_EER\\DBMS_UNIT_I_Topic_3_intermediate.md": 1964,
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_advanced.md": 1682,
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_beginner.md": 1521,
+      "Topic_4_Relational_Model_Constraints\\DBMS_UNIT_I_Topic_4_intermediate.md": 1711,
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_advanced.md": 1452,
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_beginner.md": 1709,
+      "Topic_5_Logical_Database_Design\\DBMS_UNIT_I_Topic_5_intermediate.md": 1616,
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_advanced.md": 2825,
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_beginner.md": 1397,
+      "Topic_6_Relational_Querying_Views\\DBMS_UNIT_I_Topic_6_intermediate.md": 1518
+    }
+  }
+}

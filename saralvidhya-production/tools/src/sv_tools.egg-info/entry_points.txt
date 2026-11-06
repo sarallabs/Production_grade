@@ -1,0 +1,3 @@
+[console_scripts]
+sv-admin = sv_tools.admin:main
+sv-publish = sv_tools.publish:main

@@ -1,0 +1,192 @@
+{
+  "title": "Study Plan: DBMS UNIT - I (Database System Concepts, ER Model & Relational Design)",
+  "course": "MLRIT Autonomous B.Tech CSE / IT (CS301PC)",
+  "unit": 1,
+  "topic": "Database System Concepts, ER Model & Relational Design",
+  "total_blueprints": 4,
+  "blueprints": {
+    "5_day_standard": {
+      "target_persona": "Undergraduate Semester Track (Regular Pacing)",
+      "daily_time_budget_mins": 60,
+      "total_time_mins": 300,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Module 1: Database Fundamentals, Three-Schema Architecture & Engine Internals",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "Mindmaps (L0-L1)",
+              "duration_minutes": 10,
+              "activity": "Macro Architecture Overview"
+            },
+            {
+              "resource": "Key Takeaways (Topics 1-4)",
+              "duration_minutes": 15,
+              "activity": "Foundational Conceptual Review"
+            },
+            {
+              "resource": "Video Script (Part 1)",
+              "duration_minutes": 20,
+              "activity": "Architecture Deep-Dive"
+            },
+            {
+              "resource": "Easy MCQ Quiz",
+              "duration_minutes": 15,
+              "activity": "Formative Knowledge Check"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Module 2: Conceptual Database Design & Entity-Relationship (ER) Modeling",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "Full Mindmap (Module 2)",
+              "duration_minutes": 10,
+              "activity": "Notation & Attribute Mapping"
+            },
+            {
+              "resource": "Key Takeaways (Topics 6-7)",
+              "duration_minutes": 15,
+              "activity": "Cardinality & Participation Invariants"
+            },
+            {
+              "resource": "Question Bank v2 (Q4, Q5, Q6)",
+              "duration_minutes": 25,
+              "activity": "ER Schema Construction Practice"
+            },
+            {
+              "resource": "Medium MCQ Quiz",
+              "duration_minutes": 10,
+              "activity": "Disambiguation Drill"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Module 3: Advanced ER, Weak Entity Sets & Extended ER (EER) Specialization",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "Key Takeaways (Topics 8-9)",
+              "duration_minutes": 15,
+              "activity": "Weak Entity & Inheritance Invariants"
+            },
+            {
+              "resource": "Question Bank v2 (Q7, Q8)",
+              "duration_minutes": 25,
+              "activity": "Discriminator & Disjointness Synthesis"
+            },
+            {
+              "resource": "Hard MCQ Quiz",
+              "duration_minutes": 10,
+              "activity": "Boundary Case Testing"
+            },
+            {
+              "resource": "Match The Following",
+              "duration_minutes": 10,
+              "activity": "Relational Notation Alignment"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Modules 4 & 5: Relational Model Foundations & ER-to-Relational Translation",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "Key Takeaways (Topics 10-11)",
+              "duration_minutes": 15,
+              "activity": "Integrity Constraints & Reduction Rules"
+            },
+            {
+              "resource": "Question Bank v2 (Q10, Q11, Q12, Q13)",
+              "duration_minutes": 30,
+              "activity": "Algorithmic Table Reduction Drills"
+            },
+            {
+              "resource": "Medium MSQ Quiz",
+              "duration_minutes": 15,
+              "activity": "Multi-Answer Constraint Verification"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Module 6 & Exam Simulation: Relational Views, Algebra & Pre-Final Exam",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "Key Takeaways (Topic 12)",
+              "duration_minutes": 10,
+              "activity": "View Updatability & Algebra Operators"
+            },
+            {
+              "resource": "PYQ Suite (Selected 5M & 10M)",
+              "duration_minutes": 20,
+              "activity": "University High-Frequency Past Questions"
+            },
+            {
+              "resource": "Preparation Exam (Pre-Final)",
+              "duration_minutes": 30,
+              "activity": "Timed Model Examination Simulation"
+            }
+          ]
+        }
+      ]
+    },
+    "2_day_fast_track": {
+      "target_persona": "Exam Sprint / Mid-Term Revision",
+      "daily_time_budget_mins": 90,
+      "total_time_mins": 180,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Fundamentals, ER Modeling & EER Specialization Crash Course",
+          "daily_budget_minutes": 90,
+          "schedule": [
+            {
+              "resource": "Key Takeaways (All 12 Topics)",
+              "duration_minutes": 25,
+              "activity": "High-Density Concept Reactivation"
+            },
+            {
+              "resource": "Question Bank v2 (Q1, Q6, Q7, Q8)",
+              "duration_minutes": 45,
+              "activity": "Core 10M Descriptive Answers"
+            },
+            {
+              "resource": "Easy & Medium MSQ Quizzes",
+              "duration_minutes": 20,
+              "activity": "Active Recall Check"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Relational Reduction, Views & Final Examination Practice",
+          "daily_budget_minutes": 90,
+          "schedule": [
+            {
+              "resource": "Question Bank v2 (Q10, Q11, Q12, Q15)",
+              "duration_minutes": 40,
+              "activity": "Algorithmic Translation & Views"
+            },
+            {
+              "resource": "PYQ Suite (Core Exam Pillars)",
+              "duration_minutes": 20,
+              "activity": "Decadal Invariant Drills"
+            },
+            {
+              "resource": "Preparation Exam (Final Examination)",
+              "duration_minutes": 30,
+              "activity": "Model Exam Solution Cross-Check"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,639 @@
+{
+  "chapter": "Lecture 5: Weathering of Rocks and Minerals \u2014 Types, Physical & Biological Agents",
+  "subject": "agricultural_chemistry_and_soil_science",
+  "total_questions": 50,
+  "total_marks": 50,
+  "sections": [
+    {
+      "section": "A",
+      "section_title": "Multiple Choice Questions",
+      "marks_per_question": 1,
+      "question_count": 35,
+      "questions": [
+        {
+          "number": 1,
+          "stem": "What formal definition separates weathering from metamorphic rock alteration in earth science?",
+          "options": {
+            "A": "Weathering occurs at surface temperatures and pressures while metamorphism requires deep crustal heat and pressure.",
+            "B": "Weathering occurs only in magma chambers.",
+            "C": "Metamorphism involves living organisms.",
+            "D": "Weathering increases crystal density."
+          },
+          "correct_answer": "A) Weathering occurs at surface temperatures and pressures while metamorphism requires deep crustal heat and pressure.",
+          "rationale": "Weathering operates under ambient surface temperature/pressure conditions at the lithosphere-atmosphere boundary. (Key Takeaway: Weathering is a low-temperature surface alteration process.)"
+        },
+        {
+          "number": 2,
+          "stem": "Which physical zone represents the immediate contact boundary between parent bedrock and overlying unconsolidated regolith?",
+          "options": {
+            "A": "The weathering front / basal boundary",
+            "B": "The atmospheric ozone layer",
+            "C": "The topsoil O horizon",
+            "D": "The river estuary delta"
+          },
+          "correct_answer": "A) The weathering front / basal boundary",
+          "rationale": "The weathering front is the sharp basal boundary where solid bedrock transitions into weathered regolith. (Key Takeaway: The weathering front demarcates solid bedrock from overlying regolith.)"
+        },
+        {
+          "number": 3,
+          "stem": "What secondary sesquioxide mineral is responsible for the distinct reddish coloration of intensely weathered tropical soils?",
+          "options": {
+            "A": "Hematite (Fe\u2082O\u2083)",
+            "B": "Kaolinite",
+            "C": "Calcite",
+            "D": "Quartz"
+          },
+          "correct_answer": "A) Hematite (Fe\u2082O\u2083)",
+          "rationale": "Hematite is a secondary iron oxide synthesized during intense tropical chemical weathering, giving soils a red hue. (Key Takeaway: Secondary hematite imparts red coloration to weathered tropical soils.)"
+        },
+        {
+          "number": 4,
+          "stem": "What secondary aluminosilicate clay mineral is typically synthesized in warm, humid regions under intense leaching conditions?",
+          "options": {
+            "A": "Kaolinite (1:1 layer silicate)",
+            "B": "Primary Olivine",
+            "C": "Plagioclase Feldspar",
+            "D": "Halite"
+          },
+          "correct_answer": "A) Kaolinite (1:1 layer silicate)",
+          "rationale": "Kaolinite is a stable 1:1 secondary clay synthesized under intense desilication and leaching in warm humid climates. (Key Takeaway: Kaolinite is a 1:1 secondary clay formed under intense leaching.)"
+        },
+        {
+          "number": 5,
+          "stem": "How does the presence of structural micro-fractures and joints in a granite batholith influence its weathering velocity?",
+          "options": {
+            "A": "Joints provide entry conduits that dramatically increase internal water circulation and surface contact area.",
+            "B": "Joints prevent all moisture penetration.",
+            "C": "Joints convert granite into basalt.",
+            "D": "Joints eliminate all diurnal thermal stress."
+          },
+          "correct_answer": "A) Joints provide entry conduits that dramatically increase internal water circulation and surface contact area.",
+          "rationale": "Structural joints increase permeability and surface area, allowing weathering agents to penetrate deep into bedrock. (Key Takeaway: Bedrock joint networks facilitate deep fluid infiltration and weathering.)"
+        },
+        {
+          "number": 6,
+          "stem": "What thermal property explains why rock interiors remain cool during intense daytime solar surface heating?",
+          "options": {
+            "A": "Extremely low thermal conductivity of silicate rocks",
+            "B": "High electrical conductivity",
+            "C": "High fluidity of quartz",
+            "D": "Immediate evaporation of granite"
+          },
+          "correct_answer": "A) Extremely low thermal conductivity of silicate rocks",
+          "rationale": "Silicate rocks are poor thermal conductors; heat penetrates only the outer few centimeters, setting up severe lateral thermal shear stresses. (Key Takeaway: Low thermal conductivity traps solar heat in outermost rock shells.)"
+        },
+        {
+          "number": 7,
+          "stem": "What geomorphic structure is produced when rectangular joint-bounded granite blocks weather faster at corners than on flat faces?",
+          "options": {
+            "A": "Rounded corestones / Spheroidal weathering boulders",
+            "B": "Sharp triangular needles",
+            "C": "Flat planar sheets",
+            "D": "Deep oceanic trenches"
+          },
+          "correct_answer": "A) Rounded corestones / Spheroidal weathering boulders",
+          "rationale": "Corner and edge weathering attacks rectangular blocks from multiple directions, rounding them into spherical corestones. (Key Takeaway: Spheroidal weathering rounds rectangular joint blocks into corestones.)"
+        },
+        {
+          "number": 8,
+          "stem": "What is the sediment-transporting capacity of a river current flowing at 30 cm/s (0.3 m/s)?",
+          "options": {
+            "A": "Gravel clasts",
+            "B": "Fine colloidal clay only",
+            "C": "Multi-tonne boulders",
+            "D": "Heavy angular stones"
+          },
+          "correct_answer": "A) Gravel clasts",
+          "rationale": "A stream current at 30 cm/s has the critical kinetic energy required to transport gravel. (Key Takeaway: 30 cm/s stream velocity transports gravel.)"
+        },
+        {
+          "number": 9,
+          "stem": "What happens to water in rock crevices when temperature drops below 0\u00b0C in periglacial regions?",
+          "options": {
+            "A": "It freezes, expanding by 9% and exerting 1465 Mg m\u207b\u00b2 bursting pressure on crevice walls.",
+            "B": "It contracts by 50%, pulling joint walls together.",
+            "C": "It evaporates instantly into vacuum.",
+            "D": "It dissolves the entire mountain in seconds."
+          },
+          "correct_answer": "A) It freezes, expanding by 9% and exerting 1465 Mg m\u207b\u00b2 bursting pressure on crevice walls.",
+          "rationale": "Confined water undergoes phase change to ice, expanding 9% and exerting 1465 Mg m\u207b\u00b2 bursting pressure. (Key Takeaway: Frost wedging exerts 1465 Mg m\u207b\u00b2 bursting pressure in rock crevices.)"
+        },
+        {
+          "number": 10,
+          "stem": "What is the primary landform created at the base of alpine cliffs by frost wedging rockfall?",
+          "options": {
+            "A": "Talus / Scree slopes",
+            "B": "River floodplains",
+            "C": "Sand dunes",
+            "D": "Volcanic calderas"
+          },
+          "correct_answer": "A) Talus / Scree slopes",
+          "rationale": "Frost shattering dislodges angular rock clasts that accumulate as talus or scree cones at cliff bases. (Key Takeaway: Frost wedging produces angular talus and scree slopes at cliff bases.)"
+        },
+        {
+          "number": 11,
+          "stem": "How does wind transport sand particles within the lowest 1 meter of a desert floor?",
+          "options": {
+            "A": "Saltation (bouncing and skipping impact collisions)",
+            "B": "Permanent suspension in the stratosphere",
+            "C": "Dissolution in cloud droplets",
+            "D": "Tectonic sliding"
+          },
+          "correct_answer": "A) Saltation (bouncing and skipping impact collisions)",
+          "rationale": "Saltation is the bouncing movement of heavy sand grains that causes severe abrasive undercut near the ground. (Key Takeaway: Saltation concentrates abrasive sand grains in the lowest 1 meter of wind flow.)"
+        },
+        {
+          "number": 12,
+          "stem": "Why do high-altitude mountain peaks endure rapid physical disintegration compared to low-lying plains?",
+          "options": {
+            "A": "Mountain summits experience extreme diurnal temperature swings, intense freeze-thaw cycles, and high wind velocities.",
+            "B": "Mountains have zero gravity.",
+            "C": "Lowlands have no atmosphere.",
+            "D": "Mountains are composed entirely of pure ice."
+          },
+          "correct_answer": "A) Mountain summits experience extreme diurnal temperature swings, intense freeze-thaw cycles, and high wind velocities.",
+          "rationale": "High altitude amplifies diurnal thermal gradients, freeze-thaw frequency, and eolian velocity. (Key Takeaway: High elevation accelerates physical weathering through thermal swings and cryofracture.)"
+        },
+        {
+          "number": 13,
+          "stem": "How do lichens initiate the colonization and biochemical weathering of bare granite faces?",
+          "options": {
+            "A": "They anchor with rhizines and exude chelating organic acids (e.g., usnic acid) that dissolve mineral cations.",
+            "B": "They blast the rock with electrical lightning.",
+            "C": "They heat the rock above 1000\u00b0C.",
+            "D": "They produce synthetic chemical fertilizers."
+          },
+          "correct_answer": "A) They anchor with rhizines and exude chelating organic acids (e.g., usnic acid) that dissolve mineral cations.",
+          "rationale": "Lichens physically attach via rhizines and chemically corrode rock minerals via chelating lichen acids. (Key Takeaway: Lichens pioneer bare rock weathering via rhizine attachment and organic acid chelation.)"
+        },
+        {
+          "number": 14,
+          "stem": "What biochemical role is played by carbonic acid (H\u2082CO\u2083) generated in the soil rhizosphere?",
+          "options": {
+            "A": "It dissociates to supply hydrogen ions (H\u207a) that drive hydrolytic decomposition of silicate minerals.",
+            "B": "It freezes soil pores at room temperature.",
+            "C": "It converts soil nitrogen into gold.",
+            "D": "It stops all chemical reactions."
+          },
+          "correct_answer": "A) It dissociates to supply hydrogen ions (H\u207a) that drive hydrolytic decomposition of silicate minerals.",
+          "rationale": "Carbonic acid dissociates into H\u207a and HCO\u2083\u207b, providing the hydrogen ions required for silicate hydrolysis. (Key Takeaway: Carbonic acid provides reactive H+ ions that drive chemical mineral hydrolysis.)"
+        },
+        {
+          "number": 15,
+          "stem": "What major physical disruption is caused by human open-cast mining and quarrying activities?",
+          "options": {
+            "A": "Industrial-scale mechanical fracturing and exposure of deep bedrock to atmospheric weathering agents.",
+            "B": "Permanent elimination of all atmospheric rainfall.",
+            "C": "Cooling of the Earth's mantle.",
+            "D": "Conversion of silica into radioactive gas."
+          },
+          "correct_answer": "A) Industrial-scale mechanical fracturing and exposure of deep bedrock to atmospheric weathering agents.",
+          "rationale": "Mining and quarrying excavate and shatter deep rock strata, exposing unweathered minerals to rapid surface decomposition. (Key Takeaway: Human mining and quarrying accelerate weathering by exposing deep bedrock.)"
+        },
+        {
+          "number": 16,
+          "stem": "What is the primary function of earthworm activity in the physical and biochemical conditioning of soils?",
+          "options": {
+            "A": "Ingesting and mechanically grinding mineral clasts in muscular gizzards while enriching casts with calcium carbonate.",
+            "B": "Melting mineral crystals into liquid lava.",
+            "C": "Freezing soil pore water.",
+            "D": "Eliminating all soil moisture."
+          },
+          "correct_answer": "A) Ingesting and mechanically grinding mineral clasts in muscular gizzards while enriching casts with calcium carbonate.",
+          "rationale": "Earthworms grind soil particles in their gizzard and excrete nutrient-enriched, aerated casts. (Key Takeaway: Earthworm gizzard grinding and cast enrichment enhance soil mineral fertility.)"
+        },
+        {
+          "number": 17,
+          "stem": "Why do termites construct extensive underground gallery networks in tropical soils?",
+          "options": {
+            "A": "To transport mineral grains from deep saprolite to surface mounds while facilitating sub-surface drainage and aeration.",
+            "B": "To store volcanic magma.",
+            "C": "To prevent plant roots from absorbing water.",
+            "D": "To eliminate atmospheric oxygen."
+          },
+          "correct_answer": "A) To transport mineral grains from deep saprolite to surface mounds while facilitating sub-surface drainage and aeration.",
+          "rationale": "Termite tunneling drives pedoturbation, transports deep minerals upward, and aerates subsoils. (Key Takeaway: Termite gallery networks drive pedoturbation and enhance sub-surface aeration.)"
+        },
+        {
+          "number": 18,
+          "stem": "What chemical reaction mechanism explains why formic acid secreted by ants corrodes carbonate and silicate minerals?",
+          "options": {
+            "A": "Acidic H\u207a ions protonate mineral oxygen bonds and formate anions chelate metal cations into solution.",
+            "B": "Formic acid freezes mineral surfaces.",
+            "C": "Formic acid converts silica into pure carbon.",
+            "D": "Formic acid eliminates all soil microbes."
+          },
+          "correct_answer": "A) Acidic H\u207a ions protonate mineral oxygen bonds and formate anions chelate metal cations into solution.",
+          "rationale": "Formic acid supplies H\u207a for bond cleavage and complexing anions that chelate structural metal cations. (Key Takeaway: Formic acid corrodes minerals through acidic proton attack and cation chelation.)"
+        },
+        {
+          "number": 19,
+          "stem": "If a 1 m\u00b3 solid rock cube is divided into 1 mm (10\u207b\u00b3 m) cubes, what is the resulting total surface area?",
+          "options": {
+            "A": "6,000 m\u00b2 (a 1,000-fold expansion from 6 m\u00b2)",
+            "B": "60 m\u00b2",
+            "C": "600 m\u00b2",
+            "D": "60,000 m\u00b2"
+          },
+          "correct_answer": "A) 6,000 m\u00b2 (a 1,000-fold expansion from 6 m\u00b2)",
+          "rationale": "Number of cubes N = (1000)\u00b3 = 10\u2079. Surface area per cube = 6 * (0.001)\u00b2 = 6 * 10\u207b\u2076 m\u00b2. Total area S = 10\u2079 * 6 * 10\u207b\u2076 = 6,000 m\u00b2 (1,000-fold increase). (Key Takeaway: Subdividing a 1m cube to 1mm cubes produces a 1,000-fold surface area expansion.)"
+        },
+        {
+          "number": 20,
+          "stem": "Why does chemical mineral dissolution occur much faster in warm, wet tropical climates than in cold polar deserts?",
+          "options": {
+            "A": "Chemical reaction rates double for every 10\u00b0C temperature increase (Arrhenius law) and abundant water acts as both solvent and reactant.",
+            "B": "Tropical rocks contain zero silicate minerals.",
+            "C": "Polar deserts have zero atmospheric oxygen.",
+            "D": "Tropical climates have zero gravity."
+          },
+          "correct_answer": "A) Chemical reaction rates double for every 10\u00b0C temperature increase (Arrhenius law) and abundant water acts as both solvent and reactant.",
+          "rationale": "Higher temperatures accelerate thermodynamic reaction kinetics while abundant water maximizes hydrolysis and dissolution. (Key Takeaway: Warm temperatures and moisture accelerate chemical reaction kinetics exponentially.)"
+        },
+        {
+          "number": 21,
+          "stem": "What happens to potassium cations (K\u207a) released during the weathering of orthoclase feldspar in soils?",
+          "options": {
+            "A": "They enter soil solution where they are adsorbed by secondary clays or taken up by plant roots.",
+            "B": "They evaporate into nitrogen gas.",
+            "C": "They solidify into permanent granite blocks.",
+            "D": "They transform into pure aluminum."
+          },
+          "correct_answer": "A) They enter soil solution where they are adsorbed by secondary clays or taken up by plant roots.",
+          "rationale": "Released potassium ions supply essential plant nutrition and participate in cation exchange on secondary clay surfaces. (Key Takeaway: Weathered potassium ions provide bioavailable plant nutrients on clay exchange complexes.)"
+        },
+        {
+          "number": 22,
+          "stem": "What is the primary difference between a primary mineral like Augite and a secondary mineral like Smectite?",
+          "options": {
+            "A": "Augite formed in high-temperature igneous magma, whereas Smectite was synthesized at low surface temperatures during weathering.",
+            "B": "Augite formed in rainwater.",
+            "C": "Smectite formed in the Earth's core.",
+            "D": "Augite is completely soluble in water."
+          },
+          "correct_answer": "A) Augite formed in high-temperature igneous magma, whereas Smectite was synthesized at low surface temperatures during weathering.",
+          "rationale": "Primary minerals are deep high-T/P magmatic products; secondary clays are low-T surface synthesis products. (Key Takeaway: Primary minerals are magmatic; secondary clays are surface weathering synthesis products.)"
+        },
+        {
+          "number": 23,
+          "stem": "How does the accumulation of organic humus in topsoil horizons affect the chemical weathering of subsoil minerals?",
+          "options": {
+            "A": "Humic and fulvic acids leach downward, maintaining acidic pore water that accelerates silicate hydrolysis.",
+            "B": "Humus solidifies subsoils into impermeable glass.",
+            "C": "Humus halts all mineral weathering permanently.",
+            "D": "Humus absorbs all groundwater."
+          },
+          "correct_answer": "A) Humic and fulvic acids leach downward, maintaining acidic pore water that accelerates silicate hydrolysis.",
+          "rationale": "Downward-leaching humic acids provide organic acidity that accelerates chemical decomposition in deeper saprolite. (Key Takeaway: Humic acid percolation accelerates chemical decomposition in subsoil saprolite.)"
+        },
+        {
+          "number": 24,
+          "stem": "What geomorphic term describes the downslope transport of weathered rock debris under the direct influence of gravity?",
+          "options": {
+            "A": "Mass Wasting",
+            "B": "Exfoliation",
+            "C": "Pedoturbation",
+            "D": "Cryofracturing"
+          },
+          "correct_answer": "A) Mass Wasting",
+          "rationale": "Mass wasting is the gravitational movement of weathered regolith and rock debris downslope without fluid transport agents. (Key Takeaway: Mass wasting is the gravitational downslope movement of weathered rock debris.)"
+        },
+        {
+          "number": 25,
+          "stem": "Why do arid region soils often accumulate white crusts of secondary calcium carbonate (caliche)?",
+          "options": {
+            "A": "Limited rainfall is insufficient to leach soluble Ca\u00b2\u207a cations downward, causing them to precipitate as calcite upon evaporation.",
+            "B": "Arid soils are made of pure limestone.",
+            "C": "Rainfall in deserts is composed of pure sulfuric acid.",
+            "D": "Termites produce pure calcium carbonate mounds."
+          },
+          "correct_answer": "A) Limited rainfall is insufficient to leach soluble Ca\u00b2\u207a cations downward, causing them to precipitate as calcite upon evaporation.",
+          "rationale": "In arid zones, high evapotranspiration and low rainfall precipitate dissolved calcium and bicarbonate as secondary carbonates. (Key Takeaway: Arid evaporation precipitates dissolved calcium as secondary carbonate caliche.)"
+        },
+        {
+          "number": 26,
+          "stem": "What role do atmospheric nitrogen and sulfur oxide emissions (acid rain) play in modern rock weathering?",
+          "options": {
+            "A": "They dramatically lower rainwater pH, accelerating chemical dissolution of carbonate and silicate rocks.",
+            "B": "They cool the Earth's surface to 0\u00b0C.",
+            "C": "They prevent all biological weathering.",
+            "D": "They transform rocks into volcanic ash."
+          },
+          "correct_answer": "A) They dramatically lower rainwater pH, accelerating chemical dissolution of carbonate and silicate rocks.",
+          "rationale": "Acid rain introduces strong sulfuric and nitric acids that vastly accelerate mineral weathering and monument decay. (Key Takeaway: Acid precipitation accelerates chemical dissolution of mineral surfaces.)"
+        },
+        {
+          "number": 27,
+          "stem": "What distinguishes a mature soil profile with well-developed horizons from raw regolith?",
+          "options": {
+            "A": "A mature soil exhibits distinct A, B, and C master horizons formed by vertical translocations and organic additions.",
+            "B": "Raw regolith contains dense agricultural crop roots.",
+            "C": "A mature soil is composed of unweathered solid granite.",
+            "D": "Raw regolith contains 50% organic humus."
+          },
+          "correct_answer": "A) A mature soil exhibits distinct A, B, and C master horizons formed by vertical translocations and organic additions.",
+          "rationale": "Pedogenesis differentiates raw regolith into structured master horizons (A, B, C) through eluviation, illuviation, and humification. (Key Takeaway: Pedogenesis differentiates raw regolith into structured master soil horizons.)"
+        },
+        {
+          "number": 28,
+          "stem": "Why is Quartz the most persistent and abundant residual mineral in weathered soils and river sands?",
+          "options": {
+            "A": "Quartz has a tightly bound three-dimensional framework of Si-O bonds with zero cleavages and no easily oxidizable cations.",
+            "B": "Quartz dissolves in water instantly.",
+            "C": "Quartz is an organic compound.",
+            "D": "Quartz reflects all water molecules."
+          },
+          "correct_answer": "A) Quartz has a tightly bound three-dimensional framework of Si-O bonds with zero cleavages and no easily oxidizable cations.",
+          "rationale": "The 3D framework silicate structure of quartz gives it supreme thermodynamic and chemical resistance at surface conditions. (Key Takeaway: Framework Si-O bonds give quartz maximum chemical resistance in soils.)"
+        },
+        {
+          "number": 29,
+          "stem": "What is the primary physical disintegration mechanism operating on exposed beach sea cliffs?",
+          "options": {
+            "A": "Hydraulic wave impact, pneumatic air compression in joints, and abrasive suspended sand scouring.",
+            "B": "Deep underground magma intrusion.",
+            "C": "Extreme desert diurnal thermal cycling.",
+            "D": "Termite pedoturbation."
+          },
+          "correct_answer": "A) Hydraulic wave impact, pneumatic air compression in joints, and abrasive suspended sand scouring.",
+          "rationale": "Ocean wave shock, trapped air compression in fissures, and sand abrasion rapidly disintegrate coastal rock faces. (Key Takeaway: Coastal cliffs disintegrate via wave impact, pneumatic pressure, and sand abrasion.)"
+        },
+        {
+          "number": 30,
+          "stem": "How does vegetative cover modulate physical weathering rates on steep mountain slopes?",
+          "options": {
+            "A": "Canopy intercepts rainfall and roots bind soil to reduce erosion, while root turgor and rhizosphere acids accelerate subsoil weathering.",
+            "B": "Vegetation eliminates all moisture from the mountain.",
+            "C": "Vegetation melts bedrock into magma.",
+            "D": "Vegetation increases rock temperature to 500\u00b0C."
+          },
+          "correct_answer": "A) Canopy intercepts rainfall and roots bind soil to reduce erosion, while root turgor and rhizosphere acids accelerate subsoil weathering.",
+          "rationale": "Vegetation protects topsoil from surface hydraulic erosion while biologically driving deep subsoil bedrock weathering. (Key Takeaway: Vegetation stabilizes topsoil while actively driving subsoil biological weathering.)"
+        },
+        {
+          "number": 31,
+          "stem": "What geomorphic term describes the chemical alteration of mineral iron from ferrous (Fe\u00b2\u207a) to ferric (Fe\u00b3\u207a) state upon exposure to atmospheric oxygen?",
+          "options": {
+            "A": "Oxidation",
+            "B": "Hydration",
+            "C": "Carbonation",
+            "D": "Hydrolysis"
+          },
+          "correct_answer": "A) Oxidation",
+          "rationale": "Oxidation is the loss of electrons where Fe\u00b2\u207a oxidizes to Fe\u00b3\u207a, destabilizing mineral crystal structures. (Key Takeaway: Oxidation of ferrous iron destabilizes primary mineral lattices.)"
+        },
+        {
+          "number": 32,
+          "stem": "What process occurs when anhydrite (CaSO\u2084) absorbs water into its crystal lattice to transform into gypsum (CaSO\u2084\u00b72H\u2082O)?",
+          "options": {
+            "A": "Hydration",
+            "B": "Oxidation",
+            "C": "Carbonation",
+            "D": "Exfoliation"
+          },
+          "correct_answer": "A) Hydration",
+          "rationale": "Hydration is the rigid chemical incorporation of water molecules into a mineral crystal lattice, often causing volumetric expansion. (Key Takeaway: Hydration incorporates water into crystal lattices, inducing expansion.)"
+        },
+        {
+          "number": 33,
+          "stem": "What is the chemical weathering process where dissolved carbon dioxide in water reacts with carbonate minerals to form soluble bicarbonates?",
+          "options": {
+            "A": "Carbonation / Dissolution",
+            "B": "Reduction",
+            "C": "Hydraulic Abrasion",
+            "D": "Cryofracturing"
+          },
+          "correct_answer": "A) Carbonation / Dissolution",
+          "rationale": "Carbonation dissolves calcium carbonate into soluble calcium bicarbonate (Ca(HCO\u2083)\u2082), common in karst topography. (Key Takeaway: Carbonation converts insoluble carbonates into soluble bicarbonates.)"
+        },
+        {
+          "number": 34,
+          "stem": "Which physical weathering mechanism involves the crystallization and growth of salt crystals inside rock pores in arid coastal environments?",
+          "options": {
+            "A": "Haloclasty (Salt Wedging)",
+            "B": "Exfoliation",
+            "C": "Frost Wedging",
+            "D": "Pedoturbation"
+          },
+          "correct_answer": "A) Haloclasty (Salt Wedging)",
+          "rationale": "Haloclasty occurs when saline water evaporates in rock pores, precipitating expanding salt crystals that pry grains apart. (Key Takeaway: Salt crystal growth inside pores wedges rock grains apart in saline environments.)"
+        },
+        {
+          "number": 35,
+          "stem": "Why is biological weathering considered a critical link in the global geochemical carbon cycle?",
+          "options": {
+            "A": "Silicate weathering driven by root carbonic and organic acids consumes atmospheric CO\u2082 and sequesters it as dissolved bicarbonate in oceans.",
+            "B": "Biological weathering produces pure coal beds in days.",
+            "C": "Weathering removes all oxygen from the atmosphere.",
+            "D": "Weathering emits liquid methane."
+          },
+          "correct_answer": "A) Silicate weathering driven by root carbonic and organic acids consumes atmospheric CO\u2082 and sequesters it as dissolved bicarbonate in oceans.",
+          "rationale": "Silicate mineral weathering consumes atmospheric CO\u2082, transporting bicarbonate to oceans where it precipitates as marine carbonates. (Key Takeaway: Silicate weathering consumes atmospheric CO2, regulating long-term global climate.)"
+        }
+      ]
+    },
+    {
+      "section": "B",
+      "section_title": "Multiple Select Questions",
+      "marks_per_question": 1,
+      "question_count": 15,
+      "questions": [
+        {
+          "number": 36,
+          "stem": "Which factors explain why massive granite blocks undergo Spheroidal Weathering along orthogonal joint sets? (Select all that apply)",
+          "options": {
+            "A": "Water and chemical acids penetrate orthogonal joint systems from multiple intersecting planes.",
+            "B": "Corners and edges of rectangular joint blocks have greater exposed surface area per unit volume than flat faces, weathering at accelerated rates.",
+            "C": "Concentric chemical alteration rinds spall away, transforming angular cuboidal blocks into rounded corestones.",
+            "D": "Granite corestones dissolve completely into pure water.",
+            "E": "Spheroidal weathering is accelerated by humic and carbonic acid percolation."
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "Corner and edge weathering accelerates decay along joints, producing rounded corestones. Granite is not water-soluble. (Key Takeaway: Corner and edge joint weathering sculpts rectangular granite into spheroidal corestones.)"
+        },
+        {
+          "number": 37,
+          "stem": "What specific biological mechanisms enable pioneer Lichens to colonize and weather bare granite surfaces? (Select all that apply)",
+          "options": {
+            "A": "Physical anchoring of lichen rhizines penetrating microfissures in mineral grains.",
+            "B": "Exudation of chelating lichen acids (such as usnic and lecanoric acids) that complex and extract iron and aluminum cations.",
+            "C": "Trapping windblown dust and moisture, creating an initial proto-soil substrate for bryophytes.",
+            "D": "Emitting volcanic lava flows from lichen thalli.",
+            "E": "Alternating expansion and contraction of the lichen thallus during wetting and drying cycles, mechanically plucking mineral fragments."
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "Rhizine wedging, lichen acid chelation, dust trapping, and wet-dry thallus plucking are verified lichen weathering mechanisms. (Key Takeaway: Lichens combine mechanical rhizine anchoring, thallus wet-dry plucking, and acid chelation.)"
+        },
+        {
+          "number": 38,
+          "stem": "How do burrowing mammals and earthworms influence the chemical environment of soils? (Select all that apply)",
+          "options": {
+            "A": "Their tunnels enhance gravitational drainage and atmospheric oxygen ingress, accelerating oxidative weathering.",
+            "B": "Earthworm gut passage grinds mineral grains and enriches casts with calcium carbonate and enzymes.",
+            "C": "Decomposing animal excreta releases organic nitrogen compounds that alter local soil solution pH.",
+            "D": "They cool soils to below absolute zero.",
+            "E": "Burrow excavation exposes fresh unweathered mineral surfaces to weathering agents."
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "Aeration, gut grinding, excreta chemical reactions, and fresh mineral exposure accelerate soil chemical processes. (Key Takeaway: Subterranean burrowers accelerate weathering via aeration, gizzard grinding, and excreta chemistry.)"
+        },
+        {
+          "number": 39,
+          "stem": "Which physical attributes differentiate Cryofracture (Frost Wedging) from Exfoliation? (Select all that apply)",
+          "options": {
+            "A": "Frost wedging requires phase-change volume expansion of freezing liquid water (9% expansion).",
+            "B": "Exfoliation is driven by diurnal thermal expansion gradients and poor rock thermal conductivity.",
+            "C": "Frost wedging generates immense hydrostatic bursting pressure (1465 Mg m\u207b\u00b2) inside rigid crevices.",
+            "D": "Exfoliation spalls curved outer rock sheets parallel to the topography.",
+            "E": "Frost wedging occurs exclusively in hyper-arid tropical deserts."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Frost wedging relies on 9% ice expansion and 1465 Mg m\u207b\u00b2 pressure in cold climates; exfoliation relies on diurnal thermal gradients spalling curved sheets. Frost wedging does not occur in hot deserts. (Key Takeaway: Frost wedging is cryogenic ice bursting; exfoliation is diurnal thermal surface spalling.)"
+        },
+        {
+          "number": 40,
+          "stem": "What geochemical transformations characterize the chemical weathering of primary plagioclase feldspars? (Select all that apply)",
+          "options": {
+            "A": "Release of soluble calcium (Ca\u00b2\u207a) and sodium (Na\u207a) cations into soil pore water.",
+            "B": "Hydration and hydrolysis of aluminosilicate crystal frameworks.",
+            "C": "Synthesis of secondary layer silicate clays (such as kaolinite and smectite).",
+            "D": "Precipitation of amorphous and crystalline silicic acid.",
+            "E": "Transformation into pure unweathered olivine."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Feldspar hydrolysis yields secondary clays, soluble cations (Ca, Na), and silicic acid. Olivine is not formed. (Key Takeaway: Feldspar chemical weathering yields secondary clays, soluble cations, and silica.)"
+        },
+        {
+          "number": 41,
+          "stem": "Why is the presence of liquid water essential for both chemical and biological weathering? (Select all that apply)",
+          "options": {
+            "A": "Water acts as a universal solvent and medium for ionic transport in chemical hydrolysis and dissolution.",
+            "B": "Water is a direct reactant in hydration and carbonation reactions.",
+            "C": "Water is necessary to maintain microbial metabolic activity and plant root turgor pressure.",
+            "D": "Water transports dissolved root exudates and carbonic acid to mineral reaction sites.",
+            "E": "Water eliminates all chemical reaction sites from mineral surfaces."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Water provides the solvent, reactant, and biological carrier required for chemical hydrolysis and biological acid transport. (Key Takeaway: Liquid water is the universal solvent, reactant, and biological medium for weathering.)"
+        },
+        {
+          "number": 42,
+          "stem": "Which characteristics distinguish unconsolidated Volcanic Ash from crystalline Granite in soil genesis? (Select all that apply)",
+          "options": {
+            "A": "Volcanic ash consists of fine, glassy amorphous particles with high specific surface area.",
+            "B": "Volcanic ash weathers rapidly into fertile andosols rich in short-range order minerals (allophane, imogolite).",
+            "C": "Granite is a dense crystalline plutonic rock that weathers slowly over millennia.",
+            "D": "Granite weathers primarily through surface joint exfoliation and granular disintegration.",
+            "E": "Volcanic ash is completely impermeable to rainfall."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Volcanic ash is amorphous, high surface area, and weathers rapidly into andosols; granite is dense crystalline and weathers slowly via joints. Ash is permeable. (Key Takeaway: Volcanic ash weathers rapidly due to high porosity and amorphous glass content compared to dense granite.)"
+        },
+        {
+          "number": 43,
+          "stem": "What geomorphic features and landforms are produced primarily through Physical Weathering processes? (Select all that apply)",
+          "options": {
+            "A": "Talus and Scree slopes at cliff bases produced by frost wedging",
+            "B": "Exfoliation domes and rounded inselbergs produced by thermal spalling",
+            "C": "Mushroom Rocks in arid deserts sculpted by eolian sandblasting",
+            "D": "Blockfields (Felsenmeer) produced by periglacial cryofracture",
+            "E": "Deep organic bogs produced by mangrove vegetation"
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Talus slopes, exfoliation domes, mushroom rocks, and felsenmeer are physical weathering landforms. Organic bogs are biological wetland accumulation. (Key Takeaway: Physical weathering produces talus slopes, exfoliation domes, mushroom rocks, and blockfields.)"
+        },
+        {
+          "number": 44,
+          "stem": "How does Anthropogenic engineering activity compare to natural geomorphic weathering rates? (Select all that apply)",
+          "options": {
+            "A": "High-explosive blasting fractures solid rock masses in milliseconds rather than geological epochs.",
+            "B": "Open-cast mining and quarrying mechanically excavate millions of tonnes of rock annually.",
+            "C": "Heavy earthmoving machinery pulverizes bedrock and redistributes regolith across watersheds.",
+            "D": "Human engineering acts as a rapid, high-magnitude mechanical weathering engine.",
+            "E": "Human activity produces zero mechanical disturbance of the Earth's crust."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Human blasting, open-cast mining, and civil engineering excavation vastly exceed natural mechanical weathering rates. (Key Takeaway: Anthropogenic blasting, mining, and excavation mechanically pulverize rock masses.)"
+        },
+        {
+          "number": 45,
+          "stem": "In what ways do living plant roots prevent soil erosion while simultaneously accelerating rock weathering? (Select all that apply)",
+          "options": {
+            "A": "Root networks bind loose soil particles mechanically, stabilizing topsoil against water and wind erosion.",
+            "B": "Growing root tips penetrate bedrock fissures, exerting radial wedging pressure that fractures rock.",
+            "C": "Root exudates chemically dissolve mineral lattices in the rhizosphere.",
+            "D": "Vegetative canopy intercepts rainfall, reducing surface hydraulic impact.",
+            "E": "Plants convert all soil minerals into liquid water."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Plants stabilize topsoil with roots/canopy while simultaneously fracturing bedrock joints and exuding chemical acids. (Key Takeaway: Vegetation protects topsoil from erosion while actively weathering subsoil bedrock.)"
+        },
+        {
+          "number": 46,
+          "stem": "Which factors explain why river headwaters have vastly higher mechanical rock disintegration rates than downstream reaches? (Select all that apply)",
+          "options": {
+            "A": "Steep channel gradient generates torrential flow velocities up to 9.0 m/s.",
+            "B": "High kinetic energy mobilizes heavy stones (1.2 m/s) and multi-tonne boulders (9.0 m/s).",
+            "C": "Coarse, angular bedload particles repeatedly collide with and abrade channel bedrock.",
+            "D": "Downstream reaches experience low velocities that promote sediment deposition rather than bedrock abrasion.",
+            "E": "Downstream river reaches have zero dissolved minerals."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Headwater steepness, high velocities, angular bedload collisions, and downstream depositional transitions explain headwater disintegration. (Key Takeaway: High velocity and coarse bedload make headwaters zones of intense mechanical disintegration.)"
+        },
+        {
+          "number": 47,
+          "stem": "What biochemical mechanisms explain how Formic Acid (HCOOH) secreted by ants and termites corrodes rock minerals? (Select all that apply)",
+          "options": {
+            "A": "Formic acid dissociates to release reactive hydrogen ions (H\u207a) that attack mineral silicate and carbonate bonds.",
+            "B": "Formate anions act as organic complexing agents that bind and solubilize metal cations.",
+            "C": "Formic acid lowers local pH, accelerating acid dissolution kinetics.",
+            "D": "Formic acid transforms all rock minerals into radioactive gas.",
+            "E": "Ant and termite foraging concentrates formic acid directly upon mineral grain boundaries within subterranean galleries."
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "Formic acid supplies H\u207a ions, complexes metal cations, lowers pH, and attacks grain boundaries in galleries. It does not create radioactive gas. (Key Takeaway: Formic acid secreted by termites and ants accelerates mineral dissolution via H+ attack and chelation.)"
+        },
+        {
+          "number": 48,
+          "stem": "How does climate regulate the balance between physical and chemical weathering on Earth? (Select all that apply)",
+          "options": {
+            "A": "Cold, arid, or alpine climates favor physical weathering (frost wedging, thermal expansion).",
+            "B": "Warm, humid tropical climates maximize chemical and biological weathering rates (hydrolysis, biological acids).",
+            "C": "Hyper-arid hot deserts experience intense thermal exfoliation and eolian sandblasting.",
+            "D": "Climate has zero influence on weathering processes.",
+            "E": "Moisture availability is the critical limiting factor for chemical mineral dissolution."
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "Cold/arid climates favor physical weathering; warm/humid climates maximize chemical/biological decay; moisture controls dissolution. Climate is the master regulator. (Key Takeaway: Climate regulates weathering: cold/arid favors physical, warm/humid maximizes chemical/biological.)"
+        },
+        {
+          "number": 49,
+          "stem": "Which primary silicate minerals weather most rapidly at the Earth's surface according to Goldich's weathering series? (Select all that apply)",
+          "options": {
+            "A": "High-temperature Olivine (Forsterite)",
+            "B": "Calcium-rich Plagioclase (Anorthite)",
+            "C": "Pyroxenes (Augite)",
+            "D": "Quartz (chemically most resistant)",
+            "E": "Amphiboles (Hornblende)"
+          },
+          "correct_answers": "A, B, C, E",
+          "rationale": "According to Goldich's series, high-temperature minerals (olivine, Ca-plagioclase, pyroxenes, amphiboles) weather fastest, while quartz is most resistant. (Key Takeaway: High-temperature mafic minerals weather rapidly, while quartz exhibits maximum chemical resistance.)"
+        },
+        {
+          "number": 50,
+          "stem": "What fundamental geochemical transformations occur as regolith evolves into mature agricultural soil? (Select all that apply)",
+          "options": {
+            "A": "Accumulation and humification of organic plant and microbial biomass in the surface horizon.",
+            "B": "Synthesis and downward translocations of secondary layer silicate clays and sesquioxides.",
+            "C": "Development of distinct master soil horizons (O, A, E, B, C).",
+            "D": "Establishment of a biologically active rhizosphere providing cation exchange capacity and nutrient cycling.",
+            "E": "The complete destruction of all chemical elements on Earth."
+          },
+          "correct_answers": "A, B, C, D",
+          "rationale": "Organic matter accumulation, secondary clay synthesis/translocation, horizon differentiation, and rhizosphere nutrient cycling define soil genesis from regolith. (Key Takeaway: Organic humification, clay synthesis, horizon development, and nutrient cycling transform regolith into soil.)"
+        }
+      ]
+    }
+  ]
+}

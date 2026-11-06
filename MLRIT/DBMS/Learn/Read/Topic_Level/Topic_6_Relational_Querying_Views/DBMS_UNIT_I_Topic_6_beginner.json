@@ -1,0 +1,71 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "module_name": "Topic 6 Relational Querying Views",
+  "title": "Topic 6: Relational Querying, Views & Schema Evolution",
+  "persona": "Beginner",
+  "cefr_language_tier": "A2-B1",
+  "bloom_tier": "L1 Remembering / L2 Understanding",
+  "l1_mindmap_node": "6. Relational Querying, Views & Schema Evolution",
+  "word_count": 1049,
+  "infographics_count": 4,
+  "infographics_included": [
+    "6.0",
+    "6.1",
+    "6.2",
+    "6.3"
+  ],
+  "verbatim_definitions_included": [
+    "Relational View",
+    "Virtual Relation",
+    "View Materialization",
+    "Updatable View",
+    "Schema Evolution",
+    "DDL",
+    "Relational Query"
+  ],
+  "subtopics_covered": [
+    "6.1 Relational Querying Principles & Declarative SQL",
+    "6.2 Basic SQL Query Structure (SELECT, FROM, WHERE)",
+    "6.3 Relational Views Architecture & Virtual Relations",
+    "6.4 View Security, Access Control & Data Independence",
+    "6.5 Updatable Views & the WITH CHECK OPTION Constraint",
+    "6.6 Materialized Views vs Dynamic Virtual Tables",
+    "6.7 Schema Evolution via DDL (ALTER TABLE, DROP TABLE CASCADE)",
+    "6.8 System Catalogs, Index Modification & Cost-Based Query Compilation"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 6.1",
+      "image_tag": "6.0",
+      "title": "Relational Querying Paradigms, Views & DDL Architecture Overview",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.2",
+      "image_tag": "6.1",
+      "title": "Relational Query Optimization Trees & Algebraic Equivalences",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.3",
+      "image_tag": "6.2",
+      "title": "Virtual Views vs. Materialized Views Architecture & Query Modification",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.4",
+      "image_tag": "6.3",
+      "title": "Schema Evolution, Dynamic DDL Operations & System Catalog Updates",
+      "module": "Module 6"
+    }
+  ]
+}

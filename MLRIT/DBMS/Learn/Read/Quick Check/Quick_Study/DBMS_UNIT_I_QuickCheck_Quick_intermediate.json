@@ -1,0 +1,158 @@
+{
+  "course_id": "MLRIT_DBMS_U1",
+  "course_name": "Database Management Systems",
+  "unit": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "study_track": "Quick_Study",
+  "persona": "intermediate",
+  "total_questions": 6,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Fundamentals and Engine Architecture",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which level of the ANSI-SPARC Three-Schema Architecture describes how data is physically stored on disk storage media and file structures?",
+      "options": [
+        {
+          "key": "A",
+          "text": "External Level \u2014 customized views for individual user roles",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Internal (Physical) Level \u2014 low-level data structures, block layouts, and access paths",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Conceptual Level \u2014 logical entities and enterprise-wide constraints",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "The Internal Level describes the physical storage structure of the database, including block allocation, record formats, and indexing paths. (Key Takeaway: The Internal Level describes physical storage and access mechanisms.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Conceptual Database Design & ER Modeling",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In an ER diagram, an attribute whose value can be calculated dynamically from another stored attribute (such as calculating Age from Date of Birth) is called a Composite Attribute.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "B (False)",
+      "rationale": "False \u2014 swapped_term. An attribute computed from another attribute is a Derived Attribute (drawn with a dashed ellipse). A Composite Attribute is an attribute that can be divided into smaller sub-parts (like Name into First_Name, Last_Name). (Key Takeaway: Derived attributes are computed; composite attributes are subdivided.)",
+      "alteration_type": "swapped_term",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Advanced ER and Extended ER (EER) Concepts",
+      "type": "yes_no",
+      "prompt_type": "Question",
+      "stem": "In an Extended ER (EER) model with an Overlapping constraint ('o'), can a single entity instance be a member of more than one subclass simultaneously?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "No",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (Yes)",
+      "rationale": "Yes. Overlapping specialization ('o') explicitly permits an entity instance in the superclass to belong to multiple subclasses at the same time (e.g., an Employee can be both a Teacher and a Researcher). (Key Takeaway: Overlapping specialization allows simultaneous membership in multiple subclasses.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Relational Model Foundations & Integrity Constraints",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How is a Candidate Key defined in the Relational Data Model?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Any set of attributes that contains extra optional columns in addition to the primary key",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "A minimal Super Key from which no attribute can be removed without losing uniqueness",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "An attribute that must contain at least 50% null values across all tuples",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "A Candidate Key is a minimal super key: it possesses the uniqueness property (no two distinct tuples have identical values) and minimality (removing any attribute destroys uniqueness). (Key Takeaway: A candidate key is a minimal super key.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Logical Database Design (ER-to-Relational Translation)",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "When mapping a 1:1 relationship set with Total Participation on one side into relations, embedding the foreign key on the total participation side minimizes NULL values.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. In a 1:1 relationship with total participation on one side, placing the foreign key in the table with total participation ensures that every single row will have a non-null foreign key reference, eliminating null proliferation. (Key Takeaway: Embedding the foreign key on the total participation side prevents null values.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Relational Querying, Views & Schema Evolution",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the total number of tuples in the Cartesian Product ($R \times S$) if relation $R$ contains 5 tuples and relation $S$ contains 4 tuples?",
+      "options": [
+        {
+          "key": "A",
+          "text": "9 tuples ($5 + 4$) \u2014 the rows of S are appended beneath R",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "20 tuples ($5 \times 4$) \u2014 every tuple in R is combined with every tuple in S",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "1 tuple ($5 - 4$) \u2014 common matching rows are subtracted",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "The cardinality of the Cartesian Product $|R \times S| = |R| \times |S| = 5 \times 4 = 20$ tuples. Summation ($5 + 4$) describes a UNION operation, not Cartesian product. (Key Takeaway: Cartesian product cardinality is the product of individual table cardinalities.)",
+      "bloom_level": "L2"
+    }
+  ]
+}

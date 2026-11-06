@@ -1,0 +1,368 @@
+{
+  "subject": "ANGRAU",
+  "chapter_folder": "Lec-5 Weathering",
+  "chapter_title": "Lecture 5: Weathering of Rocks and Minerals",
+  "D_max": 4,
+  "pruning_policy": "single_line_and_pass_through_pruned",
+  "hierarchy": {
+    "node_id": "node_001",
+    "level": 0,
+    "label": "Lecture 5: Weathering of Rocks and Minerals",
+    "children": [
+      {
+        "node_id": "node_100",
+        "level": 1,
+        "label": "1. Fundamentals & Regolith Genesis",
+        "source_reference": "Section 1 / Slides 1-3",
+        "children": [
+          {
+            "node_id": "node_110",
+            "level": 2,
+            "label": "Definition & Mineral Dynamics",
+            "source_reference": "Section 1.1 / Slide 2",
+            "children": [
+              {
+                "node_id": "node_111",
+                "level": 3,
+                "label": "Mechanical Disintegration without chemical alteration",
+                "source_reference": "Section 1.1"
+              },
+              {
+                "node_id": "node_112",
+                "level": 3,
+                "label": "Chemical Decomposition breaking complex minerals into simpler compounds",
+                "source_reference": "Section 1.1"
+              },
+              {
+                "node_id": "node_113",
+                "level": 3,
+                "label": "Regolith Formation (Unconsolidated weathered mantle above bedrock)",
+                "source_reference": "Section 1.1"
+              },
+              {
+                "node_id": "node_114",
+                "level": 3,
+                "label": "Transformation & Synthesis (Destruction + Clay/Oxide mineral synthesis)",
+                "source_reference": "Section 1.1"
+              }
+            ]
+          },
+          {
+            "node_id": "node_120",
+            "level": 2,
+            "label": "The Three Core Weathering Processes",
+            "source_reference": "Section 1.2 / Slide 3",
+            "children": [
+              {
+                "node_id": "node_121",
+                "level": 3,
+                "label": "Physical Weathering (Mechanical disintegration into smaller fragments)",
+                "source_reference": "Section 1.2"
+              },
+              {
+                "node_id": "node_122",
+                "level": 3,
+                "label": "Chemical Weathering (Decomposition via chemical alteration)",
+                "source_reference": "Section 1.2"
+              },
+              {
+                "node_id": "node_123",
+                "level": 3,
+                "label": "Biological Weathering (Simultaneous disintegration and decomposition)",
+                "source_reference": "Section 1.2"
+              },
+              {
+                "node_id": "node_124",
+                "level": 3,
+                "label": "Synergistic Reaction Chain (Continuous feedback & surface area amplification)",
+                "source_reference": "Section 1.2"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_200",
+        "level": 1,
+        "label": "2. Physical Weathering (Mechanical Agents)",
+        "source_reference": "Section 2 / Slides 4-32",
+        "children": [
+          {
+            "node_id": "node_210",
+            "level": 2,
+            "label": "Agent 1 - Rock Permeability & Structure",
+            "source_reference": "Section 2.1 / Slides 5-6",
+            "children": [
+              {
+                "node_id": "node_211",
+                "level": 3,
+                "label": "Permeability as Primary Rate Factor",
+                "source_reference": "Section 2.1"
+              },
+              {
+                "node_id": "node_212",
+                "level": 3,
+                "label": "Rock Resistance Hierarchy (Porous Sandstone > Basalt > Granite)",
+                "source_reference": "Section 2.1"
+              },
+              {
+                "node_id": "node_213",
+                "level": 3,
+                "label": "Grain Size Dynamics (Fast-weathering Volcanic Ash vs Slow-percolating Gravels)",
+                "source_reference": "Section 2.1"
+              }
+            ]
+          },
+          {
+            "node_id": "node_220",
+            "level": 2,
+            "label": "Agent 2 - Temperature Variations & Exfoliation",
+            "source_reference": "Section 2.2 / Slides 7-14",
+            "children": [
+              {
+                "node_id": "node_221",
+                "level": 3,
+                "label": "Diurnal Thermal Stresses (Daytime heating and nighttime cooling cycles)",
+                "source_reference": "Section 2.2"
+              },
+              {
+                "node_id": "node_222",
+                "level": 3,
+                "label": "Differential Mineral Expansion (Quartz cubical = 2x Feldspar | Granite linear = 0.5x Sandstone)",
+                "source_reference": "Section 2.2"
+              },
+              {
+                "node_id": "node_223",
+                "level": 3,
+                "label": "Thermal Absorption (Dark rocks heat faster than light rocks)",
+                "source_reference": "Section 2.2"
+              },
+              {
+                "node_id": "node_224",
+                "level": 3,
+                "label": "Exfoliation Mechanism (Concentric onion peeling in Basalt and Granite domes)",
+                "source_reference": "Section 2.2"
+              }
+            ]
+          },
+          {
+            "node_id": "node_230",
+            "level": 2,
+            "label": "Agent 3 - Water Action, Glaciers & Frost Wedging",
+            "source_reference": "Section 2.3 / Slides 15-27",
+            "children": [
+              {
+                "node_id": "node_231",
+                "level": 3,
+                "label": "Hydraulic Transport Thresholds (15cm/s sand, 30cm/s gravel, 1.2m/s stones, 9.0m/s boulders)",
+                "source_reference": "Section 2.3"
+              },
+              {
+                "node_id": "node_232",
+                "level": 3,
+                "label": "River Erosion Gradient (Disintegration greater near source than mouth)",
+                "source_reference": "Section 2.3"
+              },
+              {
+                "node_id": "node_233",
+                "level": 3,
+                "label": "Frost Wedging Dynamics (9% ice expansion exerting 1465 Mg/m2 bursting pressure)",
+                "source_reference": "Section 2.3"
+              },
+              {
+                "node_id": "node_234",
+                "level": 3,
+                "label": "Glacial Bedrock Action (Moving glaciers cutting, crushing and grinding bedrock)",
+                "source_reference": "Section 2.3"
+              }
+            ]
+          },
+          {
+            "node_id": "node_240",
+            "level": 2,
+            "label": "Agent 4 - Wind Action & Sandblasting",
+            "source_reference": "Section 2.4 / Slides 29-30",
+            "children": [
+              {
+                "node_id": "node_241",
+                "level": 3,
+                "label": "Altitude and Latitude Velocity Dependence",
+                "source_reference": "Section 2.4"
+              },
+              {
+                "node_id": "node_242",
+                "level": 3,
+                "label": "Exponential Carrying Power Law (Transport capacity proportional to v6 / r6)",
+                "source_reference": "Section 2.4"
+              },
+              {
+                "node_id": "node_243",
+                "level": 3,
+                "label": "Desert Sandblasting Abrasion (Suspended sand etching exposed rocks)",
+                "source_reference": "Section 2.4"
+              },
+              {
+                "node_id": "node_244",
+                "level": 3,
+                "label": "Landform Sculpting (Mushroom rocks in Aravalis and Thar Desert)",
+                "source_reference": "Section 2.4"
+              }
+            ]
+          },
+          {
+            "node_id": "node_250",
+            "level": 2,
+            "label": "Agent 5 - Atmospheric Electric Phenomena",
+            "source_reference": "Section 2.5 / Slides 31-32",
+            "children": [
+              {
+                "node_id": "node_251",
+                "level": 3,
+                "label": "High-Voltage Lightning Discharges",
+                "source_reference": "Section 2.5"
+              },
+              {
+                "node_id": "node_252",
+                "level": 3,
+                "label": "Localized Extreme Thermal Shock fracturing massive rock outcrops",
+                "source_reference": "Section 2.5"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_300",
+        "level": 1,
+        "label": "3. Biological Weathering (Living Agents)",
+        "source_reference": "Section 3 / Slides 33-39",
+        "children": [
+          {
+            "node_id": "node_310",
+            "level": 2,
+            "label": "Role of Flora (Plants & Microbes)",
+            "source_reference": "Section 3.1 / Slides 34-37",
+            "children": [
+              {
+                "node_id": "node_311",
+                "level": 3,
+                "label": "Mechanical Root Wedging (Growing roots exerting disruptive pressure in rock joints)",
+                "source_reference": "Section 3.1"
+              },
+              {
+                "node_id": "node_312",
+                "level": 3,
+                "label": "Subsurface Percolation Channels (Deep tap roots opening water/air pathways)",
+                "source_reference": "Section 3.1"
+              },
+              {
+                "node_id": "node_313",
+                "level": 3,
+                "label": "Biochemical Rhizosphere Secretions (Root organic acids and chelators solubilizing minerals)",
+                "source_reference": "Section 3.1"
+              },
+              {
+                "node_id": "node_314",
+                "level": 3,
+                "label": "Microbial Humus Activity (Humic and carbonic acids driving mineral decomposition)",
+                "source_reference": "Section 3.1"
+              }
+            ]
+          },
+          {
+            "node_id": "node_320",
+            "level": 2,
+            "label": "Role of Fauna (Humans, Animals & Insects)",
+            "source_reference": "Section 3.2 / Slides 38-39",
+            "children": [
+              {
+                "node_id": "node_321",
+                "level": 3,
+                "label": "Anthropogenic Disintegration (Human blasting and excavation for dams, roads & buildings)",
+                "source_reference": "Section 3.2"
+              },
+              {
+                "node_id": "node_322",
+                "level": 3,
+                "label": "Burrowing Animals & Excreta (Tunnels weakening rock structure + chemical action of excreta)",
+                "source_reference": "Section 3.2"
+              },
+              {
+                "node_id": "node_323",
+                "level": 3,
+                "label": "Termite & Ant Pedoturbation (Subterranean galleries transporting lower-to-upper soil horizons)",
+                "source_reference": "Section 3.2"
+              },
+              {
+                "node_id": "node_324",
+                "level": 3,
+                "label": "Biogenic Formic Acid (Acid secretions directly corroding mineral surfaces)",
+                "source_reference": "Section 3.2"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_400",
+        "level": 1,
+        "label": "4. Synthesis & Quantitative Summary",
+        "source_reference": "Section 4 & 5",
+        "children": [
+          {
+            "node_id": "node_410",
+            "level": 2,
+            "label": "Continuous Genesis Feedback Loop",
+            "source_reference": "Section 4",
+            "children": [
+              {
+                "node_id": "node_411",
+                "level": 3,
+                "label": "Physical fracturing exponentially expanding reactive surface area",
+                "source_reference": "Section 4"
+              },
+              {
+                "node_id": "node_412",
+                "level": 3,
+                "label": "Accelerated chemical decomposition and microbial colonization",
+                "source_reference": "Section 4"
+              }
+            ]
+          },
+          {
+            "node_id": "node_420",
+            "level": 2,
+            "label": "Master Metric Reference Matrix",
+            "source_reference": "Section 5",
+            "children": [
+              {
+                "node_id": "node_421",
+                "level": 3,
+                "label": "Water velocities (15 cm/s to 9.0 m/s load thresholds)",
+                "source_reference": "Section 5"
+              },
+              {
+                "node_id": "node_422",
+                "level": 3,
+                "label": "Frost wedging (9% expansion & 1465 Mg/m2 pressure)",
+                "source_reference": "Section 5"
+              },
+              {
+                "node_id": "node_423",
+                "level": 3,
+                "label": "Thermal expansion ratios (Quartz 2x Feldspars | Granite 0.5x Sandstone)",
+                "source_reference": "Section 5"
+              },
+              {
+                "node_id": "node_424",
+                "level": 3,
+                "label": "Wind carrying power (Proportional to velocity 6th power)",
+                "source_reference": "Section 5"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

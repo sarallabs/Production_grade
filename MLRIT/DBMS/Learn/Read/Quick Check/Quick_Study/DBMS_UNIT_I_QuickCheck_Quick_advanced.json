@@ -1,0 +1,152 @@
+{
+  "course_id": "MLRIT_DBMS_U1",
+  "course_name": "Database Management Systems",
+  "unit": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "study_track": "Quick_Study",
+  "persona": "advanced",
+  "total_questions": 6,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Fundamentals and Engine Architecture",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "Logical Data Independence ensures that changes to the conceptual schema (such as adding a new entity or attribute) do not require changes to existing external schemas or application programs.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. Logical Data Independence is the capacity to change the conceptual schema without having to alter external schemas or existing application programs that do not reference the modified entities. (Key Takeaway: Logical data independence shields external views against conceptual schema expansion.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Conceptual Database Design & ER Modeling",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "In formal ER semantics, what structural constraint characterizes a binary relationship set with cardinality ratio 1:1 and partial participation on both entity sets?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Each entity in E1 maps to at most one in E2, each in E2 maps to at most one in E1, and entities in either set may exist unassociated",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Every entity in E1 must associate with every entity in E2 simultaneously",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Entities on either side are forbidden from possessing primary key attributes",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "A 1:1 relationship with partial participation on both sides bounds the maximum cardinality to 1 and minimum cardinality to 0 in both directions, meaning relationships are singular and optional for both participating entity sets. (Key Takeaway: 1:1 partial participation bounds associations to at most one and allows unlinked entities.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Advanced ER and Extended ER (EER) Concepts",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In formal EER theory, Total Specialization dictates that the union of all subclass entity sets must equal the entire superclass entity set ($S = \\bigcup_{i} C_i$).",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. Total specialization (completeness constraint, denoted by a double line) mandates that every entity in the superclass must be a member of at least one subclass, meaning the subclasses completely partition the superclass domain. (Key Takeaway: Total specialization enforces completeness where the superclass equals the union of its subclasses.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Relational Model Foundations & Integrity Constraints",
+      "type": "yes_no",
+      "prompt_type": "Question",
+      "stem": "Is the Tuple Relational Calculus (TRC) expression {t | NOT (t in R)} considered a 'Safe' relational calculus expression?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "No",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "B (No)",
+      "rationale": "No. An expression is unsafe if it can evaluate to an infinite relation. Since the complement of relation R contains an infinite number of tuples outside the active domain of the database, {t | NOT (t in R)} is unsafe and prohibited. (Key Takeaway: Unsafe TRC expressions can produce infinite relations and are rejected.)",
+      "bloom_level": "L4"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Logical Database Design (ER-to-Relational Translation)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "When mapping an N-ary relationship set ($N > 2$) where all participating entity sets have 'Many' cardinality into a relation, what forms the primary key of the resulting junction table?",
+      "options": [
+        {
+          "key": "A",
+          "text": "An arbitrarily selected single foreign key from one participating entity",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "The composite combination of foreign keys referencing all N participating entity sets",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Composite keys are forbidden; a surrogate string column must be generated",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "When all participating entity sets have Many cardinality in an N-ary relationship, no proper subset of foreign keys can uniquely identify relationship instances. Hence, the primary key must be the composite combination of all N foreign keys. (Key Takeaway: N-ary relationships with Many cardinalities require composite primary keys combining all foreign keys.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Relational Querying, Views & Schema Evolution",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In Relational Algebra, the Division operator (R / S) is the formal algebraic counterpart for queries involving Universal Quantification ('for all').",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. The relational division operator $R(X, Y) \\div S(Y)$ identifies tuples in $X$ that are associated with ALL tuples in $S(Y)$, expressing canonical universal quantification queries (such as 'find customers who bought ALL products'). (Key Takeaway: Relational division formally computes universal quantification queries.)",
+      "bloom_level": "L3"
+    }
+  ]
+}

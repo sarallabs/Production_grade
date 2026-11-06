@@ -1,0 +1,140 @@
+{
+  "assessment_type": "MCQ",
+  "difficulty": "Hard",
+  "chapter_code": "DBMS_UNIT_I",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "total_questions": 10,
+  "zero_image_discipline": true,
+  "questions": [
+    {
+      "id": "MCQ_H01",
+      "stem": "Why does a relational Natural Join (R ⋈ S) produce an output schema with degree strictly less than Deg(R) + Deg(S) when shared attribute names exist?",
+      "options": {
+        "A": "Because Natural Join projects out duplicate join attribute columns after equating them",
+        "B": "Because the query optimizer compresses null-valued attributes into binary masks",
+        "C": "Because relational engines discard non-primary key attributes from the right table",
+        "D": "Because Natural Join computes the Cartesian product only on foreign key columns"
+      },
+      "correct_key": "A",
+      "explanation": "Natural Join is algebraically defined as a Cartesian product followed by selection on equality of all shared attributes, followed by projection that retains only one copy of each shared attribute.",
+      "mindmap_node_id": "node_212"
+    },
+    {
+      "id": "MCQ_H02",
+      "stem": "In the Three-Schema Architecture, why is Logical Data Independence significantly harder to achieve than Physical Data Independence?",
+      "options": {
+        "A": "Because physical disk storage devices evolve faster than application code",
+        "B": "Because the SQL standard does not support external view definitions",
+        "C": "Because altering conceptual schemas often changes the semantic structure of tables, making view reconstruction and view updatability difficult or impossible",
+        "D": "Because operating system file managers prohibit column additions on live databases"
+      },
+      "correct_key": "C",
+      "explanation": "Physical independence only requires updating internal pointers/indexes. Logical independence requires altering table structures (splitting, restructuring) while preserving external views, which is constrained by view updatability and complex semantic mappings.",
+      "mindmap_node_id": "node_028"
+    },
+    {
+      "id": "MCQ_H03",
+      "stem": "When mapping a 1:1 relationship between entity set A and entity set B where A has Total Participation and B has Partial Participation, where should the foreign key be placed to minimize NULL values?",
+      "options": {
+        "A": "In relation B, declared with a NOT NULL constraint",
+        "B": "In relation A, declared with a NOT NULL and UNIQUE constraint",
+        "C": "In a separate associative table containing both primary keys",
+        "D": "In both relations simultaneously to enforce bidirectional referential integrity"
+      },
+      "correct_key": "B",
+      "explanation": "Placing the foreign key in table A (total participation) ensures every row in A references a B instance, allowing a `NOT NULL` constraint and completely eliminating null foreign keys.",
+      "mindmap_node_id": "node_183"
+    },
+    {
+      "id": "MCQ_H04",
+      "stem": "What critical anomaly occurs if the Write-Ahead Logging (WAL) protocol is violated by writing a modified buffer pool page to disk before its corresponding transaction log record is persisted?",
+      "options": {
+        "A": "The query optimizer will select a sub-optimal sequential scan plan",
+        "B": "The buffer manager will trigger a deadlock in the concurrency control manager",
+        "C": "The database catalog will lose track of primary key constraints",
+        "D": "A system crash can leave uncommitted dirty data on disk with no log record to UNDO the changes, permanently violating Atomicity"
+      },
+      "correct_key": "D",
+      "explanation": "WAL mandates that log records must reach non-volatile disk before dirty data pages are flushed. If violated, a crash leaves uncommitted updates on disk without undo records, violating atomicity.",
+      "mindmap_node_id": "node_048"
+    },
+    {
+      "id": "MCQ_H05",
+      "stem": "Consider a relation R(A, B, C, D) with candidate keys {A, B} and {A, C}. Which of the following attribute sets is NOT a super key of R?",
+      "options": {
+        "A": "{B, C, D}",
+        "B": "{A, C}",
+        "C": "{A, B, D}",
+        "D": "{A, B, C, D}"
+      },
+      "correct_key": "A",
+      "explanation": "Any superset of a candidate key is a super key. {A, B, D} contains {A, B}; {A, C} is a candidate key; {A, B, C, D} contains both. {B, C, D} contains neither {A, B} nor {A, C}, so it is not a super key.",
+      "mindmap_node_id": "node_071"
+    },
+    {
+      "id": "MCQ_H06",
+      "stem": "Which of the following scenarios illustrates a violation of Referential Integrity during a database modification?",
+      "options": {
+        "A": "Inserting a new department row into the Department table with a unique Dept_ID",
+        "B": "Deleting a child row from an associative table",
+        "C": "Updating an employee's salary to a value within the allowable domain",
+        "D": "Inserting an employee row into the Employee table with a Dept_ID value that does not exist in the Department table"
+      },
+      "correct_key": "D",
+      "explanation": "Referential integrity requires foreign key values to match an existing primary key in the referenced table. Inserting an employee with a non-existent Dept_ID creates an orphan record, violating referential integrity.",
+      "mindmap_node_id": "node_152"
+    },
+    {
+      "id": "MCQ_H07",
+      "stem": "What is the result of evaluating the Relational Algebra expression R - (R - S) when R and S are union-compatible relations?",
+      "options": {
+        "A": "R ∪ S",
+        "B": "R ∩ S (Set Intersection of R and S)",
+        "C": "S - R",
+        "D": "Empty relation (∅)"
+      },
+      "correct_key": "B",
+      "explanation": "$R - S$ contains tuples in $R$ but not in $S$. Subtracting those tuples from $R$ leaves only tuples that belong to both $R$ and $S$, which is the set intersection $R \\cap S$.",
+      "mindmap_node_id": "node_210"
+    },
+    {
+      "id": "MCQ_H08",
+      "stem": "When mapping an EER specialization hierarchy using the Single Flat Table method, what major database constraint CANNOT be enforced on subclass-specific attributes?",
+      "options": {
+        "A": "CHECK constraint predicates",
+        "B": "Foreign key references pointing to external tables",
+        "C": "NOT NULL constraints on subclass-specific attributes",
+        "D": "Index creation on search columns"
+      },
+      "correct_key": "C",
+      "explanation": "In a single flat table containing attributes of all subclasses, any row belonging to subclass A must store NULL for attributes belonging to subclass B. Therefore, subclass-specific attributes cannot enforce `NOT NULL`.",
+      "mindmap_node_id": "node_191"
+    },
+    {
+      "id": "MCQ_H09",
+      "stem": "In ER modeling, under what condition can a binary relationship set be completely eliminated by collapsing it into an entity relation without creating redundant or null data?",
+      "options": {
+        "A": "When the relationship is One-to-One and both participating entity sets have Total Participation",
+        "B": "When the relationship is Many-to-Many with descriptive attributes",
+        "C": "When both entity sets are weak entity sets",
+        "D": "When the relationship has partial participation on both sides"
+      },
+      "correct_key": "A",
+      "explanation": "When a 1:1 relationship has total participation on both participating entity sets, every entity in A matches exactly one in B and vice versa. Merging them into a single table introduces zero nulls and zero redundancy.",
+      "mindmap_node_id": "node_183"
+    },
+    {
+      "id": "MCQ_H10",
+      "stem": "Why does executing an UPDATE statement on an SQL view defined with a JOIN across two base tables fail to guarantee deterministic execution?",
+      "options": {
+        "A": "Because relational storage managers do not support index lookups on views",
+        "B": "Because the query optimizer cannot generate execution trees for views",
+        "C": "Because the SQL standard limits view definitions to a maximum of 256 characters",
+        "D": "Because an update on a join view can lead to ambiguous side-effects on base tables, potentially modifying unintended parent tuples or violating foreign keys"
+      },
+      "correct_key": "D",
+      "explanation": "Updating a join view can cause unpredictable side effects—such as updating shared parent attributes across multiple child rows or creating orphaned records—making unambiguous translation to base tables impossible.",
+      "mindmap_node_id": "node_224"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+1
+00:00:00,000 --> 00:00:03,440
+This is the brief on relational model foundations and integrity constraints.
+
+2
+00:00:04,400 --> 00:00:07,900
+You know, relational databases actually rely on super strict mathematical foundations
+
+3
+00:00:07,900 --> 00:00:12,300
+and integrity invariants to keep massive amounts of enterprise data perfectly structured,
+
+4
+00:00:12,740 --> 00:00:14,700
+connected, and safe from chaotic errors.
+
+5
+00:00:15,120 --> 00:00:18,860
+First, let's map out the mathematical building blocks of tables or relations.
+
+6
+00:00:19,560 --> 00:00:22,140
+A row is a tuple, and a column is an attribute.
+
+7
+00:00:22,700 --> 00:00:26,080
+To picture it simply, arity is the width or number of columns.
+
+8
+00:00:26,540 --> 00:00:28,720
+Cardinality is the height or total rows.
+
+9
+00:00:29,120 --> 00:00:29,820
+And the domain?
+
+10
+00:00:30,160 --> 00:00:31,780
+Well, the domain is basically the bouncer,
+
+11
+00:00:32,160 --> 00:00:35,040
+making sure only the exact right type of data gets into the column.
+
+12
+00:00:35,640 --> 00:00:37,520
+Second, we've got the key constraints hierarchy.
+
+13
+00:00:37,760 --> 00:00:41,540
+This narrows down from a broad super key to a minimal candidate key,
+
+14
+00:00:41,920 --> 00:00:44,760
+right down to the specific primary key chosen by the designer.
+
+15
+00:00:45,360 --> 00:00:47,320
+But what happens if a primary key is left blank?
+
+16
+00:00:47,720 --> 00:00:49,640
+Well, thanks to the entity integrity rule,
+
+17
+00:00:49,980 --> 00:00:52,100
+primary keys can never accept null values,
+
+18
+00:00:52,400 --> 00:00:55,420
+because you simply can't track a record that lacks a fundamental identity.
+
+19
+00:00:56,060 --> 00:00:59,820
+Finally, we use referential integrity and foreign keys to link our tables together.
+
+20
+00:01:00,220 --> 00:01:02,740
+But what happens when a referenced parent record is deleted?
+
+21
+00:01:03,460 --> 00:01:04,840
+SQL gives you a few options.
+
+22
+00:01:05,420 --> 00:01:06,700
+Restrict rejects the deletion.
+
+23
+00:01:07,340 --> 00:01:09,380
+Set null leaves the referencing foreign key blank.
+
+24
+00:01:09,820 --> 00:01:12,020
+And set default assigns a fallback value.
+
+25
+00:01:12,540 --> 00:01:15,360
+Then there's cascade, which is literally like falling dominoes.
+
+26
+00:01:15,360 --> 00:01:19,820
+If you delete the parent record, all the connected dependent records are automatically wiped out with it.
+
+27
+00:01:19,820 --> 00:01:24,980
+Ultimately, relational databases use precise mathematical dimensions and rigid key constraints
+
+28
+00:01:24,980 --> 00:01:29,060
+to ensure every piece of your data stays flawlessly accurate and perfectly linked.

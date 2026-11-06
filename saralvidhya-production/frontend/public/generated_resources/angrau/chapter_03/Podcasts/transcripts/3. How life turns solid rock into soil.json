@@ -1,0 +1,138 @@
+{
+  "metadata": {
+    "source_file": "3. How life turns solid rock into soil.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Lec-5 Weathering\\podcast\\3. How life turns solid rock into soil.m4a",
+    "file_size_bytes": 3537888,
+    "duration_seconds": 109.9,
+    "duration_formatted": "00:01:49",
+    "word_count": 274,
+    "character_count": 1808,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:00:12.516398",
+    "total_segments": 15
+  },
+  "full_text": "This is the brief on biological weathering. You know, it's absolutely fascinating how living things, from towering trees to tiny insects, are actively destroying solid rock to create soil, a process we see happening all around us every single day. First, let's dive into flora, where plants and microbes act as both a physical wedge and a chemical factory. Think of a mighty people tree growing right out of a temple wall. First of all, its roots act like a slow-motion crowbar. Through root wedging, expanding roots exert disruptive pressure in rock joints, splitting boulders. But what about below ground? Well, via percolation, taproots open channels for water and air into subsurface rocks. Down in the rhizosphere, root organic acids and chelators solubilize rock minerals. And thanks to microbial humus, humic and carbonic acids dissolve surrounding minerals. Second, we've got to talk about fauna, because man, animals and insects act as the earth's natural excavators. Just look at our massive road projects blasting through the western ghats. Anthropogenic impact is huge when human blasting and excavation for dams, roads, and quarrying tear through stone. Underneath it all, with burrowing fauna, tunnels weaken rocks while excredit dissolves minerals. Now, picture the towering termite mounds across the Deccan Plateau. Through termite pedoturbation, galleries transport lower horizon minerals to surface. And finally, insects literally weaponize formic acid, where biogenic secretions directly corrode mineral surfaces. Just imagine them as tiny acid-spitting miners chemically melting the earth. So what does this all mean? It means life itself, through sheer physical force and chemical warfare, is the ultimate geological engine turning solid mountains into the fertile soil that sustains us.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 2.9,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:02",
+      "text": "This is the brief on biological weathering."
+    },
+    {
+      "id": 1,
+      "start": 3.32,
+      "end": 16.3,
+      "start_formatted": "00:00:03",
+      "end_formatted": "00:00:16",
+      "text": "You know, it's absolutely fascinating how living things, from towering trees to tiny insects, are actively destroying solid rock to create soil, a process we see happening all around us every single day."
+    },
+    {
+      "id": 2,
+      "start": 16.92,
+      "end": 23.28,
+      "start_formatted": "00:00:16",
+      "end_formatted": "00:00:23",
+      "text": "First, let's dive into flora, where plants and microbes act as both a physical wedge and a chemical factory."
+    },
+    {
+      "id": 3,
+      "start": 23.68,
+      "end": 27.12,
+      "start_formatted": "00:00:23",
+      "end_formatted": "00:00:27",
+      "text": "Think of a mighty people tree growing right out of a temple wall."
+    },
+    {
+      "id": 4,
+      "start": 27.12,
+      "end": 54.88,
+      "start_formatted": "00:00:27",
+      "end_formatted": "00:00:54",
+      "text": "First of all, its roots act like a slow-motion crowbar. Through root wedging, expanding roots exert disruptive pressure in rock joints, splitting boulders. But what about below ground? Well, via percolation, taproots open channels for water and air into subsurface rocks. Down in the rhizosphere, root organic acids and chelators solubilize rock minerals. And thanks to microbial humus, humic and carbonic acids dissolve surrounding minerals."
+    },
+    {
+      "id": 5,
+      "start": 54.88,
+      "end": 62.18,
+      "start_formatted": "00:00:54",
+      "end_formatted": "00:01:02",
+      "text": "Second, we've got to talk about fauna, because man, animals and insects act as the earth's natural excavators."
+    },
+    {
+      "id": 6,
+      "start": 62.76,
+      "end": 65.98,
+      "start_formatted": "00:01:02",
+      "end_formatted": "00:01:05",
+      "text": "Just look at our massive road projects blasting through the western ghats."
+    },
+    {
+      "id": 7,
+      "start": 66.4,
+      "end": 72.58,
+      "start_formatted": "00:01:06",
+      "end_formatted": "00:01:12",
+      "text": "Anthropogenic impact is huge when human blasting and excavation for dams, roads, and quarrying tear through stone."
+    },
+    {
+      "id": 8,
+      "start": 73.4,
+      "end": 78.12,
+      "start_formatted": "00:01:13",
+      "end_formatted": "00:01:18",
+      "text": "Underneath it all, with burrowing fauna, tunnels weaken rocks while excredit dissolves minerals."
+    },
+    {
+      "id": 9,
+      "start": 78.92,
+      "end": 81.92,
+      "start_formatted": "00:01:18",
+      "end_formatted": "00:01:21",
+      "text": "Now, picture the towering termite mounds across the Deccan Plateau."
+    },
+    {
+      "id": 10,
+      "start": 81.92,
+      "end": 86.52,
+      "start_formatted": "00:01:21",
+      "end_formatted": "00:01:26",
+      "text": "Through termite pedoturbation, galleries transport lower horizon minerals to surface."
+    },
+    {
+      "id": 11,
+      "start": 87.14,
+      "end": 93.58,
+      "start_formatted": "00:01:27",
+      "end_formatted": "00:01:33",
+      "text": "And finally, insects literally weaponize formic acid, where biogenic secretions directly corrode mineral surfaces."
+    },
+    {
+      "id": 12,
+      "start": 94.3,
+      "end": 98.34,
+      "start_formatted": "00:01:34",
+      "end_formatted": "00:01:38",
+      "text": "Just imagine them as tiny acid-spitting miners chemically melting the earth."
+    },
+    {
+      "id": 13,
+      "start": 99.26,
+      "end": 100.22,
+      "start_formatted": "00:01:39",
+      "end_formatted": "00:01:40",
+      "text": "So what does this all mean?"
+    },
+    {
+      "id": 14,
+      "start": 100.76,
+      "end": 109.58,
+      "start_formatted": "00:01:40",
+      "end_formatted": "00:01:49",
+      "text": "It means life itself, through sheer physical force and chemical warfare, is the ultimate geological engine turning solid mountains into the fertile soil that sustains us."
+    }
+  ]
+}

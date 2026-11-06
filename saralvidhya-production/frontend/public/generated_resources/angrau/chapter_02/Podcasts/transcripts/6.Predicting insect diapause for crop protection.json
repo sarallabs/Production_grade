@@ -1,0 +1,186 @@
+{
+  "metadata": {
+    "source_file": "6.Predicting insect diapause for crop protection.m4a",
+    "source_path": "c:\\Users\\hulkh\\Downloads\\Gen Assest - Copy\\Assets\\ANGRAU\\Entomology\\chapter_11_metamorphosis\\Podcast\\6.Predicting insect diapause for crop protection.m4a",
+    "file_size_bytes": 3165639,
+    "duration_seconds": 98.34,
+    "duration_formatted": "00:01:38",
+    "word_count": 249,
+    "character_count": 1658,
+    "model": "whisper-large-v3",
+    "provider": "Groq",
+    "generated_at": "2026-09-23T12:01:11.548685",
+    "total_segments": 21
+  },
+  "full_text": "This is the brief on insect diapause and overwintering. Drawing from Dr. Cherkuri Srinivasarau's N-Grail Metamorphosis Lecture, we're exploring how insects use built-in biological pause buttons to survive extreme seasons, which is absolutely crucial for outsmarting devastating agricultural pests. First, what's the difference between quiescence and diapause? Well, quiescence is just an immediate arrest from direct stress. Think of it like dozing off because a room gets stuffy. It terminates immediately upon favorable conditions. Diapause, however, is a genetically programmed arrest. It's triggered in advance by a token photoperiod, meaning the insect shuts down before bad weather hits, and it requires a mandatory refractory chilling period to wake up. Second, how do they know when to hit pause? They use the photoperiod acting as an error-free astronomical calendar. We look at the critical day length, or CDL 50%. That's simply the day-length-inducing diapause in exactly 50% of a population. Finally, let's look at overwintering physiology and pest carryover. During winter hibernation, short days induce glycerol and sorbitol polyols, acting like an antifreeze, lowering their super-cooling point. Conversely, for summer estivation, long days in drought trigger wax deposition and spiricular closure to lock in moisture. So where do these pests hide? Well, the cotton pink bullworm shelters in double seeds, the rice stem borer waits in patty stubbles, and Helicoverpa pupates right down in the soil. By predicting these scheduled biological pauses, we can perfectly time our crop protection and stay one step ahead of the swarm all season long.",
+  "segments": [
+    {
+      "id": 0,
+      "start": 0,
+      "end": 4.08,
+      "start_formatted": "00:00:00",
+      "end_formatted": "00:00:04",
+      "text": "This is the brief on insect diapause and overwintering."
+    },
+    {
+      "id": 1,
+      "start": 4.48,
+      "end": 8.94,
+      "start_formatted": "00:00:04",
+      "end_formatted": "00:00:08",
+      "text": "Drawing from Dr. Cherkuri Srinivasarau's N-Grail Metamorphosis Lecture,"
+    },
+    {
+      "id": 2,
+      "start": 9.3,
+      "end": 14.58,
+      "start_formatted": "00:00:09",
+      "end_formatted": "00:00:14",
+      "text": "we're exploring how insects use built-in biological pause buttons to survive extreme seasons,"
+    },
+    {
+      "id": 3,
+      "start": 14.78,
+      "end": 19,
+      "start_formatted": "00:00:14",
+      "end_formatted": "00:00:19",
+      "text": "which is absolutely crucial for outsmarting devastating agricultural pests."
+    },
+    {
+      "id": 4,
+      "start": 19.58,
+      "end": 23.18,
+      "start_formatted": "00:00:19",
+      "end_formatted": "00:00:23",
+      "text": "First, what's the difference between quiescence and diapause?"
+    },
+    {
+      "id": 5,
+      "start": 23.6,
+      "end": 26.98,
+      "start_formatted": "00:00:23",
+      "end_formatted": "00:00:26",
+      "text": "Well, quiescence is just an immediate arrest from direct stress."
+    },
+    {
+      "id": 6,
+      "start": 26.98,
+      "end": 29.98,
+      "start_formatted": "00:00:26",
+      "end_formatted": "00:00:29",
+      "text": "Think of it like dozing off because a room gets stuffy."
+    },
+    {
+      "id": 7,
+      "start": 30,
+      "end": 32.74,
+      "start_formatted": "00:00:30",
+      "end_formatted": "00:00:32",
+      "text": "It terminates immediately upon favorable conditions."
+    },
+    {
+      "id": 8,
+      "start": 33.38,
+      "end": 36.28,
+      "start_formatted": "00:00:33",
+      "end_formatted": "00:00:36",
+      "text": "Diapause, however, is a genetically programmed arrest."
+    },
+    {
+      "id": 9,
+      "start": 36.78,
+      "end": 42.26,
+      "start_formatted": "00:00:36",
+      "end_formatted": "00:00:42",
+      "text": "It's triggered in advance by a token photoperiod, meaning the insect shuts down before bad weather hits,"
+    },
+    {
+      "id": 10,
+      "start": 42.44,
+      "end": 45.84,
+      "start_formatted": "00:00:42",
+      "end_formatted": "00:00:45",
+      "text": "and it requires a mandatory refractory chilling period to wake up."
+    },
+    {
+      "id": 11,
+      "start": 46.38,
+      "end": 48.36,
+      "start_formatted": "00:00:46",
+      "end_formatted": "00:00:48",
+      "text": "Second, how do they know when to hit pause?"
+    },
+    {
+      "id": 12,
+      "start": 48.82,
+      "end": 52.44,
+      "start_formatted": "00:00:48",
+      "end_formatted": "00:00:52",
+      "text": "They use the photoperiod acting as an error-free astronomical calendar."
+    },
+    {
+      "id": 13,
+      "start": 53,
+      "end": 55.84,
+      "start_formatted": "00:00:53",
+      "end_formatted": "00:00:55",
+      "text": "We look at the critical day length, or CDL 50%."
+    },
+    {
+      "id": 14,
+      "start": 55.84,
+      "end": 60.42,
+      "start_formatted": "00:00:55",
+      "end_formatted": "00:01:00",
+      "text": "That's simply the day-length-inducing diapause in exactly 50% of a population."
+    },
+    {
+      "id": 15,
+      "start": 61.26,
+      "end": 64.92,
+      "start_formatted": "00:01:01",
+      "end_formatted": "00:01:04",
+      "text": "Finally, let's look at overwintering physiology and pest carryover."
+    },
+    {
+      "id": 16,
+      "start": 65.48,
+      "end": 73.42,
+      "start_formatted": "00:01:05",
+      "end_formatted": "00:01:13",
+      "text": "During winter hibernation, short days induce glycerol and sorbitol polyols, acting like an antifreeze, lowering their super-cooling point."
+    },
+    {
+      "id": 17,
+      "start": 73.94,
+      "end": 80.46,
+      "start_formatted": "00:01:13",
+      "end_formatted": "00:01:20",
+      "text": "Conversely, for summer estivation, long days in drought trigger wax deposition and spiricular closure to lock in moisture."
+    },
+    {
+      "id": 18,
+      "start": 80.88,
+      "end": 82.46,
+      "start_formatted": "00:01:20",
+      "end_formatted": "00:01:22",
+      "text": "So where do these pests hide?"
+    },
+    {
+      "id": 19,
+      "start": 82.46,
+      "end": 90.86,
+      "start_formatted": "00:01:22",
+      "end_formatted": "00:01:30",
+      "text": "Well, the cotton pink bullworm shelters in double seeds, the rice stem borer waits in patty stubbles, and Helicoverpa pupates right down in the soil."
+    },
+    {
+      "id": 20,
+      "start": 91.48,
+      "end": 98.26,
+      "start_formatted": "00:01:31",
+      "end_formatted": "00:01:38",
+      "text": "By predicting these scheduled biological pauses, we can perfectly time our crop protection and stay one step ahead of the swarm all season long."
+    }
+  ]
+}

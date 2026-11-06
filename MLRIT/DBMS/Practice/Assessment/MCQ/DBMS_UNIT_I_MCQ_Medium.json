@@ -1,0 +1,140 @@
+{
+  "assessment_type": "MCQ",
+  "difficulty": "Medium",
+  "chapter_code": "DBMS_UNIT_I",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "total_questions": 10,
+  "zero_image_discipline": true,
+  "questions": [
+    {
+      "id": "MCQ_M01",
+      "stem": "How does Physical Data Independence benefit application software maintenance in an enterprise environment?",
+      "options": {
+        "A": "It enables modifying physical storage indexing or block layout without changing the conceptual schema or application code",
+        "B": "It allows modifying conceptual tables without altering user SQL view definitions",
+        "C": "It guarantees that concurrent transactions execute in serializable order without deadlock",
+        "D": "It automatically converts non-relational unstructured data into third normal form"
+      },
+      "correct_key": "A",
+      "explanation": "Physical data independence insulates conceptual schemas and application programs from modifications made to physical disk storage structures, indexing methods, or page clustering.",
+      "mindmap_node_id": "node_027"
+    },
+    {
+      "id": "MCQ_M02",
+      "stem": "In an Entity-Relationship diagram, when every entity in an entity set must participate in at least one relationship instance, what constraint is established?",
+      "options": {
+        "A": "Partial Participation represented by a single line",
+        "B": "Disjoint Constraint represented by a circle with 'd'",
+        "C": "Total Participation represented by a double line",
+        "D": "Cardinality Constraint represented by an arrow"
+      },
+      "correct_key": "C",
+      "explanation": "Total participation (existence dependency) mandates that every entity in the entity set must participate in the relationship, visually denoted by a double line.",
+      "mindmap_node_id": "node_082"
+    },
+    {
+      "id": "MCQ_M03",
+      "stem": "How is a Many-to-Many (M:N) binary relationship correctly translated into a relational database schema?",
+      "options": {
+        "A": "By embedding the primary key of either entity set as a foreign key in the other table",
+        "B": "By creating a separate associative table whose composite primary key comprises foreign keys referencing both entity tables",
+        "C": "By merging both entity tables into a single unified table with nullable columns",
+        "D": "By adding multivalued array attributes to both entity relations"
+      },
+      "correct_key": "B",
+      "explanation": "In relational design, an M:N relationship cannot be represented via foreign key embedding without duplicating rows or violating 1NF. It requires an associative table with a composite primary key.",
+      "mindmap_node_id": "node_181"
+    },
+    {
+      "id": "MCQ_M04",
+      "stem": "What is the primary key formulation for a Weak Entity Set during relational reduction?",
+      "options": {
+        "A": "The weak entity's partial discriminator key alone",
+        "B": "A newly generated system surrogate integer column",
+        "C": "The primary key of the identifying relationship set alone",
+        "D": "The composite key combining the identifying owner entity's primary key and the weak entity's discriminator"
+      },
+      "correct_key": "D",
+      "explanation": "A weak entity table's primary key is formed by taking the primary key of its identifying owner entity and concatenating it with the weak entity's discriminator (partial key).",
+      "mindmap_node_id": "node_173"
+    },
+    {
+      "id": "MCQ_M05",
+      "stem": "What foreign key action causes all child records to be automatically deleted when the referenced parent primary key row is deleted?",
+      "options": {
+        "A": "ON DELETE CASCADE",
+        "B": "ON DELETE SET NULL",
+        "C": "ON DELETE RESTRICT",
+        "D": "ON DELETE NO ACTION"
+      },
+      "correct_key": "A",
+      "explanation": "The `ON DELETE CASCADE` referential action instructs the DBMS to automatically propagate deletions from the parent table to all referencing child tuples.",
+      "mindmap_node_id": "node_154"
+    },
+    {
+      "id": "MCQ_M06",
+      "stem": "If relation R has degree 4 and cardinality 10, and relation S has degree 3 and cardinality 5, what are the degree and cardinality of the Cartesian Product (R × S)?",
+      "options": {
+        "A": "Degree 12, Cardinality 15",
+        "B": "Degree 12, Cardinality 50",
+        "C": "Degree 7, Cardinality 15",
+        "D": "Degree 7, Cardinality 50"
+      },
+      "correct_key": "D",
+      "explanation": "For Cartesian Product $R \\times S$, Degree $= \\text{Deg}(R) + \\text{Deg}(S) = 4 + 3 = 7$. Cardinality $= \\text{Card}(R) \\times \\text{Card}(S) = 10 \\times 5 = 50$.",
+      "mindmap_node_id": "node_208"
+    },
+    {
+      "id": "MCQ_M07",
+      "stem": "What requirement must two relations satisfy before Set Union (∪) or Set Difference (-) can be evaluated between them?",
+      "options": {
+        "A": "They must have identical cardinalities",
+        "B": "They must be Union-Compatible, possessing identical degree and pairwise compatible attribute domains",
+        "C": "They must share identical primary key column names",
+        "D": "They must both reside on the same physical storage volume"
+      },
+      "correct_key": "B",
+      "explanation": "Set operations require union compatibility: both relations must have the same number of attributes (same degree), and corresponding attributes must have compatible domains.",
+      "mindmap_node_id": "node_210"
+    },
+    {
+      "id": "MCQ_M08",
+      "stem": "In Extended ER (EER) modeling, what does a disjointness constraint labeled 'd' enforce across subclasses?",
+      "options": {
+        "A": "Every superclass entity must belong to at least one subclass",
+        "B": "Subclasses do not inherit the attributes of the superclass",
+        "C": "An entity instance can be a member of at most one subclass within the specialization hierarchy",
+        "D": "Entities in subclasses can exist without an identifying superclass instance"
+      },
+      "correct_key": "C",
+      "explanation": "The disjoint constraint ($d$) enforces mutual exclusion among subclasses: an entity cannot belong to more than one subclass in that specialization.",
+      "mindmap_node_id": "node_122"
+    },
+    {
+      "id": "MCQ_M09",
+      "stem": "How is a Multivalued Attribute resolved during relational schema translation to preserve First Normal Form (1NF)?",
+      "options": {
+        "A": "By creating a dedicated relation containing the multivalued attribute and the owner's primary key as a composite key",
+        "B": "By allocating five static columns (e.g., Phone1, Phone2, Phone3) in the base relation",
+        "C": "By storing the values as a comma-delimited string in the base relation",
+        "D": "By converting the attribute into an external view definition"
+      },
+      "correct_key": "A",
+      "explanation": "To satisfy 1NF atomicity, multivalued attributes are extracted into a separate table with a composite primary key consisting of the owner's primary key and the attribute value.",
+      "mindmap_node_id": "node_177"
+    },
+    {
+      "id": "MCQ_M10",
+      "stem": "Which of the following database view definitions is inherently NON-UPDATABLE under standard SQL rules?",
+      "options": {
+        "A": "A view selecting three columns from a single table with a WHERE condition",
+        "B": "A view selecting all columns of a table without any WHERE condition",
+        "C": "A view created with the WITH CHECK OPTION clause over a single table",
+        "D": "A view containing an aggregate function (AVG, SUM) and a GROUP BY clause"
+      },
+      "correct_key": "D",
+      "explanation": "Views containing aggregate functions, `GROUP BY`, `DISTINCT`, or joins cannot be directly updated because modifications cannot be mapped unambiguously to base table tuples.",
+      "mindmap_node_id": "node_222"
+    }
+  ]
+}

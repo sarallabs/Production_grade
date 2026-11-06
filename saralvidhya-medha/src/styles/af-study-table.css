@@ -1,0 +1,161 @@
+/* af-study-table.css — Auto-split from app-flow.css */
+
+
+
+/* Study Table Layout */
+.study-table-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: calc(100vw - 420px) !important;
+  /* Leaves void for tools menu on the right */
+  margin-left: calc(-50vw + 50%) !important;
+  /* Ultimate left-align override */
+  padding: 32px 56px;
+  box-sizing: border-box;
+}
+
+
+.study-table-header {
+  margin-bottom: 32px;
+}
+
+
+.study-table-header h1 {
+  margin: 0 0 8px;
+  font-size: var(--fs-h1);
+  font-weight: var(--fw-bold);
+}
+
+
+.st-page-title {
+  font-size: 1.6rem;
+  margin: 0;
+  letter-spacing: -0.02em;
+  color: #1E1040;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+
+.st-page-subtitle-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+
+.st-page-subtitle,
+.st-chapter-subtitle {
+  color: #64748B;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+
+.st-page-subtitle-sep {
+  color: #CBD5E1;
+}
+
+
+/* Breadcrumb + persona switcher side-by-side */
+.study-table-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+
+.st-sticky-controls {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  margin-top: -2px;
+  background: linear-gradient(180deg, rgba(245, 243, 255, 0.95) 0%, rgba(245, 243, 255, 0.65) 55%, rgba(245, 243, 255, 0) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+
+.study-table-body {
+  gap: 24px;
+  align-items: flex-start;
+  position: relative;
+}
+
+
+.study-table-mainview {
+  flex: 1;
+  /* Fill the safely bounded calc() wrapper */
+  width: 100%;
+  margin: 0;
+  min-width: 0;
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 48px 52px;
+  box-sizing: border-box;
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border);
+  min-height: 680px;
+  transition: none;
+  /* Instant */
+}
+
+
+.study-table-mainview.full-width {
+  flex: 1;
+}
+
+
+/* Flashcards mode — strip card chrome so only tiles + arrows show */
+.study-table-mainview.flashcards-mode {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  min-height: unset;
+}
+
+
+/* ========================================================================== */
+/* RESPONSIVITY RULES */
+/* ========================================================================== */
+
+/* Tablets (1024px and below) */
+@media (max-width: 1024px) {
+  .study-table-layout {
+    width: 100%;
+  }
+
+  .study-table-body {
+    flex-direction: column;
+  }
+
+  .tools-menu {
+    width: 100% !important;
+    /* Take full width on small screens */
+  }
+
+  .tools-menu.expanded {
+    flex: none;
+    margin-top: 24px;
+  }
+
+  .study-table-mainview {
+    width: 100% !important;
+    /* Override standard split width */
+    min-height: 50vw;
+  }
+}
+
+
+/* StudyTable top header */
+.study-table-header h1 {
+  text-align: center;
+}

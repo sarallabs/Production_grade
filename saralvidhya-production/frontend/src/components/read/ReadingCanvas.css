@@ -1,0 +1,452 @@
+/* ── Reading Canvas Layout ─────────────────────────────────────────────────── */
+.reading-canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 900px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1F2937;
+  line-height: 1.65;
+}
+
+/* ── Sub-header Controls Bar ─────────────────────────────────────────────── */
+.reading-controls-bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 4px 0 10px;
+}
+
+/* 3D Book Tier Selector */
+.persona-book-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #F3F4F6;
+  padding: 4px 6px;
+  border-radius: 12px;
+}
+
+.book-tier-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 13px;
+  color: #4B5563;
+}
+
+.book-tier-btn:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.book-tier-btn.active {
+  background: #FFFFFF;
+  color: #065F46;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.book-tier-label {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Mode Toggle: Essentials vs In-depth */
+.mode-toggle-pill {
+  display: flex;
+  align-items: center;
+  background: #E5E7EB;
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.toggle-option {
+  border: none;
+  background: transparent;
+  padding: 6px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4B5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-option.active {
+  background: #FFFFFF;
+  color: #111827;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Play Audio Button (Purple Circle) */
+.audio-stream-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #8B5CF6;
+  border: none;
+  color: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(139, 92, 246, 0.3);
+}
+
+.audio-stream-btn svg {
+  width: 16px;
+  height: 16px;
+  margin-left: 2px;
+}
+
+.audio-stream-btn.playing svg {
+  margin-left: 0;
+}
+
+.audio-stream-btn:hover {
+  background: #7C3AED;
+  transform: scale(1.06);
+}
+
+/* ── Section Title Header ─────────────────────────────────────────────────── */
+.section-header-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section-step-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #10B981;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.section-main-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.section-subtitle-text {
+  font-size: 15px;
+  color: #475569;
+  margin: 0;
+}
+
+.section-metadata-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
+
+.meta-pill.quick-check-pill {
+  background: #E2E8F0;
+  color: #1E293B;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.meta-pill.quick-check-pill:hover {
+  background: #CBD5E1;
+  color: #0F172A;
+  transform: translateY(-1px);
+}
+
+.meta-icon {
+  width: 13px;
+  height: 13px;
+}
+
+.check-icon {
+  stroke-width: 3;
+}
+
+/* ── Body Content & Dotted Terminology ────────────────────────────────────── */
+.section-article-content {
+  font-size: 15.5px;
+  color: #1E293B;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.reader-paragraph {
+  margin: 0;
+  line-height: 1.7;
+}
+
+.dotted-guidance {
+  font-size: 13px;
+  color: #64748B;
+  font-style: italic;
+}
+
+.dotted-term-interactive {
+  font-weight: 600;
+  cursor: pointer;
+  padding-bottom: 1px;
+  transition: all 0.15s ease;
+}
+
+.dotted-term-interactive:hover {
+  background: #F8FAFC;
+}
+
+.dotted-green {
+  border-bottom: 2px dotted #10B981;
+  color: #047857;
+}
+
+.dotted-blue {
+  border-bottom: 2px dotted #3B82F6;
+  color: #1D4ED8;
+}
+
+.dotted-orange {
+  border-bottom: 2px dotted #F97316;
+  color: #C2410C;
+}
+
+/* ── Interactive Figure Container ─────────────────────────────────────────── */
+.interactive-figure-container {
+  background: #FFFFFF;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  margin-top: 6px;
+}
+
+.figure-top-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.zoom-hotspot-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.zoom-hotspot-badge:hover {
+  background: #E2E8F0;
+}
+
+.zoom-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.figure-canvas {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.diagram-svg {
+  width: 100%;
+  max-height: 220px;
+}
+
+.hotspot-pin {
+  transition: transform 0.15s ease;
+}
+
+.hotspot-pin:hover {
+  transform: scale(1.15);
+}
+
+.hotspot-callout-toast {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid #10B981;
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #334155;
+}
+
+.hotspot-badge-mini {
+  font-weight: 800;
+  font-size: 11px;
+  text-transform: uppercase;
+  background: #E2ECE4;
+  color: #065F46;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.close-callout-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 14px;
+}
+
+.figure-caption-footer {
+  border-top: 1px solid #F1F5F9;
+  padding-top: 10px;
+  font-size: 12.5px;
+  color: #475569;
+  line-height: 1.5;
+  display: flex;
+  gap: 8px;
+}
+
+.fig-number {
+  font-weight: 800;
+  color: #1E293B;
+  flex-shrink: 0;
+}
+
+/* ── Popover Card for Dotted Terminology ───────────────────────────────────── */
+.term-popover-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.term-popover-card {
+  width: 90%;
+  max-width: 440px;
+  background: #FFFFFF;
+  border: 1.5px solid #CBD5E1;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.term-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.term-popover-header h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.close-term-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #94A3B8;
+}
+
+.term-definition-text {
+  margin: 0;
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.55;
+}
+
+.term-exam-tip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #FEF3C7;
+  border-left: 3px solid #F59E0B;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #92400E;
+}
+
+.exam-tip-badge {
+  font-weight: 800;
+  font-size: 10px;
+}
+
+/* ── Zoom Lightbox ────────────────────────────────────────────────────────── */
+.zoom-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.zoom-lightbox-card {
+  width: 95%;
+  max-width: 900px;
+  background: #FFFFFF;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.close-zoom-btn {
+  align-self: flex-end;
+  background: #F1F5F9;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
