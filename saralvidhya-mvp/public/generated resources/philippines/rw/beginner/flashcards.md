@@ -3,6 +3,24 @@
 **Subject:** Reading and Writing Skills | **Total Cards:** 20 Cards  
 **Audience Level:** Beginner  
 
+### Embedded Infographic Guide:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
 ---
 ### Card 01
 **Front:** What are the four kinds of reading identified by Hirschberg?  
@@ -82,21 +100,24 @@ Presenting a complex controversy as if only two extreme choices exist, ignoring 
 
 ---
 ### Card 13
-**Front:** What is a 'Bogus Claim'?  
+**Front:** What are the TWO guiding questions of a critique (Behrens & Rosen)?  
 **Back:**  
-An unsubstantiated assertion (e.g. 'Studies prove beyond doubt...') that lacks verifiable evidence or source citations.  
+1. To what extent does the author succeed in his or her purpose?
+2. To what extent do you agree with the author (evaluating assumptions)?  
 
 ---
 ### Card 14
-**Front:** Why is keeping a book clean to resell it 'penny-wise and pound-foolish'?  
+**Front:** What three criteria evaluate Informative Writing (Behrens & Rosen)?  
 **Back:**  
-Because annotating notes in the margins active engages your mind and gives you a far more valuable education.  
+1. Accuracy (verified facts)
+2. Significance (the 'So What?' test)
+3. Fair Interpretation (balanced presentation)  
 
 ---
 ### Card 15
-**Front:** What was the opening context of Andy Rooney's essay on Fowler's English Usage?  
+**Front:** What hidden assumption did Krauthammer make in his Moon op-ed?  
 **Back:**  
-Written for a 2000 Screenwriters Guild feature titled 'A Writer's Fantasy: What I Wish I Had Written'.  
+He assumed human romance and adventure are more important than scientific utility, even though robotic probes are cheaper and safer.  
 
 ---
 ### Card 16

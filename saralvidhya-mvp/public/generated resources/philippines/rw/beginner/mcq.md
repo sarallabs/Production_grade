@@ -1,7 +1,25 @@
-# Multiple Choice Questions (MCQ) - Chapter Study (Beginner Level)
+# Multiple Choice Questions (MCQ) - Chapter Test (Beginner Level)
 
 **Subject:** Reading and Writing Skills | **Unit:** Week 2  
-**Total Questions:** 20 MCQs (Single Correct Answer)  
+**Total Questions:** 20 MCQs (4 Options Each)  
+
+### Concept Map:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
 
 ---
 ### Question 1
@@ -13,7 +31,7 @@
 - D) Reading for Information  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: C</b><br/>
+<b>Correct Option: C</b><br/>
 <b>Rationale:</b> Textbook definition: Casual reading is the most common kind of reading where people glance at headlines, signs, and messages not because they want to, but because they must.
 </details>
 
@@ -27,7 +45,7 @@
 - D) It requires writing detailed academic critiques in margins  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: A</b><br/>
+<b>Correct Option: A</b><br/>
 <b>Rationale:</b> Hirschberg explains that reading for pleasure (mystery novels, romances) is relaxed and uncritical bedtime reading to transport the reader to an imaginary world.
 </details>
 
@@ -41,7 +59,7 @@
 - D) Reading mystery novels to find out who the killer is  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
+<b>Correct Option: B</b><br/>
 <b>Rationale:</b> Critical reading is active reading involving a mental dialogue with the writer, questioning claims, deducing consequences, and refusing to accept printed claims with gullibility.
 </details>
 
@@ -55,7 +73,7 @@
 - D) Because they were imaginary tales featuring mythological beasts  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
+<b>Correct Option: B</b><br/>
 <b>Rationale:</b> Montaigne called his writings 'essais' (attempts) because they were personal disclosures of an observant mind exploring its attitudes and values rather than accounts of settled dogma.
 </details>
 
@@ -69,7 +87,7 @@
 - D) Pre-writing, Drafting, Editing  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
+<b>Correct Option: B</b><br/>
 <b>Rationale:</b> Hirschberg establishes the three cognitive operations of critical reading: 1. Analysis, 2. Synthesis, and 3. Evaluation.
 </details>
 
@@ -83,7 +101,7 @@
 - D) It eliminates the need to evaluate evidence  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
+<b>Correct Option: B</b><br/>
 <b>Rationale:</b> Hirschberg states that synthesis tampers down arrogance by proving that complex, knotty subjects always have multiple viewpoints.
 </details>
 
@@ -97,7 +115,7 @@
 - D) Translate texts into ancient Latin  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: A</b><br/>
+<b>Correct Option: A</b><br/>
 <b>Rationale:</b> Evaluation empowers students to assess and grade the material read, probe arguments for and against, and take a reasoned side on the seesaw.
 </details>
 
@@ -111,176 +129,176 @@
 - D) Assume the author is an infallible genius  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Demystifying the writer means kicking them off the throne of public esteem and realizing authors are human beings prone to errors, biases, and flawed logic.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Demystifying means recognizing that authors are fallible human beings who can make mistakes of fact, logic, and bias.
 </details>
 
 ---
 ### Question 9
 **Mindmap Location:** 3. Guidelines > Opposing Point of View  
-**Question:** What historical medical discovery is cited to justify animal research when considering counter-arguments?  
-- A) Penicillin discovered on bread mold  
-- B) Insulin discovered through research on dogs  
-- C) Polio vaccine developed from plants  
-- D) Aspirin extracted from willow bark  
+**Question:** Why does Metherell advise imagining the counter-argument regarding medical testing on dogs?  
+- A) Because dogs don't feel pain  
+- B) Because dog testing led to insulin, which saves millions of human lives  
+- C) Because dogs are cheaper than guinea pigs  
+- D) Because laws prohibit testing on humans  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Metherell and Winkler cite insulin—discovered through research on dogs and prolonging millions of diabetic human lives—as the vital counter-argument when considering animal testing.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> The counter-argument shows that research on dogs saved millions of human diabetic lives through insulin, demonstrating why critical readers must weigh both sides.
 </details>
 
 ---
 ### Question 10
-**Mindmap Location:** 3. Guidelines > Biases & Assumptions  
-**Question:** To uncover potential biases and hidden assumptions in an essay, what should the critical reader inspect?  
-- A) The author's font choice and paragraph spacing  
-- B) The author's age, education, ethnic background, and biographical headnotes  
-- C) The color of the textbook cover  
-- D) The number of pages in the index  
+**Mindmap Location:** 3. Guidelines > Evidence Timestamp  
+**Question:** Why is a 1975 medical paper on human antibody generation considered outdated today?  
+- A) Because Susumu Tonegawa discovered antibody gene rearrangement in 1976  
+- B) Because paper yellows after 30 years  
+- C) Because Latin was banned in medicine in 1976  
+- D) Because antibodies were renamed in 1980  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Biographical details such as age, gender, education, and institutional background help reveal the perspective and assumptions shaping an author's claims.
+<b>Correct Option: A</b><br/>
+<b>Rationale:</b> In 1976, Dr. Susumu Tonegawa made his breakthrough discovery on antibody diversity; prior to 1976, textbooks called it an impenetrable mystery.
 </details>
 
 ---
 ### Question 11
-**Mindmap Location:** 3. Guidelines > Interdisciplinary Insights  
-**Question:** Which historical events does the textbook cite to refute the psychological claim that oppressed people naturally develop a defeatist, submissive desire?  
-- A) The French Revolution and Storming of the Bastille  
-- B) The Battles of Fallen Timbers (1794), Tippecanoe (1811), and Black Hawk War (1832)  
-- C) The Battle of Waterloo and Trafalgar  
-- D) The American Civil War battle of Gettysburg  
+**Mindmap Location:** 3. Guidelines > Logical Fallacies  
+**Question:** What logical fallacy occurs when an author attacks their opponent's character or looks instead of the argument?  
+- A) Ad Populum  
+- B) Ad Hominem  
+- C) False Dilemma  
+- D) Non Sequitur  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> The textbook cites the Battles of Fallen Timbers, Tippecanoe, and Black Hawk War to show that Native Americans fought desperately to retain territory rather than submit meekly.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Ad Hominem ('to the man') attacks the personal traits of the arguer rather than dealing with the merits of the claim.
 </details>
 
 ---
 ### Question 12
-**Mindmap Location:** 3. Guidelines > Evaluating Evidence Date  
-**Question:** Why is the year 1976 significant in the textbook's discussion of evaluating evidence?  
-- A) The invention of the personal computer  
-- B) Susumu Tonegawa discovered how the human body rearranges genes to make antibodies  
-- C) The founding of De La Salle University  
-- D) The creation of the first internet browser  
+**Mindmap Location:** 3. Guidelines > Logical Fallacies  
+**Question:** What fallacy is committed when an issue is framed as: 'Either you ban all cars, or the planet will burn tomorrow'?  
+- A) Ad Hominem  
+- B) Either/Or Reasoning (False Dilemma)  
+- C) Circular Reasoning  
+- D) Non Sequitur  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Dr. Tonegawa's 1976 discovery at MIT solved the mystery of antibody creation. Citing a pre-1976 paper today would provide inaccurate, outdated evidence.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Either/Or reasoning forces a multifaceted problem into an artificial binary choice between two extreme opposites.
 </details>
 
 ---
 ### Question 13
-**Mindmap Location:** 3. Guidelines > Values Behind Claims  
-**Question:** Upon what core moral value did Thomas Jefferson base the Declaration of Independence?  
-- A) That corporate profit is society's highest goal  
-- B) That all men are created equal  
-- C) That labor is the only source of value  
-- D) That vengeance is more important than human dignity  
+**Mindmap Location:** 4. Essay Architecture > Thesis Statement  
+**Question:** What is Mark Twain's thesis in his essay 'The Lowest Animal'?  
+- A) Animals should be given the right to vote  
+- B) Humans are the only animals that harbor insults and take revenge  
+- C) Dogs are more intelligent than cats  
+- D) Evolution stopped in the sixteenth century  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Jefferson based his arguments on the premise that 'all men are created equal', contrasting with Marx's labor value premise.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Twain's thesis is that man is the only creature that harbors insults, broods over them, and seeks petty revenge.
 </details>
 
 ---
 ### Question 14
-**Mindmap Location:** 3. Guidelines > Logical Fallacies  
-**Question:** An argument attacks a politician's physical height rather than their tax proposal. Which fallacy is being committed?  
-- A) False Analogy  
-- B) Ad Hominem  
-- C) Begging the Question  
-- D) Hasty Generalization  
+**Mindmap Location:** 4. Essay Architecture > Signposts  
+**Question:** Which of the following is a 'Premise Signal' that introduces a supporting reason?  
+- A) Therefore  
+- B) Consequently  
+- C) Inasmuch as  
+- D) It follows that  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Ad hominem attacks the person instead of addressing the actual argument or point of view.
+<b>Correct Option: C</b><br/>
+<b>Rationale:</b> 'Inasmuch as' is a premise signal introducing a reason. The others are conclusion signals.
 </details>
 
 ---
 ### Question 15
-**Mindmap Location:** 3. Guidelines > Bogus Claims  
-**Question:** Which phrase is an example of a 'Bogus Claim' that lacks verifiable proof?  
-- A) 'According to the 2024 Philippine Census Bureau report on page 12...'  
-- B) 'Dr. Tonegawa published his findings in Nature in 1976...'  
-- C) 'Recent studies show beyond doubt that most well-educated males oppose gun control.'  
-- D) 'The Battle of Fallen Timbers took place in 1794.'  
+**Mindmap Location:** 4. Essay Architecture > Signposts  
+**Question:** Which of the following is a 'Conclusion Signal' indicating a deduction?  
+- A) Since  
+- B) For the reason that  
+- C) Thus  
+- D) Because  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: C</b><br/>
-<b>Rationale:</b> Unsubstantiated claims like 'recent studies show beyond doubt' that lack specific author, citation, or methodology are classic bogus claims.
+<b>Correct Option: C</b><br/>
+<b>Rationale:</b> 'Thus' indicates that a conclusion is reached. The other options introduce premises.
 </details>
 
 ---
 ### Question 16
-**Mindmap Location:** 3. Guidelines > Opening Context  
-**Question:** What famous reference book was Andy Rooney writing about in his satirical essay?  
-- A) Webster's Collegiate Dictionary  
-- B) Fowler's Modern English Usage  
-- C) Roget's International Thesaurus  
-- D) The Chicago Manual of Style  
+**Mindmap Location:** 7. Critical Reading for Critique > Two Questions  
+**Question:** According to Behrens and Rosen, what are the two core questions for writing an academic critique?  
+- A) 1. How many pages is the text? 2. What font was used?  
+- B) 1. To what extent does the author succeed in their purpose? 2. To what extent do you agree with the author?  
+- C) 1. Did the author win an award? 2. How much does the book cost?  
+- D) 1. Can you read it aloud? 2. Do you like the cover art?  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Rooney wrote about wishing he had authored Henry Watson Fowler's classic 'A Dictionary of Modern English Usage' (1926).
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Behrens and Rosen define critique around two questions: Question 1 assesses authorial success in purpose, and Question 2 assesses critical agreement and assumptions.
 </details>
 
 ---
 ### Question 17
-**Mindmap Location:** 4. Essay Architecture > Finding Thesis  
-**Question:** What is the central thesis of Mark Twain's essay 'The Lowest Animal'?  
-- A) Higher animals are more intelligent than humans  
-- B) Man is the only animal that harbors insults, broods over them, and takes revenge  
-- C) Anacondas can swallow seven calves in one meal  
-- D) Humans evolved from lower quadrupeds without emotion  
+**Mindmap Location:** 7. Critical Reading for Critique > Informative Criteria  
+**Question:** When evaluating informative writing, what is the 'So What?' test according to Behrens and Rosen?  
+- A) The test of grammar correctness  
+- B) The test of Significance—whether the facts are meaningful and important rather than trivial  
+- C) The test of whether the essay rhymes  
+- D) The test of whether the text can be summarized in one word  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Twain's thesis asserts that man is the only animal that harbors insults and injuries, broods over them, waits for a chance, and takes revenge.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> The 'So What?' question represents Significance: even completely accurate facts fail if they are trivial and lack meaningful relevance.
 </details>
 
 ---
 ### Question 18
-**Mindmap Location:** 4. Essay Architecture > Signposts  
-**Question:** Which of the following is a PREMISE signal that introduces supporting reasons?  
-- A) Therefore  
-- B) Consequently  
-- C) Inasmuch as  
-- D) Hence  
+**Mindmap Location:** 7. Critical Reading for Critique > Krauthammer Op-Ed  
+**Question:** In Charles Krauthammer's op-ed 'The Moon We Left Behind', what major concession does he make about robotic probes?  
+- A) Robotic probes are useless and never take good photos  
+- B) Robotic probes are cheaper, safer, and yield superior scientific data  
+- C) Robots are controlled by foreign adversaries  
+- D) Probes are more expensive than manned Apollo missions  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: C</b><br/>
-<b>Rationale:</b> 'Inasmuch as', 'because', 'since', and 'for' are premise signals. 'Therefore', 'consequently', and 'hence' are conclusion signals.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Krauthammer explicitly concedes that robotic probes are vastly cheaper, safe from human loss of life, and yield superior scientific data per dollar.
 </details>
 
 ---
 ### Question 19
-**Mindmap Location:** 5. Intertextuality > Forms  
-**Question:** A novelist incorporates the story of Rosa Parks's 1955 bus protest into a chapter. Which form of intertextuality is this?  
-- A) Book in a Book  
-- B) Other Text in a Book  
-- C) Hypertext Protocol  
-- D) Accidental Plagiarism  
+**Mindmap Location:** 5. Intertextuality > Definition  
+**Question:** How do Dharwadker and his co-authors define Intertextuality?  
+- A) Reading a book while listening to music  
+- B) The reference to or application of a literary, media, or social text inside another text  
+- C) Translating English texts into Filipino  
+- D) Using highlighters to color code textbook pages  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Form 2 ('Other Text in a Book') is the reference to a media or social narrative that has story-like quality within a literary work.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Intertextuality is the borrowing or application of a literary, media, or social 'text' inside another text.
 </details>
 
 ---
 ### Question 20
-**Mindmap Location:** 5. Intertextuality > Functions  
-**Question:** When intertextuality shakes up our comfortable understanding of a classic story or primary text, which function is at work?  
-- A) Comparison  
-- B) Destabilization  
-- C) Formatting  
-- D) Memorization  
+**Mindmap Location:** 5. Intertextuality > Transformative Effects  
+**Question:** What happens when a new book borrows a famous classic story (reflexive re-reading)?  
+- A) The classic story is automatically erased from library catalogs  
+- B) The reader's memory and understanding of the original classic is permanently transformed  
+- C) The reader is forbidden from reading the original text  
+- D) The author of the new book is sued for copyright infringement  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Answer: B</b><br/>
-<b>Rationale:</b> Destabilization shakes up or subverts our settled understanding of either the original referenced text or the primary host book.
+<b>Correct Option: B</b><br/>
+<b>Rationale:</b> Dharwadker's second effect is the reflexive transformation of the prior text—reading a retelling permanently alters how we view the original work.
 </details>
 
 ---

@@ -4,6 +4,25 @@
 **Total Questions:** 30 Questions (15 Short Answer + 15 Long Answer)  
 **Academic Target:** Applied Analytical Rigor, Evidentiary Auditing & Rhetorical Mastery  
 
+### Conceptual Schematic:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 Systematic Framework for Academic Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["Question 1: Author's Teleological Success"]
+        Q1_INFO["📄 Informative Discourse<br/>• <b>Accuracy</b>: Empirical verification<br/>• <b>Significance</b>: The 'So What?' threshold<br/>• <b>Fair Interpretation</b>: Balanced context vs selective cherry-picking"]
+        Q1_PERS["🎯 Persuasive Discourse<br/>• Structural coherence of thesis & premises<br/>• Handling of counterarguments & concessions"]
+    end
+    
+    subgraph Q2["Question 2: Critical Alignment & Assumption Auditing"]
+        Q2_WARRANTS["🔍 Hidden Assumptions & Tacit Warrants<br/>• <b>2008 Financial Crisis</b>: Assumption that real-estate prices never fall nationwide<br/>• <b>Krauthammer Case</b>: Manned flight romanticized over cost-effective robotic science"]
+        Q2_IDEOLOGY["⚡ Ideological Contradiction<br/>• Conservative anti-spending stance vs demand for massive federal NASA outlay"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
 ---
 
 ## PART A: SHORT ANSWER QUESTIONS (15 QUESTIONS)
@@ -114,18 +133,19 @@ Commissioned for a Screenwriters Guild feature called *A Writer's Fantasy*, Roon
 ---
 
 ### Question 14
-**Mindmap Location:** 5. Intertextuality > Form 2  
-**Question:** What distinguishes Form 2 ("Other Text in a Book") from mere casual cultural name-dropping?  
+**Mindmap Location:** 7. Critical Reading for Critique > Two Guiding Questions  
+**Question:** What two foundational questions structure an academic critique according to Behrens and Rosen?  
 **Solution:**  
-In Form 2, the referenced cultural or historical event (e.g., Rosa Parks's bus protest) possesses an innate narrative arc that introduces an active storyline into the host text.
+1. Question 1: To what extent does the author succeed in his or her purpose (whether informative, persuasive, or entertaining)?  
+2. Question 2: To what extent do you agree with the author (analyzing their underlying assumptions and philosophical warrants)?
 
 ---
 
 ### Question 15
-**Mindmap Location:** 6. Hypertext vs Intertextuality  
-**Question:** In what sense is Intertextuality the cognitive precursor to digital Hypertext?  
+**Mindmap Location:** 7. Critical Reading for Critique > Informative Criteria  
+**Question:** Contrast the criterion of "Accuracy" with "Significance" (the "So What?" question) in informative writing.  
 **Solution:**  
-Long before electronic hyperlinks connected digital documents across the web, intertextuality connected cultural, narrative, and historical concepts across human memory.
+Accuracy verifies that empirical statements are factually true and verifiable. Significance evaluates whether those accurate facts are intellectually meaningful and relevant to the inquiry; an essay can be 100% accurate while remaining trivial and useless.
 
 ---
 
@@ -232,47 +252,48 @@ Writers sometimes use confident conclusion signals (*therefore, thus, consequent
 ---
 
 ### Question 26
-**Mindmap Location:** 5. Intertextuality > Three Functions  
-**Question:** Evaluate the "Destabilization" function of intertextuality. How can an intertext unsettle our understanding of a classic narrative?  
+**Mindmap Location:** 5. Intertextuality > Tripartite Functional Engine  
+**Question:** Dissect the tripartite functional engine of Intertextuality (Comparison, Dialogue, Destabilization). How does destabilization challenge canonical authority?  
 **Solution:**  
-Destabilization disrupts settled cultural interpretations:  
-* In Jean Rhys's *Wide Sargasso Sea*, the novel reimagines Charlotte Brontë's *Jane Eyre* from the perspective of Bertha Mason, the "madwoman in the attic."  
-* By giving Bertha a voice and detailing her Caribbean history and colonial victimization, Rhys destabilizes *Jane Eyre*. Readers can never again view Mr. Rochester as a purely romantic hero; the intertext exposes the colonial and patriarchal violence underpinning the classic canon.
+* **Comparison:** Establishes an analogical bridge, inviting the reader to evaluate similarities and differences between hypotext and host text.  
+* **Dialogue:** Creates a polyphonic discourse where competing ideologies and historical voices converse and contest authority.  
+* **Destabilization:** Subverts settled assumptions. When a modern author rewrites a classic from the perspective of an oppressed subaltern character (e.g., Jean Rhys rewriting *Jane Eyre* from the perspective of Bertha Mason in *Wide Sargasso Sea*), it destabilizes the classic's canonical moral authority, exposing unexamined colonialist biases in the original.
 
 ---
 
 ### Question 27
-**Mindmap Location:** 5. Intertextuality > Three Effects  
-**Question:** Explain the concept of "Reflexive Transformation of a Prior Text" resulting from intertextual engagement.  
+**Mindmap Location:** 5. Intertextuality > Hermeneutic Consequences  
+**Question:** Explain Dharwadker's concept of "Reflexive Retro-Reading" as a transformative effect of intertextuality.  
 **Solution:**  
-* Even when an original historical or classic text remains unchanged in print, placing it inside a new host work forces readers to look back and re-evaluate the original source reflexively.  
-* The modern host text highlights latent assumptions, moral blind spots, or alternative perspectives in the original work. Reading the modern work permanently alters the cultural lens through which the classic is perceived.
+Reflexive retro-reading means that intertextual engagement does not merely flow forward from past to present; it flows backward retrospectively. When a reader engages with a powerful contemporary adaptation or subversion of a classic text, their cognitive memory of the original text is permanently altered. Even though the printed words of the original classic remain untouched, the reader can never read that original text again with uncritical innocence; it is now perpetually filtered through the lens of the subsequent intertext.
 
 ---
 
 ### Question 28
-**Mindmap Location:** 6. Hypertext vs Intertextuality  
-**Question:** Compare and contrast the navigational autonomy of a user in digital Hypertext with the hermeneutic agency of a reader decoding Intertextuality.  
+**Mindmap Location:** 6. Hypertext vs. Intertextuality Matrix  
+**Question:** Evaluate the epistemological intersection between digital Hypertext and literary Intertextuality.  
 **Solution:**  
-* **Hypertext Autonomy:** The user exercises physical, non-linear agency by choosing which hyperlinks to click, determining their own reading pathway across web nodes. However, the links are explicitly pre-programmed by the web developer.  
-* **Intertextual Agency:** The reader exercises cognitive, hermeneutic agency. The intertextual echoes are not clickable blue links; they require the reader's cultural literacy, memory, and analytical intellect to activate. The dialogue happens within human consciousness.
+* **Structural Parallel:** Both systems reject rigid linear sequencing in favor of associative, networked navigation.  
+* **Technological vs. Cognitive:** Hypertext executes non-linear linkage externally via digital code, HTTP protocols, and clickable hyperlinks. Intertextuality executes non-linear linkage internally across the reader's cultural consciousness and cognitive schema.  
+* **Epistemic Convergence:** Hypertext is the technological materialization of intertextuality. Intertextuality proves that human consciousness has always operated as a non-linear, hyperlinked web of narrative associations across centuries.
 
 ---
 
 ### Question 29
-**Mindmap Location:** 3. Guidelines > Fallacy Catalog  
-**Question:** Deconstruct the *False Analogy* and *Either/Or Dilemma* fallacies. Why are they particularly pervasive in modern political rhetoric?  
+**Mindmap Location:** 7. Critical Reading for Critique > Subprime Mortgage Crisis  
+**Question:** Deconstruct the role of unexamined assumptions in the 2008 Subprime Mortgage Financial Collapse as analyzed by Behrens and Rosen. What epistemic lesson does this provide for critical thinkers?  
 **Solution:**  
-* **False Analogy:** Treats two structurally distinct systems as identical (e.g., comparing a national sovereign economy to a family household budget). It is pervasive because it simplifies complex systemic issues into relatable, everyday domestic metaphors.  
-* **Either/Or Dilemma:** Collapses complex policy controversies into stark binary ultimatums (e.g., "Either we eliminate regulations, or businesses will collapse"). It is pervasive because it triggers tribal fear, eliminates nuanced compromise, and mobilizes voter bases.
+* **Unexamined Assumption:** The entire global financial pyramid of mortgage-backed securities, collateralized debt obligations (CDOs), and credit default swaps was built upon a single unexamined warrant: *that U.S. residential real estate prices would never experience a nationwide decline.*  
+* **Systemic Blindness:** Because this warrant was treated as an self-evident axiom, rating agencies granted AAA ratings to subprime bonds, and lenders abandoned basic income verification standards. When nationwide home prices depreciated, the unexamined warrant was falsified, triggering a near-total collapse of global liquidity.  
+* **Epistemic Lesson:** When foundational assumptions remain unstated and untested, catastrophic systemic failure ensues. Critical reading is not an academic luxury; it is a safeguard against collective cognitive delusion.
 
 ---
 
 ### Question 30
-**Mindmap Location:** 7. Academic Critique > Methodological Synthesis  
-**Question:** Synthesize the essential components of an academic critique. How does a critical reader balance objective summary with rigorous critical appraisal?  
+**Mindmap Location:** 7. Critical Reading for Critique > Krauthammer Rhetorical Analysis  
+**Question:** Conduct a rigorous rhetorical critique of Charles Krauthammer's op-ed "The Moon We Left Behind" (Time, 2009). Dissect his claims, concessions, hidden warrants, and ideological contradictions.  
 **Solution:**  
-An academic critique balances two ethical duties:  
-1. **Objective Summary (Fair Representation):** The critic must reconstruct the author's thesis, supporting premises, and evidence without strawman distortion, demonstrating accurate comprehension.  
-2. **Rigorous Critical Appraisal (Evaluation):** The critic evaluates the argument's evidentiary sufficiency, recency, ideological warrants, and logical validity. The critic tests counter-arguments and identifies fallacies.  
-Balancing both ensures that the critique is not an emotional attack, but a scholarly intervention in the ongoing pursuit of truth.
+* **Thesis & Diction:** Commemorating Apollo 11's 40th anniversary, Krauthammer deploys emotive, loaded rhetoric (*"ignominious retreat," "abandonment," "loss of national nerve"*) to argue that America must recommit to manned space exploration.  
+* **Concession of Counterarguments:** To his rhetorical credit, Krauthammer acknowledges the primary counterargument: unmanned robotic rovers and space telescopes are vastly cheaper, eliminate risk to human life, and produce vastly superior scientific returns per dollar invested.  
+* **Tacit Warrants:** Having conceded that science favors robots, Krauthammer insists humans must return. This reveals his tacit warrant: *The primary value of space exploration is not scientific utility or cost-benefit efficiency, but national prestige, existential adventure, and heroic frontier mythology.*  
+* **Ideological Contradiction:** Krauthammer was an iconic conservative commentator celebrated for fiercely opposing government bureaucracy and profligate federal spending. Yet in this essay, his romantic nationalism compels him to champion a multi-billion dollar state-run government enterprise (NASA). A critical reader identifies this stark philosophical tension between his fiscal conservatism and his romantic statism.

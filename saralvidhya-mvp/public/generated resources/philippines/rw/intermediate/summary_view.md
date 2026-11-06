@@ -3,7 +3,7 @@
 **Subject:** Reading and Writing Skills | **Unit:** Week 2 Curriculum  
 **Audience Level:** Intermediate (Undergraduate Prep & Applied Analytical Rigor)  
 **Target Bloom's Levels:** Understanding (L-2), Applying (L-3) & Analyzing (L-4)  
-**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md  
+**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md, critical-reading.docx  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
@@ -111,7 +111,40 @@ Critical readers audit texts against common distortions of reasoning:
 
 ---
 
-## 🖼️ 5. Intertextuality & Hypertext Framework
+## 🖼️ 5. Formal Critique Mechanics & Assumption Auditing (Behrens & Rosen Ch. 2)
+
+In Chapter 2 of *Writing and Reading Across the Curriculum*, Behrens and Rosen formalize critical reading into written critique:
+
+```mermaid
+flowchart TD
+    CRITIQUE["📝 Systematic Framework for Academic Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["Question 1: Author's Teleological Success"]
+        Q1_INFO["📄 Informative Discourse<br/>• <b>Accuracy</b>: Empirical verification<br/>• <b>Significance</b>: The 'So What?' threshold<br/>• <b>Fair Interpretation</b>: Balanced context vs selective cherry-picking"]
+        Q1_PERS["🎯 Persuasive Discourse<br/>• Structural coherence of thesis & premises<br/>• Handling of counterarguments & concessions"]
+    end
+    
+    subgraph Q2["Question 2: Critical Alignment & Assumption Auditing"]
+        Q2_WARRANTS["🔍 Hidden Assumptions & Tacit Warrants<br/>• <b>2008 Financial Crisis</b>: Assumption that real-estate prices never fall nationwide<br/>• <b>Krauthammer Case</b>: Manned flight romanticized over cost-effective robotic science"]
+        Q2_IDEOLOGY["⚡ Ideological Contradiction<br/>• Conservative anti-spending stance vs demand for massive federal NASA outlay"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
+### The Two Core Inquiries:
+1. **Question 1: To what extent does the author succeed in their purpose?**
+   * *Informative Writing Criteria:* **Accuracy** (factual veracity), **Significance** (the "So What?" hurdle), and **Fair Interpretation** (avoiding biased omissions).
+   * *Persuasive Writing Criteria:* Scrutinizing thesis coherence, empirical support, and counterargument refutation.
+2. **Question 2: To what extent do you agree with the author?**
+   * *Assumption Auditing:* Interrogating explicit and tacit presuppositions.
+   * *The 2008 Subprime Mortgage Case:* A multi-trillion dollar crisis fueled by the unexamined assumption that housing values would perpetually appreciate.
+   * *Charles Krauthammer's "The Moon We Left Behind":* Concedes robotic probes are cheaper, safer, and yield superior data, yet insists on human exploration due to an unexamined romantic/nationalistic warrant—revealing an ideological contradiction between his small-government conservatism and advocacy for massive NASA spending.
+
+---
+
+## 🖼️ 6. Intertextuality & Hypertext Framework
 
 Grounded in Dharwadker, Harrison, Lemaster, and Bourenane:
 

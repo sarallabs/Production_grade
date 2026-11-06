@@ -5,7 +5,7 @@
 **Academic References:**  
 1. Metherell, J.R. & Winkler, A. (2007). *Readings for Writers* (2nd ed., pp. 1-10).  
 2. Hirschberg, S. & Hirschberg, T. (2009). *The Millennium Reader* (5th ed., pp. 1-3).  
-3. Behrens, L. & Rosen, L. (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-55).  
+3. Behrens, L. & Rosen, L. (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-77, Ch. 1 & 2).  
 4. Dharwadker, Dharwadker, Harrison, Lemaster, & Bourenane. *What is Intertextuality?* (p. 70).  
 5. DLSU Senior High School Department (2024-2025). *Critical Reading as Looking for Ways of Thinking* (`critical reading.md`).  
 
@@ -114,14 +114,13 @@ graph TD
         F6["⚡ Non Sequitur<br/>Unwarranted leap lacking logical bridge from premises"]
     end
 ```
-12. **Don't be seduced by bogus claims:** Reject unverified declarations ("Studies show beyond doubt...") lacking transparency, sample size, or verifiable citations.
-13. **Annotate your reading:** Writing marginalia converts passive reading into an active academic seminar. Avoiding notes to protect resale value is "penny-wise and pound-foolish."
-14. **Understand the writer's opening context:** Situate the text within ongoing historical and cultural debates.  
-   * *Case Study (Andy Rooney on Fowler):* Written for the 2000 Screenwriters Guild symposium *A Writer's Fantasy: What I Wish I Had Written*, Rooney's essay satirizes grammatical pedantry (split infinitives, zeugma, syllepsis, and fusty rules like "It is I"). Without understanding this comedic context, the essay's rhetorical purpose is lost.
+12. **Don't be seduced by bogus claims:** Demand verifiable citations; reject phantom consensus phrases like "Studies prove beyond doubt."
+13. **Annotate your reading:** Scribble actively. Preserving textbook resale condition is "penny-wise and pound-foolish"; marginalia produces lifelong cognitive dividends.
+14. **Understand the opening context:** Trace the historical prompt. Andy Rooney's essay on Fowler's *Modern English Usage* was written for the Screenwriters Guild symposium *A Writer's Fantasy* (2000), using satirical irony to lampoon pedantic grammatical prescriptivism.
 
 ---
 
-## 4. Essay Architecture: Thesis Identification & Reasoning Signposts
+## 4. Argument Architecture: Thesis Formulations & Logical Connectives
 
 ```mermaid
 flowchart LR
@@ -144,16 +143,53 @@ flowchart LR
     INPUT ==> CORE ==> DEDUCTION
 ```
 
-In *Writing and Reading Across the Curriculum*, Behrens and Rosen establish that expository and argumentative essays rely on identifiable structural conventions:
-* **The Central Thesis:** Typically positioned within the introductory paragraphs, the thesis asserts the author's response to an issue open to debate.
-  * *Mark Twain Case Study (The Lowest Animal):* Twain shocks the audience by overturning evolutionary hierarchies:
-    > *"In the course of my experiments I convinced myself that among the animals man is the only one that harbors insults and injuries, broods over them, waits till a chance offers, then takes revenge. The passion of revenge is unknown to the higher animals."*
-* **Premise Signals (Reasoning Starters):** *since, because, for, as, follows from, as shown by, inasmuch as, otherwise, as indicated by, the reason is that, may be inferred from, may be derived from, may be deduced from, in view of the fact that*.
-* **Conclusion Signals (Reasoning Closers):** *therefore, hence, thus, so, accordingly, in consequence, it follows that, we may infer, I conclude that, in conclusion, in summary, which shows that, which means that, and which entails, consequently, proves that, as a result, which implies that, points to the conclusion that*.
+* **Thesis Formulations:** The conceptual spine of formal prose. Mark Twain's thesis in *The Lowest Animal* asserts that humans are uniquely degraded by harbored grudges and vindictive retribution.
+* **Premise Signals:** *because, since, for, as, follows from, inasmuch as, in view of the fact that, the reason is that*.
+* **Conclusion Signals:** *therefore, hence, thus, so, accordingly, in consequence, it follows that, we may infer, consequently*.
 
 ---
 
-## 5. Intertextuality & Hypertext: Cultural Memory and Non-Linear Networks
+## 5. The Art of Critique & Assumption Auditing (Behrens & Rosen Ch. 2)
+
+```mermaid
+flowchart TD
+    CRITIQUE["📝 Systematic Framework for Academic Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["Question 1: Author's Teleological Success"]
+        Q1_INFO["📄 Informative Discourse<br/>• <b>Accuracy</b>: Empirical verification<br/>• <b>Significance</b>: The 'So What?' threshold<br/>• <b>Fair Interpretation</b>: Balanced context vs selective cherry-picking"]
+        Q1_PERS["🎯 Persuasive Discourse<br/>• Structural coherence of thesis & premises<br/>• Handling of counterarguments & concessions"]
+    end
+    
+    subgraph Q2["Question 2: Critical Alignment & Assumption Auditing"]
+        Q2_WARRANTS["🔍 Hidden Assumptions & Tacit Warrants<br/>• <b>2008 Financial Crisis</b>: Assumption that real-estate prices never fall nationwide<br/>• <b>Krauthammer Case</b>: Manned flight romanticized over cost-effective robotic science"]
+        Q2_IDEOLOGY["⚡ Ideological Contradiction<br/>• Conservative anti-spending stance vs demand for massive federal NASA outlay"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
+A critique is a formalized evaluation of a written discourse. Laurence Behrens and Leonard Rosen establish that writing an academic critique requires answering two systematic questions:
+
+### Question 1: To What Extent Does the Author Succeed in His or Her Purpose?
+* **Informative Discourse:**
+  * **Accuracy:** Verifying factual accuracy against empirical benchmarks.
+  * **Significance ("The So What? Test"):** Facts can be perfectly accurate yet intellectually trivial. Significance requires that the data meaningfully advance the reader's understanding of the subject.
+  * **Fair Interpretation:** Assessing whether the author contextualizes facts fairly or suppresses contradictory data.
+* **Persuasive Discourse:** Auditing whether the thesis is supported by coherent claims, valid inductive/deductive reasoning, and respectful treatment of opposing positions.
+
+### Question 2: To What Extent Do You Agree with the Author?
+This demands evaluating the author's **hidden assumptions**—the tacit warrants connecting premises to claims.
+* **The 2008 Subprime Mortgage Financial Collapse:** Behrens and Rosen examine how global financial institutions, credit agencies, and home buyers predicated a multi-trillion dollar derivative market upon an unexamined hidden assumption: that U.S. residential real estate prices would perpetually appreciate. When home values plummeted, the entire global financial architecture buckled.
+* **Charles Krauthammer's "The Moon We Left Behind" (Time, 2009):**
+  * *Thesis & Rhetorical Diction:* Commemorating Apollo 11's 40th anniversary, Krauthammer laments America's abandonment of manned space exploration, employing loaded terms (*retreat, abandonment, loss of nerve*).
+  * *Concession of Counterarguments:* Krauthammer explicitly concedes that robotic probes are cheaper, safer, and provide far better scientific data per dollar.
+  * *Uncovering Tacit Assumptions:* Despite his concession, Krauthammer insists humans must explore space. Why? His underlying warrant assumes that the primary objective of space exploration is not scientific utility, but human romance, national destiny, and frontier heroism.
+  * *Ideological Tension:* Krauthammer was a prominent conservative columnist dedicated to small government and fiscal restraint. Yet in this essay, his romantic nationalism compels him to champion a colossal, taxpayer-funded state enterprise (NASA).
+
+---
+
+## 6. Intertextuality & Hypertext: Cultural Memory and Non-Linear Networks
 
 ```mermaid
 flowchart TD

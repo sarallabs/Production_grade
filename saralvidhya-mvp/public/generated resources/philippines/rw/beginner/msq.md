@@ -3,6 +3,24 @@
 **Subject:** Reading and Writing Skills | **Unit:** Week 2  
 **Total Questions:** 10 MSQs (One or More Correct Answers)  
 
+### Concept Map:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
 ---
 ### Question 1
 **Mindmap Location:** 1. Taxonomy of Reading > Four Kinds  
@@ -89,20 +107,34 @@
 
 ---
 ### Question 7
-**Mindmap Location:** 5. Intertextuality > Forms  
-**Question:** Which of the following are the TWO primary forms of intertextuality identified by Dharwadker et al.? (Select ALL that apply)  
-- [ ] A) Book in a Book (literary text in another literary text)  
-- [ ] B) Binary Code in a Spreadsheet  
-- [ ] C) Other Text in a Book (media or social narrative in literature)  
-- [ ] D) Hyperlink in an HTML file  
+**Mindmap Location:** 7. Critical Reading for Critique > Informative Criteria  
+**Question:** Which of the following are the THREE criteria used to evaluate informative writing according to Behrens and Rosen? (Select ALL that apply)  
+- [ ] A) Accuracy (verified facts)  
+- [ ] B) Significance (passing the 'So What?' test)  
+- [ ] C) Fair Interpretation (objective, non-cherry-picked presentation)  
+- [ ] D) Poetic Rhyme Scheme  
 
 <details><summary>Click to view Answer</summary>
-<b>Correct Options: A, C</b><br/>
-<b>Rationale:</b> Dharwadker defines Form 1 as 'Book in a Book' and Form 2 as 'Other Text in a Book'.
+<b>Correct Options: A, B, C</b><br/>
+<b>Rationale:</b> Behrens and Rosen outline Accuracy, Significance, and Fair Interpretation as the three criteria for informative writing.
 </details>
 
 ---
 ### Question 8
+**Mindmap Location:** 7. Critical Reading for Critique > Hidden Assumptions  
+**Question:** Which of the following statements about HIDDEN ASSUMPTIONS are TRUE based on Behrens & Rosen? (Select ALL that apply)  
+- [ ] A) An assumption is an unproven foundational belief taken for granted  
+- [ ] B) Unexamined assumptions in finance led directly to the 2008 subprime mortgage collapse  
+- [ ] C) Krauthammer's op-ed relied on the hidden assumption that human heroism matters more than robotic data  
+- [ ] D) Assumptions never influence real-world economic or political decisions  
+
+<details><summary>Click to view Answer</summary>
+<b>Correct Options: A, B, C</b><br/>
+<b>Rationale:</b> Assumptions are foundational beliefs taken for granted; unexamined assumptions crashed the 2008 mortgage market, and Krauthammer relied on romantic assumptions about human presence.
+</details>
+
+---
+### Question 9
 **Mindmap Location:** 5. Intertextuality > Functions  
 **Question:** Which of the following are the THREE primary functions of intertextuality? (Select ALL that apply)  
 - [ ] A) Comparison  
@@ -116,7 +148,7 @@
 </details>
 
 ---
-### Question 9
+### Question 10
 **Mindmap Location:** 5. Intertextuality > Transformative Effects  
 **Question:** Which of the following are the TRANSFORMATIVE EFFECTS produced by intertextuality? (Select ALL that apply)  
 - [ ] A) Transformation of the Primary Book  
@@ -127,20 +159,6 @@
 <details><summary>Click to view Answer</summary>
 <b>Correct Options: A, B, C</b><br/>
 <b>Rationale:</b> Intertextuality transforms the primary book, reflexively transforms the prior text, and triggers simultaneous reinterpretation of both.
-</details>
-
----
-### Question 10
-**Mindmap Location:** 3. Guidelines > Demystifying Authors  
-**Question:** Why do Metherell and Winkler urge students to demystify writers? (Select ALL that apply)  
-- [ ] A) Because writers are only human and prone to error  
-- [ ] B) Because writers have personal biases and hidden assumptions  
-- [ ] C) Because seeing writers as fallible empowers students to think independently  
-- [ ] D) Because all published writers intentionally lie to readers  
-
-<details><summary>Click to view Answer</summary>
-<b>Correct Options: A, B, C</b><br/>
-<b>Rationale:</b> Writers are fallible humans with personal biases; recognizing this empowers students to read critically. It is false that all writers intentionally lie.
 </details>
 
 ---

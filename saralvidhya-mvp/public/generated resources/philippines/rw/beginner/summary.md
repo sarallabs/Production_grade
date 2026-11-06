@@ -3,7 +3,7 @@
 **Subject:** Reading and Writing Skills | **Unit:** Week 2  
 **Audience Level:** Beginner (Foundational & Visual Learner Focus)  
 **Target Bloom's Levels:** Remembering (L-1) & Understanding (L-2)  
-**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md  
+**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md, critical_reading_and_critique_extracted.md  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
@@ -63,15 +63,72 @@ flowchart TD
     PREMISES ==> THESIS ==> CONCLUSIONS
 ```
 
-* **Finding the Thesis:** Discovering the single sentence that states the author's response to a controversial topic (e.g. Mark Twain's thesis in *The Lowest Animal* that man is the only creature that holds grudges and takes revenge).
-* **Premise Signals (Starting Reasons):** *since, because, for, as, follows from, as shown by, inasmuch as*.
-* **Conclusion Signals (Outcomes):** *therefore, hence, thus, so, accordingly, in consequence, it follows that, consequently*.
+* **Thesis Statement:** A single sentence asserting the author's central stance on a debatable topic (e.g. Mark Twain's thesis that only humans seek petty revenge).
+* **Premise Signals:** Words that announce reasons (*because, since, for, follows from, inasmuch as*).
+* **Conclusion Signals:** Words that announce outcomes (*therefore, thus, hence, consequently, it follows that*).
 
 ---
 
-## 🖼️ 4. Infographic: Intertextuality Framework
+## 🖼️ 4. Infographic: Common Logical Fallacies
 
-According to Dharwadker, Harrison, Lemaster, and Bourenane, **intertextuality** is when one text refers to or borrows another text:
+```mermaid
+graph TD
+    FALLACIES["Common Logical Fallacies"]
+    F1["👤 Ad Hominem: Attacking the person"]
+    F2["📢 Ad Populum: Slogans & bandwagon"]
+    F3["⚖️ Either/Or: False black-or-white choice"]
+    F4["🔄 Begging the Question: Circular logic"]
+    F5["🚫 Non Sequitur: Conclusion doesn't follow"]
+    
+    FALLACIES --> F1
+    FALLACIES --> F2
+    FALLACIES --> F3
+    FALLACIES --> F4
+    FALLACIES --> F5
+```
+
+Never accept an argument on eloquent words alone! Watch out for:
+* **Ad Hominem:** Attacking the person instead of the argument.
+* **Ad Populum:** Appealing to popular slogans or bandwagon emotions.
+* **Either/Or (False Dilemma):** Pretending there are only two extreme choices.
+* **Begging the Question:** Circular reasoning where the claim assumes its own conclusion.
+* **Non Sequitur:** Making a leap that doesn't follow from the evidence.
+
+---
+
+## 🖼️ 5. Infographic: The Two Questions of a Critique & Assumptions
+
+In Chapter 2 of *Writing and Reading Across the Curriculum*, Behrens and Rosen show how critical reading turns into writing an academic critique:
+
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
+### The Two Master Questions:
+1. **Question 1: To what extent does the author succeed in his or her purpose?**
+   * *For Informative Writing:* Evaluate **Accuracy** (correct facts), **Significance** (the "So What?" test), and **Fair Interpretation** (balanced view).
+   * *For Persuasive Writing:* Evaluate whether the thesis is supported with sound logic.
+2. **Question 2: To what extent do you agree with the author?**
+   * Evaluate the author's **hidden assumptions**—the unstated beliefs beneath the claims.
+   * *The 2008 Subprime Mortgage Crisis:* Wall Street collapsed because lenders assumed home prices would never fall nationwide.
+   * *Charles Krauthammer's Moon Op-Ed:* Concedes that robots are cheaper, safer, and provide better science, yet insists on human astronauts because of a hidden romantic assumption about national greatness!
+
+---
+
+## 🖼️ 6. Infographic: Intertextuality and Hypertext
 
 ```mermaid
 flowchart TD
@@ -95,7 +152,8 @@ flowchart TD
     FORMS ==> FUNCTIONS ==> EFFECTS
 ```
 
-* **Form 1: Book in a Book:** A literary work referring to another literary work (e.g., naming a character Hamlet, or retelling a classic story).
-* **Form 2: Other Text in a Book:** A literary work referencing a social or media story with narrative quality (e.g., Rosa Parks's bus ride or the JFK assassination).
+* **Intertextuality:** Borrowing or referencing a literary, media, or social "text" inside another text (Dharwadker et al.).
+* **Two Forms:** *Book in a Book* (literary in literary) and *Other Text in a Book* (media or cultural event in literature).
 * **Three Functions:** Comparison, Dialogue, and Destabilization.
-* **Three Effects:** Transforms the host book, transforms our view of the original text, and sparks a simultaneous re-reading of both.
+* **Three Effects:** Transforms primary book, reflexively transforms prior text, and creates simultaneous re-reading of both!
+* **Hypertext Link:** Hypertext connects digital documents with clickable web links; Intertextuality is the cognitive hypertext connecting human ideas across centuries!

@@ -2,7 +2,7 @@
 
 **Subject:** Reading and Writing Skills | **Topic:** Critical Reading as Ways of Thinking  
 **Format:** Dual-Host Academic Dialogue (Host & Guest)  
-**Target Duration:** ~5 Minutes (~850 words)  
+**Target Duration:** ~5 Minutes (~900 words)  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
@@ -23,6 +23,10 @@ Host: And the final step is Evaluation?
 
 Guest: Exactly. That's where you place your own weight on the seesaw. You judge whether the author's evidence is sufficient, recent, and logically sound, avoiding classic fallacies like ad hominem or either-or black-and-white thinking.
 
+Host: In Chapter 2 of *Writing and Reading Across the Curriculum*, Behrens and Rosen provide two master questions that turn evaluation into a formal critique.
+
+Guest: Yes! Question 1: "To what extent does the author succeed in their purpose?" Whether that purpose is to inform, persuade, or entertain. If it's informative, is it accurate, significant, and fairly interpreted? If it's persuasive, are the claims logically supported? And Question 2: "To what extent do you agree with the author?" This requires evaluating the author's hidden assumptions. Behrens and Rosen examine Charles Krauthammer's op-ed advocating a return to the Moon. Krauthammer admits robotic probes are cheaper and provide better scientific data, yet he insists living humans must go. Why? Because of his hidden romantic assumption that true greatness requires human physical presence! Notice too that Krauthammer, an outspoken conservative small-government columnist, is demanding massive taxpayer government spending—an ideological tension that sharp critical readers immediately spot!
+
 Host: Now, our curriculum pairs critical reading with our diagnostic essay topic: Intertextuality and Hypertext. Many students get intimidated by the word "intertextuality," but Dharwadker and his co-authors give us a crystal-clear framework.
 
 Guest: In simple terms, intertextuality is when a literary, media, or social text appears inside another text. It comes in two primary forms: "Book in a Book"—like when a novelist references Shakespeare's Hamlet or borrows a famous mythological archetype—and "Other Text in a Book," where an author references a social narrative, like Rosa Parks's bus ride or the JFK assassination.
@@ -37,4 +41,4 @@ Guest: Yes! It transforms our understanding of the primary book, it reflexively 
 
 Host: That is powerful. To read critically is to look for ways of thinking—to become an active participant in human thought rather than an obedient consumer. Thank you, Elena!
 
-Guest: My pleasure! Remember: underline the thesis, hunt for premise and conclusion signals, interrogate the author, and look for the intertextual web!
+Guest: My pleasure! Remember: underline the thesis, hunt for premise and conclusion signals, interrogate the author, evaluate hidden assumptions, and trace the intertextual web!

@@ -1,162 +1,150 @@
 # Comprehensive Video Production Script: Critical Reading as Looking for Ways of Thinking
 
 **Subject:** Reading and Writing Skills | **Unit:** Week 2  
-**Target Video Duration:** ~20–25 Minutes (Comprehensive Chapter Walkthrough)  
-**Academic References:** Metherell & Winkler (2007), Hirschberg & Hirschberg (2009), Behrens & Rosen (2000), Dharwadker et al. (p. 70), DLSU SHS Core Materials (`critical reading.md`)  
+**Target Video Duration:** ~25 Minutes (Comprehensive Chapter Walkthrough)  
+**Academic References:** Metherell & Winkler (2007), Hirschberg & Hirschberg (2009), Behrens & Rosen (2000, Ch. 1 & 2), Dharwadker et al. (p. 70), DLSU SHS Core Materials  
 **Visual Style:** Dynamic High-Resolution Motion Graphics, Kinetic Typography, Split-Screen Demonstrations, Embedded Mermaid Schematics  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
 
-## SCENE 1: TITLE & THE INTELLECTUAL CHALLENGE (00:00 - 02:30)
+## SCENE 1: TITLE SEQUENCE & ACADEMIC HOOK (00:00 - 02:30)
 
-**[VISUAL CUE]**: Dramatic cinematic opening. Black background transitions to an energetic emerald green (#1B4332) title card. White and gold text animates on-screen:  
-*"Critical Reading as Looking for Ways of Thinking"*  
-*Reading and Writing Skills | De La Salle University Senior High School*  
-Camera pans into a split screen: On the left, a student passively scrolling on a phone looking dazed; on the right, a student actively annotating a book with vivid margin notes and conceptual diagrams.
-
-**[AUDIO / SOUND FX]**: Subtle, engaging atmospheric synthesizer swell, transitioning to an articulate, warm voiceover.
-
-**PRESENTER (ON-SCREEN & VOICEOVER)**:  
-"When was the last time you opened a book or read an article, and instead of just memorizing the words, you actually argued back?  
-In our hyper-connected world, we are bombarded by thousands of words every day. But knowing what words say is not the same as knowing what words *mean*.  
-Welcome to SaralVidhya's master breakdown of Week 2: *Critical Reading as Looking for Ways of Thinking*.  
-Today, we are moving beyond passive reading. We are going to explore the four modalities of reading, master the cognitive triad of analysis, synthesis, and evaluation, unlock the 14 master guidelines of critical reading, dissect the architectural signposts of persuasive essays, and uncover the dynamic cultural power of Intertextuality and Hypertext."
-
----
-
-## SCENE 2: THE SPECTRUM OF READING (02:30 - 05:45)
-
-**[VISUAL CUE]**: Full-screen dynamic infographic appears. A smooth horizontal spectrum animates across the screen with four distinct icons:  
-1. Eye glancing at notification: **Casual Reading**  
-2. Cozy armchair with open novel: **Reading for Pleasure**  
-3. Highlighter and textbook: **Reading for Information**  
-4. Interconnected gears & magnifying glass: **Critical Reading**
-
-**PRESENTER (VOICEOVER)**:  
-"In *The Millennium Reader*, Stuart and Terry Hirschberg remind us that reading is not a single uniform activity. There are four distinct kinds of reading:  
-First: **Casual Reading**. This is the reading of everyday necessity. You glance at traffic signs, scan push notifications, or skim email subjects. It requires minimal mental effort.  
-Second: **Reading for Pleasure**. Think of bedtime mystery novels or romantic fiction. Here, reading is relaxed and uncritical. You don't question the logic of the plot; you happily surrender to an imaginary world.  
-Third: **Reading for Information**. This is what you do when studying for a test or learning a procedure at work. It demands focus, comprehension, and memorization. But notice: you are still treating the text as an unquestioned authority.  
-And fourth: **Critical Reading**."
-
-**[VISUAL CUE]**: The screen zooms into the fourth quadrant. Kinetic typography highlights:  
-*"Critical Reading is Active Dialogue. Critical Reading is NOT Gullibility."*
+**[VISUAL CUE]**: Dramatic cinematic intro. Camera zooms past floating parchment manuscripts, digital web networks, and academic textbooks into a futuristic university lecture theatre. Green banner appears with text: *"SaralVidhya x De La Salle University Senior High School Department - Reading and Writing Skills: Week 2."*
 
 **PRESENTER (ON-SCREEN)**:  
-"Critical reading is where scholarship begins. You do not treat the printed page as gospel truth. You enter into a lively mental dialogue with the author. When the writer asserts a claim, you reply: 'Maybe so, but what about the counter-evidence? What biases are shaping this view?' You not only understand the thesis, but you also deduce its hidden consequences."
+"Welcome, Lasallian scholars! When most people open a book, an article, or a feed on social media, they do something dangerously passive: they read to absorb words, accepting claims uncritically.  
+Today, we dismantle that passive habit. In this masterclass, we explore *Critical Reading as Looking for Ways of Thinking*.  
+We will uncover how master writers build arguments, how to kick authors off their pedestals, how to spot deceptive fallacies, how to write rigorous critiques, and how literature weaves an interconnected web called Intertextuality."
 
 ---
 
-## SCENE 3: ESSAY ORIGINS & DEMYSTIFYING THE AUTHOR (05:45 - 08:30)
+## SCENE 2: THE FOUR KINDS OF READING (02:30 - 05:30)
 
-**[VISUAL CUE]**: Historical illustration portrait of Michel de Montaigne (1580) morphs into an open manuscript notebook with scribbled margin reflections.
+**[VISUAL CUE]**: Kinetic typography builds a 4-tier vertical pyramid on screen:  
+`[Level 4: CRITICAL READING: Interrogation & Co-Creation]`  
+`[Level 3: READING FOR INFORMATION: Memorization & Utility]`  
+`[Level 2: READING FOR PLEASURE: Escapism & Suspension of Disbelief]`  
+`[Level 1: CASUAL READING: Skimming & Environmental Necessity]`
 
 **PRESENTER (VOICEOVER)**:  
-"To understand critical reading, we have to look back 400 years to the French philosopher Michel de Montaigne. In 1580, Montaigne invented the essay, calling his writings *essais*—which literally means 'attempts' or 'trials.'  
-Montaigne did not write to hand down rigid, absolute dogmas. He wrote to explore his own thinking—to disclose an observant mind struggling to reconcile conflicting facts and personal values. The essayist speaks to you directly, unmediated by fictional characters."
+"In *The Millennium Reader*, Stuart and Terry Hirschberg establish that reading is not a single activity—it is four completely different cognitive experiences:  
+Level 1: Casual Reading. Scrolling through text messages, glance-reading billboards, checking flight departure boards.  
+Level 2: Reading for Pleasure. Curling up with a thriller or romance novel. You intentionally suspend your critical judgment to enjoy the plot.  
+Level 3: Reading for Information. Studying for an anatomy quiz or reading an appliance manual. It's utilitarian and submissive.  
+Level 4: Critical Reading! The reader refuses to be passive. You challenge the author. You interrogate evidence. You ask: *'Why should I believe this?'*"
 
-**[VISUAL CUE]**: Motion graphic: A golden throne sits on a pedestal with the word "AUTHOR". A figurative visual boot sweeps across the screen, nudging the throne off-balance. Bold text:  
+---
+
+## SCENE 3: DEMYSTIFYING THE WRITER & 14 CRITICAL GUIDELINES (05:30 - 09:00)
+
+**[VISUAL CUE]**: Split-screen graphic. On the left, an ornate stone pedestal labeled *"The Infallible Author"*. A digital hammer strikes it, shattering it into dust. On the right, Metherell & Winkler's 14 Critical Reading Guidelines scroll in clean cards.  
+Highlighting:  
 *"Guideline 2: Demystify the Writer — Kick the Author off the Throne!"*
 
 **PRESENTER (ON-SCREEN)**:  
-"That brings us to the first major rule from Metherell and Winkler's *Guidelines for Critical Reading*: Demystify the writer!  
-Too many students treat authors like gods whose every word must be accepted. But authors are human beings. They have political affiliations, personal biases, demographic blind spots, and fallible logic. When you kick the author off the throne, the text becomes a human production—open to question, analysis, and critique."
+"Metherell and Winkler give us the golden rule: Demystify the writer! Kick the author off the throne!  
+Authors are fallible human beings with biases, blind spots, and political agendas.  
+When you read critically, annotate with a pencil: underline the thesis, question claims in the margin, verify dates, and check for logical fallacies."
 
 ---
 
-## SCENE 4: THE COGNITIVE TRIAD: ANALYSIS, SYNTHESIS, EVALUATION (08:30 - 12:15)
+## SCENE 4: THE COGNITIVE TRIAD: ANALYSIS, SYNTHESIS, EVALUATION (09:00 - 12:30)
 
 **[VISUAL CUE]**: High-resolution 3D flowchart builds in real time:  
 `[ANALYSIS: Deconstruction] ➔ [SYNTHESIS: Creative Integration] ➔ [EVALUATION: Judicious Stance]`
 
 **PRESENTER (VOICEOVER)**:  
 "How do we actually think critically? Hirschberg provides the three-part engine: Analysis, Synthesis, and Evaluation.  
-Let's see how this works using a contemporary controversy: *Online Dating and Modern Relationships*.  
-Step 1: **Analysis**. You deconstruct the subject. You explore academic journals, psychological surveys, and personal narratives. You identify how ideas are composed and see the hidden biases behind different reports.  
-Step 2: **Synthesis**. You absorb and blend these diverse findings into an original insight of your own. Notice what synthesis does: it tampers down your arrogance! You discover that while thousands find lasting marriages online, others experience emotional fraud or dangerous liaisons. You realize that on thorny subjects, more than one valid opinion exists.  
-Step 3: **Evaluation**. You place your own weight on the seesaw! You weigh the evidence, assess the opposing arguments, and take an educated stand—avoiding unthinking, dogmatic extremes."
+Step 1: **Analysis**. You deconstruct the subject. You identify premises, assumptions, and rhetoric.  
+Step 2: **Synthesis**. You absorb and blend multiple sources into an original insight of your own. Synthesis humbles us—it proves that on complex issues, multiple valid viewpoints exist.  
+Step 3: **Evaluation**. You place your own weight on the seesaw! You weigh the evidence, assess logical soundness, and take an educated stand."
 
 ---
 
-## SCENE 5: LOGICAL FALLACIES & EVIDENCE VERIFICATION (12:15 - 15:45)
+## SCENE 5: LOGICAL FALLACIES & EVIDENCE TIMESTAMPS (12:30 - 15:30)
 
-**[VISUAL CUE]**: A red spotlight illuminates a chalkboard titled "The Critical Reader's Fallacy Radar". Icons pop up for each fallacy:  
-- Target silhouette (Ad Hominem)  
-- Megaphone crowd (Ad Populum)  
-- Fork in the road (Either/Or False Dilemma)  
-- Ouroboros snake eating tail (Begging the Question / Circularity)  
-- Broken bridge (Non Sequitur)
+**[VISUAL CUE]**: Red spotlight on chalkboard titled "The Critical Reader's Fallacy Radar":  
+- Ad Hominem (Character attack)  
+- Either/Or False Dilemma (Black-and-white trap)  
+- Begging the Question (Circularity)  
+- Non Sequitur (Missing logical link)  
+- Susumu Tonegawa Case Study Graphic (MIT 1976 Antibody Discovery vs. Outdated 1975 Science)
 
 **PRESENTER (ON-SCREEN)**:  
-"Metherell and Winkler warn that an argument can sound persuasive while being completely bankrupt in its logic. Critical readers must recognize logical fallacies:  
-- *Ad Hominem*: Attacking the debater's character rather than answering their point.  
-- *Ad Populum*: Relying on popular slogans or bandwagon appeals.  
-- *Either/Or Reasoning*: Forcing a complex issue into black-or-white boxes.  
-- *Begging the Question*: Circular logic that assumes what it needs to prove.  
-- And *Non Sequitur*: Reaching conclusions that don't connect to the evidence."
-
-**[VISUAL CUE]**: Text graphic displaying:  
-*"Case Study: Dr. Susumu Tonegawa (MIT, 1976) — Antibody Gene Rearrangement"*
-
-**PRESENTER (VOICEOVER)**:  
-"And always scrutinize the timestamp of evidence! Before 1976, medical textbooks authoritatively stated that the mechanism behind human antibody generation was an impenetrable mystery. But in 1976, Susumu Tonegawa discovered how our genes rearrange to create diverse antibodies. If you cite an immunology paper from 1975 today, you are citing outdated evidence. Always check when evidence was produced!"
+"Never accept claims based on eloquent rhetoric alone! Check the timestamp of scientific evidence, look out for bogus claims, and detect logical fallacies."
 
 ---
 
-## SCENE 6: ESSAY ARCHITECTURE: THESIS & LOGIC SIGNPOSTS (15:45 - 18:30)
+## SCENE 6: ESSAY ARCHITECTURE: THESIS & SIGNPOST WORDS (15:30 - 18:00)
 
 **[VISUAL CUE]**: Animated text breakdown of Mark Twain's *The Lowest Animal*. The thesis sentence illuminates in radiant amber:  
 *"...among the animals man is the only one that harbors insults and injuries, broods over them, waits till a chance offers, then takes revenge."*
 
-**PRESENTER (ON-SCREEN)**:  
-"Now let's examine essay architecture with Behrens and Rosen. Every great essay has a Thesis: a single declarative sentence stating the author's focused response to a controversial topic.  
-To follow the author's logic, look for traffic signals in the text:  
-**Premise Signals** announce reasons: *because, since, for, follows from, inasmuch as, in view of the fact that*.  
-**Conclusion Signals** announce outcomes: *therefore, hence, thus, consequently, it follows that, we may infer*.  
-When you spot these words, you can map the exact skeleton of any argument in seconds."
+**PRESENTER (VOICEOVER)**:  
+"Behrens and Rosen remind us that every strong essay has a Thesis—a single declarative sentence asserting the author's stance on a debatable issue.  
+To follow the author's journey, look for signposts:  
+**Premise Signals**: *because, since, for, follows from, inasmuch as*.  
+**Conclusion Signals**: *therefore, hence, thus, consequently, it follows that*."
 
 ---
 
-## SCENE 7: INTERTEXTUALITY & HYPERTEXT (18:30 - 22:00)
+## SCENE 7: THE ART OF CRITIQUE & EVALUATING ASSUMPTIONS (18:00 - 21:30)
 
-**[VISUAL CUE]**: An intricate interconnected glowing web of books and historical images appears. Lines pulse between iconic classic books, films, and historic photographs (e.g., Shakespeare, Rosa Parks, JFK).
+**[VISUAL CUE]**: Interactive split-screen display showing Behrens & Rosen Chapter 2 Critique Framework:  
+`Question 1: Does the author succeed in their purpose? (Informative vs. Persuasive)`  
+`Question 2: To what extent do you agree? (Evaluating Hidden Assumptions)`  
+`Case Study 1: The 2008 Subprime Mortgage Financial Collapse`  
+`Case Study 2: Charles Krauthammer's "The Moon We Left Behind" (Time, 2009)`
+
+**PRESENTER (ON-SCREEN)**:  
+"Now we enter Behrens and Rosen's master guide to writing a formal Critique. A critique always answers two fundamental questions:  
+Question 1: To what extent did the author succeed in their purpose?  
+If informative, ask: Are the facts accurate? Are they significant—the 'So What?' test? Are they fairly interpreted?  
+Question 2: To what extent do you agree with the author?  
+This requires evaluating the author's hidden assumptions!"
+
+**[VISUAL CUE]**: 3D motion graphic showing Apollo 11 lunar module juxtaposed against Wall Street financial tickers.  
+Quotes appear: *"Robotic probes are cheaper and yield better science... yet we must send humans."*
 
 **PRESENTER (VOICEOVER)**:  
-"Finally, we arrive at our diagnostic topic: Intertextuality and Hypertext, grounded in the research of Dharwadker, Harrison, Lemaster, and Bourenane.  
-What is Intertextuality? In simple terms, it is the reference to or application of a literary, media, or social 'text' inside another text.  
-It comes in two forms:  
-1. **Book in a Book**: When a literary work references another literary work—like borrowing a title, a character, or a storyline.  
-2. **Other Text in a Book**: When a literary work weaves in a media or cultural story—like a famous song, a film, or Rosa Parks's historic bus defiance."
-
-**[VISUAL CUE]**: Three animated gears interlocking:  
-1. *Comparison (Spotting similarities & differences)*  
-2. *Dialogue (Two narrative worldviews in conversation)*  
-3. *Destabilization (Shaking up conventional interpretations)*
-
-**PRESENTER (ON-SCREEN)**:  
-"Intertextuality does three powerful things: it invites Comparison, it sparks a dynamic Dialogue between narratives, and it Destabilizes our assumptions.  
-And what is the result? A triple transformation:  
-It transforms the primary book;  
-It reflexively transforms our memory of the prior text;  
-And it creates a simultaneous re-reading of both!  
-And what about Hypertext? Hypertext connects documents electronically via clickable links on a computer screen. But Intertextuality is the cognitive hypertext of the human mind—connecting ideas, cultures, and generations across time!"
+"Assumptions can change the world—or crash it. In 2008, Wall Street collapsed because of an unexamined hidden assumption: that real estate prices would never fall nationwide.  
+And look at Charles Krauthammer's famous op-ed, 'The Moon We Left Behind'. Krauthammer admits robotic exploration is safer, cheaper, and yields superior scientific data. Yet he demands sending humans back to the Moon!  
+Why? Because of his hidden assumption: that the true purpose of space exploration is not scientific data, but national heroism and human romance!  
+And note the political tension: Krauthammer, a prominent conservative critic of government spending, advocates a gigantic government-funded NASA program. Critical readers identify these hidden warrants and ideological contradictions!"
 
 ---
 
-## SCENE 8: SUMMARY & CLOSING CALL TO ACTION (22:00 - 24:00)
+## SCENE 8: INTERTEXTUALITY & HYPERTEXT (21:30 - 24:00)
+
+**[VISUAL CUE]**: An interconnected glowing web of books and historical images pulses across the screen: Shakespeare, Rosa Parks, Martin Luther King Jr., web hyperlinks.
+
+**PRESENTER (VOICEOVER)**:  
+"Finally, we arrive at our diagnostic topic: Intertextuality and Hypertext, grounded in Dharwadker, Harrison, Lemaster, and Bourenane.  
+Intertextuality is the borrowing or application of a literary, media, or social text inside another text.  
+It comes in two forms:  
+1. **Book in a Book**: Literary work referencing another literature.  
+2. **Other Text in a Book**: Literary work referencing a media or social narrative, like Rosa Parks or historical protests.  
+It performs three functions: **Comparison**, **Dialogue**, and **Destabilization**.  
+And its transformative effects permanently alter how we read both the new text and the classic work!  
+Hypertext connects digital pages with clickable hyperlinks; Intertextuality is the cultural hypertext of human literature!"
+
+---
+
+## SCENE 9: SUMMARY & CLOSING CALL TO ACTION (24:00 - 25:30)
 
 **[VISUAL CUE]**: Summary checklist animates on screen with crisp checkmarks:  
-✓ 4 Modes of Reading  
+✓ 4 Modes of Reading (Hirschberg)  
+✓ 14 Guidelines & Demystifying the Author (Metherell & Winkler)  
 ✓ Cognitive Triad: Analysis, Synthesis, Evaluation  
-✓ Demystify Authors & Annotate Margin Notes  
-✓ Spot Logical Fallacies & Check Evidence Timestamps  
-✓ Trace Thesis, Premise Signals & Conclusion Signals  
-✓ Intertextuality: Forms, Functions, and Transformative Effects  
+✓ Essay Architecture: Thesis & Signpost Signals (Behrens & Rosen Ch. 1)  
+✓ The Art of Critique & Hidden Assumptions: Krauthammer Case Study (Behrens & Rosen Ch. 2)  
+✓ Intertextuality: Forms, Functions, and Transformative Effects (Dharwadker et al.)  
 
 **PRESENTER (ON-SCREEN)**:  
 "To read critically is to take charge of your own mind. It means refusing to be a passive consumer of other people's opinions.  
-As you work through your diagnostic essays, study guides, flashcards, and pop quizzes on SaralVidhya, remember: pick up your pencil, look for ways of thinking, and read like an active scholar!  
-Thank you for watching, and happy studying!"
+Work through your diagnostic exercises, study guides, flashcards, and pop quizzes on SaralVidhya.  
+Pick up your pencil, look for ways of thinking, and read like an active scholar!  
+Thank you for watching, and Animo La Salle!"
 
 **[VISUAL CUE]**: Screen fades to green branding card with SaralVidhya logo and De La Salle University Senior High School Department badge. End of video.

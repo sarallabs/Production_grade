@@ -20,7 +20,9 @@
     "ento_131": "angrau/entomology",
     "entomology": "angrau/entomology",
     "dbms": "mlrit/dbms",
-    "mongodb": "vvit/mongodb"
+    "mongodb": "vvit/mongodb",
+    "rw": "philippines/rw",
+    "reading_writing": "philippines/rw"
   },
   "boardLogos": {
     "angrau": "logo-angrau.png",

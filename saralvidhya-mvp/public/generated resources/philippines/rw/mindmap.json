@@ -6,6 +6,7 @@
   "academic_year": "2024-2025, 2nd Trimester",
   "diagnostic_test": "Intertextuality and Hypertext exercise",
   "source_materials": [
+    "critical-reading.txt",
     "critical reading.md",
     "Reading Critically.md",
     "reading_essays.md",
@@ -458,49 +459,78 @@
       },
       {
         "id": "b7",
-        "label": "7. Academic Critique & Rhetorical Analysis",
+        "label": "7. Critical Reading for Critique (Behrens & Rosen Ch. 2)",
         "level": 1,
         "children": [
           {
             "id": "b7_1",
-            "label": "Composing Critiques (Behrens & Rosen)",
+            "label": "The Two Guiding Questions",
             "level": 2,
             "children": [
               {
                 "id": "b7_1_1",
-                "label": "Fair Representation vs Strawman Fallacy",
+                "label": "Question 1: Success in Purpose (Inform / Persuade / Entertain)",
                 "level": 3
               },
               {
                 "id": "b7_1_2",
-                "label": "Evidentiary Audit (Sufficiency & Validity)",
-                "level": 3
-              },
-              {
-                "id": "b7_1_3",
-                "label": "Rhetorical Triad (Logos, Ethos, Pathos)",
+                "label": "Question 2: Personal Agreement (Evaluating Warrants & Claims)",
                 "level": 3
               }
             ]
           },
           {
             "id": "b7_2",
-            "label": "Andy Rooney Case Study",
+            "label": "Evaluating Informative vs Persuasive Writing",
             "level": 2,
             "children": [
               {
                 "id": "b7_2_1",
-                "label": "Screenwriters Guild Opening Context (2000)",
+                "label": "Informative Metrics: Accuracy, Significance ('So What?'), Fair Interpretation",
                 "level": 3
               },
               {
                 "id": "b7_2_2",
-                "label": "Satirizing Fowler's Starchy Prescriptivism",
+                "label": "Persuasive Metrics: Testing Evidence, Reasoning, Counter-Arguments",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "id": "b7_3",
+            "label": "Auditing Assumptions & Warrants",
+            "level": 2,
+            "children": [
+              {
+                "id": "b7_3_1",
+                "label": "Explicit vs Hidden Assumptions (Foundations of Arguments)",
                 "level": 3
               },
               {
-                "id": "b7_2_3",
-                "label": "Rhetorical Humor, Zeugma & Split Infinitives",
+                "id": "b7_3_2",
+                "label": "Finance Case Study: The 2008 Subprime Mortgage Collapse",
+                "level": 3
+              }
+            ]
+          },
+          {
+            "id": "b7_4",
+            "label": "Charles Krauthammer Case Study (2009)",
+            "level": 2,
+            "children": [
+              {
+                "id": "b7_4_1",
+                "label": "'The Moon We Left Behind' Rhetorical Analysis",
+                "level": 3
+              },
+              {
+                "id": "b7_4_2",
+                "label": "Emotionally Loaded Diction ('Abandonment', 'Retreat')",
+                "level": 3
+              },
+              {
+                "id": "b7_4_3",
+                "label": "Auditing Conservative Ideology vs $1T Federal Spending",
                 "level": 3
               }
             ]

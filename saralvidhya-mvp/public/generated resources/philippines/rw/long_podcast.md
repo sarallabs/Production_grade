@@ -2,13 +2,13 @@
 
 **Subject:** Reading and Writing Skills | **Topic:** Critical Reading as Ways of Thinking  
 **Format:** Deep-Dive Academic Seminar Dialogue (Host & Guest)  
-**Target Duration:** ~30 Minutes (~4,500 words)  
+**Target Duration:** ~30 Minutes (~4,800 words)  
 **Academic Reference Matrix:**  
 - Hirschberg & Hirschberg (2009), *The Millennium Reader* (5th ed., pp. 1-3)  
 - Metherell & Winkler (2007), *Readings for Writers* (2nd ed., pp. 1-10)  
-- Behrens & Rosen (2000), *Writing and Reading Across the Curriculum* (7th ed., pp. 45-55)  
+- Behrens & Rosen (2000), *Writing and Reading Across the Curriculum* (7th ed., pp. 45-77, Ch. 2: "Critical Reading and Critique")  
 - Dharwadker, Dharwadker, Harrison, Lemaster, & Bourenane, *What is Intertextuality?* (p. 70)  
-- DLSU Senior High School Department, *Critical Reading as Looking for Ways of Thinking* Core Materials (`critical reading.md`)  
+- DLSU Senior High School Department, *Critical Reading as Looking for Ways of Thinking* Core Curriculum Materials  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
@@ -113,14 +113,43 @@ Host: And Metherell and Winkler illustrate this beautifully with that wonderful 
 
 Guest: That is such a brilliant case study. Rooney writes an essay wishing he had authored Henry Watson Fowler's *A Dictionary of Modern English Usage*. If a student reads Rooney's essay without understanding the context, it seems bizarre. But Rooney was invited by the Screenwriters Guild in 2000 to contribute to a special symposium called "A Writer's Fantasy: What I Wish I Had Written." Rooney uses the opportunity to playfully satirize grammatical pedantry—mocking the snooty prohibition against split infinitives, joking about arcane terms like zeugma and syllepsis, and lampooning the fusty rule that the verb "to be" cannot take an objective pronoun, which is why pedants say "It is I" instead of "It's me!" Without knowing the opening context, the satire is lost; with the context, it is rhetorical gold!
 
-Host: Now, let's connect these guidelines to the second major theme in our curriculum: Hirschberg's Cognitive Triad—Analysis, Synthesis, and Evaluation. Aris, how do these three cognitive steps synthesize into a master workflow for high school writers?
+Host: Now let's connect these guidelines to the second major theme in our curriculum: Hirschberg's Cognitive Triad—Analysis, Synthesis, and Evaluation. Aris, how do these three cognitive steps synthesize into a master workflow for high school writers?
 
 Guest: Think of it as a three-stage rocket.
 Stage One is Analysis. You break the text down into its constituent elements. You map the author's primary thesis, identify the supporting premises, uncover the underlying assumptions, and scrutinize the evidence.
 Stage Two is Synthesis. Once you have analyzed multiple sources—say, three different perspectives on whether online dating strengthens human connection or produces superficial commodification—you synthesize. You don't just paste summaries side-by-side. You absorb the findings, cross-pollinate the ideas, and forge a new, coherent perspective that belongs exclusively to you. Hirschberg emphasizes that synthesis is the ultimate cure for arrogance because it forces you to acknowledge that reality is multidimensional.
 Stage Three is Evaluation. You weigh the merits, identify fallacies, and place your weight on the seesaw. You take a reasoned stance. You don't retreat into lazy relativism by saying "everyone has their opinion"; you declare which argument is most coherent and grounded in truth.
 
-Host: Let's also look at essay architecture through Behrens and Rosen's lens. How does a student hunt down a thesis, and how do premise and conclusion signals guide the reader's eye?
+Host: Now, in Chapter 2 of *Writing and Reading Across the Curriculum*, Laurence Behrens and Leonard Rosen take this evaluation stage and operationalize it into the formal academic genre of the Critique. This is where critical reading becomes concrete writing. Behrens and Rosen state that a critique is anchored in two foundational questions. Could you unpack those questions for our students?
+
+Guest: Yes! This is indispensable for Senior High School writers. Behrens and Rosen establish that when you write a formal critique, you must systematically answer two guiding questions:
+Question One: "To what extent does the author succeed in his or her purpose?"
+And Question Two: "To what extent do you agree with the author?"
+Notice the brilliance of this sequence! Question One is objective and rhetorical—it asks whether the author accomplished what they set out to do, given their genre and rhetorical purpose (whether informative, persuasive, or entertaining). Question Two is interpretive and evaluative—it invites you, the reader, to assess the validity of the author's claims and underlying assumptions against your own knowledge and values.
+
+Host: Let's look at Question One first. How does a critical reader evaluate an informative text versus a persuasive text?
+
+Guest: For informative writing—such as a textbook chapter, a news report, or an encyclopedia entry—Behrens and Rosen give us three strict criteria:
+First, **Accuracy**. Are the facts verified, up to date, and free from careless errors?
+Second, **Significance**. Behrens and Rosen call this the "So What?" question! The facts may be completely accurate, but are they meaningful? Does the information advance our understanding of the core subject, or is it trivial trivia?
+And third, **Fair Interpretation**. Does the author interpret the facts objectively, or do they cherry-pick data to force a skewed conclusion?
+Now, when you evaluate persuasive writing—like an op-ed, a manifesto, or an argumentative essay—you examine the thesis, the supporting reasons, the emotional appeals, and above all, the author's assumptions.
+
+Host: Let's talk about assumptions, because Behrens and Rosen devote extensive analysis to the hidden warrants behind arguments. What is an assumption, and why can an unexamined assumption be dangerous?
+
+Guest: An assumption is a fundamental premise taken for granted, without which the argument collapses. Behrens and Rosen point out that assumptions can be explicit—stated clearly—or hidden beneath the surface. And when people uncritically accept hidden assumptions, the consequences can be catastrophic.
+They give the chilling real-world example of the 2008 Subprime Mortgage Financial Collapse. For years, major Wall Street banks, mortgage lenders, credit rating agencies, and millions of home buyers operated on a single, unexamined hidden assumption: that residential real estate prices across the United States would permanently and indefinitely rise, or at worst remain flat, but never nationwide decline! Because everyone took that assumption for granted, banks issued hundreds of billions of dollars in risky loans to unqualified borrowers. When real estate prices finally plunged, the entire global financial architecture teetered on the brink of ruin! That is what happens in the real world when critical thinkers fail to interrogate hidden assumptions.
+
+Host: Behrens and Rosen provide a masterclass case study in analyzing persuasive essays by dissecting Charles Krauthammer's op-ed, "The Moon We Left Behind," published in *Time* magazine in 2009. Let's walk through Krauthammer's essay and see how a critical reader analyzes it.
+
+Guest: What a textbook demonstration of rhetorical critique! Krauthammer was marking the 40th anniversary of the 1969 Apollo 11 lunar landing. His thesis was that America's retreat from manned space exploration—and specifically the failure to return humans to the Moon or journey onward to Mars—represents a tragic failure of national nerve, an abandonment of humanity's destiny to explore the cosmos.
+A critical reader immediately examines Krauthammer's tone and loaded diction. Notice words like "retreat," "abandonment," "ignominious," and "loss of nerve." These words are designed to evoke patriotic shame and romantic longing.
+Then, you look at how Krauthammer anticipates counterarguments. To his credit, Krauthammer openly acknowledges the strongest objection against him: that unmanned robotic probes—like the Mars Rovers and deep-space telescopes—are vastly cheaper, completely safe from loss of human life, and actually yield far superior scientific data per dollar spent!
+So how does Krauthammer respond? He admits robotic exploration is more efficient, but he insists that true exploration requires living human beings walking on alien soil.
+And here is where the critical reader strikes with Question Two: What hidden assumption is Krauthammer relying on? He assumes that the supreme, overriding purpose of space exploration is not scientific utility or cost-effective data collection, but human romance, national myth-making, and heroic adventure!
+Furthermore, Behrens and Rosen highlight a fascinating political contradiction: Krauthammer was one of America's most famous conservative, small-government commentators, known for condemning bloated federal bureaucracy and runaway government spending. Yet here, in this essay, he passionately demands a colossal, multi-billion-dollar taxpayer-funded government initiative (NASA) to send humans to Mars! The critical reader notices that Krauthammer's romantic nationalism completely overrode his own conservative fiscal ideology. That is the kind of profound insight that only critical reading reveals!
+
+Host: That is stunning. When students realize they can spot contradictions in Pulitzer-winning columnists, their confidence soars. Now, let's also look at essay architecture through Behrens and Rosen's lens. How does a student hunt down a thesis, and how do premise and conclusion signals guide the reader's eye?
 
 Guest: A thesis is the conceptual spine of an essay. It is typically a single declarative sentence that asserts the author's response to an issue that rational people might debate. Behrens and Rosen cite Mark Twain's famous essay, *The Lowest Animal*, where Twain states: "In the course of my experiments I convinced myself that among the animals man is the only one that harbors insults and injuries, broods over them, waits till a chance offers, then takes revenge. The passion of revenge is unknown to the higher animals." Notice how sharp, focused, and provocative that thesis is!
 To trace how an author builds their argument toward or from that thesis, students must become sensitive to signpost words.
@@ -155,6 +184,6 @@ Guest: That is the brilliant connection our curriculum makes. Hypertext is the t
 
 Host: What an extraordinary synthesis. Dr. Thorne, as we close this masterclass, what final guidance do you offer to our Senior High School students preparing to write their critical critiques and diagnostic essays?
 
-Guest: Demystify the text. Pick up your pencil. Hunt for the thesis and its premise signals. Uncover the author's hidden value systems. Check the timestamp on the evidence. And whenever you read, ask yourself: What prior stories, cultural echoes, and intertextual threads are conversing beneath this page? When you read like that, you are no longer just decoding letters—you are mastering ways of thinking.
+Guest: Demystify the text. Pick up your pencil. Hunt for the thesis and its premise signals. Uncover the author's hidden value systems. Check the timestamp on the evidence. Ask the two golden critique questions: Did the author achieve their purpose, and do you agree with their hidden assumptions? And whenever you read, ask yourself: What prior stories, cultural echoes, and intertextual threads are conversing beneath this page? When you read like that, you are no longer just decoding letters—you are mastering ways of thinking.
 
 Host: Splendidly articulated. Thank you, Dr. Thorne, and thank you to our scholars at De La Salle University. Until next time, read actively, think deeply, and question relentlessly!

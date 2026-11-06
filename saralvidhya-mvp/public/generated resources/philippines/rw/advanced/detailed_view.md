@@ -6,7 +6,7 @@
 **Academic References:**  
 1. Metherell, J.R. & Winkler, A. (2007). *Readings for Writers* (2nd ed., pp. 1-10).  
 2. Hirschberg, S. & Hirschberg, T. (2009). *The Millennium Reader* (5th ed., pp. 1-3).  
-3. Behrens, L. & Rosen, L. (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-55).  
+3. Behrens, L. & Rosen, L. (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-77, Ch. 1 & 2).  
 4. Dharwadker, Dharwadker, Harrison, Lemaster, & Bourenane. *What is Intertextuality?* (p. 70).  
 5. DLSU Senior High School Department (2024-2025). *Critical Reading as Looking for Ways of Thinking* (`critical reading.md`).  
 
@@ -99,7 +99,7 @@ Metherell and Winkler articulate 14 foundational principles of critical reading:
 9. **Audit evidence recency and methodological credibility:**  
    * *The Susumu Tonegawa Case Study (MIT, 1976):* Before Tonegawa's genetic recombination discovery, the mechanism generating millions of unique antibodies was considered an insoluble enigma. Citing a pre-1976 scientific paper today presents false, obsolete evidence.
 10. **Ponder foundational philosophical value hierarchies:**  
-   * Contrasting Thomas Jefferson's *Declaration of Independence* (anchored in universal natural rights and individual equality) with Karl Marx's *Communist Manifesto* (anchored in the supreme societal value of labor). All political rhetoric derives from competing moral axioms.
+    * Contrasting Thomas Jefferson's *Declaration of Independence* (anchored in universal natural rights and individual equality) with Karl Marx's *Communist Manifesto* (anchored in the supreme societal value of labor). All political rhetoric derives from competing moral axioms.
 
 ### Phase IV: Fallacy Diagnosis, Marginalia & Opening Context
 11. **Diagnose logical fallacies:**
@@ -111,13 +111,12 @@ graph TD
         F3["Petitio Principii: Tautological circularity assuming the explanandum"]
         F4["False Dilemma: Bifurcation fallacy violating the law of excluded middle"]
         F5["Non Sequitur: Formal breakdown in syllogistic entailment"]
-        F6["False Analogy: Category mistake projecting structurally divergent systems"]
     end
 ```
 12. **Resist bogus claims:** Dismiss unverified authoritative pronouncements ("Studies show beyond doubt...") lacking transparent methodological metrics, peer review, and verifiable data.
 13. **Practice active marginal annotation:** Transform texts into active intellectual seminars. Reluctance to annotate out of a desire to preserve textbook resale value is "penny-wise and pound-foolish."
 14. **Deconstruct the opening discourse context:** Situate texts within ongoing socio-historical dialogues.  
-   * *Andy Rooney on Fowler Case Study:* Rooney's essay praised Henry Watson Fowler's *A Dictionary of Modern English Usage* (1926) for the Screenwriters Guild 2000 feature *A Writer's Fantasy: What I Wish I Had Written*. Rooney ironically adopts Fowler's pedantic authority to parody starchy prescriptivism, mocking split infinitives, zeugma, syllepsis, and archaic usage rules like "It is I."
+    * *Andy Rooney on Fowler Case Study:* Rooney's essay praised Henry Watson Fowler's *A Dictionary of Modern English Usage* (1926) for the Screenwriters Guild 2000 feature *A Writer's Fantasy: What I Wish I Had Written*. Rooney ironically adopts Fowler's pedantic authority to parody starchy prescriptivism, mocking split infinitives, zeugma, syllepsis, and archaic usage rules like "It is I."
 
 ---
 
@@ -142,7 +141,48 @@ In *Writing and Reading Across the Curriculum*, Behrens and Rosen establish that
 
 ---
 
-## 5. Advanced Intertextuality Theory: Dialogism, Transtextuality, and Canon Subversion
+## 5. Formal Hermeneutic Critique & Epistemic Warrant Auditing (Behrens & Rosen Ch. 2)
+
+```mermaid
+flowchart TD
+    subgraph CRITIQUE_EPISTEMOLOGY["Formal Hermeneutic Critique (Behrens & Rosen Ch. 2)"]
+        Q1["Question 1: Teleological & Rhetorical Efficacy<br/><b>To what extent does author succeed in purpose?</b><br/>• Informative: Empirical Veracity, Significance ('So What?'), Fair Synthesis<br/>• Persuasive: Rhetorical cohesion, enthymematic structure, counter-arguments"]
+        
+        Q2["Question 2: Critical Epistemic Alignment & Warrant Auditing<br/><b>To what extent do you agree with the author's warrants?</b><br/>• Explicit vs. Tacit Ideological Presuppositions<br/>• Deconstructing Contradictions: Conservative anti-statism vs. Big-Government NASA funding"]
+
+        CASE1["Case 1: The 2008 Financial Crash<br/><i>Systemic collapse driven by unexamined warrant: 'Housing prices never fall nationwide'</i>"]
+        CASE2["Case 2: Krauthammer's 'The Moon We Left Behind'<br/><i>Conceding robotic superior efficiency while romantically insisting on manned boots</i>"]
+    end
+    Q1 --> Q2
+    Q2 --> CASE1
+    Q2 --> CASE2
+```
+
+A formal academic critique is an advanced exercise in rhetorical and epistemological criticism. In Chapter 2 of *Writing and Reading Across the Curriculum*, Laurence Behrens and Leonard Rosen formulate the dual-question engine of critique:
+
+### Question 1: Teleological & Rhetorical Efficacy
+**"To what extent does the author succeed in his or her purpose?"**
+* **Informative Discourse:**
+  * **Empirical Veracity (Accuracy):** Auditing claims against verifiable primary sources and peer-reviewed empirical data.
+  * **The "So What?" Threshold (Significance):** Facts may be indisputably true yet conceptually trivial. Significance demands that factual propositions meaningfully address the central inquiry, offering substantive epistemic utility.
+  * **Hermeneutic Fairness (Fair Interpretation):** Identifying whether the author contextually honors opposing interpretations or engages in dialectical distortion and cherry-picking.
+* **Persuasive Discourse:** Auditing whether the thesis is supported by coherent enthymemes, empirical grounds, and fair treatment of dissenting counterarguments.
+
+### Question 2: Critical Epistemic Alignment & Warrant Auditing
+**"To what extent do you agree with the author's warrants?"**
+This question requires scholars to deconstruct the author's **hidden assumptions**—the underlying ideological warrants that bridge empirical data to normative claims.
+* **The 2008 Subprime Mortgage Collapse Case Study:**
+  * *Systemic Warrant Failure:* The multi-trillion dollar financial edifice of collateralized debt obligations (CDOs) and credit default swaps rested upon an unexamined, tacit warrant: *that U.S. residential real estate prices would perpetually appreciate nationwide.*
+  * *The Catastrophe of Unexamined Presuppositions:* Because institutional gatekeepers (rating agencies, investment banks) treated this warrant as an unassailable axiom, loan verification standards collapsed. When home values declined, the unexamined warrant imploded, freezing global credit liquidity.
+* **Charles Krauthammer's "The Moon We Left Behind" (Time, 2009):**
+  * *Rhetorical Exordium & Loaded Diction:* Krauthammer laments the cessation of Apollo manned missions, deploying emotive rhetoric (*"ignominious retreat," "national loss of nerve"*) to provoke patriotic melancholy.
+  * *The Concession of Counter-Evidence:* To his rhetorical credit, Krauthammer explicitly concedes the strongest empirical counter-argument: unmanned robotic rovers and deep-space telescopes are vastly cheaper, eliminate risk to human life, and yield vastly superior scientific data per dollar invested.
+  * *Deconstructing the Tacit Warrant:* Having conceded that science favors robots, Krauthammer nonetheless demands human missions. This unmasks his fundamental warrant: *The ultimate justification of space exploration is not scientific utility or cost-effective data collection, but romantic heroism, national myth-making, and imperial frontier glory.*
+  * *Deconstructing Ideological Contradictions:* Krauthammer was a prominent conservative intellectual renowned for championing small-government anti-statism and denouncing federal bureaucracy. Yet in this essay, his romantic nationalism completely overrides his conservative fiscal principles, compelling him to demand a multi-billion dollar state-run government enterprise (NASA). A critical reader deconstructs this philosophical rupture.
+
+---
+
+## 6. Advanced Intertextuality Theory: Dialogism, Transtextuality, and Canon Subversion
 
 ```mermaid
 flowchart TD
@@ -170,19 +210,15 @@ No text exists in cultural isolation. Every literary, media, or social text is a
 2. **Form 2: Other Text in a Book (Cultural/Media in Literary):** Incorporating cultural or historical events possessing an innate narrative quality (e.g., Rosa Parks's bus defiance or the assassination of JFK). The historical narrative imports instant moral stakes into the host text.
 
 ### The Tripartite Functional Engine
-1. **Comparison & Contrast:** Activating the reader's cultural literacy to draw analogies between hypotext (source) and hypertext (host).
-2. **Bakhtinian Dialogism:** Staging polyphonic dialogues between competing narrative worldviews, destabilizing monologic authoritarian discourse.
-3. **Destabilization:** Decentering the canon. The host text exposes latent colonial, patriarchal, or class prejudices within the revered source text, or the borrowed text disrupts expectations in the primary book.
+1. **Comparison:** Structural juxtaposition compelling the reader to evaluate thematic parallels and ideological divergences.
+2. **Bakhtinian Dialogism (Heteroglossia):** Staging a polyphonic conversation where competing cultural discourses contest ideological authority.
+3. **Destabilization & Canon Subversion:** Decentering the canonical authority of the source text, exposing unexamined historical, colonial, or gender biases.
 
-### Transformative Hermeneutic Consequences
-1. **Transformation of the Primary Book:** Enriching the new work with dense symbolic and cultural meaning.
-2. **Reflexive Retro-Reading:** Compelling the reader to re-evaluate the original classic through the contemporary lens of the host work.
-3. **Simultaneous Reciprocal Reinterpretation:** A reciprocal hermeneutic dialectic where both texts interrogate each other continuously.
+### The Three Hermeneutic Consequences
+1. **Host Text Enrichment:** Multi-layered symbolic resonance.
+2. **Reflexive Retrospective Re-Reading:** The intertext permanently reconfigures how the reader interprets the original source text.
+3. **Simultaneous Reciprocal Interrogation:** A reciprocal dialectic where both texts interrogate each other concurrently.
 
-### Hypertext vs. Intertextuality: A Comparative Epistemology
-| Dimension | Digital Hypertext | Cultural Intertextuality |
-| :--- | :--- | :--- |
-| **Ontological Domain** | Technological / Cybernetic | Hermeneutic / Socio-Cultural |
-| **Connection Mechanism** | Electronic hyperlinks and HTTP protocols | Semiotic allusions, archetypes, ideological echoes |
-| **Reader Agency** | Physical, non-linear navigation of web nodes | Cognitive, hermeneutic synthesis in consciousness |
-| **Temporal Scope** | Synchronous electronic data retrieval | Diachronic dialogue spanning human civilization |
+### Epistemological Convergence: Digital Hypertext vs. Literary Intertextuality
+* **Hypertext:** Technological externalization of non-linear reading via digital protocols, clickable URLs, and algorithmic network architecture.
+* **Intertextuality:** The cognitive and cultural precursor to hypertext. Centuries before the internet, literature operated as a decentralized, associative, hyperlinked network across human consciousness.

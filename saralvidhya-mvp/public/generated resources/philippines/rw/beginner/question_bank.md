@@ -4,6 +4,24 @@
 **Total Questions:** 30 Questions (15 Short Answer + 15 Long Answer)  
 **Academic Target:** Foundational Knowledge & Concept Mastery  
 
+### Reference Infographic:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
 ---
 
 ## PART A: SHORT ANSWER QUESTIONS (15 QUESTIONS)
@@ -63,214 +81,225 @@ It means kicking the writer off the throne of public esteem—recognizing that p
 **Mindmap Location:** 3. Guidelines > Opposing Point of View  
 **Question:** Give an example showing why a critical reader must imagine an opposing viewpoint.  
 **Solution:**  
-If a writer argues against using dogs in medical research, the critical reader must consider the counter-perspective: research on dogs led to the discovery of insulin, which has saved millions of human diabetic patients.
+If an essay passionately argues against medical experiments on animals, the reader must consider the counter-view: testing on dogs led to the discovery and refinement of insulin, which saves millions of human lives.
 
 ---
 
 ### Question 8
-**Mindmap Location:** 3. Guidelines > Evaluating Evidence  
-**Question:** Why is checking the publication date of scientific evidence critical, as illustrated by Susumu Tonegawa?  
+**Mindmap Location:** 3. Guidelines > Historical Correction  
+**Question:** How can knowledge of American history disprove the psychological claim that oppressed people are naturally passive?  
 **Solution:**  
-Scientific knowledge evolves. Prior to Dr. Tonegawa's 1976 discovery at MIT, how the body created diverse antibodies was an unsolved mystery. Citing evidence from 1975 today would be scientifically inaccurate and outdated.
+By citing historical events like the Battle of Fallen Timbers (1794), Tippecanoe (1811), and the Black Hawk War (1832), where Native Americans actively fought back against oppression rather than submit passively.
 
 ---
 
 ### Question 9
-**Mindmap Location:** 3. Guidelines > Logical Fallacies  
-**Question:** Define the *Ad Hominem* logical fallacy with a simple example.  
+**Mindmap Location:** 3. Guidelines > Evidence Timestamp  
+**Question:** Why is the year 1976 important when evaluating medical evidence about antibodies?  
 **Solution:**  
-An *Ad Hominem* fallacy occurs when an arguer attacks the opponent's personal appearance, background, or character rather than addressing the substance of their argument (e.g., "Don't listen to his tax plan because he dresses poorly").
+Because in 1976, Dr. Susumu Tonegawa discovered how antibody genes rearrange. Any scientific article written before 1976 would say antibody creation was an unsolved mystery, which is now outdated evidence.
 
 ---
 
 ### Question 10
-**Mindmap Location:** 3. Guidelines > Logical Fallacies  
-**Question:** What is the *Either/Or* fallacy?  
+**Mindmap Location:** 3. Guidelines > Fallacy Identification  
+**Question:** What is the difference between an *Ad Hominem* fallacy and an *Ad Populum* fallacy?  
 **Solution:**  
-The *Either/Or* fallacy (false dilemma) presents a complex controversy as having only two extreme options (black or white), ignoring all reasonable intermediate choices.
+An *Ad Hominem* fallacy attacks the personal character or traits of the person arguing, while an *Ad Populum* fallacy appeals to popular consensus, peer pressure, or emotional slogans to win agreement.
 
 ---
 
 ### Question 11
-**Mindmap Location:** 3. Guidelines > Annotating  
-**Question:** Why do Metherell and Winkler describe not writing in a textbook in order to resell it as "penny-wise and pound-foolish"?  
+**Mindmap Location:** 4. Essay Architecture > Thesis Statement  
+**Question:** What was Mark Twain's central thesis in his famous essay *The Lowest Animal*?  
 **Solution:**  
-Because saving a small amount of money on textbook resale sacrifices the far greater long-term educational benefit that comes from actively annotating and interacting with the reading.
+Twain's thesis was that humans are the only animals that harbor insults and injuries, brood over them, wait for a chance, and take revenge.
 
 ---
 
 ### Question 12
-**Mindmap Location:** 4. Essay Architecture > Finding Thesis  
-**Question:** What is a thesis statement, and where is it typically located in an essay?  
+**Mindmap Location:** 4. Essay Architecture > Signposts  
+**Question:** What is the function of "Premise Signals" and "Conclusion Signals" in an essay?  
 **Solution:**  
-A thesis is a single sentence asserting the author's central stance on a debatable topic. It is typically located in the opening introductory paragraph or section.
+Premise signals (e.g. *because, since, for*) tell the reader that reasons or evidence are coming. Conclusion signals (e.g. *therefore, hence, thus*) tell the reader that a final outcome or deduction is reached.
 
 ---
 
 ### Question 13
-**Mindmap Location:** 4. Essay Architecture > Signals  
-**Question:** Differentiate between a premise signal and a conclusion signal, giving two examples of each.  
+**Mindmap Location:** 5. Intertextuality > Three Functions  
+**Question:** List the three functions of intertextuality described by Dharwadker and his co-authors.  
 **Solution:**  
-* **Premise signals** introduce supporting reasons (e.g., *because, since*).  
-* **Conclusion signals** introduce final deductions or results (e.g., *therefore, consequently*).
+1. **Comparison:** Comparing the new text with the borrowed text.  
+2. **Dialogue:** Allowing the two stories to talk with and challenge each other.  
+3. **Destabilization:** Shaking up settled interpretations of one or both texts.
 
 ---
 
 ### Question 14
-**Mindmap Location:** 5. Intertextuality > Definition  
-**Question:** Define "Intertextuality" according to Dharwadker et al.  
+**Mindmap Location:** 7. Critical Reading for Critique > Two Guiding Questions  
+**Question:** What are the two fundamental questions that guide the writing of a critique according to Behrens and Rosen?  
 **Solution:**  
-Intertextuality is the reference to or application of a literary, media, or social "text" within another literary, media, or social text.
+1. **Question 1:** To what extent does the author succeed in his or her purpose (informative, persuasive, or entertaining)?  
+2. **Question 2:** To what extent do you agree with the author (evaluating their underlying assumptions)?
 
 ---
 
 ### Question 15
-**Mindmap Location:** 6. Hypertext vs Intertextuality  
-**Question:** What is the primary difference between digital Hypertext and Intertextuality?  
+**Mindmap Location:** 7. Critical Reading for Critique > Informative Criteria  
+**Question:** What three criteria must a critical reader use to evaluate informative writing?  
 **Solution:**  
-Hypertext refers to digital, clickable electronic links connecting distinct web documents, whereas Intertextuality refers to cognitive, cultural, and thematic links connecting narratives in human consciousness.
+1. **Accuracy:** Are the factual assertions verifiable and correct?  
+2. **Significance:** Does the information pass the "So What?" test by providing meaningful, important knowledge?  
+3. **Fair Interpretation:** Does the author interpret the facts objectively without bias or distortion?
 
 ---
 
 ## PART B: LONG ANSWER QUESTIONS (15 QUESTIONS)
 
 ### Question 16
-**Mindmap Location:** 1. Taxonomy of Reading > Four Kinds  
-**Question:** Compare and contrast "Reading for Information" with "Critical Reading." Why is reading for information insufficient for college-level scholarship?  
+**Mindmap Location:** 1. Taxonomy of Reading > Four Kinds of Reading  
+**Question:** Contrast "Reading for Information" with "Critical Reading." Why is reading for information insufficient for high school and university scholars?  
 **Solution:**  
-* **Reading for Information:** This mode is used primarily as an occupational or academic tool. The reader's focus is on attention, accurate comprehension, and memorization of stated facts to complete tasks or pass exams. It treats the text as an authoritative source of raw data.
-* **Critical Reading:** In contrast, critical reading is an active, questioning partnership. The reader does not merely accept facts; they interrogate the author's logic, evaluate underlying biases, test the evidence, and deduce unstated consequences.
-* **Why Information Reading is Insufficient:** College scholarship requires students to construct original arguments, resolve conflicting claims, and detect propaganda. Simply memorizing an author's assertions leaves the student vulnerable to gullibility and intellectual conformity.
+**Reading for Information** is an occupational and academic skill where the reader concentrates, comprehends, and memorizes factual data to complete an assignment, perform a job, or pass an exam. While essential, it remains intellectually submissive because the reader treats the text as an unquestioned authority.  
+**Critical Reading**, on the other hand, is an active mental dialogue where the reader interrogates the author's claims, investigates underlying assumptions, detects logical fallacies, and considers counterarguments. For high school and university scholars, information reading alone is insufficient because academic inquiry requires evaluating competing theories, identifying bias, and creating new knowledge rather than merely reciting accepted facts.
 
 ---
 
 ### Question 17
-**Mindmap Location:** 2. The Cognitive Triad > Full Process  
-**Question:** Walk through the three stages of the Cognitive Triad (Analysis, Synthesis, Evaluation) using the real-world controversy of "Online Dating."  
+**Mindmap Location:** 1. Taxonomy of Reading > Origins of Essay  
+**Question:** Explain how Michel de Montaigne's invention of the *essai* changed the relationship between author and reader.  
 **Solution:**  
-1. **Analysis:** The student collects and breaks down diverse sources—examining data from psychologists, marriage counselors, and users. The student identifies positive reports (successful marriages, wider social access) and negative reports (deception, harassment, safety hazards) and examines the biases of dating platform owners versus skeptics.
-2. **Synthesis:** The student combines these contrasting viewpoints into an integrated, holistic perspective. Synthesis humbles the student's initial assumptions by proving that online dating neither leads universally to happiness nor universally to catastrophe. The student synthesizes a nuanced thesis: modern online dating expands romantic choices but introduces new psychological and safety risks requiring digital literacy.
-3. **Evaluation:** The student places their weight on the seesaw—assessing the credibility and recency of the studies, grading the arguments, and taking a clear, reasoned stance on how society should navigate online romance while avoiding extreme panic or uncritical praise.
+In 1580, Michel de Montaigne began writing what he called *essais*, derived from the French verb *essayer* meaning "to try" or "to attempt." Prior to Montaigne, writing was dominated by formal philosophical treatises or dogmatic religious doctrines that proclaimed absolute truth.  
+Montaigne introduced a radically intimate, exploratory genre: he spoke directly to the reader in the first person, openly disclosing his attitudes, values, prejudices, and doubts. By presenting his writings as an "attempt" of an inquiring mind rather than absolute truth, Montaigne leveled the playing field between author and reader. The reader is no longer an obedient subject listening to a sermon; the reader is an intellectual equal invited into the author's mental laboratory to test, challenge, and reflect upon the ideas.
 
 ---
 
 ### Question 18
-**Mindmap Location:** 3. Guidelines > Demystifying & Democratic Inquiry  
-**Question:** Explain how "Demystifying the Writer" supports active citizenship and democratic thinking in Senior High School students.  
+**Mindmap Location:** 2. The Cognitive Triad > Full Process  
+**Question:** Walk through the three stages of the Cognitive Triad (Analysis, Synthesis, Evaluation) using the contemporary issue of **social media screen time among teenagers**.  
 **Solution:**  
-When students view writers as untouchable authorities, they become submissive consumers of information. Demystifying the author teaches students that every writer is a fallible human being influenced by personal background, political bias, and potential errors in reasoning. In a democratic society, citizens must critically evaluate laws, media reports, political speeches, and institutional policies. By learning to kick authors off the throne of unquestioned esteem, students develop independent critical thinking skills essential for resisting authoritarian propaganda and exercising civic responsibility.
+1. **Analysis:** The student deconstructs research articles, surveys, and expert statements on adolescent screen time. The student separates factual data (e.g., average hours spent on smartphones) from opinions and looks for possible biases (e.g., whether a study was funded by a tech company or a conservative parenting group).  
+2. **Synthesis:** The student combines findings from psychologists, sociologists, educators, and teenagers themselves. The student discovers that while excessive screen time correlates with sleep loss and anxiety, social media also provides essential social connection and educational support for isolated teens. This synthesis humbles the student, demonstrating that the issue cannot be solved with a simple "phones are evil" slogan.  
+3. **Evaluation:** The student weighs the conflicting evidence and decides where to place their weight on the seesaw. The student formulates a nuanced stance: rather than calling for a total phone ban or unlimited use, they argue for healthy boundary guidelines that curb late-night scrolling while preserving daytime digital connection.
 
 ---
 
 ### Question 19
-**Mindmap Location:** 3. Guidelines > Biases & Hidden Assumptions  
-**Question:** How do an author's personal background, education, and values shape their arguments? Provide two distinct examples.  
+**Mindmap Location:** 3. Guidelines > Demystifying Authors  
+**Question:** Why do Metherell and Winkler strongly advocate "kicking the writer off the throne of public esteem"? What happens when a student fails to do this?  
 **Solution:**  
-Every author writes from within a specific cultural, philosophical, and demographic perspective:  
-1. *Example 1 (Religious/Metaphysical Assumptions):* An atheist debating abortion will not attribute a divine immortal soul to an unborn fetus, while a devout Roman Catholic will base their entire moral stance on the sacred sanctity of human life from conception. Neither can be understood without recognizing their foundational assumptions.  
-2. *Example 2 (Economic Assumptions):* A Libertarian author arguing that municipal fire departments should be privately operated assumes that government involvement naturally produces inefficiency, whereas a cultural progressive author assumes government intervention is essential to protect public welfare.
+Metherell and Winkler urge students to demystify writers because treating authors like infallible gods leads to passive gullibility. Writers are human beings who possess political agendas, personal insecurities, demographic biases, and blind spots.  
+When a student fails to demystify the author, they accept every printed claim as undeniable gospel. They lose their capacity for independent thought, fail to spot flawed reasoning or biased statistics, and become vulnerable to intellectual manipulation. Kicking the writer off the throne empowers the student to engage with the text as an auditor, verifying evidence, checking logic, and asserting their own critical voice.
 
 ---
 
 ### Question 20
-**Mindmap Location:** 3. Guidelines > Interdisciplinary Insights  
-**Question:** How does using insights from one subject (such as history) illuminate or correct claims in another subject (such as psychology)? Use the example from the textbook.  
+**Mindmap Location:** 3. Guidelines > Annotation Value  
+**Question:** Why do Metherell and Winkler describe keeping a textbook clean for resale as "penny-wise and pound-foolish"?  
 **Solution:**  
-Academic disciplines are interconnected. The textbook describes a situation where a psychology writer asserts that oppressed peoples inevitably develop a defeatist, submissive mentality that makes them willing victims of tyrants. A critical reader equipped with historical knowledge can immediately refute this psychological claim. The reader can cite the Battle of Fallen Timbers (1794), the Battle of Tippecanoe (1811), and the Black Hawk War (1832), in which Native American tribes fought fiercely against overwhelming military forces to protect their lands rather than meekly submitting. Historical facts directly disprove the psychological generalization.
+Keeping a textbook unmarked just to resell it for a few hundred pesos at the end of the trimester is "penny-wise and pound-foolish" because the student saves a tiny sum of money at the expense of a far greater educational asset.  
+Active marginal annotation—underlining main claims, writing questions, noting vocabulary, and challenging weak logic—forces the reader's brain to stay actively engaged. It transforms reading into a live seminar. The permanent knowledge, analytical habits, and critical skills gained from annotating a text are worth infinitely more than the resale value of a clean book.
 
 ---
 
 ### Question 21
-**Mindmap Location:** 3. Guidelines > Tonegawa Evidence Case Study  
-**Question:** Discuss the principle of "Evaluating Evidence" with special emphasis on the date of scientific evidence. Why is common sense also necessary?  
+**Mindmap Location:** 3. Guidelines > Andy Rooney Context  
+**Question:** Analyze Andy Rooney's essay on Fowler's *Modern English Usage*. Why is understanding its opening context crucial for the reader?  
 **Solution:**  
-* **Evaluating Evidence:** Evidence cannot be accepted at face value; it must be audited for credibility, relevance, and recency.  
-* **Importance of the Date:** In scientific research, facts change rapidly. Before 1976, genetics textbooks taught that how the body produced millions of distinct antibodies was an impenetrable mystery. But in 1976, Dr. Susumu Tonegawa at MIT discovered antibody gene rearrangement. If a researcher relied on pre-1976 publications, their conclusions would be totally obsolete.  
-* **Role of Common Sense:** Common sense acts as a reality check. For instance, if an author asserts that a child's handwriting can predict their exact future adult career, common sense and human experience tell us this claim is speculative and unscientific, even if dressed in pseudo-academic language.
+CBS commentator Andy Rooney wrote an essay expressing a humorous wish that he had authored Henry Watson Fowler's *A Dictionary of Modern English Usage*. If a reader does not understand the opening context, the essay seems eccentric and bizarre.  
+However, the essay was written for a Screenwriters Guild feature titled *"A Writer's Fantasy: What I Wish I Had Written."* In that symposium, writers playful confessed books they admired. Rooney seized the opportunity to satirize grammatical pedantry—poking fun at strict rules against split infinitives and the fussy requirement to say "It is I" instead of "It's me." Knowing the opening context allows the reader to recognize that Rooney was writing lighthearted satire, not a serious grammatical treatise.
 
 ---
 
 ### Question 22
-**Mindmap Location:** 3. Guidelines > Andy Rooney Case Study  
-**Question:** Explain the importance of understanding the "Opening Context" of an essay, using Andy Rooney's humorous piece on Henry Watson Fowler.  
+**Mindmap Location:** 3. Guidelines > Logical Fallacies  
+**Question:** Define and provide concrete examples for: (a) *Either/Or Reasoning*, (b) *Begging the Question*, and (c) *Non Sequitur*.  
 **Solution:**  
-* **Why Opening Context Matters:** Essays do not exist in a vacuum; they participate in an ongoing cultural conversation. Without understanding the context, a reader is like a person who overhears an answer without knowing the question.  
-* **Andy Rooney Case Study:** Andy Rooney's essay praised Henry Watson Fowler's *A Dictionary of Modern English Usage* (1926). Without context, his essay seems like an eccentric personal rant about grammar. However, knowing the opening context—that it was commissioned for the Screenwriters Guild 2000 feature *A Writer's Fantasy: What I Wish I Had Written*—reveals that Rooney was playfully satirizing rigid grammatical rules, such as split infinitives, zeugma, and the pedantic requirement to say "It is I" instead of "It's me."
+(a) **Either/Or Reasoning (False Dilemma):** Forcing a multifaceted dispute into an artificial binary choice between two extremes. *Example:* "Either we ban all smartphones in schools immediately, or our students will completely fail in life."  
+(b) **Begging the Question (Circular Reasoning):** An argument where the premise merely restates the conclusion in different words instead of proving it. *Example:* "We must obey the school curfew because the school curfew must be obeyed."  
+(c) **Non Sequitur:** A Latin term meaning "it does not follow"—drawing a conclusion that has no logical bridge to the evidence offered. *Example:* "Professor Cruz has a stylish haircut and wears nice suits; therefore, his theory of macroeconomics must be correct."
 
 ---
 
 ### Question 23
-**Mindmap Location:** 4. Essay Architecture > Mark Twain Case Study  
-**Question:** Analyze Mark Twain's thesis in *The Lowest Animal*. How does Twain use this thesis to organize his argumentative essay?  
+**Mindmap Location:** 4. Essay Architecture > Thesis Statement  
+**Question:** What are the key characteristics of an effective thesis statement, and where is it typically positioned in an essay?  
 **Solution:**  
-In *The Lowest Animal*, Mark Twain asserts: "In the course of my experiments I convinced myself that among the animals man is the only one that harbors insults and injuries, broods over them, waits till a chance offers, then takes revenge."  
-* **Role of the Thesis:** This single declarative sentence in the opening paragraphs sets the entire argumentative agenda. It shocks the reader by reversing the traditional hierarchy that places humans above beasts.  
-* **Organizational Effect:** Every subsequent paragraph presents supporting evidence (comparative anecdotes, satirical experiments comparing anacondas and humans) designed to validate this central claim. Readers use the thesis as a navigational compass to test whether each supporting paragraph logically reinforces Twain's provocative stance.
+An effective thesis statement has three primary characteristics:  
+1. It is a single, clear declarative sentence.  
+2. It asserts the author's focused response to an issue that rational people might debate.  
+3. It serves as the governing blueprint for the entire essay, with every subsequent paragraph providing supporting premises, evidence, or counterargument refutations.  
+It is typically located near the end of the essay's introductory section, orienting the reader before the argument unfolds.
 
 ---
 
 ### Question 24
-**Mindmap Location:** 4. Essay Architecture > Premise vs Conclusion Signals  
-**Question:** Explain why mastering premise and conclusion signals enhances reading comprehension and helps identify logical flaws.  
+**Mindmap Location:** 4. Essay Architecture > Premise vs. Conclusion Signals  
+**Question:** Explain how "Premise Signals" and "Conclusion Signals" guide the reader's comprehension through complex argumentation.  
 **Solution:**  
-Writers construct arguments as chains of reasoning. Premise signals (*since, because, for, follows from, inasmuch as*) indicate the supporting evidence or starting assumptions. Conclusion signals (*therefore, thus, hence, consequently, it follows that*) indicate the author's logical claim.  
-* **Enhancing Comprehension:** Recognizing these words allows readers to instantly distinguish between facts offered as evidence and conclusions drawn from them.  
-* **Spotting Flaws:** If an author uses a conclusion signal like "therefore" without having provided sufficient valid premise signals earlier, the reader can immediately detect a *Non Sequitur* or hasty generalization fallacy.
+Premise and conclusion signals serve as the navigational road signs of an essay:  
+* **Premise Signals** (such as *because, since, for, follows from, inasmuch as, in view of the fact that*) alert the reader that evidentiary data, reasons, or justifications are being introduced. They answer the question: *"Why should I believe this?"*  
+* **Conclusion Signals** (such as *therefore, hence, thus, consequently, accordingly, it follows that*) alert the reader that a logical deduction or final claim is being derived from previously stated premises.  
+By tracking these signal words, a critical reader can construct a logical map of the author's reasoning, distinguishing supporting evidence from main assertions.
 
 ---
 
 ### Question 25
-**Mindmap Location:** 5. Intertextuality > Two Forms  
-**Question:** Detail the two forms of intertextuality defined by Dharwadker et al.: "Book in a Book" and "Other Text in a Book." Provide realistic examples.  
+**Mindmap Location:** 5. Intertextuality > Definition and Two Forms  
+**Question:** Detail Dharwadker's definition of intertextuality and contrast the two primary forms: "Book in a Book" versus "Other Text in a Book."  
 **Solution:**  
-1. **Book in a Book (Literary in Literary):** This occurs when an author incorporates a brief or prolonged reference to another literary text. It can be a brief mention of a title or famous character (e.g., naming a hesitant detective Hamlet) or a prolonged adaptation of an entire storyline or iconic scene.  
-2. **Other Text in a Book (Media/Social in Literature):** This occurs when an author incorporates a cultural or historical event into a literary narrative. To qualify as intertextuality, the referenced item must have a narrative quality (e.g., referencing Rosa Parks's bus defiance or the assassination of JFK). The author borrows a pre-existing cultural story to deepen the emotional and political stakes of their book.
+Dharwadker and his co-authors define intertextuality as the reference to or application of a literary, media, or social "text" inside another text. No author creates in isolation; literature builds upon prior cultural stories.  
+* **Form 1: Book in a Book:** Occurs when a literary work references another literary work. This can be brief (quoting a Shakespearean line or naming a character Hamlet) or prolonged (adapting an entire plot, as when modern novels rewrite classic fairy tales).  
+* **Form 2: Other Text in a Book:** Occurs when a literary work weaves in a media or cultural narrative—such as a famous song, a film, or an iconic historical event (like Rosa Parks refusing to give up her bus seat or the Apollo Moon landing). Because the referenced cultural event has an existing narrative quality, it brings a rich second storyline and moral weight into the host book.
 
 ---
 
 ### Question 26
 **Mindmap Location:** 5. Intertextuality > Three Functions  
-**Question:** Explain the three critical functions of intertextuality: Comparison, Dialogue, and Destabilization.  
+**Question:** Explain the three dynamic functions of intertextuality: Comparison, Dialogue, and Destabilization.  
 **Solution:**  
-1. **Comparison:** The juxtaposition of two texts prompts the reader to compare the original source with its new context, highlighting thematic similarities and differences.  
-2. **Conversational Dialogue:** Because both texts possess narrative arcs, they enter into a multi-vocal exchange. They can reinforce each other or present competing, conflicting perspectives on truth and morality.  
-3. **Destabilization:** Intertextuality shakes up conventional understanding. A new work can destabilize a classic story by exposing its hidden historical prejudices, or the borrowed classic can disrupt and subvert our expectations of the primary book.
+1. **Comparison:** By placing an earlier text inside a new text, the author invites the reader to compare both contexts, noticing similarities and sharp differences in morality, culture, and character choices.  
+2. **Dialogue:** Both the host text and the referenced text are stories with distinct worldviews. Intertextuality creates a dynamic conversation between them, allowing them to support, question, or challenge each other's authority.  
+3. **Destabilization:** The presence of an intertext can shake up comfortable interpretations. A new novel might reveal that a celebrated classic hero actually held disturbing, unexamined prejudices, subverting the canon and forcing readers to re-evaluate what they thought they knew.
 
 ---
 
 ### Question 27
-**Mindmap Location:** 5. Intertextuality > Three Effects  
-**Question:** Describe the three transformative effects that intertextuality produces on readers and texts.  
+**Mindmap Location:** 5. Intertextuality > Transformative Effects  
+**Question:** Explain the three transformative effects that occur when a reader engages with an intertextual work.  
 **Solution:**  
-1. **Transformation of the Primary Book:** The new host work is enriched with deeper symbolic resonance and moral complexity by weaving in prior narratives.  
-2. **Transformation of the Prior Text:** The original referenced text is reflexively reconsidered. Even if the old text is not altered physically, viewing it through a modern lens permanently transforms how readers interpret it.  
-3. **Simultaneous Reinterpretation of Both:** A reciprocal, dynamic conversation where both texts continually illuminate, challenge, and reframe one another in the reader's mind.
+Dharwadker identifies three transformative effects:  
+1. **Transformation of the Primary Book:** The intertext enriches the new book by adding historical depth and symbolic resonance.  
+2. **Reflexive Transformation of the Prior Text:** Seeing an old story retold through a modern lens permanently changes how the reader remembers the original work (reflexive re-reading).  
+3. **Simultaneous Reinterpretation of Both Texts:** The reader engages in a reciprocal mental ping-pong, evaluating both texts against each other at the exact same time.
 
 ---
 
 ### Question 28
-**Mindmap Location:** 6. Hypertext vs Intertextuality  
-**Question:** Compare Hypertext with Intertextuality. How does electronic linking differ from cultural narrative linking?  
+**Mindmap Location:** 5. Intertextuality vs. Hypertext  
+**Question:** Compare and contrast digital Hypertext with literary Intertextuality.  
 **Solution:**  
-* **Hypertext:** An electronic, digital system of non-linear text organization. Readers click physical hyperlinks to navigate between independent nodes across the World Wide Web. Navigation is explicit, technological, and self-directed.  
-* **Intertextuality:** A cultural, cognitive phenomenon occurring within human consciousness. It connects literary, historical, and media narratives across time through thematic allusions, archetypes, and echoes.  
-* **Comparison:** While hypertext physically connects documents on computer screens, intertextuality conceptually connects human cultural memory. Intertextuality is the literary and intellectual ancestor of digital hypertext.
+* **Hypertext** is a digital and technological mechanism. It connects electronic web documents using clickable links on a computer screen, allowing a reader to navigate non-linearly across internet nodes.  
+* **Intertextuality** is an intellectual and cultural phenomenon. It connects human ideas, stories, and cultural memories in the reader's mind without requiring physical links.  
+* **Synthesis:** Hypertext is the digital externalization of intertextuality. Centuries before the World Wide Web was built, human literature was already an interconnected cultural web where every book contained intellectual hyperlinks to prior stories.
 
 ---
 
 ### Question 29
-**Mindmap Location:** 3. Guidelines > Logical Fallacies Catalog  
-**Question:** Choose three logical fallacies from the textbook (e.g., Begging the Question, False Analogy, Non Sequitur) and explain why each fails sound reasoning.  
+**Mindmap Location:** 7. Critical Reading for Critique > Hidden Assumptions & 2008 Crisis  
+**Question:** What is a hidden assumption, and how did an unexamined hidden assumption cause the 2008 Subprime Mortgage Financial Crisis?  
 **Solution:**  
-1. **Begging the Question (Circular Reasoning):** The argument assumes what it is trying to prove (e.g., "This novel is a masterpiece because great literature is always written by brilliant authors"). It offers no real independent proof.  
-2. **False Analogy:** Comparing two situations that have superficial resemblances but fundamental structural differences (e.g., "Running a nation is just like running a household kitchen; we should simply cut grocery bills"). A national economy possesses complex monetary and geopolitical factors absent in a kitchen.  
-3. **Non Sequitur ("It does not follow"):** The stated conclusion has no logical connection to the premises offered (e.g., "She is a celebrated violinist; therefore, she will make an outstanding university president"). Musical virtuosity does not prove administrative leadership ability.
+A hidden assumption is an underlying premise taken for granted by an author or community without being explicitly stated or verified. If the assumption is flawed, the entire argument or system built upon it collapses.  
+In Chapter 2 of *Writing and Reading Across the Curriculum*, Behrens and Rosen discuss the 2008 Subprime Mortgage Financial Collapse. For years, major Wall Street banks, mortgage lenders, and financial analysts operated on a single, unexamined hidden assumption: *that residential real estate prices across the United States would always rise, or at worst remain flat, but never drop nationwide.* Because everyone accepted this assumption without question, banks issued hundreds of billions of dollars in risky mortgages to unqualified borrowers. When real estate prices plunged, the entire financial market crashed. This real-world catastrophe demonstrates the danger of failing to critically evaluate hidden assumptions.
 
 ---
 
 ### Question 30
-**Mindmap Location:** 1. Taxonomy & Foundations > Active Reading Mindset  
-**Question:** Synthesize the overarching philosophy of "Critical Reading as Looking for Ways of Thinking." How does this approach transform a student from a passive recipient into an autonomous scholar?  
+**Mindmap Location:** 7. Critical Reading for Critique > Charles Krauthammer Case Study  
+**Question:** Analyze Charles Krauthammer's op-ed "The Moon We Left Behind" as a model critique case study. How does a critical reader evaluate his claims, concessions, hidden assumptions, and political tension?  
 **Solution:**  
-The philosophy of "Critical Reading as Looking for Ways of Thinking" views reading not as passive information storage, but as an apprenticeship in how human minds construct meaning.  
-By demystifying authors, deconstructing essay architecture, spotting logical fallacies, checking evidence timestamps, and tracing intertextual connections, the student ceases to be a gullible consumer of authority. The student realizes that every text is an "essai"—an attempt by a fallible thinker to make sense of the world. Through the cognitive triad of analysis, synthesis, and evaluation, students learn to test claims, forge original perspectives, and place their own weight on the intellectual seesaw. This transforms them into autonomous scholars capable of independent judgment and active democratic citizenship.
+In *Writing and Reading Across the Curriculum*, Behrens and Rosen present Charles Krauthammer's 2009 op-ed celebrating the 40th anniversary of Apollo 11:  
+1. **Thesis & Loaded Tone:** Krauthammer argues that America's retreat from manned space exploration represents a tragic loss of national ambition. He uses loaded words like *"retreat," "abandonment,"* and *"ignominious"* to evoke emotional regret.  
+2. **Concessions (Counterarguments):** Krauthammer openly concedes that unmanned robotic probes are far cheaper, involve zero risk to human life, and yield vastly superior scientific data per dollar spent.  
+3. **Hidden Assumption:** Despite admitting robots are superior for science, Krauthammer insists humans must return to the Moon. Why? Because of his hidden assumption: that the ultimate purpose of space exploration is not scientific utility, but human adventure, romance, and national heroism!  
+4. **Ideological Contradiction:** Critical readers note that Krauthammer was a famous conservative columnist who normally opposed big-government spending. Yet in this essay, his romantic nationalism led him to advocate for a colossal, taxpayer-funded government initiative (NASA). Spotting these assumptions and tensions is the core of critical critique!

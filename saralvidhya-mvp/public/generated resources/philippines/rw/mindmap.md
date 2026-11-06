@@ -8,10 +8,11 @@ diagnostic_test: "Intertextuality and Hypertext exercise"
 references:
   - "Guidelines for Critical Reading (pp. 1-10), Metherell, J.R. & Winkler, A. (2007), Readings for Writers (2nd ed.), Cengage Learning."
   - "What is Reading Critically (pp. 1-3), Hirschberg, S. & Hirschberg, T. (2009), The Millennium Reader (5th ed.), Houghton Mifflin."
-  - "Critical Reading and Critique (pp. 45-55), Behrens, L. & Rosen, L. (2000), Writing and Reading Across the Curriculum (7th ed.), Addison Wesley Longman."
+  - "Critical Reading and Critique (pp. 45-55 / Ch. 2 pp. 51-77), Behrens, L. & Rosen, L. (2000), Writing and Reading Across the Curriculum (7th ed.), Addison Wesley Longman."
   - "What is Intertextuality? (p. 70), Dharwadker, Dharwadker, Harrison, Lemaster, & Bourenane."
-  - "Critical Reading as Ways of Thinking: Core Unit Materials (critical reading.md), DLSU Senior High School Department."
+  - "Critical Reading as Ways of Thinking: Core Unit Materials (critical-reading.txt / critical reading.md), DLSU Senior High School Department."
 source_materials:
+  - "critical-reading.txt"
   - "critical reading.md"
   - "Reading Critically.md"
   - "reading_essays.md"
@@ -19,7 +20,7 @@ source_materials:
 bloom_levels: "L-1 Remembering to L-6 Creating"
 ---
 
-# Critical Reading as Looking for Ways of Thinking — Comprehensive Mindmap
+# Critical Reading as Looking for Ways of Thinking — Comprehensive Master Mindmap
 
 ---
 
@@ -30,7 +31,7 @@ mindmap
   root((Critical Reading as Ways of Thinking))
 
     %% ═════════════════════════════════════════════════════════════════════════
-    %% BRANCH 1: FOUR KINDS OF READING & FOUNDATIONS
+    %% BRANCH 1: FOUR KINDS OF READING & PHILOSOPHICAL FOUNDATIONS
     %% ═════════════════════════════════════════════════════════════════════════
     ("1. Taxonomy of Reading & Foundations")
       ("Four Kinds of Reading (Hirschberg)")
@@ -108,7 +109,7 @@ mindmap
         ["Thought-Provoking Inquiries - Rhetorical questions, provocative paradoxes, or precise definitions"]
 
     %% ═════════════════════════════════════════════════════════════════════════
-    %% BRANCH 5: INTERTEXTUALITY (DHARWADKER ET AL.)
+    %% BRANCH 5: INTERTEXTUALITY & CULTURAL NARRATIVES (DHARWADKER ET AL.)
     %% ═════════════════════════════════════════════════════════════════════════
     ("5. Intertextuality & Cultural Narratives")
       ("Definition of Intertextuality")
@@ -140,17 +141,31 @@ mindmap
         ["Combined Modality - Digital hypertext physically connects nodes; intertextuality cognitively enriches them"]
 
     %% ═════════════════════════════════════════════════════════════════════════
-    %% BRANCH 7: ACADEMIC CRITIQUE & RHETORICAL ANALYSIS
+    %% BRANCH 7: CRITICAL READING FOR CRITIQUE (BEHRENS & ROSEN CH. 2)
     %% ═════════════════════════════════════════════════════════════════════════
-    ("7. Academic Critique & Rhetorical Analysis")
-      ("Critique Composition Steps")
-        ["Summarizing Fairly - Accurately representing an author's thesis without strawman distortions"]
-        ["Evaluating Evidence Quality - Gauging sufficiency, relevance, recency, and methodological validity"]
-        ["Analyzing Rhetorical Strategies - Persona, tone, appeals (ethos, pathos, logos), and ideological warrants"]
-      ("Case Study: Andy Rooney on Fowler")
-        ["Opening Context - 2000 Screenwriters Guild 'A Writer's Fantasy' retrospective"]
-        ["Rhetorical Target - Henry Watson Fowler's Modern English Usage (1926)"]
-        ["Satirical Device - Spoofing starchy grammar rules (split infinitives, zeugma, 'It is I')"]
+    ("7. Critical Reading for Critique (Behrens & Rosen Ch. 2)")
+      ("The Two Fundamental Critical Questions")
+        ["Question 1: Success in Purpose - To what extent does the author succeed in his or her purpose?"]
+        ["Question 2: Personal Agreement - To what extent do you agree with the author's claims and warrants?"]
+      ("The Tripartite Authorial Purpose")
+        ["Writing to Inform - Evaluated by Accuracy, Significance ('So What?'), and Fair Interpretation"]
+        ["Writing to Persuade - Informative vs Persuasive Thesis, Fair Use of Evidence, Logical Validity"]
+        ["Writing to Entertain - Aesthetic engagement, emotional resonance, dramatic and comic craft"]
+      ("Evaluating Assumptions & Ideological Foundations")
+        ["Assumptions as Structural Foundations - Presentations rest upon explicit or unstated presuppositions"]
+        ["Hidden Assumptions in Finance - The 2008 Subprime Mortgage crisis built on the assumption home prices never fall"]
+        ["Testing Warrants - Interrogating unstated philosophical and political warrants bridging data to claims"]
+      ("Guidelines & Strategy for Composing Critiques")
+        ["Section 1: Introduction & Summary - Fair representation of author, context, and core thesis"]
+        ["Section 2: Purpose Audit - Evaluating evidence accuracy, logical coherence, and rhetorical effectiveness"]
+        ["Section 3: Evaluating Assumptions - Analyzing warrants, stating reasoned points of agreement and disagreement"]
+        ["Section 4: Conclusion - Final balanced judgment of validity, significance, and cultural impact"]
+      ("Model Case Study: Charles Krauthammer (2009)")
+        ["The Text - 'The Moon We Left Behind' (Washington Post, July 17, 2009)"]
+        ["Krauthammer's Purpose - Persuading America to recommit to NASA manned lunar exploration"]
+        ["Emotional Rhetoric - Loaded terms ('abandonment', 'retreat', 'hyper-terrestrial')"]
+        ["Hidden Assumptions Audited - Space travel as innate moral imperative vs earthly poverty and $1T stimulus deficit"]
+        ["Ideological Inconsistency - Conservative small-government columnist demanding massive taxpayer space spending"]
 ```
 
 ---
@@ -250,11 +265,24 @@ mindmap
 
 ---
 
-### Branch 7: Academic Critique & Applied Rhetorical Analysis
-* **7.1 The Anatomy of an Academic Critique**
-  * **7.1.1 Objective Summary:** Accurately reconstructing the author's core thesis and supporting scaffolding without strawman distortion.
-  * **7.1.2 Evidentiary Evaluation:** Testing empirical data against criteria of sufficiency, relevance, methodology, and timeliness.
-  * **7.1.3 Rhetorical Deconstruction:** Analyzing appeals to logic (logos), character (ethos), and emotion (pathos).
-* **7.2 Case Analysis: Andy Rooney on Fowler's Modern English Usage**
-  * **7.2.1 Opening Context:** Written for the Screenwriters Guild 2000 symposium on *A Writer's Fantasy: What I Wish I Had Written*.
-  * **7.2.2 Satirical Subversion:** Rooney adopts Henry Fowler's authoritative stance to parody rigid grammatical prescriptivism, split infinitives, zeugma, and archaic rules.
+### Branch 7: Critical Reading for Critique (Behrens & Rosen Ch. 2, critical-reading.txt)
+* **7.1 The Two Fundamental Guiding Questions**
+  * **7.1.1 Question 1: Success in Purpose:** To what extent does the author succeed in his or her purpose? (Objective evaluation of rhetorical effectiveness, coherence, and evidence).
+  * **7.1.2 Question 2: Extent of Agreement:** To what extent do you agree with the author? (Subjective yet reasoned audit of premises, ethical warrants, and assumptions).
+* **7.2 The Tripartite Authorial Purpose & Evaluation Metrics**
+  * **7.2.1 Writing to Inform:** Judged on (1) **Accuracy of Information** (data verification), (2) **Significance of Information** (answering the "So what?" question), and (3) **Fair Interpretation** (separating raw facts from subjective spin).
+  * **7.2.2 Writing to Persuade:** Judged on thesis clarity (Informative vs. Persuasive thesis), evidential sufficiency, logical soundess, and fair use of counter-arguments.
+  * **7.2.3 Writing to Entertain:** Judged on aesthetic craft, emotional truth, comedic or dramatic impact.
+* **7.3 Uncovering and Auditing Assumptions**
+  * **7.3.1 Assumptions as Structural Foundations:** Every argument rests on tacit presuppositions that author assumes the audience shares.
+  * **7.3.2 The Subprime Mortgage Case Study in Finance:** The 2008 global financial collapse was built on the unstated, disastrous assumption that residential real estate prices would perpetually appreciate.
+* **7.4 The Anatomy & Strategy of Writing Critiques**
+  * **7.4.1 Step 1 (Introduction & Summary):** Contextualizing the author, title, and accurately stating the central thesis.
+  * **7.4.2 Step 2 (Purpose Evaluation):** Rigorously assessing the author's success in informing or persuading.
+  * **7.4.3 Step 3 (Assumption & Warrant Audit):** Articulating explicit reasons for agreement or disagreement with underlying axioms.
+  * **7.4.4 Step 4 (Conclusion):** Providing an overarching judgment of validity, significance, and enduring relevance.
+* **7.5 Applied Case Study: Charles Krauthammer's "The Moon We Left Behind" (2009)**
+  * **7.5.1 The Text & Context:** Written by conservative columnist Charles Krauthammer on the 40th anniversary of Apollo 11 (Washington Post, July 17, 2009).
+  * **7.5.2 Rhetorical Strategies:** Deploying emotionally charged diction ("abandonment", "retreat", "hyper-terrestrial retreat") to induce patriotic shame.
+  * **7.5.3 Deconstructing Assumptions:** Auditing Krauthammer's unstated assumption that human space exploration is an absolute moral imperative overriding terrestrial economic crises ($1 trillion stimulus deficits, shuttered schools, poverty).
+  * **7.5.4 Exposing Ideological Contradictions:** Highlighting the paradox of a conservative fiscal columnist advocating a gargantuan, federal taxpayer-funded space program rather than free-market private space initiatives.

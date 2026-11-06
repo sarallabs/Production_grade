@@ -3,6 +3,25 @@
 **Subject:** Reading and Writing Skills | **Total Cards:** 20 Cards  
 **Audience Level:** Intermediate (Applied Analytical & Rhetorical Rigor)  
 
+### Master Critique Matrix:
+```mermaid
+flowchart TD
+    CRITIQUE["📝 Systematic Framework for Academic Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["Question 1: Author's Teleological Success"]
+        Q1_INFO["📄 Informative Discourse<br/>• <b>Accuracy</b>: Empirical verification<br/>• <b>Significance</b>: The 'So What?' threshold<br/>• <b>Fair Interpretation</b>: Balanced context vs selective cherry-picking"]
+        Q1_PERS["🎯 Persuasive Discourse<br/>• Structural coherence of thesis & premises<br/>• Handling of counterarguments & concessions"]
+    end
+    
+    subgraph Q2["Question 2: Critical Alignment & Assumption Auditing"]
+        Q2_WARRANTS["🔍 Hidden Assumptions & Tacit Warrants<br/>• <b>2008 Financial Crisis</b>: Assumption that real-estate prices never fall nationwide<br/>• <b>Krauthammer Case</b>: Manned flight romanticized over cost-effective robotic science"]
+        Q2_IDEOLOGY["⚡ Ideological Contradiction<br/>• Conservative anti-spending stance vs demand for massive federal NASA outlay"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
 ---
 ### Card 01
 **Front:** Contrast 'Reading for Information' with 'Critical Reading' across cognitive engagement.  
@@ -73,27 +92,30 @@ Circular reasoning where the premise assumes the truth of the conclusion (e.g., 
 
 ---
 ### Card 12
-**Front:** What characterizes an 'Either/Or' fallacy (False Dilemma)?  
+**Front:** What are the TWO guiding questions of a critique according to Behrens & Rosen?  
 **Back:**  
-Artificially constraining a complex multidimensional controversy into a stark binary choice, ignoring reasonable intermediate positions.  
+1. To what extent does the author succeed in his or her purpose?
+2. To what extent do you agree with the author (evaluating their assumptions)?  
 
 ---
 ### Card 13
-**Front:** Why is keeping textbooks pristine to resell them considered 'penny-wise and pound-foolish'?  
+**Front:** What three criteria determine the quality of Informative Writing (Behrens & Rosen)?  
 **Back:**  
-Sacrificing margin annotations saves nominal resale currency but destroys the far more valuable cognitive benefits of active textual interrogation.  
+1. Accuracy (empirical verification)
+2. Significance (the 'So What?' threshold)
+3. Fair Interpretation (balanced presentation without omission)  
 
 ---
 ### Card 14
-**Front:** What was the rhetorical purpose of Andy Rooney's essay on Fowler's English Usage?  
+**Front:** How did an unexamined hidden assumption trigger the 2008 Subprime Mortgage Crisis?  
 **Back:**  
-Commissioned for the 2000 Screenwriters Guild symposium 'A Writer's Fantasy', Rooney satirized pedantic grammatical prescriptivism and archaic usage rules.  
+Financial institutions operated on the unexamined warrant that residential home prices would never nationwide fall, issuing hundreds of billions in toxic loans.  
 
 ---
 ### Card 15
-**Front:** How does Mark Twain formulate his central thesis in 'The Lowest Animal'?  
+**Front:** What hidden assumption and ideological contradiction exist in Krauthammer's Moon op-ed?  
 **Back:**  
-He asserts that man is the only animal harboring insults, brooding over injuries, and executing premeditated revenge—reversing traditional moral hierarchies.  
+He assumed human romance outweighs robotic scientific superiority, and as a conservative critic of government spending, he ironically advocated massive NASA federal outlay.  
 
 ---
 ### Card 16

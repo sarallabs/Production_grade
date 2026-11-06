@@ -5,7 +5,7 @@
 **Academic References:**  
 1. Metherell & Winkler (2007). *Readings for Writers* (2nd ed., pp. 1-10).  
 2. Hirschberg & Hirschberg (2009). *The Millennium Reader* (5th ed., pp. 1-3).  
-3. Behrens & Rosen (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-55).  
+3. Behrens & Rosen (2000). *Writing and Reading Across the Curriculum* (7th ed., pp. 45-77).  
 4. Dharwadker et al. *What is Intertextuality?* (p. 70).  
 5. DLSU Senior High School Department (2024-2025). *Critical Reading as Looking for Ways of Thinking* (`critical reading.md`).  
 
@@ -120,7 +120,42 @@ The thesis is the single declarative sentence that asserts the author's response
 
 ---
 
-## Section 5: What is Intertextuality and Hypertext?
+## Section 5: Writing a Critique & Auditing Assumptions (Behrens & Rosen Ch. 2)
+
+```mermaid
+flowchart TD
+    CRITIQUE["📝 The Two Questions of a Critique<br/><i>(Behrens & Rosen Ch. 2)</i>"]
+    
+    subgraph Q1["1️⃣ Question 1: Purpose Success"]
+        Q1_INFO["📄 Informative Criteria<br/>• <b>Accuracy</b> (Verified facts)<br/>• <b>Significance</b> ('So What?' test)<br/>• <b>Fair Interpretation</b> (No cherry-picking)"]
+        Q1_PERS["🎯 Persuasive Criteria<br/>• Logical claims & sound evidence"]
+    end
+    
+    subgraph Q2["2️⃣ Question 2: Critical Agreement"]
+        Q2_ASSUMP["🔍 Hidden Assumptions<br/>• <b>2008 Housing Crisis</b>: Prices never fall<br/>• <b>Krauthammer Moon Op-Ed</b>: Heroism over robotic efficiency<br/>• <b>Ideological Tension</b>: Conservative anti-spending vs NASA billions"]
+    end
+
+    CRITIQUE --> Q1
+    CRITIQUE --> Q2
+```
+
+When you critique a text, you are not simply expressing personal like or dislike. Laurence Behrens and Leonard Rosen establish that a formal critique answers two specific questions:
+
+### Question 1: To What Extent Does the Author Succeed in His or Her Purpose?
+* **Informative Writing:**
+  * **Accuracy:** Are the factual claims verifiable and true?
+  * **Significance:** The **"So What?"** question. Even if a set of facts is 100% accurate, is it meaningful and important to the reader?
+  * **Fair Interpretation:** Does the author interpret the facts objectively, or do they omit facts that contradict their stance?
+* **Persuasive Writing:** Does the author state a clear thesis, offer credible evidence, and address obvious counterarguments?
+
+### Question 2: To What Extent Do You Agree with the Author?
+This question requires you to uncover and evaluate the author's **assumptions**—the fundamental ideas taken for granted.
+* **The 2008 Financial Crisis Example:** In the mid-2000s, mortgage companies and banks made billions of dollars in risky home loans based on an unexamined hidden assumption: that real estate prices would always rise and never drop across the whole country. When home prices crashed, the entire economy almost collapsed.
+* **Charles Krauthammer's Moon Op-Ed Case Study:** In 2009, columnist Charles Krauthammer argued that the U.S. must send astronauts back to the Moon. He openly admitted that robotic probes are cheaper, safer, and produce far better scientific data. So why send humans? Because Krauthammer assumed that the supreme goal of space exploration is not science, but human glory and adventure! Critical readers also spot that Krauthammer, an outspoken conservative critic of government spending, was demanding a massive, multi-billion dollar government program (NASA).
+
+---
+
+## Section 6: What is Intertextuality and Hypertext?
 
 ```mermaid
 flowchart TD
@@ -154,8 +189,12 @@ Intertextuality is the borrowing or referencing of a literary, media, or social 
 ### The Three Functions:
 1. **Comparison:** Comparing the new story with the old story.
 2. **Dialogue:** Letting the two stories talk to each other.
-3. **Destabilization:** Shaking up what you thought you knew about the original story!
+3. **Destabilization:** Shaking up what you thought you knew about the original story.
 
-### Intertextuality vs. Hypertext:
-* **Hypertext:** Digital links that you physically click with a mouse to jump between web pages.
-* **Intertextuality:** Mental links inside your mind that connect different books, memories, and cultural stories!
+### The Three Transformative Effects:
+1. Transforms the new book.
+2. Changes how you remember the older story (reflexive re-reading).
+3. Makes you reinterpret both stories simultaneously.
+
+### The Hypertext Connection:
+Hypertext is digital—clickable links that connect web pages on a screen. Intertextuality is mental—cultural links in our minds that connect human stories across centuries!

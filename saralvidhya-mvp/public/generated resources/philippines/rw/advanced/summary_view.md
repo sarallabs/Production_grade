@@ -1,9 +1,9 @@
-# Executive Theoretical Summary: Critical Reading as Looking for Ways of Thinking (Advanced Level)
+# Scholarly Synthesis: Critical Reading as Looking for Ways of Thinking (Advanced Level)
 
 **Subject:** Reading and Writing Skills | **Curriculum:** Week 2 Module  
 **Audience Level:** Advanced (Collegiate Rigor, Rhetorical Criticism & Epistemological Deconstruction)  
 **Target Bloom's Levels:** Analyzing (L-4), Evaluating (L-5) & Creating (L-6)  
-**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md  
+**Curriculum Materials:** critical reading.md, Reading Critically.md, reading_essays.md, intertextuality.md, critical-reading.docx  
 **Institution:** De La Salle University - Senior High School Department  
 
 ---
@@ -64,7 +64,37 @@ flowchart LR
 
 ---
 
-## 🖼️ 4. Advanced Intertextuality: Dialogism, Transtextuality, and Canon Revision
+## 🖼️ 4. Formal Hermeneutic Critique & Epistemic Warrant Auditing (Behrens & Rosen Ch. 2)
+
+In Chapter 2 of *Writing and Reading Across the Curriculum*, Behrens and Rosen operationalize critical reading into written critique:
+
+```mermaid
+flowchart TD
+    subgraph CRITIQUE_EPISTEMOLOGY["Formal Hermeneutic Critique (Behrens & Rosen Ch. 2)"]
+        Q1["Question 1: Teleological & Rhetorical Efficacy<br/><b>To what extent does author succeed in purpose?</b><br/>• Informative: Empirical Veracity, Significance ('So What?'), Fair Synthesis<br/>• Persuasive: Rhetorical cohesion, enthymematic structure, counter-arguments"]
+        
+        Q2["Question 2: Critical Epistemic Alignment & Warrant Auditing<br/><b>To what extent do you agree with the author's warrants?</b><br/>• Explicit vs. Tacit Ideological Presuppositions<br/>• Deconstructing Contradictions: Conservative anti-statism vs. Big-Government NASA funding"]
+
+        CASE1["Case 1: The 2008 Financial Crash<br/><i>Systemic collapse driven by unexamined warrant: 'Housing prices never fall nationwide'</i>"]
+        CASE2["Case 2: Krauthammer's 'The Moon We Left Behind'<br/><i>Conceding robotic superior efficiency while romantically insisting on manned boots</i>"]
+    end
+    Q1 --> Q2
+    Q2 --> CASE1
+    Q2 --> CASE2
+```
+
+### The Two Teleological Inquiries:
+1. **Question 1: To what extent does the author succeed in his or her purpose?**
+   * *Informative Discourse Criteria:* **Accuracy** (verifiable empirical truth), **Significance** (the epistemological "So What?" hurdle), and **Fair Interpretation** (objective dialectical balance without selective omission).
+   * *Persuasive Discourse Criteria:* Scrutinizing thesis coherence, inductive/deductive validity, and dialectical engagement with counter-arguments.
+2. **Question 2: To what extent do you agree with the author?**
+   * *Auditing Unexamined Warrants:* Exposing explicit vs. tacit presuppositions.
+   * *The 2008 Subprime Financial Crash:* A global catastrophe caused by an unexamined warrant—that nationwide home prices would never decline.
+   * *Charles Krauthammer's "The Moon We Left Behind":* Conceding that robotic probes are safer, cheaper, and yield superior scientific data, yet insisting on manned missions due to an unexamined romantic/nationalistic warrant—revealing a stark ideological contradiction between small-government conservatism and advocacy for massive taxpayer-funded NASA expenditures.
+
+---
+
+## 🖼️ 5. Advanced Intertextuality: Dialogism, Transtextuality, and Canon Revision
 
 Grounded in Dharwadker, Harrison, Lemaster, Bourenane, and modern literary theory (Bakhtin, Kristeva, Genette):
 

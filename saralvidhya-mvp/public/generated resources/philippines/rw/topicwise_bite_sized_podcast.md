@@ -1,7 +1,7 @@
 # Topicwise Bite-Sized Podcast Scripts: Critical Reading as Looking for Ways of Thinking
 
 **Subject:** Reading and Writing Skills | **Curriculum:** Week 2  
-**Format:** 8 Modular Episodes (Micro-Concepts, ~2 Minutes Each)  
+**Format:** 10 Modular Episodes (Micro-Concepts, ~2 Minutes Each)  
 **Speakers:** Host & Specialist  
 **Institution:** De La Salle University - Senior High School Department  
 
@@ -94,17 +94,43 @@ Specialist: Dharwadker identifies three dynamic functions: Comparison, Dialogue,
 
 Host: And the second function is Dialogue?
 
-Specialist: Yes! Because both the host text and the referenced text tell stories, they engage in a lively conversation. Sometimes they reinforce each other, and sometimes they clash over which worldview is dominant. Finally, function three is Destabilization: intertextuality can shake up your settled understanding! It can disrupt what you thought you knew about the original classic, or it can challenge the assumptions of the new book.
+Specialist: Yes! Because both the host text and the borrowed intertext are dynamic narratives, they enter into a multi-vocal conversation. Sometimes they reinforce each other, and sometimes they clash over which worldview is dominant. Finally, function three is Destabilization: intertextuality can shake up your settled understanding! It can disrupt what you thought you knew about the original classic, or it can challenge the assumptions of the new book.
 
 ---
 
 ## Episode 8: Transformative Effects of Intertextuality and the Hypertext Link
 **Duration:** ~2 Minutes | **Target Word Count:** ~285 words
 
-Host: Welcome to our final bite-sized episode! What are the ultimate effects of intertextuality, and how does it relate to Hypertext?
+Host: Welcome to Episode 8! What are the ultimate effects of intertextuality, and how does it relate to Hypertext?
 
 Specialist: Dharwadker outlines three transformative effects. First, it transforms the primary book, adding layers of meaning. Second, it reflexively transforms the prior text—reading a modern retelling makes you re-evaluate the original classic. Third, it sparks a simultaneous reinterpretation of both texts at once!
 
 Host: And how does this connect to our diagnostic exercise on Hypertext?
 
 Specialist: Think of it this way: Hypertext is technological. It connects digital documents via clickable web links, allowing you to choose your own non-linear pathway across the internet. But Intertextuality is the cultural hypertext of the human mind! Long before the internet existed, authors used intertextual references as intellectual hyperlinks, connecting readers across centuries and cultures. Read critically, follow the links, and expand your thinking!
+
+---
+
+## Episode 9: Writing a Formal Critique — The Two Guiding Questions
+**Duration:** ~2 Minutes | **Target Word Count:** ~280 words
+
+Host: Episode 9! Behrens and Rosen explain how critical reading turns into a formal written critique. What are the two core questions?
+
+Specialist: Every academic critique answers two questions. Question 1: "To what extent does the author succeed in their purpose?" If the purpose is informative, you judge accuracy, significance ("So What?"), and fair interpretation. If persuasive, you judge the logic of the argument. 
+
+Host: And Question 2?
+
+Specialist: Question 2 is: "To what extent do you agree with the author?" Here, you evaluate the author's underlying assumptions and determine whether their premises hold true in the light of facts, logic, and ethical principles. You don't just say "I liked it" or "I hated it"—you audit the intellectual foundation of the work!
+
+---
+
+## Episode 10: Evaluating Hidden Assumptions — The Krauthammer & Subprime Case Studies
+**Duration:** ~2 Minutes | **Target Word Count:** ~290 words
+
+Host: Episode 10: Why are hidden assumptions so dangerous, and how do we spot them?
+
+Specialist: An assumption is an unproven belief taken for granted. In the 2008 subprime financial collapse, an entire global banking system crashed because Wall Street made the unexamined assumption that home prices would never nationwide fall! 
+
+Host: And Behrens and Rosen highlight Charles Krauthammer's essay on the Moon as a masterclass in uncovering assumptions.
+
+Specialist: Exactly! Krauthammer argues America must send humans back to the Moon. He openly admits robotic probes are far cheaper, safer, and yield better science. Yet he insists on manned flight because of a hidden romantic assumption: that only living human boots on the ground count as civilizational glory! Furthermore, Krauthammer was a fierce conservative critic of government spending, yet here he demands a multi-billion dollar state-run space program. Critical readers catch these hidden premises and philosophical contradictions!
