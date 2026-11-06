@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "copy-resources": "node scripts/copy-resources.js",
     "generate-manifest": "node scripts/generate-manifest.js",
-    "deploy:cloudflare": "npm run build && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya-moocs"
+    "deploy:cloudflare": "npm run build && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya-moocs",
+    "deploy:anu": "npm run build && firebase deploy --only hosting:saralvidhya-anu"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

@@ -2,8 +2,7 @@ import React, { useEffect, useRef, useState, useMemo, useCallback } from "react"
 import MarkdownView from "@/components/MarkdownView";
 import { getResourceContent, type Chapter, type ChapterVideo, type DifficultyLevel } from "@/data/contentRepository";
 import { getRegistryChapterData } from "@/data/manifestService";
-import { cloudStorage } from "@/context/CloudStateContext";
-
+import { cloudStorage, useCloudState, syncToolProgressToCloud } from "@/context/CloudStateContext";
 const WATCHED_THRESHOLD_PCT = 90;
 
 export interface VideosViewProps {
@@ -150,36 +149,81 @@ export default function VideosView({
   isVideoPlayableAt,
   onSelectVideoIndex,
 }: VideosViewProps) {
-  const [activeVideo, setActiveVideo] = useState(0);
+  const { isHydrated } = useCloudState();
+  const [activeVideo, setActiveVideo] = useState(() => {
+    const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    if (savedIdx != null) {
+      const idx = parseInt(savedIdx, 10);
+      if (!isNaN(idx) && idx >= 0) return idx;
+    }
+    if (activeVideoIndex && activeVideoIndex >= 1) return activeVideoIndex - 1;
+    return 0;
+  });
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [progress, setProgress] = useState(0);
   const [registryVideos, setRegistryVideos] = useState<ChapterVideo[]>([]);
-
+  const [isRegistryLoaded, setIsRegistryLoaded] = useState(false);
+  const playerReadyRef = useRef(false);
+  const iframeLoadedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
-    getRegistryChapterData(subjectId, chapterNumber).then((reg) => {
-      const regList = reg?.chapter?.videos || (reg as any)?.videos;
-      if (cancelled || !Array.isArray(regList) || regList.length === 0) return;
-      setRegistryVideos(
-        regList.map((v: any, idx: number) => ({
-          index: v.order ?? idx + 1,
-          id: v.id || `vid_${idx + 1}`,
-          title: v.title,
-          ytId: v.videoId || v.ytId || "",
-          duration: v.duration,
-          thumbnailUrl: v.thumbnailUrl || v.thumbnail || reg?.chapter?.heroImageUrl,
-          dir: "",
-          topics: v.topics,
-        })),
-      );
-    });
+    setIsRegistryLoaded(false);
+    setRegistryVideos([]);
+    getRegistryChapterData(subjectId, chapterNumber)
+      .then((reg) => {
+        const regList = reg?.chapter?.videos || (reg as any)?.videos;
+        const chTopics = (reg?.chapter as any)?.topics || [];
+        if (cancelled) return;
+        if (Array.isArray(regList) && regList.length > 0) {
+          setRegistryVideos(
+            regList.map((v: any, idx: number) => {
+              const matchingTopic = chTopics[idx];
+              const dbSubtopics =
+                Array.isArray(matchingTopic?.subtopics) && matchingTopic.subtopics.length > 0
+                  ? matchingTopic.subtopics
+                  : undefined;
+              const dbDur =
+                v.duration ||
+                (matchingTopic?.estimatedMinutes ? `${matchingTopic.estimatedMinutes}:00` : undefined);
+              const rawYt = String(v.videoId || v.ytId || v.videoUrl || v.url || "").trim();
+              const ytMatch = rawYt.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+              const resolvedYtId = ytMatch ? ytMatch[1] : rawYt;
+              const rawThumb = String(v.thumbnailUrl || v.thumbnail || "").trim();
+              const isSharedHeroThumb =
+                !rawThumb ||
+                rawThumb === reg?.chapter?.heroImageUrl ||
+                rawThumb === (reg?.chapter as any)?.thumbnailUrl ||
+                /\/hero\.|\/cover\./i.test(rawThumb);
+              return {
+                index: v.order ?? idx + 1,
+                id: v.id || `vid_${idx + 1}`,
+                title: v.title || matchingTopic?.label || matchingTopic?.title || `Part ${idx + 1}`,
+                ytId: resolvedYtId,
+                duration: dbDur,
+                thumbnailUrl: !isSharedHeroThumb
+                  ? rawThumb
+                  : resolvedYtId
+                    ? `https://i.ytimg.com/vi/${resolvedYtId}/hqdefault.jpg`
+                    : undefined,
+                dir: v.id || `vid_${idx + 1}`,
+                topics: Array.isArray(v.topics) && v.topics.length > 0 ? v.topics : dbSubtopics,
+              };
+            }),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setIsRegistryLoaded(true);
+      });
     return () => {
       cancelled = true;
     };
   }, [subjectId, chapterNumber]);
 
   // Custom Player State
+  const [watchMode, setWatchMode] = useState<"videos" | "clips">("videos");
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [volume, setVolume] = useState(100);
@@ -201,12 +245,14 @@ export default function VideosView({
   });
   const activePlaybackSessionYtIdRef = useRef<string | null>(null);
 
-  const recordVideoOpen = useCallback((ytId?: string) => {
-    if (!ytId) return;
-    if (activePlaybackSessionYtIdRef.current === ytId) return;
-    activePlaybackSessionYtIdRef.current = ytId;
+  const recordVideoOpen = useCallback((ytId?: string, vidIndexOneBased?: number) => {
+    const keyId = ytId || (vidIndexOneBased ? `video_${vidIndexOneBased}` : "");
+    if (!keyId) return;
+    const sessionKey = `${vidIndexOneBased || 1}:${keyId}`;
+    if (activePlaybackSessionYtIdRef.current === sessionKey) return;
+    activePlaybackSessionYtIdRef.current = sessionKey;
     setVideoOpenCounts((prev) => {
-      const next = { ...prev, [ytId]: (prev[ytId] || 0) + 1 };
+      const next = { ...prev, [keyId]: (prev[keyId] || 0) + 1 };
       try {
         cloudStorage.setItem("sv_video_open_counts", JSON.stringify(next));
       } catch {
@@ -214,7 +260,13 @@ export default function VideosView({
       }
       return next;
     });
-  }, []);
+    void syncToolProgressToCloud({
+      subjectId,
+      chapterId: `chapter_${String(chapterNumber).padStart(2, "0")}`,
+      visited: true,
+      openedVideoId: keyId,
+    });
+  }, [subjectId, chapterNumber]);
 
   const playerRef = useRef<any>(null);
   const playerContainerRef = useRef<HTMLDivElement>(null);
@@ -224,8 +276,9 @@ export default function VideosView({
   const hasStartedPlayingRef = useRef<boolean>(false);
   const progressIntervalRef = useRef<any>(null);
   const isSeekingRef = useRef<boolean>(false);
+  const lastSeekTargetRef = useRef<{ time: number; ts: number }>({ time: 0, ts: 0 });
+  const seekResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const seekFeedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const showSeekBadge = (type: "-10s" | "+10s" | "skip") => {
     setSeekFeedback(type);
     if (seekFeedbackTimerRef.current) clearTimeout(seekFeedbackTimerRef.current);
@@ -236,28 +289,67 @@ export default function VideosView({
 
   // 1. Build video list from registry / chapterVideos / manifest subjectChapters prop first
   const videos = useMemo(() => {
+    const ytIdsFromMd: string[] = [];
+    if (youtubeLinksContent) {
+      const ytRegex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/g;
+      let match;
+      while ((match = ytRegex.exec(youtubeLinksContent)) !== null) {
+        if (match[1] && !ytIdsFromMd.includes(match[1])) {
+          ytIdsFromMd.push(match[1]);
+        }
+      }
+    }
+
+    const extractYt = (raw?: string): string => {
+      if (!raw) return "";
+      const trimmed = String(raw).trim();
+      if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
+      const m = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/);
+      return m ? m[1] : trimmed;
+    };
+
     const manifestVids = subjectChapters?.find((c) => c.number === chapterNumber)?.videos || [];
     const mappedManifestVids = manifestVids.map((v) => ({
       title: v.title,
-      ytId: v.videoId || "",
+      ytId: extractYt(v.videoId || (v as any).ytId || v.videoUrl || v.url),
       topics: v.topics,
       duration: v.duration,
       thumbnailUrl: v.thumbnailUrl || v.thumbnail,
     }));
-    const sourceVideos =
-      chapterVideos && chapterVideos.length > 0
-        ? chapterVideos
-        : registryVideos.length > 0
-          ? registryVideos
+    const primarySource =
+      registryVideos.length > 0
+        ? registryVideos
+        : chapterVideos && chapterVideos.length > 0
+          ? chapterVideos
           : mappedManifestVids;
-    if (sourceVideos.length > 0) {
-      return sourceVideos.map((v) => ({
-        title: v.title,
-        ytId: v.ytId,
-        topics: v.topics,
-        duration: v.duration,
-        thumbnailUrl: v.thumbnailUrl,
-      }));
+    if (primarySource.length > 0) {
+      const firstValidYt =
+        primarySource.map((v) => extractYt(v.ytId || (v as any).videoId || (v as any).videoUrl || (v as any).url)).find(Boolean) ||
+        ytIdsFromMd[0] ||
+        "";
+      return primarySource.map((v, idx) => {
+        const regMatch = registryVideos[idx];
+        const chMatch = chapterVideos?.[idx];
+        const resolvedYt =
+          extractYt(v.ytId || (v as any).videoId || (v as any).videoUrl || (v as any).url) ||
+          extractYt(regMatch?.ytId) ||
+          extractYt(chMatch?.ytId) ||
+          ytIdsFromMd[idx] ||
+          firstValidYt;
+        const candidateThumb = String(v.thumbnailUrl || regMatch?.thumbnailUrl || chMatch?.thumbnailUrl || "").trim();
+        const isHeroThumb = !candidateThumb || /\/hero\.|\/cover\./i.test(candidateThumb);
+        return {
+          title: v.title || regMatch?.title || chMatch?.title || `Part ${idx + 1}`,
+          ytId: resolvedYt,
+          topics: (v.topics && v.topics.length > 0 ? v.topics : regMatch?.topics) || chMatch?.topics,
+          duration: v.duration || regMatch?.duration || chMatch?.duration,
+          thumbnailUrl: !isHeroThumb
+            ? candidateThumb
+            : resolvedYt
+              ? `https://i.ytimg.com/vi/${resolvedYt}/hqdefault.jpg`
+              : undefined,
+        };
+      });
     }
     let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string }[] = [];
     if (subjectId === "anu_physics") {
@@ -394,13 +486,36 @@ export default function VideosView({
   const currentVideo = videos[robustActive] || videos[0];
   const isSingleVideo = videos.length <= 1;
 
-  // Active index sync from parent
+  // Active index sync with cloud storage (DB-driven source of truth)
   useEffect(() => {
-    if (activeVideoIndex && activeVideoIndex >= 1 && activeVideoIndex <= videos.length) {
+    let lastObservedRaw = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+    if (lastObservedRaw != null) {
+      const idx = parseInt(lastObservedRaw, 10);
+      if (!isNaN(idx) && idx >= 0 && (videos.length <= 1 || idx < videos.length)) {
+        setActiveVideo((prev) => (prev !== idx ? idx : prev));
+      }
+    } else if (activeVideoIndex && activeVideoIndex >= 1 && (videos.length <= 1 || activeVideoIndex <= videos.length)) {
       setActiveVideo(activeVideoIndex - 1);
     }
-  }, [activeVideoIndex, videos.length]);
+    const syncSavedVideoIdx = () => {
+      const savedIdx = cloudStorage.getItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`);
+      if (savedIdx === lastObservedRaw) return;
+      lastObservedRaw = savedIdx;
+      if (savedIdx != null) {
+        const idx = parseInt(savedIdx, 10);
+        if (!isNaN(idx) && idx >= 0 && (videos.length <= 1 || idx < videos.length)) {
+          setActiveVideo((prev) => (prev !== idx ? idx : prev));
+        }
+      }
+    };
+    return cloudStorage.subscribe(syncSavedVideoIdx);
+  }, [videos.length, subjectId, chapterNumber, activeVideoIndex]);
 
+  useEffect(() => {
+    if (!isHydrated || !isRegistryLoaded || !currentVideo?.ytId) return;
+    if (activeVideo >= videos.length && videos.length <= 1) return;
+    cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(robustActive));
+  }, [robustActive, activeVideo, videos.length, subjectId, chapterNumber, isHydrated, isRegistryLoaded, currentVideo?.ytId]);
   const completedStorageKey = `sv_watch_done_${subjectId}_ch${chapterNumber}`;
   const [completedVideos, setCompletedVideos] = useState<Set<number>>(() => {
     try {
@@ -416,21 +531,27 @@ export default function VideosView({
   });
 
   useEffect(() => {
-    try {
-      const raw = cloudStorage.getItem(completedStorageKey);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          setCompletedVideos(new Set(parsed));
-          return;
+    let lastRaw: string | null = null;
+    const syncCompleted = () => {
+      try {
+        const raw = cloudStorage.getItem(completedStorageKey);
+        if (raw === lastRaw) return;
+        lastRaw = raw;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            setCompletedVideos(new Set(parsed));
+            return;
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-    setCompletedVideos(new Set());
+      setCompletedVideos((prev) => (prev.size === 0 ? prev : new Set()));
+    };
+    syncCompleted();
+    return cloudStorage.subscribe(syncCompleted);
   }, [completedStorageKey]);
-
   const markVideoDone = useCallback(
     (idx: number) => {
       setCompletedVideos((prev) => {
@@ -449,15 +570,42 @@ export default function VideosView({
   );
 
   const onVideoWatchedRef = useRef(onVideoWatched);
+  const onCompleteRef = useRef(onComplete);
   useEffect(() => {
     onVideoWatchedRef.current = onVideoWatched;
+    onCompleteRef.current = onComplete;
   });
+
+  const notifiedWatchedSetRef = useRef<Set<string>>(new Set());
 
   const markWatched = useCallback((videoIndex: number, advance = false) => {
     markVideoDone(videoIndex - 1);
+    const notifyKey = `${subjectId}_${chapterNumber}_${videoIndex}_${advance ? "adv" : " threshold"}`;
+    if (notifiedWatchedSetRef.current.has(notifyKey)) return;
+    notifiedWatchedSetRef.current.add(notifyKey);
     onVideoWatchedRef.current?.(videoIndex, advance);
-  }, [markVideoDone]);
+  }, [markVideoDone, subjectId, chapterNumber]);
 
+  const markWatchedRef = useRef(markWatched);
+  useEffect(() => {
+    markWatchedRef.current = markWatched;
+  }, [markWatched]);
+
+  const sendYtIframeCommand = useCallback(
+    (func: string, args: any[] = []) => {
+      try {
+        if (currentVideo?.ytId) {
+          const iframeEl = (document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`) ||
+            document.getElementById(`yt-player-${currentVideo.ytId}`)) as HTMLIFrameElement | null;
+          iframeEl?.contentWindow?.postMessage(
+            JSON.stringify({ event: "command", func, args }),
+            "*",
+          );
+        }
+      } catch {}
+    },
+    [currentVideo?.ytId, robustActive],
+  );
   // Format time utility
   const formatTime = (sec: number) => {
     if (isNaN(sec) || sec < 0) return "00:00";
@@ -466,11 +614,64 @@ export default function VideosView({
     return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
+  const getVideoTimeKey = useCallback(
+    (vidIdx: number, ytId?: string) => {
+      if (!ytId) return "";
+      const hasDuplicateYtId = videos.filter((v) => v.ytId === ytId).length > 1;
+      return hasDuplicateYtId
+        ? `sv_video_time_${subjectId}_ch${chapterNumber}_v${vidIdx + 1}_${ytId}`
+        : `sv_video_time_${subjectId}_ch${chapterNumber}_${ytId}`;
+    },
+    [videos, subjectId, chapterNumber],
+  );
+
+  const videoTimeStorageKey = getVideoTimeKey(robustActive, currentVideo?.ytId);
+  const lastVideoTimeSaveRef = useRef<number>(0);
+  const restoredVideoTimeRef = useRef<number>(0);
+
+  // Restore saved video playback position immediately for visual progress bar & timestamp
+  useEffect(() => {
+    if (!videoTimeStorageKey) return;
+    const applySavedVideoTime = () => {
+      try {
+        const raw = cloudStorage.getItem(videoTimeStorageKey);
+        if (!raw) {
+          restoredVideoTimeRef.current = 0;
+          if (!isPlaying) {
+            setCurrentTime(0);
+            setProgress(0);
+          }
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
+          restoredVideoTimeRef.current = parsed.currentTime;
+          setCurrentTime(parsed.currentTime);
+          if (typeof parsed.duration === "number" && parsed.duration > 0) {
+            setDuration(parsed.duration);
+            setProgress(Math.min(100, (parsed.currentTime / parsed.duration) * 100));
+          } else {
+            setProgress(0);
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    applySavedVideoTime();
+    return cloudStorage.subscribe(() => {
+      if (!isPlaying) {
+        applySavedVideoTime();
+      }
+    });
+  }, [videoTimeStorageKey, isPlaying]);
+
   // YouTube Player setup
   useEffect(() => {
     hasStartedPlayingRef.current = false;
-    if (!currentVideo?.ytId) return;
-
+    playerReadyRef.current = false;
+    iframeLoadedRef.current = false;
+    if (!isRegistryLoaded || !currentVideo?.ytId) return;
     if (!(window as any).YT) {
       const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
@@ -479,31 +680,50 @@ export default function VideosView({
     }
 
     let checkInterval: any;
+    const timeKey = videoTimeStorageKey;
+
+    const readSavedSec = (): number => {
+      try {
+        const raw = timeKey ? cloudStorage.getItem(timeKey) : null;
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
+            return parsed.currentTime;
+          }
+        }
+      } catch {}
+      return 0;
+    };
+
+    const persistVideoSec = (cur: number, dur: number, force = false) => {
+      if (!timeKey || cur < 0) return;
+      const now = Date.now();
+      if (!force && now - lastVideoTimeSaveRef.current < 3000) return;
+      lastVideoTimeSaveRef.current = now;
+      restoredVideoTimeRef.current = cur;
+      try {
+        cloudStorage.setItem(
+          timeKey,
+          JSON.stringify({ currentTime: cur, duration: dur, updatedAt: now }),
+        );
+      } catch {}
+    };
 
     const initPlayer = () => {
-      const elementId = `yt-player-${currentVideo.ytId}`;
+      const elementId = `yt-player-${robustActive}-${currentVideo.ytId}`;
       const el = document.getElementById(elementId);
-      if (!el || el.tagName === "IFRAME") return;
+      if (!el) return;
 
       try {
+        if (playerRef.current && typeof playerRef.current.destroy === "function") {
+          try {
+            playerRef.current.destroy();
+          } catch {}
+        }
         playerRef.current = new (window as any).YT.Player(elementId, {
-          height: "100%",
-          width: "100%",
-          videoId: currentVideo.ytId,
-          playerVars: {
-            origin: window.location.origin,
-            rel: 0,
-            modestbranding: 1,
-            enablejsapi: 1,
-            controls: 0,
-            disablekb: 1,
-            cc_load_policy: 0,
-            cc_lang_pref: "none",
-            playsinline: 1,
-            iv_load_policy: 3,
-          },
           events: {
             onReady: (event: any) => {
+              playerReadyRef.current = true;
               try {
                 if (event.target) {
                   if (typeof event.target.unloadModule === "function") {
@@ -512,9 +732,41 @@ export default function VideosView({
                   if (typeof event.target.setOption === "function") {
                     event.target.setOption("captions", "track", {});
                   }
-                  if (autoPlayOnReadyRef.current && typeof event.target.playVideo === "function") {
+                  const dur = typeof event.target.getDuration === "function" ? event.target.getDuration() : 0;
+                  const recentSeek =
+                    lastSeekTargetRef.current.ts > 0 && Date.now() - lastSeekTargetRef.current.ts < 8000
+                      ? lastSeekTargetRef.current.time
+                      : null;
+                  const savedSec =
+                    recentSeek !== null ? recentSeek : Math.max(readSavedSec(), restoredVideoTimeRef.current);
+                  if (savedSec >= 0) {
+                    restoredVideoTimeRef.current = savedSec;
+                    setCurrentTime(savedSec);
+                  }
+                  if (dur > 0) {
+                    setDuration(dur);
+                    if (savedSec > 0 && savedSec < dur - 2) {
+                      setProgress((savedSec / dur) * 100);
+                    }
+                  }
+                  const fsReady = !!(
+                    document.fullscreenElement ||
+                    (document as any).webkitFullscreenElement ||
+                    (document as any).mozFullScreenElement ||
+                    (document as any).msFullscreenElement ||
+                    isFullscreenRef.current
+                  );
+                  if (autoPlayOnReadyRef.current && fsReady && typeof event.target.playVideo === "function") {
                     autoPlayOnReadyRef.current = false;
+                    if (savedSec >= 0 && typeof event.target.seekTo === "function") {
+                      event.target.seekTo(savedSec, true);
+                    }
                     event.target.playVideo();
+                  } else if (!fsReady) {
+                    autoPlayOnReadyRef.current = false;
+                    try {
+                      event.target.pauseVideo?.();
+                    } catch {}
                   }
                 }
               } catch (err) {}
@@ -522,35 +774,111 @@ export default function VideosView({
             onStateChange: (event: any) => {
               const state = event.data;
               const YT = (window as any).YT;
+              const fsNow = !!(
+                document.fullscreenElement ||
+                (document as any).webkitFullscreenElement ||
+                (document as any).mozFullScreenElement ||
+                (document as any).msFullscreenElement ||
+                isFullscreenRef.current
+              );
               if (state === YT?.PlayerState?.PLAYING || state === 1) {
+                if (!fsNow) {
+                  isSeekingRef.current = false;
+                  autoPlayOnReadyRef.current = false;
+                  setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  if (progressIntervalRef.current) {
+                    clearInterval(progressIntervalRef.current);
+                    progressIntervalRef.current = null;
+                  }
+                  try {
+                    event?.target?.pauseVideo?.();
+                    playerRef.current?.pauseVideo?.();
+                  } catch {}
+                  return;
+                }
                 isSeekingRef.current = false;
-                recordVideoOpen(currentVideo.ytId);
+                recordVideoOpen(currentVideo.ytId, robustActive + 1);
                 if (!isCcEnabledRef.current && playerRef.current) {
                   try {
                     playerRef.current.unloadModule?.("captions");
                     playerRef.current.setOption?.("captions", "track", {});
                   } catch (e) {}
                 }
+                if (!hasStartedPlayingRef.current && playerRef.current) {
+                  const recentSeek =
+                    lastSeekTargetRef.current.ts > 0 && Date.now() - lastSeekTargetRef.current.ts < 8000
+                      ? lastSeekTargetRef.current.time
+                      : null;
+                  const savedSec =
+                    recentSeek !== null ? recentSeek : Math.max(readSavedSec(), restoredVideoTimeRef.current);
+                  const curNow = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : 0;
+                  const durNow = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
+                  if (savedSec >= 0 && Math.abs(curNow - savedSec) > 2 && (durNow <= 0 || savedSec < durNow - 2)) {
+                    try {
+                      playerRef.current.seekTo?.(savedSec, true);
+                      setCurrentTime(savedSec);
+                      if (durNow > 0) setProgress((savedSec / durNow) * 100);
+                    } catch {}
+                  }
+                }
                 hasStartedPlayingRef.current = true;
                 setIsPlaying(true);
                 if (!progressIntervalRef.current) {
                   progressIntervalRef.current = setInterval(() => {
+                    const stillFs = !!(
+                      document.fullscreenElement ||
+                      (document as any).webkitFullscreenElement ||
+                      (document as any).mozFullScreenElement ||
+                      (document as any).msFullscreenElement ||
+                      isFullscreenRef.current
+                    );
+                    if (!stillFs) {
+                      isSeekingRef.current = false;
+                      autoPlayOnReadyRef.current = false;
+                      setIsPlaying(false);
+                      isPlayingRef.current = false;
+                      try {
+                        playerRef.current?.pauseVideo?.();
+                      } catch {}
+                      if (progressIntervalRef.current) {
+                        clearInterval(progressIntervalRef.current);
+                        progressIntervalRef.current = null;
+                      }
+                      return;
+                    }
                     if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
                       const cur = playerRef.current.getCurrentTime();
                       const dur = playerRef.current.getDuration();
                       if (dur > 0) {
+                        const sinceSeek = Date.now() - lastSeekTargetRef.current.ts;
+                        if (sinceSeek < 1500 && Math.abs(cur - lastSeekTargetRef.current.time) > 3) {
+                          return;
+                        }
                         const pct = (cur / dur) * 100;
                         setCurrentTime(cur);
                         setDuration(dur);
                         setProgress(pct);
+                        persistVideoSec(cur, dur, false);
                         if (pct >= WATCHED_THRESHOLD_PCT && hasStartedPlayingRef.current) {
-                          markWatched(robustActive + 1, false);
+                          markWatchedRef.current(robustActive + 1, false);
                         }
                       }
                     }
                   }, 500);
                 }
               } else if (state === YT?.PlayerState?.BUFFERING || state === 3) {
+                if (!fsNow) {
+                  isSeekingRef.current = false;
+                  autoPlayOnReadyRef.current = false;
+                  setIsPlaying(false);
+                  isPlayingRef.current = false;
+                  try {
+                    event?.target?.pauseVideo?.();
+                    playerRef.current?.pauseVideo?.();
+                  } catch {}
+                  return;
+                }
                 // Buffering during seek or playback
                 if (isSeekingRef.current && playerRef.current) {
                   try {
@@ -565,10 +893,14 @@ export default function VideosView({
                   clearInterval(progressIntervalRef.current);
                   progressIntervalRef.current = null;
                 }
+                try {
+                  cloudStorage.removeItem(timeKey);
+                  restoredVideoTimeRef.current = 0;
+                } catch {}
                 if (hasStartedPlayingRef.current) {
                   hasStartedPlayingRef.current = false;
-                  markWatched(robustActive + 1, true);
-                  if (onComplete) onComplete();
+                  markWatchedRef.current(robustActive + 1, true);
+                  if (onCompleteRef.current) onCompleteRef.current();
                 }
               } else if (state === YT?.PlayerState?.PAUSED || state === 2) {
                 if (isSeekingRef.current) {
@@ -577,6 +909,13 @@ export default function VideosView({
                     playerRef.current?.playVideo?.();
                   } catch (e) {}
                   return;
+                }
+                if (playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+                  const cur = playerRef.current.getCurrentTime();
+                  const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+                  if (cur > 1) {
+                    persistVideoSec(cur, dur || 0, true);
+                  }
                 }
                 setIsPlaying(false);
                 if (progressIntervalRef.current) {
@@ -592,76 +931,142 @@ export default function VideosView({
       }
     };
 
+    const handleUnloadSave = () => {
+      if (playerReadyRef.current && playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+        try {
+          const cur = playerRef.current.getCurrentTime();
+          const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : 0;
+          if (cur > 1 && (!dur || cur < dur - 2)) {
+            persistVideoSec(cur, dur, true);
+          }
+        } catch {}
+      }
+    };
+
+    const handleVisibilitySave = () => {
+      if (document.visibilityState === "hidden") {
+        handleUnloadSave();
+      }
+    };
+
+    window.addEventListener("beforeunload", handleUnloadSave);
+    window.addEventListener("pagehide", handleUnloadSave);
+    document.addEventListener("visibilitychange", handleVisibilitySave);
+
     checkInterval = setInterval(() => {
-      if ((window as any).YT && (window as any).YT.Player && document.getElementById(`yt-player-${currentVideo.ytId}`)) {
+      const el = document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`);
+      if (
+        (iframeLoadedRef.current || el) &&
+        (window as any).YT &&
+        (window as any).YT.Player &&
+        el
+      ) {
         clearInterval(checkInterval);
         initPlayer();
       }
-    }, 200);
+    }, 150);
 
     return () => {
       clearInterval(checkInterval);
+      window.removeEventListener("beforeunload", handleUnloadSave);
+      window.removeEventListener("pagehide", handleUnloadSave);
+      document.removeEventListener("visibilitychange", handleVisibilitySave);
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
-      if (playerRef.current && typeof playerRef.current.destroy === "function") {
-        try {
-          playerRef.current.destroy();
-        } catch (e) {}
-        playerRef.current = null;
-      }
+      handleUnloadSave();
+      try {
+        playerRef.current?.destroy?.();
+      } catch {}
+      playerReadyRef.current = false;
+      playerRef.current = null;
     };
-  }, [currentVideo?.ytId, robustActive, markWatched, onComplete]);
-
+  }, [isRegistryLoaded, currentVideo?.ytId, robustActive, subjectId, chapterNumber]);
   // Player controls
   const handlePlayPause = () => {
-    if (!playerRef.current) return;
-    if (isPlaying) {
-      playerRef.current.pauseVideo();
+    if (isPlaying && isCurrentlyFullscreen()) {
+      playerRef.current?.pauseVideo?.();
+      sendYtIframeCommand("pauseVideo", []);
     } else {
-      playerRef.current.playVideo();
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(currentVideo?.ytId);
+      }
+      if (!playerRef.current || !playerReadyRef.current) {
+        autoPlayOnReadyRef.current = true;
+        if (restoredVideoTimeRef.current > 1) {
+          sendYtIframeCommand("seekTo", [restoredVideoTimeRef.current, true]);
+        }
+        sendYtIframeCommand("playVideo", []);
+        return;
+      }
+      if (!hasStartedPlayingRef.current && restoredVideoTimeRef.current > 1) {
+        try {
+          playerRef.current.seekTo?.(restoredVideoTimeRef.current, true);
+          sendYtIframeCommand("seekTo", [restoredVideoTimeRef.current, true]);
+        } catch {}
+      }
+      playerRef.current.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     }
   };
 
   const handleRewind10 = () => {
-    if (!playerRef.current) return;
     isSeekingRef.current = true;
     showSeekBadge("-10s");
-    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
+    const cur =
+      playerRef.current && typeof playerRef.current.getCurrentTime === "function"
+        ? playerRef.current.getCurrentTime()
+        : currentTime;
     const target = Math.max(0, cur - 10);
-    playerRef.current.seekTo?.(target, true);
+    lastSeekTargetRef.current = { time: target, ts: Date.now() };
+    playerRef.current?.seekTo?.(target, true);
+    sendYtIframeCommand("seekTo", [target, true]);
     setCurrentTime(target);
-    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const dur =
+      (playerRef.current && typeof playerRef.current.getDuration === "function"
+        ? playerRef.current.getDuration()
+        : duration) || effectiveDurationSec;
     if (dur > 0) setProgress((target / dur) * 100);
     setIsPlaying(true);
     try {
-      playerRef.current.playVideo?.();
+      playerRef.current?.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     } catch (e) {}
     setTimeout(() => {
       try {
         playerRef.current?.playVideo?.();
+        sendYtIframeCommand("playVideo", []);
       } catch (e) {}
     }, 60);
   };
 
   const handleForward10 = () => {
-    if (!playerRef.current) return;
     isSeekingRef.current = true;
     showSeekBadge("+10s");
-    const cur = typeof playerRef.current.getCurrentTime === "function" ? playerRef.current.getCurrentTime() : currentTime;
-    const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+    const cur =
+      playerRef.current && typeof playerRef.current.getCurrentTime === "function"
+        ? playerRef.current.getCurrentTime()
+        : currentTime;
+    const dur =
+      (playerRef.current && typeof playerRef.current.getDuration === "function"
+        ? playerRef.current.getDuration()
+        : duration) || effectiveDurationSec;
     const target = Math.min(dur || 900, cur + 10);
-    playerRef.current.seekTo?.(target, true);
+    lastSeekTargetRef.current = { time: target, ts: Date.now() };
+    playerRef.current?.seekTo?.(target, true);
+    sendYtIframeCommand("seekTo", [target, true]);
     setCurrentTime(target);
     if (dur > 0) setProgress((target / dur) * 100);
     setIsPlaying(true);
     try {
-      playerRef.current.playVideo?.();
+      playerRef.current?.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     } catch (e) {}
     setTimeout(() => {
       try {
         playerRef.current?.playVideo?.();
+        sendYtIframeCommand("playVideo", []);
       } catch (e) {}
     }, 60);
   };
@@ -676,17 +1081,22 @@ export default function VideosView({
     playerRef.current.seekTo?.(newTime, true);
     setCurrentTime(newTime);
     setProgress(ratio * 100);
+    restoredVideoTimeRef.current = newTime;
+    if (videoTimeStorageKey && newTime > 1) {
+      try {
+        cloudStorage.setItem(
+          videoTimeStorageKey,
+          JSON.stringify({ currentTime: newTime, duration: dur, updatedAt: Date.now() }),
+        );
+      } catch {}
+    }
     if (isPlayingRef.current) {
       playerRef.current.playVideo?.();
     }
   };
 
-  // Netflix-style Skip Intro (only inside player at start: first 2 minutes / 120s, and only when NOT the first time opening this video)
-  const currentVideoOpenCount = currentVideo?.ytId ? (videoOpenCounts[currentVideo.ytId] || 0) : 0;
-  const isNotFirstWatch = currentVideoOpenCount >= 2;
+  // Netflix-style Skip Intro (available inside player during the first 2 minutes / 120s, including on fresh login)
   const canSkipIntro =
-    isNotFirstWatch &&
-    (isPlaying || isFullscreen) &&
     currentTime < 120 &&
     (duration === 0 || duration > 125);
   const canSkipIntroRef = useRef(canSkipIntro);
@@ -789,11 +1199,41 @@ export default function VideosView({
     } catch (e) {}
   };
 
-  const exitFullscreen = () => {
+  const forcePauseOnExitFullscreen = () => {
     activePlaybackSessionYtIdRef.current = null;
-    try {
-      playerRef.current?.pauseVideo?.();
-    } catch (e) {}
+    isSeekingRef.current = false;
+    autoPlayOnReadyRef.current = false;
+    setIsFullscreen(false);
+    isFullscreenRef.current = false;
+    setIsPlaying(false);
+    isPlayingRef.current = false;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
+    const pauseNow = () => {
+      try {
+        playerRef.current?.pauseVideo?.();
+      } catch (e) {}
+      try {
+        if (currentVideo?.ytId) {
+          const iframeEl = (document.getElementById(`yt-player-${robustActive}-${currentVideo.ytId}`) ||
+            document.getElementById(`yt-player-${currentVideo.ytId}`)) as HTMLIFrameElement | null;
+          iframeEl?.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', "*");
+        }
+      } catch (e) {}
+    };
+    pauseNow();
+    setTimeout(() => {
+      if (!isFullscreenRef.current) pauseNow();
+    }, 150);
+    setTimeout(() => {
+      if (!isFullscreenRef.current) pauseNow();
+    }, 400);
+  };
+
+  const exitFullscreen = () => {
+    forcePauseOnExitFullscreen();
     try {
       if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
@@ -804,8 +1244,6 @@ export default function VideosView({
       } else if ((document as any).msExitFullscreen) {
         (document as any).msExitFullscreen();
       }
-      setIsFullscreen(false);
-      isFullscreenRef.current = false;
     } catch (e) {}
   };
 
@@ -836,13 +1274,11 @@ export default function VideosView({
         (document as any).msFullscreenElement
       );
       if (!fs) {
-        activePlaybackSessionYtIdRef.current = null;
-        try {
-          playerRef.current?.pauseVideo?.();
-        } catch (e) {}
+        forcePauseOnExitFullscreen();
+      } else {
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
       }
-      setIsFullscreen(fs);
-      isFullscreenRef.current = fs;
     };
     document.addEventListener("fullscreenchange", handler);
     document.addEventListener("webkitfullscreenchange", handler);
@@ -854,7 +1290,7 @@ export default function VideosView({
       document.removeEventListener("mozfullscreenchange", handler);
       document.removeEventListener("MSFullscreenChange", handler);
     };
-  }, []);
+  }, [currentVideo?.ytId]);
 
   const isPlayingRef = useRef(isPlaying);
   useEffect(() => {
@@ -868,10 +1304,7 @@ export default function VideosView({
   // - Center click: Toggle Play / Pause
   const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCurrentlyFullscreen()) {
-      enterFullscreen(currentVideo?.ytId);
-      if (!isPlayingRef.current && playerRef.current) {
-        playerRef.current.playVideo?.();
-      }
+      handlePlayPause();
       return;
     }
 
@@ -906,13 +1339,7 @@ export default function VideosView({
 
       if (e.code === "Space" || e.key === " " || e.key === "k" || e.key === "K") {
         e.preventDefault();
-        if (playerRef.current) {
-          if (isPlayingRef.current) {
-            playerRef.current.pauseVideo?.();
-          } else {
-            playerRef.current.playVideo?.();
-          }
-        }
+        handlePlayPause();
       } else if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
         e.preventDefault();
         handleForward10();
@@ -1014,76 +1441,262 @@ export default function VideosView({
       rawTopics = currentVideo.topics;
     } else {
       const curated = KNOWN_VIDEOS_METADATA[currentVideo.ytId];
-      if (curated?.topics) {
+      if (curated?.topics && curated.topics.length > 0) {
         rawTopics = curated.topics;
       } else {
+        const cleanBase = (displayTitle || chapterName || "Core Concepts")
+          .replace(/^Part\s*\d+\s*:\s*/i, "")
+          .trim();
         rawTopics = [
-          "Anatomy of the Insect Alimentary Canal: Foregut, Midgut & Hindgut",
-          "Mesenteron Physiology: Secretory Epithelium & Peritrophic Membrane",
-          "Proctodaeum & Excretion: Malpighian Tubules & Water Reabsorption",
+          `${cleanBase}: Foundations & Architecture`,
+          `Core Mechanisms, Models & System Components`,
+          `Practical Applications, Roles & Structural Summary`,
         ];
       }
     }
-    return rawTopics.slice(0, 3);
-  }, [currentVideo]);
+    return rawTopics.slice(0, 6);
+  }, [currentVideo, displayTitle, chapterName]);
 
-  // Video switching handler for multi-video
-  const handleSelectVideo = (index: number) => {
-    if (index === robustActive) return;
-    try {
-      playerRef.current?.pauseVideo?.();
-    } catch {}
-    activePlaybackSessionYtIdRef.current = null;
-    setCurrentTime(0);
-    setDuration(0);
-    setProgress(0);
-    setIsPlaying(false);
-    setActiveVideo(index);
-    if (onSelectVideoIndex) {
-      onSelectVideoIndex(index + 1);
+  // Helper to parse duration strings like "04:12", "4:12", "10:15min", "12 min" into total seconds
+  const parseDurationSec = useCallback((rawDur?: string, fallbackSec = 252): number => {
+    if (!rawDur) return fallbackSec;
+    const cleaned = rawDur.replace(/min(s|utes)?/gi, "").trim();
+    const mmss = cleaned.match(/^(\d+)\s*:\s*(\d+)$/);
+    if (mmss) {
+      return parseInt(mmss[1], 10) * 60 + parseInt(mmss[2], 10);
     }
-  };
-
-  // Handler when clicking a stacked row video in MLRIT 4-video view
-  const handleActivateStackedVideo = (index: number, e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    const rowContainer = rowPlayerContainerRefs.current[index];
-    if (rowContainer) {
-      (playerContainerRef as any).current = rowContainer;
+    const minsOnly = cleaned.match(/^(\d+(?:\.\d+)?)$/);
+    if (minsOnly) {
+      return Math.round(parseFloat(minsOnly[1]) * 60);
     }
-    const targetYtId = videos[index]?.ytId;
+    return fallbackSec;
+  }, []);
 
-    if (index === robustActive) {
-      if (!isCurrentlyFullscreen()) {
-        enterFullscreen(targetYtId);
-        if (playerRef.current) {
-          playerRef.current.playVideo?.();
-        }
-      } else {
-        handlePlayPause();
+  const effectiveDurationSec = useMemo(() => {
+    if (duration > 0) return Math.round(duration);
+    return parseDurationSec(currentVideo.duration, 252);
+  }, [duration, currentVideo.duration, parseDurationSec]);
+
+  const totalChapterWatchFormatted = useMemo(() => {
+    const totalSec = videos.reduce((acc, v, idx) => {
+      if (idx === robustActive && duration > 0) {
+        return acc + Math.round(duration);
       }
-      return;
-    }
+      return acc + parseDurationSec(v.duration, 210);
+    }, 0);
+    return formatTime(totalSec);
+  }, [videos, robustActive, duration, parseDurationSec]);
 
+  const segmentsList = useMemo(() => {
+    const count = Math.max(1, topicsList.length);
+    return topicsList.map((topic, idx) => {
+      const startSec = Math.round((idx / count) * effectiveDurationSec);
+      const endSec =
+        idx === count - 1
+          ? effectiveDurationSec
+          : Math.round(((idx + 1) / count) * effectiveDurationSec);
+      const segSec = Math.max(1, endSec - startSec);
+      const mins = Math.floor(segSec / 60);
+      const secs = segSec % 60;
+      const durationLabel =
+        mins > 0 && secs > 0
+          ? `${mins} min ${secs} sec`
+          : mins > 0
+            ? `${mins} min`
+            : `${secs} sec`;
+      return {
+        index: idx,
+        title: topic,
+        startSec,
+        endSec,
+        timeRangeStr: `${formatTime(startSec)} – ${formatTime(endSec)}`,
+        durationLabel,
+      };
+    });
+  }, [topicsList, effectiveDurationSec]);
+
+  const activeSegmentIdx = useMemo(() => {
+    for (let i = segmentsList.length - 1; i >= 0; i--) {
+      if (currentTime >= segmentsList[i].startSec) {
+        return i;
+      }
+    }
+    return 0;
+  }, [segmentsList, currentTime]);
+
+  const keyMomentsList = useMemo(() => {
+    return segmentsList.map((seg, idx) => {
+      const momentSec = Math.min(
+        Math.max(0, seg.endSec - 5),
+        seg.startSec + Math.max(12, Math.round((seg.endSec - seg.startSec) * 0.28)),
+      );
+      const colonIdx = seg.title.indexOf(":");
+      let lead = "";
+      let detail = "";
+      if (colonIdx !== -1) {
+        lead = seg.title.slice(0, colonIdx).trim();
+        detail = seg.title.slice(colonIdx + 1).trim();
+      } else {
+        const parts = seg.title.split(/\s+(?:&|—|-)\s+/);
+        lead = parts[0] || seg.title;
+        detail =
+          parts.length > 1
+            ? `${parts.slice(1).join(", ")} — core conceptual breakdown and exam focus.`
+            : `Core principles, structural relationships, and key exam takeaways for Segment ${idx + 1}.`;
+      }
+      return {
+        timeSec: momentSec,
+        timeStr: formatTime(momentSec),
+        lead,
+        detail,
+      };
+    });
+  }, [segmentsList]);
+
+  const seekToSecond = useCallback(
+    (targetSec: number) => {
+      if (!isCurrentlyFullscreen()) {
+        enterFullscreen(currentVideo?.ytId);
+      }
+      const dur =
+        (playerRef.current && typeof playerRef.current.getDuration === "function"
+          ? playerRef.current.getDuration()
+          : 0) || effectiveDurationSec;
+      const clamped = Math.max(0, Math.min(dur > 0 ? dur : targetSec, targetSec));
+      isSeekingRef.current = true;
+      hasStartedPlayingRef.current = true;
+      lastSeekTargetRef.current = { time: clamped, ts: Date.now() };
+      if (seekResetTimerRef.current) clearTimeout(seekResetTimerRef.current);
+      seekResetTimerRef.current = setTimeout(() => {
+        isSeekingRef.current = false;
+      }, 1200);
+      restoredVideoTimeRef.current = clamped;
+      setCurrentTime(clamped);
+      if (dur > 0) {
+        setProgress((clamped / dur) * 100);
+      }
+      if (videoTimeStorageKey) {
+        try {
+          cloudStorage.setItem(
+            videoTimeStorageKey,
+            JSON.stringify({ currentTime: clamped, duration: dur || effectiveDurationSec, updatedAt: Date.now() }),
+          );
+        } catch {}
+      }
+      sendYtIframeCommand("seekTo", [clamped, true]);
+      sendYtIframeCommand("playVideo", []);
+      setIsPlaying(true);
+      isPlayingRef.current = true;
+      if (!playerRef.current || !playerReadyRef.current) {
+        autoPlayOnReadyRef.current = true;
+        return;
+      }
+      if (playerRef.current?.seekTo) {
+        try {
+          playerRef.current.seekTo(clamped, true);
+          playerRef.current.playVideo?.();
+        } catch {}
+        setTimeout(() => {
+          if (isCurrentlyFullscreen()) {
+            try {
+              playerRef.current?.playVideo?.();
+              sendYtIframeCommand("playVideo", []);
+            } catch {}
+          }
+        }, 60);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [effectiveDurationSec, currentVideo?.ytId, videoTimeStorageKey, sendYtIframeCommand],
+  );
+
+  // Video switching handler for multi-video chapters
+  const handleSelectVideo = (index: number) => {
+    if (index < 0 || index >= videos.length || index === robustActive) return;
+    if (playerReadyRef.current && playerRef.current && typeof playerRef.current.getCurrentTime === "function") {
+      try {
+        const cur = playerRef.current.getCurrentTime();
+        const dur = typeof playerRef.current.getDuration === "function" ? playerRef.current.getDuration() : duration;
+        if (cur > 1 && videoTimeStorageKey) {
+          cloudStorage.setItem(
+            videoTimeStorageKey,
+            JSON.stringify({ currentTime: cur, duration: dur || effectiveDurationSec, updatedAt: Date.now() }),
+          );
+        }
+      } catch {}
+    }
     try {
       playerRef.current?.pauseVideo?.();
+      sendYtIframeCommand("pauseVideo", []);
     } catch {}
-
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
+    }
     activePlaybackSessionYtIdRef.current = null;
-    setCurrentTime(0);
-    setDuration(0);
-    setProgress(0);
+    hasStartedPlayingRef.current = false;
+    isSeekingRef.current = false;
+    autoPlayOnReadyRef.current = false;
+
+    // Persist new active video index to cloudStorage FIRST so synchronous listeners see the updated index
+    cloudStorage.setItem(`sv_last_video_idx_${subjectId}_ch${chapterNumber}`, String(index));
+
+    const targetVid = videos[index];
+    const targetTimeKey = getVideoTimeKey(index, targetVid?.ytId);
+    let restoredSec = 0;
+    let restoredDur = parseDurationSec(targetVid?.duration, 210);
+    if (targetTimeKey) {
+      try {
+        const raw = cloudStorage.getItem(targetTimeKey);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed.currentTime === "number" && parsed.currentTime >= 0) {
+            restoredSec = parsed.currentTime;
+          }
+          if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
+            restoredDur = parsed.duration;
+          }
+        }
+      } catch {}
+    }
+    restoredVideoTimeRef.current = restoredSec;
+    lastSeekTargetRef.current = { time: restoredSec, ts: 0 };
+    setCurrentTime(restoredSec);
+    setDuration(restoredDur);
+    setProgress(restoredDur > 0 && restoredSec > 0 ? Math.min(100, (restoredSec / restoredDur) * 100) : 0);
     setIsPlaying(false);
-    autoPlayOnReadyRef.current = true;
+    isPlayingRef.current = false;
+
     setActiveVideo(index);
     if (onSelectVideoIndex) {
       onSelectVideoIndex(index + 1);
     }
-    enterFullscreen(targetYtId);
   };
+  const cutLabelUpper =
+    persona === "beginner"
+      ? "ESSENTIALS CUT"
+      : persona === "advanced"
+        ? "IN-DEPTH CUT"
+        : "STANDARD CUT";
 
-  // Video Player Component
-  const renderVideoPlayer = (_isFullWidth = false, isStackedRow = false, rowIndex = robustActive) => (
+  const cutOverlayTopRightLabel =
+    persona === "beginner"
+      ? "Essentials cut · Standard / In-depth available"
+      : persona === "advanced"
+        ? "In-depth cut · Essentials / Standard available"
+        : "Standard cut · Essentials / In-depth available";
+
+  const subjectShortWatermark = useMemo(() => {
+    const cleanSubj = (subjectId || "COURSE")
+      .replace(/^anu_/i, "")
+      .replace(/_.*$/, "")
+      .toUpperCase();
+    return `${cleanSubj} PART ${robustActive + 1}`;
+  }, [subjectId, robustActive]);
+
+  const totalVideos = Math.max(1, videos.length);
+  // Video Player Component matching Screen 1 mockup
+  const renderVideoPlayer = (_isFullWidth = false, _isStackedRow = false, rowIndex = robustActive) => (
     <div
       ref={(el) => {
         rowPlayerContainerRefs.current[rowIndex] = el;
@@ -1095,26 +1708,19 @@ export default function VideosView({
       onMouseLeave={handlePlayerMouseLeave}
       style={{
         position: "relative",
-        width: isFullscreen ? "100%" : "76%",
-        maxWidth: isFullscreen ? "100%" : "860px",
-        height: "100%",
-        maxHeight: "100%",
-        aspectRatio: "16 / 9",
+        width: "100%",
+        height: isFullscreen ? "100%" : "clamp(300px, calc(100vh - 230px), 470px)",
         flexShrink: 0,
-        background: "#000",
-        borderRadius: isFullscreen ? "0px" : "12px",
-        overflow: "hidden",
-        boxShadow: isFullscreen ? "none" : "0 6px 20px rgba(0,0,0,0.14)",
+        boxShadow: isFullscreen ? "none" : "0 8px 26px rgba(20, 32, 26, 0.14)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
-        cursor: isPlaying && !showControls ? "none" : "default",
-        margin: "0 auto",
+        cursor: isFullscreen && isPlaying && !showControls ? "none" : "default",
       }}
     >
       {/* YouTube Iframe wrapped in keyed container so React cleanly unmounts on video switch */}
       <div
-        key={`yt-wrap-${currentVideo.ytId}`}
+        key={`yt-wrap-${subjectId}-${chapterNumber}-${robustActive}-${currentVideo.ytId}`}
         style={{
           position: "absolute",
           inset: 0,
@@ -1122,21 +1728,85 @@ export default function VideosView({
           height: "100%",
           border: 0,
           pointerEvents: "none",
+          opacity: isFullscreen ? 1 : 0,
+          transition: "opacity 0.25s ease",
         }}
       >
-        <div
-          id={`yt-player-${currentVideo.ytId}`}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: 0,
-          }}
-        />
+        {isRegistryLoaded && currentVideo.ytId ? (
+          <iframe
+            id={`yt-player-${robustActive}-${currentVideo.ytId}`}
+            title={displayTitle}
+            src={`https://www.youtube.com/embed/${currentVideo.ytId}?enablejsapi=1&origin=${encodeURIComponent(window.location.origin)}&rel=0&modestbranding=1&controls=0&disablekb=1&cc_load_policy=0&cc_lang_pref=none&playsinline=1&iv_load_policy=3`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            onLoad={() => {
+              iframeLoadedRef.current = true;
+            }}
+            style={{
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
+          />
+        ) : null}
       </div>
 
-      {/* Transparent Click overlay covering video - opens fullscreen from preview, handles left/right/center clicks in fullscreen */}
+      {/* Clean Video Thumbnail Cover when not in fullscreen (no YouTube buttons/chrome) */}
+      {!isFullscreen && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background: "radial-gradient(ellipse at center, rgba(46, 66, 56, 0.88) 0%, rgba(25, 38, 31, 0.96) 100%)",
+            pointerEvents: "none",
+            zIndex: 1,
+            overflow: "hidden",
+          }}
+        >
+          {(currentVideo.thumbnailUrl || currentVideo.ytId) && (
+            <img
+              key={`vid-thumb-${robustActive}-${currentVideo.ytId}`}
+              src={
+                currentVideo.ytId && (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
+                  ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+                  : currentVideo.thumbnailUrl || `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+              }
+              onError={(e) => {
+                if (currentVideo.ytId) {
+                  const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
+                }
+              }}
+              alt={displayTitle}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                objectPosition: "center",
+                display: "block",
+                userSelect: "none",
+              }}
+            />
+          )}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              background:
+                "linear-gradient(180deg, rgba(14, 22, 18, 0.36) 0%, rgba(14, 22, 18, 0.14) 45%, rgba(14, 22, 18, 0.68) 100%)",
+            }}
+          />
+        </div>
+      )}
+
+
+      {/* Transparent Click overlay covering video */}
       <div
-        onClick={handleVideoClick}
+        onClick={(e) => {
+          e.stopPropagation();
+          handleVideoClick(e);
+        }}
         style={{
           position: "absolute",
           inset: 0,
@@ -1157,14 +1827,13 @@ export default function VideosView({
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             color: "#FFFFFF",
-            padding: "16px 24px",
+            padding: "14px 22px",
             borderRadius: "50px",
             display: "flex",
             alignItems: "center",
             gap: "10px",
-            fontSize: seekFeedback === "skip" ? "16px" : "20px",
+            fontSize: "18px",
             fontWeight: 800,
-            letterSpacing: "0.5px",
             zIndex: 15,
             pointerEvents: "none",
             boxShadow: "0 10px 36px rgba(0, 0, 0, 0.6)",
@@ -1173,36 +1842,27 @@ export default function VideosView({
         >
           {seekFeedback === "-10s" ? (
             <>
-              <span style={{ fontSize: "24px" }}>«</span>
+              <span>{"«"}</span>
               <span>10s</span>
             </>
           ) : seekFeedback === "+10s" ? (
             <>
               <span>10s</span>
-              <span style={{ fontSize: "24px" }}>»</span>
+              <span>{"»"}</span>
             </>
           ) : (
-            <>
-              <span style={{ fontSize: "20px" }}>⏭</span>
-              <span>Skipped to 2:00</span>
-            </>
+            <span>Skipped</span>
           )}
         </div>
       )}
 
-      {/* Center Play Overlay when Paused */}
-      {!isPlaying && (
+      {/* Center Sage Play Button Overlay when Paused or in Thumbnail view */}
+      {(!isPlaying || !isFullscreen) && (
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            if (!isCurrentlyFullscreen()) {
-              enterFullscreen();
-              if (playerRef.current) {
-                playerRef.current.playVideo?.();
-              }
-            } else {
-              handlePlayPause();
-            }
+            handlePlayPause();
           }}
           aria-label="Play Video"
           style={{
@@ -1210,12 +1870,12 @@ export default function VideosView({
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
-            height: isFullscreen ? "80px" : isStackedRow ? "44px" : "68px",
+            width: isFullscreen ? "82px" : "68px",
+            height: isFullscreen ? "82px" : "68px",
             borderRadius: "50%",
             border: "none",
-            background: "rgba(255, 255, 255, 0.95)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.35)",
+            background: "#9DC2AD",
+            boxShadow: "0 10px 28px rgba(0, 0, 0, 0.36)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -1224,612 +1884,545 @@ export default function VideosView({
             transition: "transform 0.2s ease, background 0.2s ease",
           }}
           onMouseEnter={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1.08)";
+            e.currentTarget.style.transform = "translate(-50%, -50%) scale(1.07)";
           }}
           onMouseLeave={(e) => {
-            (e.currentTarget as HTMLButtonElement).style.transform = "translate(-50%, -50%) scale(1)";
+            e.currentTarget.style.transform = "translate(-50%, -50%) scale(1)";
           }}
         >
-          <div
-            style={{
-              width: 0,
-              height: 0,
-              borderTop: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
-              borderBottom: isFullscreen ? "15px solid transparent" : isStackedRow ? "8.5px solid transparent" : "13px solid transparent",
-              borderLeft: isFullscreen ? "26px solid #1E293B" : isStackedRow ? "14px solid #1E293B" : "22px solid #1E293B",
-              marginLeft: isFullscreen ? "6px" : isStackedRow ? "3px" : "5px",
-            }}
-          />
+          <svg
+            width={isFullscreen ? "26" : "22"}
+            height={isFullscreen ? "26" : "22"}
+            viewBox="0 0 24 24"
+            fill="#162A20"
+            style={{ marginLeft: "3px" }}
+          >
+            <polygon points="6,4 20,12 6,20" />
+          </svg>
         </button>
       )}
 
-      {/* Control Bar - Only visible in Fullscreen mode, auto-hides when video is playing unless cursor moves */}
-      {isFullscreen && (
-        <div
+      {/* Netflix-style Floating Skip Intro Button (first 2 minutes) */}
+      {canSkipIntro && (
+        <button
+          type="button"
+          onClick={handleSkipIntro}
+          title="Skip Intro (Jump to 2:00)"
+          aria-label="Skip Intro"
+          style={{
+            position: "absolute",
+            right: isFullscreen ? "28px" : "18px",
+            bottom: isFullscreen ? "74px" : "60px",
+            zIndex: 12,
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: isFullscreen ? "9px 16px" : "7px 13px",
+            borderRadius: "8px",
+            background: "rgba(22, 42, 32, 0.88)",
+            border: "1px solid rgba(255, 255, 255, 0.35)",
+            color: "#FFFFFF",
+            fontSize: isFullscreen ? "13px" : "12px",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            cursor: "pointer",
+            backdropFilter: "blur(8px)",
+            boxShadow: "0 4px 14px rgba(0, 0, 0, 0.35)",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <span>Skip Intro</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="5 4 15 12 5 20 5 4" fill="currentColor" />
+            <line x1="19" y1="5" x2="19" y2="19" />
+          </svg>
+        </button>
+      )}
+
+      {/* Sleek Bottom Control Bar (Always visible when paused or hovered, both inline & fullscreen) */}
+      <div
         onMouseEnter={() => {
           if (hideControlsTimerRef.current) {
             clearTimeout(hideControlsTimerRef.current);
           }
           setShowControls(true);
         }}
-        onMouseLeave={() => {
-          if (isPlaying) {
-            if (hideControlsTimerRef.current) {
-              clearTimeout(hideControlsTimerRef.current);
-            }
-            hideControlsTimerRef.current = setTimeout(() => {
-              setShowControls(false);
-            }, 2500);
-          }
-        }}
         style={{
-          position: "absolute",
-          bottom: 0,
-          left: 0,
-          right: 0,
+          position: "relative",
           zIndex: 10,
-          background: "linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.72) 65%, transparent 100%)",
-          padding: "24px 20px 14px 20px",
+          background: "linear-gradient(to top, rgba(16, 24, 20, 0.92) 0%, rgba(16, 24, 20, 0.55) 70%, transparent 100%)",
+          padding: "18px 18px 13px 18px",
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
+          gap: "14px",
           width: "100%",
           boxSizing: "border-box",
           opacity: showControls || !isPlaying ? 1 : 0,
-          transform: showControls || !isPlaying ? "translateY(0)" : "translateY(10px)",
           pointerEvents: showControls || !isPlaying ? "auto" : "none",
-          transition: "opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
+          transition: "opacity 0.25s ease",
           userSelect: "none",
         }}
       >
-        {/* Full-width Seek Bar with comfortable hit area */}
-        <div
+        {/* Play / Pause Button */}
+        <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            handleSeekClick(e);
+            handlePlayPause();
           }}
-          title="Seek"
+          title={isPlaying ? "Pause" : "Play"}
+          aria-label={isPlaying ? "Pause" : "Play"}
           style={{
-            position: "relative",
-            width: "100%",
-            height: "18px",
+            background: "transparent",
+            border: "none",
+            color: "#FFFFFF",
+            cursor: "pointer",
+            padding: "2px",
             display: "flex",
             alignItems: "center",
-            cursor: "pointer",
-            marginBottom: "6px",
-          }}
-          onMouseEnter={(e) => {
-            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
-            if (track) track.style.height = "8px";
-            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
-            if (thumb) thumb.style.transform = "translateY(-50%) scale(1.25)";
-          }}
-          onMouseLeave={(e) => {
-            const track = e.currentTarget.querySelector(".seek-track") as HTMLDivElement;
-            if (track) track.style.height = "6px";
-            const thumb = e.currentTarget.querySelector(".seek-thumb") as HTMLDivElement;
-            if (thumb) thumb.style.transform = "translateY(-50%) scale(1)";
+            justifyContent: "center",
+            flexShrink: 0,
           }}
         >
-          {/* Seek Track */}
+          {isPlaying ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF">
+              <rect x="5" y="4" width="4.5" height="16" rx="1.2" />
+              <rect x="14.5" y="4" width="4.5" height="16" rx="1.2" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFFFFF">
+              <polygon points="6,4 20,12 6,20" />
+            </svg>
+          )}
+        </button>
+
+        {/* Rewind 10s (↺10) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleRewind10();
+          }}
+          title="Rewind 10 seconds"
+          aria-label="Rewind 10 seconds"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "rgba(255, 255, 255, 0.85)",
+            cursor: "pointer",
+            padding: "2px 4px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "2px",
+            fontSize: "11.5px",
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 12a9 9 0 1 0 3-6.7L3 8" />
+            <polyline points="3 3 3 8 8 8" />
+          </svg>
+          <span style={{ fontSize: "10px" }}>10</span>
+        </button>
+
+        {/* Forward 10s (↻10) */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleForward10();
+          }}
+          title="Forward 10 seconds"
+          aria-label="Forward 10 seconds"
+          style={{
+            background: "transparent",
+            border: "none",
+            color: "rgba(255, 255, 255, 0.85)",
+            cursor: "pointer",
+            padding: "2px 4px",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "2px",
+            fontSize: "11.5px",
+            fontWeight: 700,
+            flexShrink: 0,
+          }}
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+            <polyline points="21 3 21 8 16 8" />
+          </svg>
+          <span style={{ fontSize: "10px" }}>10</span>
+        </button>
+
+        {/* Inline Horizontal Seek Bar with Segment Dividers & Subtle Fullscreen Timestamp Popups */}
+        <div
+          style={{
+            position: "relative",
+            flex: 1,
+            height: "24px",
+            display: "flex",
+            alignItems: "center",
+          }}
+        >
+          {/* Subtle Timestamp & Topic Name Popups right above the progress bar in Fullscreen mode */}
+          {isFullscreen && segmentsList.length > 0 && (
+            <div
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: "22px",
+                height: "28px",
+                pointerEvents: "none",
+                zIndex: 14,
+              }}
+            >
+              {segmentsList.map((seg, idx) => {
+                const startPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(92, Math.max(0, (seg.startSec / effectiveDurationSec) * 100))
+                    : (idx / segmentsList.length) * 100;
+                const endPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(100, Math.max(startPct + 8, (seg.endSec / effectiveDurationSec) * 100))
+                    : ((idx + 1) / segmentsList.length) * 100;
+                const maxWidthPct = Math.max(10, endPct - startPct - 1.2);
+                const isCurrentSeg = activeSegmentIdx === idx;
+                return (
+                  <div
+                    key={`fs-seg-popup-${seg.index}`}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      seekToSecond(seg.startSec);
+                    }}
+                    style={{
+                      position: "absolute",
+                      left: `${startPct}%`,
+                      bottom: 0,
+                      maxWidth: `calc(${maxWidthPct}% - 6px)`,
+                      pointerEvents: "auto",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div
+                      style={{
+                        background: isCurrentSeg ? "rgba(20, 32, 26, 0.76)" : "rgba(16, 24, 20, 0.58)",
+                        backdropFilter: "blur(6px)",
+                        WebkitBackdropFilter: "blur(6px)",
+                        border: isCurrentSeg
+                          ? "1px solid rgba(157, 194, 173, 0.34)"
+                          : "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "5px",
+                        padding: "2.5px 7px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        maxWidth: "100%",
+                        boxSizing: "border-box",
+                        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.22)",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 700,
+                          color: "#9DC2AD",
+                          fontVariantNumeric: "tabular-nums",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {formatTime(seg.startSec)}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 500,
+                          color: "rgba(255, 255, 255, 0.86)",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {seg.title}
+                      </span>
+                    </div>
+                    <div
+                      style={{
+                        width: "1px",
+                        height: "4px",
+                        marginLeft: "6px",
+                        background: isCurrentSeg ? "rgba(157, 194, 173, 0.55)" : "rgba(255, 255, 255, 0.22)",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Clickable & Draggable Seek Track Hit Area */}
           <div
-            className="seek-track"
+            onMouseDown={(e) => {
+              e.stopPropagation();
+              const barEl = e.currentTarget;
+              const computeTargetSec = (clientX: number): { sec: number; dur: number } | null => {
+                const rect = barEl.getBoundingClientRect();
+                if (rect.width <= 0) return null;
+                const clickX = Math.max(0, Math.min(clientX - rect.left, rect.width));
+                const pct = clickX / rect.width;
+                const dur =
+                  (playerRef.current && typeof playerRef.current.getDuration === "function"
+                    ? playerRef.current.getDuration()
+                    : 0) || effectiveDurationSec;
+                return { sec: Math.round(pct * dur), dur };
+              };
+
+              const initial = computeTargetSec(e.clientX);
+              if (initial) {
+                lastSeekTargetRef.current = { time: initial.sec, ts: Date.now() };
+                setCurrentTime(initial.sec);
+                if (initial.dur > 0) setProgress((initial.sec / initial.dur) * 100);
+              }
+
+              const handleMouseMove = (moveEvt: MouseEvent) => {
+                const pos = computeTargetSec(moveEvt.clientX);
+                if (pos) {
+                  lastSeekTargetRef.current = { time: pos.sec, ts: Date.now() };
+                  setCurrentTime(pos.sec);
+                  if (pos.dur > 0) setProgress((pos.sec / pos.dur) * 100);
+                }
+              };
+              const handleMouseUp = (upEvt: MouseEvent) => {
+                window.removeEventListener("mousemove", handleMouseMove);
+                window.removeEventListener("mouseup", handleMouseUp);
+                const finalPos = computeTargetSec(upEvt.clientX) || initial;
+                if (finalPos) {
+                  seekToSecond(finalPos.sec);
+                }
+              };
+              window.addEventListener("mousemove", handleMouseMove);
+              window.addEventListener("mouseup", handleMouseUp);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+            }}
+            title="Click or drag to seek"
             style={{
               position: "relative",
               width: "100%",
-              height: "6px",
-              background: "rgba(255, 255, 255, 0.32)",
-              borderRadius: "4px",
-              transition: "height 0.15s ease",
+              height: "24px",
+              display: "flex",
+              alignItems: "center",
+              cursor: "pointer",
+              zIndex: 15,
             }}
           >
-            {/* Progress Fill */}
             <div
               style={{
-                height: "100%",
-                width: `${Math.min(100, Math.max(0, progress))}%`,
-                background: "#FFFFFF",
-                borderRadius: "4px",
                 position: "relative",
+                width: "100%",
+                height: "5px",
+                background: "rgba(255, 255, 255, 0.24)",
+                borderRadius: "999px",
+                pointerEvents: "none",
               }}
             >
-              {/* Scrubber Thumb */}
+              {/* Segment Boundary Ticks */}
+              {segmentsList.slice(1).map((seg) => {
+                const tickPct =
+                  effectiveDurationSec > 0
+                    ? Math.min(98, Math.max(2, (seg.startSec / effectiveDurationSec) * 100))
+                    : 0;
+                return (
+                  <div
+                    key={`tick-${seg.index}`}
+                    style={{
+                      position: "absolute",
+                      left: `${tickPct}%`,
+                      top: "-1px",
+                      width: "2px",
+                      height: "7px",
+                      background: "rgba(18, 28, 23, 0.85)",
+                      zIndex: 2,
+                      pointerEvents: "none",
+                    }}
+                  />
+                );
+              })}
+
+              {/* Progress Fill */}
               <div
-                className="seek-thumb"
                 style={{
-                  position: "absolute",
-                  right: "-7px",
-                  top: "50%",
-                  transform: "translateY(-50%) scale(1)",
-                  width: "15px",
-                  height: "15px",
-                  borderRadius: "50%",
-                  background: "#FFFFFF",
-                  boxShadow: "0 0 8px rgba(0,0,0,0.7), 0 2px 4px rgba(0,0,0,0.5)",
-                  transition: "transform 0.15s ease",
+                  height: "100%",
+                  width: `${Math.min(100, Math.max(0, effectiveDurationSec > 0 ? (currentTime / effectiveDurationSec) * 100 : progress))}%`,
+                  background: "#9DC2AD",
+                  borderRadius: "999px",
+                  position: "relative",
+                  pointerEvents: "none",
                 }}
-              />
+              >
+                {/* Scrubber White Thumb */}
+                <div
+                  style={{
+                    position: "absolute",
+                    right: "-6px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "13px",
+                    height: "13px",
+                    borderRadius: "50%",
+                    background: "#FFFFFF",
+                    boxShadow: "0 1px 4px rgba(0, 0, 0, 0.5)",
+                    pointerEvents: "none",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Controls Row */}
+        {/* Right Info Cluster: Time | Segment X of Y | Speed | Fullscreen */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
-            justifyContent: "space-between",
-            padding: "4px 6px 4px 6px",
-            gap: "16px",
+            gap: "12px",
+            flexShrink: 0,
+            color: "#FFFFFF",
+            fontSize: "12px",
+            fontWeight: 600,
+            fontVariantNumeric: "tabular-nums",
           }}
         >
-          {/* Left Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {/* Play/Pause */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePlayPause();
-              }}
-              title={isPlaying ? "Pause (Space/k)" : "Play (Space/k)"}
-              aria-label={isPlaying ? "Pause" : "Play"}
-              style={{
-                background: "rgba(255, 255, 255, 0.12)",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "38px",
-                height: "38px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.12)";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              {isPlaying ? (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF">
-                  <rect x="5" y="4" width="4.5" height="16" rx="1.5" />
-                  <rect x="14.5" y="4" width="4.5" height="16" rx="1.5" />
-                </svg>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFFFFF" style={{ marginLeft: "2px" }}>
-                  <polygon points="6,4 20,12 6,20" />
-                </svg>
-              )}
-            </button>
+          <span>
+            {`${formatTime(currentTime)} / ${formatTime(effectiveDurationSec)}`}
+          </span>
 
-            {/* Rewind 10s («) */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleRewind10();
-              }}
-              title="Rewind 10s"
-              aria-label="Rewind 10s"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="11 17 6 12 11 7" />
-                <polyline points="18 17 13 12 18 7" />
-              </svg>
-            </button>
+          <span style={{ color: "rgba(255, 255, 255, 0.72)", fontWeight: 500 }}>
+            {`Segment ${activeSegmentIdx + 1} of ${segmentsList.length}`}
+          </span>
 
-            {/* Forward 10s (») */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleForward10();
-              }}
-              title="Forward 10s"
-              aria-label="Forward 10s"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="13 17 18 12 13 7" />
-                <polyline points="6 17 11 12 6 7" />
-              </svg>
-            </button>
+          {/* Speed Selector */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const rates = [1, 1.25, 1.5, 1.75, 2, 0.75];
+              const nextRate = rates[(rates.indexOf(playbackRate) + 1) % rates.length];
+              setPlaybackRate(nextRate);
+              try {
+                playerRef.current?.setPlaybackRate?.(nextRate);
+              } catch {}
+            }}
+            title="Change playback speed"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#FFFFFF",
+              fontWeight: 700,
+              fontSize: "12px",
+              cursor: "pointer",
+              padding: "2px 4px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "3px",
+            }}
+          >
+            <span>{`${playbackRate}x`}</span>
+            <span style={{ fontSize: "9px", opacity: 0.8 }}>▾</span>
+          </button>
 
-            {/* Timestamp */}
-            <div
-              style={{
-                color: "#FFFFFF",
-                fontSize: "14px",
-                fontWeight: 600,
-                whiteSpace: "nowrap",
-                letterSpacing: "0.3px",
-                fontVariantNumeric: "tabular-nums",
-                userSelect: "none",
-                marginLeft: "4px",
-              }}
-            >
-              {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : "00:00 / 00:00"}
-            </div>
-
-            {/* Volume Icon + Slider */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: "6px" }}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleMute();
-                }}
-                title={isMuted ? "Unmute (m)" : "Mute (m)"}
-                aria-label={isMuted ? "Unmute" : "Mute"}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#FFFFFF",
-                  cursor: "pointer",
-                  padding: 0,
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s ease, transform 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                {isMuted || volume === 0 ? (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
-                    <line x1="23" y1="9" x2="17" y2="15" />
-                    <line x1="17" y1="9" x2="23" y2="15" />
-                  </svg>
-                ) : (
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#FFFFFF" />
-                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" strokeWidth="2.2" />
-                    <path d="M18.8 5.2a9 9 0 0 1 0 13.6" strokeWidth="2.2" />
-                  </svg>
-                )}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={isMuted ? 0 : volume}
-                onChange={handleVolumeChange}
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  width: "75px",
-                  height: "5px",
-                  accentColor: "#FFFFFF",
-                  cursor: "pointer",
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Right Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            {/* Speed Selector Toggle / Inline Pills */}
-            {!showSpeedSelector ? (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowSpeedSelector(true);
-                }}
-                title="Playback Speed"
-                aria-label="Playback Speed"
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "#FFFFFF",
-                  cursor: "pointer",
-                  padding: 0,
-                  width: "36px",
-                  height: "36px",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "background 0.15s ease, transform 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                  e.currentTarget.style.transform = "scale(1.08)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "transparent";
-                  e.currentTarget.style.transform = "scale(1)";
-                }}
-              >
-                {/* Speedometer Gauge Icon */}
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <line x1="12" y1="12" x2="16" y2="8" strokeWidth="2.2" />
-                  <circle cx="12" cy="12" r="1.5" fill="#FFFFFF" />
-                  <path d="M7 12a5 5 0 0 1 1.46-3.54" strokeDasharray="1 2.5" />
-                </svg>
-              </button>
-            ) : (
-              <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  background: "rgba(0, 0, 0, 0.6)",
-                  padding: "3px 6px",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(255, 255, 255, 0.25)",
-                }}
-              >
-                {[
-                  { label: "Normal", rate: 1 },
-                  { label: "1.25x", rate: 1.25 },
-                  { label: "1.5x", rate: 1.5 },
-                  { label: "2x", rate: 2 },
-                ].map((s) => {
-                  const isActive = playbackRate === s.rate;
-                  return (
-                    <button
-                      key={s.rate}
-                      type="button"
-                      onClick={() => {
-                        setPlaybackRate(s.rate);
-                        if (playerRef.current && typeof playerRef.current.setPlaybackRate === "function") {
-                          playerRef.current.setPlaybackRate(s.rate);
-                        }
-                      }}
-                      style={{
-                        background: isActive ? "rgba(255, 255, 255, 0.28)" : "transparent",
-                        border: isActive ? "1px solid rgba(255, 255, 255, 0.8)" : "1px solid transparent",
-                        color: "#FFFFFF",
-                        fontSize: "12px",
-                        fontWeight: isActive ? 700 : 500,
-                        borderRadius: "12px",
-                        padding: "3px 8px",
-                        cursor: "pointer",
-                        lineHeight: 1.3,
-                        transition: "all 0.15s ease",
-                      }}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
-                <button
-                  type="button"
-                  onClick={() => setShowSpeedSelector(false)}
-                  title="Close speed selector"
-                  style={{
-                    background: "none",
-                    border: "none",
-                    color: "rgba(255, 255, 255, 0.75)",
-                    cursor: "pointer",
-                    padding: "0 4px",
-                    fontSize: "13px",
-                    lineHeight: 1,
-                  }}
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            {/* CC Subtitles Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCc();
-              }}
-              title={isCcEnabled ? "Turn Captions Off (c)" : "Turn Captions On (c)"}
-              aria-label={isCcEnabled ? "Turn Captions Off" : "Turn Captions On"}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: isCcEnabled ? "#60A5FA" : "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="5" width="18" height="14" rx="3" />
-                <line x1="7" y1="12" x2="11" y2="12" strokeWidth="2" />
-                <line x1="13" y1="12" x2="17" y2="12" strokeWidth="2" />
-              </svg>
-            </button>
-
-            {/* Fullscreen / Minimize Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFullscreen();
-              }}
-              title={isFullscreen ? "Exit Fullscreen / Minimize (f)" : "Fullscreen (f)"}
-              aria-label={isFullscreen ? "Exit Fullscreen / Minimize" : "Fullscreen"}
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#FFFFFF",
-                cursor: "pointer",
-                padding: 0,
-                width: "36px",
-                height: "36px",
-                borderRadius: "50%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                transition: "background 0.15s ease, transform 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
-                e.currentTarget.style.transform = "scale(1.08)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "transparent";
-                e.currentTarget.style.transform = "scale(1)";
-              }}
-            >
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                {isFullscreen ? (
-                  <>
-                    <polyline points="4 14 10 14 10 20" />
-                    <polyline points="20 10 14 10 14 4" />
-                    <line x1="14" y1="10" x2="21" y2="3" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </>
-                ) : (
-                  <>
-                    <polyline points="15 3 21 3 21 9" />
-                    <polyline points="9 21 3 21 3 15" />
-                    <line x1="21" y1="3" x2="14" y2="10" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </>
-                )}
-              </svg>
-            </button>
-          </div>
+          {/* Fullscreen Toggle */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFullscreen();
+            }}
+            title={isFullscreen ? "Exit Fullscreen (f)" : "Fullscreen (f)"}
+            aria-label="Toggle Fullscreen"
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#FFFFFF",
+              cursor: "pointer",
+              padding: "2px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+              <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+              <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+              <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+            </svg>
+          </button>
         </div>
       </div>
-      )}
-
-      {/* Netflix-style "Skip" Intro Button (Skips to 2:00 / 120s) */}
-      {canSkipIntro && (
-        <button
-          type="button"
-          onClick={handleSkipIntro}
-          title="Skip intro (skips to 2:00)"
-          aria-label="Skip intro"
-          style={{
-            position: "absolute",
-            bottom: isFullscreen ? (showControls ? "86px" : "28px") : "18px",
-            right: isFullscreen ? "32px" : "18px",
-            zIndex: 12,
-            display: "flex",
-            alignItems: "center",
-            gap: "7px",
-            background: "rgba(20, 20, 20, 0.75)",
-            backdropFilter: "blur(8px)",
-            WebkitBackdropFilter: "blur(8px)",
-            color: "#FFFFFF",
-            border: "1.5px solid rgba(255, 255, 255, 0.65)",
-            borderRadius: "6px",
-            padding: isFullscreen ? "8px 18px" : "6px 14px",
-            fontSize: isFullscreen ? "14px" : "12.5px",
-            fontWeight: 700,
-            letterSpacing: "0.4px",
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.45)",
-            transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-            userSelect: "none",
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
-            e.currentTarget.style.borderColor = "#FFFFFF";
-            e.currentTarget.style.transform = "scale(1.05)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = "rgba(20, 20, 20, 0.75)";
-            e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.65)";
-            e.currentTarget.style.transform = "scale(1)";
-          }}
-        >
-          <span>Skip</span>
-          <svg
-            width={isFullscreen ? "13" : "11"}
-            height={isFullscreen ? "13" : "11"}
-            viewBox="0 0 24 24"
-            fill="currentColor"
-          >
-            <polygon points="5 4 15 12 5 20 5 4" />
-            <line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        </button>
-      )}
     </div>
   );
 
   const isVideoDone = (idx: number) =>
     completedVideos.has(idx) || Boolean(isVideoWatchedAt?.(idx + 1)) || (videos.length === 1 && isCompleted);
 
-  const totalVideos = Math.max(1, videos.length);
-  const completedCount = videos.reduce((acc, _, idx) => acc + (isVideoDone(idx) ? 1 : 0), 0);
-  const activePartialFraction = isVideoDone(robustActive)
-    ? 0
-    : Math.min(1, Math.max(0, progress / 100));
-  const watchProgressPercent = Math.min(
-    100,
-    Math.round(((completedCount + activePartialFraction) / totalVideos) * 100),
-  );
-  const accentColor = "#15803d";
-  const formattedWatchDuration = displayDuration.replace(/(\d+)\s*min$/i, "$1 min");
+  const watchProgressPercent = useMemo(() => {
+    if (totalVideos <= 0) return 0;
+    let totalFraction = 0;
+    for (let idx = 0; idx < videos.length; idx++) {
+      if (isVideoDone(idx)) {
+        totalFraction += 1;
+      } else if (idx === robustActive) {
+        totalFraction += Math.min(1, Math.max(0, progress / 100));
+      } else {
+        const tKey = getVideoTimeKey(idx, videos[idx]?.ytId);
+        if (tKey) {
+          try {
+            const raw = cloudStorage.getItem(tKey);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const cTime = Number(parsed?.currentTime || 0);
+              const cDur = Number(parsed?.duration || parseDurationSec(videos[idx]?.duration, 210));
+              if (cTime > 0 && cDur > 0) {
+                totalFraction += Math.min(1, cTime / cDur);
+              }
+            }
+          } catch {}
+        }
+      }
+    }
+    return Math.min(100, Math.round((totalFraction / totalVideos) * 100));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videos, totalVideos, robustActive, progress, completedVideos, isCompleted, getVideoTimeKey, parseDurationSec]);
+
+  const upcomingPlaylist = useMemo(() => {
+    const items: { idx: number; title: string; durationStr: string }[] = [];
+    for (let offset = 1; offset < videos.length; offset++) {
+      const targetIdx = (robustActive + offset) % videos.length;
+      const vid = videos[targetIdx];
+      if (vid) {
+        items.push({
+          idx: targetIdx,
+          title: vid.title || `Part ${targetIdx + 1}`,
+          durationStr: formatTime(parseDurationSec(vid.duration, 185)),
+        });
+      }
+    }
+    return items;
+  }, [videos, robustActive, parseDurationSec]);
+
+  const nextVideoIdx = (robustActive + 1) % totalVideos;
+  const nextVideoObj = videos[nextVideoIdx];
+  const hasNextVideo = totalVideos > 1 && robustActive + 1 < totalVideos;
 
   return (
     <div
@@ -1838,217 +2431,572 @@ export default function VideosView({
         width: "100%",
         height: "100%",
         maxHeight: "100%",
-        overflow: "hidden",
+        overflowY: "auto",
+        overflowX: "hidden",
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
+        paddingRight: "4px",
       }}
     >
-      {/* ── Section-Wise 2-Column Layout (Matching Read & Listen UI, Single-Screen Fit) ── */}
+      {/* ── Top Header Bar: Left Chapter Title + Middle-Top Toggle (Videos | Clips) ── */}
+      <div
+        className="videos-sticky-top"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "16px",
+          flexWrap: "wrap",
+          paddingBottom: "10px",
+          marginBottom: "12px",
+          borderBottom: "1px solid #E6E1D6",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            fontSize: "13.5px",
+            color: "#6E7670",
+            fontWeight: 500,
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
+          <strong
+            style={{
+              color: "#1E2822",
+              fontWeight: 700,
+              fontSize: "0.84rem",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+            title={chapterName}
+          >
+            {chapterName}
+          </strong>
+        </div>
+
+        {/* Centered Segmented Toggle: Videos | Clips */}
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", flexShrink: 0 }}>
+          <div
+            role="tablist"
+            aria-label="Watch mode selector"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              background: "#FFFFFF",
+              borderRadius: "9999px",
+              padding: "4px",
+              border: "1px solid #DED8CA",
+              boxShadow: "0 1px 3px rgba(30, 40, 34, 0.05)",
+              gap: "2px",
+            }}
+          >
+            {(
+              [
+                {
+                  key: "videos" as const,
+                  label: "Videos",
+                  icon: (active: boolean) => (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={active ? "#FFFFFF" : "#4A554E"}
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="2" y="4" width="20" height="16" rx="3" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill={active ? "#FFFFFF" : "#4A554E"} stroke="none" />
+                    </svg>
+                  ),
+                },
+                {
+                  key: "clips" as const,
+                  label: "Clips",
+                  icon: (active: boolean) => (
+                    <svg
+                      width="13"
+                      height="13"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke={active ? "#FFFFFF" : "#4A554E"}
+                      strokeWidth="2.1"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill={active ? "#FFFFFF" : "#4A554E"} stroke="none" />
+                    </svg>
+                  ),
+                },
+              ]
+            ).map(({ key, label, icon }) => {
+              const isActive = watchMode === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => {
+                    if (key === "clips" && isPlaying) {
+                      try {
+                        playerRef.current?.pauseVideo?.();
+                        sendYtIframeCommand("pauseVideo", []);
+                      } catch {}
+                      setIsPlaying(false);
+                      isPlayingRef.current = false;
+                    }
+                    setWatchMode(key);
+                  }}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "6px 16px",
+                    borderRadius: "9999px",
+                    border: "none",
+                    outline: "none",
+                    background: isActive ? "#2D3E36" : "transparent",
+                    color: isActive ? "#FFFFFF" : "#4A554E",
+                    fontSize: "13px",
+                    fontWeight: isActive ? 700 : 600,
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                    userSelect: "none",
+                    whiteSpace: "nowrap",
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {icon(isActive)}
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div style={{ flex: 1, minWidth: 0 }} />
+      </div>
+
+      {watchMode === "clips" ? (
+        /* ── Clips (Shorts) Placeholder View ── */
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "20px",
+            width: "100%",
+            padding: "8px 0 36px 0",
+            boxSizing: "border-box",
+          }}
+        >
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))",
+              gap: "16px",
+              width: "100%",
+            }}
+          >
+            {(videos.length > 0
+              ? videos.slice(0, 4).map((v, i) => ({
+                  title: v.title?.replace(/^Part\s*\d+\s*:\s*/i, "") || `Concept Short ${i + 1}`,
+                  subtitle: v.topics?.[0] || "Key exam concept & visual intuition",
+                  duration: ["0:45", "0:55", "0:50", "0:58"][i % 4],
+                }))
+              : [
+                  { title: "Core Concept Intuition", subtitle: "60-second visual walkthrough", duration: "0:45" },
+                  { title: "Architecture & Key Flow", subtitle: "Quick diagram breakdown", duration: "0:55" },
+                  { title: "Common Exam Pitfalls", subtitle: "Fast revision check", duration: "0:50" },
+                  { title: "Rapid Formula & Rule Recap", subtitle: "One-minute takeaway", duration: "0:58" },
+                ]
+            ).map((clip, idx) => (
+              <div
+                key={`clip-placeholder-${idx}`}
+                style={{
+                  aspectRatio: "9 / 15",
+                  borderRadius: "16px",
+                  border: "1px solid #DDD7C9",
+                  background:
+                    idx % 2 === 0
+                      ? "linear-gradient(165deg, #24352D 0%, #18241E 60%, #121B17 100%)"
+                      : "linear-gradient(165deg, #2B3D34 0%, #1B2922 60%, #141E19 100%)",
+                  position: "relative",
+                  overflow: "hidden",
+                  padding: "14px",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  boxShadow: "0 6px 18px rgba(20, 32, 26, 0.08)",
+                  userSelect: "none",
+                }}
+              >
+                {/* Top Row: Short number + duration */}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 2 }}>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.06em",
+                      textTransform: "uppercase",
+                      color: "#D3E4DA",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      padding: "3px 8px",
+                      borderRadius: "999px",
+                      backdropFilter: "blur(4px)",
+                    }}
+                  >
+                    {`Short #${idx + 1}`}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 600,
+                      color: "#E4EFE9",
+                      background: "rgba(0, 0, 0, 0.32)",
+                      padding: "2px 7px",
+                      borderRadius: "6px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {clip.duration}
+                  </span>
+                </div>
+
+                {/* Center Placeholder Icon */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    zIndex: 2,
+                  }}
+                >
+                  <div
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      borderRadius: "50%",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.18)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#D8E8DF",
+                    }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
+                      <polygon points="10 9 15 12 10 15 10 9" fill="currentColor" stroke="none" />
+                    </svg>
+                  </div>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 600,
+                      letterSpacing: "0.04em",
+                      color: "rgba(216, 232, 223, 0.72)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Placeholder
+                  </span>
+                </div>
+
+                {/* Bottom Clip Title & Topic */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                    zIndex: 2,
+                    background: "rgba(15, 23, 19, 0.55)",
+                    padding: "10px 11px",
+                    borderRadius: "11px",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "12.5px",
+                      fontWeight: 700,
+                      color: "#F4F7F5",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {clip.title}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 400,
+                      color: "#A7BBAE",
+                      lineHeight: 1.3,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                  >
+                    {clip.subtitle}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+      /* ── Three-Column Watch Layout (Left: Watching Guide | Middle: Video | Right: Timestamps/Segments) ── */
       <div
         style={{
           display: "flex",
-          gap: "24px",
+          gap: "20px",
           width: "100%",
-          flex: 1,
-          minHeight: 0,
           margin: 0,
-          padding: "0 0 6px 0",
+          padding: "4px 0 36px 0",
           boxSizing: "border-box",
-          alignItems: "stretch",
+          alignItems: "flex-start",
         }}
       >
-        {/* ── LEFT NAVIGATION SIDEBAR (Matching Read & Listen 'IN THIS CHAPTER' sidebar) ── */}
+        {/* ── LEFT NAVIGATION SIDEBAR (Watching Guide + IN THIS CHAPTER · N VIDEOS) ── */}
         <div
           style={{
-            width: "260px",
+            width: "256px",
             flexShrink: 0,
-            alignSelf: "flex-start",
-            maxHeight: "100%",
-            overflowY: "auto",
             display: "flex",
             flexDirection: "column",
             gap: "12px",
-            zIndex: 10,
           }}
         >
-          {/* Resumed / Watching Guide Pill */}
+          {/* White Chapter Video Playlist Card */}
           <div
             style={{
-              background: "#e0f2fe",
-              color: "#0369a1",
-              borderRadius: "999px",
-              padding: "6px 14px",
-              fontSize: "12.5px",
-              fontWeight: 700,
-              textAlign: "center",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.05)",
-            }}
-          >
-            {completedCount > 0 || currentTime > 5 ? "Resumed where you left off" : "Watching Guide"}
-          </div>
-
-          {/* Video Checklist Card */}
-          <div
-            style={{
-              background: "#ffffff",
+              background: "#FFFFFF",
               borderRadius: "16px",
-              border: "1px solid #e2e8f0",
-              padding: "16px 12px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
+              padding: "16px 14px",
+              border: "1px solid #E6E0D4",
+              boxShadow: "0 2px 10px rgba(30, 40, 34, 0.03)",
               display: "flex",
               flexDirection: "column",
-              gap: "6px",
+              gap: "10px",
             }}
           >
             <div
               style={{
-                fontSize: "11px",
+                fontSize: "10.5px",
                 fontWeight: 800,
                 letterSpacing: "0.07em",
+                color: "#6E7B73",
                 textTransform: "uppercase",
-                color: "#64748b",
-                padding: "0 8px 6px",
-                borderBottom: "1px solid #f1f5f9",
+                padding: "0 4px 4px 4px",
               }}
             >
-              IN THIS CHAPTER
+              {`IN THIS CHAPTER · ${totalVideos} ${totalVideos === 1 ? "VIDEO" : "VIDEOS"}`}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            {/* Video List Items */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {videos.map((vid, idx) => {
                 const isSelected = idx === robustActive;
-                const isDone = isVideoDone(idx);
-                const cleanVideoTitle = (vid.title || `Video ${idx + 1}`).replace(/^\d+\.\s*/, "");
+                const isWatched = isVideoDone(idx);
+                let savedVidDur = 0;
+                if (!isSelected) {
+                  const tKey = getVideoTimeKey(idx, vid.ytId);
+                  if (tKey) {
+                    try {
+                      const raw = cloudStorage.getItem(tKey);
+                      if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
+                          savedVidDur = Math.round(parsed.duration);
+                        }
+                      }
+                    } catch {}
+                  }
+                }
+                const vidSec =
+                  isSelected && duration > 0
+                    ? Math.round(duration)
+                    : savedVidDur > 0
+                      ? savedVidDur
+                      : parseDurationSec(vid.duration, 210);
+                const vidDurFormatted = formatTime(vidSec);
+
+                // Determine right status label: HERE, UP NEXT, 2ND, 3RD, 4TH, or DONE
+                let statusBadge = "";
+                if (isSelected) {
+                  statusBadge = "HERE";
+                } else if (isWatched) {
+                  statusBadge = "DONE";
+                } else {
+                  const queueOffset =
+                    idx > robustActive ? idx - robustActive : totalVideos - robustActive + idx;
+                  if (queueOffset === 1) statusBadge = "UP NEXT";
+                  else if (queueOffset === 2) statusBadge = "2ND";
+                  else if (queueOffset === 3) statusBadge = "3RD";
+                  else statusBadge = `${queueOffset}TH`;
+                }
 
                 return (
-                  <button
-                    key={vid.ytId || idx}
-                    type="button"
+                  <div
+                    key={`video-item-${idx}-${vid.ytId || idx}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => handleSelectVideo(idx)}
-                    title={vid.title}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleSelectVideo(idx);
+                      }
+                    }}
                     style={{
                       display: "flex",
-                      alignItems: "center",
+                      alignItems: "flex-start",
                       gap: "10px",
-                      padding: "8px 12px",
-                      borderRadius: "10px",
-                      border: "1.5px solid transparent",
-                      background: isSelected ? "#dbe6df" : "transparent",
+                      padding: "10px 10px",
+                      borderRadius: "12px",
                       cursor: "pointer",
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
+                      border: isSelected ? "1px solid #C5D9CD" : "1px solid transparent",
+                      background: isSelected ? "#EFF5F1" : "transparent",
+                      transition: "all 0.18s ease",
                     }}
                   >
-                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
-                    {isDone ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "#0f172a",
-                          color: "#ffffff",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : isSelected ? (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #0f172a",
-                          color: "#0f172a",
-                          fontSize: "11px",
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          width: "18px",
-                          height: "18px",
-                          borderRadius: "50%",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          flexShrink: 0,
-                          background: "transparent",
-                          border: "1.5px solid #cbd5e1",
-                        }}
-                      />
-                    )}
-
-                    {/* Video Title */}
-                    <span
+                    {/* Left Radio / Check Icon */}
+                    <div
                       style={{
-                        fontSize: "13px",
-                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                        color: isSelected ? "#0f172a" : "#475569",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        width: "16px",
+                        height: "16px",
+                        borderRadius: "50%",
+                        marginTop: "2px",
+                        flexShrink: 0,
+                        border: isSelected
+                          ? "1.5px solid #5B8C72"
+                          : isWatched
+                            ? "1.5px solid #5B8C72"
+                            : "1.5px solid #C5C0B6",
+                        background: isWatched && !isSelected ? "#5B8C72" : "transparent",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
                     >
-                      {cleanVideoTitle}
-                    </span>
-                  </button>
+                      {isSelected ? (
+                        <div
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            background: "#5B8C72",
+                          }}
+                        />
+                      ) : isWatched ? (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      ) : null}
+                    </div>
+
+                    {/* Title + Duration Row */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "12.5px",
+                            fontWeight: isSelected ? 700 : 600,
+                            color: isSelected ? "#1E2822" : "#37423B",
+                            lineHeight: 1.35,
+                          }}
+                        >
+                          {vid.title || `Part ${idx + 1}`}
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "9.5px",
+                            fontWeight: 800,
+                            letterSpacing: "0.04em",
+                            color: isSelected ? "#4F7D65" : "#88938B",
+                            flexShrink: 0,
+                            marginTop: "2px",
+                          }}
+                        >
+                          {statusBadge}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "11px",
+                          fontWeight: 500,
+                          color: isSelected ? "#586B60" : "#88938B",
+                          marginTop: "4px",
+                        }}
+                      >
+                        {`• ${vidDurFormatted}`}
+                      </div>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            {/* Progress Bar Footer */}
+            {/* Chapter Progress Footer */}
             <div
               style={{
-                marginTop: "10px",
-                paddingTop: "10px",
-                borderTop: "1px solid #f1f5f9",
-                paddingLeft: "6px",
-                paddingRight: "6px",
+                borderTop: "1px solid #EFECE6",
+                paddingTop: "12px",
+                marginTop: "2px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "7px",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   justifyContent: "space-between",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  color: "#64748b",
-                  marginBottom: "6px",
+                  alignItems: "center",
+                  fontSize: "11.5px",
                 }}
               >
-                <span>Chapter progress</span>
-                <span style={{ color: "#0f172a", fontWeight: 700 }}>{watchProgressPercent}%</span>
+                <span style={{ color: "#6E7B73", fontWeight: 600 }}>Chapter progress</span>
+                <span style={{ color: "#2D3E36", fontWeight: 800 }}>{`${watchProgressPercent}%`}</span>
               </div>
               <div
                 style={{
-                  height: "6px",
                   width: "100%",
-                  background: "#f1f5f9",
+                  height: "5px",
+                  background: "#EAE5DC",
                   borderRadius: "999px",
                   overflow: "hidden",
                 }}
               >
                 <div
                   style={{
-                    height: "100%",
                     width: `${watchProgressPercent}%`,
-                    background: accentColor,
+                    height: "100%",
+                    background: '#9CC0B4',
                     borderRadius: "999px",
                     transition: "width 0.3s ease",
                   }}
@@ -2058,200 +3006,165 @@ export default function VideosView({
           </div>
         </div>
 
-        {/* ── RIGHT MAIN CONTENT AREA (Single-Screen Fit: Meta + Header + Player & Topics Card) ── */}
+        {/* ── MIDDLE MAIN VIDEO COLUMN ── */}
         <div
           style={{
             flex: 1,
             minWidth: 0,
-            height: "100%",
-            minHeight: 0,
-            background: "transparent",
-            border: "none",
-            boxShadow: "none",
-            padding: 0,
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
-            overflow: "hidden",
+            gap: "14px",
           }}
         >
-          {/* Chapter Overview Meta Line (Matching Read & Listen) */}
+          {/* 16:9 Main Video Player in the Middle */}
+          {renderVideoPlayer(true, false, robustActive)}
+        </div>
+
+        {/* ── RIGHT SUBTLE TIMESTAMPS COLUMN ── */}
+        <div
+          style={{
+            width: "268px",
+            flexShrink: 0,
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <div
             style={{
+              background: "#FFFFFF",
+              borderRadius: "14px",
+              padding: "14px 14px",
+              border: "1px solid #EAE5DC",
+              boxShadow: "0 1px 6px rgba(30, 40, 34, 0.02)",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
+              flexDirection: "column",
               gap: "8px",
-              paddingBottom: "6px",
-              borderBottom: "1px solid rgba(226, 232, 240, 0.6)",
-              flexShrink: 0,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "0 4px 6px 4px",
+                borderBottom: "1px solid #F2EFE9",
+              }}
+            >
               <span
                 style={{
-                  background: "rgba(21, 128, 61, 0.08)",
-                  color: accentColor,
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
+                  fontSize: "10px",
                   fontWeight: 700,
-                }}
-              >
-                ⏱ {formattedWatchDuration} watch
-              </span>
-              <span
-                style={{
-                  background: "#f1f5f9",
-                  color: "#475569",
-                  borderRadius: "6px",
-                  padding: "4px 10px",
-                  fontSize: "12.5px",
-                  fontWeight: 600,
-                }}
-              >
-                {totalVideos} {totalVideos === 1 ? "Video" : "Videos"}
-              </span>
-            </div>
-          </div>
-
-          {/* Active Video Section Header (Matching Read's SECTION X OF Y & Listen's PODCAST X OF Y) */}
-          <div style={{ flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "2px" }}>
-              <span
-                style={{
-                  fontSize: "11.5px",
-                  fontWeight: 800,
-                  letterSpacing: "0.06em",
-                  color: accentColor,
+                  letterSpacing: "0.08em",
+                  color: "#7C8780",
                   textTransform: "uppercase",
                 }}
               >
-                VIDEO {robustActive + 1} OF {totalVideos}
+                Timestamps
+              </span>
+              <span
+                style={{
+                  fontSize: "10.5px",
+                  fontWeight: 500,
+                  color: "#9AA39D",
+                }}
+              >
+                Click to jump
               </span>
             </div>
 
-            <h2
-              style={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "#0f172a",
-                lineHeight: "1.25",
-                margin: "0",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-              title={displayTitle.replace(/^\d+\.\s*/, "")}
-            >
-              {displayTitle.replace(/^\d+\.\s*/, "")}
-            </h2>
-          </div>
-
-          {/* Combined Video Player + Key Topics Card (Fits Remaining Viewport Height) */}
-          <div
-            style={{
-              flex: 1,
-              minHeight: 0,
-              width: "100%",
-              background: "#ffffff",
-              borderRadius: "16px",
-              padding: "12px 16px",
-              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.04)",
-              border: "1px solid #e2e8f0",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              gap: "10px",
-              position: "relative",
-              overflow: "hidden",
-            }}
-          >
-            {/* Top: 16:9 Video Player automatically scaled to fit remaining height */}
             <div
               style={{
-                flex: "1 1 0",
-                minHeight: 0,
-                width: "100%",
                 display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1,
+                flexDirection: "column",
+                gap: "4px",
               }}
             >
-              {renderVideoPlayer(true)}
-            </div>
+              {segmentsList.map((seg, idx) => {
+                const isNowPlaying = idx === activeSegmentIdx;
 
-            {/* Bottom: Compact Key Topics Covered Strip */}
-            {topicsList.length > 0 && (
-              <div
-                style={{
-                  flexShrink: 0,
-                  width: "100%",
-                  display: "grid",
-                  gridTemplateColumns:
-                    topicsList.length <= 2
-                      ? `repeat(${topicsList.length}, 1fr)`
-                      : "repeat(3, minmax(0, 1fr))",
-                  gap: "8px",
-                  zIndex: 1,
-                }}
-              >
-                {topicsList.map((topic, idx) => (
+                return (
                   <div
-                    key={idx}
+                    key={seg.index}
+                    onClick={() => seekToSecond(seg.startSec)}
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "7px 11px",
-                      background: "#f8fafc",
+                      background: isNowPlaying ? "#F3F8F5" : "transparent",
+                      border: isNowPlaying ? "1px solid #DCEAE2" : "1px solid transparent",
                       borderRadius: "10px",
-                      border: "1px solid #e2e8f0",
-                      minWidth: 0,
+                      padding: "9px 10px",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: "10px",
+                      transition: "background 0.15s ease, border-color 0.15s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isNowPlaying) {
+                        e.currentTarget.style.background = "#FAF8F4";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isNowPlaying) {
+                        e.currentTarget.style.background = "transparent";
+                      }
                     }}
                   >
-                    <div
-                      style={{
-                        width: "24px",
-                        height: "24px",
-                        borderRadius: "50%",
-                        background: "rgba(21, 128, 61, 0.08)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {renderTopicIcon(idx, 14)}
-                    </div>
+                    {/* Subtle Timestamp Pill */}
                     <span
                       style={{
-                        fontSize: "12px",
-                        fontWeight: 500,
-                        color: "#1e293b",
-                        lineHeight: 1.25,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
+                        background: isNowPlaying ? "#E2EFE8" : "#F4F1EA",
+                        color: isNowPlaying ? "#2F5944" : "#6E7B73",
+                        fontSize: "10.5px",
+                        fontWeight: 600,
+                        padding: "3px 7px",
+                        borderRadius: "5px",
+                        fontVariantNumeric: "tabular-nums",
+                        flexShrink: 0,
+                        marginTop: "1px",
                       }}
-                      title={topic}
                     >
-                      {topic}
+                      {formatTime(seg.startSec)}
                     </span>
-                  </div>
-                ))}
-              </div>
-            )}
 
-            <InsectWatermark width="76px" height="76px" opacity={0.09} />
+                    {/* Topic Name & Subtle Duration */}
+                    <div
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "3px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: isNowPlaying ? 600 : 500,
+                          color: isNowPlaying ? "#1E2822" : "#3E4A43",
+                          lineHeight: 1.38,
+                        }}
+                      >
+                        {seg.title}
+                      </div>
+
+                      <div
+                        style={{
+                          fontSize: "10.5px",
+                          fontWeight: 400,
+                          color: "#8F9993",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {seg.durationLabel}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
+      )}
     </div>
   );
 }

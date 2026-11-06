@@ -162,8 +162,8 @@ def main():
     # tenant + subject + chapter metadata + visual assets
     out.mkdir(parents=True)
     shutil.copy2(TOOLS / "samples" / "mlrit" / "tenant.json", out / "tenant.json")
-    cp(MVP_PUBLIC / "brand-tree-cropped.png", out / "assets" / "logo.png", log)
-    cp(MVP_PUBLIC / "brand-tree-cropped.png", out / "assets" / "favicon.png", log)
+    cp(MVP_PUBLIC / "logo-mlrit.png", out / "assets" / "logo.png", log)
+    cp(MVP_PUBLIC / "logo-mlrit.png", out / "assets" / "favicon.png", log)
 
     (out / "dbms").mkdir(parents=True, exist_ok=True)
     (out / "dbms" / "subject.json").write_text(json.dumps(SUBJECT, indent=2), encoding="utf-8")

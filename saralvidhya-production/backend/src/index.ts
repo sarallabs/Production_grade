@@ -22,8 +22,57 @@ app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },  // allow audio/image loading from other origins
   crossOriginOpenerPolicy: false,  // needed for audio element
 }));
-app.use(cors({ origin: true, credentials: true }));
+
+const extraOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+function isAllowedOrigin(origin?: string): boolean {
+  if (!origin) return true; // non-browser / server-to-server requests
+  if (extraOrigins.includes(origin)) return true;
+  try {
+    const u = new URL(origin);
+    const host = u.hostname.toLowerCase();
+    if (
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host.endsWith('.web.app') ||
+      host.endsWith('.firebaseapp.com') ||
+      host.endsWith('.pages.dev') ||
+      host.endsWith('.run.app')
+    ) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Origin not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '2mb' }));
+
+// ── Rate-limited Server-side AI Ask & Cloud TTS Proxies (Zero browser secrets) ──
+const geminiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { xForwardedForHeader: false },
+  message: { error: 'Too many AI requests. Please try again in a minute.' },
+});
 
 // ── Health check (no auth needed) ───────────────────────────────
 app.get('/health', (_req, res) => res.json({ status: 'ok' }));
@@ -40,7 +89,9 @@ app.use('/api/v2/t', v2PublicRoutes);
 app.use('/v2/t', v2ContentRoutes);
 app.use('/api/v2/t', v2ContentRoutes);
 
-// v2 Authenticated Server-Side AI Ask & Cloud TTS Proxy
+// v2 Authenticated & Rate-Limited Server-Side AI Ask & Cloud TTS Proxy
+app.use('/v2/t/:tenant/ai', geminiLimiter);
+app.use('/api/v2/t/:tenant/ai', geminiLimiter);
 app.use('/v2/t', v2AiRoutes);
 app.use('/api/v2/t', v2AiRoutes);
 
@@ -48,14 +99,6 @@ app.use('/api/v2/t', v2AiRoutes);
 app.use('/v2/publish', v2PublishRoutes);
 app.use('/api/v2/publish', v2PublishRoutes);
 
-// ── Rate-limited Server-side AI Ask & Cloud TTS Proxies (Zero browser secrets) ──
-const geminiLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many AI requests. Please try again in a minute.' },
-});
 app.use('/api/gemini', geminiLimiter, geminiRoutes);
 
 // ── All legacy routes below require a valid Firebase ID token ───

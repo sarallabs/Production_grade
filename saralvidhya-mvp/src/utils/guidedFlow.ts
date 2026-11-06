@@ -21,7 +21,7 @@ export const GUIDED_LABELS: Record<string, string> = {
   videos: "Videos",
   flashcards: "Flashcards",
   summary: "Quick Study",
-  key_takeaways: "Key Takeaways",
+  key_takeaways: "Takeaways",
   study_plan: "Study Plan",
   detailed: "Detailed Study",
   assessment: "Assessments",

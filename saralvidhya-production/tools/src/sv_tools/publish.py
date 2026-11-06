@@ -16,10 +16,15 @@ DEFAULT_API_URL = os.environ.get(
 BUCKET_NAME = os.environ.get("GCS_BUCKET_NAME", "saralvidhya-artifacts")
 
 
-def _publisher_headers():
-    key = os.environ.get("SV_PUBLISH_KEY", "")
-    return {"X-Publish-Key": key} if key else {}
-
+def _publisher_headers(admin_key: str = ""):
+    headers = {}
+    pub_key = os.environ.get("SV_PUBLISH_KEY", "")
+    adm_key = admin_key or os.environ.get("SV_ADMIN_KEY") or os.environ.get("ADMIN_API_KEY", "")
+    if pub_key:
+        headers["X-Publish-Key"] = pub_key
+    if adm_key:
+        headers["X-Admin-Key"] = adm_key
+    return headers
 
 def cmd_validate(args):
     folder = args.folder
@@ -83,8 +88,7 @@ def cmd_submit(args):
         if len(manifest_files) > 25:
             print(f"  ... and {len(manifest_files) - 25} more file(s)")
         return
-
-    headers = _publisher_headers()
+    headers = _publisher_headers(getattr(args, "admin_key", ""))
     base_url = api_url.rstrip("/")
     submit_url = f"{base_url}/v2/publish/submit"
     try:
@@ -131,10 +135,30 @@ def cmd_submit(args):
         print(f"\n[FAIL] Could not finalize request: {done.status_code} {done.text}")
         sys.exit(1)
 
-    print(f"\n[SUCCESS] Publish request created and awaiting approval.")
+    print(f"\n[SUCCESS] Publish request created and finalized in staging.")
     print(f"  Request ID : {request_id}")
     print(f"  Status     : {done.json().get('status')}")
 
+    if getattr(args, "approve", False):
+        adm_headers = _publisher_headers(getattr(args, "admin_key", ""))
+        if "X-Admin-Key" not in adm_headers:
+            print("\n[WARN] --approve specified, but SV_ADMIN_KEY / --admin-key is not set. Skipping auto-approval.")
+            return
+        print(f"  Auto-approving request {request_id} -> promoting to live GCS + Firestore registry...")
+        app_resp = requests.post(
+            f"{base_url}/v2/publish/requests/{request_id}/approve",
+            headers=adm_headers,
+            json={"approvedBy": args.submitted_by or "sv-publish-auto"},
+            timeout=180,
+        )
+        if app_resp.status_code == 200:
+            app_data = app_resp.json()
+            print(f"[LIVE] {app_data.get('message')}")
+            if app_data.get("generatedPassword"):
+                print(f"  Generated Tenant Password: {app_data.get('generatedPassword')}")
+        else:
+            print(f"[FAIL] Auto-approval returned {app_resp.status_code}: {app_resp.text}")
+            sys.exit(1)
 
 def cmd_status(args):
     api_url = args.api_url or DEFAULT_API_URL
@@ -183,7 +207,12 @@ def main():
         action="store_true",
         help="Validate and print manifest without uploading to GCS",
     )
-
+    p_sub.add_argument(
+        "--approve",
+        action="store_true",
+        help="Immediately approve and promote the bundle to live GCS + Firestore (requires SV_ADMIN_KEY or --admin-key)",
+    )
+    p_sub.add_argument("--admin-key", default="", help="Admin API key for auto-approval or auto-creating new tenants")
     # status
     p_stat = subparsers.add_parser("status", help="Check status of a publish request")
     p_stat.add_argument("request_id", help="Publish Request ID")

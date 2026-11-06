@@ -6,6 +6,38 @@
     <title>Student Learning</title>
     <link rel="icon" type="image/png" href="/brand-logo.png" />
     <link rel="shortcut icon" type="image/png" href="/brand-logo.png" />
+    <script>
+      (function() {
+        function reloadOnChunkFailure(e) {
+          var msg = (e && (e.message || (e.reason && e.reason.message))) || '';
+          if (
+            msg.indexOf('Failed to fetch dynamically imported module') !== -1 ||
+            msg.indexOf('error loading dynamically imported module') !== -1 ||
+            msg.indexOf('Importing a module script failed') !== -1
+          ) {
+            var reloadKey = 'sv_chunk_reload';
+            var lastReload = sessionStorage.getItem(reloadKey);
+            var now = Date.now();
+            if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+              sessionStorage.setItem(reloadKey, String(now));
+              window.location.reload();
+            }
+          }
+        }
+        window.addEventListener('vite:preloadError', function(event) {
+          event.preventDefault();
+          var reloadKey = 'sv_chunk_reload';
+          var lastReload = sessionStorage.getItem(reloadKey);
+          var now = Date.now();
+          if (!lastReload || now - parseInt(lastReload, 10) > 10000) {
+            sessionStorage.setItem(reloadKey, String(now));
+            window.location.reload();
+          }
+        });
+        window.addEventListener('error', reloadOnChunkFailure);
+        window.addEventListener('unhandledrejection', reloadOnChunkFailure);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

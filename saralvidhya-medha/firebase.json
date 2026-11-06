@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "saralvidhya-anu",
     "public": "dist",
     "ignore": [
       "firebase.json",

@@ -14,6 +14,15 @@ export interface SpeakWord {
   offset: number;
   length: number;
   root: HTMLElement;
+  word: string;
+  charStart: number;
+  charEnd: number;
+}
+
+export interface ReadHighlightState {
+  active: boolean;
+  startWord: number;
+  endWord: number;
 }
 
 interface Snapshot {
@@ -25,6 +34,44 @@ interface Snapshot {
 const roots = new Set<HTMLElement>();
 let version = 0;
 let cache: Snapshot | null = null;
+
+let currentHighlight: ReadHighlightState = {
+  active: false,
+  startWord: -1,
+  endWord: -1,
+};
+const highlightListeners = new Set<(state: ReadHighlightState) => void>();
+
+export function emitReadHighlight(next: ReadHighlightState): void {
+  if (
+    currentHighlight.active === next.active &&
+    currentHighlight.startWord === next.startWord &&
+    currentHighlight.endWord === next.endWord
+  ) {
+    return;
+  }
+  currentHighlight = next;
+  highlightListeners.forEach((fn) => {
+    try {
+      fn(currentHighlight);
+    } catch {
+      // ignore listener errors
+    }
+  });
+}
+
+export function getCurrentReadHighlight(): ReadHighlightState {
+  return currentHighlight;
+}
+
+export function subscribeReadHighlight(
+  fn: (state: ReadHighlightState) => void,
+): () => void {
+  highlightListeners.add(fn);
+  return () => {
+    highlightListeners.delete(fn);
+  };
+}
 
 const SKIP_SELECTOR =
   '.katex, .katex-display, pre, svg, script, style, button, noscript, [aria-hidden="true"], .reading-highlight-overlay, .sv-no-read, .mermaid';
@@ -84,8 +131,19 @@ function build(): Snapshot {
       const value = n.nodeValue || '';
       while ((m = re.exec(value)) !== null) {
         if (words.length) text += block !== lastBlock ? '\n' : ' ';
-        text += m[0];
-        words.push({ node: n, offset: m.index, length: m[0].length, root });
+        const charStart = text.length;
+        const wordStr = m[0];
+        text += wordStr;
+        const charEnd = text.length;
+        words.push({
+          node: n,
+          offset: m.index,
+          length: wordStr.length,
+          root,
+          word: wordStr,
+          charStart,
+          charEnd,
+        });
         lastBlock = block;
       }
     }

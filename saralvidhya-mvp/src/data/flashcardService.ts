@@ -56,10 +56,29 @@ function mapRawCards(
     }
 
     // Conventional per-card infographic path when card JSON does not inline infographicUrl
-    const conventionalRel = `practice/flashcards/images/card_${normLevel}_${index + 1}.webp`;
+    const rawCardId = String(c.card_id || c.id || '');
+    const idMatch = rawCardId.match(/(beginner|intermediate|advanced)_q0*(\d+)/i);
+    const cardLevel = idMatch ? idMatch[1].toLowerCase() : normLevel;
+    const cardNum = idMatch ? parseInt(idMatch[2], 10) : index + 1;
+    const isFcId = /^FC-/i.test(rawCardId);
+    const fcExt = chDir === 'chapter_04' ? 'jpg' : 'webp';
+    const conventionalRel = isFcId
+      ? `practice/flashcards/images/${rawCardId}_${normLevel}.${fcExt}`
+      : `practice/flashcards/images/card_${cardLevel}_${cardNum}.webp`;
+
     if (!infoUrl) {
-      if (chapterFiles[conventionalRel]) {
-        infoUrl = chapterFiles[conventionalRel];
+      const signedMatch =
+        chapterFiles[conventionalRel] ||
+        (isFcId
+          ? chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.webp`] ||
+            chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.jpg`] ||
+            chapterFiles[`practice/flashcards/images/${rawCardId}_${normLevel}.png`]
+          : chapterFiles[`practice/flashcards/images/card_${cardLevel}_${cardNum}.png`] ||
+            chapterFiles[`practice/flashcards/images/card_${cardLevel}_${cardNum}.jpg`]);
+      if (signedMatch) {
+        infoUrl = signedMatch;
+      } else if (subjectPath && chDir) {
+        infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${conventionalRel}`;
       } else if (localBase && chDir) {
         infoUrl = `${import.meta.env.BASE_URL || '/'}${localBase.replace(/^\//, '')}/${chDir}/${conventionalRel}`.replace(
           /\/\//g,
@@ -87,7 +106,10 @@ function mapRawCards(
       } else if (infoUrl.startsWith('/generated_resources/')) {
         infoUrl = `${import.meta.env.BASE_URL || '/'}${infoUrl.replace(/^\//, '')}`.replace(/\/\//g, '/');
       } else if (subjectPath && chDir) {
-        infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cleanRel}`;
+        const cloudRel = cleanRel.startsWith('images/')
+          ? `practice/flashcards/${cleanRel}`
+          : cleanRel;
+        infoUrl = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}/${cloudRel}`;
       }
     }
 

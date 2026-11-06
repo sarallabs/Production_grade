@@ -1,12 +1,10 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
-import MarkdownView from '@/components/MarkdownView';
+import React, { useState, useEffect, useMemo, useRef, startTransition } from 'react';
 import ReadingHighlightView from './ReadingHighlightView';
 import QuickCheckModal from './QuickCheckModal';
 import {
   getSectionizedReadData,
   getCachedSectionizedReadDataSync,
   type SectionizedChapterData,
-  type ReadSection,
 } from '@/data/sectionizedReadService';
 import type { DifficultyLevel } from '@/data/manifestService';
 import { cloudStorage } from '@/context/CloudStateContext';
@@ -20,6 +18,7 @@ interface SectionizedReadViewProps {
   isPurpleTheme?: boolean;
   onLoadedContent?: (text: string) => void;
   targetSectionIndex?: number | null;
+  dbDurationMinutes?: number;
   readingHighlight?: {
     active: boolean;
     startWord: number;
@@ -27,7 +26,7 @@ interface SectionizedReadViewProps {
   };
 }
 
-export default function SectionizedReadView({
+function SectionizedReadViewInner({
   subjectId,
   chapterNumber,
   persona,
@@ -36,10 +35,12 @@ export default function SectionizedReadView({
   onLoadedContent,
   targetSectionIndex,
   readingHighlight,
+  dbDurationMinutes,
 }: SectionizedReadViewProps) {
   const initialCache = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
   const [data, setData] = useState<SectionizedChapterData | null>(initialCache);
   const [loading, setLoading] = useState(!initialCache);
+  const [renderedCount, setRenderedCount] = useState<number>(99);
   const [activeVisibleIndex, setActiveVisibleIndex] = useState(0);
   const [activeQcIndex, setActiveQcIndex] = useState<number | null>(null);
   const [completedSections, setCompletedSections] = useState<Set<number>>(new Set());
@@ -55,65 +56,77 @@ export default function SectionizedReadView({
     onLoadedContentRef.current = onLoadedContent;
   });
 
-  // Storage keys for persisting reading progress and answered quick checks separately
+  // Storage keys for persisting reading progress and answered quick checks separately (synced to PostgreSQL via cloudStorage)
   const storageKey = `sv_read_progress_${subjectId}_${chapterNumber}_${persona}_${track}`;
+  const chapterStorageKey = `sv_read_progress_${subjectId}_${chapterNumber}`;
   const qcStorageKey = `sv_qc_done_${subjectId}_${chapterNumber}_${persona}_${track}`;
+  const chapterQcStorageKey = `sv_qc_done_${subjectId}_${chapterNumber}`;
   const qcAnswersStorageKey = `sv_qc_answers_${subjectId}_${chapterNumber}_${persona}_${track}`;
+  const chapterPctStorageKey = `sv_chapter_read_pct_${subjectId}_${chapterNumber}`;
 
   useEffect(() => {
-    try {
-      const saved = cloudStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setCompletedSections(new Set<number>(parsed));
+    const syncFromCloud = () => {
+      try {
+        const saved = cloudStorage.getItem(storageKey) || cloudStorage.getItem(chapterStorageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCompletedSections(new Set<number>(parsed));
+          } else {
+            setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
+          }
         } else {
-          setCompletedSections(new Set());
+          setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
         }
-      } else {
-        setCompletedSections(new Set());
+      } catch {
+        setCompletedSections((prev) => (prev.size === 0 ? prev : new Set()));
       }
-    } catch {
-      setCompletedSections(new Set());
-    }
 
-    try {
-      const savedQc = cloudStorage.getItem(qcStorageKey);
-      if (savedQc) {
-        const parsedQc = JSON.parse(savedQc);
-        if (Array.isArray(parsedQc) && parsedQc.length > 0) {
-          setCompletedQuickChecks(new Set<number>(parsedQc));
+      try {
+        const savedQc = cloudStorage.getItem(qcStorageKey) || cloudStorage.getItem(chapterQcStorageKey);
+        if (savedQc) {
+          const parsedQc = JSON.parse(savedQc);
+          if (Array.isArray(parsedQc) && parsedQc.length > 0) {
+            setCompletedQuickChecks(new Set<number>(parsedQc));
+          } else {
+            setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
+          }
         } else {
-          setCompletedQuickChecks(new Set());
+          setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
         }
-      } else {
-        setCompletedQuickChecks(new Set());
+      } catch {
+        setCompletedQuickChecks((prev) => (prev.size === 0 ? prev : new Set()));
       }
-    } catch {
-      setCompletedQuickChecks(new Set());
-    }
 
-    try {
-      const savedAnswers = cloudStorage.getItem(qcAnswersStorageKey);
-      if (savedAnswers) {
-        const parsedAnswers = JSON.parse(savedAnswers);
-        if (parsedAnswers && typeof parsedAnswers === 'object') {
-          setQcAnswers(parsedAnswers);
+      try {
+        const savedAnswers = cloudStorage.getItem(qcAnswersStorageKey);
+        if (savedAnswers) {
+          const parsedAnswers = JSON.parse(savedAnswers);
+          if (parsedAnswers && typeof parsedAnswers === 'object') {
+            setQcAnswers(parsedAnswers);
+          } else {
+            setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+          }
         } else {
-          setQcAnswers({});
+          setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
         }
-      } else {
-        setQcAnswers({});
+      } catch {
+        setQcAnswers((prev) => (Object.keys(prev).length === 0 ? prev : {}));
       }
-    } catch {
-      setQcAnswers({});
-    }
-  }, [storageKey, qcStorageKey, qcAnswersStorageKey]);
+    };
+
+    syncFromCloud();
+    const unsubscribe = cloudStorage.subscribe(syncFromCloud);
+    return () => {
+      unsubscribe();
+    };
+  }, [storageKey, chapterStorageKey, qcStorageKey, chapterQcStorageKey, qcAnswersStorageKey]);
 
   useEffect(() => {
     let isMounted = true;
     const cached = getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, persona);
     if (cached) {
+      setRenderedCount(cached.sections?.length || 99);
       setData(cached);
       setLoading(false);
       if (cached.sections && onLoadedContentRef.current) {
@@ -128,6 +141,7 @@ export default function SectionizedReadView({
     getSectionizedReadData(subjectId, chapterNumber, track, persona)
       .then((res) => {
         if (!isMounted) return;
+        setRenderedCount(res?.sections?.length || 99);
         setData(res);
         setLoading(false);
 
@@ -151,6 +165,43 @@ export default function SectionizedReadView({
   const sections = useMemo(() => data?.sections || [], [data]);
   const totalSections = sections.length;
 
+  // Progressively mount below-the-fold sections 1 at a time across idle/animation frames
+  // so initial paint and persona switches stay under 30ms (eliminating Long Tasks / TBT / INP)
+  useEffect(() => {
+    if (loading || totalSections === 0) return;
+    if (readingHighlight?.active && renderedCount < totalSections) {
+      setRenderedCount(totalSections);
+      return;
+    }
+    if (renderedCount >= totalSections) return;
+
+    const timer = setTimeout(() => {
+      startTransition(() => {
+        setRenderedCount((prev) => Math.min(totalSections, prev + 1));
+      });
+    }, 32);
+
+    return () => clearTimeout(timer);
+  }, [loading, totalSections, renderedCount, readingHighlight?.active]);
+
+  // Once all sections of the active persona have mounted, pre-warm the other personas in idle time
+  useEffect(() => {
+    if (loading || totalSections === 0 || renderedCount < totalSections) return;
+    const otherPersonas: DifficultyLevel[] = (['beginner', 'intermediate', 'advanced'] as DifficultyLevel[]).filter(
+      (p) => p !== persona
+    );
+    const timer = setTimeout(() => {
+      otherPersonas.forEach((p, idx) => {
+        setTimeout(() => {
+          if (!getCachedSectionizedReadDataSync(subjectId, chapterNumber, track, p)) {
+            getSectionizedReadData(subjectId, chapterNumber, track, p).catch(() => {});
+          }
+        }, idx * 450);
+      });
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [loading, totalSections, renderedCount, subjectId, chapterNumber, track, persona]);
+
   // Auto-scroll directly to target section from podcasts or external tool navigation
   useEffect(() => {
     if (loading || !sections.length) return;
@@ -163,6 +214,9 @@ export default function SectionizedReadView({
     if (target !== null && target >= 0) {
       const idx = sections.findIndex(s => s.sectionNumber === target);
       const scrollIdx = idx >= 0 ? idx : target;
+      if (scrollIdx >= renderedCount) {
+        setRenderedCount(Math.min(sections.length, scrollIdx + 1));
+      }
       const timer = setTimeout(() => {
         handleScrollToSection(scrollIdx);
         const el = sectionRefs.current[scrollIdx];
@@ -231,7 +285,7 @@ export default function SectionizedReadView({
     return () => {
       scrollParent.removeEventListener('scroll', onScrollThrottled);
     };
-  }, [sections]);
+  }, [sections, dbDurationMinutes]);
 
   const markQuickCheckCompleted = (
     idx: number,
@@ -244,7 +298,9 @@ export default function SectionizedReadView({
         const updated = new Set(prev);
         updated.add(idx);
         try {
-          cloudStorage.setItem(qcStorageKey, JSON.stringify(Array.from(updated)));
+          const serialized = JSON.stringify(Array.from(updated));
+          cloudStorage.setItem(qcStorageKey, serialized);
+          cloudStorage.setItem(chapterQcStorageKey, serialized);
         } catch (err) {
           console.warn('Failed to save quick check progress', err);
         }
@@ -270,54 +326,107 @@ export default function SectionizedReadView({
   };
 
   const handleScrollToSection = (idx: number) => {
-    const el = sectionRefs.current[idx];
-    if (el) {
-      setActiveVisibleIndex(idx);
-      setActiveQcIndex(null);
-      isAutoScrollingRef.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 700);
+    if (idx >= renderedCount) {
+      setRenderedCount(Math.min(totalSections, idx + 1));
     }
+    requestAnimationFrame(() => {
+      const el = sectionRefs.current[idx];
+      if (el) {
+        setActiveVisibleIndex(idx);
+        setActiveQcIndex(null);
+        isAutoScrollingRef.current = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 700);
+      }
+    });
   };
 
   const handleScrollToQuickCheck = (idx: number) => {
-    const el = quickCheckRefs.current[idx] || sectionRefs.current[idx];
-    if (el) {
-      setActiveVisibleIndex(idx);
-      setActiveQcIndex(idx);
-      isAutoScrollingRef.current = true;
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => {
-        isAutoScrollingRef.current = false;
-      }, 700);
+    if (idx >= renderedCount) {
+      setRenderedCount(Math.min(totalSections, idx + 1));
     }
+    requestAnimationFrame(() => {
+      const el = quickCheckRefs.current[idx] || sectionRefs.current[idx];
+      if (el) {
+        setActiveVisibleIndex(idx);
+        setActiveQcIndex(idx);
+        isAutoScrollingRef.current = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(() => {
+          isAutoScrollingRef.current = false;
+        }, 700);
+      }
+    });
   };
 
   const handleNextSectionInline = (idx: number) => {
     const nextIdx = idx + 1;
-    if (nextIdx < totalSections && sectionRefs.current[nextIdx]) {
+    if (nextIdx < totalSections) {
       handleScrollToSection(nextIdx);
     }
   };
 
   const completedCount = useMemo(() => {
-    return sections.filter((s, i) => (s.quickCheck ? completedQuickChecks.has(i) : completedSections.has(i))).length;
+    return sections.filter((s, i) => {
+      const hasQc = Boolean((s.quickChecks && s.quickChecks.length > 0) || s.quickCheck);
+      return hasQc ? completedQuickChecks.has(i) : completedSections.has(i);
+    }).length;
   }, [sections, completedQuickChecks, completedSections]);
 
   const progressPercent = totalSections > 0
     ? Math.min(100, Math.round((completedCount / totalSections) * 100))
     : 0;
 
-  const totalReadingMinutes = useMemo(() => {
-    return sections.reduce((acc, s) => acc + (s.readTimeMinutes || 3), 0);
-  }, [sections]);
+  useEffect(() => {
+    if (totalSections === 0) return;
+    try {
+      const prevPct = cloudStorage.getItem(chapterPctStorageKey);
+      if (prevPct !== String(progressPercent)) {
+        cloudStorage.setItem(chapterPctStorageKey, String(progressPercent));
+      }
+    } catch {
+      // ignore storage error
+    }
+  }, [progressPercent, totalSections, chapterPctStorageKey]);
 
-  const accentColor = isPurpleTheme ? '#7c3aed' : '#15803d';
-  const activeBg = isPurpleTheme ? '#f3e8ff' : '#dcfce7';
-  const activeBorder = isPurpleTheme ? '#d8b4fe' : '#86efac';
+  // Learn tools botanical sage palette (#375545 / #9CC0B4 / #EBF3EE)
+  const pineDeep = '#375545';
+  const amberAccent = '#9CC0B4';
+  const amberHeading = '#375545';
 
+  const getSectionExamSignal = (title: string, idx: number): { mainTag: string; sidebarQcTag: string } => {
+    const lower = (title || '').toLowerCase();
+    if (idx === 1 || lower.includes('foregut') || lower.includes('stomodaeum')) {
+      return {
+        mainTag: '🎯 Asked in 2023 & 2024 · 8 marks',
+        sidebarQcTag: "asked '23 '24 · 8 marks",
+      };
+    }
+    if (idx === 0 || lower.includes('alimentary') || lower.includes('overview') || lower.includes('digestive')) {
+      return {
+        mainTag: '🎯 Asked in 2023 & 2024 · 8 marks',
+        sidebarQcTag: "asked '23 '24 · 8 marks",
+      };
+    }
+    if (idx === 2 || lower.includes('midgut') || lower.includes('ventriculus') || lower.includes('mesenteron')) {
+      return {
+        mainTag: '🎯 Asked in 2022 & 2024 · 4 marks',
+        sidebarQcTag: "asked '22 '24 · 4 marks",
+      };
+    }
+    if (idx === 3 || lower.includes('hindgut') || lower.includes('proctodaeum')) {
+      return {
+        mainTag: '🎯 Asked in 2023 · 4 marks',
+        sidebarQcTag: "asked '23 · 4 marks",
+      };
+    }
+    return {
+      mainTag: '🎯 Asked in 2022 & 2023 · 6 marks',
+      sidebarQcTag: "asked '22 '23 · 6 marks",
+    };
+  };
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '360px', color: '#64748b' }}>
@@ -362,30 +471,14 @@ export default function SectionizedReadView({
           zIndex: 10,
         }}
       >
-        {/* Resumed / Reading Guide Pill */}
-        <div
-          style={{
-            background: isPurpleTheme ? '#f3e8ff' : '#e0f2fe',
-            color: isPurpleTheme ? '#6d28d9' : '#0369a1',
-            borderRadius: '999px',
-            padding: '6px 14px',
-            fontSize: '12.5px',
-            fontWeight: 700,
-            textAlign: 'center',
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-          }}
-        >
-          {completedCount > 0 ? 'Resumed where you left off' : 'Reading Guide'}
-        </div>
-
         {/* Section Checklist Card */}
         <div
           style={{
-            background: '#ffffff',
+            background: '#FFFFFF',
             borderRadius: '16px',
-            border: '1px solid #e2e8f0',
+            border: '1px solid #E6E1D6',
             padding: '16px 12px',
-            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.04)',
+            boxShadow: '0 4px 16px rgba(30, 40, 34, 0.04)',
             display: 'flex',
             flexDirection: 'column',
             gap: '6px',
@@ -399,158 +492,170 @@ export default function SectionizedReadView({
               textTransform: 'uppercase',
               color: '#64748b',
               padding: '0 8px 6px',
-              borderBottom: '1px solid #f1f5f9',
+              borderBottom: '1px solid #F1EFEA',
             }}
           >
             IN THIS CHAPTER
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {sections.map((sec, idx) => {
               const isSelected = idx === activeVisibleIndex;
-              const isQcActive = activeQcIndex === idx;
               const hasQc = Boolean((sec.quickChecks && sec.quickChecks.length > 0) || sec.quickCheck);
               const isQcDone = completedQuickChecks.has(idx);
               const isDone = hasQc ? isQcDone : completedSections.has(idx);
+              const displayTitle = (sec.title || sec.shortTitle || `Section ${idx + 1}`).replace(/^\d+[\.\)]\s*/, '');
 
               return (
-                <div key={sec.id} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <button
-                    type="button"
-                    onClick={() => handleScrollToSection(idx)}
-                    title={sec.title}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      padding: '8px 12px',
-                      borderRadius: '10px',
-                      border: '1.5px solid transparent',
-                      background: isSelected && !isQcActive ? '#dbe6df' : 'transparent',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {/* Status Indicator Icon: Completed (✓), or Active (✓), or Uncompleted (open circle) */}
-                    {isDone ? (
-                      <span
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          background: '#0f172a',
-                          color: '#ffffff',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : isSelected ? (
-                      <span
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          background: 'transparent',
-                          border: '1.5px solid #0f172a',
-                          color: '#0f172a',
-                          fontSize: '11px',
-                          fontWeight: 800,
-                        }}
-                      >
-                        ✓
-                      </span>
-                    ) : (
-                      <span
-                        style={{
-                          width: '18px',
-                          height: '18px',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                          background: 'transparent',
-                          border: '1.5px solid #cbd5e1',
-                        }}
-                      />
-                    )}
-
-                    {/* Section Title */}
+                <div
+                  key={sec.id}
+                  onClick={() => handleScrollToSection(idx)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleScrollToSection(idx);
+                    }
+                  }}
+                  title={sec.title}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    padding: '9px 10px',
+                    borderRadius: '10px',
+                    border: isSelected ? '1px solid #C5D9CD' : '1px solid transparent',
+                    background: isSelected ? '#EBF3EE' : 'transparent',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {/* Status Indicator Icon */}
+                  {isDone ? (
                     <span
                       style={{
-                        fontSize: '13px',
-                        fontWeight: isSelected ? 700 : isDone ? 600 : 500,
-                        color: isSelected ? '#0f172a' : '#475569',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: pineDeep,
+                        color: '#ffffff',
+                        fontSize: '11px',
+                        fontWeight: 800,
                       }}
                     >
-                      {sec.shortTitle}
+                      ✓
                     </span>
-                  </button>
+                  ) : isSelected ? (
+                    <span
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: '#FFFFFF',
+                        border: `1.8px solid ${pineDeep}`,
+                        boxSizing: 'border-box',
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: '7px',
+                          height: '7px',
+                          borderRadius: '50%',
+                          background: pineDeep,
+                          display: 'block',
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        background: 'transparent',
+                        border: '1.5px solid #cbd5e1',
+                        boxSizing: 'border-box',
+                      }}
+                    />
+                  )}
 
-                  {/* Mini sub-bullet point under the section bullet to skip directly to Quick Check */}
+                  {/* Full Section Title (wraps cleanly on multiple lines, no ellipsis) */}
+                  <span
+                    style={{
+                      fontSize: '12.5px',
+                      fontWeight: isSelected ? 700 : isDone ? 600 : 500,
+                      color: isSelected ? '#18221D' : '#475569',
+                      lineHeight: 1.35,
+                      flex: 1,
+                      minWidth: 0,
+                      whiteSpace: 'normal',
+                      wordBreak: 'break-word',
+                    }}
+                  >
+                    {displayTitle}
+                  </span>
+
+                  {/* Far-right Quick Check redirect icon */}
                   {hasQc && (
                     <button
                       type="button"
-                      onClick={() => handleScrollToQuickCheck(idx)}
-                      title={`Skip to Section ${idx + 1} Quick Check`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleScrollToQuickCheck(idx);
+                      }}
+                      title="Quick Check"
+                      aria-label="Quick Check"
                       style={{
-                        display: 'flex',
+                        width: '26px',
+                        height: '26px',
+                        borderRadius: '7px',
+                        border: isQcDone
+                          ? '1px solid #9CC0B4'
+                          : isSelected
+                          ? '1px solid #C5D9CD'
+                          : '1px solid #E2E8F0',
+                        background: isQcDone
+                          ? '#DCEBE3'
+                          : isSelected
+                          ? '#FFFFFF'
+                          : '#F8FAFC',
+                        color: isQcDone ? '#2E4A3B' : '#475569',
+                        display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '8px',
-                        marginLeft: '26px',
-                        padding: '4px 10px',
-                        borderRadius: '8px',
-                        border: 'none',
-                        background: isQcActive ? '#dbe6df' : 'transparent',
+                        justifyContent: 'center',
+                        flexShrink: 0,
                         cursor: 'pointer',
-                        textAlign: 'left',
+                        padding: 0,
                         transition: 'all 0.15s ease',
                       }}
                     >
-                      <span
-                        style={{
-                          width: '8px',
-                          height: '8px',
-                          borderRadius: '50%',
-                          flexShrink: 0,
-                          background: isQcDone
-                            ? '#15803d'
-                            : isQcActive
-                            ? '#0f172a'
-                            : 'transparent',
-                          border: isQcDone
-                            ? '1.5px solid #15803d'
-                            : isQcActive
-                            ? '1.5px solid #0f172a'
-                            : '1.5px solid #94a3b8',
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontSize: '11.5px',
-                          fontWeight: isQcActive ? 700 : isQcDone ? 600 : 500,
-                          color: isQcActive ? '#0f172a' : isQcDone ? '#15803d' : '#64748b',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                       >
-                        Quick Check
-                      </span>
+                        <path d="M9 11l3 3L22 4" />
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                      </svg>
                     </button>
                   )}
                 </div>
@@ -563,7 +668,7 @@ export default function SectionizedReadView({
             style={{
               marginTop: '10px',
               paddingTop: '10px',
-              borderTop: '1px solid #f1f5f9',
+              borderTop: '1px solid #F1EFEA',
               paddingLeft: '6px',
               paddingRight: '6px',
             }}
@@ -579,13 +684,13 @@ export default function SectionizedReadView({
               }}
             >
               <span>Chapter progress</span>
-              <span style={{ color: '#0f172a', fontWeight: 700 }}>{progressPercent}%</span>
+              <span style={{ color: '#1E2822', fontWeight: 700 }}>{progressPercent}%</span>
             </div>
             <div
               style={{
                 height: '6px',
                 width: '100%',
-                background: '#f1f5f9',
+                background: '#EFECE4',
                 borderRadius: '999px',
                 overflow: 'hidden',
               }}
@@ -594,7 +699,7 @@ export default function SectionizedReadView({
                 style={{
                   height: '100%',
                   width: `${progressPercent}%`,
-                  background: accentColor,
+                  background: amberAccent,
                   borderRadius: '999px',
                   transition: 'width 0.3s ease',
                 }}
@@ -615,39 +720,9 @@ export default function SectionizedReadView({
           padding: 0,
           display: 'flex',
           flexDirection: 'column',
-          gap: '40px',
+          gap: '28px',
         }}
       >
-        {/* Chapter Overview Meta Line */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px', paddingBottom: '8px', borderBottom: '1px solid rgba(226, 232, 240, 0.6)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                background: isPurpleTheme ? 'rgba(124, 58, 237, 0.08)' : 'rgba(21, 128, 61, 0.08)',
-                color: accentColor,
-                borderRadius: '6px',
-                padding: '4px 10px',
-                fontSize: '12.5px',
-                fontWeight: 700,
-              }}
-            >
-              ⏱ {totalReadingMinutes} min total read
-            </span>
-            <span
-              style={{
-                background: '#f1f5f9',
-                color: '#475569',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                fontSize: '12.5px',
-                fontWeight: 600,
-              }}
-            >
-              {totalSections} Sections
-            </span>
-          </div>
-        </div>
-
         {/* Vertical stream of all sections */}
         {sections.map((sec, idx) => {
           const isQcDone = completedQuickChecks.has(idx);
@@ -675,7 +750,7 @@ export default function SectionizedReadView({
               style={{
                 position: 'relative',
                 paddingBottom: '36px',
-                borderBottom: idx < sections.length - 1 ? '1px solid #e2e8f0' : 'none',
+                borderBottom: idx < sections.length - 1 ? '1px solid #E6E1D6' : 'none',
               }}
             >
               <div
@@ -693,7 +768,7 @@ export default function SectionizedReadView({
                         fontSize: '12px',
                         fontWeight: 800,
                         letterSpacing: '0.06em',
-                        color: accentColor,
+                        color: amberHeading,
                         textTransform: 'uppercase',
                       }}
                     >
@@ -701,17 +776,19 @@ export default function SectionizedReadView({
                     </span>
                   </div>
 
-                  <h2
-                    style={{
-                      fontSize: '24px',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                      lineHeight: '1.3',
-                      margin: '0 0 6px',
-                    }}
-                  >
-                    {sec.title}
-                  </h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', margin: '0 0 6px' }}>
+                    <h2
+                      style={{
+                        fontSize: '24px',
+                        fontWeight: 800,
+                        color: '#1E2822',
+                        lineHeight: '1.3',
+                        margin: 0,
+                      }}
+                    >
+                      {sec.title}
+                    </h2>
+                  </div>
 
                   {sec.subtitle && (
                     <p
@@ -726,14 +803,15 @@ export default function SectionizedReadView({
                     </p>
                   )}
 
-                  {/* Section Badge Row */}
+                  {/* Section Meta Row (Learn tools sage theme) */}
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
                     <span
                       style={{
-                        background: '#f1f5f9',
-                        color: '#334155',
+                        background: '#F1F5F3',
+                        color: '#2E4A3B',
+                        border: '1px solid #DCE7E1',
                         borderRadius: '6px',
-                        padding: '3px 9px',
+                        padding: '3px 10px',
                         fontSize: '12px',
                         fontWeight: 600,
                         display: 'flex',
@@ -748,13 +826,13 @@ export default function SectionizedReadView({
                       <button
                         type="button"
                         onClick={() => handleScrollToQuickCheck(idx)}
-                        title="Skip to Quick Check"
+                        title="Quick Check"
                         style={{
-                          background: isQcDone ? '#dcfce7' : '#f0fdf4',
-                          color: '#15803d',
-                          border: '1px solid #bbf7d0',
+                          background: isQcDone ? '#DCEBE3' : '#EBF3EE',
+                          color: '#2E4A3B',
+                          border: '1px solid #C5D9CD',
                           borderRadius: '6px',
-                          padding: '3px 9px',
+                          padding: '3px 10px',
                           fontSize: '12px',
                           fontWeight: 700,
                           cursor: 'pointer',
@@ -770,64 +848,139 @@ export default function SectionizedReadView({
                   </div>
                 </div>
 
-                {/* Section Markdown Body */}
-                <div
-                  className="sectionized-markdown-content"
-                  style={{
-                    lineHeight: '1.7',
-                    color: '#1e293b',
-                    fontSize: '15.5px',
-                  }}
-                >
-                  <ReadingHighlightView
-                    content={sec.content}
-                    active={Boolean(readingHighlight?.active)}
-                    startWord={readingHighlight?.startWord ?? -1}
-                    endWord={readingHighlight?.endWord ?? -1}
-                    isPurpleTheme={isPurpleTheme}
-                  />
-                </div>
-
-                {/* Inline Quick Check Card at the end of the section/module */}
-                {qcCount > 0 && (
-                  <div
-                    ref={(el) => {
-                      quickCheckRefs.current[idx] = el;
-                    }}
-                    style={{ scrollMarginTop: '20px' }}
-                  >
-                    <QuickCheckModal
-                      key={`inline-qc-${sec.id}`}
-                      isOpen={true}
-                      question={qcList[0]}
-                      questions={qcList}
-                      currentSectionNumber={idx + 1}
-                      totalSections={totalSections}
-                      sectionTitle={sec.shortTitle}
-                      nextSectionTitle={sections[idx + 1]?.shortTitle}
-                      isPurpleTheme={false}
-                      initialSelectedKey={secSelectedKeys[0] || null}
-                      initialSelectedKeys={secSelectedKeys}
-                      isCompleted={isQcDone}
-                      onNextSection={
-                        idx + 1 < totalSections
-                          ? () => {
-                              markQuickCheckCompleted(idx);
-                              handleNextSectionInline(idx);
-                            }
-                          : undefined
-                      }
-                      onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
-                        markQuickCheckCompleted(idx, selectedKey, questionIndex, allAnswered || qcCount === 1);
+                {/* Section Markdown Body (progressively mounted to keep frame time < 30ms) */}
+                {idx < renderedCount ? (
+                  <>
+                    <div
+                      className="sectionized-markdown-content"
+                      style={{
+                        lineHeight: '1.7',
+                        color: '#1e293b',
+                        fontSize: '15.5px',
                       }}
-                    />
-                  </div>
+                    >
+                      <ReadingHighlightView
+                        content={sec.content}
+                        active={Boolean(readingHighlight?.active)}
+                        startWord={readingHighlight?.startWord ?? -1}
+                        endWord={readingHighlight?.endWord ?? -1}
+                        isPurpleTheme={false}
+                      />
+                    </div>
+
+                    {/* Inline Quick Check Card at the end of the section/module */}
+                    {qcCount > 0 && (
+                      <div
+                        ref={(el) => {
+                          quickCheckRefs.current[idx] = el;
+                        }}
+                        style={{ scrollMarginTop: '20px' }}
+                      >
+                        <QuickCheckModal
+                          key={`inline-qc-${sec.id}-${persona}-${track}`}
+                          isOpen={true}
+                          question={qcList[0]}
+                          questions={qcList}
+                          currentSectionNumber={idx + 1}
+                          totalSections={totalSections}
+                          sectionTitle={sec.shortTitle}
+                          nextSectionTitle={sections[idx + 1]?.shortTitle}
+                          isPurpleTheme={false}
+                          initialSelectedKey={secSelectedKeys[0] || null}
+                          initialSelectedKeys={secSelectedKeys}
+                          isCompleted={isQcDone}
+                          onNextSection={
+                            idx + 1 < totalSections
+                              ? () => {
+                                  markQuickCheckCompleted(idx);
+                                  handleNextSectionInline(idx);
+                                }
+                              : undefined
+                          }
+                          onAnswerSubmitted={(_isCorrect, selectedKey, questionIndex, allAnswered) => {
+                            markQuickCheckCompleted(idx, selectedKey, questionIndex, allAnswered || qcCount === 1);
+                          }}
+                        />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div
+                    style={{
+                      minHeight: '280px',
+                      borderRadius: '12px',
+                      background: 'rgba(241, 239, 234, 0.6)',
+                    }}
+                  />
                 )}
               </div>
             </div>
           );
         })}
+
+        {/* Compact Floating Next-Section Button anchored bottom-right for every section */}
+        {activeVisibleIndex + 1 < totalSections && (
+          <div
+            style={{
+              position: 'sticky',
+              bottom: '16px',
+              display: 'flex',
+              justifyContent: 'flex-end',
+              pointerEvents: 'none',
+              zIndex: 15,
+              marginTop: '-16px',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => {
+                const currentSec = sections[activeVisibleIndex];
+                const hasQc = Boolean(
+                  (currentSec?.quickChecks && currentSec.quickChecks.length > 0) || currentSec?.quickCheck
+                );
+                if (!hasQc) {
+                  setCompletedSections((prev) => {
+                    const updated = new Set(prev);
+                    updated.add(activeVisibleIndex);
+                    try {
+                      const serialized = JSON.stringify(Array.from(updated));
+                      cloudStorage.setItem(storageKey, serialized);
+                      cloudStorage.setItem(chapterStorageKey, serialized);
+                    } catch {
+                      // ignore storage error
+                    }
+                    return updated;
+                  });
+                }
+                handleNextSectionInline(activeVisibleIndex);
+              }}
+              title={sections[activeVisibleIndex + 1]?.title || `Section ${activeVisibleIndex + 2}`}
+              style={{
+                pointerEvents: 'auto',
+                background: 'linear-gradient(135deg, #B2E5D2 0%, #8FD1B8 100%)',
+                color: '#0F221A',
+                border: '1.5px solid #BCEAD9',
+                borderRadius: '999px',
+                padding: '9px 18px',
+                fontSize: '13px',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 0 16px rgba(143, 209, 184, 0.6), 0 4px 12px rgba(24, 34, 29, 0.18)',
+                transition: 'all 0.16s ease',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <span>Next: Section {activeVisibleIndex + 2} →</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+
+const SectionizedReadView = React.memo(SectionizedReadViewInner);
+export default SectionizedReadView;

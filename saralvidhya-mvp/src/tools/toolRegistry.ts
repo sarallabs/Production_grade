@@ -27,7 +27,7 @@ export const STANDARD_TOOL_REGISTRY: Record<string, ToolDefinition> = {
   },
   'read.key_takeaways': {
     id: 'read.key_takeaways',
-    label: 'Key Takeaways',
+    label: 'Takeaways',
     category: 'read',
     iconName: 'ListChecks',
     description: 'High-yield points and exam takeaways',

@@ -17,5 +17,11 @@
     "ento_131": "angrau/entomology",
     "entomology": "angrau/entomology",
     "dbms": "mlrit/dbms"
-  }
+  },
+  "boardLogos": {
+    "angrau": "logo-angrau.png",
+    "angrau_university": "logo-angrau.png",
+    "mlrit": "logo-mlrit.png"
+  },
+  "defaultBoardLogo": "logo-angrau.png"
 }

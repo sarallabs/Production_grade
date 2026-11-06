@@ -137,3 +137,34 @@ brian/
 
 .agents/mcp_config.json
 
+
+# Local AI / Brain / MCP / Agent tooling (local only, never commit)
+.projectbrain*
+*.projectbrain*
+**/.projectbrain*
+*projectbrain*
+**/*projectbrain*
+project_brain.py
+**/project_brain.py
+.brain/
+**/.brain/
+brain/
+**/brain/
+.mcp.json
+**/.mcp.json
+mcp.json
+**/mcp.json
+.cursor/
+**/.cursor/
+.clinerules
+**/.clinerules
+.github/copilot-instructions.md
+**/.github/copilot-instructions.md
+.agents/
+**/.agents/
+.claude/
+**/.claude/
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md

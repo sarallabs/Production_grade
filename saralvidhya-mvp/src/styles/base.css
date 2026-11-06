@@ -2,6 +2,14 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 
+:root {
+  --sv-theme-menu: #546C60;
+  --sv-theme-learn: #9CC0B4;
+  --sv-theme-practice: #E7B864;
+  --sv-theme-prepare: #B5BA9B;
+  --sv-theme-resources: #D9A382;
+  --sv-theme-logout: #F5F2EB;
+}
 * {
   margin: 0;
   padding: 0;

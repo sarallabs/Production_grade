@@ -124,6 +124,39 @@ export function normalizeTerm(term: string): string {
 }
 
 /**
+ * Dynamically registers cloud-fetched chapter or subject definitions into GLOSSARY_DEFINITIONS.
+ */
+export function registerCloudGlossaryTerms(
+  source:
+    | Record<string, string>
+    | Array<{ term?: string; title?: string; name?: string; definition?: string; description?: string; meaning?: string }>
+    | null
+    | undefined
+): void {
+  if (!source) return;
+  if (Array.isArray(source)) {
+    for (const item of source) {
+      if (!item || typeof item !== 'object') continue;
+      const rawKey = item.term || item.title || item.name || '';
+      const rawDef = item.definition || item.description || item.meaning || '';
+      if (rawKey && rawDef) {
+        const norm = normalizeTerm(String(rawKey));
+        if (norm) GLOSSARY_DEFINITIONS[norm] = String(rawDef).trim();
+      }
+    }
+    return;
+  }
+  if (typeof source === 'object') {
+    for (const [k, v] of Object.entries(source)) {
+      if (typeof v === 'string' && v.trim()) {
+        const norm = normalizeTerm(k);
+        if (norm) GLOSSARY_DEFINITIONS[norm] = v.trim();
+      }
+    }
+  }
+}
+
+/**
  * Finds the definition for a given term, checking exact matches and variations.
  */
 export function getTermDefinition(rawTerm: string): string | null {

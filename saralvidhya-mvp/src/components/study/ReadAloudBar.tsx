@@ -6,8 +6,13 @@ import {
   googleTtsResume,
 } from "@/services/googleTtsService";
 import type { ToolId } from "@/components/ToolsMenu";
-import { getSpeakableDomText } from "@/utils/readAloudDom";
+import {
+  getSpeakableDomText,
+  getReadSnapshot,
+  emitReadHighlight,
+} from "@/utils/readAloudDom";
 import { cloudStorage } from "@/context/CloudStateContext";
+import { stripInlineImageTokens } from "@/utils/inlineImageStore";
 
 const SUBJECT_LANG: Record<string, string> = {
   pubadm_ur: "ur-PK",
@@ -20,12 +25,12 @@ const SUBJECT_LANG: Record<string, string> = {
  */
 export function preprocessSummaryText(md: string): string {
   if (!md) return "";
-  let processed = md;
+  let processed = stripInlineImageTokens(md);
   // Remove " — Chapter Name" from "Quick Summary — Chapter Name"
   processed = processed.replace(/^(#*\s*(?:Quick|Detailed)\s+Summary)\s*—[^\n]*/im, "$1");
   // Remove Persona line and the following horizontal rule
   processed = processed.replace(/^[#*\s]*Persona:\s*[^|]*\|[^|]*D_target:[^\n]*\n*(-{3,})?\n*/gim, "");
-  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  processed = processed.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*\n]+\*+/gi, "");
   return processed;
 }
 
@@ -34,32 +39,30 @@ export function preprocessSummaryText(md: string): string {
  */
 export function stripMarkdown(md: string): string {
   if (!md) return "";
-  let t = md;
+  let t = stripInlineImageTokens(md);
 
   // 1. Remove YAML frontmatter at document start
   t = t.replace(/^---[\s\S]*?---\n*/m, "");
 
   // 2. Remove Persona / D_target / Word count metadata lines
   t = t.replace(/^[#*\s]*(?:Persona|D_target|Word count|Bloom|Alteration)[^\n]*$/gmi, "");
-  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*]+\*+/gi, "");
+  t = t.replace(/\*+(?:Persona|Word count|D_target|D_max)[^*\n]+\*+/gi, "");
   t = t.replace(/Persona:\s*[^|]*\|[^|]*D_target:[^\n]*/gi, "");
 
   // 3. Remove Mermaid diagrams and code blocks
   t = t.replace(/```mermaid[\s\S]*?```/gi, "");
   t = t.replace(/```[\s\S]*?```/g, "");
 
-  // 4. Remove HTML figure tags, img tags, and all HTML tags (including huge base64 data URIs)
+  // 4. Remove HTML figure tags, img tags, and all HTML tags
   t = t.replace(/<figure\b[\s\S]*?<\/figure>/gi, "");
   t = t.replace(/<img\b[^>]*>/gi, "");
-  t = t.replace(/data:image\/[a-zA-Z0-9.+-]+;base64,[A-Za-z0-9+/=]+/g, "");
   t = t.replace(/<[^>]+>/g, " ");
 
   // 5. Remove markdown images: ![alt](url)
-  t = t.replace(/!\[[\s\S]*?\]\([\s\S]*?\)/g, "");
+  t = t.replace(/!\[[^\]]*\]\([^)]*\)/g, "");
 
-  // 6. Remove Markdown table separator lines (e.g. | :--- | :---: | ---: | or |---|---|)
-  // This is vital: DOM tables do not contain these separator tokens!
-  t = t.replace(/^[ \t]*\|?\s*:?-{2,}:?\s*(\|?\s*:?-{2,}:?\s*)+\|?[ \t]*$/gm, "");
+  // 6. Remove Markdown table separator lines (linear-time per-line check, avoiding nested quantifier ReDoS)
+  t = t.replace(/^[ \t]*\|?[ \t:|-]*---+[ \t:|-]*\|?[ \t]*$/gm, "");
 
   // 7. Clean Markdown table rows: strip outer pipes and turn internal pipes into spaces
   t = t.replace(/^[ \t]*\|/gm, "");
@@ -96,7 +99,7 @@ export function stripMarkdown(md: string): string {
 /**
  * ReadAloudBar component for text-to-speech functionality.
  */
-export default function ReadAloudBar({
+function ReadAloudBarInner({
   text,
   subjectId,
   persona,
@@ -105,6 +108,7 @@ export default function ReadAloudBar({
   activeTool,
   onSwitchTool,
   isPurpleTheme,
+  durationMinutes,
 }: {
   text: string;
   subjectId: string;
@@ -118,6 +122,7 @@ export default function ReadAloudBar({
   activeTool?: string;
   onSwitchTool?: (tool: ToolId) => void;
   isPurpleTheme?: boolean;
+  durationMinutes?: number;
 }) {
   const [playbackState, setPlaybackState] = useState<
     "idle" | "playing" | "paused"
@@ -136,16 +141,10 @@ export default function ReadAloudBar({
   const stoppedExternallyRef = useRef(false); // true = stopped by persona switch, not natural end
   const lastSavedTsRef = useRef(0);
   const latestGlobalCharRef = useRef(0);
+  // Stable DB-backed storage key (does NOT depend on `text` length/hash so async content updates never abort active speech)
   const progressStorageKey = useMemo(() => {
-    if (!text)
-      return `read_progress_${subjectId}_${persona ?? ""}_${activeTool ?? "summary"}_empty`;
-    const clean = stripMarkdown(text);
-    let hash = 0;
-    for (let i = 0; i < clean.length; i++) {
-      hash = ((hash << 5) - hash + clean.charCodeAt(i)) | 0;
-    }
-    return `read_progress_${subjectId}_${persona ?? ""}_${activeTool ?? "summary"}_${Math.abs(hash)}`;
-  }, [text, subjectId, activeTool, persona]);
+    return `sv_read_aloud_pos_${subjectId}_${persona ?? "intermediate"}_${activeTool ?? "summary"}`;
+  }, [subjectId, activeTool, persona]);
 
   const setPlayback = (state: "idle" | "playing" | "paused") => {
     playbackRef.current = state;
@@ -157,101 +156,159 @@ export default function ReadAloudBar({
     cooldownRef.current = true;
     setTimeout(() => {
       cooldownRef.current = false;
-    }, 400);
+    }, 320);
 
     if (playbackRef.current === "playing") {
       googleTtsPause();
       setPlayback("paused");
+      if (latestGlobalCharRef.current > 0) {
+        try {
+          cloudStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
+        } catch {}
+      }
+      emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
       onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
     } else if (playbackRef.current === "paused") {
       googleTtsResume();
       setPlayback("playing");
       onPlay?.();
+      const resumedWord = Math.max(0, lastHighlightRef.current.startWord);
+      emitReadHighlight({
+        active: true,
+        startWord: resumedWord,
+        endWord: resumedWord,
+      });
       onHighlightChange?.({
         active: true,
-        startWord: Math.max(0, lastHighlightRef.current.startWord),
-        endWord: Math.max(0, lastHighlightRef.current.startWord),
+        startWord: resumedWord,
+        endWord: resumedWord,
       });
     } else {
-      const clean = getSpeakableDomText() ?? stripMarkdown(text);
+      const domText = getSpeakableDomText();
+      const snap = domText ? getReadSnapshot() : null;
+      const clean = snap && snap.words.length > 0 ? snap.text : stripMarkdown(text);
       if (!clean) {
         cooldownRef.current = false;
         return;
       }
       cleanTextRef.current = clean;
-      const startChar = 0;
-      resumeCharRef.current = 0;
-      const ranges: { start: number; end: number }[] = [];
-      const re = /\S+/g;
-      let m: RegExpExecArray | null;
-      while ((m = re.exec(clean)) !== null) {
-        ranges.push({ start: m.index, end: m.index + m[0].length });
+
+      let ranges: { start: number; end: number }[] = [];
+      if (snap && snap.words.length > 0 && snap.text === clean) {
+        ranges = snap.words.map((w) => ({ start: w.charStart, end: w.charEnd }));
+      } else {
+        const re = /\S+/g;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(clean)) !== null) {
+          ranges.push({ start: m.index, end: m.index + m[0].length });
+        }
       }
       wordRangesRef.current = ranges;
+
+      // Check DB-backed saved position if resuming after persona/tab switch, else start at 0
+      let startChar = 0;
+      try {
+        const savedRaw = cloudStorage.getItem(progressStorageKey);
+        if (savedRaw) {
+          const parsed = parseInt(savedRaw, 10);
+          if (Number.isFinite(parsed) && parsed > 0 && parsed < clean.length * 0.92) {
+            // Snap startChar to the beginning of the word containing `parsed`
+            for (let i = 0; i < ranges.length; i++) {
+              if (ranges[i].end >= parsed) {
+                startChar = ranges[i].start;
+                break;
+              }
+            }
+          }
+        }
+      } catch {}
+
+      resumeCharRef.current = startChar;
+      latestGlobalCharRef.current = startChar;
+
       const getWordIndexFromChar = (charIndex: number) => {
         if (!ranges.length) return 0;
-        for (let i = 0; i < ranges.length; i++) {
-          if (charIndex <= ranges[i].end) return i;
+        let lo = 0,
+          hi = ranges.length - 1,
+          best = 0;
+        while (lo <= hi) {
+          const mid = (lo + hi) >> 1;
+          if (ranges[mid].end < charIndex) {
+            lo = mid + 1;
+            best = mid;
+          } else if (ranges[mid].start > charIndex) {
+            hi = mid - 1;
+          } else {
+            return mid;
+          }
         }
-        return ranges.length - 1;
+        return Math.min(ranges.length - 1, Math.max(0, best));
       };
+
       const startWordIdx = getWordIndexFromChar(startChar);
       setPlayback("playing");
       onPlay?.();
+      lastHighlightRef.current = {
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      };
+      emitReadHighlight({
+        active: true,
+        startWord: Math.max(0, startWordIdx),
+        endWord: Math.max(0, startWordIdx),
+      });
       onHighlightChange?.({
         active: true,
         startWord: Math.max(0, startWordIdx),
         endWord: Math.max(0, startWordIdx),
       });
-      lastHighlightRef.current = {
-        startWord: Math.max(0, startWordIdx),
-        endWord: Math.max(0, startWordIdx),
-      };
+
       googleTtsSpeak(
-        clean.slice(startChar),
+        clean,
         lang,
         () => {
           setPlayback("playing");
           onPlay?.();
-          onHighlightChange?.({
+          const curWord = Math.max(0, lastHighlightRef.current.startWord);
+          emitReadHighlight({
             active: true,
-            startWord: Math.max(0, startWordIdx),
-            endWord: Math.max(0, startWordIdx),
+            startWord: curWord,
+            endWord: curWord,
           });
-          lastHighlightRef.current = {
-            startWord: Math.max(0, startWordIdx),
-            endWord: Math.max(0, startWordIdx),
-          };
         },
         () => {
-          // Only clear saved progress if audio ended naturally (not stopped by persona switch)
+          // Only clear saved progress if audio ended naturally (not stopped by persona/tool unmount)
           if (!stoppedExternallyRef.current) {
             setPlayback("idle");
-            cloudStorage.removeItem(progressStorageKey);
+            try {
+              cloudStorage.removeItem(progressStorageKey);
+            } catch {}
             resumeCharRef.current = 0;
+            latestGlobalCharRef.current = 0;
+            emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
             onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
           }
           stoppedExternallyRef.current = false;
         },
-        (localCharIndex) => {
+        (globalCharIndexFromTts) => {
           const rangesLocal = wordRangesRef.current;
           if (!rangesLocal.length) return;
           const globalCharIndex = Math.min(
             clean.length,
-            resumeCharRef.current + Math.max(0, localCharIndex),
+            Math.max(0, globalCharIndexFromTts),
           );
           latestGlobalCharRef.current = globalCharIndex;
 
-          // Throttle cloudStorage writes to avoid main-thread jank
+          // Throttle DB-synced cloudStorage writes during speech
           const now = Date.now();
-          if (now - lastSavedTsRef.current > 1200) {
+          if (now - lastSavedTsRef.current > 10000) {
             lastSavedTsRef.current = now;
             try {
               cloudStorage.setItem(progressStorageKey, String(globalCharIndex));
             } catch {}
           }
 
-          // Find the word at this char position using binary search
+          // Binary search for the word at this character offset
           let lo = 0,
             hi = rangesLocal.length - 1,
             idx = 0;
@@ -268,8 +325,6 @@ export default function ReadAloudBar({
             }
           }
 
-          // Single active word. Ignore tiny backward jitter (<=2 words) but always
-          // resync on larger corrections so the highlight can never get stuck ahead.
           const windowStart = Math.max(0, idx);
           const prevWord = lastHighlightRef.current.startWord;
           const isTinyBackJitter = windowStart < prevWord && prevWord - windowStart <= 2;
@@ -278,56 +333,55 @@ export default function ReadAloudBar({
               startWord: windowStart,
               endWord: windowStart,
             };
-            onHighlightChange?.({
+            // Broadcast directly to ReadingHighlightView DOM subscribers (zero React parent re-render!)
+            emitReadHighlight({
               active: true,
               startWord: windowStart,
               endWord: windowStart,
             });
           }
         },
-        { raw: true },
+        { raw: true, startCharIndex: startChar },
       );
     }
   };
 
   const handleStop = () => {
     if (cooldownRef.current) return;
-    // Manual stop — clear saved progress so next play starts from beginning
     stoppedExternallyRef.current = false;
     googleTtsStop();
     setPlayback("idle");
-    cloudStorage.removeItem(progressStorageKey);
+    try {
+      cloudStorage.removeItem(progressStorageKey);
+    } catch {}
     resumeCharRef.current = 0;
+    latestGlobalCharRef.current = 0;
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
   };
 
   useEffect(() => {
     return () => {
-      // Flush any pending progress before unmount
       if (latestGlobalCharRef.current > 0) {
         try {
           cloudStorage.setItem(progressStorageKey, String(latestGlobalCharRef.current));
         } catch {}
       }
-      // Mark as externally stopped so onEnd doesn't clear saved progress
       stoppedExternallyRef.current = true;
       googleTtsStop();
+      emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     };
   }, [progressStorageKey]);
+  const effectiveDurationMins = useMemo(() => {
+    if (typeof durationMinutes === "number" && durationMinutes > 0) {
+      return durationMinutes;
+    }
+    if (!text) return 0;
+    const words = text.replace(/<[^>]+>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+    return Math.max(2, Math.ceil(words / 180));
+  }, [durationMinutes, text]);
 
-  const durationString = useMemo(() => {
-    if (!text) return "3:42";
-    const clean = stripMarkdown(text);
-    const words = clean.split(/\s+/).filter(Boolean).length;
-    if (words === 0) return "3:42";
-    // Average speech rate: ~140 words per minute
-    const totalSeconds = Math.max(30, Math.round((words / 140) * 60));
-    const mins = Math.floor(totalSeconds / 60);
-    const secs = totalSeconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  }, [text]);
-
-  if (!text) return null;
+  if (!text && !effectiveDurationMins) return null;
 
   return (
     <div
@@ -383,16 +437,20 @@ export default function ReadAloudBar({
           onClick={handlePlayPause}
           type="button"
           className="sv-read-aloud-pill-btn"
-          title="Read Aloud"
           aria-label={playbackState === "playing" ? "Pause reading" : "Read Aloud"}
           style={{
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
-            width: "32px",
+            gap: "6px",
+            width: effectiveDurationMins > 0 ? "auto" : "32px",
             height: "32px",
-            padding: 0,
-            borderRadius: "50%",
+            padding: effectiveDurationMins > 0 ? "0 12px" : 0,
+            borderRadius: "9999px",
+            fontSize: "12.5px",
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+
             border: `1.5px solid ${isPurple ? "#8b5cf6" : "#16a34a"}`,
             background: playbackState === "playing"
               ? (isPurple ? "#7c3aed" : "#16a34a")
@@ -424,6 +482,12 @@ export default function ReadAloudBar({
             <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
             <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
           </svg>
+          {effectiveDurationMins > 0 && (
+            <span>{effectiveDurationMins} min</span>
+          )}
+          <svg style={{ display: "none" }}>
+
+          </svg>
         </button>
         <span className="sv-read-aloud-tooltip">
           {playbackState === "playing"
@@ -444,6 +508,7 @@ export default function ReadAloudBar({
             width: "28px",
             height: "28px",
             borderRadius: "50%",
+
             border: `1px solid ${isPurple ? "#ddd6fe" : "#bbf7d0"}`,
             background: "#ffffff",
             color: isPurple ? "#7c3aed" : "#16a34a",
@@ -463,3 +528,6 @@ export default function ReadAloudBar({
     </div>
   );
 }
+
+const ReadAloudBar = React.memo(ReadAloudBarInner);
+export default ReadAloudBar;

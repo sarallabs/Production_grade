@@ -33,15 +33,28 @@ const PERSONAS = [
 export default function PersonaSelection() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const sId = searchParams.get('sId') || '';
+  const savedCourseParams: Record<string, string> = (() => {
+    try { return JSON.parse(cloudStorage.getItem('sv_last_course_params') || '{}'); } catch { return {}; }
+  })();
+  const sId = searchParams.get('sId') || savedCourseParams.sId || '';
   const treeLogoSrc = `${import.meta.env.BASE_URL}brand-tree-cropped.png`;
-  const className = searchParams.get('className') || '';
-  const semesterName = searchParams.get('semesterName') || '';
-  const subjectName = searchParams.get('subjectName') || '';
+  const className = searchParams.get('className') || savedCourseParams.className || '';
+  const semesterName = searchParams.get('semesterName') || savedCourseParams.semesterName || '';
+  const subjectName = searchParams.get('subjectName') || savedCourseParams.subjectName || '';
+
+  React.useEffect(() => {
+    if (window.location.search) {
+      const merged: Record<string, string> = { ...savedCourseParams };
+      searchParams.forEach((v, k) => { if (v) merged[k] = v; });
+      cloudStorage.setItem('sv_last_course_params', JSON.stringify(merged));
+      window.history.replaceState(window.history.state, '', window.location.pathname);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handlePersonaSelect = (personaId: string) => {
-    const cId = searchParams.get('cId') || '';
-    const semId = searchParams.get('semId') || '';
+    const cId = searchParams.get('cId') || savedCourseParams.cId || '';
+    const semId = searchParams.get('semId') || savedCourseParams.semId || '';
     if (cId && sId) {
       cloudStorage.setItem(`persona_${cId}_${semId}_${sId}`, personaId);
       // Fallback key format used in ClassSubjectSelection
@@ -51,11 +64,18 @@ export default function PersonaSelection() {
     const username = cloudStorage.getItem('username') || '';
     if (username) setStudentPersona(username, personaId);
 
-    const params = new URLSearchParams(searchParams);
-    params.set('persona', personaId);
-    navigate(`/chapters?${params.toString()}`);
+    const nextParams: Record<string, string> = {
+      ...savedCourseParams,
+      ...(cId ? { cId } : {}),
+      ...(sId ? { sId } : {}),
+      ...(className ? { className } : {}),
+      ...(semesterName ? { semesterName } : {}),
+      ...(subjectName ? { subjectName } : {}),
+      persona: personaId,
+    };
+    cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextParams));
+    navigate('/chapters', { state: nextParams });
   };
-
   const handleBackToClass = () => navigate('/');
 
   const logout = () => {
@@ -78,18 +98,6 @@ export default function PersonaSelection() {
                 width={220}
                 height={132}
               />
-            </div>
-            <div className="sv-breadcrumb">
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={handleBackToClass}>{className}</span>
-              {semesterName && (
-                <>
-                  <span className="sv-bc-sep">/</span>
-                  <span className="sv-bc-link">{semesterName}</span>
-                </>
-              )}
-              <span className="sv-bc-sep">/</span>
-              <span className="sv-bc-link" onClick={() => navigate('/')}>{subjectName}</span>
             </div>
           </div>
           <div className="sv-topbar-right">

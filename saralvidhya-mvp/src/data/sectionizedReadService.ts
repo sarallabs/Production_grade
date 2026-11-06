@@ -7,6 +7,10 @@ import {
   getLocalSubjectBaseUrl,
   getChapterDir,
 } from './manifestService';
+import {
+  extractInlineDataImages,
+  stripInlineImageTokens,
+} from '@/utils/inlineImageStore';
 
 export interface QuickCheckOption {
   key: string;
@@ -64,14 +68,214 @@ export interface SectionizedChapterData {
   definitions?: string[];
 }
 
-function estimateReadingTime(text: string): number {
-  const words = text
+export function estimateReadingTime(text: string): number {
+  const words = stripInlineImageTokens(text || '')
     .replace(/<[^>]+>/g, ' ')
-    .replace(/data:image\/[^\s)]+/g, '')
     .trim()
     .split(/\s+/).length;
   const minutes = Math.ceil(words / 180);
   return Math.max(2, Math.min(15, minutes));
+}
+
+function cleanPlainText(raw: string): string {
+  return stripInlineImageTokens(raw || '')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[*_`~#>|]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function truncateStatement(text: string, maxLen = 145): string {
+  const cleaned = cleanPlainText(text).replace(/^[-•:–—\s]+/, '').trim();
+  if (cleaned.length <= maxLen) return cleaned;
+  const cut = cleaned.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(' ');
+  return (lastSpace > 60 ? cut.slice(0, lastSpace) : cut).replace(/[.,;:\s]+$/, '') + '…';
+}
+
+/**
+ * Generates 3 context-specific QuickCheckQuestion items directly from a mindmap
+ * artifact's title and markdown content when pre-authored JSON quick checks are absent.
+ */
+export function generateQuickCheckQuestionsFromMarkdown(
+  title: string,
+  markdown: string,
+  moduleId = 'M1'
+): QuickCheckQuestion[] {
+  const cleanTitle = cleanHeadingText(title || 'Topic Overview') || 'Topic Overview';
+  const rawLines = (markdown || '')
+    .replace(/```[\s\S]*?```/g, '')
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && !l.startsWith('![') && !l.startsWith('|---'));
+
+  // 1. Extract bolded term -> definition pairs
+  const termPairs: Array<{ term: string; def: string }> = [];
+  for (const line of rawLines) {
+    const m = line.match(
+      /^(?:[-*•]|\d+\.)?\s*\*\*([^*]{3,65})\*\*\s*(?::|—|–|-|\bis\b|\bare\b|\brefers to\b|\bmeans\b)\s*(.{20,240})/i
+    );
+    if (m) {
+      const term = cleanPlainText(m[1]).replace(/[:—–-]+$/, '').trim();
+      const def = truncateStatement(m[2], 145);
+      if (
+        term &&
+        def.length >= 20 &&
+        !term.toLowerCase().includes('marking scheme') &&
+        !termPairs.some((p) => p.term.toLowerCase() === term.toLowerCase())
+      ) {
+        termPairs.push({ term, def });
+      }
+    }
+  }
+
+  // 2. Extract informative sentences & bullet points
+  const keyStatements: Array<{ subheading: string; statement: string }> = [];
+  let currentSubheading = cleanTitle;
+  for (const line of rawLines) {
+    const hMatch = line.match(/^#{1,4}\s+(.+)/);
+    if (hMatch) {
+      const h = cleanHeadingText(hMatch[1]);
+      if (h && h.length >= 3 && h.length <= 70) currentSubheading = h;
+      continue;
+    }
+    if (line.startsWith('|')) continue;
+    const cleaned = truncateStatement(line.replace(/^(?:[-*•]|\d+\.)\s*/, ''), 145);
+    if (
+      cleaned.length >= 35 &&
+      cleaned.length <= 150 &&
+      !cleaned.endsWith('?') &&
+      !keyStatements.some((s) => s.statement.toLowerCase() === cleaned.toLowerCase())
+    ) {
+      keyStatements.push({ subheading: currentSubheading, statement: cleaned });
+    }
+  }
+
+  const genericDistractorPool = [
+    `It operates independently of ${cleanTitle} and has no functional role in this process.`,
+    `It only occurs under artificial laboratory conditions and never in standard ${cleanTitle} systems.`,
+    `It reverses the primary mechanism of ${cleanTitle} by eliminating all structural components.`,
+    `It is an obsolete classification that has been completely replaced by unrelated external factors.`,
+    `It restricts ${cleanTitle} to a single static state without any regulatory or structural interaction.`,
+    `It bypasses all intermediate stages of ${cleanTitle} and produces no measurable outcome.`,
+  ];
+
+  const buildOptions = (
+    correctText: string,
+    candidateDistractors: string[],
+    seed: number
+  ): { options: QuickCheckOption[]; correctKey: string } => {
+    const keys = ['A', 'B', 'C', 'D'];
+    const distinctDistractors: string[] = [];
+    for (const d of [...candidateDistractors, ...genericDistractorPool]) {
+      const cleanD = truncateStatement(d, 145);
+      if (
+        cleanD &&
+        cleanD.toLowerCase() !== correctText.toLowerCase() &&
+        !distinctDistractors.some((existing) => existing.toLowerCase() === cleanD.toLowerCase())
+      ) {
+        distinctDistractors.push(cleanD);
+      }
+      if (distinctDistractors.length >= 3) break;
+    }
+    while (distinctDistractors.length < 3) {
+      distinctDistractors.push(genericDistractorPool[distinctDistractors.length % genericDistractorPool.length]);
+    }
+
+    const correctIdx = Math.abs(seed) % 4;
+    const options: QuickCheckOption[] = [];
+    let dIdx = 0;
+    for (let i = 0; i < 4; i++) {
+      if (i === correctIdx) {
+        options.push({ key: keys[i], text: correctText, is_correct: true });
+      } else {
+        options.push({ key: keys[i], text: distinctDistractors[dIdx++], is_correct: false });
+      }
+    }
+    return { options, correctKey: keys[correctIdx] };
+  };
+
+  const hashSeed = cleanTitle.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+  const questions: QuickCheckQuestion[] = [];
+
+  // Use termPairs first (up to 2), then keyStatements to reach 3 questions
+  for (let i = 0; i < Math.min(2, termPairs.length); i++) {
+    const pair = termPairs[i];
+    const otherDefs = termPairs
+      .filter((_, idx) => idx !== i)
+      .map((p) => p.def)
+      .concat(keyStatements.slice(0, 3).map((s) => s.statement));
+    const { options, correctKey } = buildOptions(pair.def, otherDefs, hashSeed + i);
+    questions.push({
+      module_id: moduleId,
+      module_title: cleanTitle,
+      type: 'mcq',
+      prompt_type: 'concept_check',
+      stem: `In the context of ${cleanTitle}, which of the following best describes "${pair.term}"?`,
+      options,
+      correct_answer: correctKey,
+      rationale: `In ${cleanTitle}, **${pair.term}** is defined as: ${pair.def}`,
+    });
+  }
+
+  let stmtIdx = 0;
+  while (questions.length < 3 && stmtIdx < keyStatements.length) {
+    const item = keyStatements[stmtIdx++];
+    // Avoid duplicating a statement already used as a term definition
+    if (questions.some((q) => q.options.some((o) => o.is_correct && o.text === item.statement))) {
+      continue;
+    }
+    const { options, correctKey } = buildOptions(
+      item.statement,
+      genericDistractorPool.slice(questions.length),
+      hashSeed + questions.length + stmtIdx
+    );
+    const focusLabel =
+      item.subheading && item.subheading.toLowerCase() !== cleanTitle.toLowerCase()
+        ? `${item.subheading} (${cleanTitle})`
+        : cleanTitle;
+    questions.push({
+      module_id: moduleId,
+      module_title: cleanTitle,
+      type: 'mcq',
+      prompt_type: 'concept_check',
+      stem:
+        questions.length === 0
+          ? `Which of the following is a key concept or principle of ${focusLabel}?`
+          : questions.length === 1
+          ? `According to the notes on ${focusLabel}, which statement is accurate?`
+          : `Which of the following accurately summarizes a key takeaway from ${focusLabel}?`,
+      options,
+      correct_answer: correctKey,
+      rationale: `As explained in the notes on ${focusLabel}: ${item.statement}`,
+    });
+  }
+
+  // Fallback if the markdown was extremely brief
+  while (questions.length < 3) {
+    const qNum = questions.length + 1;
+    const fallbackCorrect =
+      qNum === 1
+        ? `${cleanTitle} provides the foundational structure, mechanisms, and principles covered in this topic.`
+        : qNum === 2
+        ? `Understanding the core components and relationships within ${cleanTitle} is essential for applying this concept accurately.`
+        : `${cleanTitle} integrates key terminology, functional pathways, and practical applications within the chapter.`;
+    const { options, correctKey } = buildOptions(fallbackCorrect, genericDistractorPool, hashSeed + qNum);
+    questions.push({
+      module_id: moduleId,
+      module_title: cleanTitle,
+      type: 'mcq',
+      prompt_type: 'concept_check',
+      stem: `Which statement best reflects the core focus of ${cleanTitle} (Check ${qNum})?`,
+      options,
+      correct_answer: correctKey,
+      rationale: fallbackCorrect,
+    });
+  }
+
+  return questions;
 }
 
 function cleanHeadingText(text: string): string {
@@ -108,7 +312,7 @@ async function fetchFirstValid(
     if (!c) continue;
     try {
       const cleanUrl = c.startsWith('http') ? c : c.replace(/([^:])\/\//g, '$1/');
-      const res = await fetch(cleanUrl, { cache: 'no-store' });
+      const res = await fetch(cleanUrl);
       if (!res.ok) continue;
       const ct = (res.headers.get('content-type') || '').toLowerCase();
       if (ct.includes('text/html')) continue;
@@ -132,7 +336,7 @@ async function fetchFirstValid(
   return null;
 }
 
-const READ_CACHE_MAX_ENTRIES = 6;
+const READ_CACHE_MAX_ENTRIES = 12;
 const sectionizedReadCache = new Map<string, SectionizedChapterData>();
 
 export function getCachedSectionizedReadDataSync(
@@ -178,7 +382,10 @@ export async function getSectionizedReadData(
     return cached;
   }
 
-  const manifest = await getManifest();
+  const [manifest, regCh] = await Promise.all([
+    getManifest(),
+    getRegistryChapterData(subjectId, chapterNumber),
+  ]);
   const manifestChapter = getChapters(manifest, subjectId).find((c) => c.number === chapterNumber);
 
   const trackFolder = track === 'detailed' ? 'detailed_study' : 'quick_study';
@@ -189,8 +396,8 @@ export async function getSectionizedReadData(
   const studyJsonCandidates: string[] = [];
 
   // 1. Primary Cloud-Native Path: V4 Signed URLs from v2 Registry Chapter files
-  const regCh = await getRegistryChapterData(subjectId, chapterNumber);
   const files = regCh?.files || {};
+  const hasCloudFileMap = Object.keys(files).length > 0;
   const registryChapterTitle =
     regCh?.chapter?.title || manifestChapter?.title || manifestChapter?.name;
 
@@ -239,6 +446,7 @@ export async function getSectionizedReadData(
     `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
     `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
     `${subjectBase}/${chDir}/read/${trackFolder}/${normPersona}.md`,
+    `${localBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.md`,
     `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.md`,
     `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.md`
   );
@@ -247,20 +455,23 @@ export async function getSectionizedReadData(
     `${subjectBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${subjectBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${subjectBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${explicitLocalBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${explicitLocalBase}/${canonicalChDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
+    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
     `${localBase}/${canonicalChDir}/learn/read/quick_check/${trackFolder}/${normPersona}.json?v=4qc3`,
-    `${localBase}/${chDir}/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`,
     `${localBase}/${chDir}/learn/read/quick_check/${trackFolderAlt}/${normPersona}.json?v=4qc3`
   );
-  studyJsonCandidates.push(
-    `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
-    `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
-    `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.json`
-  );
+  if (!hasCloudFileMap) {
+    studyJsonCandidates.push(
+      `${subjectBase}/${chDir}/read/${trackFolderAlt}/${normPersona}.json`,
+      `${subjectBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+      `${localBase}/${chDir}/learn/read/${trackFolder}/${normPersona}.json`,
+      `${localBase}/${chDir}/learn/read/${trackFolderAlt}/${normPersona}.json`
+    );
+  }
 
   try {
     const [mdRes, qcRes, studyJsonRes] = await Promise.all([
@@ -280,7 +491,7 @@ export async function getSectionizedReadData(
       return null;
     }
 
-    let markdown = await mdRes.text();
+    let markdown = extractInlineDataImages(await mdRes.text());
     // Rewrite relative image paths (../../extracted_images/X or ../Mindmaps/X) to Cloud Run subjectBase
     markdown = markdown.replace(
       /!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g,
@@ -393,6 +604,14 @@ export async function getSectionizedReadData(
       }
       if (i === startIndex && part0Body.length > 50) {
         sectionBody = `${part0Body}\n\n---\n\n${sectionBody}`;
+      }
+
+      if (matchedQuestions.length === 0) {
+        matchedQuestions = generateQuickCheckQuestionsFromMarkdown(
+          cleanTitle,
+          sectionBody,
+          `M${secNumber}`
+        );
       }
 
       sections.push({

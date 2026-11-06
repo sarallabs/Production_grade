@@ -3,7 +3,7 @@ import React, { useEffect, useState, Suspense } from 'react';
 import Layout from './components/Layout';
 import { FocusModeProvider } from './context/FocusModeContext';
 import { TenantProvider, useTenant } from './tenant/TenantProvider';
-import { cloudStorage } from './context/CloudStateContext';
+import { cloudStorage, useCloudState } from './context/CloudStateContext';
 import branding from './config/branding.json';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -44,41 +44,44 @@ function AdminGuard({ children }: { children: JSX.Element }) {
 /** Redirect to /login if not authenticated */
 function AuthGuard({ children }: { children: JSX.Element }) {
   const location = useLocation();
-  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
-  if (isLoading) {
+  const { isLoading, isAuthenticated: tenantAuthed } = useTenant();
+  const { isHydrated } = useCloudState();
+  if (isLoading || ((isAuthenticated() || tenantAuthed) && !isHydrated)) {
     return <LoadingSpinner />;
   }
   if (!isAuthenticated() && !tenantAuthed) {
-    const loginRoute = tenantId ? `/${tenantId}/login` : '/login';
-    return <Navigate to={loginRoute} state={{ from: location.pathname + location.search }} replace />;
+    return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
   return children;
 }
 
-/** Redirect to / if already authenticated (for login page) */
+/** Redirect to / (or original destination) if already authenticated (for login page) */
 function GuestOnly({ children }: { children: JSX.Element }) {
-  const { isLoading, isAuthenticated: tenantAuthed, tenantId } = useTenant();
-  if (isLoading) {
+  const location = useLocation();
+  const { isLoading, isAuthenticated: tenantAuthed } = useTenant();
+  const { isHydrated } = useCloudState();
+  if (isLoading || ((isAuthenticated() || tenantAuthed) && !isHydrated)) {
     return <LoadingSpinner />;
   }
   if (isAuthenticated() || tenantAuthed) {
-    const homeRoute = tenantId ? `/${tenantId}` : '/';
-    return <Navigate to={homeRoute} replace />;
+    const from = (location.state as { from?: string })?.from;
+    const targetUrl = from && from !== '/login' && !from.endsWith('/login') ? from : '/';
+    return <Navigate to={targetUrl} replace />;
   }
   return children;
 }
 
 /** Enforce onboarding after authentication */
 function ProtectedRoute({ children }: { children: JSX.Element }) {
+  const { tenantId } = useTenant();
   const username = cloudStorage.getItem('username');
   const questionnaireCompleted = cloudStorage.getItem('questionnaire_completed') === 'true';
   const profileCompleted = !!cloudStorage.getItem('saral_student_profile');
   const location = useLocation();
 
-  if (!username && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+  if (!username) {
+    return <Navigate to="/login" replace />;
   }
-
   if (username) {
     // 1. Enforce student profile details completion first
     if (!profileCompleted && location.pathname !== '/profile') {
@@ -251,23 +254,6 @@ export default function App() {
                 </AuthGuard>
               } />
               <Route element={<Layout />}>
-                {renderAppRoutes()}
-              </Route>
-
-              {/* ── Multi-Tenant Prefixed Routes (/:tenantId/...) ── */}
-              <Route path="/:tenantId/login" element={
-                <GuestOnly>
-                  <Login />
-                </GuestOnly>
-              } />
-              <Route path="/:tenantId/onboarding" element={
-                <AuthGuard>
-                  <ProtectedRoute>
-                    <Onboarding />
-                  </ProtectedRoute>
-                </AuthGuard>
-              } />
-              <Route path="/:tenantId" element={<Layout />}>
                 {renderAppRoutes()}
               </Route>
 

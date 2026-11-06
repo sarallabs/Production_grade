@@ -1,4 +1,5 @@
 import { Router, Response } from 'express';
+import path from 'path';
 import { tenantMiddleware } from '../../middleware/tenant.js';
 import { requireSession, AuthenticatedRequest } from '../../middleware/requireSession.js';
 import {
@@ -14,7 +15,9 @@ import {
   recordToolOrChapterProgress,
   updateAudioPlaybackProgress,
   recordQuizAttempt,
+  getTenantLeaderboard,
 } from '../../services/userState.js';
+import { ingestAnalyticsBatch } from '../../services/analyticsService.js';
 
 const router = Router();
 
@@ -22,11 +25,11 @@ const router = Router();
 router.use('/:tenant', tenantMiddleware, requireSession);
 
 function resolveUserId(req: AuthenticatedRequest): string {
-  return (
-    req.session?.userId ||
-    req.session?.sessionId ||
-    `u_${req.tenant?.id || 'default'}_default_student`
-  );
+  const tenantId = req.tenant?.id || req.session?.tenantId || 'default';
+  if (req.session?.email && req.session?.userId) {
+    return req.session.userId;
+  }
+  return `u_${tenantId}_default_student`;
 }
 
 /**
@@ -72,27 +75,8 @@ router.get(
         return;
       }
 
-      // Generate signed URLs for files in this chapter version
-      const signedFiles: Record<string, string> = {};
-      const chapterFiles: Record<string, string> = {};
-      const chPrefix = `${subjectId}/${chapterId}/`;
-
-      if (chapter.files) {
-        const fileKeys = Object.keys(chapter.files);
-        const signedPromises = fileKeys.map(async (key) => {
-          const fileEntry = chapter.files![key];
-          const gcsPath = `${tenant.storage.prefix}/${fileEntry.path.replace(/^\/+/, '')}`;
-          try {
-            const signed = await getSignedUrlForFile(gcsPath, 60);
-            signedFiles[key] = signed;
-            const relKey = key.startsWith(chPrefix) ? key.substring(chPrefix.length) : key;
-            chapterFiles[relKey] = signed;
-          } catch (e) {
-            console.warn(`[Content] Failed signing URL for ${gcsPath}:`, e);
-          }
-        });
-        await Promise.all(signedPromises);
-      }
+      const signedFiles: Record<string, string> = chapter.signedFiles || {};
+      const chapterFiles: Record<string, string> = chapter.chapterFiles || {};
 
       res.setHeader('Cache-Control', 'private, max-age=60');
       res.json({
@@ -126,26 +110,50 @@ router.get(
  */
 router.get('/:tenant/signed-url', async (req: AuthenticatedRequest, res: Response) => {
   const tenant = req.tenant!;
-  const filePath = ((req.query.path as string) || '').trim();
+  const rawPath = ((req.query.path as string) || '').trim();
 
-  if (!filePath) {
+  if (!rawPath) {
     res.status(400).json({ error: 'File path query parameter is required' });
     return;
   }
 
+  const normalizedPath = path.posix.normalize(rawPath.replace(/\\/g, '/'));
+
   // Prevent path traversal outside tenant prefix
-  if (filePath.includes('..') || filePath.startsWith('/')) {
+  if (
+    !normalizedPath ||
+    normalizedPath === '.' ||
+    normalizedPath.includes('..') ||
+    normalizedPath.startsWith('/') ||
+    normalizedPath.includes('\0')
+  ) {
     res.status(400).json({ error: 'Invalid file path' });
     return;
   }
 
-  const gcsPath = `${tenant.storage.prefix}/${filePath}`;
+  const gcsPath = `${tenant.storage.prefix}/${normalizedPath}`;
   try {
     const signedUrl = await getSignedUrlForFile(gcsPath, 30);
     res.json({ signedUrl, expiresInMinutes: 30 });
   } catch (err: any) {
     console.error(`[Content] Failed signing URL for '${gcsPath}':`, err);
     res.status(500).json({ error: 'Could not generate signed download URL' });
+  }
+});
+
+/**
+ * GET /v2/t/:tenant/leaderboard
+ * Returns the cloud-synced tenant leaderboard from Firestore user state & quiz scores.
+ */
+router.get('/:tenant/leaderboard', async (req: AuthenticatedRequest, res: Response) => {
+  const tenant = req.tenant!;
+  const userId = resolveUserId(req);
+  try {
+    const leaderboard = await getTenantLeaderboard(tenant.id, userId);
+    res.json({ tenantId: tenant.id, leaderboard });
+  } catch (err: any) {
+    console.error(`[Leaderboard] Failed loading leaderboard for '${tenant.id}':`, err);
+    res.status(500).json({ error: 'Failed to load leaderboard' });
   }
 });
 
@@ -207,6 +215,32 @@ router.post('/:tenant/me/progress/tool', async (req: AuthenticatedRequest, res: 
       completedVideoId,
       openedVideoId,
     });
+    ingestAnalyticsBatch(
+      tenant.id,
+      [
+        {
+          eventType: completedTool
+            ? 'tool.complete'
+            : openedVideoId
+            ? 'video.open'
+            : completedVideoId
+            ? 'video.complete'
+            : 'chapter.visit',
+          category: completedTool ? 'study_tool' : openedVideoId || completedVideoId ? 'media' : 'navigation',
+          subjectId,
+          chapterId,
+          toolId: completedTool || (openedVideoId || completedVideoId ? 'videos' : undefined),
+          status: 'completed',
+        },
+      ],
+      {
+        userId,
+        sessionId: req.session?.sessionId,
+        userEmail: req.session?.email,
+        displayName: req.session?.displayName,
+        userAgent: req.headers['user-agent'],
+      }
+    ).catch(() => {});
     res.json({ success: true, chapterProgress });
   } catch (err: any) {
     console.error(`[UserState] Failed recording tool progress for '${userId}':`, err);
@@ -283,6 +317,31 @@ router.post('/:tenant/me/progress/quiz', async (req: AuthenticatedRequest, res: 
       timeTakenSeconds,
       answers,
     });
+    ingestAnalyticsBatch(
+      tenant.id,
+      [
+        {
+          eventType: 'quiz.submit',
+          category: 'assessment',
+          subjectId,
+          chapterId,
+          toolId: quizType || 'quiz',
+          persona: difficulty,
+          score,
+          total,
+          scorePct: result.percentage,
+          durationMs: typeof timeTakenSeconds === 'number' ? timeTakenSeconds * 1000 : 0,
+          status: 'completed',
+        },
+      ],
+      {
+        userId,
+        sessionId: req.session?.sessionId,
+        userEmail: req.session?.email,
+        displayName: req.session?.displayName,
+        userAgent: req.headers['user-agent'],
+      }
+    ).catch(() => {});
     res.json({ success: true, ...result });
   } catch (err: any) {
     console.error(`[UserState] Failed recording quiz attempt for '${userId}':`, err);

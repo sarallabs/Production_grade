@@ -35,10 +35,24 @@ export default function ResumePodcastToast() {
     setIsVisible(false);
     const { subjectId, chapterNumber, chapterName, persona, track } = resumeData;
 
-    const baseParams = `cId=${subjectId}&className=Resumed&sId=${subjectId}&subjectName=${encodeURIComponent(subjectId)}`;
+    const savedCourseParams: Record<string, string> = (() => {
+      try { return JSON.parse(cloudStorage.getItem('sv_last_course_params') || '{}'); } catch { return {}; }
+    })();
+    const nextParams: Record<string, string> = {
+      ...savedCourseParams,
+      cId: subjectId,
+      className: 'Resumed',
+      sId: subjectId,
+      subjectName: subjectId,
+      persona: persona || 'intermediate',
+      chapter: String(chapterNumber || 1),
+      ...(chapterName ? { chapterName } : {}),
+    };
+    cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextParams));
 
-    navigate(`/chapters?${baseParams}&persona=${persona}`, {
+    navigate('/chapters', {
       state: {
+        ...nextParams,
         autoPlayPodcast: true,
         resumeTrack: track,
         chapterNumber,

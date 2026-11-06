@@ -1,0 +1,337 @@
+{
+  "subject": "cns",
+  "chapter_number": 1,
+  "chapter_title": "Chapter 1: Introduction to Security & Classical Encryption Techniques",
+  "source": "Notes.pdf Pages 1–15; Syllabus Unit 1",
+  "university": "Chalapathi University",
+  "hierarchy": {
+    "id": "root",
+    "label": "Chapter 1: Security Concepts & Classical Encryption",
+    "level": 0,
+    "children": [
+      {
+        "id": "b1",
+        "label": "1. Security Concepts & Attacks",
+        "level": 1,
+        "children": [
+          {
+            "id": "b1_1",
+            "label": "Security Disciplines & Triad",
+            "level": 2,
+            "children": [
+              { "id": "b1_1_1", "label": "Computer Security", "level": 3 },
+              { "id": "b1_1_2", "label": "Network Security", "level": 3 },
+              { "id": "b1_1_3", "label": "Information Security", "level": 3 },
+              { "id": "b1_1_4", "label": "Three Key Aspects (Attacks, Mechanisms, Services)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b1_2",
+            "label": "Passive Attacks (Eavesdropping)",
+            "level": 2,
+            "children": [
+              { "id": "b1_2_1", "label": "Core Nature (No alteration, prevention emphasized)", "level": 3 },
+              { "id": "b1_2_2", "label": "Release of Message Contents", "level": 3 },
+              { "id": "b1_2_3", "label": "Traffic Analysis", "level": 3 }
+            ]
+          },
+          {
+            "id": "b1_3",
+            "label": "Active Attacks (Modification)",
+            "level": 2,
+            "children": [
+              { "id": "b1_3_1", "label": "Masquerade (Entity impersonation)", "level": 3 },
+              { "id": "b1_3_2", "label": "Replay Attack (Capturing & retransmitting)", "level": 3 },
+              { "id": "b1_3_3", "label": "Modification of Messages", "level": 3 },
+              { "id": "b1_3_4", "label": "Denial of Service (DoS)", "level": 3 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "b2",
+        "label": "2. Security Services (X.800 Framework)",
+        "level": 1,
+        "children": [
+          {
+            "id": "b2_1",
+            "label": "Authentication Services",
+            "level": 2,
+            "children": [
+              { "id": "b2_1_1", "label": "Peer Entity Authentication", "level": 3 },
+              { "id": "b2_1_2", "label": "Data Origin Authentication", "level": 3 }
+            ]
+          },
+          {
+            "id": "b2_2",
+            "label": "Access Control Service",
+            "level": 2,
+            "children": [
+              { "id": "b2_2_1", "label": "Unauthorized Resource Access Prevention", "level": 3 }
+            ]
+          },
+          {
+            "id": "b2_3",
+            "label": "Data Confidentiality Services",
+            "level": 2,
+            "children": [
+              { "id": "b2_3_1", "label": "Connection Confidentiality", "level": 3 },
+              { "id": "b2_3_2", "label": "Connectionless Confidentiality", "level": 3 },
+              { "id": "b2_3_3", "label": "Selective-Field Confidentiality", "level": 3 },
+              { "id": "b2_3_4", "label": "Traffic-Flow Confidentiality", "level": 3 }
+            ]
+          },
+          {
+            "id": "b2_4",
+            "label": "Data Integrity Services",
+            "level": 2,
+            "children": [
+              { "id": "b2_4_1", "label": "Connection Integrity with Recovery", "level": 3 },
+              { "id": "b2_4_2", "label": "Connection Integrity without Recovery", "level": 3 },
+              { "id": "b2_4_3", "label": "Selective-Field Integrity", "level": 3 },
+              { "id": "b2_4_4", "label": "Connectionless Integrity", "level": 3 }
+            ]
+          },
+          {
+            "id": "b2_5",
+            "label": "Nonrepudiation & Availability",
+            "level": 2,
+            "children": [
+              { "id": "b2_5_1", "label": "Proof of Origin", "level": 3 },
+              { "id": "b2_5_2", "label": "Proof of Destination", "level": 3 },
+              { "id": "b2_5_3", "label": "Availability Service", "level": 3 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "b3",
+        "label": "3. Security Mechanisms & Network Models",
+        "level": 1,
+        "children": [
+          {
+            "id": "b3_1",
+            "label": "Specific Security Mechanisms (X.800)",
+            "level": 2,
+            "children": [
+              { "id": "b3_1_1", "label": "Encipherment (Symmetric & Asymmetric)", "level": 3 },
+              { "id": "b3_1_2", "label": "Digital Signatures", "level": 3 },
+              { "id": "b3_1_3", "label": "Access Control Mechanisms", "level": 3 },
+              { "id": "b3_1_4", "label": "Data Integrity (MAC & Hashes)", "level": 3 },
+              { "id": "b3_1_5", "label": "Authentication Exchange", "level": 3 },
+              { "id": "b3_1_6", "label": "Traffic Padding & Routing Control", "level": 3 },
+              { "id": "b3_1_7", "label": "Notarization (Trusted Third Party)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b3_2",
+            "label": "Pervasive Security Mechanisms (X.800)",
+            "level": 2,
+            "children": [
+              { "id": "b3_2_1", "label": "Trusted Functionality", "level": 3 },
+              { "id": "b3_2_2", "label": "Security Labels & Event Detection", "level": 3 },
+              { "id": "b3_2_3", "label": "Security Audit Trail & Recovery", "level": 3 }
+            ]
+          },
+          {
+            "id": "b3_3",
+            "label": "Model for Network Security",
+            "level": 2,
+            "children": [
+              { "id": "b3_3_1", "label": "Components (Sender, Receiver, Key, Channel, Opponent)", "level": 3 },
+              { "id": "b3_3_2", "label": "4 Design Tasks (Algorithm, Key Gen, Distribution, Protocol)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b3_4",
+            "label": "Network Access Security Model",
+            "level": 2,
+            "children": [
+              { "id": "b3_4_1", "label": "Gatekeeper Function (Firewalls & Login)", "level": 3 },
+              { "id": "b3_4_2", "label": "Internal Controls (Antivirus & Monitoring)", "level": 3 },
+              { "id": "b3_4_3", "label": "Threat Actors (Hackers & Software Viruses/Worms)", "level": 3 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "b4",
+        "label": "4. Symmetric Cipher Model & Cryptanalysis",
+        "level": 1,
+        "children": [
+          {
+            "id": "b4_1",
+            "label": "Five Ingredients of Symmetric Cipher",
+            "level": 2,
+            "children": [
+              { "id": "b4_1_1", "label": "Plaintext (X)", "level": 3 },
+              { "id": "b4_1_2", "label": "Encryption Algorithm (E)", "level": 3 },
+              { "id": "b4_1_3", "label": "Secret Key (K)", "level": 3 },
+              { "id": "b4_1_4", "label": "Ciphertext (Y = E_K(X))", "level": 3 },
+              { "id": "b4_1_5", "label": "Decryption Algorithm (X = D_K(Y))", "level": 3 }
+            ]
+          },
+          {
+            "id": "b4_2",
+            "label": "Two Core Security Requirements",
+            "level": 2,
+            "children": [
+              { "id": "b4_2_1", "label": "Strong Encryption Algorithm", "level": 3 },
+              { "id": "b4_2_2", "label": "Secure Key Distribution & Secrecy", "level": 3 }
+            ]
+          },
+          {
+            "id": "b4_3",
+            "label": "Three Cryptographic Dimensions",
+            "level": 2,
+            "children": [
+              { "id": "b4_3_1", "label": "Operation Types (Substitution, Transposition, Product)", "level": 3 },
+              { "id": "b4_3_2", "label": "Key Multiplicity (Symmetric vs. Asymmetric)", "level": 3 },
+              { "id": "b4_3_3", "label": "Processing Modes (Block Cipher vs. Stream Cipher)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b4_4",
+            "label": "Cryptanalysis & Attack Models",
+            "level": 2,
+            "children": [
+              { "id": "b4_4_1", "label": "Ciphertext-Only Attack", "level": 3 },
+              { "id": "b4_4_2", "label": "Known-Plaintext Attack", "level": 3 },
+              { "id": "b4_4_3", "label": "Chosen-Plaintext Attack", "level": 3 },
+              { "id": "b4_4_4", "label": "Chosen-Ciphertext Attack", "level": 3 },
+              { "id": "b4_4_5", "label": "Brute-Force Search (50% average keyspace)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b4_5",
+            "label": "Security Criteria Notions",
+            "level": 2,
+            "children": [
+              { "id": "b4_5_1", "label": "Unconditionally Secure (Mathematically unbreakable)", "level": 3 },
+              { "id": "b4_5_2", "label": "Computationally Secure (Cost/time exceeds value/lifetime)", "level": 3 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "b5",
+        "label": "5. Classical Substitution Techniques",
+        "level": 1,
+        "children": [
+          {
+            "id": "b5_1",
+            "label": "Caesar Cipher (Shift k = 3)",
+            "level": 2,
+            "children": [
+              { "id": "b5_1_1", "label": "Formulas: c = (p + k) mod 26, p = (c - k) mod 26", "level": 3 },
+              { "id": "b5_1_2", "label": "Vulnerabilities (25 keys, brute-force in seconds)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b5_2",
+            "label": "Monoalphabetic Substitution",
+            "level": 2,
+            "children": [
+              { "id": "b5_2_1", "label": "Keyspace: 26! ≈ 4 x 10^26 keys", "level": 3 },
+              { "id": "b5_2_2", "label": "Frequency Analysis (E, T, A, O, I, N frequencies preserved)", "level": 3 },
+              { "id": "b5_2_3", "label": "Digraphs (th, he, in) & Trigraphs (the, and)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b5_3",
+            "label": "Playfair Digraph Cipher",
+            "level": 2,
+            "children": [
+              { "id": "b5_3_1", "label": "5x5 Matrix Grid (Keyword + I/J combined)", "level": 3 },
+              { "id": "b5_3_2", "label": "4 Rules (Filler 'x', Row right, Column down, Rectangle)", "level": 3 },
+              { "id": "b5_3_3", "label": "Cryptanalysis (650 digraphs, broken by digraph stats)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b5_4",
+            "label": "Hill Cipher (Linear Algebra Block)",
+            "level": 2,
+            "children": [
+              { "id": "b5_4_1", "label": "Formulas: C = K * P mod 26, P = K^-1 * C mod 26", "level": 3 },
+              { "id": "b5_4_2", "label": "Key Invertibility: gcd(det(K), 26) = 1", "level": 3 },
+              { "id": "b5_4_3", "label": "Hides 1-gram frequencies, broken by known-plaintext", "level": 3 }
+            ]
+          },
+          {
+            "id": "b5_5",
+            "label": "Polyalphabetic Ciphers",
+            "level": 2,
+            "children": [
+              { "id": "b5_5_1", "label": "Vigenère Cipher (26 Caesar ciphers, repeating key)", "level": 3 },
+              { "id": "b5_5_2", "label": "Kasiski Examination (Exploiting key periodicity)", "level": 3 },
+              { "id": "b5_5_3", "label": "Autokey System (Key concatenated with plaintext)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b5_6",
+            "label": "Vernam Cipher & One-Time Pad",
+            "level": 2,
+            "children": [
+              { "id": "b5_6_1", "label": "Vernam XOR Cipher: C_i = P_i ⊕ K_i", "level": 3 },
+              { "id": "b5_6_2", "label": "One-Time Pad (Truly random key of message length)", "level": 3 },
+              { "id": "b5_6_3", "label": "Sole unconditionally secure system; key sync limitation", "level": 3 }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "b6",
+        "label": "6. Transposition, Rotors & Steganography",
+        "level": 1,
+        "children": [
+          {
+            "id": "b6_1",
+            "label": "Rail Fence Cipher",
+            "level": 2,
+            "children": [
+              { "id": "b6_1_1", "label": "Diagonal zigzag writing across d rails, row reading", "level": 3 }
+            ]
+          },
+          {
+            "id": "b6_2",
+            "label": "Rectangular Columnar Transposition",
+            "level": 2,
+            "children": [
+              { "id": "b6_2_1", "label": "Row-by-row write, column read via key permutation", "level": 3 },
+              { "id": "b6_2_2", "label": "Frequency preserved, anagramming attacks reconstruct", "level": 3 }
+            ]
+          },
+          {
+            "id": "b6_3",
+            "label": "Multiple Transposition",
+            "level": 2,
+            "children": [
+              { "id": "b6_3_1", "label": "Two successive transposition stages yielding complex diffusion", "level": 3 }
+            ]
+          },
+          {
+            "id": "b6_4",
+            "label": "Rotor Machines",
+            "level": 2,
+            "children": [
+              { "id": "b6_4_1", "label": "26 input/output pins, continuous cylinder rotation", "level": 3 },
+              { "id": "b6_4_2", "label": "Period multiplier: 3 rotors = 26³ = 17,576 substitution alphabets", "level": 3 },
+              { "id": "b6_4_3", "label": "Historical Landmark (German WWII Enigma Machine)", "level": 3 }
+            ]
+          },
+          {
+            "id": "b6_5",
+            "label": "Steganography",
+            "level": 2,
+            "children": [
+              { "id": "b6_5_1", "label": "Hiding existence of message vs. hiding meaning (cryptography)", "level": 3 },
+              { "id": "b6_5_2", "label": "Classical (Invisible ink, pin punctures, character marking)", "level": 3 },
+              { "id": "b6_5_3", "label": "Digital (LSB replacement in 24-bit images & audio files)", "level": 3 }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+
