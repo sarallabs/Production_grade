@@ -1,0 +1,128 @@
+{
+  "subject": "rw",
+  "unit": "week_2",
+  "level": "beginner",
+  "total_cards": 20,
+  "flashcards": [
+    {
+      "id": "card_01",
+      "front": "What are the four kinds of reading identified by Hirschberg?",
+      "back": "1. Casual Reading\n2. Reading for Pleasure\n3. Reading for Information\n4. Critical Reading",
+      "level": "beginner"
+    },
+    {
+      "id": "card_02",
+      "front": "What defines 'Casual Reading'?",
+      "back": "Glancing at road signs, headlines, and notifications out of daily necessity with minimal mental effort.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_03",
+      "front": "What is the primary purpose of 'Reading for Pleasure'?",
+      "back": "Relaxed and uncritical reading (e.g. mystery novels) to be transported to an imaginary world.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_04",
+      "front": "What is 'Critical Reading'?",
+      "back": "Active reading where you engage in a mental dialogue with the author, question claims, and avoid gullibility.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_05",
+      "front": "What does the French word 'essais' mean, and who coined it?",
+      "back": "'Essais' means 'attempts' or 'trials', coined in 1580 by Michel de Montaigne to describe personal explorations of the mind.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_06",
+      "front": "What are the 3 steps of the Cognitive Triad in critical reading?",
+      "back": "1. Analysis (Deconstruction)\n2. Synthesis (Blending ideas)\n3. Evaluation (Judging and taking a stand)",
+      "level": "beginner"
+    },
+    {
+      "id": "card_07",
+      "front": "How does Synthesis 'tamper down our arrogance'?",
+      "back": "It demonstrates that on complex, knotty subjects, more than a single valid opinion exists.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_08",
+      "front": "What does 'Demystify the Writer' mean in Metherell & Winkler's guidelines?",
+      "back": "Kicking the author off the throne of public esteem\u2014viewing writers as fallible humans prone to bias and errors.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_09",
+      "front": "Why should you 'imagine an opposing point of view' for every opinion?",
+      "back": "To test the strength of arguments and avoid one-sided bias (e.g. medical research on dogs led to insulin).",
+      "level": "beginner"
+    },
+    {
+      "id": "card_10",
+      "front": "Why is the date of scientific evidence important? (Give Tonegawa example)",
+      "back": "Evidence changes over time. Before Susumu Tonegawa's 1976 discovery, antibody creation was an unsolved mystery.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_11",
+      "front": "What is an 'Ad Hominem' logical fallacy?",
+      "back": "Attacking the personal character or appearance of the arguer instead of addressing their argument.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_12",
+      "front": "What is an 'Either/Or' fallacy (False Dilemma)?",
+      "back": "Presenting a complex controversy as if only two extreme choices exist, ignoring shades of gray.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_13",
+      "front": "What is a 'Bogus Claim'?",
+      "back": "An unsubstantiated assertion (e.g. 'Studies prove beyond doubt...') that lacks verifiable evidence or source citations.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_14",
+      "front": "Why is keeping a book clean to resell it 'penny-wise and pound-foolish'?",
+      "back": "Because annotating notes in the margins active engages your mind and gives you a far more valuable education.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_15",
+      "front": "What was the opening context of Andy Rooney's essay on Fowler's English Usage?",
+      "back": "Written for a 2000 Screenwriters Guild feature titled 'A Writer's Fantasy: What I Wish I Had Written'.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_16",
+      "front": "What is a 'Thesis Statement' in an essay?",
+      "back": "A single sentence that asserts the author's central response to an issue that others might debate.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_17",
+      "front": "Give three examples of 'Premise Signals'.",
+      "back": "'Because', 'since', 'for', 'follows from', 'inasmuch as'.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_18",
+      "front": "Give three examples of 'Conclusion Signals'.",
+      "back": "'Therefore', 'hence', 'thus', 'so', 'it follows that', 'consequently'.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_19",
+      "front": "What is 'Intertextuality'?",
+      "back": "The reference to or application of a literary, media, or social 'text' within another text.",
+      "level": "beginner"
+    },
+    {
+      "id": "card_20",
+      "front": "What are the two forms of Intertextuality according to Dharwadker?",
+      "back": "1. 'Book in a Book' (literary text in another literary text)\n2. 'Other Text in a Book' (media or social narrative in literature)",
+      "level": "beginner"
+    }
+  ]
+}
