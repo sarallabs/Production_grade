@@ -1,0 +1,128 @@
+{
+  "subject": "rw",
+  "unit": "week_2",
+  "level": "intermediate",
+  "total_cards": 20,
+  "flashcards": [
+    {
+      "id": "card_01",
+      "front": "Contrast 'Reading for Information' with 'Critical Reading' across cognitive engagement.",
+      "back": "Reading for information is utilitarian memorization treating text as authoritative data; critical reading is an active dialectical duel questioning claims, premises, and biases.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_02",
+      "front": "What epistemological breakthrough did Michel de Montaigne achieve in 1580?",
+      "back": "He coined 'essais' (attempts), moving prose from dogmatic pronouncements of absolute truth to personal disclosures of a mind exploring its attitudes and doubts.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_03",
+      "front": "Explain the 3 phases of Hirschberg's Cognitive Triad.",
+      "back": "1. Analysis (Deconstructing claims & warrants)\n2. Synthesis (Blending cross-disciplinary data into an original thesis)\n3. Evaluation (Auditing evidentiary weight & taking a reasoned stand)",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_04",
+      "front": "Why is Synthesis defined as the 'antidote to intellectual arrogance'?",
+      "back": "Because synthesizing multiple conflicting perspectives proves that complex controversies have multi-faceted valid viewpoints, curbing one-sided dogmatism.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_05",
+      "front": "What does 'Demystifying the Writer' mean for Senior High School scholars?",
+      "back": "Kicking the author off the pedestal of unquestioned esteem\u2014auditing their work as a fallible human construction prone to demographic and ideological bias.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_06",
+      "front": "How does the insulin discovery case study support the principle of argument inversion?",
+      "back": "Inverting the anti-animal-testing claim highlights that canine medical trials produced insulin, saving millions of human lives\u2014forcing a nuanced ethical balance.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_07",
+      "front": "How do underlying philosophical values shape the arguments of Jefferson vs. Marx?",
+      "back": "Jefferson bases his argument on universal individual equality; Marx bases his on the supreme societal value of labor. Claims are rooted in competing ethical warrants.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_08",
+      "front": "Explain how historical events refuted a psychological claim in Metherell & Winkler.",
+      "back": "Native American resistance at Fallen Timbers (1794) and Tippecanoe (1811) disproved the psychological hypothesis that oppressed peoples naturally develop passive defeatism.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_09",
+      "front": "Why does Dr. Susumu Tonegawa's 1976 discovery emphasize the recency of scientific evidence?",
+      "back": "Before 1976, antibody gene rearrangement was deemed an unsolved mystery. Using pre-1976 citations today would yield obsolete, factually inaccurate evidence.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_10",
+      "front": "Define the 'Ad Hominem' fallacy and explain why it is logically invalid.",
+      "back": "Attacking the arguer's personal character rather than their premise. It is invalid because the truth of a claim is independent of the person asserting it.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_11",
+      "front": "Define 'Begging the Question' (Petitio Principii) and provide an example.",
+      "back": "Circular reasoning where the premise assumes the truth of the conclusion (e.g., 'We must trust this text because it is trustworthy').",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_12",
+      "front": "What characterizes an 'Either/Or' fallacy (False Dilemma)?",
+      "back": "Artificially constraining a complex multidimensional controversy into a stark binary choice, ignoring reasonable intermediate positions.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_13",
+      "front": "Why is keeping textbooks pristine to resell them considered 'penny-wise and pound-foolish'?",
+      "back": "Sacrificing margin annotations saves nominal resale currency but destroys the far more valuable cognitive benefits of active textual interrogation.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_14",
+      "front": "What was the rhetorical purpose of Andy Rooney's essay on Fowler's English Usage?",
+      "back": "Commissioned for the 2000 Screenwriters Guild symposium 'A Writer's Fantasy', Rooney satirized pedantic grammatical prescriptivism and archaic usage rules.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_15",
+      "front": "How does Mark Twain formulate his central thesis in 'The Lowest Animal'?",
+      "back": "He asserts that man is the only animal harboring insults, brooding over injuries, and executing premeditated revenge\u2014reversing traditional moral hierarchies.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_16",
+      "front": "List four Premise Signals and four Conclusion Signals.",
+      "back": "Premise: 'inasmuch as', 'because', 'since', 'follows from'. Conclusion: 'consequently', 'therefore', 'thus', 'it follows that'.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_17",
+      "front": "Define Dharwadker's two forms of Intertextuality: Form 1 vs. Form 2.",
+      "back": "Form 1: 'Book in a Book' (literary text in literary text). Form 2: 'Other Text in a Book' (media or historical narrative in literary text).",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_18",
+      "front": "Explain the three functions of Intertextuality: Comparison, Dialogue, Destabilization.",
+      "back": "Comparison contrasts source and host; Dialogue stages a polyphonic conversation; Destabilization subverts conventional interpretations of either narrative.",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_19",
+      "front": "What are the three transformative effects produced by Intertextuality?",
+      "back": "1. Transformation of the primary host text\n2. Reflexive transformation of the prior text\n3. Simultaneous reciprocal reinterpretation of both texts",
+      "level": "intermediate"
+    },
+    {
+      "id": "card_20",
+      "front": "Contrast digital Hypertext with literary Intertextuality.",
+      "back": "Hypertext connects electronic nodes via clickable URLs; Intertextuality connects cultural and thematic narratives across the reader's consciousness.",
+      "level": "intermediate"
+    }
+  ]
+}
