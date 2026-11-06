@@ -1,0 +1,111 @@
+1
+00:00:00,000 --> 00:00:03,160
+This is the brief on advanced ER and extended ER mechanisms.
+
+2
+00:00:03,740 --> 00:00:07,340
+So today, we're tackling the most frequently failed database exam topic,
+
+3
+00:00:07,640 --> 00:00:12,560
+demystifying the complex visual language of weak entity sets and extended ER abstractions,
+
+4
+00:00:12,740 --> 00:00:14,760
+so you can easily ace your schema designs.
+
+5
+00:00:15,340 --> 00:00:19,700
+First up, let's look at the trickiest concept of existence dependency, weak entities.
+
+6
+00:00:20,320 --> 00:00:22,260
+These guys literally cannot exist on their own.
+
+7
+00:00:22,700 --> 00:00:24,000
+Think of a health insurance policy.
+
+8
+00:00:24,300 --> 00:00:27,420
+A dependent only exists in the system because the employee exists, right?
+
+9
+00:00:27,980 --> 00:00:33,680
+In your diagram, a weak entity needs an identifying owner, which is a strong entity, connected by a double diamond.
+
+10
+00:00:34,160 --> 00:00:37,060
+It gets a dashed underline for its discriminator, or partial key.
+
+11
+00:00:37,480 --> 00:00:41,560
+To form its actual primary key, you just combine the owner's primary key with that discriminator.
+
+12
+00:00:41,920 --> 00:00:43,880
+And this ties right into participation constraints.
+
+13
+00:00:44,160 --> 00:00:49,820
+You'll see total participation shown as a double line, meaning the entity absolutely must participate to survive,
+
+14
+00:00:50,220 --> 00:00:52,860
+versus a single line for optional partial participation.
+
+15
+00:00:53,640 --> 00:00:56,160
+Second, now that we know how entities depend on each other,
+
+16
+00:00:56,320 --> 00:00:58,720
+let's talk about how they inherit traits through family trees,
+
+17
+00:00:59,120 --> 00:01:00,980
+also known as ISA hierarchies.
+
+18
+00:01:01,440 --> 00:01:04,020
+You've got specialization, which is top-down decomposition,
+
+19
+00:01:04,500 --> 00:01:06,780
+and generalization, which is bottom-up synthesis.
+
+20
+00:01:07,400 --> 00:01:08,580
+The rules here are pretty simple.
+
+21
+00:01:09,020 --> 00:01:13,280
+A disjoint constraint means an entity can only belong to one mutually exclusive subclass.
+
+22
+00:01:13,800 --> 00:01:15,740
+Overlapping? Well, that means it can belong to multiple.
+
+23
+00:01:16,280 --> 00:01:19,940
+And if every superclass entity absolutely must belong to at least one subclass,
+
+24
+00:01:19,940 --> 00:01:23,660
+that's total covering, opposed to partial covering where it just doesn't have to.
+
+25
+00:01:24,480 --> 00:01:28,780
+Finally, we have the aggregation construct, which you need specifically to bypass standard rules,
+
+26
+00:01:29,200 --> 00:01:32,900
+allowing you to link relationships directly with other relationships by treating them as
+
+27
+00:01:32,900 --> 00:01:36,840
+higher-level composite entities. Nail these mechanics down, and you'll be able to perfectly
+
+28
+00:01:36,840 --> 00:01:38,460
+read literally any database schema.

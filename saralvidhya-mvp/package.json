@@ -15,7 +15,8 @@
     "test:vitest": "vitest run",
     "test:pytest": "pytest",
     "test:all": "concurrently \"npm run test:vitest\" \"npm run test:pytest\"",
-    "check:tenant-literals": "node scripts/check-no-tenant-literals.mjs"
+    "check:tenant-literals": "node scripts/check-no-tenant-literals.mjs",
+    "deploy:vvit": "node scripts/check-no-tenant-literals.mjs && vite build --mode vvit && firebase deploy --only hosting:saralvidhya-vvit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

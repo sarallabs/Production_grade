@@ -193,13 +193,49 @@ export default function App() {
           </ProtectedRoute>
         </AuthGuard>
       } />
-      <Route path="study-table" element={
-        <AuthGuard>
-          <ProtectedRoute>
-            <StudyTable />
-          </ProtectedRoute>
-        </AuthGuard>
-      } />
+      {[
+        "study-table",
+        "read",
+        "summary",
+        "detailed",
+        "listen",
+        "podcasts",
+        "watch",
+        "videos",
+        "revise",
+        "flashcards",
+        "assessment",
+        "assessments",
+        "question-bank",
+        "qbank",
+        "pyq",
+        "pyqs",
+        "exam-prep",
+        "prep-exam",
+        "preparation-exam",
+        "mocktest",
+        "study-plan",
+        "mindmaps",
+        "mindmap",
+        "takeaways",
+        "key-takeaways",
+        "ask-me",
+        "ask",
+        "swot",
+        "deep-dive",
+      ].map((toolPath) => (
+        <Route
+          key={toolPath}
+          path={toolPath}
+          element={
+            <AuthGuard>
+              <ProtectedRoute>
+                <StudyTable />
+              </ProtectedRoute>
+            </AuthGuard>
+          }
+        />
+      ))}
       <Route path="previous-year-questions" element={
         <AuthGuard>
           <ProtectedRoute>

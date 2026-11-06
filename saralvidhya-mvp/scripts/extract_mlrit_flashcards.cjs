@@ -6,7 +6,7 @@ const outDir = path.resolve(__dirname, '../public/generated_resources/mlrit/dbms
 fs.mkdirSync(outDir, { recursive: true });
 
 // Also copy the Mindmap PNG if it exists
-const mindmapSrc = path.resolve('d:/SV-Medha_ production_grade/MLRIT/DBMS/Resources/Mindmaps/NotebookLM Mind Map.png');
+const mindmapSrc = path.resolve('d:/SV-Medha_ production_grade/saralvidhya-production/staging/MLRIT/DBMS/Resources/Mindmaps/NotebookLM Mind Map.png');
 const mindmapDstDir = path.resolve(__dirname, '../public/generated_resources/mlrit/dbms/chapter_01/Resources/Mindmaps');
 fs.mkdirSync(mindmapDstDir, { recursive: true });
 if (fs.existsSync(mindmapSrc)) {
@@ -22,7 +22,7 @@ if (fs.existsSync(mindmapSrc)) {
 }
 
 levels.forEach(lvl => {
-  const p = path.resolve(`d:/SV-Medha_ production_grade/MLRIT/DBMS/Practice/Revise/DBMS_UNIT_I_Flashcards_${lvl}.md`);
+  const p = path.resolve(`d:/SV-Medha_ production_grade/saralvidhya-production/staging/MLRIT/DBMS/Practice/Revise/DBMS_UNIT_I_Flashcards_${lvl}.md`);
   if (!fs.existsSync(p)) {
     console.log('File not found:', p);
     return;

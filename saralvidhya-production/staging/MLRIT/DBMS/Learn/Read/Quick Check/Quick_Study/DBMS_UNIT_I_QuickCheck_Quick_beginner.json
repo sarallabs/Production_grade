@@ -1,0 +1,158 @@
+{
+  "course_id": "MLRIT_DBMS_U1",
+  "course_name": "Database Management Systems",
+  "unit": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "study_track": "Quick_Study",
+  "persona": "beginner",
+  "total_questions": 6,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Fundamentals and Engine Architecture",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "The Database Administrator (DBA) is primarily responsible for designing the database schema, granting user permissions, managing security, and monitoring database performance.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (True)",
+      "rationale": "True. The DBA has central control over the system, managing security authorizations, physical storage, schema design, and operational backups. (Key Takeaway: The DBA controls database access, schema definition, and maintenance.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Conceptual Database Design & ER Modeling",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which geometric shape represents an Entity Set in standard Peter Chen ER notation?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Rectangle \u2014 represents an Entity Set",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Diamond \u2014 represents an individual attribute",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Ellipse \u2014 represents an active relational table",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "In Chen ER notation, Rectangles represent Entity Sets, Diamonds represent Relationship Sets, and Ellipses represent Attributes. (Key Takeaway: In ER diagrams, rectangles represent entity sets.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Advanced ER and Extended ER (EER) Concepts",
+      "type": "true_false",
+      "prompt_type": "Statement",
+      "stem": "In an ER diagram, the Partial Key (Discriminator) of a weak entity set is indicated by a solid underline.",
+      "options": [
+        {
+          "key": "A",
+          "text": "True",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "False",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "B (False)",
+      "rationale": "False \u2014 swapped_term. A solid underline indicates a Primary Key of a strong entity set. A partial key (discriminator) of a weak entity set is indicated by a dashed (dotted) underline. (Key Takeaway: Partial keys are marked with dashed underlines; primary keys with solid underlines.)",
+      "alteration_type": "swapped_term",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Relational Model Foundations & Integrity Constraints",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the primary role of a Foreign Key in a relational database?",
+      "options": [
+        {
+          "key": "A",
+          "text": "An auto-incrementing integer used solely to number rows sequentially",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "An attribute in one table that references the primary key of another table to maintain referential integrity",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "A special security password required to connect to international servers",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "A Foreign Key is an attribute or set of attributes in a referencing table that matches the primary key of a referenced table, enforcing referential integrity across relations. (Key Takeaway: Foreign keys link tables and enforce referential integrity.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Logical Database Design (ER-to-Relational Translation)",
+      "type": "yes_no",
+      "prompt_type": "Question",
+      "stem": "During ER-to-relational schema mapping, does a Multivalued Attribute (such as multiple skills for an employee) map into a brand new, separate table?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Yes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "No",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A (Yes)",
+      "rationale": "Yes. Relational 1NF forbids non-atomic or multi-valued fields in a single row. Therefore, every multivalued attribute maps into a separate table containing the attribute and the parent primary key as a foreign key. (Key Takeaway: Multivalued attributes always map to a separate table to satisfy 1NF.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Relational Querying, Views & Schema Evolution",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which SQL command is used to add a new column to an existing table without erasing or dropping the existing table?",
+      "options": [
+        {
+          "key": "A",
+          "text": "CREATE TABLE \u2014 it recreates the table structure from scratch",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "ALTER TABLE ... ADD \u2014 it adds new column definitions while preserving existing rows",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "UPDATE TABLE \u2014 it writes new schema metadata into temporary memory buffers",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "ALTER TABLE is a DDL command that modifies the schema definition of an existing table (e.g., adding or dropping columns) without data loss. (Key Takeaway: ALTER TABLE modifies existing table schemas without deleting stored data.)",
+      "bloom_level": "L1"
+    }
+  ]
+}

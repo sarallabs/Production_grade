@@ -2,7 +2,7 @@
 
 Usage (from repo root):
     python saralvidhya-production/tools/adapters/mlrit_adapter.py \
-        --src MLRIT/DBMS --out saralvidhya-production/tools/build/mlrit
+        --src saralvidhya-production/staging/MLRIT/DBMS --out saralvidhya-production/tools/build/mlrit
 
 Then:
     sv-publish validate saralvidhya-production/tools/build/mlrit
@@ -149,7 +149,7 @@ def cp(src: Path, dst: Path, log: list):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--src", default="MLRIT/DBMS")
+    ap.add_argument("--src", default="saralvidhya-production/staging/MLRIT/DBMS")
     ap.add_argument("--out", default=str(TOOLS / "build" / "mlrit"))
     a = ap.parse_args()
     src, out = Path(a.src), Path(a.out)

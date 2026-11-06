@@ -1,0 +1,265 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "title": "Comprehensive Study Guide: Database System Concepts, ER Model & Relational Design",
+  "persona": "Advanced",
+  "cefr_language_tier": "C2",
+  "target_audience": "Advanced research students, systems architects, and high-rank competitive examinees",
+  "bloom_tier": "L5 Evaluating / L6 Creating",
+  "mindmap_depth_target": "L0-LN (100% Full Tree)",
+  "word_count": 12063,
+  "infographics_count": 30,
+  "infographics_included": [
+    "0.0",
+    "1.0",
+    "1.1",
+    "1.2",
+    "1.3",
+    "1.4",
+    "1.5",
+    "2.0",
+    "2.1",
+    "2.2",
+    "2.3",
+    "2.4",
+    "3.0",
+    "3.1",
+    "3.2",
+    "3.3",
+    "3.4",
+    "4.0",
+    "4.1",
+    "4.2",
+    "4.3",
+    "5.0",
+    "5.1",
+    "5.2",
+    "5.3",
+    "5.4",
+    "6.0",
+    "6.1",
+    "6.2",
+    "6.3"
+  ],
+  "verbatim_definitions_preserved": [
+    "Database",
+    "DBMS",
+    "Instance",
+    "Schema",
+    "Physical Schema",
+    "Logical Schema",
+    "Subschema",
+    "Data Model",
+    "DDL",
+    "DML",
+    "Transaction",
+    "Entity",
+    "Entity Set",
+    "Attribute",
+    "Relationship",
+    "Relationship Set",
+    "Primary Key",
+    "Weak Entity Set",
+    "Identifying Owner",
+    "Generalization",
+    "Specialization",
+    "Aggregation",
+    "Relation Schema",
+    "Relation Instance",
+    "Domain Constraint",
+    "Entity Integrity",
+    "Referential Integrity",
+    "Foreign Key",
+    "View"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 1.0",
+      "image_tag": "0.0",
+      "title": "Master Curriculum Architecture: Database System Concepts, ER Modeling & Relational Design",
+      "module": "Roadmap"
+    },
+    {
+      "figure_no": "Fig 1.1",
+      "image_tag": "1.0",
+      "title": "Database Management System Engine Architecture & Internal Subsystems",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 1.2",
+      "image_tag": "1.1",
+      "title": "Comparative Analysis: Database Systems vs. Operating System File Processing",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 1.3",
+      "image_tag": "1.2",
+      "title": "ANSI/SPARC Three-Schema Abstraction & Data Independence Framework",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 1.4",
+      "image_tag": "1.3",
+      "title": "Database Users Taxonomy & Administrator Governance Framework",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 1.5",
+      "image_tag": "1.4",
+      "title": "Transaction Processing Architecture & ACID State Machine Invariants",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 1.6",
+      "image_tag": "1.5",
+      "title": "Concurrency Control Anomalies & Conflict Serializability Graphs",
+      "module": "Module 1"
+    },
+    {
+      "figure_no": "Fig 2.2",
+      "image_tag": "2.1",
+      "title": "Database Design Engineering Phases & Architectural Stages",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.1",
+      "image_tag": "2.0",
+      "title": "Conceptual Database Design Lifecycle & Entity-Relationship Modeling Framework",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.3",
+      "image_tag": "2.2",
+      "title": "Entity-Relationship Diagram Standard Geometric Notation Reference",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.4",
+      "image_tag": "2.3",
+      "title": "Entity Classifications & Attribute Typology Taxonomy",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.5",
+      "image_tag": "2.4",
+      "title": "Relationship Mapping Cardinality Constraints (1:1, 1:N, N:1, M:N)",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 3.2",
+      "image_tag": "3.1",
+      "title": "Structural Existence Dependencies: Total vs. Partial Participation Constraints",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.1",
+      "image_tag": "3.0",
+      "title": "Advanced ER & Extended ER (EER) Modeling Primitives Overview",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.3",
+      "image_tag": "3.2",
+      "title": "Weak Entity Sets, Partial Keys (Discriminators) & Identifying Relationships",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.4",
+      "image_tag": "3.3",
+      "title": "Specialization & Generalization ISA Class Inheritance Hierarchies",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.5",
+      "image_tag": "3.4",
+      "title": "Aggregation Abstraction for Higher-Order Relationship Associations",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 4.1",
+      "image_tag": "4.0",
+      "title": "Relational Data Model Foundations: Relations, Tuples, Attributes & Domains",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.2",
+      "image_tag": "4.1",
+      "title": "Fundamental Primitive Relational Algebra Operators (σ, π, ∪, -, ×, ρ)",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.3",
+      "image_tag": "4.2",
+      "title": "Database Integrity Constraints Classification Framework",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 4.4",
+      "image_tag": "4.3",
+      "title": "SQL Declarative Constraint Enforcement & Table DDL Invariants",
+      "module": "Module 4"
+    },
+    {
+      "figure_no": "Fig 5.1",
+      "image_tag": "5.0",
+      "title": "Conceptual ER-to-Relational Logical Schema Reduction Pipeline",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.2",
+      "image_tag": "5.1",
+      "title": "Mapping Strong Entity Sets & Composite Attributes to Relations",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.4",
+      "image_tag": "5.3",
+      "title": "Mapping Weak Entity Sets & Foreign Key Cascading Identifiers",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.3",
+      "image_tag": "5.2",
+      "title": "Mapping Binary & Ternary Relationship Sets to Relational Tables",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 5.5",
+      "image_tag": "5.4",
+      "title": "Mapping EER Specialization/Generalization (4 Distinct Relational Strategies)",
+      "module": "Module 5"
+    },
+    {
+      "figure_no": "Fig 6.1",
+      "image_tag": "6.0",
+      "title": "Relational Querying Paradigms, Views & DDL Architecture Overview",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.2",
+      "image_tag": "6.1",
+      "title": "Relational Query Optimization Trees & Algebraic Equivalences",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.3",
+      "image_tag": "6.2",
+      "title": "Virtual Views vs. Materialized Views Architecture & Query Modification",
+      "module": "Module 6"
+    },
+    {
+      "figure_no": "Fig 6.4",
+      "image_tag": "6.3",
+      "title": "Schema Evolution, Dynamic DDL Operations & System Catalog Updates",
+      "module": "Module 6"
+    }
+  ]
+}

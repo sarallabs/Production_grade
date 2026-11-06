@@ -1,0 +1,54 @@
+{
+  "institution": "MLR Institute of Technology (MLRIT Autonomous)",
+  "accreditation": "UGC Autonomous / NAAC A+ Curriculum",
+  "course_code": "CS301PC",
+  "course_title": "Database Management Systems",
+  "chapter_name": "Unit 1: Database System Concepts, ER Model & Relational Design",
+  "suite_version": "v1.0 (Zero Metadata Markdown + 100% JSON Metadata Retention)",
+  "framework": "Saral Vidhya Long-Answer Pedagogy",
+  "rules_enforced": [
+    "RULE-ASM-01: Strictly 0 images (no img tags, no markdown images)",
+    "RULE-NO-MCQ-V1: Strictly 0 objective questions / 0% MCQs/MSQs",
+    "RULE-DOC-19: Markdown purity with collapsible <details> solution disclosures",
+    "Zero Metadata in Markdown: Markdown files render 100% clean educational text",
+    "100% Metadata Preservation in Companion JSON files",
+    "MLRIT-50M: 12 Questions, 50 Marks, 2.0 Hours, 50% Pass Mark"
+  ],
+  "examinations_in_suite": [
+    {
+      "tier": "pre_final",
+      "markdown_file": "pre_final_exam.md",
+      "json_companion": "pre_final_exam.json",
+      "title": "Semester Pre-Final Preparation Examination",
+      "total_questions": 12,
+      "total_marks": 50,
+      "duration_minutes": 120,
+      "sha256_md": "4f373ccae5808538893906928b3d88e8a9473a50f327dd7d5e8e54412c172302",
+      "sha256_json": "a517101e313468310bda4815595913abb2232b70c64cf88f809838fe506bc818"
+    },
+    {
+      "tier": "final",
+      "markdown_file": "final_examination.md",
+      "json_companion": "final_examination.json",
+      "title": "Semester Theory Final Examination",
+      "total_questions": 12,
+      "total_marks": 50,
+      "duration_minutes": 120,
+      "sha256_md": "cf52590b5013440ba449dd58daa99c6159218bdcbaa9a130dac9cfea45b79919",
+      "sha256_json": "c3ccd7b9da0db290104de2e5c202a8206d9d56b136d9120d4c7d0d4da5b8b5b6"
+    },
+    {
+      "tier": "certification",
+      "markdown_file": "certification_exam.md",
+      "json_companion": "certification_exam.json",
+      "title": "Professional Certification Examination",
+      "total_questions": 12,
+      "total_marks": 50,
+      "duration_minutes": 120,
+      "sha256_md": "f301a3c652beecd8e2b6bb7371626b09a0459055932b3eadaa5ecfe660ce3d84",
+      "sha256_json": "84b7e71a9c53e6349469af4743e9f6fcb8fcb5473578c06de748359edee6c464"
+    }
+  ],
+  "rubric_ledger_file": "exam_rubric_and_keys.json",
+  "verification_report": "qa_verification_report.md"
+}

@@ -1,27 +1,32 @@
 {
   "defaultVisibleBoards": [
     "angrau_university",
-    "mlrit"
+    "mlrit",
+    "vvit"
   ],
   "boardTenantAliases": {
     "angrau": "angrau_university",
     "angrau_university": "angrau",
-    "mlrit": "mlrit"
+    "mlrit": "mlrit",
+    "vvit": "vvit"
   },
   "cloudSubjectRoutes": {
     "ento_131": "angrau/entomology",
     "entomology": "angrau/entomology",
-    "dbms": "mlrit/dbms"
+    "dbms": "mlrit/dbms",
+    "mongodb": "vvit/mongodb"
   },
   "localSubjectRoutes": {
     "ento_131": "angrau/entomology",
     "entomology": "angrau/entomology",
-    "dbms": "mlrit/dbms"
+    "dbms": "mlrit/dbms",
+    "mongodb": "vvit/mongodb"
   },
   "boardLogos": {
     "angrau": "logo-angrau.png",
     "angrau_university": "logo-angrau.png",
-    "mlrit": "logo-mlrit.png"
+    "mlrit": "logo-mlrit.png",
+    "vvit": "logo-vvit.png"
   },
   "defaultBoardLogo": "logo-angrau.png"
 }

@@ -210,7 +210,16 @@ export function getCloudBoardLogoUrl(boardId: string): string | undefined {
     activeCloudTenantConfig?.assets?.boardLogoUrls ||
     activeCloudPlatformConfig?.assets?.boardLogoUrls ||
     {};
-  return map[boardId] || map[boardId.toLowerCase()];
+  const direct = map[boardId] || map[boardId.toLowerCase()];
+  if (direct) return direct;
+  if (activeCloudTenantConfig?.id?.toLowerCase() === boardId.toLowerCase()) {
+    return (
+      activeCloudTenantConfig.branding?.logoUrl ||
+      activeCloudTenantConfig.assets?.logoUrl ||
+      activeCloudTenantConfig.logoUrl
+    );
+  }
+  return undefined;
 }
 function applyTenantBrandingToDom(cfg: TenantConfig) {
   if (cfg.branding?.appName) {

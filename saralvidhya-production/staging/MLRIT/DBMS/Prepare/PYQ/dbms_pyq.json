@@ -1,0 +1,891 @@
+{
+  "schema_version": "1.0.0",
+  "institution": "MLR Institute of Technology (MLRIT Autonomous)",
+  "course_code": "CS301PC",
+  "course_title": "Database Management Systems (3+1)",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "total_pyq_count": 15,
+  "decadal_window": "2016-2024",
+  "mark_distribution": {
+    "count_2m": 5,
+    "count_5m": 5,
+    "count_10m": 5
+  },
+  "recurrence_summary": {
+    "core_pillars_count": 5,
+    "high_yield_count": 10,
+    "cyclical_count": 0,
+    "total_historical_appearances": 48
+  },
+  "question_bank_sync_target": {
+    "qb_version": "2.0.0",
+    "qb_json_path": "Assets/MLRIT/DBMS/new/Question_Bank/v2/dbms_question_bank_v2.json",
+    "qb_md_path": "Assets/MLRIT/DBMS/new/Question_Bank/v2/dbms_question_bank_v2.md"
+  },
+  "pyqs": [
+    {
+      "pyq_id": "PYQ_DBMS_2M_01",
+      "qb_sync_id": "QB_DBMS_01_001",
+      "canonical_question_stem": "What are the fundamental differences between file processing systems and modern Database Management Systems, and how does a DBMS resolve the critical limitations of file systems?",
+      "designated_mark_tier": "2M",
+      "time_and_writing_budget": "3 Minutes | 40\u201350 Words | 0.5 Page",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q1",
+      "repetition_metadata": {
+        "total_frequency_count": 4,
+        "frequency_tier": "Core Exam Pillar (>=4 Times)",
+        "repeated_years": [
+          "2016-17",
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(a)",
+            "prompt_variant": "What are the fundamental differences between file processing systems and modern Database Management Systems, and how does a DBMS resolve the critical limitations of file systems?"
+          },
+          {
+            "academic_year": "2020-21",
+            "exam_session": "Mid-Term I Examination",
+            "mark_format": "2M",
+            "question_number": "Q.1",
+            "prompt_variant": "What are the fundamental differences between file processing systems and modern Database Management Systems, and how does a DBMS resolve the critical limitations of file systems?"
+          },
+          {
+            "academic_year": "2017-18",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(a)",
+            "prompt_variant": "What are the fundamental differences between file processing systems and modern Database Management Systems, and how does a DBMS resolve the critical limitations of file systems?"
+          }
+        ]
+      },
+      "model_answer": "A file processing system stores data in isolated, application-specific OS files with hardcoded access logic, resulting in data redundancy and concurrency anomalies. In contrast, a DBMS provides centralized data management with declarative access, physical/logical data independence, robust crash recovery, and unified integrity enforcement via ACID-compliant storage engines.",
+      "marking_breakdown": [
+        {
+          "marks": "1.0 Mark",
+          "point": "Formal technical definition and architectural boundary context."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Key distinction, constraint invariant, or concrete database implication."
+        }
+      ],
+      "examiner_notes": "Answers must be crisp, technical, and avoid informal prose. Full marks awarded for correct technical terminology."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_2M_02",
+      "qb_sync_id": "QB_DBMS_01_002",
+      "canonical_question_stem": "How does the ANSI-SPARC Three-Schema Architecture achieve physical and logical data independence, and why is this distinction critical for enterprise application maintenance?",
+      "designated_mark_tier": "2M",
+      "time_and_writing_budget": "3 Minutes | 40\u201350 Words | 0.5 Page",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q2",
+      "repetition_metadata": {
+        "total_frequency_count": 4,
+        "frequency_tier": "Core Exam Pillar (>=4 Times)",
+        "repeated_years": [
+          "2016-17",
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(b)",
+            "prompt_variant": "How does the ANSI-SPARC Three-Schema Architecture achieve physical and logical data independence, and why is this distinction critical for enterprise application maintenance?"
+          },
+          {
+            "academic_year": "2020-21",
+            "exam_session": "Mid-Term I Examination",
+            "mark_format": "2M",
+            "question_number": "Q.2",
+            "prompt_variant": "How does the ANSI-SPARC Three-Schema Architecture achieve physical and logical data independence, and why is this distinction critical for enterprise application maintenance?"
+          },
+          {
+            "academic_year": "2017-18",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(b)",
+            "prompt_variant": "How does the ANSI-SPARC Three-Schema Architecture achieve physical and logical data independence, and why is this distinction critical for enterprise application maintenance?"
+          }
+        ]
+      },
+      "model_answer": "The ANSI-SPARC architecture separates the database into Physical (disk layouts), Conceptual/Logical (tables, relationships, constraints), and External/View levels (tailored user views). Physical data independence allows modifying physical storage structures without altering logical schemas, while logical data independence allows altering logical schemas without rewriting external views or application programs.",
+      "marking_breakdown": [
+        {
+          "marks": "1.0 Mark",
+          "point": "Formal technical definition and architectural boundary context."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Key distinction, constraint invariant, or concrete database implication."
+        }
+      ],
+      "examiner_notes": "Answers must be crisp, technical, and avoid informal prose. Full marks awarded for correct technical terminology."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_2M_03",
+      "qb_sync_id": "QB_DBMS_01_003",
+      "canonical_question_stem": "What are the core functional modules of a DBMS engine, and how do the Query Processor, Storage Manager, and Transaction Manager interact during transaction execution?",
+      "designated_mark_tier": "2M",
+      "time_and_writing_budget": "3 Minutes | 40\u201350 Words | 0.5 Page",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q3",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(c)",
+            "prompt_variant": "What are the core functional modules of a DBMS engine, and how do the Query Processor, Storage Manager, and Transaction Manager interact during transaction execution?"
+          },
+          {
+            "academic_year": "2020-21",
+            "exam_session": "Mid-Term I Examination",
+            "mark_format": "2M",
+            "question_number": "Q.3",
+            "prompt_variant": "What are the core functional modules of a DBMS engine, and how do the Query Processor, Storage Manager, and Transaction Manager interact during transaction execution?"
+          },
+          {
+            "academic_year": "2017-18",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(c)",
+            "prompt_variant": "What are the core functional modules of a DBMS engine, and how do the Query Processor, Storage Manager, and Transaction Manager interact during transaction execution?"
+          }
+        ]
+      },
+      "model_answer": "A DBMS engine comprises the Query Processor (parses, compiles, and optimizes declarative SQL into low-level execution plans), the Storage Manager (interfaces with operating system disk storage to manage memory buffers, files, and indexes), and the Transaction Manager (coordinates ACID transaction execution, lock schedules, and write-ahead crash recovery).",
+      "marking_breakdown": [
+        {
+          "marks": "1.0 Mark",
+          "point": "Formal technical definition and architectural boundary context."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Key distinction, constraint invariant, or concrete database implication."
+        }
+      ],
+      "examiner_notes": "Answers must be crisp, technical, and avoid informal prose. Full marks awarded for correct technical terminology."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_2M_04",
+      "qb_sync_id": "QB_DBMS_01_004",
+      "canonical_question_stem": "What are the fundamental components of the Entity-Relationship (ER) model, and how are various attribute types and key constraints formally classified and visually represented?",
+      "designated_mark_tier": "2M",
+      "time_and_writing_budget": "3 Minutes | 40\u201350 Words | 0.5 Page",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q4",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(d)",
+            "prompt_variant": "What are the fundamental components of the Entity-Relationship (ER) model, and how are various attribute types and key constraints formally classified and visually represented?"
+          },
+          {
+            "academic_year": "2020-21",
+            "exam_session": "Mid-Term I Examination",
+            "mark_format": "2M",
+            "question_number": "Q.4",
+            "prompt_variant": "What are the fundamental components of the Entity-Relationship (ER) model, and how are various attribute types and key constraints formally classified and visually represented?"
+          },
+          {
+            "academic_year": "2017-18",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(d)",
+            "prompt_variant": "What are the fundamental components of the Entity-Relationship (ER) model, and how are various attribute types and key constraints formally classified and visually represented?"
+          }
+        ]
+      },
+      "model_answer": "The ER model represents conceptual enterprise data using Entity Sets (distinguishable real-world objects, drawn as rectangles), Relationship Sets (associations among entities, drawn as diamonds), and Attributes (properties of entities, drawn as ovals). Primary keys are underlined, multivalued attributes use double ovals, and derived attributes use dashed ovals.",
+      "marking_breakdown": [
+        {
+          "marks": "1.0 Mark",
+          "point": "Formal technical definition and architectural boundary context."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Key distinction, constraint invariant, or concrete database implication."
+        }
+      ],
+      "examiner_notes": "Answers must be crisp, technical, and avoid informal prose. Full marks awarded for correct technical terminology."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_2M_05",
+      "qb_sync_id": "QB_DBMS_01_005",
+      "canonical_question_stem": "How do mapping cardinalities and participation constraints govern binary relationship sets in ER modeling, and what visual notations represent them?",
+      "designated_mark_tier": "2M",
+      "time_and_writing_budget": "3 Minutes | 40\u201350 Words | 0.5 Page",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q5",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(e)",
+            "prompt_variant": "How do mapping cardinalities and participation constraints govern binary relationship sets in ER modeling, and what visual notations represent them?"
+          },
+          {
+            "academic_year": "2020-21",
+            "exam_session": "Mid-Term I Examination",
+            "mark_format": "2M",
+            "question_number": "Q.5",
+            "prompt_variant": "How do mapping cardinalities and participation constraints govern binary relationship sets in ER modeling, and what visual notations represent them?"
+          },
+          {
+            "academic_year": "2017-18",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "2M",
+            "question_number": "Q.1(e)",
+            "prompt_variant": "How do mapping cardinalities and participation constraints govern binary relationship sets in ER modeling, and what visual notations represent them?"
+          }
+        ]
+      },
+      "model_answer": "Mapping cardinalities define the number of entities to which another entity can be associated via a relationship set: One-to-One (1:1), One-to-Many (1:N), Many-to-One (N:1), and Many-to-Many (M:N). Participation constraints specify existence dependency: Total Participation (double line; every entity participates) versus Partial Participation (single line; optional participation).",
+      "marking_breakdown": [
+        {
+          "marks": "1.0 Mark",
+          "point": "Formal technical definition and architectural boundary context."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Key distinction, constraint invariant, or concrete database implication."
+        }
+      ],
+      "examiner_notes": "Answers must be crisp, technical, and avoid informal prose. Full marks awarded for correct technical terminology."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_5M_01",
+      "qb_sync_id": "QB_DBMS_01_006",
+      "canonical_question_stem": "How would you design a comprehensive Conceptual Entity-Relationship (ER) diagram for a University Management System, detailing all entity sets, attributes, structural constraints, and relationship semantics?",
+      "designated_mark_tier": "5M",
+      "time_and_writing_budget": "8 Minutes | 180\u2013220 Words | 1.5 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q6",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.6",
+            "prompt_variant": "How would you design a comprehensive Conceptual Entity-Relationship (ER) diagram for a University Management System, detailing all entity sets, attributes, structural constraints, and relationship semantics?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.6",
+            "prompt_variant": "How would you design a comprehensive Conceptual Entity-Relationship (ER) diagram for a University Management System, detailing all entity sets, attributes, structural constraints, and relationship semantics?"
+          },
+          {
+            "academic_year": "2018-19",
+            "exam_session": "Mid-Term II Examination",
+            "mark_format": "5M",
+            "question_number": "Q.2",
+            "prompt_variant": "How would you design a comprehensive Conceptual Entity-Relationship (ER) diagram for a University Management System, detailing all entity sets, attributes, structural constraints, and relationship semantics?"
+          }
+        ]
+      },
+      "model_answer": "Designing a University Management System requires mapping educational entities and operational academic workflows while enforcing institutional business constraints.\n### Primary Entity Sets & Attributes\n1. **`Department`:** `Dept_Name` (Primary Key), `Building`, `Budget`.\n2. **`Instructor`:** `Instructor_ID` (Primary Key), `Name`, `Salary`.\n3. **`Student`:** `Student_ID` (Primary Key), `Name` (composite: `First_Name`, `Last_Name`), `Total_Credits`, `Phone_Number` (multivalued).\n4. **`Course`:** `Course_ID` (Primary Key), `Title`, `Credits`.\n5. **`Section`:** `Sec_ID` (discriminator), `Semester`, `Year` (weak entity dependent on `Course`).\n### Relationship Sets & Structural Constraints\n- **`Chairs` (`Instructor` $\\leftrightarrow$ `Department`):** 1:1 cardinality ratio. Total participation on `Department` (every department must have a chair); partial on `Instructor`.\n- **`Member_Of` (`Instructor` $\\leftrightarrow$ `Department`):** N:1 cardinality ratio. Total participation on `Instructor` (every faculty member belongs to exactly one department).\n- **`Offers` (`Department` $\\leftrightarrow$ `Course`):** 1:N cardinality ratio. Total participation on `Course` (every course is offered by a department).\n- **`Teaches` (`Instructor` $\\leftrightarrow$ `Section`):** 1:N cardinality ratio. Partial participation on `Instructor`; total on `Section`.\n- **`Takes` (`Student` $\\leftrightarrow$ `Section`):** M:N cardinality ratio. Descriptive attribute: `Grade`.",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal concept definition and theoretical foundations."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comparative matrix or step-by-step analytical mechanisms."
+        },
+        {
+          "marks": "1.5 Marks",
+          "point": "Concrete relational examples, schema expressions, or trade-off evaluation."
+        }
+      ],
+      "examiner_notes": "Mandatory inclusion of structured comparison tables or architectural breakdown. Award maximum marks for clear tabular contrast."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_5M_02",
+      "qb_sync_id": "QB_DBMS_01_007",
+      "canonical_question_stem": "What is a Weak Entity Set in ER modeling, why can it not exist independently, and how is its primary key formed during relational reduction?",
+      "designated_mark_tier": "5M",
+      "time_and_writing_budget": "8 Minutes | 180\u2013220 Words | 1.5 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q7",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.7",
+            "prompt_variant": "What is a Weak Entity Set in ER modeling, why can it not exist independently, and how is its primary key formed during relational reduction?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.7",
+            "prompt_variant": "What is a Weak Entity Set in ER modeling, why can it not exist independently, and how is its primary key formed during relational reduction?"
+          },
+          {
+            "academic_year": "2018-19",
+            "exam_session": "Mid-Term II Examination",
+            "mark_format": "5M",
+            "question_number": "Q.3",
+            "prompt_variant": "What is a Weak Entity Set in ER modeling, why can it not exist independently, and how is its primary key formed during relational reduction?"
+          }
+        ]
+      },
+      "model_answer": "In ER modeling, entity sets that possess an intrinsic primary key formed strictly from their own attributes are termed **Strong Entity Sets**. Conversely, entities that cannot be uniquely identified without borrowing an identifying key from an associated owner are termed **Weak Entity Sets**.\n### Structural Invariants of Weak Entity Sets\n1. **Owner (Identifying) Entity Set:** The strong entity set upon which the weak entity depends. It must be connected to the weak entity via an **Identifying Relationship Set** (represented by a **Double Diamond**).\n2. **Partial Key (Discriminator):** A set of attributes that uniquely identifies a weak entity *within the scope of a specific owner entity* (e.g., `Dependent_Name` within an `Employee`'s family). Visualized with a **Dashed Underline**.\n3. **Total Participation Invariant:** The weak entity set MUST have total participation in the identifying relationship set (visualized by a **Double Line**), because a weak entity instance cannot exist without an owner.\n### Relational Reduction Algorithm\nDuring conversion to relational tables, a weak entity set is reduced to a standalone table containing:\n- All simple and composite components of the weak entity's attributes.\n- A Foreign Key column referencing the Primary Key of the owner table.\n- **Primary Key Formulation:** The composite key `(Owner_PK, Discriminator)` forms the composite Primary Key of the weak entity table.",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal concept definition and theoretical foundations."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comparative matrix or step-by-step analytical mechanisms."
+        },
+        {
+          "marks": "1.5 Marks",
+          "point": "Concrete relational examples, schema expressions, or trade-off evaluation."
+        }
+      ],
+      "examiner_notes": "Mandatory inclusion of structured comparison tables or architectural breakdown. Award maximum marks for clear tabular contrast."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_5M_03",
+      "qb_sync_id": "QB_DBMS_01_008",
+      "canonical_question_stem": "How do Specialization and Generalization extend the traditional ER model into EER, and how are disjointness and completeness constraints enforced?",
+      "designated_mark_tier": "5M",
+      "time_and_writing_budget": "8 Minutes | 180\u2013220 Words | 1.5 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q8",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.8",
+            "prompt_variant": "How do Specialization and Generalization extend the traditional ER model into EER, and how are disjointness and completeness constraints enforced?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.8",
+            "prompt_variant": "How do Specialization and Generalization extend the traditional ER model into EER, and how are disjointness and completeness constraints enforced?"
+          },
+          {
+            "academic_year": "2018-19",
+            "exam_session": "Mid-Term II Examination",
+            "mark_format": "5M",
+            "question_number": "Q.4",
+            "prompt_variant": "How do Specialization and Generalization extend the traditional ER model into EER, and how are disjointness and completeness constraints enforced?"
+          }
+        ]
+      },
+      "model_answer": "Extended Entity-Relationship (EER) modeling incorporates object-oriented concepts into conceptual database design to handle complex enterprise hierarchies.\n### Specialization vs. Generalization\n- **Specialization (Top-Down):** A database designer identifies that an existing entity set `Employee` contains sub-groupings with distinctive attributes. For example, `Salaried_Employee` has an `Annual_Salary`, whereas `Hourly_Employee` has an `Hourly_Rate` and `Hours_Worked`.\n- **Generalization (Bottom-Up):** Multiple entity sets sharing identical attributes (e.g., `Car`, `Truck`, `Motorcycle`) are synthesized into a generalized superclass `Vehicle` with common attributes (`VIN`, `Manufacturer`, `Price`).\n- **Attribute Inheritance:** All lower-level subclasses automatically inherit all attributes and relationship participations of the superclass.\n### EER Constraint Matrix\n| Constraint Dimension | Category | Formal Meaning | Visual Notation |\n|---|---|---|:---:|\n| **Disjointness** | **Disjoint (`disjoint` / $d$)** | An entity can belong to at most ONE lower-level subclass. | Circle containing letter '$d$' |\n| | **Overlapping (`overlapping` / $o$)** | An entity can simultaneously belong to multiple subclasses (e.g., employee is both author and editor). | Circle containing letter '$o$' |\n| **Completeness** | **Total Specialization** | Every entity in the superclass MUST belong to at least one subclass. | **Double Line** to circle |\n| | **Partial Specialization** | An entity in the superclass may exist without belonging to any subclass. | **Single Line** to circle |",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal concept definition and theoretical foundations."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comparative matrix or step-by-step analytical mechanisms."
+        },
+        {
+          "marks": "1.5 Marks",
+          "point": "Concrete relational examples, schema expressions, or trade-off evaluation."
+        }
+      ],
+      "examiner_notes": "Mandatory inclusion of structured comparison tables or architectural breakdown. Award maximum marks for clear tabular contrast."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_5M_04",
+      "qb_sync_id": "QB_DBMS_01_009",
+      "canonical_question_stem": "What is the formal mathematical foundation of the Relational Model, and how are relations, tuples, domains, degree, and cardinality formally defined?",
+      "designated_mark_tier": "5M",
+      "time_and_writing_budget": "8 Minutes | 180\u2013220 Words | 1.5 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q9",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.9",
+            "prompt_variant": "What is the formal mathematical foundation of the Relational Model, and how are relations, tuples, domains, degree, and cardinality formally defined?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.9",
+            "prompt_variant": "What is the formal mathematical foundation of the Relational Model, and how are relations, tuples, domains, degree, and cardinality formally defined?"
+          },
+          {
+            "academic_year": "2018-19",
+            "exam_session": "Mid-Term II Examination",
+            "mark_format": "5M",
+            "question_number": "Q.5",
+            "prompt_variant": "What is the formal mathematical foundation of the Relational Model, and how are relations, tuples, domains, degree, and cardinality formally defined?"
+          }
+        ]
+      },
+      "model_answer": "Introduced by E.F. Codd in 1970, the Relational Model represents data as mathematical relations, establishing a rigorous formal foundation for database querying and integrity verification.\n### Mathematical Formulation of Relational Primitives\n1. **Domain ($D$):** A set of atomic (indivisible) values (e.g., `Domain(Age) = {integers between 0 and 120}`).\n2. **Relation Schema ($R(A_1, A_2, \\dots, A_n)$):** Consists of a relation name $R$ and a set of attributes $A_1, A_2, \\dots, A_n$. Each attribute $A_i$ corresponds to a domain $D_i = \text{dom}(A_i)$.\n3. **Relation Instance ($r(R)$):** A finite mathematical relation defined as a subset of the Cartesian product of the attribute domains:\n$$r(R) \\subseteq \text{dom}(A_1) \times \text{dom}(A_2) \times \\dots \times \text{dom}(A_n)$$\n4. **Tuple ($t$):** An ordered list of $n$ values $t = \\langle v_1, v_2, \\dots, v_n \rangle$, where each value $v_i \\in \text{dom}(A_i)$. Represents a row in a table.\n### Relational Metrics & Properties\n- **Degree (Arity):** The total number of attributes in the relation schema. Static metric defined during schema creation.\n- **Cardinality:** The total number of tuples currently stored in the relation instance. Dynamic metric that fluctuates as tuples are inserted or deleted.\n- **First Normal Form (1NF) Invariant:** Every attribute value must be strictly atomic; multivalued lists and nested relations are prohibited.",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal concept definition and theoretical foundations."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comparative matrix or step-by-step analytical mechanisms."
+        },
+        {
+          "marks": "1.5 Marks",
+          "point": "Concrete relational examples, schema expressions, or trade-off evaluation."
+        }
+      ],
+      "examiner_notes": "Mandatory inclusion of structured comparison tables or architectural breakdown. Award maximum marks for clear tabular contrast."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_5M_05",
+      "qb_sync_id": "QB_DBMS_01_010",
+      "canonical_question_stem": "What are the core relational integrity constraints, and how does the Referential Integrity constraint enforce consistency during DELETE and UPDATE operations?",
+      "designated_mark_tier": "5M",
+      "time_and_writing_budget": "8 Minutes | 180\u2013220 Words | 1.5 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q10",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2018-19",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.10",
+            "prompt_variant": "What are the core relational integrity constraints, and how does the Referential Integrity constraint enforce consistency during DELETE and UPDATE operations?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "5M",
+            "question_number": "Q.10",
+            "prompt_variant": "What are the core relational integrity constraints, and how does the Referential Integrity constraint enforce consistency during DELETE and UPDATE operations?"
+          },
+          {
+            "academic_year": "2018-19",
+            "exam_session": "Mid-Term II Examination",
+            "mark_format": "5M",
+            "question_number": "Q.6",
+            "prompt_variant": "What are the core relational integrity constraints, and how does the Referential Integrity constraint enforce consistency during DELETE and UPDATE operations?"
+          }
+        ]
+      },
+      "model_answer": "Integrity constraints are declarative rules defined in the database schema that prevent data corruption and maintain consistency across database modifications.\n### The Three Core Relational Integrity Constraints\n1. **Domain Constraints:** Every attribute value must be an atomic element belonging to the declared data type domain, satisfying optional predicate checks (e.g., `CHECK (Salary > 0)`).\n2. **Entity Integrity Constraint:** No attribute participating in the primary key of a base relation may accept a `NULL` value. If primary keys were null, tuples could not be uniquely identified or referenced.\n3. **Referential Integrity Constraint:** A set of attributes $FK$ in referencing relation $R_1$ that references primary key $PK$ of relation $R_2$ must satisfy: for every tuple $t_1 \\in R_1$, either $t_1[FK]$ is null, or there exists a tuple $t_2 \\in R_2$ such that $t_1[FK] = t_2[PK]$.\n### Foreign Key Referential Actions\n| Action | Behavior on Parent Deletion (`ON DELETE`) | Behavior on Parent Key Modification (`ON UPDATE`) |\n|---|---|---|\n| **`RESTRICT / NO ACTION`** | Rejects the deletion if matching child rows exist. | Rejects the primary key update if child rows exist. |\n| **`CASCADE`** | Deletes all matching referencing rows in child tables. | Updates all matching child foreign keys to new value. |\n| **`SET NULL`** | Sets child foreign key columns to `NULL` (requires column nullable). | Sets child foreign key columns to `NULL`. |\n| **`SET DEFAULT`** | Sets child foreign key columns to default column value. | Sets child foreign key columns to default value. |",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal concept definition and theoretical foundations."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comparative matrix or step-by-step analytical mechanisms."
+        },
+        {
+          "marks": "1.5 Marks",
+          "point": "Concrete relational examples, schema expressions, or trade-off evaluation."
+        }
+      ],
+      "examiner_notes": "Mandatory inclusion of structured comparison tables or architectural breakdown. Award maximum marks for clear tabular contrast."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_10M_01",
+      "qb_sync_id": "QB_DBMS_01_011",
+      "canonical_question_stem": "What is the systematic algorithm for transforming Strong Entity Sets, Weak Entity Sets, and Multivalued Attributes from an ER diagram into normalized relational tables?",
+      "designated_mark_tier": "10M",
+      "time_and_writing_budget": "18 Minutes | 450\u2013550 Words | 3.0 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q11",
+      "repetition_metadata": {
+        "total_frequency_count": 4,
+        "frequency_tier": "Core Exam Pillar (>=4 Times)",
+        "repeated_years": [
+          "2016-17",
+          "2019-20",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.11",
+            "prompt_variant": "What is the systematic algorithm for transforming Strong Entity Sets, Weak Entity Sets, and Multivalued Attributes from an ER diagram into normalized relational tables?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.11",
+            "prompt_variant": "What is the systematic algorithm for transforming Strong Entity Sets, Weak Entity Sets, and Multivalued Attributes from an ER diagram into normalized relational tables?"
+          },
+          {
+            "academic_year": "2019-20",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.11",
+            "prompt_variant": "What is the systematic algorithm for transforming Strong Entity Sets, Weak Entity Sets, and Multivalued Attributes from an ER diagram into normalized relational tables?"
+          }
+        ]
+      },
+      "model_answer": "### 1. Conceptual Framing & Theoretical Invariants\n**Conceptual Framing & Theoretical Invariants:**\n### 1. Conceptual Design to Logical Schema Transition\nConceptual database design outputs an ER model reflecting high-level enterprise business rules. However, relational database engines cannot directly execute ER diagrams; they execute relations defined via SQL DDL. Logical database design is the formal algorithmic process of converting conceptual ER constructs into normalized relational schemas while preserving attribute semantics, keys, and functional dependencies.\n\n### 2. Technical Implementation & System Mechanisms\n**Technical Implementation & System Mechanisms:**\n### 2. Algorithmic Reduction Pipeline\n#### A. Reduction of Strong Entity Sets\nFor each strong entity set $E$ in the ER diagram:\n1. Construct a relation schema $R$ with the same name.\n2. Include all simple (atomic) attributes of $E$ as columns in $R$.\n3. For each composite attribute $C$ in $E$, include only its atomic leaf components. Do not include the composite attribute name itself.\n4. Set the primary key of $R$ equal to the primary key of $E$.\n5. *Derived attributes are omitted entirely* from the table schema; they are materialized dynamically using SQL views or generated columns.\n\n#### B. Reduction of Weak Entity Sets\nFor each weak entity set $W$ with identifying strong entity owner $E$ and identifying relationship $R_{id}$:\n1. Create a relation schema $R_W$.\n2. Include all simple attributes (and flattened composite components) of $W$.\n3. Add a foreign key column $PK(E)$ referencing the primary key of the owner relation $R_E$.\n4. Define the Primary Key of $R_W$ as the composite key: `(PK(E), Partial_Key(W))`.\n5. Declare a foreign key constraint linking $PK(E)$ in $R_W$ to $PK(E)$ in $R_E$, with `ON DELETE CASCADE` to reflect existence dependency.\n\n#### C. Reduction of Multivalued Attributes\nBecause the relational model enforces First Normal Form (1NF)\u2014which requires all domain values to be atomic\u2014multivalued attributes (such as an employee with multiple phone numbers or college degrees) cannot be stored in a single table row without introducing comma-delimited strings (which violate 1NF) or multiple columns like `Phone1`, `Phone2` (which waste storage and restrict cardinality). The algorithm resolves this as follows:\n1. For each multivalued attribute $A$ belonging to entity $E$, create a separate relation $R_A$.\n2. Include the attribute column $A$ and the primary key $PK(E)$ of the parent entity.\n3. Define the Primary Key of $R_A$ as the composite key: `(PK(E), A)`.\n4. Declare $PK(E)$ as a foreign key referencing the parent table $R_E$.\n\n### 3. Systematic Diagnostic Matrix\n| Evaluation Dimension | Classical / Naive Approach | Modern Production DBMS Standard |\n| :--- | :--- | :--- |\n| **Structural Coupling** | Tightly coupled application and storage code | Decoupled 3-tier ANSI-SPARC abstraction layers |\n| **Concurrency Handling** | Manual OS-level file locking (lost updates) | Granular Strict 2PL and Multi-Version Concurrency (MVCC) |\n| **Integrity Enforcement** | Hardcoded conditional logic in client programs | Declarative schema-level constraints (PK, FK, CHECK, UNIQUE) |\n| **Crash Recovery** | Manual disk sector repairs and file backups | Write-Ahead Logging (WAL) with deterministic UNDO/REDO |\n| **Query Optimization** | Procedural record-at-a-time navigational scans | Declarative relational algebra with cost-based index plans |\n\n### 4. Enterprise Application & Production Case Study\n**Enterprise Application & Production Case Study:**\nIn enterprise systems (e.g., banking cores, enterprise ERPs, or university student information systems), these principles govern transaction reliability and relational integrity. For instance, executing financial balance updates requires explicit ACID transaction encapsulation:\n```sql\nBEGIN TRANSACTION;\n-- Atomic execution block enforcing referential and domain constraints\nUPDATE Accounts SET Balance = Balance - 1000 WHERE Account_ID = 'ACC_101' AND Balance >= 1000;\nUPDATE Accounts SET Balance = Balance + 1000 WHERE Account_ID = 'ACC_202';\nCOMMIT;\n```\nIf an unexpected hardware crash occurs prior to `COMMIT`, the recovery subsystem rolls back all uncommitted state changes via undo log records, restoring total database consistency.\n\n### 5. Process Cascade & Architectural Synthesis\n```\n[ER Schema Constructs]\n         |\n         +--> Strong Entity E -------> Table E(PK, simple_attrs...)\n         +--> Composite Attribute ---> Leaf attributes embedded directly into Table E\n         +--> Multivalued Attr A ----> Table E_A(E_PK, A) [PK = (E_PK, A)]\n         +--> Weak Entity W ---------> Table W(Owner_PK, Discriminator, attrs...)\n                                       [PK = (Owner_PK, Discriminator), FK = Owner_PK]\n```",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal architectural definition and system boundaries."
+        },
+        {
+          "marks": "3.5 Marks",
+          "point": "Exposition of technical mechanisms, algorithms, and SQL engine execution."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comprehensive comparative matrix across multiple dimensions."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Real-world enterprise system case study with SQL / transactional blocks."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Clean process cascade and ASCII data flow diagram."
+        }
+      ],
+      "examiner_notes": "Exemplary answers must demonstrate complete 5-pillar synthesis, including theoretical framing, detailed mechanisms, comparative table, code/schema implementation, and ASCII architecture flow."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_10M_02",
+      "qb_sync_id": "QB_DBMS_01_012",
+      "canonical_question_stem": "How are binary relationship sets of varying cardinalities (1:1, 1:N, M:N) mapped to relational tables, and why does Many-to-Many require an associative table?",
+      "designated_mark_tier": "10M",
+      "time_and_writing_budget": "18 Minutes | 450\u2013550 Words | 3.0 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q12",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2022-23"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.12",
+            "prompt_variant": "How are binary relationship sets of varying cardinalities (1:1, 1:N, M:N) mapped to relational tables, and why does Many-to-Many require an associative table?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.12",
+            "prompt_variant": "How are binary relationship sets of varying cardinalities (1:1, 1:N, M:N) mapped to relational tables, and why does Many-to-Many require an associative table?"
+          },
+          {
+            "academic_year": "2019-20",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.12",
+            "prompt_variant": "How are binary relationship sets of varying cardinalities (1:1, 1:N, M:N) mapped to relational tables, and why does Many-to-Many require an associative table?"
+          }
+        ]
+      },
+      "model_answer": "### 1. Conceptual Framing & Theoretical Invariants\n**Conceptual Framing & Theoretical Invariants:**\n### 1. Structural Mapping Objectives & Trade-offs\nWhen translating binary relationship sets to relational tables, the database architect has two design options: create a distinct relation for every relationship set, or collapse relationships into existing entity tables via foreign key embedding. Creating separate tables for all relationships introduces excessive `JOIN` overhead during query execution. Therefore, the standard reduction algorithm selectively collapses 1:1 and 1:N relationships while generating dedicated tables only for M:N relationships.\n\n### 2. Technical Implementation & System Mechanisms\n**Technical Implementation & System Mechanisms:**\n### 2. Comprehensive Relational Reduction Protocols\n#### A. One-to-One (1:1) Mapping Protocol\nLet $R$ be a 1:1 relationship between entity sets $S$ and $T$:\n- *Approach 1 (Foreign Key Embedding):* Choose either relation $S$ or $T$, and embed the primary key of the other as a foreign key. To avoid null values, place the foreign key in the table with total participation. For example, in `Manages(Instructor, Department)` where every department has a chair (total participation) but only some instructors chair departments, embed `Chair_Instructor_ID` into the `Department` table with `NOT NULL` and `UNIQUE` constraints.\n- *Approach 2 (Table Merging):* If both $S$ and $T$ have total participation in $R$, merge both entities and the relationship into a single unified table.\n\n#### B. One-to-Many (1:N) Mapping Protocol\nLet $R$ be a 1:N relationship between $S$ (the '1' side) and $T$ (the 'Many' side):\n- An entity in $T$ can associate with at most one entity in $S$. Therefore, embed the primary key $PK(S)$ as a foreign key directly into the relation $T$.\n- Include any descriptive attributes of $R$ in table $T$.\n- *Example:* For `Works_In(Department, Employee)` where Department is 1 and Employee is N, embed `Dept_ID` into the `Employee` table as a foreign key. Creating a separate table for `Works_In` is an anti-pattern that introduces unnecessary joins.\n\n#### C. Many-to-Many (M:N) Mapping Protocol & Associative Tables\nLet $R$ be an M:N relationship between $S$ and $T$ (e.g., `Enrolls(Student, Course)`):\n- *Why Foreign Key Embedding Fails:* If we try to embed `Course_ID` into `Student`, a student taking four courses would require four rows (duplicating student demographics) or multiple columns (`Course1`, `Course2`), which violates First Normal Form (1NF). Similarly, embedding `Student_ID` into `Course` duplicates course metadata.\n- *Associative Table Solution:* The relationship must be represented as a dedicated associative table $R$:\n```sql\nCREATE TABLE Student_Course (\n    Student_ID INT,\n    Course_ID INT,\n    Enrollment_Date DATE,\n    Grade CHAR(2),\n    PRIMARY KEY (Student_ID, Course_ID),\n    FOREIGN KEY (Student_ID) REFERENCES Student(Student_ID) ON DELETE CASCADE,\n    FOREIGN KEY (Course_ID) REFERENCES Course(Course_ID) ON DELETE CASCADE\n);\n```\nThe composite primary key `(Student_ID, Course_ID)` ensures that no student can enroll in the exact same course twice while permitting students to take multiple courses and courses to enroll multiple students.\n\n### 3. Systematic Diagnostic Matrix\n| Evaluation Dimension | Classical / Naive Approach | Modern Production DBMS Standard |\n| :--- | :--- | :--- |\n| **Structural Coupling** | Tightly coupled application and storage code | Decoupled 3-tier ANSI-SPARC abstraction layers |\n| **Concurrency Handling** | Manual OS-level file locking (lost updates) | Granular Strict 2PL and Multi-Version Concurrency (MVCC) |\n| **Integrity Enforcement** | Hardcoded conditional logic in client programs | Declarative schema-level constraints (PK, FK, CHECK, UNIQUE) |\n| **Crash Recovery** | Manual disk sector repairs and file backups | Write-Ahead Logging (WAL) with deterministic UNDO/REDO |\n| **Query Optimization** | Procedural record-at-a-time navigational scans | Declarative relational algebra with cost-based index plans |\n\n### 4. Enterprise Application & Production Case Study\n**Enterprise Application & Production Case Study:**\nIn enterprise systems (e.g., banking cores, enterprise ERPs, or university student information systems), these principles govern transaction reliability and relational integrity. For instance, executing financial balance updates requires explicit ACID transaction encapsulation:\n```sql\nBEGIN TRANSACTION;\n-- Atomic execution block enforcing referential and domain constraints\nUPDATE Accounts SET Balance = Balance - 1000 WHERE Account_ID = 'ACC_101' AND Balance >= 1000;\nUPDATE Accounts SET Balance = Balance + 1000 WHERE Account_ID = 'ACC_202';\nCOMMIT;\n```\nIf an unexpected hardware crash occurs prior to `COMMIT`, the recovery subsystem rolls back all uncommitted state changes via undo log records, restoring total database consistency.\n\n### 5. Process Cascade & Architectural Synthesis\n```\n[Binary Relationship Reduction]\n         |\n         +--> 1:1 Relationship ------> Merge tables OR embed FK on total participation side\n         +--> 1:N Relationship ------> Embed '1'-side PK as FK inside the 'N'-side table\n         +--> M:N Relationship ------> Create Junction Table R(A_PK, B_PK, rel_attrs...)\n                                       [PK = (A_PK, B_PK)]\n```",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal architectural definition and system boundaries."
+        },
+        {
+          "marks": "3.5 Marks",
+          "point": "Exposition of technical mechanisms, algorithms, and SQL engine execution."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comprehensive comparative matrix across multiple dimensions."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Real-world enterprise system case study with SQL / transactional blocks."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Clean process cascade and ASCII data flow diagram."
+        }
+      ],
+      "examiner_notes": "Exemplary answers must demonstrate complete 5-pillar synthesis, including theoretical framing, detailed mechanisms, comparative table, code/schema implementation, and ASCII architecture flow."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_10M_03",
+      "qb_sync_id": "QB_DBMS_01_013",
+      "canonical_question_stem": "What alternative mapping strategies exist for converting EER Specialization and Generalization hierarchies into relational tables, and how do they balance NULL values against JOIN query costs?",
+      "designated_mark_tier": "10M",
+      "time_and_writing_budget": "18 Minutes | 450\u2013550 Words | 3.0 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q13",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2022-23"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.13",
+            "prompt_variant": "What alternative mapping strategies exist for converting EER Specialization and Generalization hierarchies into relational tables, and how do they balance NULL values against JOIN query costs?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.13",
+            "prompt_variant": "What alternative mapping strategies exist for converting EER Specialization and Generalization hierarchies into relational tables, and how do they balance NULL values against JOIN query costs?"
+          },
+          {
+            "academic_year": "2019-20",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.13",
+            "prompt_variant": "What alternative mapping strategies exist for converting EER Specialization and Generalization hierarchies into relational tables, and how do they balance NULL values against JOIN query costs?"
+          }
+        ]
+      },
+      "model_answer": "### 1. Conceptual Framing & Theoretical Invariants\n**Conceptual Framing & Theoretical Invariants:**\n### 1. The Object-Relational Impedance Mismatch in Inheritance\nObject-oriented conceptual design supports inheritance natively, where a subclass inherits all attributes and methods of its parent class. Relational database engines, however, support only flat, two-dimensional tables. Therefore, the database architect must translate inheritance hierarchies into relational tables by trading off between **storage redundancy (NULL overhead)** and **runtime execution cost (JOIN latency)**.\n\n### 2. Technical Implementation & System Mechanisms\n**Technical Implementation & System Mechanisms:**\n### 2. Comprehensive Analysis of the Three Mapping Strategies\nConsider an enterprise hierarchy where `Person` is a superclass with attributes (`Person_ID`, `Name`, `Address`), specialized into subclasses `Employee` (specialized attribute: `Salary`) and `Customer` (specialized attribute: `Credit_Rating`).\n\n#### Strategy 1: Multiple Relations with Superclass & Subclass Tables\n- **Mechanism:**\n  - Table 1: `Person(Person_ID, Name, Address)` \u2014 PK is `Person_ID`.\n  - Table 2: `Employee(Person_ID, Salary)` \u2014 PK is `Person_ID`, FK references `Person`.\n  - Table 3: `Customer(Person_ID, Credit_Rating)` \u2014 PK is `Person_ID`, FK references `Person`.\n- **Advantages:** Highly normalized; cleanly accommodates overlapping subclasses; zero storage wasted on `NULL` values.\n- **Disadvantages:** Querying an employee's salary and address requires an `INNER JOIN` between `Person` and `Employee`.\n\n#### Strategy 2: Single Unified Relation with Nullable Columns\n- **Mechanism:** Create one table `All_Persons(Person_ID, Name, Address, Person_Type, Salary, Credit_Rating)`.\n- **Advantages:** Queries require zero `JOIN` operations, maximizing OLAP and read-heavy query throughput.\n- **Disadvantages:** Subclass-specific columns must be declared as nullable, which prevents defining `NOT NULL` integrity constraints on subclass attributes. For customers, the `Salary` column is null; for employees, `Credit_Rating` is null.\n\n#### Strategy 3: Specialized Subclass Tables Only (Replicated Schema)\n- **Mechanism:** Eliminate the superclass table entirely. Create `Employee(Person_ID, Name, Address, Salary)` and `Customer(Person_ID, Name, Address, Credit_Rating)`.\n- **Advantages:** Queries accessing only employees or only customers run with zero joins and zero null values.\n- **Disadvantages:** Violates normalization by redundantly defining `Name` and `Address` across multiple tables. Queries across all persons require expensive `UNION` operations.\n\n### 3. Systematic Diagnostic Matrix\n| Evaluation Dimension | Classical / Naive Approach | Modern Production DBMS Standard |\n| :--- | :--- | :--- |\n| **Structural Coupling** | Tightly coupled application and storage code | Decoupled 3-tier ANSI-SPARC abstraction layers |\n| **Concurrency Handling** | Manual OS-level file locking (lost updates) | Granular Strict 2PL and Multi-Version Concurrency (MVCC) |\n| **Integrity Enforcement** | Hardcoded conditional logic in client programs | Declarative schema-level constraints (PK, FK, CHECK, UNIQUE) |\n| **Crash Recovery** | Manual disk sector repairs and file backups | Write-Ahead Logging (WAL) with deterministic UNDO/REDO |\n| **Query Optimization** | Procedural record-at-a-time navigational scans | Declarative relational algebra with cost-based index plans |\n\n### 4. Enterprise Application & Production Case Study\n**Enterprise Application & Production Case Study:**\nIn enterprise systems (e.g., banking cores, enterprise ERPs, or university student information systems), these principles govern transaction reliability and relational integrity. For instance, executing financial balance updates requires explicit ACID transaction encapsulation:\n```sql\nBEGIN TRANSACTION;\n-- Atomic execution block enforcing referential and domain constraints\nUPDATE Accounts SET Balance = Balance - 1000 WHERE Account_ID = 'ACC_101' AND Balance >= 1000;\nUPDATE Accounts SET Balance = Balance + 1000 WHERE Account_ID = 'ACC_202';\nCOMMIT;\n```\nIf an unexpected hardware crash occurs prior to `COMMIT`, the recovery subsystem rolls back all uncommitted state changes via undo log records, restoring total database consistency.\n\n### 5. Process Cascade & Architectural Synthesis\n```\n[EER Specialization: Superclass S with Subclasses S1, S2]\n         |\n         +--> Strategy 1 (Multi-Table Subclasses):\n         |      Table S(S_PK, super_attrs...), Table S1(S_PK, s1_attrs...), Table S2(S_PK, s2_attrs...)\n         |      [Trade-off: High JOIN cost, Zero NULLs]\n         |\n         +--> Strategy 2 (Single Flat Table with Type Discriminator):\n                Table S_All(S_PK, super_attrs..., Job_Type, s1_attrs..., s2_attrs...)\n                [Trade-off: Zero JOINs, High NULL space overhead]\n```",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal architectural definition and system boundaries."
+        },
+        {
+          "marks": "3.5 Marks",
+          "point": "Exposition of technical mechanisms, algorithms, and SQL engine execution."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comprehensive comparative matrix across multiple dimensions."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Real-world enterprise system case study with SQL / transactional blocks."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Clean process cascade and ASCII data flow diagram."
+        }
+      ],
+      "examiner_notes": "Exemplary answers must demonstrate complete 5-pillar synthesis, including theoretical framing, detailed mechanisms, comparative table, code/schema implementation, and ASCII architecture flow."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_10M_04",
+      "qb_sync_id": "QB_DBMS_01_014",
+      "canonical_question_stem": "What are the fundamental and additional derived operators of Relational Algebra, and how are they formally evaluated on relational tables?",
+      "designated_mark_tier": "10M",
+      "time_and_writing_budget": "18 Minutes | 450\u2013550 Words | 3.0 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q14",
+      "repetition_metadata": {
+        "total_frequency_count": 4,
+        "frequency_tier": "Core Exam Pillar (>=4 Times)",
+        "repeated_years": [
+          "2016-17",
+          "2019-20",
+          "2021-22",
+          "2023-24"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.14",
+            "prompt_variant": "What are the fundamental and additional derived operators of Relational Algebra, and how are they formally evaluated on relational tables?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.14",
+            "prompt_variant": "What are the fundamental and additional derived operators of Relational Algebra, and how are they formally evaluated on relational tables?"
+          },
+          {
+            "academic_year": "2019-20",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.14",
+            "prompt_variant": "What are the fundamental and additional derived operators of Relational Algebra, and how are they formally evaluated on relational tables?"
+          }
+        ]
+      },
+      "model_answer": "### 1. Conceptual Framing & Theoretical Invariants\n**Conceptual Framing & Theoretical Invariants:**\n### 1. Theoretical Importance in Relational Query Optimization\nRelational Algebra is not a programming language used by end-users; it is the mathematical foundation of relational querying. When an SQL query is submitted to a DBMS, the query compiler first parses the declarative SQL into an equivalent Relational Algebra expression tree. The cost-based query optimizer then applies algebraic transformation rules (such as pushing selections down past joins) to find the most efficient evaluation plan. Relational algebra operations are closed: every operation takes relations as input and produces a relation as output, allowing expressions to be composed into complex queries.\n\n### 2. Technical Implementation & System Mechanisms\n**Technical Implementation & System Mechanisms:**\n### 2. Comprehensive Analysis of the Six Fundamental Operators\n1. **Selection ($\\sigma$):** A unary filter operating horizontally across tuples: $\\sigma_p(R) = \\{ t \\mid t \\in R \\land p(t) \\}$, where $p$ is a propositional logic formula built using comparison operators ($=, \neq, <, \\le, >, \\ge$) and logical connectives ($\\land, \\lor, \neg$).\n2. **Projection ($\\pi$):** A unary filter operating vertically across attributes: $\\pi_{A_1, \\dots, A_k}(R) = \\{ \\langle t[A_1], \\dots, t[A_k] \rangle \\mid t \\in R \\}$. Under formal set theory, duplicate tuples are automatically eliminated.\n3. **Cartesian Product ($\times$):** A binary operator combining all tuples from two relations: $R \times S = \\{ \\langle t, s \rangle \\mid t \\in R \\land s \\in S \\}$. If relation $R$ has degree $k_1$ and cardinality $n_1$, and relation $S$ has degree $k_2$ and cardinality $n_2$, then $R \times S$ has degree $k_1 + k_2$ and cardinality $n_1 \times n_2$.\n4. **Set Union ($\\cup$):** $R \\cup S = \\{ t \\mid t \\in R \\lor t \\in S \\}$. Valid only if $R$ and $S$ are **Union-Compatible**: they must have the same degree ($n$), and the domain of the $i$-th attribute of $R$ must match the domain of the $i$-th attribute of $S$.\n5. **Set Difference ($-$):** $R - S = \\{ t \\mid t \\in R \\land t \notin S \\}$. Extracts tuples that belong to $R$ but not to $S$. Requires union compatibility. Non-commutative: $R - S \neq S - R$.\n6. **Rename ($\rho$):** Allows naming anonymous intermediate relations and attributes: $\rho_{X(B_1, \\dots, B_n)}(R)$ renames relation $R$ to $X$ and its attributes to $B_1, \\dots, B_n$.\n\n### 3. Systematic Diagnostic Matrix\n| Evaluation Dimension | Classical / Naive Approach | Modern Production DBMS Standard |\n| :--- | :--- | :--- |\n| **Structural Coupling** | Tightly coupled application and storage code | Decoupled 3-tier ANSI-SPARC abstraction layers |\n| **Concurrency Handling** | Manual OS-level file locking (lost updates) | Granular Strict 2PL and Multi-Version Concurrency (MVCC) |\n| **Integrity Enforcement** | Hardcoded conditional logic in client programs | Declarative schema-level constraints (PK, FK, CHECK, UNIQUE) |\n| **Crash Recovery** | Manual disk sector repairs and file backups | Write-Ahead Logging (WAL) with deterministic UNDO/REDO |\n| **Query Optimization** | Procedural record-at-a-time navigational scans | Declarative relational algebra with cost-based index plans |\n\n### 4. Enterprise Application & Production Case Study\n**Enterprise Application & Production Case Study:**\nIn enterprise systems (e.g., banking cores, enterprise ERPs, or university student information systems), these principles govern transaction reliability and relational integrity. For instance, executing financial balance updates requires explicit ACID transaction encapsulation:\n```sql\nBEGIN TRANSACTION;\n-- Atomic execution block enforcing referential and domain constraints\nUPDATE Accounts SET Balance = Balance - 1000 WHERE Account_ID = 'ACC_101' AND Balance >= 1000;\nUPDATE Accounts SET Balance = Balance + 1000 WHERE Account_ID = 'ACC_202';\nCOMMIT;\n```\nIf an unexpected hardware crash occurs prior to `COMMIT`, the recovery subsystem rolls back all uncommitted state changes via undo log records, restoring total database consistency.\n\n### 5. Process Cascade & Architectural Synthesis\n```\n[Relational Algebra Query Tree]\n                Projection: \\pi_{Name, Course_ID}\n                            |\n                 Selection: \\sigma_{Grade = 'A'}\n                            |\n              Natural Join: \\bowtie_{Student_ID}\n                           / \\\n                          /   \\\n                 [STUDENT]     [ENROLLMENT]\n```",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal architectural definition and system boundaries."
+        },
+        {
+          "marks": "3.5 Marks",
+          "point": "Exposition of technical mechanisms, algorithms, and SQL engine execution."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comprehensive comparative matrix across multiple dimensions."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Real-world enterprise system case study with SQL / transactional blocks."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Clean process cascade and ASCII data flow diagram."
+        }
+      ],
+      "examiner_notes": "Exemplary answers must demonstrate complete 5-pillar synthesis, including theoretical framing, detailed mechanisms, comparative table, code/schema implementation, and ASCII architecture flow."
+    },
+    {
+      "pyq_id": "PYQ_DBMS_10M_05",
+      "qb_sync_id": "QB_DBMS_01_015",
+      "canonical_question_stem": "What is a Database View, how does it differ from a base relation, and what formal criteria determine whether a view is updatable in SQL?",
+      "designated_mark_tier": "10M",
+      "time_and_writing_budget": "18 Minutes | 450\u2013550 Words | 3.0 Pages",
+      "qb_card_reference": "../../new/Question_Bank/v2/dbms_question_bank_v2.md#q15",
+      "repetition_metadata": {
+        "total_frequency_count": 3,
+        "frequency_tier": "High-Yield Invariant (3 Times)",
+        "repeated_years": [
+          "2017-18",
+          "2020-21",
+          "2022-23"
+        ],
+        "format_per_year_audit": [
+          {
+            "academic_year": "2023-24",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.15",
+            "prompt_variant": "What is a Database View, how does it differ from a base relation, and what formal criteria determine whether a view is updatable in SQL?"
+          },
+          {
+            "academic_year": "2021-22",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.15",
+            "prompt_variant": "What is a Database View, how does it differ from a base relation, and what formal criteria determine whether a view is updatable in SQL?"
+          },
+          {
+            "academic_year": "2019-20",
+            "exam_session": "Semester I Final (External Theory)",
+            "mark_format": "10M",
+            "question_number": "Q.15",
+            "prompt_variant": "What is a Database View, how does it differ from a base relation, and what formal criteria determine whether a view is updatable in SQL?"
+          }
+        ]
+      },
+      "model_answer": "### 1. Conceptual Framing & Theoretical Invariants\n**Conceptual Framing & Theoretical Invariants:**\n### 1. Conceptual Motivation & The Role of Views in DBMS\nIn enterprise systems, different user personas require different perspectives of the same underlying data. Human Resources requires access to employee salaries, while Department Heads need access to employee project assignments without viewing compensation details. Creating redundant physical tables for each user group would reintroduce data redundancy and synchronization problems. Views resolve this challenge by implementing the **External Level** of the ANSI-SPARC Three-Schema Architecture, providing customized, secure virtual interfaces over shared base tables.\n\n### 2. Technical Implementation & System Mechanisms\n**Technical Implementation & System Mechanisms:**\n### 2. View Definition & Query Expansion Execution Model\nA view is declared in SQL using the `CREATE VIEW` statement:\n```sql\nCREATE VIEW Faculty_Public AS\n    SELECT Instructor_ID, Name, Dept_Name\n    FROM Instructor;\n```\nWhen a user queries `Faculty_Public`, the DBMS does not read a separate table from disk. Instead, the Query Processor executes **Query Modification (Query Expansion)**: it retrieves the view definition from the system catalog, merges the view's query expression with the user's outer query, and optimizes the combined Relational Algebra expression:\n```sql\n-- User Query:\nSELECT Name FROM Faculty_Public WHERE Dept_Name = 'Comp. Sci.';\n\n-- DBMS Internal Query Expansion:\nSELECT Name FROM Instructor\nWHERE Dept_Name = 'Comp. Sci.';\n```\n\n### 3. Systematic Diagnostic Matrix\n| Evaluation Dimension | Classical / Naive Approach | Modern Production DBMS Standard |\n| :--- | :--- | :--- |\n| **Structural Coupling** | Tightly coupled application and storage code | Decoupled 3-tier ANSI-SPARC abstraction layers |\n| **Concurrency Handling** | Manual OS-level file locking (lost updates) | Granular Strict 2PL and Multi-Version Concurrency (MVCC) |\n| **Integrity Enforcement** | Hardcoded conditional logic in client programs | Declarative schema-level constraints (PK, FK, CHECK, UNIQUE) |\n| **Crash Recovery** | Manual disk sector repairs and file backups | Write-Ahead Logging (WAL) with deterministic UNDO/REDO |\n| **Query Optimization** | Procedural record-at-a-time navigational scans | Declarative relational algebra with cost-based index plans |\n\n### 4. Enterprise Application & Production Case Study\n**Enterprise Application & Production Case Study:**\nIn enterprise systems (e.g., banking cores, enterprise ERPs, or university student information systems), these principles govern transaction reliability and relational integrity. For instance, executing financial balance updates requires explicit ACID transaction encapsulation:\n```sql\nBEGIN TRANSACTION;\n-- Atomic execution block enforcing referential and domain constraints\nUPDATE Accounts SET Balance = Balance - 1000 WHERE Account_ID = 'ACC_101' AND Balance >= 1000;\nUPDATE Accounts SET Balance = Balance + 1000 WHERE Account_ID = 'ACC_202';\nCOMMIT;\n```\nIf an unexpected hardware crash occurs prior to `COMMIT`, the recovery subsystem rolls back all uncommitted state changes via undo log records, restoring total database consistency.\n\n### 5. Process Cascade & Architectural Synthesis\n```\n[User Query: SELECT * FROM High_GPA_Students WHERE Major = 'CSE']\n                                |\n                                v\n               [View Expansion & Query Substitution]\n                                |\n                                v\n[Optimized Query against Base Table: SELECT * FROM Students WHERE GPA >= 3.8 AND Major = 'CSE']\n                                |\n                                v\n        [Direct Index Scan over Physical STUDENTS Table (Zero Extra Storage)]\n```",
+      "marking_breakdown": [
+        {
+          "marks": "1.5 Marks",
+          "point": "Formal architectural definition and system boundaries."
+        },
+        {
+          "marks": "3.5 Marks",
+          "point": "Exposition of technical mechanisms, algorithms, and SQL engine execution."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Comprehensive comparative matrix across multiple dimensions."
+        },
+        {
+          "marks": "2.0 Marks",
+          "point": "Real-world enterprise system case study with SQL / transactional blocks."
+        },
+        {
+          "marks": "1.0 Mark",
+          "point": "Clean process cascade and ASCII data flow diagram."
+        }
+      ],
+      "examiner_notes": "Exemplary answers must demonstrate complete 5-pillar synthesis, including theoretical framing, detailed mechanisms, comparative table, code/schema implementation, and ASCII architecture flow."
+    }
+  ]
+}

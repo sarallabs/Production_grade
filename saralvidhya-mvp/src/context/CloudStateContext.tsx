@@ -532,12 +532,17 @@ export function applyHydratedCloudState(state: CloudUserState) {
       memoryKv.set(`audio_progress_shared_${resolvedLessonId}`, progPayload);
     }
     const mcMatch = resolvedLessonId.match(/_mc_(\d+)$/);
+    const qlDlMatch = resolvedLessonId.match(/_(ql|dl)_\d+$/) || resolvedLessonId.match(/_(short|long)$/);
     if (mcMatch) {
       if (!memoryKv.has(`last_mc_${p.subjectId}_${chNum}`)) {
         memoryKv.set(`last_mc_${p.subjectId}_${chNum}`, mcMatch[1]);
       }
       if (!memoryKv.has(`last_track_${p.subjectId}_${chNum}_${activePersona}`)) {
         memoryKv.set(`last_track_${p.subjectId}_${chNum}_${activePersona}`, 'mc');
+      }
+    } else if (qlDlMatch) {
+      if (!memoryKv.has(`last_track_${p.subjectId}_${chNum}_${activePersona}`)) {
+        memoryKv.set(`last_track_${p.subjectId}_${chNum}_${activePersona}`, qlDlMatch[1]);
       }
     }
   }
