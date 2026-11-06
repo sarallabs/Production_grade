@@ -1,0 +1,33 @@
+{
+  "name": "Computational Thinking",
+  "children": [
+    {
+      "name": "Decomposition",
+      "children": [
+        { "name": "Module Partitioning" },
+        { "name": "Sub-problem Isolation" }
+      ]
+    },
+    {
+      "name": "Pattern Recognition",
+      "children": [
+        { "name": "Recurrence Identification" },
+        { "name": "Structural Analogy" }
+      ]
+    },
+    {
+      "name": "Abstraction",
+      "children": [
+        { "name": "Interface Isolation" },
+        { "name": "Irrelevant Detail Removal" }
+      ]
+    },
+    {
+      "name": "Algorithm Design",
+      "children": [
+        { "name": "Deterministic Sequences" },
+        { "name": "Complexity Bounds" }
+      ]
+    }
+  ]
+}

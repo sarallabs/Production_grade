@@ -1,0 +1,1584 @@
+{
+  "subject": "MLRIT",
+  "chapter_folder": "DBMS",
+  "chapter_title": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+  "D_max": 4,
+  "pruning_policy": "single_line_and_pass_through_pruned",
+  "total_nodes": 234,
+  "hierarchy": {
+    "node_id": "node_001",
+    "level": 0,
+    "label": "DBMS UNIT - I: Database System Concepts, ER Model & Relational Design",
+    "source_reference": "DBMS-UNIT-I.pdf (Pages 1-41)",
+    "children": [
+      {
+        "node_id": "node_002",
+        "level": 1,
+        "label": "1. Database Fundamentals & Engine Architecture",
+        "source_reference": "Pages 2-11 / Sections 1.1-1.10",
+        "children": [
+          {
+            "node_id": "node_003",
+            "level": 2,
+            "label": "Database Systems vs. File Systems",
+            "source_reference": "Pages 2-3 / Sections 1.1-1.2",
+            "children": [
+              {
+                "node_id": "node_004",
+                "level": 3,
+                "label": "Enterprise Applications Domain",
+                "source_reference": "Page 2 / Section 1.1",
+                "children": [
+                  {
+                    "node_id": "node_005",
+                    "level": 4,
+                    "label": "Mission-Critical Systems (Banking transactions, Airline reservations & Telecommunication billing)",
+                    "source_reference": "Page 2 / Section 1.1"
+                  },
+                  {
+                    "node_id": "node_006",
+                    "level": 4,
+                    "label": "Enterprise Operations (University student records, Financial accounting & Human Resource payroll)",
+                    "source_reference": "Page 2 / Section 1.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_007",
+                "level": 3,
+                "label": "File System Critical Drawbacks",
+                "source_reference": "Pages 2-3 / Section 1.2.1",
+                "children": [
+                  {
+                    "node_id": "node_008",
+                    "level": 4,
+                    "label": "Data Redundancy & Inconsistency (Duplicate data across multiple files causing wasted storage and desynchronization)",
+                    "source_reference": "Page 2 / Section 1.2.1"
+                  },
+                  {
+                    "node_id": "node_009",
+                    "level": 4,
+                    "label": "Difficulty Accessing Data (Need to write new specialized programs for every ad-hoc request)",
+                    "source_reference": "Page 2 / Section 1.2.1"
+                  },
+                  {
+                    "node_id": "node_010",
+                    "level": 4,
+                    "label": "Data Isolation & Integrity Problems (Data scattered in diverse formats + Inflexible hardcoded integrity constraints)",
+                    "source_reference": "Page 2 / Section 1.2.1"
+                  },
+                  {
+                    "node_id": "node_011",
+                    "level": 4,
+                    "label": "Atomicity, Concurrency & Security Flaws (Inconsistent states on power crashes, race condition anomalies & coarse-grained security)",
+                    "source_reference": "Pages 2-3 / Section 1.2.1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_012",
+            "level": 2,
+            "label": "Data Abstraction & Three-Schema Architecture",
+            "source_reference": "Pages 3-4 / Section 1.3",
+            "children": [
+              {
+                "node_id": "node_013",
+                "level": 3,
+                "label": "Three Levels of Data Abstraction",
+                "source_reference": "Page 3 / Section 1.3.1",
+                "children": [
+                  {
+                    "node_id": "node_014",
+                    "level": 4,
+                    "label": "Physical Level (Lowest level describing complex low-level data structures and record layouts on storage media)",
+                    "source_reference": "Page 3 / Section 1.3.1"
+                  },
+                  {
+                    "node_id": "node_015",
+                    "level": 4,
+                    "label": "Logical Level (Middle level describing what data is stored and structural relationships among all entities)",
+                    "source_reference": "Page 3 / Section 1.3.1"
+                  },
+                  {
+                    "node_id": "node_016",
+                    "level": 4,
+                    "label": "View Level (Highest level describing customized subsets of the database tailored to specific user personas)",
+                    "source_reference": "Page 3 / Section 1.3.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_017",
+                "level": 3,
+                "label": "Dual Data Independence Principles",
+                "source_reference": "Page 3 / Section 1.3.1",
+                "children": [
+                  {
+                    "node_id": "node_018",
+                    "level": 4,
+                    "label": "Physical Data Independence (Capacity to modify physical storage schemas or indexes without altering logical schemas)",
+                    "source_reference": "Page 3 / Section 1.3.1"
+                  },
+                  {
+                    "node_id": "node_019",
+                    "level": 4,
+                    "label": "Logical Data Independence (Capacity to modify logical schemas without altering external views or application programs)",
+                    "source_reference": "Page 3 / Section 1.3.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_020",
+                "level": 3,
+                "label": "Database Instances vs. Schemas",
+                "source_reference": "Pages 3-4 / Section 1.3.2",
+                "children": [
+                  {
+                    "node_id": "node_021",
+                    "level": 4,
+                    "label": "Database Schema (Overall static skeleton design and type definitions analogous to variable declarations in programming)",
+                    "source_reference": "Pages 3-4 / Section 1.3.2"
+                  },
+                  {
+                    "node_id": "node_022",
+                    "level": 4,
+                    "label": "Database Instance (Dynamic snapshot collection of information stored in the database at a specific moment in time)",
+                    "source_reference": "Pages 3-4 / Section 1.3.2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_023",
+            "level": 2,
+            "label": "Data Models & Database Languages",
+            "source_reference": "Pages 4-6 / Sections 1.3.3-1.5",
+            "children": [
+              {
+                "node_id": "node_024",
+                "level": 3,
+                "label": "Four Primary Data Model Paradigms",
+                "source_reference": "Page 4 / Section 1.3.3",
+                "children": [
+                  {
+                    "node_id": "node_025",
+                    "level": 4,
+                    "label": "Relational Model (Collection of tables with rows and columns representing data records and relations)",
+                    "source_reference": "Page 4 / Section 1.3.3"
+                  },
+                  {
+                    "node_id": "node_026",
+                    "level": 4,
+                    "label": "Entity-Relationship Model (Collection of basic objects called entities and relationship sets for conceptual design)",
+                    "source_reference": "Page 4 / Section 1.3.3"
+                  },
+                  {
+                    "node_id": "node_027",
+                    "level": 4,
+                    "label": "Object-Based Models (Object-oriented and object-relational encapsulating methods, identity, and complex data structures)",
+                    "source_reference": "Page 4 / Section 1.3.3"
+                  },
+                  {
+                    "node_id": "node_028",
+                    "level": 4,
+                    "label": "Semi-Structured Data Model (Data specifications allowing individual data items of same type to have different attribute sets e.g. XML & JSON)",
+                    "source_reference": "Page 4 / Section 1.3.3"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_029",
+                "level": 3,
+                "label": "DDL vs. DML Languages",
+                "source_reference": "Pages 4-5 / Section 1.4",
+                "children": [
+                  {
+                    "node_id": "node_030",
+                    "level": 4,
+                    "label": "Data-Definition Language / DDL (Specifies database schema structure, produces system catalog metadata, and enforces integrity constraints)",
+                    "source_reference": "Pages 4-5 / Section 1.4.2"
+                  },
+                  {
+                    "node_id": "node_031",
+                    "level": 4,
+                    "label": "Procedural DML (Requires user to specify what data is needed and how to retrieve those data step-by-step)",
+                    "source_reference": "Page 5 / Section 1.4.1"
+                  },
+                  {
+                    "node_id": "node_032",
+                    "level": 4,
+                    "label": "Declarative / Non-Procedural DML (Requires user to specify what data is needed without specifying how to retrieve it e.g. SQL)",
+                    "source_reference": "Pages 5-6 / Section 1.4.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_033",
+                "level": 3,
+                "label": "Application Program Access Methods",
+                "source_reference": "Page 5 / Section 1.5",
+                "children": [
+                  {
+                    "node_id": "node_034",
+                    "level": 4,
+                    "label": "Embedded SQL (Host language pre-processor converting EXEC SQL statements into procedural runtime API calls)",
+                    "source_reference": "Page 5 / Section 1.5"
+                  },
+                  {
+                    "node_id": "node_035",
+                    "level": 4,
+                    "label": "Application Program Interfaces (Dynamic SQL execution libraries such as ODBC for C/C++ and JDBC for Java)",
+                    "source_reference": "Page 5 / Section 1.5"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_036",
+            "level": 2,
+            "label": "DBMS Engine Internals & System Structure",
+            "source_reference": "Pages 6-8 / Sections 1.6-1.8",
+            "children": [
+              {
+                "node_id": "node_037",
+                "level": 3,
+                "label": "Transaction Management & ACID Rules",
+                "source_reference": "Page 6 / Section 1.6",
+                "children": [
+                  {
+                    "node_id": "node_038",
+                    "level": 4,
+                    "label": "Transaction Definition (A collection of operations that performs a single logical function in a database application)",
+                    "source_reference": "Page 6 / Section 1.6"
+                  },
+                  {
+                    "node_id": "node_039",
+                    "level": 4,
+                    "label": "ACID Invariants (Atomicity all-or-nothing, Consistency preserving invariants, Isolation concurrency protection, Durability persistent commits)",
+                    "source_reference": "Page 6 / Section 1.6"
+                  },
+                  {
+                    "node_id": "node_040",
+                    "level": 4,
+                    "label": "Core Transaction Modules (Concurrency Control Manager coordinating concurrent execution + Recovery Manager ensuring state restoration)",
+                    "source_reference": "Page 6 / Section 1.6"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_041",
+                "level": 3,
+                "label": "Query Processing Engine Components",
+                "source_reference": "Pages 6-7 / Section 1.7",
+                "children": [
+                  {
+                    "node_id": "node_042",
+                    "level": 4,
+                    "label": "DDL Interpreter (Parses and executes DDL schema statements, recording definitions in data dictionary metadata)",
+                    "source_reference": "Pages 6-7 / Section 1.7"
+                  },
+                  {
+                    "node_id": "node_043",
+                    "level": 4,
+                    "label": "DML Compiler & Optimizer (Parses DML queries, translates into relational algebra expressions, and selects lowest-cost execution plan)",
+                    "source_reference": "Pages 6-7 / Section 1.7"
+                  },
+                  {
+                    "node_id": "node_044",
+                    "level": 4,
+                    "label": "Query Evaluation Engine (Executes low-level primitive physical instructions generated by query optimizer)",
+                    "source_reference": "Pages 6-7 / Section 1.7"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_045",
+                "level": 3,
+                "label": "Storage Manager Modules & Data Structures",
+                "source_reference": "Pages 7-8 / Section 1.8",
+                "children": [
+                  {
+                    "node_id": "node_046",
+                    "level": 4,
+                    "label": "Storage Control Modules (Authorization & Integrity Manager, Transaction Manager, File Manager & Buffer Manager caching blocks)",
+                    "source_reference": "Pages 7-8 / Section 1.8"
+                  },
+                  {
+                    "node_id": "node_047",
+                    "level": 4,
+                    "label": "Physical Disk Data Structures (Data Files storing records, Data Dictionary storing schema metadata & Indices providing rapid lookup)",
+                    "source_reference": "Pages 7-8 / Section 1.8"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_048",
+            "level": 2,
+            "label": "System Architecture, User Personas & History",
+            "source_reference": "Pages 8-11 / Sections 1.8.1-1.10",
+            "children": [
+              {
+                "node_id": "node_049",
+                "level": 3,
+                "label": "Two-Tier vs. Three-Tier Client-Server Architecture",
+                "source_reference": "Pages 8-9 / Section 1.8.1",
+                "children": [
+                  {
+                    "node_id": "node_050",
+                    "level": 4,
+                    "label": "Two-Tier Architecture (Client machine runs user interface and business logic, invoking SQL on database system directly via ODBC/JDBC)",
+                    "source_reference": "Page 8 / Section 1.8.1"
+                  },
+                  {
+                    "node_id": "node_051",
+                    "level": 4,
+                    "label": "Three-Tier Architecture (Client web browser interfaces with Application Server business logic, which in turn coordinates with Database Server)",
+                    "source_reference": "Pages 8-9 / Section 1.8.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_052",
+                "level": 3,
+                "label": "User Hierarchy & DBA Responsibilities",
+                "source_reference": "Pages 9-10 / Section 1.9",
+                "children": [
+                  {
+                    "node_id": "node_053",
+                    "level": 4,
+                    "label": "Four Database User Classes (Naive users via forms, Application programmers writing software, Sophisticated analysts & Specialized engineers)",
+                    "source_reference": "Pages 9-10 / Section 1.9.1"
+                  },
+                  {
+                    "node_id": "node_054",
+                    "level": 4,
+                    "label": "Database Administrator / DBA Mandate (Schema definition, Storage structure & access method selection, User privilege authorization & Periodic backups)",
+                    "source_reference": "Page 10 / Section 1.9.2"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_055",
+                "level": 3,
+                "label": "Historical Evolution Milestones",
+                "source_reference": "Pages 10-11 / Section 1.10",
+                "children": [
+                  {
+                    "node_id": "node_056",
+                    "level": 4,
+                    "label": "Early Eras (1950s-1960s magnetic tapes & file systems; CODASYL network model and IBM IMS hierarchical database)",
+                    "source_reference": "Page 10 / Section 1.10"
+                  },
+                  {
+                    "node_id": "node_057",
+                    "level": 4,
+                    "label": "Relational Revolution (1970 Edgar F. Codd relational model paper; IBM System R and UC Berkeley Ingres prototypes)",
+                    "source_reference": "Page 10 / Section 1.10"
+                  },
+                  {
+                    "node_id": "node_058",
+                    "level": 4,
+                    "label": "Modern Eras (1980s ANSI SQL standardization; 1990s Data Warehousing & Object-Relational; 2000s Web XML & Cloud Big Data)",
+                    "source_reference": "Pages 10-11 / Section 1.10"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_059",
+        "level": 1,
+        "label": "2. Conceptual Database Design & ER Modeling",
+        "source_reference": "Pages 12-21 / Sections 1.11-1.15.1",
+        "children": [
+          {
+            "node_id": "node_060",
+            "level": 2,
+            "label": "Database Design Lifecycle Phases",
+            "source_reference": "Pages 12, 14 / Sections 1.11-1.12, 1.14",
+            "children": [
+              {
+                "node_id": "node_061",
+                "level": 3,
+                "label": "Phase 1 - Requirements Analysis",
+                "source_reference": "Page 12 / Section 1.12",
+                "children": [
+                  {
+                    "node_id": "node_062",
+                    "level": 4,
+                    "label": "User Requirement Gathering (Interviews and documentation reviews with prospective database users)",
+                    "source_reference": "Page 12 / Section 1.12"
+                  },
+                  {
+                    "node_id": "node_063",
+                    "level": 4,
+                    "label": "Operational Specification (Identifying functional business workflows and expected query/transaction workloads)",
+                    "source_reference": "Page 12 / Section 1.12"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_064",
+                "level": 3,
+                "label": "Phase 2 & 3 - Conceptual & Logical Design",
+                "source_reference": "Pages 12, 14 / Sections 1.12, 1.14",
+                "children": [
+                  {
+                    "node_id": "node_065",
+                    "level": 4,
+                    "label": "Conceptual Database Design (Developing a high-level enterprise ER schema independent of DBMS implementation)",
+                    "source_reference": "Page 12 / Section 1.12"
+                  },
+                  {
+                    "node_id": "node_066",
+                    "level": 4,
+                    "label": "Logical Database Design (Mapping conceptual ER schema into target DBMS data model e.g. Relational tables)",
+                    "source_reference": "Pages 12, 14 / Section 1.14"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_067",
+                "level": 3,
+                "label": "Phase 4, 5 & 6 - Refinement, Physical & Security",
+                "source_reference": "Page 14 / Section 1.14",
+                "children": [
+                  {
+                    "node_id": "node_068",
+                    "level": 4,
+                    "label": "Schema Refinement (Analyzing relational schemas using Normalization theory to eliminate update redundancies and anomalies)",
+                    "source_reference": "Page 14 / Section 1.14"
+                  },
+                  {
+                    "node_id": "node_069",
+                    "level": 4,
+                    "label": "Physical Design & Tuning (Selecting file organizations, clustering, primary/secondary indexes, and buffer parameters)",
+                    "source_reference": "Page 14 / Section 1.14"
+                  },
+                  {
+                    "node_id": "node_070",
+                    "level": 4,
+                    "label": "Security Design (Specifying user roles, discretionary access controls, and view-level authorization masks)",
+                    "source_reference": "Page 14 / Section 1.14"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_071",
+            "level": 2,
+            "label": "ER Diagram Standard Geometric Notations",
+            "source_reference": "Page 13 / Section 1.13",
+            "children": [
+              {
+                "node_id": "node_072",
+                "level": 3,
+                "label": "Primary Structural Shapes",
+                "source_reference": "Page 13 / Section 1.13",
+                "children": [
+                  {
+                    "node_id": "node_073",
+                    "level": 4,
+                    "label": "Rectangles (Entity sets) & Double Rectangles (Weak entity sets dependent on identifying owner)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  },
+                  {
+                    "node_id": "node_074",
+                    "level": 4,
+                    "label": "Diamonds (Relationship sets) & Double Diamonds (Identifying relationship sets for weak entities)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  },
+                  {
+                    "node_id": "node_075",
+                    "level": 4,
+                    "label": "Connecting Lines (Links attributes to entity sets and entity sets to relationship sets)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_076",
+                "level": 3,
+                "label": "Attribute & Constraint Geometric Styles",
+                "source_reference": "Page 13 / Section 1.13",
+                "children": [
+                  {
+                    "node_id": "node_077",
+                    "level": 4,
+                    "label": "Ellipses (Standard attributes) & Underlined Ellipse Text (Primary key attribute identifiers)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  },
+                  {
+                    "node_id": "node_078",
+                    "level": 4,
+                    "label": "Double Ellipses (Multivalued attributes) & Dashed Ellipses (Derived attributes computed dynamically)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  },
+                  {
+                    "node_id": "node_079",
+                    "level": 4,
+                    "label": "Dashed Underline Text (Discriminator / Partial key attribute of weak entity set)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  },
+                  {
+                    "node_id": "node_080",
+                    "level": 4,
+                    "label": "Double Lines (Total participation / existence dependency) & Directed Arrows (Key constraints)",
+                    "source_reference": "Page 13 / Section 1.13"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_081",
+            "level": 2,
+            "label": "Entity Concepts & Attribute Typologies",
+            "source_reference": "Pages 14-17 / Section 1.14.1",
+            "children": [
+              {
+                "node_id": "node_082",
+                "level": 3,
+                "label": "Entity & Entity Set Definitions",
+                "source_reference": "Pages 14-15 / Section 1.14.1",
+                "children": [
+                  {
+                    "node_id": "node_083",
+                    "level": 4,
+                    "label": "Entity Definition (A real-world object that is distinguishable from all other objects e.g. specific employee)",
+                    "source_reference": "Page 14 / Section 1.14.1"
+                  },
+                  {
+                    "node_id": "node_084",
+                    "level": 4,
+                    "label": "Entity Set Definition (A collection of similar entities of the same type that share identical attribute properties)",
+                    "source_reference": "Page 14 / Section 1.14.1"
+                  },
+                  {
+                    "node_id": "node_085",
+                    "level": 4,
+                    "label": "Strong vs. Weak Entities (Strong entities possess independent key attributes; Weak entities require owner key)",
+                    "source_reference": "Pages 14-15 / Section 1.14.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_086",
+                "level": 3,
+                "label": "Attribute Dimension Matrix",
+                "source_reference": "Pages 15-17 / Section 1.14.1",
+                "children": [
+                  {
+                    "node_id": "node_087",
+                    "level": 4,
+                    "label": "Simple / Atomic vs. Composite Attributes (Indivisible units vs Hierarchical components e.g. Name decomposed into First, Middle, Last)",
+                    "source_reference": "Pages 15-16 / Section 1.14.1"
+                  },
+                  {
+                    "node_id": "node_088",
+                    "level": 4,
+                    "label": "Single-Valued vs. Multivalued Attributes (Single scalar value e.g. SSN or DOB vs Set of multiple values e.g. phone_numbers or degrees)",
+                    "source_reference": "Pages 16-17 / Section 1.14.1"
+                  },
+                  {
+                    "node_id": "node_089",
+                    "level": 4,
+                    "label": "Stored vs. Derived Attributes (Physically stored in database vs Dynamically computed on-the-fly e.g. Age computed from DOB and Current_Date)",
+                    "source_reference": "Page 17 / Section 1.14.1"
+                  },
+                  {
+                    "node_id": "node_090",
+                    "level": 4,
+                    "label": "Null Value Semantics (Represents missing values, unknown values, or inapplicable attribute contexts)",
+                    "source_reference": "Page 17 / Section 1.14.1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_091",
+            "level": 2,
+            "label": "Relationships & Mapping Cardinality Constraints",
+            "source_reference": "Pages 18-21 / Sections 1.14.2-1.15.1",
+            "children": [
+              {
+                "node_id": "node_092",
+                "level": 3,
+                "label": "Relationship Set & Degree Dimensions",
+                "source_reference": "Page 18 / Section 1.14.2",
+                "children": [
+                  {
+                    "node_id": "node_093",
+                    "level": 4,
+                    "label": "Relationship Set (A mathematical relation on n >= 2 entity sets, representing associations among entities e.g. Works_In or Enrolls)",
+                    "source_reference": "Page 18 / Section 1.14.2"
+                  },
+                  {
+                    "node_id": "node_094",
+                    "level": 4,
+                    "label": "Degree of Relationship (Number of participating entity sets: Binary = 2 sets, Ternary = 3 sets, n-ary = general)",
+                    "source_reference": "Page 18 / Section 1.14.2"
+                  },
+                  {
+                    "node_id": "node_095",
+                    "level": 4,
+                    "label": "Descriptive Attributes (Attributes belonging to relationship set itself rather than participating entities e.g. since or hours)",
+                    "source_reference": "Page 18 / Section 1.14.2"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_096",
+                "level": 3,
+                "label": "Four Mapping Cardinalities",
+                "source_reference": "Pages 18-20 / Section 1.14.2",
+                "children": [
+                  {
+                    "node_id": "node_097",
+                    "level": 4,
+                    "label": "One-to-One / 1:1 Cardinality (An entity in A is associated with at most one entity in B, and B with at most one in A)",
+                    "source_reference": "Page 18 / Section 1.14.2"
+                  },
+                  {
+                    "node_id": "node_098",
+                    "level": 4,
+                    "label": "One-to-Many / 1:N Cardinality (An entity in A is associated with any number in B, while an entity in B is associated with at most one in A)",
+                    "source_reference": "Page 19 / Section 1.14.2"
+                  },
+                  {
+                    "node_id": "node_099",
+                    "level": 4,
+                    "label": "Many-to-One / N:1 Cardinality (Entities in A are associated with at most one in B, while an entity in B is associated with any number in A)",
+                    "source_reference": "Page 19 / Section 1.14.2"
+                  },
+                  {
+                    "node_id": "node_100",
+                    "level": 4,
+                    "label": "Many-to-Many / M:N Cardinality (An entity in A is associated with any number in B, and an entity in B is associated with any number in A)",
+                    "source_reference": "Page 20 / Section 1.14.2"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_101",
+                "level": 3,
+                "label": "Key Constraints on Relationships",
+                "source_reference": "Pages 20-21 / Section 1.15.1",
+                "children": [
+                  {
+                    "node_id": "node_102",
+                    "level": 4,
+                    "label": "Directed Arrow Representation (Arrow from relationship pointing to entity set indicates at most one relationship instance per entity)",
+                    "source_reference": "Pages 20-21 / Section 1.15.1"
+                  },
+                  {
+                    "node_id": "node_103",
+                    "level": 4,
+                    "label": "Department Manages Example (Arrow towards Departments in Manages indicates each department has at most one manager)",
+                    "source_reference": "Page 21 / Section 1.15.1"
+                  },
+                  {
+                    "node_id": "node_104",
+                    "level": 4,
+                    "label": "Strict 1:1 Arrow Rule (Arrows pointing to both entity sets enforce strict one-to-one mapping across both domains)",
+                    "source_reference": "Page 21 / Section 1.15.1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_105",
+        "level": 1,
+        "label": "3. Advanced ER & Extended ER (EER) Mechanisms",
+        "source_reference": "Pages 22-27 / Sections 1.15.2-1.16.1",
+        "children": [
+          {
+            "node_id": "node_106",
+            "level": 2,
+            "label": "Participation Constraints & Existence Dependency",
+            "source_reference": "Page 22 / Section 1.15.2",
+            "children": [
+              {
+                "node_id": "node_107",
+                "level": 3,
+                "label": "Total Participation Semantics",
+                "source_reference": "Page 22 / Section 1.15.2",
+                "children": [
+                  {
+                    "node_id": "node_108",
+                    "level": 4,
+                    "label": "Double-Line Representation (Signifies that every entity in the entity set must participate in at least one relationship instance)",
+                    "source_reference": "Page 22 / Section 1.15.2"
+                  },
+                  {
+                    "node_id": "node_109",
+                    "level": 4,
+                    "label": "Existence Dependency (Entities cannot exist in the database without an associated relationship instance e.g. every Department must have a Manager)",
+                    "source_reference": "Page 22 / Section 1.15.2"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_110",
+                "level": 3,
+                "label": "Partial Participation Semantics",
+                "source_reference": "Page 22 / Section 1.15.2",
+                "children": [
+                  {
+                    "node_id": "node_111",
+                    "level": 4,
+                    "label": "Single-Line Representation (Signifies that entities in the entity set can optionally participate in relationship instances)",
+                    "source_reference": "Page 22 / Section 1.15.2"
+                  },
+                  {
+                    "node_id": "node_112",
+                    "level": 4,
+                    "label": "Selective Association (e.g. only a small subset of Employees participate as managers in the Manages relationship set)",
+                    "source_reference": "Page 22 / Section 1.15.2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_113",
+            "level": 2,
+            "label": "Weak Entity Sets & Identifying Relationships",
+            "source_reference": "Pages 22-23 / Section 1.15.3",
+            "children": [
+              {
+                "node_id": "node_114",
+                "level": 3,
+                "label": "Structural Anatomy of Weak Entity Sets",
+                "source_reference": "Pages 22-23 / Section 1.15.3.1",
+                "children": [
+                  {
+                    "node_id": "node_115",
+                    "level": 4,
+                    "label": "Identifying Owner Entity Set (Strong entity set providing primary key context for weak entity existence)",
+                    "source_reference": "Page 22 / Section 1.15.3.1"
+                  },
+                  {
+                    "node_id": "node_116",
+                    "level": 4,
+                    "label": "Identifying Relationship Set (Represented by double diamond, linking weak entity to owner with mandatory total participation)",
+                    "source_reference": "Page 22 / Section 1.15.3.1"
+                  },
+                  {
+                    "node_id": "node_117",
+                    "level": 4,
+                    "label": "Partial Key / Discriminator (Underlined with dashed line, uniquely distinguishes weak entities associated with same owner)",
+                    "source_reference": "Page 22 / Section 1.15.3.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_118",
+                "level": 3,
+                "label": "Formulation & Academic Examples",
+                "source_reference": "Pages 22-23 / Section 1.15.3.2",
+                "children": [
+                  {
+                    "node_id": "node_119",
+                    "level": 4,
+                    "label": "Primary Key Synthesis Rule (Primary Key = Owner Entity Primary Key + Weak Entity Partial Key / Discriminator)",
+                    "source_reference": "Page 22 / Section 1.15.3.1"
+                  },
+                  {
+                    "node_id": "node_120",
+                    "level": 4,
+                    "label": "Dependents of Employees (Dependents weak entity identified by pname discriminator combined with Employee ssn)",
+                    "source_reference": "Page 22 / Section 1.15.3.1"
+                  },
+                  {
+                    "node_id": "node_121",
+                    "level": 4,
+                    "label": "Course Offerings of University (Course_Offering weak entity identified by sec_no and semester combined with Course_No)",
+                    "source_reference": "Page 23 / Section 1.15.3.2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_122",
+            "level": 2,
+            "label": "Class Hierarchies & ISA Abstractions",
+            "source_reference": "Pages 23-25 / Section 1.15.4",
+            "children": [
+              {
+                "node_id": "node_123",
+                "level": 3,
+                "label": "Specialization vs. Generalization",
+                "source_reference": "Pages 24-25 / Sections 1.15.4.1-1.15.4.2",
+                "children": [
+                  {
+                    "node_id": "node_124",
+                    "level": 4,
+                    "label": "Generalization (Bottom-up design process synthesizing common attributes of lower-level entity sets into a higher-level superclass)",
+                    "source_reference": "Page 24 / Section 1.15.4.1"
+                  },
+                  {
+                    "node_id": "node_125",
+                    "level": 4,
+                    "label": "Specialization (Top-down design process decomposing a higher-level entity set into specialized sub-groups based on distinct roles)",
+                    "source_reference": "Page 25 / Section 1.15.4.2"
+                  },
+                  {
+                    "node_id": "node_126",
+                    "level": 4,
+                    "label": "Attribute Inheritance (Subclasses automatically inherit all attributes and relationship memberships of their superclass)",
+                    "source_reference": "Pages 23-24 / Section 1.15.4"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_127",
+                "level": 3,
+                "label": "Hierarchy Constraint Dimensions",
+                "source_reference": "Pages 24, 37 / Sections 1.15.4, 1.20",
+                "children": [
+                  {
+                    "node_id": "node_128",
+                    "level": 4,
+                    "label": "Overlap Constraints (Overlapping allows an entity instance to belong to multiple subclasses vs Disjoint enforcing mutual exclusivity)",
+                    "source_reference": "Pages 24, 37 / Section 1.15.4"
+                  },
+                  {
+                    "node_id": "node_129",
+                    "level": 4,
+                    "label": "Covering / Completeness Constraints (Total Covering requires every superclass entity to be in at least one subclass vs Partial Covering)",
+                    "source_reference": "Pages 24, 37 / Section 1.15.4"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_130",
+            "level": 2,
+            "label": "Aggregation & Enterprise Conceptual Design",
+            "source_reference": "Pages 26-27 / Sections 1.15.4.3-1.16.1",
+            "children": [
+              {
+                "node_id": "node_131",
+                "level": 3,
+                "label": "Aggregation Modeling Pattern",
+                "source_reference": "Page 26 / Section 1.15.4.3",
+                "children": [
+                  {
+                    "node_id": "node_132",
+                    "level": 4,
+                    "label": "Aggregation Construct (Encapsulates a relationship set and participating entities as a higher-level abstract entity)",
+                    "source_reference": "Page 26 / Section 1.15.4.3"
+                  },
+                  {
+                    "node_id": "node_133",
+                    "level": 4,
+                    "label": "Overcoming ER Relationship Boundaries (Allows associating a relationship set with another relationship set e.g. Sponsors relationship linking to Projects-Monitors)",
+                    "source_reference": "Page 26 / Section 1.15.4.3"
+                  },
+                  {
+                    "node_id": "node_134",
+                    "level": 4,
+                    "label": "Aggregation vs. Ternary Relationship (Aggregation preserves independent binary relationship semantics and permits distinct key constraints)",
+                    "source_reference": "Page 26 / Section 1.15.4.3"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_135",
+                "level": 3,
+                "label": "Enterprise Design Decision Dilemmas",
+                "source_reference": "Pages 26-27 / Sections 1.16, 1.16.1",
+                "children": [
+                  {
+                    "node_id": "node_136",
+                    "level": 4,
+                    "label": "Entity vs. Attribute Choice (Use entity if object has internal attributes or dynamic lifecycle; use attribute if atomic descriptor)",
+                    "source_reference": "Page 26 / Section 1.16"
+                  },
+                  {
+                    "node_id": "node_137",
+                    "level": 4,
+                    "label": "Entity vs. Relationship Choice (Use relationship for pure associations; use entity if association itself has rich attributes or connects other relationships)",
+                    "source_reference": "Page 26 / Section 1.16"
+                  },
+                  {
+                    "node_id": "node_138",
+                    "level": 4,
+                    "label": "Binary vs. Ternary Relationship Selection (Decompose ternary into binary if independent constraints apply; retain ternary if relationship is atomic)",
+                    "source_reference": "Pages 26, 38 / Sections 1.16, 1.20"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_139",
+        "level": 1,
+        "label": "4. Relational Model Foundations & Integrity Constraints",
+        "source_reference": "Pages 28-31 / Sections 1.17-1.18",
+        "children": [
+          {
+            "node_id": "node_140",
+            "level": 2,
+            "label": "Relational Data Model Structure & Terminology",
+            "source_reference": "Pages 28-29 / Section 1.17.1",
+            "children": [
+              {
+                "node_id": "node_141",
+                "level": 3,
+                "label": "Core Relational Building Blocks",
+                "source_reference": "Pages 28-29 / Section 1.17.1",
+                "children": [
+                  {
+                    "node_id": "node_142",
+                    "level": 4,
+                    "label": "Relation Schema & Instance (Schema defines relation name, column names and types; Instance is a set of distinct tuples/records)",
+                    "source_reference": "Pages 28-29 / Section 1.17.1"
+                  },
+                  {
+                    "node_id": "node_143",
+                    "level": 4,
+                    "label": "Tuples & Attributes (Tuple corresponds to a row or record; Attribute corresponds to a column or named field with a defined domain)",
+                    "source_reference": "Page 29 / Section 1.17.1"
+                  },
+                  {
+                    "node_id": "node_144",
+                    "level": 4,
+                    "label": "Domain / Data Type (Set of permitted atomic scalar values e.g. INTEGER, CHAR(20), REAL)",
+                    "source_reference": "Page 29 / Section 1.17.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_145",
+                "level": 3,
+                "label": "Mathematical Dimensions of Relations",
+                "source_reference": "Page 29 / Section 1.17.1",
+                "children": [
+                  {
+                    "node_id": "node_146",
+                    "level": 4,
+                    "label": "Relation Degree / Arity (The total number of attributes / columns in the relation schema)",
+                    "source_reference": "Page 29 / Section 1.17.1"
+                  },
+                  {
+                    "node_id": "node_147",
+                    "level": 4,
+                    "label": "Relation Cardinality (The total number of tuples / rows currently stored in the relation instance)",
+                    "source_reference": "Page 29 / Section 1.17.1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_148",
+            "level": 2,
+            "label": "Integrity Constraints Classification",
+            "source_reference": "Pages 29-30 / Section 1.17.2",
+            "children": [
+              {
+                "node_id": "node_149",
+                "level": 3,
+                "label": "Domain Constraints & Entity Integrity",
+                "source_reference": "Pages 29-30 / Section 1.17.2",
+                "children": [
+                  {
+                    "node_id": "node_150",
+                    "level": 4,
+                    "label": "Domain Constraint (Every attribute value must be an atomic element drawn from the specified domain)",
+                    "source_reference": "Page 29 / Section 1.17.2"
+                  },
+                  {
+                    "node_id": "node_151",
+                    "level": 4,
+                    "label": "Entity Integrity Rule (No attribute participating in the primary key of a relation can accept NULL values)",
+                    "source_reference": "Page 29 / Section 1.17.2.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_152",
+                "level": 3,
+                "label": "Key Constraints Hierarchy",
+                "source_reference": "Pages 29-30 / Section 1.17.2.1",
+                "children": [
+                  {
+                    "node_id": "node_153",
+                    "level": 4,
+                    "label": "Super Key (Any subset of attributes that uniquely identifies every tuple within the relation)",
+                    "source_reference": "Pages 29-30 / Section 1.17.2.1"
+                  },
+                  {
+                    "node_id": "node_154",
+                    "level": 4,
+                    "label": "Candidate Key (A minimal super key such that no proper subset can uniquely identify tuples)",
+                    "source_reference": "Pages 29-30 / Section 1.17.2.1"
+                  },
+                  {
+                    "node_id": "node_155",
+                    "level": 4,
+                    "label": "Primary Key (A designated candidate key chosen by the database designer as the principal tuple identifier)",
+                    "source_reference": "Pages 29-30 / Section 1.17.2.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_156",
+                "level": 3,
+                "label": "Foreign Key & General Semantic Constraints",
+                "source_reference": "Page 30 / Sections 1.17.2.2-1.17.2.3",
+                "children": [
+                  {
+                    "node_id": "node_157",
+                    "level": 4,
+                    "label": "Foreign Key & Referential Integrity (A set of fields in referencing relation referring to primary key of referenced relation)",
+                    "source_reference": "Page 30 / Section 1.17.2.2"
+                  },
+                  {
+                    "node_id": "node_158",
+                    "level": 4,
+                    "label": "Referential Integrity Invariant (Foreign key value must match an existing primary key value in referenced relation or be NULL)",
+                    "source_reference": "Page 30 / Section 1.17.2.2"
+                  },
+                  {
+                    "node_id": "node_159",
+                    "level": 4,
+                    "label": "General Semantic Constraints (Table CHECK constraints and assertions restricting allowable data states e.g. CHECK (rating BETWEEN 1 AND 10))",
+                    "source_reference": "Page 30 / Section 1.17.2.3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_160",
+            "level": 2,
+            "label": "Constraint Enforcement & Referential Actions",
+            "source_reference": "Pages 30-31 / Section 1.18",
+            "children": [
+              {
+                "node_id": "node_161",
+                "level": 3,
+                "label": "Violation Triggers on DML Operations",
+                "source_reference": "Pages 30-31 / Section 1.18",
+                "children": [
+                  {
+                    "node_id": "node_162",
+                    "level": 4,
+                    "label": "Insert Violations (Can violate domain, entity integrity, primary key uniqueness, or foreign key target validity)",
+                    "source_reference": "Pages 30-31 / Section 1.18"
+                  },
+                  {
+                    "node_id": "node_163",
+                    "level": 4,
+                    "label": "Delete Violations (Can violate referential integrity if a referenced primary key tuple is deleted while referencing foreign keys exist)",
+                    "source_reference": "Pages 30-31 / Section 1.18"
+                  },
+                  {
+                    "node_id": "node_164",
+                    "level": 4,
+                    "label": "Update Violations (Can violate both primary key uniqueness and foreign key referential integrity on either side)",
+                    "source_reference": "Pages 30-31 / Section 1.18"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_165",
+                "level": 3,
+                "label": "SQL Referential Integrity Actions",
+                "source_reference": "Page 31 / Section 1.18",
+                "children": [
+                  {
+                    "node_id": "node_166",
+                    "level": 4,
+                    "label": "NO ACTION / RESTRICT (Default action rejecting the deletion or update of referenced tuple with an error)",
+                    "source_reference": "Page 31 / Section 1.18"
+                  },
+                  {
+                    "node_id": "node_167",
+                    "level": 4,
+                    "label": "CASCADE (Automatically propagates the deletion or update of referenced tuple to all matching referencing tuples)",
+                    "source_reference": "Page 31 / Section 1.18"
+                  },
+                  {
+                    "node_id": "node_168",
+                    "level": 4,
+                    "label": "SET NULL (Sets the foreign key columns of all referencing tuples to NULL when referenced tuple is deleted or updated)",
+                    "source_reference": "Page 31 / Section 1.18"
+                  },
+                  {
+                    "node_id": "node_169",
+                    "level": 4,
+                    "label": "SET DEFAULT (Sets the foreign key columns of all referencing tuples to a specified default value upon modification)",
+                    "source_reference": "Page 31 / Section 1.18"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_170",
+        "level": 1,
+        "label": "5. Logical Database Design (ER-to-Relational Translation)",
+        "source_reference": "Pages 32-39 / Section 1.20",
+        "children": [
+          {
+            "node_id": "node_171",
+            "level": 2,
+            "label": "Translating Entity Sets to Relations",
+            "source_reference": "Page 32 / Section 1.20",
+            "children": [
+              {
+                "node_id": "node_172",
+                "level": 3,
+                "label": "Strong Entity Set Mapping Protocol",
+                "source_reference": "Page 32 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_173",
+                    "level": 4,
+                    "label": "Direct Column Mapping (Each simple attribute of entity set maps to a column in the newly created table)",
+                    "source_reference": "Page 32 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_174",
+                    "level": 4,
+                    "label": "Primary Key Preservation (The primary key of the strong entity set directly becomes the PRIMARY KEY of the relation)",
+                    "source_reference": "Page 32 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_175",
+                "level": 3,
+                "label": "Complex Attribute Decompositions",
+                "source_reference": "Pages 16-17, 32 / Sections 1.14.1, 1.20",
+                "children": [
+                  {
+                    "node_id": "node_176",
+                    "level": 4,
+                    "label": "Composite Attribute Flattening (Flattened into individual atomic component columns e.g. Address -> Street, City, State, Zip)",
+                    "source_reference": "Pages 16, 32 / Sections 1.14.1, 1.20"
+                  },
+                  {
+                    "node_id": "node_177",
+                    "level": 4,
+                    "label": "Multivalued Attribute Extraction (Extracted into a separate relation containing owner primary key + attribute value as composite key)",
+                    "source_reference": "Pages 17, 32 / Sections 1.14.1, 1.20"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_178",
+            "level": 2,
+            "label": "Translating Relationship Sets to Relations",
+            "source_reference": "Pages 33-35 / Section 1.20",
+            "children": [
+              {
+                "node_id": "node_179",
+                "level": 3,
+                "label": "Many-to-Many / M:N Relationship Translation",
+                "source_reference": "Page 33 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_180",
+                    "level": 4,
+                    "label": "Junction Relation Creation (Creates a dedicated relation containing foreign keys referencing both participating entity tables)",
+                    "source_reference": "Page 33 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_181",
+                    "level": 4,
+                    "label": "Composite Primary Key Formation (The primary key of the junction table is the composite union of both entity primary keys)",
+                    "source_reference": "Page 33 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_182",
+                    "level": 4,
+                    "label": "Descriptive Attribute Retention (Any descriptive attributes of the relationship set become columns in the junction table)",
+                    "source_reference": "Page 33 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_183",
+                "level": 3,
+                "label": "Key Constraints & Relation Folding (1:N and 1:1)",
+                "source_reference": "Pages 33-34 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_184",
+                    "level": 4,
+                    "label": "Option 1 - Dedicated Relation (Create separate table where primary key is strictly the primary key of the entity on the constrained side)",
+                    "source_reference": "Pages 33-34 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_185",
+                    "level": 4,
+                    "label": "Option 2 - Relation Folding / Combination (Fold relationship attributes and foreign key directly into the relation of the entity on the many side e.g. Dept_Mgr)",
+                    "source_reference": "Page 34 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_186",
+                "level": 3,
+                "label": "Enforcing Participation Constraints in SQL",
+                "source_reference": "Pages 34-35 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_187",
+                    "level": 4,
+                    "label": "NOT NULL Constraint Enforcement (In folded table, declare foreign key as NOT NULL to enforce total participation e.g. mgr_ssn in Departments)",
+                    "source_reference": "Pages 34-35 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_188",
+                    "level": 4,
+                    "label": "Combining 1:1 Total Relations (When both sides have total participation, combine both entities and relationship into a single unified table)",
+                    "source_reference": "Page 35 / Section 1.20"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_189",
+            "level": 2,
+            "label": "Translating Weak Entity Sets",
+            "source_reference": "Pages 35-36 / Section 1.20",
+            "children": [
+              {
+                "node_id": "node_190",
+                "level": 3,
+                "label": "Relational Formulation of Weak Entities",
+                "source_reference": "Pages 35-36 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_191",
+                    "level": 4,
+                    "label": "Composite Primary Key Structure (Primary key consists of Owner Entity Primary Key + Weak Entity Partial Key / Discriminator)",
+                    "source_reference": "Page 36 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_192",
+                    "level": 4,
+                    "label": "Foreign Key with ON DELETE CASCADE (Foreign key references owner relation with mandatory ON DELETE CASCADE clause)",
+                    "source_reference": "Page 36 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_193",
+                    "level": 4,
+                    "label": "Identifying Relationship Subsumption (Identifying relationship set is eliminated as a separate table and folded into weak entity relation)",
+                    "source_reference": "Page 36 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_194",
+                "level": 3,
+                "label": "SQL DDL Implementation Example",
+                "source_reference": "Page 36 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_195",
+                    "level": 4,
+                    "label": "Dependents Schema (CREATE TABLE Dependents (pname CHAR(20), ssn CHAR(11), cost REAL, PRIMARY KEY (pname, ssn), FOREIGN KEY (ssn) REFERENCES Employees ON DELETE CASCADE))",
+                    "source_reference": "Page 36 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_196",
+                    "level": 4,
+                    "label": "Cascading Lifecycle Guarantee (Deleting an employee record automatically triggers immediate cascading purge of all corresponding dependent tuples)",
+                    "source_reference": "Page 36 / Section 1.20"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_197",
+            "level": 2,
+            "label": "Translating ISA Class Hierarchies & Aggregations",
+            "source_reference": "Pages 36-39 / Section 1.20",
+            "children": [
+              {
+                "node_id": "node_198",
+                "level": 3,
+                "label": "General 3-Table ISA Mapping Approach",
+                "source_reference": "Pages 36-37 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_199",
+                    "level": 4,
+                    "label": "Superclass Base Table (Creates relation for superclass storing primary key and all common shared attributes)",
+                    "source_reference": "Page 37 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_200",
+                    "level": 4,
+                    "label": "Subclass Specialized Tables (Creates relations for subclasses storing primary key and specific attributes, where primary key is foreign key to superclass)",
+                    "source_reference": "Page 37 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_201",
+                    "level": 4,
+                    "label": "Universal Constraint Support (Works flawlessly across all combinations of overlap and covering constraints)",
+                    "source_reference": "Page 37 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_202",
+                "level": 3,
+                "label": "Alternative 2-Table ISA Mapping Approach",
+                "source_reference": "Page 37 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_203",
+                    "level": 4,
+                    "label": "Subclass-Only Relations (Creates relations only for subclasses, copying all superclass attributes into each subclass table)",
+                    "source_reference": "Page 37 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_204",
+                    "level": 4,
+                    "label": "Prerequisite Condition (Only valid when specialization is strictly Disjoint and Total/Covering; duplicate superclass updates are avoided)",
+                    "source_reference": "Page 37 / Section 1.20"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_205",
+                "level": 3,
+                "label": "Translating Aggregations & Binary Decompositions",
+                "source_reference": "Pages 38-39 / Section 1.20",
+                "children": [
+                  {
+                    "node_id": "node_206",
+                    "level": 4,
+                    "label": "Aggregation Relational Translation (Creates table for aggregated relationship, and higher-level relationship contains foreign key to it)",
+                    "source_reference": "Pages 38-39 / Section 1.20"
+                  },
+                  {
+                    "node_id": "node_207",
+                    "level": 4,
+                    "label": "Binary vs. Ternary Decomposition in SQL (Binary decomposition uses separate relations e.g. Policies and Dependents with specific foreign keys, avoiding ternary null anomalies)",
+                    "source_reference": "Pages 38-39 / Section 1.20"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "node_id": "node_208",
+        "level": 1,
+        "label": "6. Relational Querying, Views & Schema Evolution",
+        "source_reference": "Pages 32, 40-41 / Sections 1.19, 1.21-1.21.1",
+        "children": [
+          {
+            "node_id": "node_209",
+            "level": 2,
+            "label": "Relational Querying Principles",
+            "source_reference": "Page 32 / Section 1.19",
+            "children": [
+              {
+                "node_id": "node_210",
+                "level": 3,
+                "label": "Declarative SQL Query Paradigm",
+                "source_reference": "Page 32 / Section 1.19",
+                "children": [
+                  {
+                    "node_id": "node_211",
+                    "level": 4,
+                    "label": "Query Definition & Result (A question about the data resulting in a newly computed relation containing matching answer tuples)",
+                    "source_reference": "Page 32 / Section 1.19"
+                  },
+                  {
+                    "node_id": "node_212",
+                    "level": 4,
+                    "label": "Core Relational Operators (SELECT projection choosing columns, WHERE restriction filtering rows, FROM join combining relations)",
+                    "source_reference": "Page 32 / Section 1.19"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_213",
+                "level": 3,
+                "label": "Academic Query Examples",
+                "source_reference": "Pages 6, 32 / Sections 1.5, 1.19",
+                "children": [
+                  {
+                    "node_id": "node_214",
+                    "level": 4,
+                    "label": "Projection & Restriction Queries (e.g. SELECT sname, gpa FROM Students WHERE gpa > 3.0)",
+                    "source_reference": "Pages 6, 32 / Sections 1.5, 1.19"
+                  },
+                  {
+                    "node_id": "node_215",
+                    "level": 4,
+                    "label": "Multi-Table Relational Joins (e.g. SELECT S.sname, E.cid FROM Students S, Enrolled E WHERE S.sid = E.sid AND E.grade = 'A')",
+                    "source_reference": "Pages 30, 32 / Sections 1.17.2.2, 1.19"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_216",
+            "level": 2,
+            "label": "Relational Views Architecture & Applications",
+            "source_reference": "Page 40 / Section 1.21.1",
+            "children": [
+              {
+                "node_id": "node_217",
+                "level": 3,
+                "label": "View Definition & Virtual Semantics",
+                "source_reference": "Page 40 / Section 1.21.1",
+                "children": [
+                  {
+                    "node_id": "node_218",
+                    "level": 4,
+                    "label": "Virtual Table Concept (A relation that is not part of the conceptual physical model but is made visible to users as a virtual relation)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_219",
+                    "level": 4,
+                    "label": "SQL View Definition Syntax (CREATE VIEW view_name AS SELECT query_expression; stored as query definition in data dictionary)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_220",
+                    "level": 4,
+                    "label": "Dynamic Query Re-evaluation (Standard views are computed on-the-fly dynamically whenever referenced in queries)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_221",
+                "level": 3,
+                "label": "Core Architectural View Benefits",
+                "source_reference": "Page 40 / Section 1.21.1",
+                "children": [
+                  {
+                    "node_id": "node_222",
+                    "level": 4,
+                    "label": "Logical Data Independence (Shields user applications from disruptions when base relation schemas are restructured)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_223",
+                    "level": 4,
+                    "label": "Security & Fine-Grained Access Control (Hides sensitive attributes and rows from unauthorized users without multiple base copies)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_224",
+                    "level": 4,
+                    "label": "Query Simplification (Encapsulates frequently-used complex multi-table joins into clean virtual relations)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_225",
+                "level": 3,
+                "label": "Materialized Views Mechanism",
+                "source_reference": "Page 40 / Section 1.21.1",
+                "children": [
+                  {
+                    "node_id": "node_226",
+                    "level": 4,
+                    "label": "Physical Result Caching (Precomputes and physically persists the view result on disk for high-performance decision support)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_227",
+                    "level": 4,
+                    "label": "View Maintenance Overhead (Requires systematic maintenance protocols: Periodic batch refresh vs Incremental immediate refresh on base table updates)",
+                    "source_reference": "Page 40 / Section 1.21.1"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "node_id": "node_228",
+            "level": 2,
+            "label": "DDL Schema Evolution & Object Destruction",
+            "source_reference": "Page 41 / Section 1.21.1",
+            "children": [
+              {
+                "node_id": "node_229",
+                "level": 3,
+                "label": "Destroying Database Objects",
+                "source_reference": "Page 41 / Section 1.21.1",
+                "children": [
+                  {
+                    "node_id": "node_230",
+                    "level": 4,
+                    "label": "DROP TABLE Semantics (Deletes all rows and purges table definition; RESTRICT blocks if foreign keys exist, CASCADE automatically purges referencing objects)",
+                    "source_reference": "Page 41 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_231",
+                    "level": 4,
+                    "label": "DROP VIEW Semantics (Deletes view query definition from system catalog without deleting or altering underlying base table data)",
+                    "source_reference": "Page 41 / Section 1.21.1"
+                  }
+                ]
+              },
+              {
+                "node_id": "node_232",
+                "level": 3,
+                "label": "Modifying Relational Table Schemas",
+                "source_reference": "Page 41 / Section 1.21.1",
+                "children": [
+                  {
+                    "node_id": "node_233",
+                    "level": 4,
+                    "label": "ALTER TABLE ADD Column (Adds a new column definition to existing table; existing tuples receive NULL or defined DEFAULT value)",
+                    "source_reference": "Page 41 / Section 1.21.1"
+                  },
+                  {
+                    "node_id": "node_234",
+                    "level": 4,
+                    "label": "ALTER TABLE DROP Column (Deletes an existing column from table schema and removes attribute data across all tuples)",
+                    "source_reference": "Page 41 / Section 1.21.1"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

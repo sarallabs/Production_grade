@@ -1,0 +1,611 @@
+/* study-table.css — Auto-split from index.css */
+
+
+
+/* Study table (st-app): wide tree artwork in rail + frosted topbar */
+.st-app .sv-study-rail-tree-logo {
+  width: auto;
+  max-width: 360px;
+  height: clamp(108px, 15vh, 156px);
+  object-fit: contain;
+  object-position: center;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  flex-shrink: 0;
+}
+
+
+.st-app .sv-study-topbar-brand {
+  gap: 0;
+}
+
+
+.st-app .sv-topbar .sv-persona-tree-logo {
+  height: clamp(40px, 5.5vh, 56px);
+  max-width: min(180px, 30vw);
+  object-fit: contain;
+  object-position: left center;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+
+/* ════════════════════════════════════════
+   STUDY TABLE — OPTION 1 (st-* classes)
+   Full-width content · Slim right rail · Floating drawer
+════════════════════════════════════════ */
+
+/* Page shell */
+.st-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: #f8f9fb;
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  position: relative;
+}
+
+
+/* ── TOP BAR ── */
+.st-topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 0 28px;
+  background: #ffffff;
+  border-bottom: 1px solid #e8eaf0;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+
+.st-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+
+.st-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+
+/* Breadcrumb */
+.st-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+
+.st-bc-sep {
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
+
+.st-bc-link {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6d28d9;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+
+.st-bc-link:hover {
+  color: #4f46e5;
+  text-decoration: underline;
+}
+
+
+.st-bc-current {
+  font-size: 13px;
+  font-weight: 600;
+  color: #64748b;
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+/* Tool badge */
+.st-tool-badge {
+  padding: 5px 14px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+
+/* Persona pills */
+.st-persona-row {
+  display: flex;
+  gap: 4px;
+}
+
+
+.st-persona-pill {
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+
+.st-auth-btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: #f8f9fb;
+  color: #1f2937;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+
+.st-auth-btn:hover {
+  background: #ede9fe;
+  border-color: #7c3aed;
+}
+
+
+.st-persona-pill--active {
+  background: #ede9fe;
+  border-color: #7c3aed;
+  color: #5b21b6;
+}
+
+
+.st-persona-pill:not(.st-persona-pill--active):hover {
+  border-color: #c4b5fd;
+  color: #4f46e5;
+}
+
+
+/* Profile button */
+.st-profile-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid #e2e8f0;
+  background: #f8f9fb;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+
+.st-profile-btn:hover {
+  background: #ede9fe;
+  border-color: #7c3aed;
+}
+
+
+/* ── CHAPTER TITLE STRIP ── */
+.st-chapter-strip {
+  padding: 16px 28px 12px;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f3f7;
+  flex-shrink: 0;
+}
+
+
+.st-chapter-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f0c29;
+  letter-spacing: -0.3px;
+  margin: 0;
+}
+
+
+/* ── BODY ── */
+.st-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+
+.st-mainview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 28px 28px 28px;
+  min-width: 0;
+}
+
+.st-mainview--flashcards {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px 12px 20px;
+}
+
+.st-rich-sidebar--collapsed {
+  width: 72px;
+}
+
+.st-rich-sidebar--expanded {
+  width: 280px;
+  box-shadow: 8px 0 30px rgba(124, 58, 237, 0.08);
+}
+
+
+/* Toggle Button & Hamburger */
+.st-sidebar-toggle {
+  height: 72px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+  cursor: pointer;
+  outline: none;
+}
+
+
+.st-sidebar-toggle:hover .hamburger-icon span {
+  background: #7c3aed;
+}
+
+
+/* Tools List Container */
+.st-sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 12px;
+}
+
+
+.st-sidebar-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+
+/* Individual Tool Buttons */
+.st-sidebar-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+}
+
+
+.st-sidebar-btn:hover {
+  background: #f8fafc;
+  transform: translateX(4px);
+}
+
+
+.st-btn-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  transition: transform 0.3s ease;
+}
+
+
+.st-sidebar-btn:hover .st-btn-icon {
+  transform: scale(1.15) rotate(5deg);
+}
+
+
+.st-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-left: 16px;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+
+.st-rich-sidebar--expanded .st-btn-text {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+
+.st-btn-label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+
+.st-btn-desc {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+
+/* Inactive — greyed out */
+.st-sidebar-btn:not(.active):not(:hover) {
+  opacity: 0.42;
+  filter: grayscale(0.3);
+  transition: opacity 0.22s ease, filter 0.22s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.st-sidebar-btn:not(.active):hover {
+  opacity: 1;
+  filter: grayscale(0);
+}
+
+/* Active State */
+.st-sidebar-btn.active {
+  background: linear-gradient(135deg,
+      rgba(49, 1, 133, 0.08),
+      rgba(144, 4, 74, 0.05));
+  border: 1px solid rgba(124, 58, 237, 0.15);
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.05);
+}
+
+
+.st-sidebar-btn.active .st-btn-label {
+  color: #2a0072;
+}
+
+
+.st-btn-glow {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  border-radius: 4px 0 0 4px;
+  background: linear-gradient(to bottom, #7c3aed, #ec4899);
+  box-shadow: -2px 0 8px rgba(236, 72, 153, 0.4);
+}
+
+
+/* Footer Action */
+.st-sidebar-footer {
+  padding: 12px;
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+
+.st-footer-btn {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+
+.st-footer-btn:hover {
+  background: #e2e8f0;
+}
+
+
+.st-rich-sidebar--collapsed .st-footer-btn .st-btn-label {
+  display: none;
+}
+
+
+/* ── BOTTOM QUICK-ACTION BAR ── */
+.st-bottom-bar {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 14px;
+  background: #ffffff;
+  border-top: 1px solid #e8eaf0;
+  flex-shrink: 0;
+}
+
+
+.st-bottom-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  background: transparent;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+
+.st-bottom-btn:hover {
+  border-color: #7c3aed;
+  color: #7c3aed;
+  background: #f5f3ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.12);
+}
+
+
+.st-bottom-btn--accent {
+  background: linear-gradient(135deg, #7c3aed, #ec4899);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.28);
+}
+
+
+.st-bottom-btn--accent:hover {
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.38);
+  background: linear-gradient(135deg, #6d28d9, #db2777);
+  border-color: transparent;
+}
+
+
+/* Study table — desktop: “peek” strip when collapsed; smooth expand on hover */
+@media (min-width: 993px) {
+  .st-app .sv-rail {
+    transition:
+      width 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+      padding 0.38s cubic-bezier(0.4, 0, 0.2, 1),
+      border-color 0.3s ease,
+      box-shadow 0.35s ease;
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed {
+    width: 76px;
+    min-width: 76px;
+    padding: 18px 6px 22px;
+    overflow: hidden;
+    border-right: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: 2px 0 18px rgba(139, 92, 246, 0.06);
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed .sv-rail-brand {
+    margin-bottom: 20px;
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed .sv-rail-chip {
+    opacity: 0;
+    transform: translateX(-10px);
+    max-width: 0;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition:
+      opacity 0.22s ease,
+      transform 0.26s cubic-bezier(0.4, 0, 0.2, 1),
+      max-width 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+      max-height 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .st-app .sv-rail:not(.sv-rail--collapsed) .sv-rail-chip {
+    opacity: 1;
+    transform: translateX(0);
+    max-width: 120px;
+    max-height: 40px;
+    transition:
+      opacity 0.28s ease 0.05s,
+      transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s,
+      max-width 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.04s,
+      max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1) 0.04s;
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed .sv-rail-item {
+    gap: 0;
+    padding: 6px 2px;
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed .sv-rail-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+  }
+
+  .st-app .sv-rail.sv-rail--collapsed .sv-rail-items {
+    gap: 8px 0;
+    padding: 0 6px;
+  }
+
+  .st-app .sv-rail:not(.sv-rail--collapsed) {
+    box-shadow: 4px 0 24px rgba(124, 58, 237, 0.08);
+  }
+}
+
+
+/* ── STUDY TABLE RESPONSIVE ── */
+@media (max-width: 992px) {
+  .st-topbar {
+    padding: 0 16px;
+  }
+
+  .st-chapter-strip {
+    padding: 12px 16px 8px;
+  }
+
+  .st-mainview {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 28px 28px 28px;
+  min-width: 0;
+}
+
+.st-mainview--flashcards {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 0 8px 0;
+}
+
+/* ── RICH EXPANDING SIDEBAR ── */
+.st-rich-sidebar {
+
+    padding: 16px;
+  }
+
+  .st-toolbar-rail {
+    width: 48px;
+  }
+}

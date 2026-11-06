@@ -1,0 +1,80 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "module_name": "Topic 2 Conceptual Database Design",
+  "title": "Topic 2: Conceptual Database Design & ER Modeling",
+  "persona": "Advanced",
+  "cefr_language_tier": "C2",
+  "bloom_tier": "L5 Evaluating / L6 Creating",
+  "l1_mindmap_node": "2. Conceptual Database Design & ER Modeling",
+  "word_count": 1689,
+  "infographics_count": 5,
+  "infographics_included": [
+    "2.0",
+    "2.1",
+    "2.2",
+    "2.3",
+    "2.4"
+  ],
+  "verbatim_definitions_included": [
+    "Entity",
+    "Entity Set",
+    "Attribute",
+    "Domain",
+    "Primary Key",
+    "Relationship",
+    "Relationship Set",
+    "Mapping Cardinality",
+    "Descriptive Attribute"
+  ],
+  "subtopics_covered": [
+    "2.1 Database Design Lifecycle: Six Engineering Phases",
+    "2.2 Conceptual Modeling Principles & Entity Sets",
+    "2.3 Attribute Typologies (Simple, Composite, Multivalued, Derived)",
+    "2.4 Relationships & Relationship Sets (Binary, Ternary, Recursive)",
+    "2.5 Mapping Cardinalities (1:1, 1:N, N:1, M:N) & Min..Max Constraints",
+    "2.6 ER Diagram Geometric Notations (Chen vs Crow's Foot)",
+    "2.7 Descriptive Attributes on Relationships",
+    "2.8 Conceptual Design Trade-offs & Enterprise Case Studies"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 2.1",
+      "image_tag": "2.0",
+      "title": "Conceptual Database Design Lifecycle & Entity-Relationship Modeling Framework",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.2",
+      "image_tag": "2.1",
+      "title": "Database Design Engineering Phases & Architectural Stages",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.4",
+      "image_tag": "2.3",
+      "title": "Entity Classifications & Attribute Typology Taxonomy",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.3",
+      "image_tag": "2.2",
+      "title": "Entity-Relationship Diagram Standard Geometric Notation Reference",
+      "module": "Module 2"
+    },
+    {
+      "figure_no": "Fig 2.5",
+      "image_tag": "2.4",
+      "title": "Relationship Mapping Cardinality Constraints (1:1, 1:N, N:1, M:N)",
+      "module": "Module 2"
+    }
+  ]
+}

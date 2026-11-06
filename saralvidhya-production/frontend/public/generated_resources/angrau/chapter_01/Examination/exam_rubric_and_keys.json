@@ -1,0 +1,38 @@
+{
+  "subject": "Entomology",
+  "chapter_no": 13,
+  "chapter_name": "Digestive System",
+  "total_questions": 50,
+  "pre_final_exam": {
+    "passing_criteria": "45% (23 / 50 Marks)",
+    "duration_minutes": 60,
+    "mcq_count": 35,
+    "msq_count": 15
+  },
+  "final_examination": {
+    "passing_criteria": "45% - 50% (23 - 25 / 50 Marks)",
+    "duration_minutes": 60,
+    "mcq_count": 35,
+    "msq_count": 15
+  },
+  "certification_exam": {
+    "passing_criteria": "50% (25 / 50 Marks)",
+    "duration_minutes": 60,
+    "mcq_count": 35,
+    "msq_count": 15
+  },
+  "zero_overlap_verification": true,
+  "bloom_taxonomy_distribution": {
+    "Remembering": "20%",
+    "Understanding": "30%",
+    "Applying": "25%",
+    "Analyzing": "15%",
+    "Evaluating": "10%"
+  },
+  "mindmap_depth_distribution": {
+    "L1": "20%",
+    "L2": "35%",
+    "L3": "35%",
+    "L4": "10%"
+  }
+}

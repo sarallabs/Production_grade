@@ -1,0 +1,80 @@
+{
+  "chapter": "DBMS UNIT - I",
+  "subject": "Database Management Systems",
+  "module_name": "Topic 3 Advanced ER EER",
+  "title": "Topic 3: Advanced ER & Extended ER Mechanisms",
+  "persona": "Beginner",
+  "cefr_language_tier": "A2-B1",
+  "bloom_tier": "L1 Remembering / L2 Understanding",
+  "l1_mindmap_node": "3. Advanced ER & Extended ER (EER) Mechanisms",
+  "word_count": 1681,
+  "infographics_count": 5,
+  "infographics_included": [
+    "3.0",
+    "3.1",
+    "3.2",
+    "3.3",
+    "3.4"
+  ],
+  "verbatim_definitions_included": [
+    "Weak Entity Set",
+    "Discriminator (Partial Key)",
+    "Identifying Relationship",
+    "Participation Constraint",
+    "Total Participation",
+    "Partial Participation",
+    "Specialization",
+    "Generalization",
+    "Aggregation"
+  ],
+  "subtopics_covered": [
+    "3.1 Advanced ER & EER Conceptual Framework",
+    "3.2 Database Participation Constraints (Total vs Partial Participation)",
+    "3.3 Weak Entity Sets & Identifying Relationships",
+    "3.4 Discriminators and Primary Key Synthesis for Weak Entities",
+    "3.5 Class Hierarchies, Specialization, and Generalization",
+    "3.6 Constraints on Specialization (Disjointness and Completeness)",
+    "3.7 Aggregation Constructs vs Ternary Relationships",
+    "3.8 Enterprise EER Modeling Case Study (Banking and Insurance Systems)"
+  ],
+  "validation_report": {
+    "zero_metadata_in_md": true,
+    "rfc2045_chunking_76_col": true,
+    "master_mindmap_excluded": true,
+    "katex_cleanliness_passed": true,
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true
+  },
+  "figures": [
+    {
+      "figure_no": "Fig 3.1",
+      "image_tag": "3.0",
+      "title": "Advanced ER & Extended ER (EER) Modeling Primitives Overview",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.2",
+      "image_tag": "3.1",
+      "title": "Structural Existence Dependencies: Total vs. Partial Participation Constraints",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.3",
+      "image_tag": "3.2",
+      "title": "Weak Entity Sets, Partial Keys (Discriminators) & Identifying Relationships",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.4",
+      "image_tag": "3.3",
+      "title": "Specialization & Generalization ISA Class Inheritance Hierarchies",
+      "module": "Module 3"
+    },
+    {
+      "figure_no": "Fig 3.5",
+      "image_tag": "3.4",
+      "title": "Aggregation Abstraction for Higher-Order Relationship Associations",
+      "module": "Module 3"
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SubjectConfig",
+  "type": "object",
+  "required": ["id", "name"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9_-]+$"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "code": {
+      "type": "string"
+    },
+    "subtitle": {
+      "type": "string",
+      "description": "Program or degree label displayed on the subject card, e.g. 'B.Sc Agriculture' or 'B.Tech CSE'"
+    },
+    "programLabel": {
+      "type": "string",
+      "description": "Optional program badge override for the subject card"
+    },
+    "description": {
+      "type": "string"
+    },
+    "credits": {
+      "type": "number"
+    },
+    "parentNodeId": {
+      "type": ["string", "null"]
+    },
+    "order": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "archived"]
+    },
+    "iconBlob": {
+      "type": "string",
+      "description": "Subject-relative path to subject card icon (e.g. 'assets/icon.webp') or external URL"
+    },
+    "assets": {
+      "type": "object",
+      "description": "Subject-level visual assets stored under <subjectId>/assets/ in the bundle",
+      "properties": {
+        "icon": { "type": "string" },
+        "banner": { "type": "string" },
+        "thumbnail": { "type": "string" }
+      }
+    },
+    "cardStyle": {
+      "type": "object",
+      "description": "Presentation styling for the subject card in the catalog",
+      "properties": {
+        "accentColor": { "type": "string" },
+        "gradient": { "type": "string" },
+        "badgeText": { "type": "string" },
+        "iconBgColor": { "type": "string" }
+      }
+    },
+    "faculty": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "avatarBlob": { "type": "string" }
+      }
+    },
+    "units": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

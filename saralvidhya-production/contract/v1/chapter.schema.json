@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ChapterConfig",
+  "type": "object",
+  "required": ["number", "title"],
+  "properties": {
+    "number": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "shortTitle": {
+      "type": "string",
+      "description": "Compact title used on subject card chapter pills"
+    },
+    "description": {
+      "type": "string"
+    },
+    "estimatedMinutes": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Estimated study duration in minutes displayed on chapter cards"
+    },
+    "heroImageBlob": {
+      "type": "string",
+      "description": "Chapter-relative path to the chapter card hero image (e.g. 'media/hero.webp')"
+    },
+    "assets": {
+      "type": "object",
+      "description": "Chapter-level visual assets stored under <subjectId>/<chapterId>/media/",
+      "properties": {
+        "heroImage": { "type": "string" },
+        "thumbnail": { "type": "string" },
+        "mindmapImage": { "type": "string" },
+        "watermarkSvg": { "type": "string" }
+      }
+    },
+    "topics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "title": { "type": "string" },
+          "order": { "type": "number" },
+          "topicNum": { "type": "number" },
+          "estimatedMinutes": { "type": "number" },
+          "subtopics": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "videos": {
+      "type": "array",
+      "description": "Ordered list of chapter instructional videos with thumbnails, durations, and covered topics",
+      "items": {
+        "type": "object",
+        "required": ["id", "title"],
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string", "minLength": 1 },
+          "provider": {
+            "type": "string",
+            "enum": ["youtube", "gcs", "external"]
+          },
+          "videoId": {
+            "type": "string",
+            "description": "YouTube video ID when provider is 'youtube'"
+          },
+          "gcsPath": {
+            "type": ["string", "null"],
+            "description": "Chapter-relative path in media/ when video is hosted in GCS"
+          },
+          "url": {
+            "type": "string",
+            "description": "Direct external video URL if hosted externally"
+          },
+          "thumbnail": {
+            "type": "string",
+            "description": "Chapter-relative path in media/ (e.g. 'media/video_01_thumb.webp') or external URL"
+          },
+          "duration": {
+            "type": "string",
+            "description": "Human-readable duration badge, e.g. '14:20'"
+          },
+          "durationSeconds": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "topics": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "order": {
+            "type": "number"
+          }
+        }
+      }
+    }
+  }
+}

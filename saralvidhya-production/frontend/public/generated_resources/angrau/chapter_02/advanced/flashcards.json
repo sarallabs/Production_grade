@@ -1,0 +1,197 @@
+{
+  "chapter": "Metamorphosis",
+  "subject": "Entomology",
+  "level": "advanced",
+  "flashcards": [
+    {
+      "front": "What is the formal entomological definition of morphogenesis across the post-embryonic developmental arc?",
+      "back": "Morphogenesis encompasses the entire sequence of post-embryonic structural changes from egg hatching to adult sexual maturity, divided into three sequential phases: 1. Growth (larval feeding and periodic ecdysis); 2. Differentiation (pupal tissue reorganization); 3. Maturation (adult reproductive development and cuticular sclerotization).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_001.png"
+    },
+    {
+      "front": "Differentiate the cellular processes of 'histolysis' and 'histogenesis' during holometabolous pupal differentiation.",
+      "back": "**Histolysis** is the programmed cell death (apoptosis) and enzymatic autophagic digestion of obsolete larval tissues (e.g., gut, larval muscles) by lysosomal enzymes. **Histogenesis** is the rapid mitotic proliferation and differentiation of undifferentiated epidermal **imaginal discs** into adult structures (wings, legs, compound eyes, antennae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_002.png"
+    },
+    {
+      "front": "Contrast direct and indirect developmental pathways in insect metamorphosis, citing taxonomic representation.",
+      "back": "**Direct development** transitions immature forms directly into adults through graded moults without a pupal stage (Ametabolous in Apterygota, $<0.1\\%$; Hemimetabolous in Exopterygota, $\\sim 12\\%$). **Indirect development** requires a pupal stage for structural reorganisation (Holometabolous in Endopterygota, $\\sim 88\\%$).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_003.png"
+    },
+    {
+      "front": "Contrast the wing morphogenesis mechanisms of Exopterygote and Endopterygote insects.",
+      "back": "**Exopterygota** (hemimetabolous) develop wing pads externally on the thoracic dorsum over successive nymphal instars. **Endopterygota** (holometabolous) develop wings internally from invaginated epidermal imaginal discs during larval stages, which evert externally during pupation.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_004.png"
+    },
+    {
+      "front": "What is the macro-evolutionary significance of complete (holometabolous) metamorphosis?",
+      "back": "Holometaboly completely decouples the ecological niches of immature and adult forms. Larvae specialize exclusively on feeding and growth in hidden/subterranean niches, while adults specialize on dispersal and reproduction, eliminating intra-specific resource competition.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_005.png"
+    },
+    {
+      "front": "Define 'hypermetamorphosis' and outline the complete developmental sequence in Blister Beetles (Meloidae).",
+      "back": "Hypermetamorphosis is a specialized holometabolous variant featuring two or more morphologically and functionally distinct larval instars. Sequence in Meloidae: $\\text{Egg} \\rightarrow \\text{Triungulin (active 1st instar crawler)} \\rightarrow \\text{Scarabaeoid/Caraboid Grub (sedentary feeder)} \\rightarrow \\text{Coarctate / Pseudo-pupa (diapausing instar)} \\rightarrow \\text{Final Larval Instar} \\rightarrow \\text{True Exarate Pupa} \\rightarrow \\text{Adult}$.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_006.png"
+    },
+    {
+      "front": "What structural adaptations distinguish a 'Triungulin' larva from subsequent instars in Meloidae?",
+      "back": "The triungulin (1st instar) is an active, heavily sclerotized, long-legged campodeiform crawler equipped with specialized tarsal claws and caudal setae adapted for host attachment (clinging to solitary bees). Subsequent instars become fleshy, legless, grub-like feeders.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_007.png"
+    },
+    {
+      "front": "Differentiate 'Eruciform' and 'Scarabaeiform' larvae morphologically and ecologically.",
+      "back": "**Eruciform**: Cylindrical body with 3 pairs of thoracic legs and 2–5 pairs of abdominal prolegs with crochets; plant foliage feeders (Lepidoptera, Symphyta). **Scarabaeiform**: Fleshy C-shaped stout grub with sclerotized head capsule and thoracic legs, but lacking prolegs; soil/root feeders (Scarabaeidae).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_008.png"
+    },
+    {
+      "front": "Characterize 'Campodeiform', 'Elateriform', and 'Vermiform' larvae.",
+      "back": "**Campodeiform**: Elongate, dorso-ventrally flattened active predator with cursorial legs and cerci (Neuroptera, Carabidae). **Elateriform**: Cylindrical, heavily sclerotized wireworm with short thoracic legs (Elateridae). **Vermiform**: Legless maggot with reduced head capsule and mouthhooks (Diptera).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_009.png"
+    },
+    {
+      "front": "Differentiate 'Exarate', 'Obtect', and 'Coarctate' pupal structures.",
+      "back": "**Exarate**: Appendages free and unattached to body wall (Coleoptera, Hymenoptera). **Obtect**: Appendages glued tightly to pupal body wall by cuticular secretion (Lepidoptera). **Coarctate**: Enclosed inside a hardened 4th/5th larval puparium (higher Diptera).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_010.png"
+    },
+    {
+      "front": "Explain the structural and functional difference between 'Decticous' and 'Adecticous' pupae during eclosion.",
+      "back": "**Decticous pupae** possess functional, articulated mandibles used by the pharate adult to chew through the cocoon (Neuroptera, Trichoptera). **Adecticous pupae** lack functional mandibles and rely on cocoonase enzymes, pupal spines, or an eversible head sac (**ptilinum**) to emerge (Lepidoptera, Diptera).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_011.png"
+    },
+    {
+      "front": "Outline the neuroendocrine signaling pathway initiating insect apolysis and ecdysis.",
+      "back": "$\\text{Brain Neurosecretory Cells (Protocerebrum)} \\xrightarrow{\\text{PTTH}} \\text{Corpora Cardiaca} \\xrightarrow{\\text{Blood}} \\text{Prothoracic Glands} \\xrightarrow{\\text{Ecdysone}} \\text{Epidermal Cells}$. Ecdysone binds to nuclear receptor complex ($\\text{EcR} / \\text{USP}$), activating transcription of early-response genes for apolysis, cell division, and new cuticle synthesis.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_012.png"
+    },
+    {
+      "front": "Explain how Juvenile Hormone (JH) titers qualitatively determine the outcome of an ecdysial moult.",
+      "back": "- $\\text{High JH} + \\text{Ecdysone} \\rightarrow \\text{Larval-to-Larval Moult (maintains larval gene expression)}$",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_013.png"
+    },
+    {
+      "front": "What is the physiological effect of surgical 'allatectomy' (removal of corpora allata) on a 3rd instar larva?",
+      "back": "Surgical removal of corpora allata drops JH titers to zero prematurely. Upon the next ecdysone pulse, the young larva skips remaining larval instars and undergoes precocious metamorphosis into a miniature pupa and dwarf adult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_014.png"
+    },
+    {
+      "front": "How do synthetic Juvenile Hormone Analogs (JHAs / Methoprene) act as Insect Growth Regulators (IGRs)?",
+      "back": "Exogenous JHA applied to final-instar larvae prevents the natural drop in JH titer required for pupation. This blocks pupal differentiation, causing developmental arrest, morphogenetic monstrosities (larval-pupal chimeras), and sterility/death.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_015.png"
+    },
+    {
+      "front": "What is the role of Bursicon in post-eclosion adult development?",
+      "back": "Bursicon is a neurotropic peptide hormone released from the central nervous system following adult emergence; it acts on epidermal cells to trigger cuticular sclerotization (tanning and hardening) and wing inflation.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_016.png"
+    },
+    {
+      "front": "Differentiate 'diapause' from 'quiescence' ecophysiologically and endocrinologically.",
+      "back": "**Quiescence** is a non-programmed, immediate physical arrest directly forced by current adverse conditions (ceases immediately upon thermal restoration). **Diapause** is a predictive, neurohormonally enforced state of metabolic suppression triggered in advance by token stimuli (photoperiod).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/intermediate/infographic_card_017.png"
+    },
+    {
+      "front": "Differentiate 'Obligatory' and 'Facultative' diapause regarding genetic fixing and voltinism.",
+      "back": "**Obligatory diapause** is genetically fixed in 100% of individuals in every generation regardless of environment; characteristic of **univoltine** species (1 generation/year). **Facultative diapause** is induced by environmental token stimuli (short days); characteristic of **multivoltine** species.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_018.png"
+    },
+    {
+      "front": "Explain the concept of 'Critical Day Length' and photoperiodic response curves in insects.",
+      "back": "Critical day length is the specific photoperiod (hours of light in a 24h cycle) at which 50% of a multivoltine population enters diapause. Long-day insects enter diapause when photoperiod falls below threshold; short-day insects enter diapause when photoperiod exceeds threshold.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/beginner/infographic_card_019.png"
+    },
+    {
+      "front": "Define 'token stimulus' and explain its predictive role in insect survival.",
+      "back": "A token stimulus is a non-injurious environmental signal (such as day length) that serves as a reliable calendar cue to induce physiological diapause long before actual lethal freezing or drought sets in.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_020.png"
+    },
+    {
+      "front": "What is the 'thermo-refractory phase' (cold conditioning) in pupal diapause termination?",
+      "back": "In species undergoing pupal diapause (e.g., *Pieris brassicae*), the brain remains refractory to warm emergence temperatures until exposed to a prolonged period of chilling (cold conditioning). Chilling restores neurosecretory sensitivity, allowing warm spring temperatures to trigger PTTH release.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_021.png"
+    },
+    {
+      "front": "Explain maternal determination of embryonic diapause in the Silkworm (*Bombyx mori*).",
+      "back": "Photoperiod and temperature experienced by the female parent during her embryonic/larval stages control whether her suboesophageal ganglion secretes **Diapause Hormone (DH)** during oogenesis, pre-programming her eggs to enter early-embryonic diapause after oviposition.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_022.png"
+    },
+    {
+      "front": "According to Table tbl_005, match embryonic diapause types with their representative species.",
+      "back": "- **Early-embryonic egg diapause**: Silkworm (*Bombyx mori*)",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_023.png"
+    },
+    {
+      "front": "According to Table tbl_005, match larval, pupal, and adult diapause with their representative species.",
+      "back": "- **Larval Diapause**: Bamboo borer (*Omphisa fuscidentalis*), Rice stem borer (*Scirpophaga incertulas*)",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_024.png"
+    },
+    {
+      "front": "Distinguish between 'aestivation' and 'hibernation' ecophysiologically.",
+      "back": "**Aestivation** is summer diapause induced by photoperiod/temperature to survive high heat and summer drought. **Hibernation** is winter diapause induced by short photoperiod/cold to survive freezing winter conditions.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_025.png"
+    },
+    {
+      "front": "What is the endocrine mechanism of imaginal (adult) diapause in beetles?",
+      "back": "Imaginal diapause is caused by neuroendocrine suppression of the *corpora allata*, leading to a deficiency of Juvenile Hormone (JH). Without JH, vitellogenesis and ovarian maturation halt, forcing reproductive arrest.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_026.png"
+    },
+    {
+      "front": "Contrast 'Univoltine' and 'Multivoltine' life cycles.",
+      "back": "**Univoltine** species complete exactly one generation per year, typically governed by obligatory diapause. **Multivoltine** species complete multiple generations per year during favorable weather, entering facultative diapause only when triggered by autumn photoperiod.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_027.png"
+    },
+    {
+      "front": "What role do imaginal discs play during holometabolous larval instars under high JH titers?",
+      "back": "Under high JH titers during larval instars, imaginal discs remain small, undifferentiated clusters of epidermal cells that divide slowly without forming adult structures until the pupal transition.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_028.png"
+    },
+    {
+      "front": "How does higher Dipteran eclosion differ from Neuropteran pupal emergence?",
+      "back": "Higher Diptera (coarctate pupae) inflate an eversible head sac (**ptilinum**) with haemolymph to push open the puparium cap. Neuroptera (decticous pupae) use articulated pupal mandibles to chew through the cocoon.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_029.png"
+    },
+    {
+      "front": "TRUE or FALSE: Apolysis and ecdysis occur simultaneously during insect moulting.",
+      "back": "**FALSE.** Apolysis (separation of the old cuticle from epidermal cells) occurs *first*, creating the exuvial space. Ecdysis (shedding of the old exuviae) occurs *hours or days later* after the new cuticle is synthesized.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_030.png"
+    },
+    {
+      "front": "What is the physiological mechanism of Ecdysone-induced moulting fluid digestion?",
+      "back": "Ecdysone stimulates epidermal cells to secrete inactive moulting fluid containing chitinases and proteinases into the exuvial space. The enzymes activate to digest the old endocuticle while protecting the newly synthesized epicuticle.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_031.png"
+    },
+    {
+      "front": "How do aquatic nymphs (naiads) differ from terrestrial nymphs in hemimetabolous insects?",
+      "back": "Naiads live in aquatic habitats and possess specialized tracheal gills for aquatic respiration while adults are terrestrial/aerial (Odonata). Terrestrial nymphs share the exact same terrestrial habitat and food source as adults (Orthoptera).",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_032.png"
+    },
+    {
+      "front": "What is the role of the suboesophageal ganglion in *Bombyx mori* egg diapause?",
+      "back": "The suboesophageal ganglion synthesizes and secretes Diapause Hormone (DH), which acts on developing ovaries to accumulate trehalose and glycogen in eggs, enforcing embryonic diapause.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_033.png"
+    },
+    {
+      "front": "What is an 'imaginal disc' and which insect development pattern features it?",
+      "back": "An imaginal disc is an internal pocket of undifferentiated epidermal cells set aside during embryogenesis that forms adult structures (wings, legs, eyes) during the pupal stage. Found exclusively in **Holometabolous (Endopterygote)** insects.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_034.png"
+    },
+    {
+      "front": "TRUE or FALSE: Exogenous JHA application can be used as an ovicide.",
+      "back": "**TRUE.** JHA applied to freshly laid eggs disrupts blastokinesis and embryonic differentiation, acting as an effective ovicide.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_035.png"
+    },
+    {
+      "front": "What is the function of the 'coarctate / pseudo-pupa' stage in Meloidae hypermetamorphosis?",
+      "back": "The coarctate stage is a heavily sclerotized, legless pre-pupal resting instar that allows the blister beetle larva to pass unfavorable winter/drought conditions before completing its final larval instar and pupating.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_036.png"
+    },
+    {
+      "front": "Define 'apolysis' in insect post-embryonic growth.",
+      "back": "Apolysis is the separation of the cuticular hypodermis/epidermis from the inner layer of the old endocuticle, marking the formal initiation of a moult.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_037.png"
+    },
+    {
+      "front": "Define 'ecdysis' in insect post-embryonic growth.",
+      "back": "Ecdysis is the physical shedding and casting off of the remnant old cuticular exuviae once new epicuticle and procuticle layers are formed.",
+      "infographicUrl": "/generated_resources/Entomology/chapter_02/generated_infographics/advanced/infographic_card_038.png"
+    }
+  ]
+}

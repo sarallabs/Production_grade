@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../../contract/v1/chapter.schema.json",
+  "number": 1,
+  "title": "Computational Thinking & Problem Solving",
+  "topics": [
+    {
+      "id": "topic_1",
+      "label": "Decomposition and Pattern Recognition",
+      "order": 1
+    },
+    {
+      "id": "topic_2",
+      "label": "Algorithm Design and Abstraction",
+      "order": 2
+    }
+  ]
+}

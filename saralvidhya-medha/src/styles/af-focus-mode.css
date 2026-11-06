@@ -1,0 +1,572 @@
+/* af-focus-mode.css — Auto-split from app-flow.css */
+
+
+
+/* ════════════════════════════════════════
+   FOCUS MODE — fm-* styles
+════════════════════════════════════════ */
+
+/* ── Welcome screen (pitch white, full viewport) ── */
+.fm-welcome-screen {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+}
+
+
+.fm-quit-corner {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 20px;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.fm-quit-corner:hover {
+  background: #fecaca;
+}
+
+
+.fm-welcome-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+  max-width: 600px;
+  padding: 0 24px;
+  animation: fmWelcomeIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+
+.fm-welcome-icon {
+  font-size: 72px;
+  line-height: 1;
+}
+
+
+.fm-welcome-title {
+  margin: 0;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+}
+
+
+.fm-welcome-chapter {
+  margin: 0;
+  font-size: 1rem;
+  color: #64748b;
+  font-weight: 600;
+}
+
+
+.fm-welcome-flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+
+.fm-flow-step {
+  font-size: 13px;
+  font-weight: 700;
+  color: #334155;
+  padding: 4px 10px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+
+.fm-flow-arrow {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+
+.fm-start-btn {
+  padding: 16px 40px;
+  border: none;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.35);
+}
+
+.fm-start-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.45);
+}
+
+
+/* ── Active study screen (pitch black) ── */
+.fm-active-screen {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  color: #f1f5f9;
+}
+
+
+/* Header */
+.fm-active-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: #111111;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  flex-shrink: 0;
+}
+
+
+.fm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+
+.fm-header-chapter {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.fm-header-sep {
+  color: #475569;
+  font-size: 14px;
+}
+
+
+.fm-header-step {
+  font-size: 14px;
+  font-weight: 800;
+  color: #a78bfa;
+  white-space: nowrap;
+}
+
+
+.fm-header-progress {
+  font-size: 12px;
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+
+.fm-quit-btn {
+  background: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 20px;
+  padding: 7px 16px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.fm-quit-btn:hover {
+  background: rgba(239, 68, 68, 0.22);
+}
+
+
+/* Progress bar */
+.fm-progress-track {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+
+.fm-progress-fill {
+  height: 100%;
+  background: #ffffff;
+  transition: width 0.5s ease;
+}
+
+
+/* Scrollable content */
+.fm-active-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 36px 48px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* Override markdown colours for dark background */
+.fm-markdown-wrapper .markdown-view,
+.fm-markdown-wrapper .markdown-body {
+  color: #e2e8f0 !important;
+}
+
+
+.fm-markdown-wrapper .markdown-view h1,
+.fm-markdown-wrapper .markdown-view h2,
+.fm-markdown-wrapper .markdown-view h3,
+.fm-markdown-wrapper .markdown-view h4,
+.fm-markdown-wrapper .markdown-body h1,
+.fm-markdown-wrapper .markdown-body h2,
+.fm-markdown-wrapper .markdown-body h3,
+.fm-markdown-wrapper .markdown-body h4 {
+  color: #f8fafc !important;
+}
+
+
+.fm-markdown-wrapper .markdown-view strong,
+.fm-markdown-wrapper .markdown-body strong {
+  color: #f1f5f9 !important;
+}
+
+
+.fm-markdown-wrapper .markdown-view blockquote,
+.fm-markdown-wrapper .markdown-body blockquote {
+  border-left-color: #7c3aed !important;
+  background: rgba(124, 58, 237, 0.08) !important;
+  color: #cbd5e1 !important;
+}
+
+
+.fm-markdown-wrapper .markdown-view code,
+.fm-markdown-wrapper .markdown-body code {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #c4b5fd !important;
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+
+.fm-loading-msg,
+.fm-error-msg {
+  font-size: 1rem;
+  color: #94a3b8;
+  text-align: center;
+  margin-top: 80px;
+}
+
+
+.fm-error-msg {
+  color: #f87171;
+}
+
+
+/* Footer */
+.fm-active-footer {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 20px 28px;
+  background: #111111;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.fm-continue-btn {
+  padding: 14px 48px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  background: #ffffff;
+  color: #000000;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s, background 0.2s ease;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.1);
+}
+
+.fm-continue-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 255, 255, 0.2);
+  background: #f1f5f9;
+}
+
+
+/* Focus Mode overrides for Flashcards */
+.fm-active-content .flashcard-frame.single-face {
+  background: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05), 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+
+.fm-active-content .flashcard-frame.single-face:hover {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 30px 70px rgba(0, 0, 0, 0.6);
+}
+
+
+.fm-active-content .flashcard-title,
+.fm-active-content .flashcard-title p,
+.fm-active-content .flashcard-title h1,
+.fm-active-content .flashcard-title h2,
+.fm-active-content .flashcard-title h3 {
+  color: #f8fafc !important;
+}
+
+
+.fm-active-content .flashcard-back-content,
+.fm-active-content .flashcard-back-content p,
+.fm-active-content .flashcard-back-content h1,
+.fm-active-content .flashcard-back-content h2,
+.fm-active-content .flashcard-back-content h3 {
+  color: #cbd5e1 !important;
+}
+
+
+.fm-active-content .flashcard-separator {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+
+.fm-active-content .flashcard-speak-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #c4b5fd;
+  box-shadow: none;
+}
+
+.fm-active-content .flashcard-speak-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+
+/* Focus Mode overrides for Quiz */
+.fm-active-content .quiz-card {
+  background: #1e1e1e;
+  border: 2px solid rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.22), 0 16px 40px rgba(0, 0, 0, 0.4);
+}
+
+
+.fm-active-content .quiz-q,
+.fm-active-content .quiz-q * {
+  color: #f8fafc !important;
+}
+
+
+/* Colorful dark mode options */
+.fm-active-content .quiz-opt {
+  background: #2a2a2a;
+}
+
+
+.fm-active-content .quiz-opt .option-text,
+.fm-active-content .quiz-opt .option-text * {
+  color: inherit !important;
+}
+
+
+.fm-active-content .quiz-opt .opt-letter {
+  background: #ffffff !important;
+  color: #0f172a !important;
+}
+
+
+.fm-active-content .quiz-opt.correct .opt-letter {
+  background: #22c55e !important;
+  color: #ffffff !important;
+}
+
+
+.fm-active-content .quiz-opt.wrong .opt-letter {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+
+.fm-active-content .quiz-opt.option-0 {
+  background: linear-gradient(135deg, rgba(67, 56, 202, 0.2), rgba(67, 56, 202, 0.3));
+  border-color: rgba(99, 102, 241, 0.5);
+  color: #e0e7ff;
+}
+
+
+.fm-active-content .quiz-opt.option-1 {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(168, 85, 247, 0.3));
+  border-color: rgba(217, 70, 239, 0.5);
+  color: #f5d0fe;
+}
+
+
+.fm-active-content .quiz-opt.option-2 {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(217, 119, 6, 0.3));
+  border-color: rgba(245, 158, 11, 0.5);
+  color: #fef3c7;
+}
+
+
+.fm-active-content .quiz-opt.option-3 {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(14, 165, 233, 0.3));
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #cffafe;
+}
+
+
+/* Option Hovers */
+.fm-active-content .quiz-opt.option-0:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(67, 56, 202, 0.3), rgba(67, 56, 202, 0.4));
+}
+
+.fm-active-content .quiz-opt.option-1:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(168, 85, 247, 0.4));
+}
+
+.fm-active-content .quiz-opt.option-2:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.3), rgba(217, 119, 6, 0.4));
+}
+
+.fm-active-content .quiz-opt.option-3:not(:disabled):hover {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(14, 165, 233, 0.4));
+}
+
+
+/* Option Results */
+.fm-active-content .quiz-opt.correct {
+  background: linear-gradient(135deg, rgba(22, 163, 74, 0.3), rgba(22, 163, 74, 0.4)) !important;
+  border-color: rgba(34, 197, 94, 0.8) !important;
+  color: #dcfce7 !important;
+  box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2);
+}
+
+.fm-active-content .quiz-opt.correct .correct-indicator {
+  color: #86efac !important;
+}
+
+
+.fm-active-content .quiz-opt.wrong {
+  background: linear-gradient(135deg, rgba(220, 38, 38, 0.3), rgba(220, 38, 38, 0.4)) !important;
+  border-color: rgba(239, 68, 68, 0.8) !important;
+  color: #fee2e2 !important;
+}
+
+
+/* Explanation Modal */
+.fm-active-content .quiz-explanation-modal {
+  background: #1e1e1e !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+
+.fm-active-content .quiz-explanation-modal p,
+.fm-active-content .quiz-explanation-modal span {
+  color: #e2e8f0 !important;
+}
+
+
+.fm-active-content .quiz-explanation-modal .wrong-heading {
+  color: #fca5a5 !important;
+}
+
+
+.fm-active-content .quiz-modal-close {
+  color: #94a3b8 !important;
+}
+
+.fm-active-content .quiz-modal-close:hover {
+  color: #f8fafc !important;
+}
+
+
+/* Focus mode overrides for new question types */
+.fm-active-content select {
+  background-color: #2a2a2a !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.fm-active-content select option {
+  background-color: #1e1e1e !important;
+  color: #f8fafc !important;
+}
+
+.fm-active-content input[type="text"] {
+  background-color: #2a2a2a !important;
+  color: #f8fafc !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.fm-active-content .quiz-btn-primary {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: var(--primary, linear-gradient(135deg, #7c3aed, #ec4899));
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.fm-active-content .quiz-btn-primary:hover {
+  opacity: 0.9;
+}
+
+.fm-active-content .quiz-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* ── Hover-reveal Top Bar (Opens by moving cursor to top line) ── */
+.sv-topbar,
+.fm-active-header,
+.resource-tabs-header {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, box-shadow 0.25s ease !important;
+}
+
+
+.sv-topbar:not(:hover),
+.fm-active-header:not(:hover) {
+  transform: translateY(-80%);
+  opacity: 0.35;
+}
+
+
+.sv-topbar:hover,
+.fm-active-header:hover,
+.sv-topbar:focus-within,
+.fm-active-header:focus-within {
+  transform: translateY(0%) !important;
+  opacity: 1 !important;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15) !important;
+}

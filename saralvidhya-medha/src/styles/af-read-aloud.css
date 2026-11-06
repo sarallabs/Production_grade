@@ -1,0 +1,184 @@
+/* af-read-aloud.css — Auto-split from app-flow.css */
+
+
+
+.read-aloud-toolbar-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+  margin-top: 0;
+}
+
+
+.read-aloud-toolbar-split {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+
+.read-aloud-tool-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 6px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ffffff, #f8fafc);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.06);
+}
+
+
+.read-aloud-tool-pill--view {
+  padding: 3px 5px;
+}
+
+
+.read-aloud-tool-pill--transport {
+  padding: 4px 6px;
+}
+
+
+.read-aloud-play-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.read-aloud-view-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+
+.read-aloud-view-toggle-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(124, 58, 237, 0.08);
+  color: #5b21b6;
+}
+
+
+.read-aloud-view-toggle-btn::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -26px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 0.64rem;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
+  white-space: nowrap;
+  z-index: 10;
+}
+
+
+.read-aloud-view-toggle-btn:hover::after,
+.read-aloud-view-toggle-btn:focus-visible::after {
+  opacity: 1;
+}
+
+
+.read-aloud-action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
+.read-aloud-action-btn,
+.read-aloud-play-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: #f8fafc;
+  color: #64748B;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 0.7rem;
+}
+
+
+.read-aloud-action-btn:hover,
+.read-aloud-play-btn:hover {
+  transform: translateY(-1px);
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+
+.read-aloud-action-btn.active {
+  background: #7C3AED;
+  color: #fff;
+  box-shadow: 0 6px 12px rgba(124, 58, 237, 0.2);
+}
+
+
+.read-aloud-action-btn::after,
+.read-aloud-play-btn::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -24px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.92);
+  color: #fff;
+  font-size: 0.64rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+
+.read-aloud-action-btn:hover::after,
+.read-aloud-play-btn:hover::after {
+  opacity: 1;
+}
+
+
+.read-aloud-play-btn {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(124, 58, 237, 0.2);
+}
+
+
+.read-aloud-play-btn:hover {
+  background: linear-gradient(135deg, #7C3AED, #5B21B6);
+  box-shadow: 0 6px 14px rgba(124, 58, 237, 0.28);
+}
+
+
+/* Study table read-aloud live highlighting (summary/detailed) */
+.reading-highlight-view {
+  white-space: pre-wrap;
+  line-height: 1.9;
+  color: #1e293b;
+  font-size: 1.02rem;
+}

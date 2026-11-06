@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "boards": [
+    {
+      "id": "cbse",
+      "name": "Central Board of Secondary Education",
+      "shortName": "CBSE",
+      "classes": [
+        {
+          "id": "class_10",
+          "name": "Class X",
+          "subjects": [
+            {
+              "id": "english",
+              "name": "English",
+              "path": "cbse/class_10/english"
+            },
+            {
+              "id": "science",
+              "name": "Science",
+              "path": "cbse/class_10/science"
+            },
+            {
+              "id": "maths",
+              "name": "Maths",
+              "path": "cbse/class_10/maths"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "manuu",
+      "name": "Maulana Azad National Urdu University",
+      "shortName": "MANUU",
+      "classes": [
+        {
+          "id": "ma_public_administration",
+          "name": "Public Administration",
+          "subjects": [
+            {
+              "id": "pubadm_ur",
+              "name": "Public Administration (Urdu Medium)",
+              "path": "manuu/pubadm_ur"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "neb_nepal",
+      "name": "The National Exams Board, Nepal",
+      "shortName": "NEB Nepal",
+      "classes": [
+        {
+          "id": "class_10",
+          "name": "Class X",
+          "subjects": [
+            {
+              "id": "neb_x_science",
+              "name": "Science and Technology",
+              "path": "neb_nepal/class_10/Science and Technology"
+            }
+          ]
+        },
+        {
+          "id": "class_12",
+          "name": "Class XII",
+          "subjects": [
+            {
+              "id": "neb_xii_biology",
+              "name": "Biology",
+              "path": "neb_nepal/class_12/biology"
+            },
+            {
+              "id": "neb_xii_chemistry",
+              "name": "Chemistry",
+              "path": "neb_nepal/class_12/chemistry"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "telangana_intermediate",
+      "name": "Telangana State Board of Intermediate Education",
+      "shortName": "Telangana Intermediate",
+      "classes": [
+        {
+          "id": "inter_1st_year",
+          "name": "Inter First Year",
+          "subjects": [
+            {
+              "id": "ti_11th_chemistry",
+              "name": "Chemistry",
+              "path": "Telangana_Intermediate/Inter 1st year/11th_chemistry"
+            },
+            {
+              "id": "ti_11th_physics",
+              "name": "Physics",
+              "path": "Telangana_Intermediate/Inter 1st year/11th_physics"
+            }
+          ]
+        },
+        {
+          "id": "inter_2nd_year",
+          "name": "Inter Second Year",
+          "subjects": [
+            {
+              "id": "ti_12th_chemistry",
+              "name": "Chemistry",
+              "path": "Telangana_Intermediate/Inter 2nd year/12th_chemistry"
+            },
+            {
+              "id": "ti_12th_physics",
+              "name": "Physics",
+              "path": "Telangana_Intermediate/Inter 2nd year/12th_physics"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "master_minds",
+      "name": "Master Minds CA Academy",
+      "shortName": "Master Minds",
+      "classes": [
+        {
+          "id": "ca_final",
+          "name": "CA Final",
+          "subjects": [
+            {
+              "id": "advanced_financial_management",
+              "name": "Advanced Financial Management",
+              "path": "master_minds/ca_final/advanced_financial_management"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anu_university",
+      "name": "Acharya Nagarjuna University",
+      "shortName": "ANU",
+      "classes": [
+        {
+          "id": "mba",
+          "name": "MBA",
+          "subjects": [
+            {
+              "id": "management",
+              "name": "Management",
+              "path": "Nagarjuna_University/MBA"
+            }
+          ]
+        },
+        {
+          "id": "science",
+          "name": "M.Sc",
+          "subjects": [
+            {
+              "id": "anu_physics",
+              "name": "Quantum Mechanics",
+              "path": "Nagarjuna_University/physics",
+              "chapterNumbers": [
+                4
+              ]
+            },
+            {
+              "id": "anu_characterization",
+              "name": "Characterization Techniques",
+              "path": "Nagarjuna_University/physics",
+              "chapterNumbers": [
+                5
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "angrau_university",
+      "name": "Acharya N.G. Ranga Agricultural University",
+      "shortName": "ANGRAU",
+      "logo": "/logo-angrau.png",
+      "classes": [
+        {
+          "id": "bsc_agri",
+          "name": "B.Sc. Agriculture",
+          "subjects": [
+            {
+              "id": "ento_131",
+              "name": "Entomology",
+              "path": "angrau",
+              "chapterNumbers": [
+                1,
+                2,
+                3,
+                4
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
