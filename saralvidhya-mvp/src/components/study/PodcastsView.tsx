@@ -400,9 +400,14 @@ export default function PodcastsView({
     return savedMc ? Math.max(0, parseInt(savedMc, 10) || 0) : 0;
   });
 
+  const userSelectedTrackRef = useRef(false);
+  useEffect(() => {
+    userSelectedTrackRef.current = false;
+  }, [subjectId, chapterNumber]);
+
   useEffect(() => {
     const syncSavedTrackAndMc = () => {
-      if (!resumeTrack) {
+      if (!resumeTrack && !userSelectedTrackRef.current) {
         const savedTrk = cloudStorage.getItem(`last_track_${subjectId}_${chapterNumber}_${persona}`);
         if (savedTrk === "mc" || savedTrk === "ql" || savedTrk === "dl" || savedTrk === "short" || savedTrk === "long") {
           setSelectedTrack((prev) => (prev !== savedTrk ? savedTrk : prev));
@@ -629,13 +634,6 @@ export default function PodcastsView({
     ];
   }, [hasRegistryPodcasts, isNebBiologyChap6, chapterName, subjectId]);
 
-  useEffect(() => {
-    if (!isRegistryResolved) return;
-    cloudStorage.setItem(
-      `last_track_${subjectId}_${chapterNumber}_${persona}`,
-      selectedTrack,
-    );
-  }, [selectedTrack, subjectId, chapterNumber, persona, isRegistryResolved]);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -850,9 +848,9 @@ export default function PodcastsView({
       chapterName,
       persona,
       track: selectedTrack,
-      mcIndex: selectedMc,
-      dlIndex: selectedDl,
-      qlIndex: selectedQl,
+      mcIndex: selectedTrack === "mc" ? selectedMc : undefined,
+      dlIndex: selectedTrack === "dl" || selectedTrack === "long" ? selectedDl : undefined,
+      qlIndex: selectedTrack === "ql" || selectedTrack === "short" ? selectedQl : undefined,
     }),
     [subjectId, chapterNumber, chapterName, persona, selectedTrack, selectedMc, selectedDl, selectedQl],
   );
@@ -1602,14 +1600,20 @@ export default function PodcastsView({
       const txt = await r.text();
       const parsed = JSON.parse(txt);
       if (cancelled) return true;
-      if (parsed && (typeof parsed.full_text === "string" || Array.isArray(parsed.segments))) {
+      if (parsed && (typeof parsed.full_text === "string" || typeof parsed.full_transcript === "string" || Array.isArray(parsed.segments) || Array.isArray(parsed.paragraphs))) {
+        const paragraphText = Array.isArray(parsed.paragraphs) && parsed.paragraphs.length > 0
+          ? parsed.paragraphs
+              .map((p: any) => cleanTranscriptPreamble(String(p || "")))
+              .filter(Boolean)
+              .join("\n\n")
+          : "";
         const segmentText = Array.isArray(parsed.segments)
           ? parsed.segments
               .map((s: any) => cleanTranscriptPreamble(s.transcript || s.text || ""))
               .filter(Boolean)
               .join("\n\n")
           : "";
-        const fullText = segmentText || parsed.full_text || parsed.transcript || "";
+        const fullText = paragraphText || segmentText || parsed.full_text || parsed.full_transcript || parsed.transcript || "";
         setTranscript(cleanTranscriptPreamble(fullText));
         if (Array.isArray(parsed.segments) && parsed.segments.length > 0) {
           const normalized = parsed.segments.map((s: any) => ({
@@ -1621,7 +1625,7 @@ export default function PodcastsView({
         } else {
           setTranscriptSegments(null);
         }
-        const runtime = parsed.total_runtime_seconds || parsed.metadata?.duration_seconds || null;
+        const runtime = parsed.total_runtime_seconds || parsed.duration_seconds || parsed.metadata?.duration_seconds || null;
         if (typeof runtime === "number" && runtime > 0) {
           setTranscriptDuration(runtime);
         }
@@ -2093,7 +2097,12 @@ export default function PodcastsView({
                 role="tab"
                 aria-selected={isActive}
                 disabled={isDisabled}
-                onClick={() => !isDisabled && setSelectedTrack(key)}
+                onClick={() => {
+                  if (isDisabled) return;
+                  userSelectedTrackRef.current = true;
+                  cloudStorage.setItem(`last_track_${subjectId}_${chapterNumber}_${persona}`, key);
+                  setSelectedTrack(key);
+                }}
                 title={isDisabled ? "Not available in topic view — go to Podcasts tab for full access" : undefined}
                 className={`pod-segmented-btn ${isActive ? "active" : ""}`}
                 style={{

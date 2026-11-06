@@ -1,0 +1,20 @@
+#!/bin/sh
+# Check only newly ADDED lines (excluding file header lines starting with +++)
+ADDED_LINES=$(git diff --cached -U0 --no-color | grep '^[+]' | grep -v '^[+][+][+]')
+
+# Prevent self-matching the hook script's own regex pattern definition
+FILTERED_LINES=$(echo "$ADDED_LINES" | grep -v 'PATTERN=')
+
+# Search for Google API keys, OpenAI keys, or PEM private keys
+KEY_PATTERN="AIza""Sy[0-9A-Za-z_-]{33}|sk-[0-9A-Za-z_-]{20,}|BEGIN (RSA |EC )?PRIVATE KEY"
+
+if echo "$FILTERED_LINES" | grep -E "$KEY_PATTERN" > /dev/null 2>&1; then
+    echo ""
+    echo "❌ [SECURITY REJECTED] You are attempting to commit an active API key or private secret!"
+    echo "Please remove the hardcoded secret from the staged lines."
+    echo "Use .env.local for local testing and Google Cloud Secret Manager for production."
+    echo ""
+    exit 1
+fi
+
+exit 0

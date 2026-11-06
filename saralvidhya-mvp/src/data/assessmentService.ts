@@ -78,17 +78,37 @@ export async function fetchAndParseFirst(
         if (rawQuestions.length > 0) {
           const mapped = rawQuestions
             .map((q: any, i: number) => {
-              const isDescriptive = !!(
-                q.model_answer !== undefined ||
-                q.rubric !== undefined ||
-                q.keywords !== undefined ||
-                q.section_name !== undefined ||
-                (!q.options && (q.question || q.stem || q.q))
-              );
+              const qObj = q.question && typeof q.question === 'object' ? q.question : null;
+              const aObj = q.answer && typeof q.answer === 'object' && !Array.isArray(q.answer) ? q.answer : null;
+              const mObj = q.meta && typeof q.meta === 'object' ? q.meta : null;
+              const rawOptsSrc = q.options ?? qObj?.options;
+              const hasOptions = Array.isArray(rawOptsSrc)
+                ? rawOptsSrc.length > 0
+                : Boolean(rawOptsSrc && typeof rawOptsSrc === 'object' && Object.keys(rawOptsSrc).length > 0);
+              const stemRaw =
+                (typeof q.question === 'string' ? q.question : qObj?.stem) ||
+                q.stem ||
+                q.question_stem ||
+                q.q ||
+                '';
+
+              const isDescriptive =
+                !hasOptions &&
+                Boolean(
+                  q.model_answer !== undefined ||
+                    aObj?.model_answer !== undefined ||
+                    q.rubric !== undefined ||
+                    q.keywords !== undefined ||
+                    q.section_name !== undefined ||
+                    q.type === 'descriptive' ||
+                    q.type === 'short_answer' ||
+                    q.type === 'long_answer' ||
+                    stemRaw
+                );
 
               if (isDescriptive) {
-                const stem = q.question || q.stem || q.q || '';
-                const section = q.section || '';
+                const stem = String(stemRaw || '');
+                const section = q.section || mObj?.section || '';
                 const type =
                   section === 'part_a'
                     ? 'short_answer'
@@ -99,22 +119,24 @@ export async function fetchAndParseFirst(
                   id: q.question_id || q.id || `${prefix}${i + 1}`,
                   type: type,
                   q: stem.replace(/^\[.*?\]\s*/, ''),
-                  explanation: q.explanation || q.rationale || q.source_reference || '',
+                  explanation: q.explanation || aObj?.explanation || q.rationale || q.source_reference || mObj?.source_reference || '',
                   options: [],
                   answer: 0,
-                  section: q.section,
-                  sectionName: q.section_name,
+                  section: section,
+                  sectionName: q.section_name || mObj?.section,
                   marks:
                     q.marks !== undefined
                       ? q.marks
+                      : mObj?.marks !== undefined
+                      ? mObj.marks
                       : section === 'part_a'
                       ? 2
                       : section === 'part_b'
                       ? 5
                       : 9,
-                  bloomLevel: q.bloom_level,
-                  mindmapPath: q.mindmap_path,
-                  modelAnswer: q.model_answer,
+                  bloomLevel: q.bloom_level || mObj?.bloom_level,
+                  mindmapPath: q.mindmap_path || mObj?.mindmap?.path,
+                  modelAnswer: q.model_answer || aObj?.model_answer,
                   rubric: q.rubric,
                   keywords: q.keywords,
                   hasAsciiDiagram: q.has_ascii_diagram,
@@ -124,13 +146,13 @@ export async function fetchAndParseFirst(
 
               let rawOptions: string[] = [];
               let optionKeyMap: string[] = [];
-              if (Array.isArray(q.options)) {
-                rawOptions = q.options;
+              if (Array.isArray(rawOptsSrc)) {
+                rawOptions = rawOptsSrc;
                 optionKeyMap = ['A', 'B', 'C', 'D', 'E', 'F', 'G'].slice(0, rawOptions.length);
-              } else if (q.options && typeof q.options === 'object') {
-                const keys = Object.keys(q.options).sort();
+              } else if (rawOptsSrc && typeof rawOptsSrc === 'object') {
+                const keys = Object.keys(rawOptsSrc).sort();
                 optionKeyMap = keys;
-                rawOptions = keys.map((k) => q.options[k]);
+                rawOptions = keys.map((k) => rawOptsSrc[k]);
               }
               const cleanedOptions = rawOptions.map((opt: any) =>
                 String(opt).replace(/^[A-G]\)\s*/, '')
@@ -156,7 +178,9 @@ export async function fetchAndParseFirst(
               const rawAnswer =
                 q.correct_keys ??
                 q.correct_key ??
-                q.answer ??
+                aObj?.keys ??
+                aObj?.key ??
+                (!aObj ? q.answer : undefined) ??
                 q.correct_answer ??
                 q.correct_answers ??
                 q.correct_options ??
@@ -167,7 +191,8 @@ export async function fetchAndParseFirst(
                   rawAnswer.includes(',') &&
                   !rawAnswer.startsWith('A)')) ||
                 prefix.startsWith('msq') ||
-                q.assessment_type === 'MSQ';
+                q.assessment_type === 'MSQ' ||
+                String(q.type || '').toLowerCase() === 'msq';
 
               let answerIndices: number | number[];
               if (Array.isArray(rawAnswer)) {
@@ -180,11 +205,18 @@ export async function fetchAndParseFirst(
                 answerIndices = isMSQ ? (idx === -1 ? [] : [idx]) : idx === -1 ? 0 : idx;
               }
 
-              const stemText = (q.stem || q.question || q.question_stem || q.q || '').replace(
+              const stemText = String(stemRaw).replace(
                 /^\[.*?\]\s*/,
                 ''
               );
-              const explanationText = q.explanation || q.rationale || q.source_reference || '';
+              const explanationText =
+                q.explanation ||
+                aObj?.explanation ||
+                q.rationale ||
+                aObj?.rationale ||
+                q.source_reference ||
+                mObj?.source_reference ||
+                '';
 
               return {
                 id: q.question_id || q.id || `${prefix}${i + 1}`,
@@ -193,8 +225,10 @@ export async function fetchAndParseFirst(
                 options: cleanedOptions,
                 answer: answerIndices,
                 explanation: explanationText,
+                marks: q.marks ?? mObj?.marks ?? (isMSQ ? 2 : 1),
+                section: q.section ?? mObj?.section,
                 videoTime: 0,
-              };
+              } as AssessmentQuestion;
             })
             .filter(
               (q: AssessmentQuestion) =>

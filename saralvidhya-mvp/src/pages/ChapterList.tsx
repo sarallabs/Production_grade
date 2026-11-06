@@ -173,12 +173,12 @@ export default function ChapterList() {
       ...(resolvedSubjectName ? { subjectName: resolvedSubjectName } : {}),
       ...(className ? { className } : {}),
       chapter: ch.number.toString(),
-      chapterName: toTitleCase(ch.name),
+      chapterName: toTitleCase(ch.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').replace(/^(?:vvit\s+)?(?:mongodb\s*[:–—-]\s*)?/i, '').trim() || ch.name),
       tool: 'summary',
     };
     delete nextParams.section;
     cloudStorage.setItem('sv_last_course_params', JSON.stringify(nextParams));
-    navigate(tenantPath('/study-table'), { state: nextParams });
+    navigate(tenantPath('/read'), { state: nextParams });
   };
 
   return (
@@ -271,21 +271,32 @@ export default function ChapterList() {
                 const completedSessions = isFullyDone ? totalSessions : Math.min(uniqueToolsDone.size, totalSessions);
                 const chapterPct = isFullyDone ? 100 : snapToQuarter((completedSessions / totalSessions) * 100);
 
-                const cleanChapterName = flipCh.name.replace(/^chapter\s*\d+[\s:–-]*/i, '').trim() || flipCh.name;
+                const cleanChapterName =
+                  flipCh.name
+                    .replace(/^chapter\s*\d+[\s:–-]*/i, '')
+                    .replace(/^(?:vvit\s+)?(?:mongodb\s*[:–—-]\s*)?/i, '')
+                    .replace(/^vvit\s+/i, '')
+                    .trim() || flipCh.name;
                 const lowerName = (flipCh.name || '').toLowerCase();
                 const lowerSubName = (resolvedSubjectName || '').toLowerCase();
+                const isMongo =
+                  sId.toLowerCase().includes('mongo') ||
+                  lowerSubName.includes('mongo') ||
+                  lowerName.includes('mongo');
                 const isDbms =
-                  sId.toLowerCase().includes('dbms') ||
-                  lowerSubName.includes('database') ||
-                  lowerName.includes('database');
+                  !isMongo && (
+                    sId.toLowerCase().includes('dbms') ||
+                    lowerSubName.includes('database') ||
+                    lowerName.includes('database')
+                  );
                 const isDigestive =
-                  !isDbms && (
+                  !isMongo && !isDbms && (
                     lowerName.includes('digestive') ||
                     flipCh.number === 1 ||
                     flipIndex === 0
                   );
                 const isMetamorphosis =
-                  !isDbms && (
+                  !isMongo && !isDbms && (
                     lowerName.includes('metamorphosis') ||
                     lowerName.includes('morphology') ||
                     flipCh.number === 2 ||
@@ -293,21 +304,23 @@ export default function ChapterList() {
                     flipIndex === 1
                   );
                 const isWeathering =
-                  !isDbms && (
+                  !isMongo && !isDbms && (
                     lowerName.includes('weathering') ||
                     lowerName.includes('soil') ||
                     flipCh.number === 3 ||
                     flipIndex === 2
                   );
                 const isPollination =
-                  !isDbms && (
+                  !isMongo && !isDbms && (
                     lowerName.includes('pollination') ||
                     lowerName.includes('floral') ||
                     flipCh.number === 4 ||
                     flipIndex === 3
                   );
 
-                const fallbackHero = isDbms
+                const fallbackHero = isMongo
+                  ? 'chapter-mongodb-hero.png'
+                  : isDbms
                   ? 'chapter-dbms-hero.png'
                   : isDigestive
                   ? 'chapter-digestive-hero.png'

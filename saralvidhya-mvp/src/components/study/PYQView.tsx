@@ -74,7 +74,11 @@ export default function PYQView({
             if (items.length > 0 && !cancelled) {
               const mapped = items.map((q: any, i: number) => {
                 // Support both contract/v1 previous_year.schema.json and rich repetition metadata
-                const years: string[] = q.repetition_metadata?.repeated_years || [];
+                const years: string[] =
+                  q.repetition_metadata?.repeated_years ||
+                  q.repeated_academic_years ||
+                  q.meta?.decadal_recurrence_audit?.repeated_academic_years ||
+                  [];
                 const latestYearStr = years[years.length - 1] || (q.year ? String(q.year) : "2024");
                 const yrNum =
                   typeof q.year === "number"
@@ -83,13 +87,17 @@ export default function PYQView({
                 const marksVal =
                   typeof q.marks === "number"
                     ? q.marks
-                    : q.designated_mark_tier === "10M"
-                      ? 10
-                      : q.designated_mark_tier === "5M"
-                        ? 5
-                        : 2;
+                    : typeof q.meta?.marks === "number"
+                      ? q.meta.marks
+                      : q.designated_mark_tier === "10M"
+                        ? 10
+                        : q.designated_mark_tier === "5M"
+                          ? 5
+                          : 2;
                 const tier = q.designated_mark_tier || `${marksVal}M`;
-                const fullAnswer: string = q.model_answer || q.longAnswer || q.answer || "";
+                const ansObj = q.answer && typeof q.answer === "object" ? q.answer : null;
+                const fullAnswer: string =
+                  q.model_answer || ansObj?.model_answer || ansObj?.explanation || q.longAnswer || (typeof q.answer === "string" ? q.answer : "") || "";
                 const shortAns: string =
                   q.shortAnswer || fullAnswer.split(/\n\s*\n/)[0]?.trim() || fullAnswer;
 
@@ -97,12 +105,13 @@ export default function PYQView({
                 const chBadge = cleanChTitle
                   ? `Chapter ${chapterNumber} · ${cleanChTitle}`
                   : `Chapter ${chapterNumber}`;
+                const qStem = typeof q.question === "object" ? q.question?.stem : q.question;
                 return {
                   id:
                     typeof q.id === "number"
                       ? q.id
                       : (q.pyq_id && parseInt(String(q.pyq_id).replace(/[^0-9]/g, ""))) || i + 1,
-                  text: q.canonical_question_stem || q.question || q.text || "",
+                  text: q.canonical_question_stem || qStem || q.text || "",
                   shortAnswer: shortAns,
                   longAnswer: q.examiner_notes
                     ? `${fullAnswer}\n\n> **Examiner Notes:** ${q.examiner_notes}`
@@ -113,7 +122,12 @@ export default function PYQView({
                   subjectId,
                   chapterNumber,
                   year: yrNum,
-                  frequency: q.repetition_metadata?.total_frequency_count || q.frequency || (years.length > 1 ? years.length : 2),
+                  frequency:
+                    q.repetition_metadata?.total_frequency_count ||
+                    q.repetition_count ||
+                    q.meta?.decadal_recurrence_audit?.repetition_count ||
+                    q.frequency ||
+                    (years.length > 1 ? years.length : 2),
                   repeatedYears: years.length > 0 ? years.join(", ") : q.repeatedYears,
                   examSession: typeof latestYearStr === "string" && latestYearStr.includes(" ") ? `End-Sem · ${latestYearStr}` : `End-Sem · Dec ${yrNum}`,
                 };

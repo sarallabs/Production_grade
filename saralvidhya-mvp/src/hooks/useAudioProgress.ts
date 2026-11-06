@@ -102,9 +102,8 @@ export async function saveProgress(
     cloudStorage.setItem(`global_last_podcast_${userId}`, JSON.stringify(globalData));
     cloudStorage.setItem('global_last_podcast_shared', JSON.stringify(globalData));
 
-    if (metadata.mcIndex !== undefined) {
+    if (metadata.track === 'mc' && metadata.mcIndex !== undefined) {
       cloudStorage.setItem(`last_mc_${metadata.subjectId}_${metadata.chapterNumber}`, String(metadata.mcIndex));
-      cloudStorage.setItem(`last_track_${metadata.subjectId}_${metadata.chapterNumber}_${metadata.persona}`, 'mc');
     }
 
     const chapterId = `chapter_${String(metadata.chapterNumber || 1).padStart(2, '0')}`;

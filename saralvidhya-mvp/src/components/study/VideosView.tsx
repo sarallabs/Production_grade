@@ -25,7 +25,15 @@ export interface VideosViewProps {
   onSelectVideoIndex?: (videoIndex: number) => void;
 }
 
-const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; duration?: string }> = {};
+const KNOWN_VIDEOS_METADATA: Record<string, { title: string; topics: string[]; duration?: string; introEndTime?: number }> = {};
+
+const VIDEO_SKIP_INTRO_SECONDS: Record<string, number> = {
+  "Zyqv9fMnTrc": 70, // VVIT MongoDB Part 1 -> 1:10
+  "TWtsTE0sLAQ": 68, // VVIT MongoDB Part 2 -> 1:08
+  "i1eoBK9RUDk": 0,  // VVIT MongoDB Part 3 -> no skip intro
+  "K0lv_ubMinE": 40, // VVIT MongoDB Part 4 -> 0:40
+  "g37gQCAyKf8": 70, // VVIT MongoDB Complete Video -> 1:10
+};
 
 /** Faint green insect outline watermark matching Figma */
 const InsectWatermark = ({ width = "165px", height = "165px", opacity = 0.22 }: { width?: string; height?: string; opacity?: number }) => (
@@ -208,6 +216,7 @@ export default function VideosView({
                     : undefined,
                 dir: v.id || `vid_${idx + 1}`,
                 topics: Array.isArray(v.topics) && v.topics.length > 0 ? v.topics : dbSubtopics,
+                introEndTime: typeof v.introEndTime === "number" ? v.introEndTime : VIDEO_SKIP_INTRO_SECONDS[resolvedYtId],
               };
             }),
           );
@@ -315,6 +324,7 @@ export default function VideosView({
       topics: v.topics,
       duration: v.duration,
       thumbnailUrl: v.thumbnailUrl || v.thumbnail,
+      introEndTime: typeof (v as any).introEndTime === "number" ? (v as any).introEndTime : undefined,
     }));
     const primarySource =
       registryVideos.length > 0
@@ -348,10 +358,18 @@ export default function VideosView({
             : resolvedYt
               ? `https://i.ytimg.com/vi/${resolvedYt}/hqdefault.jpg`
               : undefined,
+          introEndTime:
+            typeof (v as any).introEndTime === "number"
+              ? (v as any).introEndTime
+              : typeof (regMatch as any)?.introEndTime === "number"
+                ? (regMatch as any).introEndTime
+                : typeof (chMatch as any)?.introEndTime === "number"
+                  ? (chMatch as any).introEndTime
+                  : VIDEO_SKIP_INTRO_SECONDS[resolvedYt],
         };
       });
     }
-    let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string }[] = [];
+    let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string; introEndTime?: number }[] = [];
     if (subjectId === "anu_physics") {
       list = [
         {
@@ -442,6 +460,68 @@ export default function VideosView({
             "Multinational Case Studies & Foundational Competitive Benefits",
             "Critical International Challenges & Cultural Adaptations",
             "Global Supply Chain Alignment & Standardization vs Localization"
+          ]
+        }
+      ];
+    } else if (subjectId === "mongodb") {
+      list = [
+        {
+          title: "Part 1: Database Creation & Collection Lifecycle",
+          ytId: "Zyqv9fMnTrc",
+          introEndTime: 70,
+          topics: [
+            "use <DATABASE_NAME> Context Switch & Lazy Allocation",
+            "db Global Reference & show dbs Storage Threshold",
+            "Explicit Collection Provisioning: db.createCollection(name, options)",
+            "Capped Collections (capped: true, size, max) & Auto-FIFO Eviction",
+            "Implicit Collection Auto-Creation & db.<collection>.drop()"
+          ]
+        },
+        {
+          title: "Part 2: Document Ingestion & Cursor Retrieval",
+          ytId: "TWtsTE0sLAQ",
+          introEndTime: 68,
+          topics: [
+            "Single-Document Write Mechanics: insertOne() & insert()",
+            "Batch Array Ingestion: insertMany() & 12-Byte _id: ObjectId Architecture",
+            "Cursor Iteration with find() vs Single-Document findOne()",
+            "JSON Formatting with pretty() & Implicit Logical AND Filters"
+          ]
+        },
+        {
+          title: "Part 3: Query Filtering, Projection & Cursor Pagination",
+          ytId: "i1eoBK9RUDk",
+          introEndTime: 0,
+          topics: [
+            "Comparison Operators ($eq, $ne, $gt, $gte, $lt, $lte, $in, $nin)",
+            "Logical Operators ($and, $or, $not, $nor) & Compound Queries",
+            "Field Projection Rules: Inclusion (1), Exclusion (0) & _id Exception",
+            "Cursor Chaining Pipeline: sort(1|-1), skip(n) & limit(n) Execution Order"
+          ]
+        },
+        {
+          title: "Part 4: In-Place Atomic Updates & Three-Tier Deletion",
+          ytId: "K0lv_ubMinE",
+          introEndTime: 40,
+          topics: [
+            "updateOne(), updateMany(), replaceOne() & Whole-Document Replacement",
+            "Atomic Update Modifiers ($set, $unset, $inc, $push, $pull) & Upsert",
+            "Document-Level Removal: deleteOne(), deleteMany() & Index Preservation",
+            "Collection Drop (db.collection.drop()) vs Database Drop (db.dropDatabase())"
+          ]
+        },
+        {
+          title: "Complete Video: Databases, Collections & CRUD Operations",
+          ytId: "g37gQCAyKf8",
+          introEndTime: 70,
+          topics: [
+            "Database Creation & Lazy Instantiation (use, db, show dbs)",
+            "Collection Lifecycle: Explicit Provisioning, Capped & Drop",
+            "Document Ingestion & 12-Byte ObjectId Architecture",
+            "Document Retrieval: find() Cursor vs findOne() & pretty()",
+            "Query Filtering, Projection Rules & Cursor Pagination",
+            "In-Place Document Updates & Atomic Operators ($set, $inc, $push)",
+            "Three-Tier Deletion Hierarchy (Document, Collection & Database)"
           ]
         }
       ];
@@ -1095,10 +1175,22 @@ export default function VideosView({
     }
   };
 
-  // Netflix-style Skip Intro (available inside player during the first 2 minutes / 120s, including on fresh login)
+  // Netflix-style Skip Intro (uses per-video introEndTime or VIDEO_SKIP_INTRO_SECONDS, defaulting to 120s)
+  const skipIntroTargetSec = useMemo(() => {
+    const vidIntro = (currentVideo as any)?.introEndTime;
+    if (typeof vidIntro === "number") return vidIntro;
+    const ytId = currentVideo?.ytId || "";
+    if (ytId && ytId in VIDEO_SKIP_INTRO_SECONDS) {
+      return VIDEO_SKIP_INTRO_SECONDS[ytId];
+    }
+    return 120;
+  }, [currentVideo]);
+
   const canSkipIntro =
-    currentTime < 120 &&
-    (duration === 0 || duration > 125);
+    skipIntroTargetSec > 0 &&
+    currentTime < skipIntroTargetSec &&
+    (duration === 0 || duration > skipIntroTargetSec + 5);
+
   const canSkipIntroRef = useRef(canSkipIntro);
   useEffect(() => {
     canSkipIntroRef.current = canSkipIntro;
@@ -1109,23 +1201,29 @@ export default function VideosView({
       e.stopPropagation();
       e.preventDefault();
     }
-    const target = 120; // 2 minutes (120 seconds)
+    const target = skipIntroTargetSec > 0 ? skipIntroTargetSec : 120;
     const dur = typeof playerRef.current?.getDuration === "function" ? playerRef.current.getDuration() : duration;
     const safeTarget = dur > 0 ? Math.min(target, Math.max(0, dur - 5)) : target;
     isSeekingRef.current = true;
+    hasStartedPlayingRef.current = true;
+    lastSeekTargetRef.current = { time: safeTarget, ts: Date.now() };
+    restoredVideoTimeRef.current = safeTarget;
     showSeekBadge("skip");
     if (playerRef.current) {
       playerRef.current.seekTo?.(safeTarget, true);
     }
+    sendYtIframeCommand("seekTo", [safeTarget, true]);
     setCurrentTime(safeTarget);
     if (dur > 0) setProgress((safeTarget / dur) * 100);
     setIsPlaying(true);
     try {
       playerRef.current?.playVideo?.();
+      sendYtIframeCommand("playVideo", []);
     } catch (err) {}
     setTimeout(() => {
       try {
         playerRef.current?.playVideo?.();
+        sendYtIframeCommand("playVideo", []);
       } catch (err) {}
     }, 80);
   };
@@ -1907,7 +2005,7 @@ export default function VideosView({
         <button
           type="button"
           onClick={handleSkipIntro}
-          title="Skip Intro (Jump to 2:00)"
+          title={`Skip Intro (Jump to ${formatTime(skipIntroTargetSec)})`}
           aria-label="Skip Intro"
           style={{
             position: "absolute",

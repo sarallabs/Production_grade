@@ -133,6 +133,8 @@ export interface Chapter {
     durationSeconds?: number;
     topics?: string[];
     order?: number;
+    introEndTime?: number;
+    introEndTime?: number;
   }>;
   tools?: Record<string, any>;
 }
@@ -801,8 +803,14 @@ export async function getManifest(): Promise<Manifest> {
     });
   };
 
-  if (regTenant && overlay?.subjects && overlay.subjects.length > 0) {
-    return { ...base, subjects: enrichOverlaySubjects(overlay.subjects) };
+  if (regTenant && overlay?.subjects) {
+    if (overlay.subjects.length > 0) {
+      return { ...base, subjects: enrichOverlaySubjects(overlay.subjects) };
+    }
+    const tenantFallback = base.subjects.filter(
+      (s) => s.boardId === regTenant || s.boardId?.startsWith(`${regTenant}_`)
+    );
+    return { ...base, subjects: tenantFallback };
   }
   if (!overlay) return base;
   const enrichedOverlaySubjects = enrichOverlaySubjects(overlay.subjects);
@@ -921,7 +929,9 @@ export interface ChapterVideo {
   thumbnailUrl?: string;
   dir: string;
   topics?: string[];
+  introEndTime?: number;
   duration?: string;
+  introEndTime?: number;
 }
 
 const chapterVideosCache: Record<string, ChapterVideo[]> = {};
@@ -956,6 +966,7 @@ export async function getChapterVideos(
               ? `https://i.ytimg.com/vi/${v.videoId}/hqdefault.jpg`
               : undefined,
           dir: v.id || `video_${idx + 1}`,
+          introEndTime: v.introEndTime,
           topics: v.topics,
           duration: v.duration,
         };

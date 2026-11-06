@@ -27,6 +27,9 @@ function getFallbackSubjectIconUrl(subject: CatalogSubject): string | undefined 
   const lowerId = (subject.id || '').toLowerCase();
   const lowerName = (subject.name || '').toLowerCase();
   const lowerCode = (subject.code || '').toLowerCase();
+  if (lowerId.includes('mongo') || lowerName.includes('mongo') || lowerCode.includes('cs304')) {
+    return '/subject-mongodb-icon.png';
+  }
   if (lowerId.includes('dbms') || lowerName.includes('database') || lowerCode.includes('cs302')) {
     return '/subject-dbms-icon.png';
   }
@@ -73,7 +76,7 @@ function SubjectIcon({ subject }: { subject: CatalogSubject }) {
       <img
         src={src}
         alt={subject.name}
-        className={`sv-card-book-img ${effectiveIconUrl.includes('dbms') || subject.id.toLowerCase().includes('dbms') ? 'sv-card-book-img--dbms' : ''}`}
+        className={`sv-card-book-img ${effectiveIconUrl.includes('dbms') || subject.id.toLowerCase().includes('dbms') || effectiveIconUrl.includes('mongo') || subject.id.toLowerCase().includes('mongo') ? 'sv-card-book-img--dbms' : ''}`}
         onError={(e) => {
           const img = e.currentTarget;
           if (fallbackSrc && img.src !== window.location.origin + fallbackSrc && !img.dataset.fallbackApplied) {
@@ -480,7 +483,7 @@ export default function ClassSubjectSelection() {
                                   isFullyDone: isDone,
                                   percent: isDone ? 100 : rawStats.percent,
                                 };
-                                const formattedTitle = toTitleCase(ch.shortTitle || ch.name);
+                                const formattedTitle = toTitleCase((ch.shortTitle || ch.name).replace(/^(?:vvit\s+)?(?:mongodb\s*[:–—-]\s*)?/i, '').trim() || ch.name);
 
                                 const tickColor = stats.isFullyDone
                                   ? '#22c55e'
