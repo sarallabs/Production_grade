@@ -13,6 +13,7 @@ node_modules/
 # Large generated resource folders (use Git LFS or cloud storage instead)
 saralvidhya-mvp/public/generated_resources/*
 !saralvidhya-mvp/public/generated_resources/philippines/
+!saralvidhya-mvp/public/generated_resources/chalapathi university/
 saralvidhya-medha/public/generated_resources/
 
 # Production content — goes directly to GCS, never to git
