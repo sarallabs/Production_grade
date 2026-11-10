@@ -1,0 +1,260 @@
+{
+  "name": "Volumetric Analysis",
+  "children": [
+    {
+      "name": "Types of Chemical Analysis",
+      "children": [
+        {
+          "name": "Qualitative Analysis",
+          "children": [
+            {
+              "name": "Detection and identification of constituents"
+            }
+          ]
+        },
+        {
+          "name": "Quantitative Analysis",
+          "children": [
+            {
+              "name": "Estimation of accurate amounts of constituents"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Branches of Quantitative Analysis",
+      "children": [
+        {
+          "name": "Volumetric Analysis",
+          "children": [
+            {
+              "name": "Determination of amount of constituents by measuring volumes of solutions"
+            }
+          ]
+        },
+        {
+          "name": "Gravimetric Analysis",
+          "children": [
+            {
+              "name": "Determination of amount of constituents by measuring volumes and weights of precipitates"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Volumetric Analysis - Core Concepts",
+      "children": [
+        {
+          "name": "Standard Solution",
+          "children": [
+            {
+              "name": "Solution of accurately known concentration"
+            }
+          ]
+        },
+        {
+          "name": "Titrant",
+          "children": [
+            {
+              "name": "Reagent of known concentration added during titration"
+            }
+          ]
+        },
+        {
+          "name": "Titrate",
+          "children": [
+            {
+              "name": "Substance being titrated (solution of unknown strength)"
+            }
+          ]
+        },
+        {
+          "name": "Titration",
+          "children": [
+            {
+              "name": "Process of adding standard solution until reaction is complete"
+            }
+          ]
+        },
+        {
+          "name": "Indicator",
+          "children": [
+            {
+              "name": "Auxiliary reagent to detect completion of titration"
+            },
+            {
+              "name": "Produces sharp color change at endpoint"
+            }
+          ]
+        },
+        {
+          "name": "End Point",
+          "children": [
+            {
+              "name": "Point where indicator gives visual change"
+            }
+          ]
+        },
+        {
+          "name": "Equivalence Point",
+          "children": [
+            {
+              "name": "Point where chemically equivalent amounts have reacted"
+            }
+          ]
+        },
+        {
+          "name": "Titration Error",
+          "children": [
+            {
+              "name": "Difference between observed end point and equivalence point"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Conditions for Volumetric Analysis",
+      "children": [
+        {
+          "name": "Reaction proceeds to completion"
+        },
+        {
+          "name": "Reaction takes place at a very fast speed"
+        },
+        {
+          "name": "Reaction is simple"
+        },
+        {
+          "name": "Prominent color change at endpoint or suitable indicator available"
+        }
+      ]
+    },
+    {
+      "name": "Types of Volumetric Analysis",
+      "children": [
+        {
+          "name": "Acidimetry and Alkalimetry (Neutralization Titration)",
+          "children": [
+            {
+              "name": "Titration of acid with base or vice-versa"
+            },
+            {
+              "name": "Uses acid-base indicators (e.g., Methyl Orange, Phenolphthalein)"
+            },
+            {
+              "name": "Example: HCl vs NaOH"
+            }
+          ]
+        },
+        {
+          "name": "Oxidation and Reduction Titration (Redox Titration)",
+          "children": [
+            {
+              "name": "Involves oxidation and reduction reactions"
+            },
+            {
+              "name": "Change in oxidation number or transfer of electrons"
+            },
+            {
+              "name": "Example: Oxalic acid vs KMnO4 (KMnO4 acts as self-indicator)"
+            }
+          ]
+        },
+        {
+          "name": "Iodometry and Iodimetry",
+          "children": [
+            {
+              "name": "Sub-types of redox titrations"
+            },
+            {
+              "name": "Iodimetry: Standard solution of iodine used (oxidizing agent)"
+            },
+            {
+              "name": "Iodometry: Titration involving liberated iodine (e.g., with sodium thiosulphate)"
+            },
+            {
+              "name": "Example: Reaction of I2 with Na2S2O3"
+            }
+          ]
+        },
+        {
+          "name": "Precipitation Titration",
+          "children": [
+            {
+              "name": "Determines strength by complete precipitation"
+            },
+            {
+              "name": "Example: AgNO3 + NaCl ⟶ AgCl↓"
+            },
+            {
+              "name": "Argentometric Titrations (involving AgNO3)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Equivalent Weight",
+      "children": [
+        {
+          "name": "Definition",
+          "children": [
+            {
+              "name": "Combining weight of an element"
+            },
+            {
+              "name": "Weight that combines with or displaces 8 parts by weight of oxygen"
+            },
+            {
+              "name": "Standard: 8.000 parts by weight of oxygen"
+            }
+          ]
+        },
+        {
+          "name": "Equivalent Weight of an Element",
+          "children": [
+            {
+              "name": "Parts by weight combining with 8 parts O or 1.008 parts H"
+            },
+            {
+              "name": "Example: Equivalent weight of Magnesium = 12"
+            }
+          ]
+        },
+        {
+          "name": "Gram Equivalent",
+          "children": [
+            {
+              "name": "Equivalent weight expressed in grams"
+            },
+            {
+              "name": "1 g equivalent of oxygen = 8 g of oxygen"
+            }
+          ]
+        },
+        {
+          "name": "Calculating Number of Gram Equivalents",
+          "children": [
+            {
+              "name": "Number of g equivalent = Weight in g / Equivalent weight"
+            }
+          ]
+        },
+        {
+          "name": "Variable Equivalent Weight",
+          "children": [
+            {
+              "name": "Occurs when elements form multiple compounds"
+            },
+            {
+              "name": "Example: Iron in FeO (EW=28) and Fe2O3 (EW=18.667)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

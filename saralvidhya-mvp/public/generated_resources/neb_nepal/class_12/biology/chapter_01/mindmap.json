@@ -1,0 +1,449 @@
+{
+  "name": "Biology Chapter 1",
+  "children": [
+    {
+      "name": "Plant Anatomy",
+      "children": [
+        {
+          "name": "Introduction",
+          "children": [
+            {
+              "name": "Father of Plant Anatomy: N. Grew"
+            },
+            {
+              "name": "Term 'tissue' coined by: N. Grew"
+            },
+            {
+              "name": "Definition: Study of internal structure of plants"
+            },
+            {
+              "name": "Definition of Tissue: Group of cells with common origin and function"
+            },
+            {
+              "name": "Specialization in higher plants: Division of labor"
+            }
+          ]
+        },
+        {
+          "name": "Types of Tissues",
+          "children": [
+            {
+              "name": "Classification based on dividing capacity",
+              "children": [
+                {
+                  "name": "Meristematic Tissue"
+                },
+                {
+                  "name": "Permanent Tissue"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Meristematic Tissue",
+          "children": [
+            {
+              "name": "Term 'meristem' coined by: C. Nageli (1858)"
+            },
+            {
+              "name": "Origin of term: Greek 'meristos' (divisible)"
+            },
+            {
+              "name": "Definition: Group of immature cells with capacity for division"
+            },
+            {
+              "name": "Characteristics",
+              "children": [
+                {
+                  "name": "Small, thin-walled, living cells"
+                },
+                {
+                  "name": "Thin, elastic, cellulosic cell wall; usually no secondary wall"
+                },
+                {
+                  "name": "Compactly arranged, lack intercellular spaces"
+                },
+                {
+                  "name": "Isodiametric, spherical, oval, or polygonal shape"
+                },
+                {
+                  "name": "Dense cytoplasm with large, distinct nucleus"
+                },
+                {
+                  "name": "Vacuoles absent or very small"
+                },
+                {
+                  "name": "Plastids present as proplastids"
+                },
+                {
+                  "name": "Parent cells for new cells"
+                }
+              ]
+            },
+            {
+              "name": "Classification Based on Origin and Development",
+              "children": [
+                {
+                  "name": "Promeristem",
+                  "children": [
+                    {
+                      "name": "Earliest embryonic meristematic cells"
+                    },
+                    {
+                      "name": "Located at tips of stem and root"
+                    },
+                    {
+                      "name": "Gives rise to primary meristem"
+                    }
+                  ]
+                },
+                {
+                  "name": "Primary Meristem",
+                  "children": [
+                    {
+                      "name": "Derived from promeristem"
+                    },
+                    {
+                      "name": "Found at tips of root, stem, and appendages"
+                    },
+                    {
+                      "name": "Retains division power throughout life"
+                    },
+                    {
+                      "name": "Forms primary structure of plant body"
+                    },
+                    {
+                      "name": "Example: Vascular cambium of dicot stem (divides in one plane)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Secondary Meristem",
+                  "children": [
+                    {
+                      "name": "Formed when primary permanent tissues become meristematic"
+                    },
+                    {
+                      "name": "Always lateral in position"
+                    },
+                    {
+                      "name": "Heals wounds, causes secondary growth"
+                    },
+                    {
+                      "name": "Examples: Vascular cambium of root, interfascicular cambium, cork cambium"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Classification Based on Position",
+              "children": [
+                {
+                  "name": "Apical Meristems",
+                  "children": [
+                    {
+                      "name": "Located at apices of shoots and roots"
+                    },
+                    {
+                      "name": "Include promeristems and primary meristems"
+                    },
+                    {
+                      "name": "Increase plant length"
+                    }
+                  ]
+                },
+                {
+                  "name": "Intercalary Meristems",
+                  "children": [
+                    {
+                      "name": "Present between permanent tissue regions"
+                    },
+                    {
+                      "name": "Considered part of apical meristem"
+                    },
+                    {
+                      "name": "Found at base of leaves (Pinus), base of internode (grasses), below node (Mentha)"
+                    },
+                    {
+                      "name": "Increase length"
+                    }
+                  ]
+                },
+                {
+                  "name": "Lateral Meristems",
+                  "children": [
+                    {
+                      "name": "Lie along lateral sides of roots and stems"
+                    },
+                    {
+                      "name": "Responsible for increase in thickness"
+                    },
+                    {
+                      "name": "Examples: Vascular cambium, cork cambium"
+                    },
+                    {
+                      "name": "Cause secondary growth in dicots"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Classification Based on Function (Haberlandt, 1914)",
+              "children": [
+                {
+                  "name": "Protoderm",
+                  "children": [
+                    {
+                      "name": "Outermost meristematic layer"
+                    },
+                    {
+                      "name": "Forms epidermis"
+                    }
+                  ]
+                },
+                {
+                  "name": "Procambium",
+                  "children": [
+                    {
+                      "name": "Located inside protoderm"
+                    },
+                    {
+                      "name": "Differentiates into primary vascular tissues"
+                    }
+                  ]
+                },
+                {
+                  "name": "Ground Meristem",
+                  "children": [
+                    {
+                      "name": "Major part of apical meristem"
+                    },
+                    {
+                      "name": "Forms ground tissue system (cortex, pith, etc.)"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "The Shoot Apex",
+              "children": [
+                {
+                  "name": "Dome-shaped mass of cells"
+                },
+                {
+                  "name": "Covered by young leaves"
+                },
+                {
+                  "name": "Differentiates into leaves, buds, floral buds"
+                },
+                {
+                  "name": "Responsible for stem growth"
+                }
+              ]
+            },
+            {
+              "name": "Theories of Structural Organisation of Root and Shoot Apex",
+              "children": [
+                {
+                  "name": "Apical Cell Theory (Nageli, 1858)",
+                  "children": [
+                    {
+                      "name": "Single apical cell responsible for growth"
+                    },
+                    {
+                      "name": "Applicable to algae, bryophytes, pteridophytes"
+                    }
+                  ]
+                },
+                {
+                  "name": "Histogen Theory (Hanstein, 1870)",
+                  "children": [
+                    {
+                      "name": "Differentiates into three regions:"
+                    },
+                    {
+                      "name": "Dermatogen (forms epidermis, calyptrogen in roots for root cap)"
+                    },
+                    {
+                      "name": "Periblem (forms cortex)"
+                    },
+                    {
+                      "name": "Plerome (forms central stele: vascular tissues, pericycle, pith)"
+                    },
+                    {
+                      "name": "Limitations: Not always distinguishable in gymnosperms/angiosperms"
+                    }
+                  ]
+                },
+                {
+                  "name": "Tunica-Corpus Theory (Schmidt, 1924)",
+                  "children": [
+                    {
+                      "name": "Shoot apex organized into two distinct regions:"
+                    },
+                    {
+                      "name": "Tunica",
+                      "children": [
+                        {
+                          "name": "Outer peripheral layers of cells"
+                        },
+                        {
+                          "name": "Forms epidermis and leaf primordia"
+                        },
+                        {
+                          "name": "Number of layers varies (1-5 in dicots, 1-3 in monocots)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Corpus",
+                      "children": [
+                        {
+                          "name": "Central undifferentiated mass of cells"
+                        },
+                        {
+                          "name": "Forms cortex, vascular tissue, pith"
+                        },
+                        {
+                          "name": "Cells are larger than tunica cells"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "More distinct in angiosperms"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "The Root Apex",
+              "children": [
+                {
+                  "name": "Enclosed by root cap (calyptra)"
+                },
+                {
+                  "name": "Root cap protects apical meristem"
+                },
+                {
+                  "name": "Subterminal position"
+                },
+                {
+                  "name": "Not involved in formation of lateral appendages"
+                },
+                {
+                  "name": "Lateral organs formed behind apical meristem"
+                },
+                {
+                  "name": "Root branches: Endogenous origin"
+                },
+                {
+                  "name": "Quiescent Centre",
+                  "children": [
+                    {
+                      "name": "Cup-like region between root cap and meristem"
+                    },
+                    {
+                      "name": "Area of slow dividing cells"
+                    },
+                    {
+                      "name": "Reservoir of active initials"
+                    }
+                  ]
+                },
+                {
+                  "name": "Meristematic Regions (same as shoot apex)",
+                  "children": [
+                    {
+                      "name": "Protoderm (forms epidermis)"
+                    },
+                    {
+                      "name": "Procambium (forms primary vascular tissues)"
+                    },
+                    {
+                      "name": "Ground meristem (forms cortex, endodermis, pericycle, pith)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Permanent Tissues",
+          "children": [
+            {
+              "name": "Definition: Tissues that have lost dividing capacity, attained definite shape, size, and function"
+            },
+            {
+              "name": "Characteristics: Living or dead, thin-walled or thick-walled"
+            },
+            {
+              "name": "Classification",
+              "children": [
+                {
+                  "name": "Simple Permanent Tissue"
+                },
+                {
+                  "name": "Complex Permanent Tissue"
+                },
+                {
+                  "name": "Special or Secretory Tissue"
+                }
+              ]
+            },
+            {
+              "name": "Simple Permanent Tissue",
+              "children": [
+                {
+                  "name": "Composed of only one type of cells"
+                },
+                {
+                  "name": "Types:",
+                  "children": [
+                    {
+                      "name": "Parenchyma",
+                      "children": [
+                        {
+                          "name": "Term 'parenchyma' given by: Green"
+                        },
+                        {
+                          "name": "Composed of living cells"
+                        },
+                        {
+                          "name": "Variable shape: spherical, oval, rectangular, polygonal, elongated, irregular"
+                        },
+                        {
+                          "name": "Thin primary cell wall (cellulose, hemicellulose, calcium pectate)"
+                        },
+                        {
+                          "name": "Usually loosely arranged with intercellular spaces"
+                        },
+                        {
+                          "name": "Contains vacuolated cytoplasm and distinct nucleus"
+                        },
+                        {
+                          "name": "Abundantly found in soft parts (pith, mesophyll, fruit pulp, endosperm, cortex)"
+                        }
+                      ]
+                    },
+                    {
+                      "name": "Collenchyma"
+                    },
+                    {
+                      "name": "Sclerenchyma"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

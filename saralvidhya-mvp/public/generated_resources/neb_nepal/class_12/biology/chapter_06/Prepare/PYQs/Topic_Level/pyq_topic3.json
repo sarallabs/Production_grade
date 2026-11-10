@@ -1,0 +1,33 @@
+{
+  "title": "Topic 3: Connective Tissue (Proper & Supportive)",
+  "items": [
+    {
+      "id": "PYQ_T3_01",
+      "exam": "NEET 2019",
+      "stem": "Select the CORRECTLY matched pair regarding connective tissue:",
+      "options": [
+        "A) Tendon — Specialised connective tissue",
+        "B) Adipose tissue — Dense connective tissue",
+        "C) Areolar tissue — Loose connective tissue",
+        "D) Cartilage — Loose connective tissue"
+      ],
+      "answer": "C) Areolar tissue — Loose connective tissue",
+      "explanation": "Areolar and Adipose are Loose Connective Tissues; Tendon is Dense Regular CT; Cartilage is Supportive CT.",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PYQ_T3_02",
+      "exam": "AIPMT 2015",
+      "stem": "Which of the following cell types secretes histamine, serotonin, and heparin in loose connective tissue?",
+      "options": [
+        "A) Fibroblasts",
+        "B) Histocytes",
+        "C) Mast cells",
+        "D) Plasma cells"
+      ],
+      "answer": "C) Mast cells",
+      "explanation": "Mast cells produce histamine (inflammatory mediator), heparin (anticoagulant), and serotonin.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    }
+  ]
+}

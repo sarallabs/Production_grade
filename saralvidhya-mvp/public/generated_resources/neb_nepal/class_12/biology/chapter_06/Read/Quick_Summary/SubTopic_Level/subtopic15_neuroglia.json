@@ -1,0 +1,38 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 15,
+  "subtopic_name": "5.1 Neuroglia \u2014 Non-Neuronal Glial Support Cells",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 51,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia",
+  "sections": [
+    {
+      "subsection_header": "5.1 Neuroglia \u2014 Non-Neuronal Glial Support Cells",
+      "bullets": [
+        "**Non-Neuronal Support Cells**: Non-conducting, mitotic supportive cells outnumbering neurons 10:1 in nervous tissue.",
+        "**CNS Neuroglia**: **Astrocytes** (Blood-Brain Barrier BBB, K+ regulation), **Oligodendrocytes** (myelin sheath in CNS), **Microglia** (phagocytic immune defense), **Ependymal Cells** (ciliated CSF circulation).",
+        "**PNS Neuroglia**: **Schwann Cells** (myelin sheath in PNS, axon regeneration) and **Stellate/Satellite Cells** (ganglionic neuronal support)."
+      ],
+      "mermaid_diagram": null,
+      "visual_references": [
+        "5. Nervous Tissue\\2. Neuroglia\\00.png",
+        "5. Nervous Tissue\\2. Neuroglia\\leaves\\CNS.png",
+        "5. Nervous Tissue\\2. Neuroglia\\leaves\\PNS.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "word_count_check": "Target reached for sub-topic quick study",
+    "must_know_filtering": true,
+    "formula_preservation": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia"
+    }
+  }
+}

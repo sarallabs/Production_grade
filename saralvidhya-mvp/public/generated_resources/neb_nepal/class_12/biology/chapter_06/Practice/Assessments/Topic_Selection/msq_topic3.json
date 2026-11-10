@@ -1,0 +1,192 @@
+{
+  "topic": "Topic 3: Connective Tissue (Proper & Supportive)",
+  "questions": [
+    {
+      "id": "PA_T3_MSQ_01",
+      "stem": "In Topic 3, select all cell types residing in Loose Areolar Connective Tissue matrix: (Select all that apply)",
+      "options": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells",
+        "E) Mineralized Osteocytes"
+      ],
+      "answers": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells"
+      ],
+      "explanation": "Areolar CT matrix contains fibroblasts, mast cells, histocytes, and plasma cells.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PA_T3_MSQ_02",
+      "stem": "In Topic 3, select all Granulocytic Leucocytes in circulating blood: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Monocytes",
+        "E) Lymphocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutrophils, Eosinophils, Basophils.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_T3_MSQ_03",
+      "stem": "In Topic 3, select all anatomical structures containing Hyaline Cartilage: (Select all that apply)",
+      "options": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Tracheal rings and larynx",
+        "E) Intervertebral discs"
+      ],
+      "answers": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Tracheal rings and larynx"
+      ],
+      "explanation": "Hyaline cartilage lines articular ends, nose, ribs, and tracheal rings.",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_T3_MSQ_04",
+      "stem": "In Topic 3, select all true statements regarding White Fat vs Brown Fat: (Select all that apply)",
+      "options": [
+        "A) White adipocytes are monolocular; Brown adipocytes are multilocular",
+        "B) Brown fat contains dense cytochrome mitochondria for thermogenesis",
+        "C) Brown fat expresses Thermogenin (UCP-1)",
+        "D) White fat serves as primary energy storage and thermal insulation",
+        "E) White fat generates heat in hibernating newborn mammals"
+      ],
+      "answers": [
+        "A) White adipocytes are monolocular; Brown adipocytes are multilocular",
+        "B) Brown fat contains dense cytochrome mitochondria for thermogenesis",
+        "C) Brown fat expresses Thermogenin (UCP-1)",
+        "D) White fat serves as primary energy storage and thermal insulation"
+      ],
+      "explanation": "Brown fat is multilocular, rich in mitochondria/UCP-1 for heat generation; White fat is monolocular energy storage.",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PA_T3_MSQ_05",
+      "stem": "In Topic 3, select all components forming a Compact Bone Osteon: (Select all that apply)",
+      "options": [
+        "A) Central Haversian canal containing blood vessels and nerve",
+        "B) Concentric ossein matrix lamellae",
+        "C) Osteocytes in lacunae spaces",
+        "D) Canaliculi cytoplasmic channels",
+        "E) Avascular chondrin proteoglycans"
+      ],
+      "answers": [
+        "A) Central Haversian canal containing blood vessels and nerve",
+        "B) Concentric ossein matrix lamellae",
+        "C) Osteocytes in lacunae spaces",
+        "D) Canaliculi cytoplasmic channels"
+      ],
+      "explanation": "Osteons consist of Haversian canals, concentric lamellae, lacunae with osteocytes, and canaliculi.",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PA_T3_MSQ_06",
+      "stem": "In Topic 3, select all formed blood elements: (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Serum Albumin",
+        "E) Plasma Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed blood elements comprise RBCs, WBCs, and Platelets.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_T3_MSQ_07",
+      "stem": "In Topic 3, select all tissue macrophages derived from blood monocytes: (Select all that apply)",
+      "options": [
+        "A) Kupffer cells of liver",
+        "B) Microglia of brain CNS",
+        "C) Dust cells / alveolar macrophages of lungs",
+        "D) Langerhans cells of skin",
+        "E) Osteocytes of bone"
+      ],
+      "answers": [
+        "A) Kupffer cells of liver",
+        "B) Microglia of brain CNS",
+        "C) Dust cells / alveolar macrophages of lungs",
+        "D) Langerhans cells of skin"
+      ],
+      "explanation": "Monocyte-derived histocytes: Kupffer cells, Microglia, Dust cells, and Langerhans cells.",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PA_T3_MSQ_08",
+      "stem": "In Topic 3, select all characteristics distinguishing Fibrocartilage from Elastic Cartilage: (Select all that apply)",
+      "options": [
+        "A) Fibrocartilage contains thick Type I collagen bundles",
+        "B) Fibrocartilage lacks perichondrium sheath",
+        "C) Fibrocartilage resists high mechanical compression in intervertebral discs",
+        "D) Elastic cartilage contains branching yellow elastin fibers in pinna and epiglottis",
+        "E) Elastic cartilage has highest tensile strength among all cartilages"
+      ],
+      "answers": [
+        "A) Fibrocartilage contains thick Type I collagen bundles",
+        "B) Fibrocartilage lacks perichondrium sheath",
+        "C) Fibrocartilage resists high mechanical compression in intervertebral discs",
+        "D) Elastic cartilage contains branching yellow elastin fibers in pinna and epiglottis"
+      ],
+      "explanation": "Fibrocartilage has Type I collagen, lacks perichondrium, absorbs shock in discs. Elastic cartilage has elastin in ear/epiglottis.",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_T3_MSQ_09",
+      "stem": "In Topic 3, select all plasma proteins maintaining blood physiology: (Select all that apply)",
+      "options": [
+        "A) Serum Albumin (Osmotic pressure maintenance)",
+        "B) Gamma Globulins (Humoral antibody defense)",
+        "C) Fibrinogen (Blood clotting cascade)",
+        "D) Prothrombin (Thrombin precursor for clotting)",
+        "E) Hemoglobin (Intra-erythrocytic oxygen transport)"
+      ],
+      "answers": [
+        "A) Serum Albumin (Osmotic pressure maintenance)",
+        "B) Gamma Globulins (Humoral antibody defense)",
+        "C) Fibrinogen (Blood clotting cascade)",
+        "D) Prothrombin (Thrombin precursor for clotting)"
+      ],
+      "explanation": "Plasma proteins include Albumin, Globulin, Fibrinogen, and Prothrombin. Hemoglobin is inside RBCs.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_T3_MSQ_10",
+      "stem": "In Topic 3, select all types of Dense Connective Tissue: (Select all that apply)",
+      "options": [
+        "A) Dense Regular White Fibrous CT (Tendons)",
+        "B) Dense Irregular White Collagenous CT (Dermis of skin)",
+        "C) Yellow Elastic CT (Artery walls & Ligaments)",
+        "D) Loose Areolar CT",
+        "E) Adipose CT"
+      ],
+      "answers": [
+        "A) Dense Regular White Fibrous CT (Tendons)",
+        "B) Dense Irregular White Collagenous CT (Dermis of skin)",
+        "C) Yellow Elastic CT (Artery walls & Ligaments)"
+      ],
+      "explanation": "Dense CT categories: Dense Regular, Dense Irregular, and Elastic CT. Areolar and Adipose are Loose CT.",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    }
+  ]
+}

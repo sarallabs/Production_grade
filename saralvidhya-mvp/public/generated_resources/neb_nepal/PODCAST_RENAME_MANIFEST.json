@@ -1,0 +1,231 @@
+{
+  "generated_at": "2026-06-19T11:13:46.724298+00:00",
+  "root": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal",
+  "dry_run": false,
+  "renames": [
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/advanced",
+      "kind": "short",
+      "type": "md",
+      "from": "Resources 12th chapter 1 bio_advanced_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/advanced",
+      "kind": "long",
+      "type": "md",
+      "from": "Resources 12th chapter 1 bio_advanced_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/advanced",
+      "kind": "short",
+      "type": "mp3",
+      "from": "Resources 12th chapter 1 bio_advanced_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/advanced",
+      "kind": "long",
+      "type": "mp3",
+      "from": "Resources 12th chapter 1 bio_advanced_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/intermediate",
+      "kind": "short",
+      "type": "md",
+      "from": "Resources 12th chapter 1 bio_intermediate_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/intermediate",
+      "kind": "long",
+      "type": "md",
+      "from": "Resources 12th chapter 1 bio_intermediate_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/intermediate",
+      "kind": "short",
+      "type": "mp3",
+      "from": "Resources 12th chapter 1 bio_intermediate_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_01/intermediate",
+      "kind": "long",
+      "type": "mp3",
+      "from": "Resources 12th chapter 1 bio_intermediate_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/beginner",
+      "kind": "short",
+      "type": "md",
+      "from": "Resources 12th chapter 2 bio_beginner_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/beginner",
+      "kind": "long",
+      "type": "md",
+      "from": "Resources 12th chapter 2 bio_beginner_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/beginner",
+      "kind": "short",
+      "type": "mp3",
+      "from": "Resources 12th chapter 2 bio_beginner_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/beginner",
+      "kind": "long",
+      "type": "mp3",
+      "from": "Resources 12th chapter 2 bio_beginner_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/intermediate",
+      "kind": "short",
+      "type": "md",
+      "from": "Resources 12th chapter 2 bio_intermediate_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/intermediate",
+      "kind": "long",
+      "type": "md",
+      "from": "Resources 12th chapter 2 bio_intermediate_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/intermediate",
+      "kind": "short",
+      "type": "mp3",
+      "from": "Resources 12th chapter 2 bio_intermediate_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/biology/chapter_02/intermediate",
+      "kind": "long",
+      "type": "mp3",
+      "from": "Resources 12th chapter 2 bio_intermediate_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/advanced",
+      "kind": "short",
+      "type": "md",
+      "from": "12th_chem_2_advanced_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/advanced",
+      "kind": "long",
+      "type": "md",
+      "from": "12th_chem_2_advanced_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/advanced",
+      "kind": "short",
+      "type": "mp3",
+      "from": "12th_chem_2_advanced_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/advanced",
+      "kind": "long",
+      "type": "mp3",
+      "from": "12th_chem_2_advanced_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/beginner",
+      "kind": "short",
+      "type": "md",
+      "from": "12th_chem_2_beginner_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/beginner",
+      "kind": "long",
+      "type": "md",
+      "from": "12th_chem_2_beginner_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/beginner",
+      "kind": "short",
+      "type": "mp3",
+      "from": "12th_chem_2_beginner_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/beginner",
+      "kind": "long",
+      "type": "mp3",
+      "from": "12th_chem_2_beginner_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/intermediate",
+      "kind": "short",
+      "type": "md",
+      "from": "12th_chem_2_intermediate_short_podcast.md",
+      "to": "short_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/intermediate",
+      "kind": "long",
+      "type": "md",
+      "from": "12th_chem_2_intermediate_long_podcast.md",
+      "to": "long_podcast.md",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/intermediate",
+      "kind": "short",
+      "type": "mp3",
+      "from": "12th_chem_2_intermediate_short.mp3",
+      "to": "short_podcast.mp3",
+      "action": "rename"
+    },
+    {
+      "level_dir": "/Users/rkanduk/Documents/GitHub/saralvidhya-mvp/public/generated_resources/neb_nepal/class_12/chemistry/chapter_02/intermediate",
+      "kind": "long",
+      "type": "mp3",
+      "from": "12th_chem_2_intermediate_long.mp3",
+      "to": "long_podcast.mp3",
+      "action": "rename"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+[
+  {
+    "front": "How do you determine the Initial Margin using the Value-at-Risk (VaR) approach?",
+    "back": "Initial Margin % is set by the exchange to cover daily price risk with 99.7% confidence, calculated as: Initial Margin % = Mean of Absolute Daily Returns (\u03bc) + 3 \u00d7 Daily Volatility (\u03c3)."
+  },
+  {
+    "front": "When a margin call is triggered, how much variation margin must the investor deposit?",
+    "back": "The investor must deposit variation margin to restore the account balance to the Initial Margin level, not the Maintenance Margin level. Any shortfall below the initial margin must be fully topped up."
+  },
+  {
+    "front": "What is the formula for the theoretical futures price of a dividend-paying stock under continuous compounding?",
+    "back": "F_0 = (S_0 - D \u00d7 e^{-r \u00d7 t_d}) \u00d7 e^{r \u00d7 T}, where S_0 is the spot price, D is the dividend paid at time t_d, r is the continuous risk-free rate, and T is the time to maturity."
+  },
+  {
+    "front": "What is the formula for pricing index futures with a continuous dividend yield under continuous compounding?",
+    "back": "F_0 = S_0 \u00d7 e^{(r - d) \u00d7 T}, where S_0 is the spot index, r is the continuous risk-free interest rate, d is the continuous dividend yield, and T is the contract maturity in years."
+  },
+  {
+    "front": "Under what conditions will futures prices exceed forward prices?",
+    "back": "Futures prices exceed forward prices when futures prices are positively correlated with interest rates. This is because rising prices lead to daily MTM gains that can be reinvested at higher interest rates."
+  },
+  {
+    "front": "Explain the difference between Contango and Backwardation in terms of the cost of carry.",
+    "back": "Contango: F_0 > S_0 (positive cost of carry, reflecting financing/storage costs exceeding benefits). Backwardation: F_0 < S_0 (negative cost of carry, reflecting high convenience yield or expected price drop)."
+  },
+  {
+    "front": "How does an arbitrageur exploit overvalued futures (F_mkt > F_theoretical)?",
+    "back": "By executing a Cash & Carry Arbitrage: Borrow funds, buy the asset in the spot market, and sell (short) the futures contract. At expiry, deliver the spot asset to settle the futures contract."
+  },
+  {
+    "front": "How does an arbitrageur exploit undervalued futures (F_mkt < F_theoretical)?",
+    "back": "By executing a Reverse Cash & Carry Arbitrage: Borrow the stock via the SLB desk (paying a borrowing fee), short sell it in the spot market, invest the proceeds, and buy (long) the futures contract."
+  },
+  {
+    "front": "What is the formula to adjust the beta of an equity portfolio using index futures?",
+    "back": "N = [(Beta_target - Beta_portfolio) / Beta_futures] \u00d7 [Portfolio Value / (Futures Price \u00d7 Lot Size)], where Beta_futures = 1.0. A negative result means selling contracts; positive means buying."
+  },
+  {
+    "front": "What transaction costs must be accounted for in a practical Cash & Carry arbitrage calculation?",
+    "back": "1. Brokerage on spot and futures trades. 2. GST (18%) on brokerage. 3. Securities Transaction Tax (STT) on spot buy/sell. 4. Opportunity cost of the margin deposit."
+  },
+  {
+    "front": "In a Reverse Cash & Carry arbitrage, how are dividend payments during the contract life handled by the short seller?",
+    "back": "The short seller must pass through any dividends paid on the shorted stock to the stock lender. This represents a cash outflow at the dividend payment date, which must be financed."
+  },
+  {
+    "front": "What is the 'Arbitrage-Free Corridor' in derivative pricing?",
+    "back": "It is the range of market futures prices within which transaction costs, tax frictions (GST, STT), and borrowing-lending spreads make arbitrage unprofitable."
+  },
+  {
+    "front": "Why is the Nifty 50 Index Futures contract generally less volatile than individual Stock Futures?",
+    "back": "The Nifty 50 Index is a diversified basket of 50 stocks, which diversifies away unsystematic (company-specific) volatility, leaving only systematic risk."
+  },
+  {
+    "front": "What is the tick size and lot size in futures trading, and why are they standardized?",
+    "back": "Tick size is the minimum price movement; lot size is the minimum number of units per contract. Standardizing them ensures liquid trading, uniform clearing, and transparency on the exchange."
+  },
+  {
+    "front": "Why are futures contracts described as a 'zero-sum game'?",
+    "back": "Every rupee gained by a long futures holder is exactly matched by a rupee lost by the short counterparty. The total wealth created by the price movement itself is zero."
+  }
+]

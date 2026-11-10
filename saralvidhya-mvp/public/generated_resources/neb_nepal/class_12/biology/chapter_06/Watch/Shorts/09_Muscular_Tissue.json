@@ -1,0 +1,30 @@
+{
+  "short_id": "short_09_muscular",
+  "short_title": "Muscular Tissue — Skeletal, Smooth & Cardiac",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L1_Muscular", "L2_Skeletal", "L3_RedMuscle", "L3_WhiteMuscle", "L3_Sarcomere", "L3_SlidingFilament", "L2_Smooth", "L3_SingleUnit", "L3_MultiUnit", "L2_Cardiac", "L3_IntercalatedDisc"],
+  "pedagogical_mode": "Causal & Process-Oriented",
+  "segments": [
+    {
+      "segment_id": "S09_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Every blink, every breath, every heartbeat — powered by muscle. Three types, three jobs, one molecular secret.",
+      "video_prompt": "Triptych animation. Left: striated skeletal muscle fibres contract in parallel — striations visible with the I-band narrowing. Centre: a smooth muscle ring contracts around a gut tube, pushing a bolus forward. Right: cardiac muscle network pulsates in branching waves with an ECG waveform running below. Each panel is colour-coded: blue for skeletal, green for smooth, red for cardiac. Cinematic molecular biology style."
+    },
+    {
+      "segment_id": "S09_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Muscular tissue is mesodermal. Actin and myosin slide in the sliding filament theory of Huxley and Hanson. Skeletal (striped) muscle: multi-nucleated, unbranched, cylindrical. Sarcomere bands: A-band, I-band, H-band, M-line, Z-lines. During contraction: I-band narrows, H-band disappears, A-band unchanged. Red muscle has myoglobin and is fatigue-resistant. White muscle lacks myoglobin and is fast-twitch. Voluntary; fatigues quickly. Smooth (unstriped) muscle: uninucleated, spindle-shaped, no visible striations. Single-unit contracts as one (bladder, gut). Multi-unit contracts independently (blood vessels, arrector pilli). Involuntary, fatigues in 10–12 hours, performs peristalsis. Cardiac muscle: branched, connected by intercalated discs (desmosomes plus gap junctions) — functional syncytium. Never fatigues. Only in the heart. Least abundant. Total muscles 639: largest gluteus maximus, smallest stapedius, longest sartorius, strongest masseter.",
+      "video_prompt": "Sequence: (1) Sarcomere animation — resting state all bands labelled, then contraction — I-band collapses, H-band vanishes, Z-lines approach. (2) Peristalsis animation — gut tube cross section, muscle rings contract in a wave pushing the bolus leftward. (3) Intercalated disc close-up — step-shaped junction with desmosomes labelled at lateral sides and gap junctions at transverse portions, shown as molecular structures. (4) Fun facts ticker: 639 muscles, gluteus maximus, stapedius, sartorius, masseter. Clean molecular illustration, blue-gold palette."
+    },
+    {
+      "segment_id": "S09_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Nervous Tissue — the brain's building blocks.",
+      "video_prompt": "Title card: 'Up Next: Nervous Tissue'. Background: electric pulse animation along a myelinated neuron. Smooth wipe to black."
+    }
+  ]
+}

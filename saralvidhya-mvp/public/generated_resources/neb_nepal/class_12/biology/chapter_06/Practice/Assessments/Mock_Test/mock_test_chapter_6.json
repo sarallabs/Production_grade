@@ -1,0 +1,245 @@
+{
+  "mcqs": [
+    {
+      "id": "PM_MCQ_01",
+      "stem": "Which simple epithelium forms endothelial lining in blood vessels to permit nutrient exchange?",
+      "options": [
+        "A) Simple cuboidal",
+        "B) Simple squamous pavement epithelium",
+        "C) Simple columnar",
+        "D) Urothelium"
+      ],
+      "answer": "B) Simple squamous pavement epithelium",
+      "explanation": "Endothelium is simple squamous pavement epithelium.",
+      "difficulty": "Medium",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PM_MCQ_02",
+      "stem": "Unicellular mucus-secreting goblet cells interspersed in gut mucosa belong to:",
+      "options": [
+        "A) Squamous epithelium",
+        "B) Simple columnar epithelium",
+        "C) Cuboidal epithelium",
+        "D) Transitional epithelium"
+      ],
+      "answer": "B) Simple columnar epithelium",
+      "explanation": "Goblet cells are unicellular columnar glands.",
+      "difficulty": "Medium",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PM_MCQ_03",
+      "stem": "Non-keratinized stratified squamous epithelium protects moist internal surfaces such as:",
+      "options": [
+        "A) Epidermis of dry skin",
+        "B) Lumen of the oesophagus",
+        "C) Renal PCT",
+        "D) Pulmonary alveoli"
+      ],
+      "answer": "B) Lumen of the oesophagus",
+      "explanation": "Non-keratinized stratified squamous protects moist surfaces.",
+      "difficulty": "Medium",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PM_MCQ_04",
+      "stem": "Which primary cell type synthesizes ground substance matrix and collagen fibers in CT proper?",
+      "options": [
+        "A) Mast cell",
+        "B) Fibroblast cell",
+        "C) Osteocyte",
+        "D) Histocyte"
+      ],
+      "answer": "B) Fibroblast cell",
+      "explanation": "Fibroblasts synthesize matrix and fibers.",
+      "difficulty": "Medium",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PM_MCQ_05",
+      "stem": "Loose areolar connective tissue performs which physiological role?",
+      "options": [
+        "A) Long term fat storage",
+        "B) Framing skin and packaging internal viscera",
+        "C) Electrical nerve impulse conduction",
+        "D) Blood filtration"
+      ],
+      "answer": "B) Framing skin and packaging internal viscera",
+      "explanation": "Areolar tissue frames skin and cushions internal organs.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PM_MCQ_06",
+      "stem": "Dense regular white fibrous connective tissue in tendons features parallel bundles of:",
+      "options": [
+        "A) Yellow elastin fibers",
+        "B) Type I collagen white fibers",
+        "C) Reticular fibers",
+        "D) Myofibrils"
+      ],
+      "answer": "B) Type I collagen white fibers",
+      "explanation": "Tendons consist of dense regular white collagen bundles.",
+      "difficulty": "Medium",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PM_MCQ_07",
+      "stem": "Which solid pliable avascular tissue matrix contains chondrocytes in lacunae spaces?",
+      "options": [
+        "A) Osseous bone",
+        "B) Cartilage tissue",
+        "C) Vascular blood",
+        "D) Bone marrow"
+      ],
+      "answer": "B) Cartilage tissue",
+      "explanation": "Cartilage is an avascular solid pliable connective tissue.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PM_MCQ_08",
+      "stem": "Concentric bone lamellae arranged around a central Haversian canal constitute:",
+      "options": [
+        "A) Spongy bone trabecula",
+        "B) Compact bone osteon system",
+        "C) Hyaline cartilage lacuna",
+        "D) Fibrocartilage capsule"
+      ],
+      "answer": "B) Compact bone osteon system",
+      "explanation": "Haversian osteons characterize compact bone.",
+      "difficulty": "Medium",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PM_MCQ_09",
+      "stem": "Which granular leucocyte releases histamine during allergic inflammatory skin reactions?",
+      "options": [
+        "A) Neutrophil",
+        "B) Eosinophil granulocyte",
+        "C) Monocyte",
+        "D) Lymphocyte"
+      ],
+      "answer": "B) Eosinophil granulocyte",
+      "explanation": "Eosinophils increase during allergic reactions.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PM_MCQ_10",
+      "stem": "Involuntary striated cardiac muscle cells are physically coupled end-to-end by:",
+      "options": [
+        "A) Neuromuscular junctions",
+        "B) Intercalated discs with gap junctions",
+        "C) Tight junctions",
+        "D) Synaptic clefts"
+      ],
+      "answer": "B) Intercalated discs with gap junctions",
+      "explanation": "Intercalated discs join cardiocytes for syncytium.",
+      "difficulty": "Medium",
+      "image": "2. Intercalated_Discs.png"
+    }
+  ],
+  "msqs": [
+    {
+      "id": "PM_MSQ_01",
+      "stem": "Select all cell junctions involved in epithelial cell attachment: (Select all that apply)",
+      "options": [
+        "A) Tight junction",
+        "B) Desmosome",
+        "C) Gap junction",
+        "D) Hemidesmosome",
+        "E) Synaptic terminal"
+      ],
+      "answers": [
+        "A) Tight junction",
+        "B) Desmosome",
+        "C) Gap junction",
+        "D) Hemidesmosome"
+      ],
+      "explanation": "Epithelial junctions = Tight, Desmosome, Gap, Hemidesmosome.",
+      "difficulty": "Medium",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PM_MSQ_02",
+      "stem": "Select all cellular formed elements in human blood: (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Serum Albumin",
+        "E) Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed elements = RBC, WBC, Platelets.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PM_MSQ_03",
+      "stem": "Select all physiological properties of Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Voluntary neural control",
+        "B) Syncytial multinucleation",
+        "C) Cross-striated bands",
+        "D) Intercalated discs",
+        "E) Rapid fatigue"
+      ],
+      "answers": [
+        "A) Voluntary neural control",
+        "B) Syncytial multinucleation",
+        "C) Cross-striated bands",
+        "E) Rapid fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, subject to fatigue.",
+      "difficulty": "Medium",
+      "image": "00.png"
+    },
+    {
+      "id": "PM_MSQ_04",
+      "stem": "Which anatomical locations contain Hyaline Cartilage? (Select all that apply)",
+      "options": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Intervertebral discs",
+        "E) Tracheal rings"
+      ],
+      "answers": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "E) Tracheal rings"
+      ],
+      "explanation": "Hyaline cartilage lines articular ends, nose, ribs, trachea.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PM_MSQ_05",
+      "stem": "Select all neuroglial support cells residing in the CNS: (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia = Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "difficulty": "Medium",
+      "image": "CNS.png"
+    }
+  ]
+}

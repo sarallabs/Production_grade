@@ -1,0 +1,41 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 8,
+  "subtopic_name": "2.4 Modified & Glandular Epithelium",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 97,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Modified & Glandular Epithelium",
+  "sections": [
+    {
+      "subsection_header": "2.4 Modified & Glandular Epithelium",
+      "bullets": [
+        "**Modified Epithelia**: Specialized structural adaptations including Ciliated (Kino-ciliated 9+2 vs Stereo-ciliated 0+0), Brush-bordered (microvilli), Neuro-sensory (taste buds), Pigmented (retina), and Germinal (gonads).",
+        "**Glandular Epithelium**: Epithelial cells specialized for synthesis and secretion of metabolic products.",
+        "**Classification by Ducts**: Exocrine (secretes via ducts onto surface), Endocrine (ductless; secretes hormones directly into blood), Heterocrine/Mixed (pancreas).",
+        "**Classification by Secretion Mode**: **Merocrine** (exocytosis, no cell loss), **Apocrine** (apical cytoplasm pinches off, e.g. mammary glands), **Holocrine** (entire cell ruptures and dies, e.g. sebaceous glands).",
+        "**Classification by Cell Count & Architecture**: Unicellular (goblet cells) vs Multicellular; Simple (tubular, alveolar) vs Compound (tubular, alveolar, tubulo-alveolar)."
+      ],
+      "mermaid_diagram": "graph TD\n    A[Merocrine] -->|Exocytosis| B[Zero Cell Damage]\n    C[Apocrine] -->|Apical Pinching| D[Partial Cytoplasm Loss]\n    E[Holocrine] -->|Total Lysis| F[Entire Cell Disintegration]",
+      "visual_references": [
+        "2. Epithelial Tissue\\4. Modified Epithelium\\00 Modified_Epithelium_Types_and_Functions.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\1. Modified_Ciliated_Epithelium_Specialisations.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\2. Specialised_Brush-Bordered_Epithelium_Guide.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\6. Glandular_Epithelium_Classification_Overview.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "word_count_check": "Target reached for sub-topic quick study",
+    "must_know_filtering": true,
+    "formula_preservation": true,
+    "infographics_count": 4,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Modified & Glandular Epithelium"
+    }
+  }
+}

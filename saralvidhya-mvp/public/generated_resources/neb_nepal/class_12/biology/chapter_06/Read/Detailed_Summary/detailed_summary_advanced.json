@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "D_max_detected": 8,
+  "D_target_used": 8,
+  "source": "Biology Textbook pp. 193-239 (PDF primary) + Mermaid mindmap",
+  "sections": [
+    "H1. History — 3-scientist comparison table, exact contributions, exam distinctions",
+    "H2. Epithelial Tissue — Full 4 simple types (location-function maps), full compound types (keratin distribution), full 6 modified types, Glandular ET 5-axis classification (all simple + compound gland sub-types)",
+    "H3. Connective Tissue — Cells: all 5 types + histocyte/macrophage by 10 organs; Matrix: jelly vs gel; Fibres: all 3 types property comparison; Proper CT: loose 3 types + dense 5 types; Cartilage: all 4 types with distinguishing features; Bone: 3 formation types + 4 shape types + Long bone Epiphysis/Diaphysis + Amphibian vs Mammalian T.S. + Haversian cascade; Blood: full RBC comparison table (mammal vs non-mammal) + full WBC differential count table + B/T lymphocyte detail + platelet detail + clotting cascade flowchart + blood cell formation tissue; Lymph: pathway + formation + composition",
+    "H4. Muscular Tissue — Sarcomere anatomy table (6 regions, contraction vs relaxation); Hierarchical organization with 4 coverings; Red vs White muscle; Sliding filament theory; Full 3-type comparison; Human muscle facts",
+    "H5. Nervous Tissue — CNS + PNS neuroglia complete table; Neurone anatomy cascade flowchart; Synapse definition; 3 directional types; Myelinated vs Non-myelinated comparison; 5 structural types; Gray/White matter mapping; Fascicle organization"
+  ],
+  "image_refs_embedded": 43,
+  "mermaid_diagrams_embedded": 10,
+  "tables_embedded": 30,
+  "validation_report": {
+    "all_subtopics_covered": true,
+    "all_sub_subtopics_covered": true,
+    "definitions_present": true,
+    "tables_used_for_multi_row_data": true,
+    "mermaid_for_every_multi_stage_process": true,
+    "visuals_at_correct_D_target_level": true,
+    "no_placeholders": true,
+    "filler_padding": false,
+    "cross_reference_table_included": true,
+    "exam_tips_embedded": true,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 8,
+      "coverage_ratio_applied": "100%"
+    }
+  }
+}

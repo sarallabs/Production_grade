@@ -1,0 +1,163 @@
+{
+  "topic": "Topic 2: Epithelial Tissue & Cell Junctions",
+  "questions": [
+    {
+      "id": "PE_T2_01",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), simple squamous epithelium lining blood vessels is called:",
+      "options": [
+        "A) Mesothelium",
+        "B) Endothelium",
+        "C) Urothelium",
+        "D) Epidermis"
+      ],
+      "answer": "B) Endothelium",
+      "explanation": "Endothelium lines blood and lymph vessels.",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PE_T2_02",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), simple cuboidal epithelium with microvilli brush border occurs in:",
+      "options": [
+        "A) Stomach mucosa",
+        "B) Proximal Convoluted Tubule (PCT) of nephron",
+        "C) Respiratory trachea",
+        "D) Oesophagus"
+      ],
+      "answer": "B) Proximal Convoluted Tubule (PCT) of nephron",
+      "explanation": "Renal PCT features simple cuboidal brush-bordered epithelium.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PE_T2_03",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), mucus-secreting unicellular exocrine glands in stomach mucosa are called:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Goblet cells",
+        "C) Mast cells",
+        "D) Parietal cells"
+      ],
+      "answer": "B) Goblet cells",
+      "explanation": "Goblet cells are unicellular exocrine glands.",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PE_T2_04",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), pseudostratified ciliated columnar epithelium is characteristically found lining the:",
+      "options": [
+        "A) Trachea",
+        "B) Urinary bladder",
+        "C) Thyroid gland",
+        "D) Skin surface"
+      ],
+      "answer": "A) Trachea",
+      "explanation": "Trachea and bronchi are lined by pseudostratified ciliated columnar epithelium.",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PE_T2_05",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), non-keratinized stratified squamous epithelium lines which moist cavity?",
+      "options": [
+        "A) Dry skin epidermis",
+        "B) Oral cavity and Oesophagus",
+        "C) Thyroid follicle",
+        "D) Renal PCT"
+      ],
+      "answer": "B) Oral cavity and Oesophagus",
+      "explanation": "Non-keratinized stratified squamous lines moist internal cavities.",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "PE_T2_06",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), distensible plastic urothelium featuring surface umbrella cells lines the:",
+      "options": [
+        "A) Stomach",
+        "B) Urinary bladder",
+        "C) Trachea",
+        "D) Gall bladder"
+      ],
+      "answer": "B) Urinary bladder",
+      "explanation": "Transitional epithelium (urothelium) lines the urinary bladder.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PE_T2_07",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 2), cell junctions that seal adjacent cell membranes preventing fluid leakage are:",
+      "options": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Gap junctions",
+        "C) Desmosomes",
+        "D) Synapses"
+      ],
+      "answer": "A) Tight junctions (Zona Occludens)",
+      "explanation": "Tight junctions form occluding barriers preventing fluid leakage.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PE_T2_08",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 2 - MSQ), select all anatomical locations lined by Simple Cuboidal Epithelium: (Select all that apply)",
+      "options": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary",
+        "E) Stomach mucosal lining"
+      ],
+      "answers": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary"
+      ],
+      "explanation": "Simple cuboidal lines thyroid follicles, gland ducts, renal PCT, and ovary surface.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PE_T2_09",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 2 - MSQ), select all cell junction types connecting adjacent epithelial cells: (Select all that apply)",
+      "options": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)",
+        "E) Synaptic boutons"
+      ],
+      "answers": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)"
+      ],
+      "explanation": "Epithelial junctions include Tight, Adherens, Desmosome, and Gap junctions.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PE_T2_10",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 2 - MSQ), select all characteristics of Transitional Epithelium (Urothelium): (Select all that apply)",
+      "options": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis",
+        "E) Keratinized dead cell stratum corneum"
+      ],
+      "answers": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis"
+      ],
+      "explanation": "Urothelium is a distensible compound epithelium lining the urinary tract.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    }
+  ]
+}

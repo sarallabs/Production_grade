@@ -1,0 +1,135 @@
+{
+  "topic": "Topic 3: Connective Tissue (Proper & Supportive)",
+  "mcqs": [
+    {
+      "id": "PQB_T3_MCQ_01",
+      "stem": "From Question Bank perspective, which primary cell type in connective tissue proper synthesizes extracellular matrix ground substance and collagen fibers?",
+      "options": [
+        "A) Histocyte",
+        "B) Mast cell",
+        "C) Fibroblast",
+        "D) Plasma cell"
+      ],
+      "answer": "C) Fibroblast",
+      "explanation": "Fibroblasts are matrix-producing cells synthesizing collagen and elastin fibers.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_02",
+      "stem": "From Question Bank perspective, histamine, Heparin, and Serotonin are inflammatory chemical mediators released by which connective tissue cell?",
+      "options": [
+        "A) Fibroblast",
+        "B) Mast cell",
+        "C) Macrophage",
+        "D) Plasma cell"
+      ],
+      "answer": "B) Mast cell",
+      "explanation": "Mast cells release histamine, heparin, and serotonin during allergic inflammatory responses.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_03",
+      "stem": "From Question Bank perspective, monocyte-derived phagocytic macrophages residing in loose connective tissue matrix are called:",
+      "options": [
+        "A) Histocytes",
+        "B) Plasma cells",
+        "C) Chondrocytes",
+        "D) Fibroblasts"
+      ],
+      "answer": "A) Histocytes",
+      "explanation": "Tissue macrophages in connective tissue proper are termed histocytes.",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_04",
+      "stem": "From Question Bank perspective, which connective tissue cell exhibits a distinctive 'cartwheel' or 'clock-face' nuclear chromatin pattern and secretes antibodies?",
+      "options": [
+        "A) Mast cell",
+        "B) Plasma cell",
+        "C) Fibroblast",
+        "D) Adipocyte"
+      ],
+      "answer": "B) Plasma cell",
+      "explanation": "Plasma cells differentiate from B-lymphocytes, have cartwheel nuclei, and produce antibodies.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_05",
+      "stem": "From Question Bank perspective, tendons attaching skeletal muscle to bone consist of which dense connective tissue type?",
+      "options": [
+        "A) Dense Irregular Collagenous CT",
+        "B) Dense Regular White Fibrous CT",
+        "C) Loose Areolar CT",
+        "D) Yellow Elastic CT"
+      ],
+      "answer": "B) Dense Regular White Fibrous CT",
+      "explanation": "Tendons consist of dense regular white fibrous CT with parallel Type I collagen bundles.",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_06",
+      "stem": "From Question Bank perspective, which solid, pliable, avascular connective tissue matrix contains chondrocytes housed inside lacunae spaces?",
+      "options": [
+        "A) Osseous Bone",
+        "B) Cartilage Tissue",
+        "C) Vascular Blood",
+        "D) Reticular Tissue"
+      ],
+      "answer": "B) Cartilage Tissue",
+      "explanation": "Cartilage is an avascular, solid, pliable tissue containing chondrocytes in lacunae.",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_07",
+      "stem": "From Question Bank perspective, in mammalian compact bone, concentric matrix lamellae arranged around a central Haversian canal form an:",
+      "options": [
+        "A) Osteon / Haversian System",
+        "B) Trabecula",
+        "C) Intervertebral disc",
+        "D) Perichondrium"
+      ],
+      "answer": "A) Osteon / Haversian System",
+      "explanation": "The osteon (Haversian system) is the fundamental structural unit of compact bone.",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_08",
+      "stem": "From Question Bank perspective, transverse Volkmann's canals in compact bone function to interconnect adjacent:",
+      "options": [
+        "A) Osteocytes inside lacunae",
+        "B) Haversian canals with periosteal blood vessels",
+        "C) Bone marrow cavities",
+        "D) Concentric lamellae"
+      ],
+      "answer": "B) Haversian canals with periosteal blood vessels",
+      "explanation": "Volkmann's canals run transversely to connect Haversian canals with periosteal blood vessels.",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_09",
+      "stem": "From Question Bank perspective, which formed blood element is a non-nucleated biconcave disc packed with hemoglobin for oxygen transport?",
+      "options": [
+        "A) Monocyte",
+        "B) Erythrocyte (RBC)",
+        "C) Thrombocyte",
+        "D) Lymphocyte"
+      ],
+      "answer": "B) Erythrocyte (RBC)",
+      "explanation": "Erythrocytes (RBCs) lose nuclei at maturity and transport oxygen via hemoglobin.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_T3_MCQ_10",
+      "stem": "From Question Bank perspective, which granular leucocyte exhibits a multi-lobed nucleus and acts as primary first-responder bacterial phagocyte?",
+      "options": [
+        "A) Basophil",
+        "B) Eosinophil",
+        "C) Neutrophil",
+        "D) Monocyte"
+      ],
+      "answer": "C) Neutrophil",
+      "explanation": "Neutrophils are multi-lobed granulocytes performing first-line bacterial phagocytosis.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    }
+  ]
+}

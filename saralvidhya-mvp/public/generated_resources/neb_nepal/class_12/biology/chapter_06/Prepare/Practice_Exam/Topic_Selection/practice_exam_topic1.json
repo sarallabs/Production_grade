@@ -1,0 +1,162 @@
+{
+  "topic": "Topic 1: History & Fundamentals of Histology",
+  "questions": [
+    {
+      "id": "PE_T1_01",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), identify the French anatomist who defined 21 primary tissue types without microscopic aid:",
+      "options": [
+        "A) Xavier Bichat",
+        "B) Marcello Malpighi",
+        "C) Robert Hooke",
+        "D) Anton van Leeuwenhoek"
+      ],
+      "answer": "A) Xavier Bichat",
+      "explanation": "Xavier Bichat coined the term tissue and defined 21 primary tissue classes.",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "PE_T1_02",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), microscopic investigation of animal tissues was systematically pioneered by which biologist?",
+      "options": [
+        "A) Xavier Bichat",
+        "B) Marcello Malpighi",
+        "C) Theodor Schwann",
+        "D) Rudolf Virchow"
+      ],
+      "answer": "B) Marcello Malpighi",
+      "explanation": "Marcello Malpighi pioneered microscopic histology.",
+      "image": "3. Marcello_Malpighi__Histology_Pioneer.png"
+    },
+    {
+      "id": "PE_T1_03",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), true tissue level of organization first evolved in which invertebrate phylum?",
+      "options": [
+        "A) Porifera",
+        "B) Coelenterata (Cnidaria)",
+        "C) Platyhelminthes",
+        "D) Annelida"
+      ],
+      "answer": "B) Coelenterata (Cnidaria)",
+      "explanation": "Tissue grade organization originated in Coelenterates (Hydra).",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "PE_T1_04",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), embryonic mesoderm gives origin to which pair of primary tissues?",
+      "options": [
+        "A) Epithelial and Nervous",
+        "B) Connective and Muscular",
+        "C) Epithelial and Muscular",
+        "D) Connective and Nervous"
+      ],
+      "answer": "B) Connective and Muscular",
+      "explanation": "Connective tissue and muscle arise from embryonic mesoderm.",
+      "image": "2. Origin Mesoderm.png"
+    },
+    {
+      "id": "PE_T1_05",
+      "stem": "In Practice Exam (Topic 1), which primary tissue type originates from all three germ layers (Ectoderm, Mesoderm, Endoderm)?",
+      "type": "MCQ",
+      "options": [
+        "A) Muscular Tissue",
+        "B) Nervous Tissue",
+        "C) Epithelial Tissue",
+        "D) Connective Tissue"
+      ],
+      "answer": "C) Epithelial Tissue",
+      "explanation": "Epithelia derive from ectoderm, mesoderm, and endoderm.",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "PE_T1_06",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), the non-cellular basement membrane underlying epithelial sheets contains basal lamina and:",
+      "options": [
+        "A) Reticular lamina",
+        "B) Hydroxyapatite matrix",
+        "C) Elastic lamellae",
+        "D) Ossein canals"
+      ],
+      "answer": "A) Reticular lamina",
+      "explanation": "Basement membrane = Basal lamina + Reticular lamina.",
+      "image": "3. The_Epithelial_Basement_Membrane_Gateway.png"
+    },
+    {
+      "id": "PE_T1_07",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 1), avascular epithelial sheets obtain metabolic nutrients primarily via:",
+      "options": [
+        "A) Direct intra-epithelial capillary blood flow",
+        "B) Simple diffusion from underlying connective tissue blood vessels",
+        "C) Active transport from lumen air space",
+        "D) Perichondrial canaliculi"
+      ],
+      "answer": "B) Simple diffusion from underlying connective tissue blood vessels",
+      "explanation": "Epithelial cells depend on nutrient diffusion across the basement membrane.",
+      "image": "2. Avascular_Tissue_Survival_and_Respiration.png"
+    },
+    {
+      "id": "PE_T1_08",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 1 - MSQ), select all historical milestones established in animal histology: (Select all that apply)",
+      "options": [
+        "A) Xavier Bichat defined 21 primary tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the term 'Histology' in 1819",
+        "D) True tissue level first evolved in Phylum Coelenterata",
+        "E) Leeuwenhoek discovered Haversian osteons"
+      ],
+      "answers": [
+        "A) Xavier Bichat defined 21 primary tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the term 'Histology' in 1819",
+        "D) True tissue level first evolved in Phylum Coelenterata"
+      ],
+      "explanation": "Bichat, Malpighi, Mayer, and Coelenterate evolution represent foundational histology milestones.",
+      "image": "2. The_History_of_Histology.png"
+    },
+    {
+      "id": "PE_T1_09",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 1 - MSQ), select all primary tissue classes in complex animals: (Select all that apply)",
+      "options": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue",
+        "E) Vascular Tissue as fifth primary class"
+      ],
+      "answers": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PE_T1_10",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 1 - MSQ), select all embryonic germ layers giving rise to Epithelial Tissues: (Select all that apply)",
+      "options": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI mucosa)",
+        "D) Neural crest only",
+        "E) Blastoderm only"
+      ],
+      "answers": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI mucosa)"
+      ],
+      "explanation": "Epithelium arises from Ectoderm, Mesoderm, and Endoderm.",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    }
+  ]
+}

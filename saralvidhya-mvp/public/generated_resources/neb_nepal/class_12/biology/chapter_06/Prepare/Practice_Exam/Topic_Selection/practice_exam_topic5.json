@@ -1,0 +1,160 @@
+{
+  "topic": "Topic 5: Nervous Tissue & Neuroglia",
+  "questions": [
+    {
+      "id": "PE_T5_01",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), the metabolic cell body of a neurone containing the nucleus is the:",
+      "options": [
+        "A) Axon",
+        "B) Cyton / Soma",
+        "C) Dendrite",
+        "D) Synaptic knob"
+      ],
+      "answer": "B) Cyton / Soma",
+      "explanation": "Cyton (Soma) is the main cell body of a neurone.",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PE_T5_02",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), Nissl's granules in cyton and dendrites consist of clumps of:",
+      "options": [
+        "A) Smooth ER and lipids",
+        "B) Rough Endoplasmic Reticulum and free Ribosomes",
+        "C) Lysosomes and Golgi bodies",
+        "D) Microtubules and centrioles"
+      ],
+      "answer": "B) Rough Endoplasmic Reticulum and free Ribosomes",
+      "explanation": "Nissl's granules are RER and free ribosomes synthesizing protein.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PE_T5_03",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), Nissl's granules are strictly ABSENT in:",
+      "options": [
+        "A) Cyton",
+        "B) Axon and Axon Hillock",
+        "C) Main dendrites",
+        "D) Soma cytoplasm"
+      ],
+      "answer": "B) Axon and Axon Hillock",
+      "explanation": "Nissl's granules are absent in axon hillock and axon.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PE_T5_04",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), saltatory nerve impulse propagation leaps along myelinated axons at:",
+      "options": [
+        "A) Synaptic knobs",
+        "B) Uninsulated Nodes of Ranvier",
+        "C) Schwann cell nuclei",
+        "D) Axon hillock"
+      ],
+      "answer": "B) Uninsulated Nodes of Ranvier",
+      "explanation": "Action potentials jump from Node of Ranvier to Node of Ranvier.",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PE_T5_05",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), which CNS neuroglia construct the Blood-Brain Barrier (BBB)?",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "answer": "A) Astrocytes",
+      "explanation": "Astrocytes form perivascular end-feet creating the Blood-Brain Barrier.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_06",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), myelin sheath in the Central Nervous System (CNS) is synthesized by:",
+      "options": [
+        "A) Schwann cells",
+        "B) Oligodendrocytes",
+        "C) Astrocytes",
+        "D) Microglia"
+      ],
+      "answer": "B) Oligodendrocytes",
+      "explanation": "Oligodendrocytes form CNS myelin; Schwann cells form PNS myelin.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_07",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 5), phagocytic macrophage defense neuroglia in the CNS are:",
+      "options": [
+        "A) Astrocytes",
+        "B) Microglia",
+        "C) Ependymal cells",
+        "D) Satellite cells"
+      ],
+      "answer": "B) Microglia",
+      "explanation": "Microglia act as tissue macrophages defending the CNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_08",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 5 - MSQ), select all neuroglial cells residing in the Central Nervous System (CNS): (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia: Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_09",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 5 - MSQ), select all neuroglial cells residing in the Peripheral Nervous System (PNS): (Select all that apply)",
+      "options": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells",
+        "C) CNS Astrocytes",
+        "D) CNS Microglia",
+        "E) CNS Oligodendrocytes"
+      ],
+      "answers": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells"
+      ],
+      "explanation": "PNS neuroglia include Schwann cells and Satellite cells.",
+      "image": "PNS.png"
+    },
+    {
+      "id": "PE_T5_10",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 5 - MSQ), select all anatomical locations containing Bipolar Neurones: (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs",
+        "D) Cerebral cortex",
+        "E) Dorsal root ganglion"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs"
+      ],
+      "explanation": "Bipolar neurones occur in retina, olfactory mucosa, and inner ear.",
+      "image": "5. Structure.png"
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+[
+  {
+    "front": "What is the primary difference between a futures contract and an options contract regarding obligations?",
+    "back": "In a futures contract, both counterparties are obligated to perform the contract. In an options contract, the buyer has the right but no obligation to perform, while the seller is obligated to perform if the buyer exercises."
+  },
+  {
+    "front": "Why is the payoff profile of an option described as asymmetrical?",
+    "back": "Because the buyer's potential loss is strictly capped at the premium paid, while their potential profit can be unlimited or very large. For the seller, the opposite holds true."
+  },
+  {
+    "front": "What does a Call Option give the buyer the right to do?",
+    "back": "It gives the buyer the right, but not the obligation, to buy the underlying asset at a pre-determined strike price on or before a specified expiry date."
+  },
+  {
+    "front": "What does a Put Option give the buyer the right to do?",
+    "back": "It gives the buyer the right, but not the obligation, to sell the underlying asset at a pre-determined strike price on or before a specified expiry date."
+  },
+  {
+    "front": "What is the Strike Price (Exercise Price) of an option?",
+    "back": "The fixed price at which the underlying asset can be bought (call) or sold (put) when the option is exercised."
+  },
+  {
+    "front": "What is the Option Premium?",
+    "back": "The non-refundable upfront price paid by the option buyer to the option seller to acquire the rights under the option contract."
+  },
+  {
+    "front": "How do American-style and European-style options differ in their exercise timing?",
+    "back": "American options can be exercised at any time on or before the expiration date. European options can only be exercised on the expiration date itself."
+  },
+  {
+    "front": "What exercise style is used for stock and index options traded in the Indian markets?",
+    "back": "European-style options (which expire on the last Thursday of the contract month)."
+  },
+  {
+    "front": "What is the difference between a covered call and an uncovered (naked) call?",
+    "back": "A covered call is written by someone who already owns the underlying shares (limiting delivery risk). An uncovered (naked) call is written by someone who does not own the stock, exposing them to unlimited risk if the price spikes."
+  },
+  {
+    "front": "When is a Call Option In-the-Money (ITM), At-the-Money (ATM), and Out-of-the-Money (OTM)?",
+    "back": "ITM: Spot Price > Strike Price (S > X)\nATM: Spot Price = Strike Price (S = X)\nOTM: Spot Price < Strike Price (S < X)"
+  },
+  {
+    "front": "When is a Put Option In-the-Money (ITM), At-the-Money (ATM), and Out-of-the-Money (OTM)?",
+    "back": "ITM: Spot Price < Strike Price (S < X)\nATM: Spot Price = Strike Price (S = X)\nOTM: Spot Price > Strike Price (S > X)"
+  },
+  {
+    "front": "What is the Intrinsic Value of an option and what are its formulas?",
+    "back": "The value if exercised immediately. It can never be negative.\nCall IV = max(0, S - X)\nPut IV = max(0, X - S)"
+  },
+  {
+    "front": "What is the Time Value of an option and what is its formula?",
+    "back": "The portion of the premium that reflects the probability of favorable price movements before expiry. Time Value = Option Premium - Intrinsic Value. It decays to zero at expiration."
+  },
+  {
+    "front": "What is the Breakeven Price at expiration for a Long Call and a Long Put?",
+    "back": "Long Call Breakeven = Strike Price + Premium\nLong Put Breakeven = Strike Price - Premium"
+  },
+  {
+    "front": "Why does an increase in underlying asset volatility increase the value of both call and put options?",
+    "back": "Because higher volatility increases the probability of large price movements that can generate significant payoffs, while the downside risk remains limited to the premium paid."
+  },
+  {
+    "front": "What does the option Greek 'Delta' measure, and what are its standard ranges?",
+    "back": "Delta measures the change in option premium for a Rs. 1 change in underlying asset price.\nCall Delta: 0 to +1\nPut Delta: -1 to 0"
+  },
+  {
+    "front": "What does the option Greek 'Gamma' measure?",
+    "back": "Gamma measures the change in Delta for a Rs. 1 change in underlying asset price (rate of change of Delta)."
+  },
+  {
+    "front": "What does the option Greek 'Theta' measure, and is it positive or negative for buyers?",
+    "back": "Theta measures the rate of time decay (loss of option value per day). It is negative for option buyers and positive for option sellers."
+  },
+  {
+    "front": "What does the option Greek 'Vega' measure?",
+    "back": "Vega measures the change in option premium for a 1% change in implied volatility."
+  },
+  {
+    "front": "What does the option Greek 'Rho' measure, and how does it react to interest rate increases?",
+    "back": "Rho measures the change in option premium for a 1% change in risk-free interest rate. When interest rates rise, Call premiums rise (positive Rho) and Put premiums fall (negative Rho)."
+  },
+  {
+    "front": "What are three key assumptions of the Black-Scholes option pricing model?",
+    "back": "1. The stock pays no dividends during the option's life.\n2. European exercise terms apply.\n3. Risk-free interest rates and asset volatility remain constant and known."
+  }
+]

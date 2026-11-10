@@ -1,0 +1,38 @@
+{
+  "chapter_number": 1,
+  "chapter_name": "Biology Chapter 1",
+  "subject": "Biology",
+  "pdf": "Resources 12th chapter 1 bio.docx",
+  "completed": {
+    "beginner": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ],
+    "intermediate": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ],
+    "advanced": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ]
+  }
+}

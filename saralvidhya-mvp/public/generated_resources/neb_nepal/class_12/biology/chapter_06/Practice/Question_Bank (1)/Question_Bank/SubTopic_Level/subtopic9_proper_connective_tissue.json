@@ -1,0 +1,44 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 9,
+  "subtopic_name": "3.1 Proper Connective Tissue \u2014 Cells, Matrix, and Fibers",
+  "topic_name": "Connective Tissue",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Proper Connective Tissue",
+  "questions": [
+    {
+      "id": "qb_subtopic9_001",
+      "type": "Describe",
+      "question": "Describe the cellular components of Proper Connective Tissue and state their functions.",
+      "answer_2mark": "Proper connective tissue contains Fibroblasts (matrix/fiber synthesis), Mast cells (histamine, heparin release), Macrophages (phagocytosis), and Plasma cells (antibody synthesis with cartwheel nucleus).",
+      "answer_5mark": [
+        "1. **Fibroblasts**: Stellate, abundant cells that actively synthesize extracellular ground matrix and protein fiber precursors (collagen, elastin).",
+        "2. **Mast Cells**: Granular cells mediating inflammatory allergic cascades; secrete **Histamine** (vasodilator), **Heparin** (anticoagulant), and **Serotonin** (vasoconstrictor).",
+        "3. **Histiocytes / Macrophages**: Phagocytic cells derived from monocytes that engulf invading microorganisms and dead cellular debris.",
+        "4. **Plasma Cells**: Differentiated B-lymphocytes featuring a characteristic **'cartwheel' or 'clock-face'** nuclear chromatin pattern; synthesize circulating antibodies.",
+        "5. **Adipocytes**: Ring-shaped cells specialized for lipid storage and thermal insulation."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Proper Connective Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "Connective Tissue Proper Cells Diagram"
+    },
+    {
+      "id": "qb_subtopic9_002",
+      "type": "Compare",
+      "question": "Differentiate between Tendons and Ligaments in dense connective tissue.",
+      "answer_2mark": "Tendons are dense regular white fibrous tissues connecting skeletal muscle to bone with high tensile strength. Ligaments are dense elastic yellow fibrous tissues connecting bone to bone with high flexibility.",
+      "answer_5mark": [
+        "1. **Structural Composition**: Tendons consist of parallel unbranched bundles of collagen (white) fibers. Ligaments consist of branching networks of elastic (yellow) fibers mixed with collagen.",
+        "2. **Attachments**: Tendons attach voluntary muscle to bone. Ligaments attach bone to bone across synovial joints.",
+        "3. **Flexibility vs Tensile Strength**: Tendons possess immense tensile strength with limited elasticity. Ligaments exhibit high elasticity and flexibility.",
+        "4. **Cell Distribution**: Fibroblasts in tendons lie in continuous parallel rows between collagen bundles. Fibroblasts in ligaments are scattered irregularly throughout elastic fibers.",
+        "5. **Functional Significance**: Tendons transmit muscle force to pull bones. Ligaments stabilize joint movement and prevent hyperextension."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Proper Connective Tissue",
+      "bloom_level": "Analyze",
+      "difficulty": "Medium",
+      "diagram_ref": "Tendon vs Ligament Microarchitecture Diagram"
+    }
+  ]
+}

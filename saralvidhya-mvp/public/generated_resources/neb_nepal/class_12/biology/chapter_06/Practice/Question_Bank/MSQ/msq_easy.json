@@ -1,0 +1,203 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MSQ_E1",
+      "stem": "Identify all primary tissue classes in human histology: (Select all that apply)",
+      "options": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue",
+        "E) Bone tissue only"
+      ],
+      "answers": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "difficulty": "Easy",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PQB_MSQ_E2",
+      "stem": "Which cell junctions join adjacent epithelial cells together? (Select all that apply)",
+      "options": [
+        "A) Tight junction",
+        "B) Adherens junction",
+        "C) Desmosome",
+        "D) Gap junction",
+        "E) Synaptic terminal"
+      ],
+      "answers": [
+        "A) Tight junction",
+        "B) Adherens junction",
+        "C) Desmosome",
+        "D) Gap junction"
+      ],
+      "explanation": "Epithelial junctions = Tight, Adherens, Desmosome, Gap.",
+      "difficulty": "Easy",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PQB_MSQ_E3",
+      "stem": "Identify all formed blood elements in circulating bloodstream: (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Albumins",
+        "E) Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed elements = RBC, WBC, Platelets.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MSQ_E4",
+      "stem": "Identify all features belonging to Skeletal Muscle histology: (Select all that apply)",
+      "options": [
+        "A) Voluntary control",
+        "B) Multinucleated syncytium",
+        "C) Striated bands",
+        "D) Intercalated discs",
+        "E) Rapid fatigue"
+      ],
+      "answers": [
+        "A) Voluntary control",
+        "B) Multinucleated syncytium",
+        "C) Striated bands",
+        "E) Rapid fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, subject to fatigue.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    },
+    {
+      "id": "PQB_MSQ_E5",
+      "stem": "Which structures contain Hyaline Cartilage extracellular matrix? (Select all that apply)",
+      "options": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Intervertebral discs",
+        "E) Tracheal rings"
+      ],
+      "answers": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "E) Tracheal rings"
+      ],
+      "explanation": "Hyaline cartilage lines articular ends, nose, ribs, trachea.",
+      "difficulty": "Easy",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PQB_MSQ_E6",
+      "stem": "In Question Bank Easy deck, select all tissue layers formed by Simple Columnar Epithelium: (Select all that apply)",
+      "options": [
+        "A) Lining of stomach lumen",
+        "B) Lining of small intestine with microvilli brush border",
+        "C) Lining of gall bladder",
+        "D) Lining of Fallopian tubes (Ciliated variant)",
+        "E) Skin epidermis"
+      ],
+      "answers": [
+        "A) Lining of stomach lumen",
+        "B) Lining of small intestine with microvilli brush border",
+        "C) Lining of gall bladder",
+        "D) Lining of Fallopian tubes (Ciliated variant)"
+      ],
+      "explanation": "Simple columnar lines stomach, intestine, gall bladder, and Fallopian tubes.",
+      "difficulty": "Easy",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PQB_MSQ_E7",
+      "stem": "In Question Bank Easy deck, select all key properties of Connective Tissue: (Select all that apply)",
+      "options": [
+        "A) Abundant extracellular matrix",
+        "B) Vascular blood supply in CT proper",
+        "C) Connects and supports other tissues",
+        "D) Derived from embryonic mesoderm",
+        "E) Avascular tightly packed sheets with no matrix"
+      ],
+      "answers": [
+        "A) Abundant extracellular matrix",
+        "B) Vascular blood supply in CT proper",
+        "C) Connects and supports other tissues",
+        "D) Derived from embryonic mesoderm"
+      ],
+      "explanation": "Connective tissue has abundant matrix, vascular supply (except cartilage), mesodermal origin.",
+      "difficulty": "Easy",
+      "image": "00 Connective_Tissue_Structure_and_Function.png"
+    },
+    {
+      "id": "PQB_MSQ_E8",
+      "stem": "In Question Bank Easy deck, identify all functions of Leucocytes (WBCs): (Select all that apply)",
+      "options": [
+        "A) Bacterial phagocytosis by Neutrophils",
+        "B) Antibody production by Lymphocytes",
+        "C) Histamine release by Basophils",
+        "D) Parasitic defense by Eosinophils",
+        "E) Oxygen transport by Hemoglobin"
+      ],
+      "answers": [
+        "A) Bacterial phagocytosis by Neutrophils",
+        "B) Antibody production by Lymphocytes",
+        "C) Histamine release by Basophils",
+        "D) Parasitic defense by Eosinophils"
+      ],
+      "explanation": "WBCs perform immune protection via phagocytosis, antibody production, and inflammatory defense.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MSQ_E9",
+      "stem": "In Question Bank Easy deck, select all structural parts of a typical Multipolar Neurone: (Select all that apply)",
+      "options": [
+        "A) Cell body Cyton / Soma",
+        "B) Receptive Dendrites",
+        "C) Single conducting Axon",
+        "D) Protein-synthesizing Nissl's granules",
+        "E) Contractile Sarcomeres"
+      ],
+      "answers": [
+        "A) Cell body Cyton / Soma",
+        "B) Receptive Dendrites",
+        "C) Single conducting Axon",
+        "D) Protein-synthesizing Nissl's granules"
+      ],
+      "explanation": "Neurones consist of Cyton, Dendrites, Axon, and Nissl's granules.",
+      "difficulty": "Easy",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PQB_MSQ_E10",
+      "stem": "In Question Bank Easy deck, select all exocrine glands classified by morphology: (Select all that apply)",
+      "options": [
+        "A) Unicellular Goblet glands",
+        "B) Simple tubular sweat glands",
+        "C) Compound alveolar salivary glands",
+        "D) Compound tubulo-alveolar pancreas glands",
+        "E) Ductless pituitary thyroid glands"
+      ],
+      "answers": [
+        "A) Unicellular Goblet glands",
+        "B) Simple tubular sweat glands",
+        "C) Compound alveolar salivary glands",
+        "D) Compound tubulo-alveolar pancreas glands"
+      ],
+      "explanation": "Exocrine glands include unicellular goblet cells, simple tubular, compound alveolar, and tubulo-alveolar glands.",
+      "difficulty": "Easy",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    }
+  ]
+}

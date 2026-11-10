@@ -1,0 +1,47 @@
+{
+  "chapter": "Volumetric Analysis",
+  "subject": "Chemistry",
+  "level": "beginner",
+  "flashcards": [
+    {
+      "front": "What is quantitative analysis?",
+      "back": "Quantitative analysis involves the estimation of the accurate amounts of the constituents of an inorganic substance. It determines how much of each component is present."
+    },
+    {
+      "front": "What are the two main branches of quantitative analysis?",
+      "back": "The two main branches of quantitative analysis are volumetric analysis and gravimetric analysis."
+    },
+    {
+      "front": "What is volumetric analysis?",
+      "back": "Volumetric analysis deals with measurements of the volumes of solutions involved in chemical reactions. This ultimately determines the amount of constituents in unknown solutions."
+    },
+    {
+      "front": "In volumetric analysis, what is a standard solution?",
+      "back": "A standard solution is a solution of accurately known concentration. It is essential for determining the strength of an unknown solution."
+    },
+    {
+      "front": "What is a titrant in volumetric analysis?",
+      "back": "The titrant is the reagent of known concentration used in volumetric analysis. It is typically added to the substance being determined."
+    },
+    {
+      "front": "What is a titrate?",
+      "back": "The titrate is the substance being titrated, which is usually a solution of unknown strength. Its concentration is determined during the analysis."
+    },
+    {
+      "front": "What is titration?",
+      "back": "Titration is the process of adding a standard solution to a solution of unknown strength until the chemical reaction between them is just complete."
+    },
+    {
+      "front": "What is the role of an indicator in titration?",
+      "back": "An indicator is an auxiliary reagent added to a titration to detect its completion. It produces a sharp, unmistakable color change at the end point."
+    },
+    {
+      "front": "What is the end point of a titration?",
+      "back": "The end point is the point at which the indicator gives a clear visual change. This observed change signals the completion of the titration."
+    },
+    {
+      "front": "What is the equivalence point in a titration?",
+      "back": "The equivalence point is the theoretical point where chemically equivalent amounts of the reagent and the substance titrated have completely reacted. Ideally, the end point should coincide with it."
+    }
+  ]
+}

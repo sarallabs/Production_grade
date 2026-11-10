@@ -1,0 +1,30 @@
+{
+  "short_id": "short_01_history_overview",
+  "short_title": "History & Overview of Animal Tissue",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L1_History", "L2_Malpighi", "L2_Bichat", "L2_Mayer", "L2_Coelenterata", "L0_Root"],
+  "pedagogical_mode": "Narrative & Chronological",
+  "segments": [
+    {
+      "segment_id": "S01_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Who gave us the word 'tissue'? And where in the animal kingdom did tissues first evolve?",
+      "video_prompt": "Dramatic macro zoom into a Hydra under a compound microscope, cilia waving in slow motion. Cut to a sepia-toned portrait of Xavier Bichat in a candlelit 18th-century laboratory holding a dissection tool. Title card: 'The Origins of Histology'. Dark cinematic style."
+    },
+    {
+      "segment_id": "S01_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Marcello Malpighi (1628–1694) became the founder of histology when he first examined tissue microstructure through early microscopes. Xavier Bichat (1771–1802) identified 21 elementary tissue types without a microscope — coined the term 'tissue' — and became the Father of Histology. In 1801, Karl Mayer named the science: histology. Evolutionarily, animal tissues first appeared in Phylum Coelenterata — the first phylum at the tissue-grade of organisation. This was the evolutionary turning point that made complex organs possible.",
+      "video_prompt": "Animated timeline from 1628 to 1801. Portrait panels appear at each date: Malpighi (1628, microscope), Bichat (1771, scalpel), Mayer (1801, text label 'Histology'). Then evolutionary ladder animation: Amoeba → Volvox → Sycon → Hydra, with 'Tissue Grade' label glowing at Hydra. Warm amber historical tones for portraits, clean vector for ladder. Voiceover narration at 140 wpm."
+    },
+    {
+      "segment_id": "S01_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Epithelial tissue — the great surface-cover of the body.",
+      "video_prompt": "Four tissue-type icons appear one by one in a 2x2 grid — Epithelial highlighted in gold. Text: 'Up Next: Epithelial Tissue'. Transition wipe to black. Clean flat-design icon style."
+    }
+  ]
+}

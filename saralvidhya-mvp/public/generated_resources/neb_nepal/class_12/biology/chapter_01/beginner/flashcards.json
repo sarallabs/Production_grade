@@ -1,0 +1,47 @@
+{
+  "chapter": "Biology Chapter 1",
+  "subject": "Biology",
+  "level": "beginner",
+  "flashcards": [
+    {
+      "front": "Who is known as the Father of Plant Anatomy?",
+      "back": "N. Grew is known as the Father of Plant Anatomy."
+    },
+    {
+      "front": "What is the study of the internal structure of plants called?",
+      "back": "The study of the internal structure of plants is called plant anatomy."
+    },
+    {
+      "front": "Define a tissue.",
+      "back": "A tissue is a group of cells with a common origin that perform specific functions."
+    },
+    {
+      "front": "What are the two main types of plant tissues based on their dividing capacity?",
+      "back": "The two main types are meristematic tissue and permanent tissue."
+    },
+    {
+      "front": "What is meristematic tissue?",
+      "back": "Meristematic tissue is a group of immature cells that can divide and grow."
+    },
+    {
+      "front": "What does the word 'meristem' mean?",
+      "back": "The word 'meristem' comes from a Greek word meaning 'divisible'."
+    },
+    {
+      "front": "Where are apical meristems located?",
+      "back": "Apical meristems are located at the tips of roots and shoots, increasing length."
+    },
+    {
+      "front": "What is the function of intercalary meristems?",
+      "back": "Intercalary meristems help in the increase in length at the nodes or internodes."
+    },
+    {
+      "front": "What do lateral meristems help to increase?",
+      "back": "Lateral meristems help to increase the thickness of plant parts like stems and roots."
+    },
+    {
+      "front": "Give an example of a lateral meristem.",
+      "back": "Vascular cambium and cork cambium are examples of lateral meristems."
+    }
+  ]
+}

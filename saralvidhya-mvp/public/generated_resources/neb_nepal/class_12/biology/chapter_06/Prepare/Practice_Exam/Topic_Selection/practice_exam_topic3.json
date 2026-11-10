@@ -1,0 +1,161 @@
+{
+  "topic": "Topic 3: Connective Tissue (Proper & Supportive)",
+  "questions": [
+    {
+      "id": "PE_T3_01",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), matrix-producing connective tissue cells synthesizing collagen and elastin fibers are:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "D) Plasma cells"
+      ],
+      "answer": "A) Fibroblasts",
+      "explanation": "Fibroblasts synthesize fibers and ground substance.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_02",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), histamine, heparin, and serotonin are released during inflammation by:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Macrophages",
+        "D) Adipocytes"
+      ],
+      "answer": "B) Mast cells",
+      "explanation": "Mast cells release histamine, heparin, and serotonin.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_03",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), tissue macrophages residing in loose connective tissue proper are:",
+      "options": [
+        "A) Histocytes",
+        "B) Plasma cells",
+        "C) Chondrocytes",
+        "D) Osteocytes"
+      ],
+      "answer": "A) Histocytes",
+      "explanation": "Histocytes are phagocytic macrophages in connective tissue proper.",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PE_T3_04",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), antibody-producing plasma cells differentiate from activated:",
+      "options": [
+        "A) T-lymphocytes",
+        "B) B-lymphocytes",
+        "C) Neutrophils",
+        "D) Monocytes"
+      ],
+      "answer": "B) B-lymphocytes",
+      "explanation": "Plasma cells derive from antigen-stimulated B-lymphocytes.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_05",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), tendons attaching skeletal muscle to bone consist of:",
+      "options": [
+        "A) Dense Regular White Fibrous CT",
+        "B) Dense Irregular Collagenous CT",
+        "C) Yellow Elastic CT",
+        "D) Loose Areolar CT"
+      ],
+      "answer": "A) Dense Regular White Fibrous CT",
+      "explanation": "Tendons are composed of dense regular white fibrous CT.",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PE_T3_06",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), tough shock-absorbing cartilage in intervertebral discs lacking perichondrium is:",
+      "options": [
+        "A) Hyaline cartilage",
+        "B) Elastic cartilage",
+        "C) Fibrocartilage",
+        "D) Calcified cartilage"
+      ],
+      "answer": "C) Fibrocartilage",
+      "explanation": "Fibrocartilage has thick collagen bundles and forms intervertebral discs.",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PE_T3_07",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 3), the structural unit of compact bone comprising Haversian canal and lamellae is:",
+      "options": [
+        "A) Osteon / Haversian System",
+        "B) Trabecula",
+        "C) Perichondrium",
+        "D) Sarcomere"
+      ],
+      "answer": "A) Osteon / Haversian System",
+      "explanation": "The osteon is the functional structural unit of compact bone.",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PE_T3_08",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 3 - MSQ), select all cell types residing in Loose Areolar Connective Tissue matrix: (Select all that apply)",
+      "options": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells",
+        "E) Mineralized Osteocytes"
+      ],
+      "answers": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells"
+      ],
+      "explanation": "Areolar CT matrix contains fibroblasts, mast cells, histocytes, and plasma cells.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_09",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 3 - MSQ), select all Granulocytic Leucocytes in circulating blood: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Monocytes",
+        "E) Lymphocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutrophils, Eosinophils, Basophils.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_T3_10",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 3 - MSQ), select all formed blood elements: (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Serum Albumin",
+        "E) Plasma Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed blood elements comprise RBCs, WBCs, and Platelets.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    }
+  ]
+}

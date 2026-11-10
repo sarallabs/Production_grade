@@ -1,0 +1,30 @@
+{
+  "short_id": "short_06_connective_proper",
+  "short_title": "Connective Tissue Proper — Cells, Matrix, Fibres & Types",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L2_Proper", "L3_Cells", "L4_Fibroblasts", "L4_MastCells", "L4_Histocytes", "L4_Lymphocytes", "L4_PlasmaCells", "L3_Matrix", "L3_Fibres", "L4_Collagen", "L4_Elastic", "L4_Reticular", "L3_Loose", "L4_Areolar", "L4_Adipose", "L3_Dense"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S06_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "The 'glue' of your body isn't just inert packing material. Proper connective tissue is alive, active, and defending you every second.",
+      "video_prompt": "SEM-style cinematic zoom into loose connective tissue matrix. Collagen fibres crisscross while a mast cell releases granule clouds and a macrophage extends amoeboid pseudopodia toward bacterial debris. Dramatic amber and teal colouring, deep-field microscopy style."
+    },
+    {
+      "segment_id": "S06_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Three components: Cells — fibroblasts (synthesise fibres and matrix), mast cells (histamine and heparin), histocytes (macrophages), lymphocytes (immune surveillance), plasma cells (antibodies). Matrix — proteoglycan ground substance. Fibres — collagen (white, tensile strength), elastic (yellow, extensible), reticular (colourless, fine framework). Loose types: areolar tissue (body packing, all cell and fibre types) and adipose (white fat — single droplet, peripheral nucleus; brown fat — multiple droplets, many mitochondria for thermogenesis). Dense types: white fibrous (tendons muscle-to-bone, ligaments bone-to-bone), elastic CT, reticular CT (lymph node framework).",
+      "video_prompt": "Three-panel SEM render: collagen bundles (parallel white cables), elastic fibres (wavy yellow), reticular network (grey branching). Below: H&E histology comparison — areolar tissue (loose matrix with cells) vs. adipose (clear lipid vacuoles with peripheral signet-ring nuclei). Then a compact summary table appears showing all cell types and their functions as neon-labeled rows. Dark background, bright callout labels."
+    },
+    {
+      "segment_id": "S06_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Supportive Connective Tissue — the rigid skeleton within.",
+      "video_prompt": "Title card: 'Up Next: Supportive Connective Tissue'. Background: a 3D render of a bone cross-section. Smooth wipe to black."
+    }
+  ]
+}

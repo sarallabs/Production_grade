@@ -1,0 +1,87 @@
+{
+  "chapter": "Biology Chapter 2",
+  "subject": "Biology",
+  "level": "beginner",
+  "flashcards": [
+    {
+      "front": "Who is called the Father of Plant Physiology?",
+      "back": "Stephan Hales is called the Father of Plant Physiology. Sir J.C. Bose is the Father of Indian Plant Physiology."
+    },
+    {
+      "front": "What percentage of active protoplasm is made up of water?",
+      "back": "Water makes up 75% to 90% of active protoplasm in plant cells. Without water, the protoplasm becomes inactive or dies."
+    },
+    {
+      "front": "What is diffusion?",
+      "back": "Diffusion is the movement of molecules from an area of HIGH concentration to an area of LOW concentration until they are evenly spread. It happens on its own — no energy needed!"
+    },
+    {
+      "front": "What is osmosis?",
+      "back": "Osmosis is a special type of diffusion where WATER moves through a semi-permeable membrane (thin, selective skin) from a watery (dilute) area to a less watery (concentrated) area."
+    },
+    {
+      "front": "What is a semi-permeable membrane?",
+      "back": "A thin barrier (like a cell's plasma membrane) that lets water and small molecules pass through but blocks large molecules. Examples: plasma membrane, egg membrane."
+    },
+    {
+      "front": "What happens when a plant cell is placed in a hypotonic (dilute) solution?",
+      "back": "Water enters the cell by endosmosis. The cell swells up and becomes TURGID (firm and hard)."
+    },
+    {
+      "front": "What happens when a plant cell is placed in a hypertonic (concentrated) solution?",
+      "back": "Water leaves the cell by exosmosis. The cell shrinks and becomes FLACCID (limp and soft). If too much water is lost, plasmolysis occurs."
+    },
+    {
+      "front": "What is plasmolysis?",
+      "back": "Plasmolysis is when a plant cell loses so much water (in hypertonic solution) that the inner membrane shrinks away from the cell wall. The cell becomes limp."
+    },
+    {
+      "front": "What is deplasmolysis?",
+      "back": "Deplasmolysis is the recovery of a plasmolysed cell when it is placed back in water or a dilute solution. Water re-enters the cell and the membrane returns to the wall."
+    },
+    {
+      "front": "What is turgor pressure?",
+      "back": "Turgor pressure is the pressure of the water inside a cell pushing against the cell wall. It makes the cell firm. A turgid cell has high turgor pressure."
+    },
+    {
+      "front": "What is the path of water during ascent of sap?",
+      "back": "Water travels upward through XYLEM — special tube-like structures (tracheids and vessels) inside the plant. The path can be proved using the stain test (eosin dye turns xylem red)."
+    },
+    {
+      "front": "What is the Cohesion-Tension Theory?",
+      "back": "The most accepted theory for ascent of sap. Three key ideas: (1) Cohesion — water molecules stick to each other. (2) Adhesion — water sticks to xylem walls. (3) Transpiration Pull — evaporation from leaves creates a suction that pulls the water chain upward. Like drinking through a straw!"
+    },
+    {
+      "front": "What is transpiration?",
+      "back": "Transpiration is the loss of water as VAPOUR from the leaves, stems, and flowers of a plant. About 97–99% of all water absorbed by plants is lost this way."
+    },
+    {
+      "front": "What are the three types of transpiration?",
+      "back": "1. Stomatal — through stomata (~90%). 2. Cuticular — through the waxy cuticle (3–10%). 3. Lenticular — through lenticels in bark (~1%)."
+    },
+    {
+      "front": "What are guard cells and what do they do?",
+      "back": "Guard cells are two special cells that surround each stoma (pore). When they fill with water (turgid) the pore OPENS. When they lose water (flaccid) the pore CLOSES. They control how much water the plant loses."
+    },
+    {
+      "front": "What shape are guard cells in dicots vs monocots?",
+      "back": "Dicots (like rose, mango): guard cells are KIDNEY-shaped. Monocots (like wheat, grass): guard cells are DUMB-BELL shaped."
+    },
+    {
+      "front": "What is guttation?",
+      "back": "Guttation is when a plant releases LIQUID water droplets (not vapour) from the tips and edges of leaves through special pores called hydathodes. It happens at night or early morning."
+    },
+    {
+      "front": "What are hydathodes?",
+      "back": "Hydathodes are special pores located at leaf tips and margins. They are used in guttation — releasing liquid water droplets when root pressure builds up."
+    },
+    {
+      "front": "Why does guttation happen at night?",
+      "back": "At night: stomata are closed so transpiration is low. If the soil is wet, roots keep absorbing water, building up root pressure. This positive pressure pushes liquid water out through hydathodes."
+    },
+    {
+      "front": "What is the DPD (Diffusion Pressure Deficit)?",
+      "back": "DPD is also called suction pressure. When solutes are added to pure water, the pressure of the water drops. That drop is the DPD. It is the 'thirst' of a cell — the force pulling water in. DPD = Osmotic Pressure − Turgor Pressure."
+    }
+  ]
+}

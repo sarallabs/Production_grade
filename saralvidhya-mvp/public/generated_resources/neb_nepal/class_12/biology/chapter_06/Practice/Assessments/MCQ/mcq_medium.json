@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PA_MCQ_M1",
+      "stem": "Areolar loose connective tissue serving as skin support framework contains which primary cell type?",
+      "options": [
+        "A) Chondrocytes",
+        "B) Fibroblasts",
+        "C) Osteocytes",
+        "D) Myocytes"
+      ],
+      "answer": "B) Fibroblasts",
+      "explanation": "Fibroblasts are predominant cells synthesizing matrix fibres.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PA_MCQ_M2",
+      "stem": "White adipose tissue adipocytes are characterized by having:",
+      "options": [
+        "A) Multilocular lipid droplets",
+        "B) A single large monolocular fat vacuole pushing nucleus peripherally",
+        "C) Abundant cytochrome mitochondria",
+        "D) High thermogenin expression"
+      ],
+      "answer": "B) A single large monolocular fat vacuole pushing nucleus peripherally",
+      "explanation": "White adipocytes are monolocular energy storage cells.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PA_MCQ_M3",
+      "stem": "Tendons connecting skeletal muscle to bone are composed of which dense connective tissue type?",
+      "options": [
+        "A) Dense Irregular Collagenous CT",
+        "B) Dense Regular White Fibrous CT",
+        "C) Loose Elastic CT",
+        "D) Reticular CT"
+      ],
+      "answer": "B) Dense Regular White Fibrous CT",
+      "explanation": "Tendons consist of parallel white collagen bundles.",
+      "difficulty": "Medium",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PA_MCQ_M4",
+      "stem": "Which non-vascular cartilage forms smooth articular covers at the ends of long arm and leg bones?",
+      "options": [
+        "A) Elastic Cartilage",
+        "B) Fibrocartilage",
+        "C) Hyaline Cartilage",
+        "D) Calcified Cartilage"
+      ],
+      "answer": "C) Hyaline Cartilage",
+      "explanation": "Hyaline cartilage covers articular bone ends.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_MCQ_M5",
+      "stem": "Intervertebral discs subject to intense mechanical compression are composed of:",
+      "options": [
+        "A) Hyaline Cartilage",
+        "B) Fibrocartilage rich in collagen bundles",
+        "C) Yellow Elastic Cartilage",
+        "D) Areolar tissue"
+      ],
+      "answer": "B) Fibrocartilage rich in collagen bundles",
+      "explanation": "Fibrocartilage provides high tensile strength in intervertebral discs.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_MCQ_M6",
+      "stem": "In mammalian compact bone, concentric bone lamellae surround a central channel called:",
+      "options": [
+        "A) Volkmann's canal",
+        "B) Haversian canal",
+        "C) Canaliculus",
+        "D) Central lacteal"
+      ],
+      "answer": "B) Haversian canal",
+      "explanation": "Haversian canals transmit blood vessels through osteon centers.",
+      "difficulty": "Medium",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PA_MCQ_M7",
+      "stem": "Which formed blood element is a non-nucleated biconcave disc containing hemoglobin?",
+      "options": [
+        "A) Monocyte",
+        "B) Erythrocyte (RBC)",
+        "C) Thrombocyte",
+        "D) Neutrophil"
+      ],
+      "answer": "B) Erythrocyte (RBC)",
+      "explanation": "Erythrocytes lose nuclei at maturity.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MCQ_M8",
+      "stem": "Which granular leucocyte exhibits a multi-lobed nucleus and performs primary bacterial phagocytosis?",
+      "options": [
+        "A) Basophil",
+        "B) Eosinophil",
+        "C) Neutrophil",
+        "D) Lymphocyte"
+      ],
+      "answer": "C) Neutrophil",
+      "explanation": "Neutrophils act as first-responder phagocytes.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MCQ_M9",
+      "stem": "The involuntary non-striated muscle cells lining gut wall are:",
+      "options": [
+        "A) Skeletal myocytes",
+        "B) Fusiform smooth myocytes",
+        "C) Branched cardiocytes",
+        "D) Myoepithelial cells"
+      ],
+      "answer": "B) Fusiform smooth myocytes",
+      "explanation": "Smooth muscle cells are spindle-shaped (fusiform), unstriated.",
+      "difficulty": "Medium",
+      "image": "00.png"
+    },
+    {
+      "id": "PA_MCQ_M10",
+      "stem": "Structural intercalated discs featuring desmosomes and gap junctions are exclusive to:",
+      "options": [
+        "A) Skeletal muscle",
+        "B) Smooth muscle",
+        "C) Cardiac muscle",
+        "D) Visceral muscle"
+      ],
+      "answer": "C) Cardiac muscle",
+      "explanation": "Intercalated discs join cardiocytes for syncytium.",
+      "difficulty": "Medium",
+      "image": "2. Intercalated_Discs.png"
+    }
+  ]
+}

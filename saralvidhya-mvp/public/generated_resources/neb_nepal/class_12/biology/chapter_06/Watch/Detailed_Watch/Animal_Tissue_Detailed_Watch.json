@@ -1,0 +1,167 @@
+{
+  "video_id": "animal_tissue_detailed_watch",
+  "video_title": "Unit 6: Animal Tissue — Detailed Watch",
+  "video_duration_seconds": 2700,
+  "act_count": 5,
+  "acts": [
+    {
+      "act_no": 1,
+      "act_title": "History, Overview & Epithelial Tissue Introduction",
+      "start_time_seconds": 0,
+      "end_time_seconds": 570,
+      "duration_seconds": 570,
+      "covers_element_ids": ["L0_Root", "L1_History", "L2_Bichat", "L2_Malpighi", "L2_Mayer", "L2_Coelenterata", "L1_Epithelial", "L2_Characteristics"],
+      "pedagogical_mode": "Narrative & Chronological",
+      "opening_hook": {
+        "script": "Living bodies are more than organs. Before organs, there are tissues — organised layers of cells working in concert to perform specific functions. Today, we go deep into all four types of animal tissue: their history, structure, types, and function.",
+        "start_time_seconds": 0,
+        "end_time_seconds": 20,
+        "video_prompt": "Time-lapse sequence of biological organisation — from single-cell amoeba to a full human body silhouette. Overlaid text: 'Animal Tissues — Unit 6.' Dramatic orchestral music swell. Cinematic wide shot, deep space-black background."
+      },
+      "segments": [
+        {
+          "segment_id": "A1_S1_History",
+          "start_time_seconds": 20,
+          "end_time_seconds": 210,
+          "script": "The very beginning lies with Marcello Malpighi (1628–1694), an Italian physician and pioneer microscopist — the founder of histology. Over a century later, Xavier Bichat (1771–1802), the French anatomist, identified 21 types of elementary tissues, coined the word 'tissue', and earned the title Father of Histology and Founder of Animal Histology — all without a microscope. In 1801, Karl Mayer gave this science its formal name — histology. Animal tissues first evolved in Phylum Coelenterata — the first phylum to achieve a tissue-grade of organisation, evolving from the protoplasmic grade of Amoeba, cellular grade of Volvox, and cell-aggregate grade of Sycon.",
+          "video_prompt": "Animated timeline from 1628 to 1801. Each date triggers a portrait panel: Malpighi (1628), Bichat (1771), Mayer (1801). Handwritten-style annotations. Then an evolutionary ladder animation from Amoeba to Hydra, with Tissue Grade label glowing on Phylum Coelenterata. Renaissance illustration style for portraits, clean vector for the ladder."
+        },
+        {
+          "segment_id": "A1_S2_Overview",
+          "start_time_seconds": 210,
+          "end_time_seconds": 350,
+          "script": "Tissues form the second level of the biological hierarchy: Cell → Tissue → Organ → Organ System → Organism. Based on body plan, epithelium covers 2 surfaces in acoelomates, 3 in pseudocoelomates, and 4 in coelomates. Four tissue types exist: Epithelial, Connective, Muscular, and Nervous.",
+          "video_prompt": "A 3D motion graphic shows the organization hierarchy as stacking glowing golden cards — CELL at bottom, TISSUE highlighted in amber, then up to ORGANISM. Then three body-plan cross-section diagrams show surface counts. Four tissue category icons snap into a 2x2 grid with distinct color accents."
+        },
+        {
+          "segment_id": "A1_S3_Epithelial_Intro",
+          "start_time_seconds": 350,
+          "end_time_seconds": 570,
+          "script": "Epithelial tissue covers all body surfaces — external, internal, and glandular. It is avascular, has minimal matrix, rests on a basement membrane, and is held together by four junction types: tight junctions seal intercellular spaces; adherens junctions link actin cytoskeletons; desmosomes anchor against pulling forces; gap junctions allow direct ionic communication between cells.",
+          "video_prompt": "Electron microscopy-style render of epithelial cells in close-up. Four junction types labeled with callouts. Zoomed inset shows molecular structure of each junction: tight (occludin/claudin), adherens (E-cadherin), desmosome (desmoglein), gap (connexin). Cold blue scientific illustration style with precise labels."
+        }
+      ]
+    },
+    {
+      "act_no": 2,
+      "act_title": "Simple, Compound & Modified Epithelium",
+      "start_time_seconds": 570,
+      "end_time_seconds": 1110,
+      "duration_seconds": 540,
+      "covers_element_ids": ["L3_Simple", "L3_Squamous", "L3_Cuboidal", "L3_Columnar", "L3_Pseudostratified", "L3_Compound", "L3_Stratified", "L3_Transitional", "L2_Modified", "L3_Ciliated", "L3_Glandular"],
+      "pedagogical_mode": "Descriptive & Spatial",
+      "segments": [
+        {
+          "segment_id": "A2_S1_Simple",
+          "start_time_seconds": 570,
+          "end_time_seconds": 780,
+          "script": "Simple epithelium has a single cell layer. Simple squamous cells are flat, tile-like. Endothelium (endodermal) lines capillaries and the heart's endocardium. Mesothelium (mesodermal) covers body cavities and viscera. Simple cuboidal cells have equal height and width with a central nucleus; located in kidney tubules, thyroid, and ovary. Simple columnar cells are taller than wide, with a basal nucleus; non-ciliated in stomach and gut, ciliated in fallopian tube and oviduct, brush-bordered in intestinal mucosa. Pseudostratified epithelium appears multi-layered but all cells touch the basement membrane; it filters air in the trachea and bronchi.",
+          "video_prompt": "Clinical anatomy diagram showing four simple epithelium cross-sections side by side: flat squamous tiles, cube-shaped cuboidal, tall columnar (with a ciliated variant), and mixed-height pseudostratified with all cells touching the basement membrane. Color-coded and labeled with location examples. White background, bright lab-report style, callout arrows."
+        },
+        {
+          "segment_id": "A2_S2_Compound",
+          "start_time_seconds": 780,
+          "end_time_seconds": 960,
+          "script": "Compound epithelium has multiple cell layers for protection. Stratified squamous is non-keratinised in moist areas — mouth, oesophagus, vagina — and keratinised in skin and keratin derivatives: fish scales, reptile scutes, bird feathers, mammal hair and nails. Stratified cuboidal is rare, in sweat and mammary gland ducts. Stratified columnar is uncommon, in conjunctiva and pharynx. Transitional epithelium, or urothelium, lines the urinary tract — cells shift from rounded (relaxed) to flat (stretched) allowing high bladder expansion.",
+          "video_prompt": "Split-screen animation: non-keratinised oral mucosa (smooth pink layer) vs. keratinised skin epidermis (rough cornified outer layer). Then collage of keratin derivatives phylogenetically arranged: fish scales, reptile scutes, bird feathers, mammal hair, human nails. Bottom panel shows transitional epithelium morphing from relaxed dome cells to stretched squamous — smooth tween animation with clock icon showing the change."
+        },
+        {
+          "segment_id": "A2_S3_Modified",
+          "start_time_seconds": 960,
+          "end_time_seconds": 1110,
+          "script": "Modified epithelium has six specialisations on the free border. Kino-ciliated has the 9+2 microtubule arrangement — 9 peripheral duplets and 2 central singlets — true motile cilia found in respiratory organs, fallopian tubes, and neurocoel. Stereo-ciliated has modified non-motile microvilli in the epididymis. Brush-bordered maximises absorption in intestine and PCT of kidney. Neuro-sensory in taste buds, olfactory mucosa, and inner ear. Pigmented in the retina. Germinal in seminiferous tubules and ovary. Glandular epithelium is classified by ducts: exocrine (duct present), endocrine (no duct, hormones into blood), heterocrine (both). By consistency: serous, mucous, mixed. By secretion: apocrine, merocrine, holocrine. By cell count: unicellular or multicellular. By complexity: simple or compound — tubular, alveolar, or tubulo-alveolar.",
+          "video_prompt": "Animated glandular classification decision tree. Starting with 'Glandular Epithelium', five branching criteria unfold sequentially: Ducts → Consistency → Secretion Mode → Cell Count → Structural Complexity. Leaf nodes show example structures: goblet cell (unicellular merocrine mucous), parotid gland (multicellular serous compound tubulo-alveolar). Dark navy background, neon white branching lines, gold leaf nodes."
+        }
+      ]
+    },
+    {
+      "act_no": 3,
+      "act_title": "Connective Tissue: Proper & Supportive",
+      "start_time_seconds": 1110,
+      "end_time_seconds": 1800,
+      "duration_seconds": 690,
+      "covers_element_ids": ["L1_Connective", "L2_Proper", "L3_Cells", "L3_Matrix", "L3_Fibres", "L3_Loose", "L3_Dense", "L2_Supportive", "L3_Cartilage", "L3_Bone"],
+      "pedagogical_mode": "Descriptive & Spatial / Causal & Process-Oriented",
+      "segments": [
+        {
+          "segment_id": "A3_S1_Proper",
+          "start_time_seconds": 1110,
+          "end_time_seconds": 1320,
+          "script": "Connective tissue is mesodermal and the most diverse tissue. Proper connective tissue has three components. Cells: fibroblasts secrete fibres and matrix; mast cells release histamine and heparin; histocytes phagocytise debris; lymphocytes provide immune surveillance; plasma cells secrete antibodies. Matrix: a jelly-like to gel-like ground substance of proteoglycans. Fibres: collagen (white, tensile strength), elastic (yellow, elasticity), reticular (colourless, framework). Loose CT includes areolar tissue (packing material with all cell and fibre types) and adipose tissue — white (single fat droplet, peripheral nucleus, energy storage) and brown (multiple fat droplets, many mitochondria, heat generation). Dense CT includes tendons (white fibrous, muscle-to-bone), ligaments (elastic fibres, bone-to-bone), and reticular CT (lymph node and spleen framework).",
+          "video_prompt": "SEM-style electron microscopy renders of three fibre types side by side: parallel collagen bundles (white cable-like), wavy elastic fibres (yellow), branching reticular network (colourless grey). Then H&E histology comparison: areolar tissue (loose arrangement of cells and fibres) vs. adipose tissue (large clear lipid vacuoles with peripheral signet-ring nuclei). Clean clinical microscopy style."
+        },
+        {
+          "segment_id": "A3_S2_Cartilage",
+          "start_time_seconds": 1320,
+          "end_time_seconds": 1530,
+          "script": "Supportive connective tissue forms the skeleton. Cartilage is avascular and aneural. Chondrocytes live in lacunae within a chondrin matrix, covered externally by perichondrium. Hyaline cartilage is the commonest, with fine collagen fibres, found in respiratory tract and articular surfaces. Calcified cartilage has calcium deposits and is very rigid, found at epiphyseal ends. Fibro-cartilage (white fibrous) is the strongest, with dense collagen, found in intervertebral discs and pubic symphysis. Elastic cartilage (yellow fibrous) is flexible and resilient, found in the pinna of the ear and epiglottis.",
+          "video_prompt": "Grid of four cartilage histology microscopy images: hyaline showing chondrocytes in lacunae in clear glassy matrix; calcified appearing dense and opaque; fibro-cartilage showing dense white fibres between chondrocytes; elastic cartilage showing yellow branching elastic fibres. Each panel labelled with type, matrix fibres, properties, and location. Clean clinical-microscopy colour palette."
+        },
+        {
+          "segment_id": "A3_S3_Bone",
+          "start_time_seconds": 1530,
+          "end_time_seconds": 1800,
+          "script": "Bone is vascular and rigid, with osteocytes in lacunae within an ossein matrix of collagen and hydroxyapatite (calcium phosphate). Bone forms via cartilaginous ossification (endochondral, for long bones), membranous ossification (intramembranous, for flat skull bones), or sesamoid ossification (within tendons, e.g., patella). Long bone structure: the epiphysis contains spongy bone with red marrow for blood cell production; the diaphysis contains compact bone with yellow marrow (fat). The structural unit of compact bone is the Haversian system or osteon: a Haversian canal containing blood vessels and nerves, surrounded by concentric lamellae, with osteocytes in lacunae connected by canaliculi. Transverse Volkmann's canals connect adjacent osteons.",
+          "video_prompt": "3D cinematic cross-section of a long bone. Camera starts at the epiphysis — spongy trabecular bone with red marrow. Dolly into diaphysis — compact bone cortex. Zoom into a single osteon: Haversian canal at center with blood vessel, concentric lamellae rings, osteocytes in lacunae, canaliculi branching outward. Side panel shows full long bone schema. Warm amber bone tones, clinical precision 3D render. Side panel legend for all labelled structures."
+        }
+      ]
+    },
+    {
+      "act_no": 4,
+      "act_title": "Fluid Connective Tissue & Muscular Tissue",
+      "start_time_seconds": 1800,
+      "end_time_seconds": 2340,
+      "duration_seconds": 540,
+      "covers_element_ids": ["L2_Fluid", "L3_Blood", "L4_Plasma", "L4_RBC", "L4_WBC", "L4_Platelet", "L3_Lymph", "L1_Muscular", "L2_Skeletal", "L2_Smooth", "L2_Cardiac"],
+      "pedagogical_mode": "Causal & Process-Oriented",
+      "segments": [
+        {
+          "segment_id": "A4_S1_Blood",
+          "start_time_seconds": 1800,
+          "end_time_seconds": 1980,
+          "script": "Blood is a fluid connective tissue. Plasma (55%) contains water, proteins (albumin, globulins, fibrinogen), and solutes. Formed elements (45%): RBCs or erythrocytes are biconcave, anucleate, haemoglobin-containing; 4.5–5.5 million per mm³; lifespan 120 days; produced in red bone marrow, destroyed in spleen. WBCs or leucocytes are nucleated and amoeboid; 4,000–11,000 per mm³. Granulocytes: neutrophils (60–70%, phagocytise bacteria), basophils (0.5–1%, histamine and heparin), eosinophils (2–4%, anti-parasitic). Agranulocytes: lymphocytes B and T (20–25%, antibody and cell-mediated immunity), monocytes (3–8%, become macrophages). Platelets or thrombocytes are cell fragments essential for blood clotting; 2.5 lakh per mm³. Lymph is interstitial fluid collected by lymphatic capillaries, carrying fats (as chylomicrons) and lymphocytes to the thoracic duct and back to blood.",
+          "video_prompt": "Animated infographic. A test tube fills with blood — layers separate: plasma (golden), formed elements (red). Zoom in reveals: RBCs as biconcave red discs; WBCs explode into a classification tree (granulocytes left, agranulocytes right with subtypes); platelets as small fragments. Each type has a role icon (phagocyte icon for neutrophil, shield icon for lymphocyte, scissors icon for platelet clotting). Then a lymphatic vessel diagram showing plasma leaking from capillary to interstitium to lymph vessel to lymph node to subclavian vein. Dark lab background, neon labels."
+        },
+        {
+          "segment_id": "A4_S2_Muscular",
+          "start_time_seconds": 1980,
+          "end_time_seconds": 2340,
+          "script": "Muscular tissue is mesodermal. Contraction is driven by the sliding of actin thin filaments over myosin thick filaments — the sliding filament theory of Huxley and Hanson. Skeletal (striped) muscle is voluntary, multi-nucleated, with clear A, I, H bands and Z and M lines in each sarcomere. During contraction: I-band narrows, H-band disappears, A-band unchanged. Fibres organised as myofibrils → myofibre (endomysium) → fascicle (perimysium) → muscle block (epimysium). Red muscle (myoglobin, fatigue-resistant) vs. white muscle (no myoglobin, fast-twitch). Smooth (unstriped) muscle is involuntary, uninucleated, spindle-shaped. Single-unit type contracts as one unit (bladder, alimentary canal). Multi-unit type contracts independently (blood vessels, arrector pilli). Performs peristalsis; fatigues in 10–12 hrs. Cardiac muscle is involuntary, branched, with intercalated discs containing desmosomes and gap junctions. Located only in the heart. Never fatigues. Least abundant. Total human muscles: 639. Largest: gluteus maximus; smallest: stapedius; longest: sartorius; strongest: masseter.",
+          "video_prompt": "Three-panel muscle triptych: left = striated muscle (parallel fibres, striations, peripheral multinuclei); centre = smooth muscle (spindle cells, central nucleus, sheet arrangement); right = cardiac muscle (branching fibres, intercalated discs as dark step junctions). Then a sarcomere animation: resting state labelled → contraction → I-band narrows, H-band disappears, A-band constant, Z-lines approach each other. Then a peristalsis animation showing smooth muscle rings contracting sequentially along the gut lumen. SEM-style monochrome render with blue-tint labels."
+        }
+      ]
+    },
+    {
+      "act_no": 5,
+      "act_title": "Nervous Tissue & Chapter Summary",
+      "start_time_seconds": 2340,
+      "end_time_seconds": 2700,
+      "duration_seconds": 360,
+      "covers_element_ids": ["L1_Nervous", "L2_Neuroglia", "L3_CNS_Glia", "L3_PNS_Glia", "L2_Neurone", "L3_Soma", "L3_Neurite", "L3_Myelin", "L3_Structure_Function", "L3_Connection"],
+      "pedagogical_mode": "Descriptive & Spatial",
+      "segments": [
+        {
+          "segment_id": "A5_S1_Neuroglia",
+          "start_time_seconds": 2340,
+          "end_time_seconds": 2490,
+          "script": "Nervous tissue is ectodermal, controlling, coordinating, integrating, and regulating the organism through nerve impulse conduction. Two cell types exist. Neuroglia are supportive and can undergo mitosis. CNS glia: astrocytes (star-shaped, regulate neuro-environment and form the blood-brain barrier), oligodendrocytes (form CNS myelin sheath), microglia (mesodermal, phagocytise debris and bacteria), ependymal cells (cuboidal/columnar, line ventricles, secrete CSF). PNS glia: stellate (satellite) cells (surround soma, regulate nutrients), Schwann cells (form PNS myelin sheath, enable peripheral nerve regeneration).",
+          "video_prompt": "Schematic showing a neuron at centre surrounded by its supporting cast: oligodendrocytes wrap CNS axons in blue-tinted myelin; Schwann cells wrap PNS axon with visible neurolemma; astrocyte extends foot-processes touching both neuron soma and capillary wall (blood-brain barrier); microglia extend pseudopodia toward debris (phagocyte illustration); ependymal cells line a ventricle with cilia creating CSF flow arrows. All labelled with clean white callouts. Dark neural network background."
+        },
+        {
+          "segment_id": "A5_S2_Neurons",
+          "start_time_seconds": 2490,
+          "end_time_seconds": 2660,
+          "script": "Neurons are the structural and functional units of the nervous system. They cannot divide after birth. The soma contains the nucleus, Nissl's granules (rough ER), neurofibrils, and mitochondria. Neurites are of two types: dendrites (multiple, branched, carry signals to soma, Nissl granules present) and the single axon (carries signals away from soma, uniform diameter, often myelinated). The myelin sheath is formed by oligodendrocytes in CNS and Schwann cells in PNS. Gaps between Schwann cells are Nodes of Ranvier — sites of rapid saltatory conduction. Classification by structure: apolar (embryonic), pseudopolar (dorsal root ganglion), unipolar, bipolar (retina, cochlea), multipolar (most CNS neurons). By function: sensory or afferent (receptors to CNS), motor or efferent (CNS to effectors), intermediate or adjustor (within CNS, most numerous). Grey matter is soma-rich; white matter is myelin-rich axon bundles.",
+          "video_prompt": "Detailed anatomical illustration of a multipolar neuron on dark background. Soma at centre with visible Nissl granules inside. Multiple dendrites extend left (with arrow: 'signals IN'). Single long axon extends right (with arrow: 'signals OUT'), wrapped in segmented myelin (blue cylinders), Nodes of Ranvier as gaps, axon terminal bulbs at end with vesicles. Then a reflex arc diagram showing receptor → afferent neuron → interneuron (spinal cord) → efferent neuron → effector. Finally, an electric impulse animation jumping node-to-node in saltatory conduction — bright white-blue arc, neon blue and gold palette."
+        },
+        {
+          "segment_id": "A5_S3_Summary",
+          "start_time_seconds": 2660,
+          "end_time_seconds": 2700,
+          "script": "Unit 6 complete. Epithelial tissue covers — avascular, minimal matrix, basement membrane, cell junctions. Connective tissue binds and transports — mesodermal, high matrix, vascular (except cartilage). Muscular tissue contracts — mesodermal, actin-myosin, three types. Nervous tissue conducts — ectodermal, neuroglia and neurons, impulse transmission. For rapid topic reviews, explore the Shorts series. Good luck!",
+          "video_prompt": "Summary infographic: 4-quadrant split screen with one representative histology image per tissue type. Each quadrant has a key property icon set: vascularity (green for yes, red for no), origin label, and cell division capability symbol. Clean flat-design academic infographic style. Outro music fades in. End card shows playlist tiles for all 10 Shorts."
+        }
+      ]
+    }
+  ]
+}

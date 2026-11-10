@@ -1,0 +1,193 @@
+{
+  "topic": "Topic 2: Epithelial Tissue & Cell Junctions",
+  "questions": [
+    {
+      "id": "PA_T2_MSQ_01",
+      "stem": "In Topic 2, select all anatomical sites lined by Simple Squamous Epithelium: (Select all that apply)",
+      "options": [
+        "A) Endothelium of blood and lymph vessels",
+        "B) Mesothelium of pleura and pericardium",
+        "C) Parietal layer of Bowman's capsule",
+        "D) Alveolar air sacs of lungs",
+        "E) Thyroid gland follicles"
+      ],
+      "answers": [
+        "A) Endothelium of blood and lymph vessels",
+        "B) Mesothelium of pleura and pericardium",
+        "C) Parietal layer of Bowman's capsule",
+        "D) Alveolar air sacs of lungs"
+      ],
+      "explanation": "Simple squamous lines endothelium, mesothelium, Bowman's capsule, and lung alveoli.",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PA_T2_MSQ_02",
+      "stem": "In Topic 2, select all anatomical locations lined by Simple Cuboidal Epithelium: (Select all that apply)",
+      "options": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary",
+        "E) Stomach mucosal lining"
+      ],
+      "answers": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary"
+      ],
+      "explanation": "Simple cuboidal lines thyroid follicles, gland ducts, renal PCT, and ovary surface.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PA_T2_MSQ_03",
+      "stem": "In Topic 2, select all cell junction types connecting adjacent epithelial cells: (Select all that apply)",
+      "options": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)",
+        "E) Synaptic terminal boutons"
+      ],
+      "answers": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)"
+      ],
+      "explanation": "Epithelial cell junctions include Tight, Adherens, Desmosomes, and Gap junctions.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PA_T2_MSQ_04",
+      "stem": "In Topic 2, select all locations containing Non-Keratinized Stratified Squamous Epithelium: (Select all that apply)",
+      "options": [
+        "A) Oral cavity mucosa",
+        "B) Pharynx and Oesophagus",
+        "C) Vagina and Anal canal",
+        "D) Cornea of eye",
+        "E) Dry outer epidermis of skin"
+      ],
+      "answers": [
+        "A) Oral cavity mucosa",
+        "B) Pharynx and Oesophagus",
+        "C) Vagina and Anal canal",
+        "D) Cornea of eye"
+      ],
+      "explanation": "Non-keratinized stratified squamous lines moist surfaces: mouth, oesophagus, vagina, cornea.",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "PA_T2_MSQ_05",
+      "stem": "In Topic 2, select all characteristics of Transitional Epithelium (Urothelium): (Select all that apply)",
+      "options": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis",
+        "E) Keratinized dead cell stratum corneum"
+      ],
+      "answers": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis"
+      ],
+      "explanation": "Urothelium is a distensible compound epithelium with umbrella cells lining the urinary tract.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PA_T2_MSQ_06",
+      "stem": "In Topic 2, select all specialized modifications of epithelial cell surface: (Select all that apply)",
+      "options": [
+        "A) Microvilli forming brush border for absorption",
+        "B) Motile Kino-cilia for fluid propulsion",
+        "C) Non-motile Stereocilia in epididymis",
+        "D) Keratin protein waterproofing layer",
+        "E) Myosin thick filament cross-bridges"
+      ],
+      "answers": [
+        "A) Microvilli forming brush border for absorption",
+        "B) Motile Kino-cilia for fluid propulsion",
+        "C) Non-motile Stereocilia in epididymis",
+        "D) Keratin protein waterproofing layer"
+      ],
+      "explanation": "Epithelial surface modifications include microvilli, motile cilia, stereocilia, and keratin.",
+      "image": "2. Specialised_Brush-Bordered_Epithelium_Guide.png"
+    },
+    {
+      "id": "PA_T2_MSQ_07",
+      "stem": "In Topic 2, select all specialized glandular epithelial modes of secretion: (Select all that apply)",
+      "options": [
+        "A) Merocrine / Eccrine (Exocytosis without cell loss)",
+        "B) Apocrine (Apical cytoplasm loss e.g. mammary gland)",
+        "C) Holocrine (Complete cell disintegration e.g. sebaceous gland)",
+        "D) Endocrine (Ductless secretion into blood)",
+        "E) Autocrine gap junction pulse"
+      ],
+      "answers": [
+        "A) Merocrine / Eccrine (Exocytosis without cell loss)",
+        "B) Apocrine (Apical cytoplasm loss e.g. mammary gland)",
+        "C) Holocrine (Complete cell disintegration e.g. sebaceous gland)",
+        "D) Endocrine (Ductless secretion into blood)"
+      ],
+      "explanation": "Glandular modes of secretion: Merocrine, Apocrine, Holocrine, and Endocrine.",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    },
+    {
+      "id": "PA_T2_MSQ_08",
+      "stem": "In Topic 2, select all organs containing Pseudostratified Ciliated Columnar Epithelium: (Select all that apply)",
+      "options": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx",
+        "D) Auditory tube",
+        "E) Renal PCT"
+      ],
+      "answers": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx",
+        "D) Auditory tube"
+      ],
+      "explanation": "Pseudostratified ciliated columnar epithelium lines trachea, bronchi, nasopharynx, and auditory tube.",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PA_T2_MSQ_09",
+      "stem": "In Topic 2, select all locations containing Germinal Epithelium producing gametes: (Select all that apply)",
+      "options": [
+        "A) Seminiferous tubules of testes",
+        "B) Germinal layer of ovaries",
+        "C) Thyroid follicles",
+        "D) Salivary gland ducts",
+        "E) Skin epidermis"
+      ],
+      "answers": [
+        "A) Seminiferous tubules of testes",
+        "B) Germinal layer of ovaries"
+      ],
+      "explanation": "Germinal cuboidal epithelium lines seminiferous tubules and ovary surface for gametogenesis.",
+      "image": "5. Germinal_Epithelium_Gamete_Formation_Guide.png"
+    },
+    {
+      "id": "PA_T2_MSQ_10",
+      "stem": "In Topic 2, select all functions of Gap Junctions (Nexus) between epithelial cells: (Select all that apply)",
+      "options": [
+        "A) Intercellular passage of small ions (Ca2+, Na+)",
+        "B) Passage of signaling second messengers (cAMP)",
+        "C) Direct electrical and metabolic cell coupling",
+        "D) Rapid cell-to-cell signal synchronization",
+        "E) Mechanical anchoring of keratin intermediate filaments"
+      ],
+      "answers": [
+        "A) Intercellular passage of small ions (Ca2+, Na+)",
+        "B) Passage of signaling second messengers (cAMP)",
+        "C) Direct electrical and metabolic cell coupling",
+        "D) Rapid cell-to-cell signal synchronization"
+      ],
+      "explanation": "Gap junctions allow passage of ions and second messengers for electrical/metabolic coupling. Desmosomes provide mechanical anchor.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    }
+  ]
+}

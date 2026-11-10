@@ -1,0 +1,33 @@
+{
+  "title": "Topic 5: Nervous Tissue & Neuroglia",
+  "items": [
+    {
+      "id": "PYQ_T5_01",
+      "exam": "NEET 2016",
+      "stem": "Myelin sheath is produced by:",
+      "options": [
+        "A) Astrocytes and Schwann cells",
+        "B) Oligodendrocytes and Osteoclasts",
+        "C) Osteoclasts and Astrocytes",
+        "D) Schwann cells and Oligodendrocytes"
+      ],
+      "answer": "D) Schwann cells and Oligodendrocytes",
+      "explanation": "Oligodendrocytes form myelin sheaths around axons in the CNS; Schwann cells form myelin sheaths in the PNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PYQ_T5_02",
+      "exam": "NEET 2015",
+      "stem": "Nissl's bodies are mainly composed of:",
+      "options": [
+        "A) Free ribosomes and RER",
+        "B) Nucleic acids and SER",
+        "C) DNA and RNA",
+        "D) Proteins and lipids"
+      ],
+      "answer": "A) Free ribosomes and RER",
+      "explanation": "Nissl's granules consist of Rough Endoplasmic Reticulum (RER) and free ribosomes active in protein synthesis.",
+      "image": "2. Nissls_ granules.png"
+    }
+  ]
+}

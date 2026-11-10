@@ -1,0 +1,198 @@
+{
+  "questions": [
+    {
+      "id": "PA_MSQ_M1",
+      "stem": "Select all matrix cell types present in Loose Areolar Connective Tissue: (Select all that apply)",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes / Macrophages",
+        "D) Osteocytes",
+        "E) Plasma cells"
+      ],
+      "answers": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes / Macrophages",
+        "E) Plasma cells"
+      ],
+      "explanation": "Areolar CT contains fibroblasts, mast cells, histocytes, plasma cells.",
+      "difficulty": "Medium",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PA_MSQ_M2",
+      "stem": "Select all Granulocytic Leucocytes found in human blood: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Monocytes",
+        "E) Lymphocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutrophils, Eosinophils, Basophils.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MSQ_M3",
+      "stem": "Which locations feature Pseudostratified Ciliated Columnar Epithelium? (Select all that apply)",
+      "options": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx",
+        "D) Fallopian tube",
+        "E) Urinary bladder"
+      ],
+      "answers": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx"
+      ],
+      "explanation": "Pseudostratified ciliated columnar lines trachea, bronchi, nasopharynx.",
+      "difficulty": "Medium",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PA_MSQ_M4",
+      "stem": "Select all connective tissue sheaths organizing skeletal muscle blocks: (Select all that apply)",
+      "options": [
+        "A) Endomysium",
+        "B) Perimysium",
+        "C) Epimysium",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium",
+        "B) Perimysium",
+        "C) Epimysium"
+      ],
+      "explanation": "Muscle sheaths = Endomysium, Perimysium, Epimysium.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PA_MSQ_M5",
+      "stem": "Which structures contain Bipolar Neurones? (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa",
+        "C) Inner ear vestibular organ",
+        "D) Cerebral cortex",
+        "E) Dorsal root ganglion"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa",
+        "C) Inner ear vestibular organ"
+      ],
+      "explanation": "Bipolar neurones occur in retina, olfactory mucosa, vestibular organ.",
+      "difficulty": "Medium",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PA_MSQ_M6",
+      "stem": "Select all features characteristic of Smooth Muscle tissue: (Select all that apply)",
+      "options": [
+        "A) Fusiform spindle-shaped cells",
+        "B) Single central nucleus per cell",
+        "C) Involuntary autonomic innervation",
+        "D) Absence of cross-striation bands",
+        "E) Multinucleated syncytium"
+      ],
+      "answers": [
+        "A) Fusiform spindle-shaped cells",
+        "B) Single central nucleus per cell",
+        "C) Involuntary autonomic innervation",
+        "D) Absence of cross-striation bands"
+      ],
+      "explanation": "Smooth muscle cells are spindle-shaped, uninucleated, involuntary, and unstriated.",
+      "difficulty": "Medium",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "PA_MSQ_M7",
+      "stem": "Select all structural elements forming a Compact Bone Osteon (Haversian System): (Select all that apply)",
+      "options": [
+        "A) Central Haversian canal",
+        "B) Concentric matrix lamellae",
+        "C) Osteocytes inside lacunae",
+        "D) Canaliculi cytoplasmic processes",
+        "E) Avascular chondrin matrix"
+      ],
+      "answers": [
+        "A) Central Haversian canal",
+        "B) Concentric matrix lamellae",
+        "C) Osteocytes inside lacunae",
+        "D) Canaliculi cytoplasmic processes"
+      ],
+      "explanation": "Osteons consist of Haversian canals, concentric lamellae, lacunae with osteocytes, and canaliculi.",
+      "difficulty": "Medium",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PA_MSQ_M8",
+      "stem": "Select all functions performed by Blood Plasma proteins: (Select all that apply)",
+      "options": [
+        "A) Colloid osmotic pressure maintenance by Albumin",
+        "B) Humoral immune defense by Gamma Globulins",
+        "C) Blood clotting cascade by Fibrinogen",
+        "D) Oxygen transport by Hemoglobin",
+        "E) Anticoagulation by Heparin"
+      ],
+      "answers": [
+        "A) Colloid osmotic pressure maintenance by Albumin",
+        "B) Humoral immune defense by Gamma Globulins",
+        "C) Blood clotting cascade by Fibrinogen"
+      ],
+      "explanation": "Plasma proteins (Albumin, Globulin, Fibrinogen) maintain osmotic pressure, immunity, and clotting. Hemoglobin is inside RBCs.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MSQ_M9",
+      "stem": "Which cell types in connective tissue release inflammatory mediators during allergic responses? (Select all that apply)",
+      "options": [
+        "A) Mast cells releasing Histamine",
+        "B) Basophils releasing Heparin",
+        "C) Eosinophils regulating allergic reactions",
+        "D) Osteocytes depositing hydroxyapatite",
+        "E) Chondrocytes synthesizing chondrin"
+      ],
+      "answers": [
+        "A) Mast cells releasing Histamine",
+        "B) Basophils releasing Heparin",
+        "C) Eosinophils regulating allergic reactions"
+      ],
+      "explanation": "Mast cells, Basophils, and Eosinophils mediate allergic and inflammatory responses.",
+      "difficulty": "Medium",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PA_MSQ_M10",
+      "stem": "Select all anatomical locations containing Yellow Elastic Cartilage: (Select all that apply)",
+      "options": [
+        "A) Pinna of external ear",
+        "B) Epiglottis of larynx",
+        "C) Eustachian tube wall",
+        "D) Tip of nose",
+        "E) Intervertebral discs"
+      ],
+      "answers": [
+        "A) Pinna of external ear",
+        "B) Epiglottis of larynx",
+        "C) Eustachian tube wall",
+        "D) Tip of nose"
+      ],
+      "explanation": "Elastic cartilage forms ear pinna, epiglottis, Eustachian tube, and nasal tip.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    }
+  ]
+}

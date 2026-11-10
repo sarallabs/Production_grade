@@ -1,0 +1,67 @@
+{
+  "chapter": "Volumetric Analysis",
+  "subject": "Chemistry",
+  "level": "intermediate",
+  "flashcards": [
+    {
+      "front": "What is the broad definition of chemical analysis?",
+      "back": "Chemical analysis is the resolution of a chemical compound into its proximate or ultimate parts; the determination of its elements or of the foreign substances it may contain."
+    },
+    {
+      "front": "Differentiate between qualitative and quantitative analysis.",
+      "back": "Qualitative analysis involves the detection and identification of the constituents of an inorganic substance. Quantitative analysis involves the estimation of the accurate amounts of the constituents of an inorganic substance."
+    },
+    {
+      "front": "What are the two main branches of quantitative analysis?",
+      "back": "The two main branches of quantitative analysis are (i) Volumetric analysis, and (ii) Gravimetric analysis."
+    },
+    {
+      "front": "Define Volumetric Analysis.",
+      "back": "Volumetric analysis deals with measurements of the volumes of solutions involved in chemical reactions, which ultimately leads to the determination of the amount of the constituents in the given unknown solutions."
+    },
+    {
+      "front": "How does Gravimetric Analysis differ from Volumetric Analysis?",
+      "back": "Gravimetric analysis deals with the measurements of the volumes of solutions and the weights of precipitates obtained in chemical reactions, whereas volumetric analysis primarily focuses on volume measurements only."
+    },
+    {
+      "front": "What is a 'Standard Solution' in volumetric analysis?",
+      "back": "A standard solution is a solution of accurately known concentration (strength) which is used in volumetric analysis to react quantitatively with the substance being determined."
+    },
+    {
+      "front": "Define 'Titrant' and 'Titrate'.",
+      "back": "The titrant is the reagent of known concentration (standard solution) in volumetric analysis. The titrate is the substance or solution of unknown strength being determined (titrated)."
+    },
+    {
+      "front": "Explain the process of 'Titration'.",
+      "back": "Titration is the process of adding the standard solution (titrant) to the solution of unknown strength (titrate) until the chemical reaction between them is just complete."
+    },
+    {
+      "front": "What is the role of an 'Indicator' in volumetric analysis?",
+      "back": "An indicator is an auxiliary reagent added to the titrate that produces a sharp, unmistakable colour change, signalling the completion of the titration at the end point."
+    },
+    {
+      "front": "Differentiate between the 'End Point' and the 'Equivalence Point'.",
+      "back": "The End Point is the point at which the indicator gives a clear visual change. The Equivalence Point is the theoretical point where chemically equivalent amounts of the reagent and the substance titrated have completely reacted."
+    },
+    {
+      "front": "What is 'Titration Error'?",
+      "back": "Titration error is the small difference that usually occurs in practice between the observed end point (where the indicator changes colour) and the true equivalence point (where the reaction is chemically complete)."
+    },
+    {
+      "front": "State two essential conditions for a chemical reaction to be suitable for volumetric analysis.",
+      "back": "1) The reaction must proceed to completion rapidly under easily attainable experimental conditions. 2) The reaction must be simple and involve a prominent colour change at the end point or have a suitable indicator available."
+    },
+    {
+      "front": "List two advantages of volumetric analysis.",
+      "back": "1) It does not involve laborious operations. 2) It is rapid and generally more accurate compared to some other quantitative methods like gravimetric analysis."
+    },
+    {
+      "front": "Name four types of volumetric analysis.",
+      "back": "The four types are: 1) Acidimetry and Alkalimetry (neutralization titration), 2) Oxidation and Reduction Titration (redox titration), 3) Iodometry and Iodimetry, 4) Precipitation Titration."
+    },
+    {
+      "front": "Why are most ionic reactions involved in volumetric analysis?",
+      "back": "Most ionic reactions are involved in volumetric analysis because they generally proceed to completion at a very fast speed, which is a crucial condition for efficient and accurate titrations."
+    }
+  ]
+}

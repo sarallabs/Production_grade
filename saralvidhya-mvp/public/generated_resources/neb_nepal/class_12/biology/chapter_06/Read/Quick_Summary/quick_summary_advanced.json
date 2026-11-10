@@ -1,0 +1,29 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "persona": "Advanced",
+  "type": "quick_summary",
+  "word_count": 1004,
+  "D_max_detected": 8,
+  "D_target_used": 8,
+  "source": "Biology Textbook pp. 193-239 (PDF primary) + Mermaid mindmap",
+  "sections_summary": [
+    "History & Overview (all historians, all tissue-grade phyla, histo-components)",
+    "Epithelial Tissue (full taxonomy: Simple 4 types, Compound 3+Transitional, Modified 6 types, full Gland classification 5-way)",
+    "Connective Tissue (full CT cells, fibres, matrix, Proper CT subtypes, Cartilage 4 types, Bone long bone Haversian, Blood full composition + clotting cascade, Lymph)",
+    "Muscular Tissue (Sarcomere detail, sliding filament, all 3 types + coverings)",
+    "Nervous Tissue (CNS + PNS Neuroglia, Axon anatomy, 5 Neurone types by structure, Gray/White matter)"
+  ],
+  "image_refs_embedded": 43,
+  "mermaid_diagrams_embedded": 0,
+  "tables_embedded": 3,
+  "validation_report": {
+    "word_count_check": "1004 words — within 750–1000+ target for Advanced",
+    "key_visuals_covered": true,
+    "filler_padding": false,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 8,
+      "coverage_ratio_applied": "100%"
+    }
+  }
+}

@@ -1,0 +1,120 @@
+{
+  "act_no": 1,
+  "act_title": "Founder of Histology",
+  "act_duration_seconds": 75,
+  "opening_hook": {
+    "script": "Who actually founded the study of tissues, and how did complex life first evolve them? Let's dive in!",
+    "duration_seconds": 8
+  },
+  "segments": [
+    {
+      "segment_no": 1,
+      "start_time_seconds": 8,
+      "end_time_seconds": 16,
+      "covers_element_ids": [
+        "L1_History_Overview",
+        "L2_Marcello_Malpighi"
+      ],
+      "script": "In biology, histology is the study of the microscopic structure of tissues—the vital bridge between cells and organs.",
+      "visual_cues": [
+        {
+          "element_id": "L1_History_Overview",
+          "cue": "3D animated diagram illustrating the hierarchy of biological organization: Cell -> Tissue -> Organ -> Organ System -> Organism.",
+          "video_generation_prompt": "A clean 3D motion graphics animation showing the hierarchy of biological organization on a dark slate background. A single cell duplicates and aggregates to form a distinct pink tissue layer. The tissue layer then curves and folds to form a beating heart organ, which then integrates into a transparent human body outline showing the cardiovascular system. Smooth orbits and warm, cinematic lighting with clean neon labels: CELL, TISSUE, ORGAN, ORGAN SYSTEM."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 2,
+      "start_time_seconds": 16,
+      "end_time_seconds": 27,
+      "covers_element_ids": [
+        "L2_Marcello_Malpighi"
+      ],
+      "script": "Its history begins with Marcello Malpighi in the seventeenth century. By using early microscopes to study biological microstructures, Malpighi became the celebrated founder of histology.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Marcello_Malpighi",
+          "cue": "On-screen text slide: 'Marcello Malpighi (1628-1694) - Founder of Histology'. Cut to close-up of cell structures under a vintage lens filter.",
+          "video_generation_prompt": "An elegant academic slide transitions on screen displaying 'Marcello Malpighi (1628-1694) - Founder of Histology' in classic typography. The camera cuts to a microscopic point-of-view of plant cell walls and capillaries, seen through an early 17th-century telescope lens with slight aberration and a circular vignette. The lighting is soft and golden, like candlelight."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 3,
+      "start_time_seconds": 27,
+      "end_time_seconds": 40,
+      "covers_element_ids": [
+        "L2_Xavier_Bichat"
+      ],
+      "script": "But in the late eighteenth century, French anatomist Xavier Bichat took a different path. Working without a microscope, Bichat dissected organs to prove that tissues are the actual building blocks of anatomy.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Xavier_Bichat",
+          "cue": "On-screen text slide: 'Marie Francois Xavier Bichat (1771-1802)'. Transition to a historical sketch of hands dissecting organs.",
+          "video_generation_prompt": "On-screen text displaying 'Marie Francois Xavier Bichat (1771-1802)' with a clean paper texture background. The camera pans down to show a detailed, monochrome historical ink sketch of hands carefully dissecting tissues of an organ on a wooden table, using fine surgical tools. Focus is sharp on the metal tools and the texture of the drawing paper."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 4,
+      "start_time_seconds": 40,
+      "end_time_seconds": 50,
+      "covers_element_ids": [
+        "L2_Xavier_Bichat"
+      ],
+      "script": "He identified twenty-one elementary tissues, coined the word 'tissue', and is recognized as the father of histology and founder of animal histology.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Xavier_Bichat",
+          "cue": "A stylized vertical list of '21 Elementary Tissues' scrolls down rapidly. The word 'TISSUE' is highlighted in a vibrant color.",
+          "video_generation_prompt": "A clean, stylized typography animation showing a vertical list of tissue types (Nervous, Connective, Epithelial, Muscle, etc.) scrolling upwards on screen. As the scroll decelerates, the letters of the word 'TISSUE' scale up and glow with a warm golden highlight against a dark concrete texture background."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 5,
+      "start_time_seconds": 50,
+      "end_time_seconds": 57,
+      "covers_element_ids": [
+        "L2_Karl_Mayer"
+      ],
+      "script": "Shortly after, in 1801, Karl Mayer coined the term histology to name this growing branch of science.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Karl_Mayer",
+          "cue": "On-screen text slide: 'Karl Mayer (1801) - Coined the term 'Histology''. The word 'HISTOLOGY' lights up letter by letter.",
+          "video_generation_prompt": "A minimalist slate slides in. The text 'Karl Mayer (1801) - Coined the term' is shown at the top. Below it, the letters of the word 'H-I-S-T-O-L-O-G-Y' light up sequentially with a clean blue neon glow on a dark concrete background, creating a high-contrast educational graphic."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 6,
+      "start_time_seconds": 57,
+      "end_time_seconds": 67,
+      "covers_element_ids": [
+        "L2_Phylum_Coelenterata"
+      ],
+      "script": "But biology is also about evolution! True tissue-grade organization first appeared in the animal kingdom in Phylum Coelenterata, marking the evolutionary leap from single cells to coordinated tissues.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Phylum_Coelenterata",
+          "cue": "Close-up video of a glowing jellyfish representing Phylum Coelenterata, showing its simple translucent tissue layer contracting.",
+          "video_generation_prompt": "A cinematic macro shot of a translucent, bioluminescent jellyfish swimming gracefully in a dark deep-sea environment. The camera focuses on the rhythmic contractions of its outer bell, showcasing the simple, semi-transparent layers of coordinated tissues pulsing in unison. Golden and violet light diffuses through its body."
+        }
+      ],
+      "is_socratic_question_segment": false
+    }
+  ],
+  "closing_recap": {
+    "script": "So, Malpighi saw it first, Bichat classified it, and Mayer named it. Together, they laid the foundation of how we study the microscopic structures of life!",
+    "duration_seconds": 8
+  },
+  "act_word_count": 191,
+  "duration_gap_note": ""
+}

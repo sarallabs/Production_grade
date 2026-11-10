@@ -1,0 +1,206 @@
+{
+  "version": "v1",
+  "mark_type": "2-mark",
+  "topic": "History & Overview",
+  "chapter": "Unit 6: Animal Tissue",
+  "questions": [
+    {
+      "id": "v1_01_001",
+      "type": "Definition",
+      "question": "Define histology.",
+      "answer": "Histology is the branch of biology concerned with the microscopic study of the structure of cells and tissues. The term was coined by Karl Mayer in 1801.",
+      "mindmap_path": "Animal Tissue > History > Karl Mayer",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_002",
+      "type": "Fact",
+      "question": "Who coined the term 'tissue' in animal anatomy?",
+      "answer": "Marie François Xavier Bichat (1771–1802 AD) coined the term 'tissue' in animal anatomy. He was a French anatomist and pathologist.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_003",
+      "type": "Fact",
+      "question": "Who coined the term 'histology' and in which year?",
+      "answer": "Karl Mayer coined the term 'histology' in 1801.",
+      "mindmap_path": "Animal Tissue > History > Karl Mayer",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_004",
+      "type": "Fact",
+      "question": "What is Marcello Malpighi recognised for in biology?",
+      "answer": "Marcello Malpighi is recognised as the Founder of histology for pioneering the use of the microscope in biological studies and making early observations of microscopic tissue and organ structures.",
+      "mindmap_path": "Animal Tissue > History > Marcello Malpighi",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_005",
+      "type": "Fact",
+      "question": "How many types of elementary tissues did Xavier Bichat distinguish?",
+      "answer": "Xavier Bichat distinguished 21 types of elementary tissues from which the organs of the human body are composed.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_006",
+      "type": "Explain",
+      "question": "Why is Xavier Bichat called the 'Father of Histology'?",
+      "answer": "Bichat is called the 'Father of Histology' because he was the first to systematically establish tissue as the central element of human anatomy, proposed that organs are collections of disparate tissues, and classified 21 elementary tissue types — all without the use of a microscope.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_007",
+      "type": "Definition",
+      "question": "What is tissue grade of organisation?",
+      "answer": "Tissue grade of organisation is the level of biological complexity at which similar cells are grouped together to form tissues that perform specific functions. It is first seen in Phylum Coelenterata.",
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_008",
+      "type": "Fact",
+      "question": "Which phylum was the first to exhibit tissue-grade organisation?",
+      "answer": "Phylum Coelenterata was the first phylum to exhibit tissue-grade organisation, making it the earliest animal group with true tissues.",
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_009",
+      "type": "Difference",
+      "question": "Distinguish between the contributions of Xavier Bichat and Karl Mayer to histology.",
+      "answer": "Xavier Bichat coined the term 'tissue', proposed that organs are collections of tissues, and distinguished 21 elementary tissue types — thus founding the discipline. Karl Mayer formally named the discipline by coining the term 'histology' in 1801.",
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_010",
+      "type": "Difference",
+      "question": "Distinguish between the roles of Xavier Bichat and Marcello Malpighi in histology.",
+      "answer": "Malpighi is called the 'Founder of histology' for pioneering microscopic biological studies. Bichat, working without a microscope, is called the 'Founder and Father of animal histology' for classifying 21 tissue types and establishing tissue as the fundamental unit of anatomy.",
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_011",
+      "type": "Explain",
+      "question": "What revolutionary proposal did Bichat make about organs and tissues?",
+      "answer": "Bichat proposed that organs are not single entities but collections of often disparate tissues. He placed the tissue — not the organ — as the central element of human anatomy, fundamentally reshaping the understanding of body organisation.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_012",
+      "type": "List",
+      "question": "Name the three scientists most associated with the founding of histology and their key contributions.",
+      "answer": "(1) Marcello Malpighi — Founder of histology, pioneered microscope use; (2) Xavier Bichat — Founder and Father of animal histology, coined 'tissue', classified 21 tissue types; (3) Karl Mayer — coined the term 'histology' in 1801.",
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_013",
+      "type": "Explain",
+      "question": "What is significant about Bichat's work being conducted without a microscope?",
+      "answer": "It is remarkable that Bichat distinguished 21 tissue types and redefined anatomy purely through macroscopic dissection and observation. This achievement demonstrated exceptional analytical insight and established the conceptual foundation for histology without any optical magnification.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_01_014",
+      "type": "TrueFalse",
+      "question": "True or False: Karl Mayer discovered and classified 21 types of elementary tissues. Justify.",
+      "answer": "False. It was Xavier Bichat who distinguished 21 types of elementary tissues. Karl Mayer's contribution was coining the term 'histology' in 1801.",
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_015",
+      "type": "TrueFalse",
+      "question": "True or False: Phylum Coelenterata exhibits tissue-grade organisation. Justify.",
+      "answer": "True. Phylum Coelenterata is the first phylum to exhibit tissue-grade organisation, in which cells are grouped into functional tissues, representing the earliest true tissue organisation in the animal kingdom.",
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_016",
+      "type": "Difference",
+      "question": "Distinguish between tissue grade and cellular grade of organisation.",
+      "answer": "In cellular grade (e.g., Protozoa), individual cells perform all functions independently. In tissue grade (e.g., Coelenterata), similar cells are grouped into tissues, each performing specialised functions, enabling division of labour among cell groups.",
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_01_017",
+      "type": "Definition",
+      "question": "What are 'elementary tissues' as described by Bichat?",
+      "answer": "Elementary tissues, as described by Bichat, are the basic, irreducible tissue types from which all organs of the human body are constructed. He identified 21 such types, proposing that organs are formed by different combinations of these elementary tissues.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_018",
+      "type": "Explain",
+      "question": "Explain why Phylum Coelenterata is the first phylum with animal tissue.",
+      "answer": "Phylum Coelenterata is the first phylum to have cells organised into distinct tissue layers (ectoderm and endoderm), allowing for functional specialisation. Prior to Coelenterata, animals such as sponges had cells without true tissue formation, making Coelenterata the evolutionary starting point for tissue-level organisation.",
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_01_019",
+      "type": "List",
+      "question": "List the full designations/titles given to Xavier Bichat in the history of biology.",
+      "answer": "Xavier Bichat is given the following designations: (1) Founder of animal histology; (2) Father of histology; (3) The person who coined the term 'tissue' in animal anatomy.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_020",
+      "type": "Fact",
+      "question": "What were the dates of Xavier Bichat's life, and what was his nationality?",
+      "answer": "Xavier Bichat lived from 1771 to 1802 AD. He was French — a French anatomist and pathologist.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_01_021",
+      "type": "Explain",
+      "question": "How did Xavier Bichat change the focus of anatomy from organs to tissues?",
+      "answer": "Bichat argued that organs should not be studied as single units but as combinations of different tissues. By classifying 21 elementary tissue types and showing that the same tissues appear in different organs, he shifted anatomical analysis from the organ level to the tissue level, making tissues the primary object of anatomical and physiological investigation.",
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_01_022",
+      "type": "Fact",
+      "question": "What does the term 'animal histology' specifically study?",
+      "answer": "Animal histology studies the microscopic structure of tissues in animals. It examines how different cell types are arranged and organised to form tissues, and how these tissues combine to form organs in animals.",
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    }
+  ]
+}

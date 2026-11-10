@@ -1,0 +1,193 @@
+{
+  "topic": "Topic 5: Nervous Tissue & Neuroglia",
+  "questions": [
+    {
+      "id": "PA_T5_MSQ_01",
+      "stem": "In Topic 5, select all structural components of a typical Multipolar Neurone: (Select all that apply)",
+      "options": [
+        "A) Cell body Cyton / Soma",
+        "B) Receptive Dendrites",
+        "C) Axon Hillock and conducting Axon",
+        "D) Terminal arborization with Synaptic Knobs",
+        "E) Contractile Sarcomeres"
+      ],
+      "answers": [
+        "A) Cell body Cyton / Soma",
+        "B) Receptive Dendrites",
+        "C) Axon Hillock and conducting Axon",
+        "D) Terminal arborization with Synaptic Knobs"
+      ],
+      "explanation": "Neurone structure = Cyton, Dendrites, Axon Hillock, Axon, and Synaptic Knobs.",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PA_T5_MSQ_02",
+      "stem": "In Topic 5, select all neuroglial cells residing in the Central Nervous System (CNS): (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia: Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_T5_MSQ_03",
+      "stem": "In Topic 5, select all neuroglial cells residing in the Peripheral Nervous System (PNS): (Select all that apply)",
+      "options": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells",
+        "C) CNS Astrocytes",
+        "D) CNS Microglia",
+        "E) CNS Oligodendrocytes"
+      ],
+      "answers": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells"
+      ],
+      "explanation": "PNS neuroglia include Schwann cells and Satellite cells.",
+      "image": "PNS.png"
+    },
+    {
+      "id": "PA_T5_MSQ_04",
+      "stem": "In Topic 5, select all functions of Astrocytes in the brain: (Select all that apply)",
+      "options": [
+        "A) Form Blood-Brain Barrier (BBB) perivascular feet",
+        "B) Regulate extracellular K+ ion concentration",
+        "C) Take up excess neurotransmitters (Glutamate)",
+        "D) Provide structural metabolic support to neurones",
+        "E) Synthesize PNS myelin sheath"
+      ],
+      "answers": [
+        "A) Form Blood-Brain Barrier (BBB) perivascular feet",
+        "B) Regulate extracellular K+ ion concentration",
+        "C) Take up excess neurotransmitters (Glutamate)",
+        "D) Provide structural metabolic support to neurones"
+      ],
+      "explanation": "Astrocytes form BBB, regulate K+ and glutamate, and provide metabolic support.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_T5_MSQ_05",
+      "stem": "In Topic 5, select all features of Saltatory Nerve Conduction in myelinated axons: (Select all that apply)",
+      "options": [
+        "A) Leaping impulse propagation from Node of Ranvier to Node of Ranvier",
+        "B) High conduction velocity (up to 120 m/s)",
+        "C) High concentration of voltage-gated Na+ channels at Nodes",
+        "D) Energy conservation due to restricted Na+/K+ ATP pumping",
+        "E) Continuous slow uninsulated axolemma wave depolarization"
+      ],
+      "answers": [
+        "A) Leaping impulse propagation from Node of Ranvier to Node of Ranvier",
+        "B) High conduction velocity (up to 120 m/s)",
+        "C) High concentration of voltage-gated Na+ channels at Nodes",
+        "D) Energy conservation due to restricted Na+/K+ ATP pumping"
+      ],
+      "explanation": "Saltatory conduction is fast, leaps node to node, saves ATP, and relies on high Na+ channel density at nodes.",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PA_T5_MSQ_06",
+      "stem": "In Topic 5, select all anatomical locations containing Bipolar Neurones: (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs",
+        "D) Cerebral cortex",
+        "E) Dorsal root ganglion"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs"
+      ],
+      "explanation": "Bipolar neurones occur in retina, olfactory mucosa, and inner ear.",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PA_T5_MSQ_07",
+      "stem": "In Topic 5, select all features characteristic of Nissl's Granules: (Select all that apply)",
+      "options": [
+        "A) Composed of Rough Endoplasmic Reticulum and Ribosomes",
+        "B) Active site of protein synthesis in neurones",
+        "C) Present in Cyton and Dendrites",
+        "D) Strictly ABSENT in Axon and Axon Hillock",
+        "E) Present in high density inside axon terminal knobs"
+      ],
+      "answers": [
+        "A) Composed of Rough Endoplasmic Reticulum and Ribosomes",
+        "B) Active site of protein synthesis in neurones",
+        "C) Present in Cyton and Dendrites",
+        "D) Strictly ABSENT in Axon and Axon Hillock"
+      ],
+      "explanation": "Nissl's granules (RER + ribosomes) synthesize protein in cyton and dendrites, but are absent in axon/axon hillock.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PA_T5_MSQ_08",
+      "stem": "In Topic 5, select all steps involved in Chemical Synaptic Transmission: (Select all that apply)",
+      "options": [
+        "A) Action potential reaches presynaptic axon terminal",
+        "B) Influx of Ca2+ ions through voltage-gated channels",
+        "C) Exocytosis of synaptic vesicles releasing neurotransmitters into synaptic cleft",
+        "D) Neurotransmitter binding to postsynaptic receptors altering membrane potential",
+        "E) Reverse nerve conduction from axon back to dendrite"
+      ],
+      "answers": [
+        "A) Action potential reaches presynaptic axon terminal",
+        "B) Influx of Ca2+ ions through voltage-gated channels",
+        "C) Exocytosis of synaptic vesicles releasing neurotransmitters into synaptic cleft",
+        "D) Neurotransmitter binding to postsynaptic receptors altering membrane potential"
+      ],
+      "explanation": "Synaptic transmission involves action potential arrival, Ca2+ influx, neurotransmitter exocytosis, and receptor binding.",
+      "image": "4. Direction.png"
+    },
+    {
+      "id": "PA_T5_MSQ_09",
+      "stem": "In Topic 5, select all neurone structural classifications based on neurite process count: (Select all that apply)",
+      "options": [
+        "A) Unipolar (Single axon, no dendrites - Embryo)",
+        "B) Bipolar (One axon, one dendrite - Retina)",
+        "C) Multipolar (One axon, multiple dendrites - Brain)",
+        "D) Pseudounipolar (Single process dividing into 2 branches - DRG)",
+        "E) Apolar / Anaxonic (No true axon - Amacrine cells)"
+      ],
+      "answers": [
+        "A) Unipolar (Single axon, no dendrites - Embryo)",
+        "B) Bipolar (One axon, one dendrite - Retina)",
+        "C) Multipolar (One axon, multiple dendrites - Brain)",
+        "D) Pseudounipolar (Single process dividing into 2 branches - DRG)",
+        "E) Apolar / Anaxonic (No true axon - Amacrine cells)"
+      ],
+      "explanation": "Neurone structural types include Unipolar, Bipolar, Multipolar, Pseudounipolar, and Anaxonic.",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PA_T5_MSQ_10",
+      "stem": "In Topic 5, select all functions performed by Ependymal Neuroglial cells: (Select all that apply)",
+      "options": [
+        "A) Line ventricles of brain and central canal of spinal cord",
+        "B) Possess apical cilia to facilitate Cerebrospinal Fluid (CSF) circulation",
+        "C) Form choroid plexus tissue producing CSF",
+        "D) Act as neural stem cells in specialized neurogenic niches",
+        "E) Form peripheral nerve myelin sheath"
+      ],
+      "answers": [
+        "A) Line ventricles of brain and central canal of spinal cord",
+        "B) Possess apical cilia to facilitate Cerebrospinal Fluid (CSF) circulation",
+        "C) Form choroid plexus tissue producing CSF",
+        "D) Act as neural stem cells in specialized neurogenic niches"
+      ],
+      "explanation": "Ependymal cells line CNS ventricles/canal, possess cilia for CSF circulation, form choroid plexus, and serve as neural progenitors.",
+      "image": "CNS.png"
+    }
+  ]
+}

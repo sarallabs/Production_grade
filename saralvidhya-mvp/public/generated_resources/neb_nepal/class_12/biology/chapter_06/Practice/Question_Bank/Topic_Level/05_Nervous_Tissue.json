@@ -1,0 +1,43 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Topic (L-1)",
+  "topic_id": 5,
+  "topic_name": "Nervous Tissue",
+  "questions_count": 2,
+  "questions": [
+    {
+      "id": "qb_subtopic15_001",
+      "type": "Describe",
+      "question": "Describe the types and functions of Central Nervous System (CNS) neuroglial cells.",
+      "answer_2mark": "CNS neuroglia include Astrocytes (Blood-Brain Barrier formation), Oligodendrocytes (CNS myelin sheath synthesis), Microglia (phagocytic immune defense), and Ependymal cells (ciliated CSF circulation).",
+      "answer_5mark": [
+        "1. **Astrocytes**: Star-shaped cells whose vascular feet cover brain capillaries, forming the protective **Blood-Brain Barrier (BBB)** and regulating extracellular K+ concentration.",
+        "2. **Oligodendrocytes**: Cells with few branching processes that synthesize and maintain lipid **myelin sheaths** around multiple central nerve axons in brain and spinal cord white matter.",
+        "3. **Microglia**: Small mesoderm-derived phagocytic cells that act as resident macrophages in CNS tissue, clearing pathogens and damaged cell debris.",
+        "4. **Ependymal Cells**: Simple ciliated cuboidal cells lining brain ventricles and central canal of spinal cord; cilia beat rhythmically to circulate **Cerebrospinal Fluid (CSF)**.",
+        "5. *Summary*: CNS glia provide structural support, myelination, immune surveillance, and fluid circulation."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "CNS Neuroglia Cell Subtypes Diagram"
+    },
+    {
+      "id": "qb_subtopic16_001",
+      "type": "Describe",
+      "question": "Describe the structural anatomy of a Neuron, highlighting Nissl's granules and Nodes of Ranvier.",
+      "answer_2mark": "A neuron consists of a Soma (cell body containing nucleus and Nissl's granules for protein synthesis), branched centripetal Dendrites, and a long centrifugal Axon surrounded by a myelin sheath interrupted at Nodes of Ranvier for saltatory conduction.",
+      "answer_5mark": [
+        "1. **Soma / Cyton**: Central cell body containing a spherical nucleus and prominent **Nissl's granules** (clumps of rough ER and ribosomes for active protein synthesis). Nissl's granules are present in cyton and dendrites but **absent in axon hillock and axon**.",
+        "2. **Dendrites**: Short, highly branched receptive processes that conduct nerve impulses **centripetally** toward the cyton.",
+        "3. **Axon**: Single, long cylindrical process originating from the axon hillock that conducts impulses **centrifugally** away from the cyton to terminal telodendria.",
+        "4. **Myelin Sheath & Nodes of Ranvier**: In myelinated nerves, Schwann cells (PNS) or oligodendrocytes (CNS) wrap axons in a lipid myelin sheath interrupted by periodic gaps called **Nodes of Ranvier**.",
+        "5. **Saltatory Conduction**: Action potentials jump rapidly from node to node across Nodes of Ranvier, increasing nerve impulse transmission speed up to 100-fold."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neurone",
+      "bloom_level": "Understand",
+      "difficulty": "Hard",
+      "diagram_ref": "Neuron Microscopic Structure and Node of Ranvier Diagram"
+    }
+  ]
+}

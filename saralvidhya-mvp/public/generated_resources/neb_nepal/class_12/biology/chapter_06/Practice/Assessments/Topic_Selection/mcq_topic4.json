@@ -1,0 +1,135 @@
+{
+  "topic": "Topic 4: Muscular Tissue Architecture",
+  "questions": [
+    {
+      "id": "PA_T4_MCQ_01",
+      "stem": "Which muscle tissue class is characterized as being voluntary, cross-striated, and multinucleated syncytium?",
+      "options": [
+        "A) Smooth Muscle",
+        "B) Skeletal Muscle",
+        "C) Cardiac Muscle",
+        "D) Myoepithelium"
+      ],
+      "answer": "B) Skeletal Muscle",
+      "explanation": "Skeletal muscle is voluntary, striated, and multinucleated.",
+      "image": "00.png"
+    },
+    {
+      "id": "PA_T4_MCQ_02",
+      "stem": "Involuntary, non-striated, fusiform spindle-shaped muscle cells lining gut wall are classified as:",
+      "options": [
+        "A) Skeletal Muscle",
+        "B) Smooth Muscle",
+        "C) Cardiac Muscle",
+        "D) Red Muscle"
+      ],
+      "answer": "B) Smooth Muscle",
+      "explanation": "Smooth muscle cells are involuntary, unstriated, and spindle-shaped.",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "PA_T4_MCQ_03",
+      "stem": "Structural intercalated discs containing fascia adherens, desmosomes, and gap junctions are unique to:",
+      "options": [
+        "A) Skeletal Muscle",
+        "B) Smooth Muscle",
+        "C) Cardiac Muscle",
+        "D) Visceral Muscle"
+      ],
+      "answer": "C) Cardiac Muscle",
+      "explanation": "Intercalated discs join cardiac muscle cells into functional syncytium.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PA_T4_MCQ_04",
+      "stem": "The fundamental functional contractile unit of a skeletal myofibril bounded between two adjacent Z-lines is the:",
+      "options": [
+        "A) Sarcomere",
+        "B) Sarcolemma",
+        "C) Sarcoplasm",
+        "D) Myofascicle"
+      ],
+      "answer": "A) Sarcomere",
+      "explanation": "The sarcomere is the functional unit of myofibril between Z-lines.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PA_T4_MCQ_05",
+      "stem": "During skeletal muscle contraction, which sarcomere band length remains CONSTANT while I-band shortens?",
+      "options": [
+        "A) Z-line distance",
+        "B) A-band",
+        "C) H-zone",
+        "D) M-line distance"
+      ],
+      "answer": "B) A-band",
+      "explanation": "A-band represents myosin length and remains constant during contraction.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PA_T4_MCQ_06",
+      "stem": "Calcium ions released from sarcoplasmic reticulum during muscle excitation bind directly to:",
+      "options": [
+        "A) Myosin heavy chain",
+        "B) Troponin C",
+        "C) Actin subunit",
+        "D) Tropomyosin strand"
+      ],
+      "answer": "B) Troponin C",
+      "explanation": "Ca2+ binds Troponin C, causing tropomyosin shift to expose actin binding sites.",
+      "image": "3. Proteins.png"
+    },
+    {
+      "id": "PA_T4_MCQ_07",
+      "stem": "Red skeletal muscle fibers differ from white muscle fibers because red fibers contain high density of:",
+      "options": [
+        "A) Myoglobin and mitochondria",
+        "B) Glycogen and fast ATPase",
+        "C) Sarcoplasmic reticulum only",
+        "D) Anaerobic enzymes"
+      ],
+      "answer": "A) Myoglobin and mitochondria",
+      "explanation": "Red muscle is rich in myoglobin and mitochondria for sustained aerobic respiration.",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PA_T4_MCQ_08",
+      "stem": "Fast-twitch white muscle fibers generate rapid contractile force relying primarily on:",
+      "options": [
+        "A) Aerobic oxidative phosphorylation",
+        "B) Anaerobic glycogen glycolysis",
+        "C) Fatty acid oxidation",
+        "D) Myoglobin oxygen storage"
+      ],
+      "answer": "B) Anaerobic glycogen glycolysis",
+      "explanation": "White muscle fibers rely on fast anaerobic glycogen glycolysis and fatigue quickly.",
+      "image": "4. White_Muscle.png"
+    },
+    {
+      "id": "PA_T4_MCQ_09",
+      "stem": "Which connective tissue sheath directly encloses an individual muscle axon or muscle fiber cell?",
+      "options": [
+        "A) Epimysium",
+        "B) Perimysium",
+        "C) Endomysium",
+        "D) Periosteum"
+      ],
+      "answer": "C) Endomysium",
+      "explanation": "Endomysium surrounds individual muscle fibers.",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PA_T4_MCQ_10",
+      "stem": "The longest individual skeletal muscle in the human body is:",
+      "options": [
+        "A) Gluteus maximus",
+        "B) Sartorius (tailor's muscle)",
+        "C) Stapedius",
+        "D) Masseter"
+      ],
+      "answer": "B) Sartorius (tailor's muscle)",
+      "explanation": "Sartorius is the longest muscle in human body running down the thigh.",
+      "image": "00.png"
+    }
+  ]
+}

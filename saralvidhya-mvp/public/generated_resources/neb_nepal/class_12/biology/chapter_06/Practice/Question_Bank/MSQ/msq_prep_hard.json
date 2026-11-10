@@ -1,0 +1,203 @@
+{
+  "questions": [
+    {
+      "id": "PE_MSQ_14",
+      "stem": "Which neuroglial cells reside within the Central Nervous System (CNS)? (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "D) Microglia",
+        "E) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia = Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "difficulty": "Hard",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_MSQ_15",
+      "stem": "Select all characteristics belonging to Red Muscle fibres:",
+      "options": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "D) Fast-twitch rapid fatigue",
+        "E) Aerobic respiration"
+      ],
+      "answers": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "E) Aerobic respiration"
+      ],
+      "explanation": "Red muscle is rich in myoglobin/mitochondria, slow-twitch, aerobic, fatigue-resistant.",
+      "difficulty": "Hard",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PE_MSQ_16",
+      "stem": "Which anatomical structures contain Bipolar Neurones? (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory epithelium of nasal cavity",
+        "C) Cerebral cortex",
+        "D) Dorsal root ganglion",
+        "E) Cochlea inner ear vestibular organ"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory epithelium of nasal cavity",
+        "E) Cochlea inner ear vestibular organ"
+      ],
+      "explanation": "Bipolar neurones occur in retina, olfactory mucosa, cochlear ganglion.",
+      "difficulty": "Hard",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PE_MSQ_17",
+      "stem": "Select all tissue macrophages derived from blood monocytes:",
+      "options": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells / Alveolar macrophages (Lungs)",
+        "D) Langerhans cells (Skin)",
+        "E) Fibroblasts"
+      ],
+      "answers": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells / Alveolar macrophages (Lungs)",
+        "D) Langerhans cells (Skin)"
+      ],
+      "explanation": "Kupffer, Microglia, Dust cells, Langerhans are all specialized monocyte-derived histocytes.",
+      "difficulty": "Hard",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PE_MSQ_18",
+      "stem": "Which features distinguish Cardiac Muscle from Skeletal Muscle? (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Complete resistance to fatigue",
+        "E) Syncytial multinucleated fibres"
+      ],
+      "answers": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Complete resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, has intercalated discs, never fatigues, single nucleus per cell.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PE_MSQ_19",
+      "stem": "Select all statements true regarding Bone architecture:",
+      "options": [
+        "A) Matrix contains 65% inorganic calcium salts (Ossein)",
+        "B) Covered externally by Periosteum",
+        "C) Osteocytes reside in lacunae connected by canaliculi",
+        "D) Highly vascular tissue",
+        "E) Matrix is avascular chondrin"
+      ],
+      "answers": [
+        "A) Matrix contains 65% inorganic calcium salts (Ossein)",
+        "B) Covered externally by Periosteum",
+        "C) Osteocytes reside in lacunae connected by canaliculi",
+        "D) Highly vascular tissue"
+      ],
+      "explanation": "Bone has 65% inorganic ossein, periosteum sheath, canaliculi, vascular supply.",
+      "difficulty": "Hard",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PE_MSQ_20",
+      "stem": "Which factors are required during the blood clotting cascade to form Fibrin? (Select all that apply)",
+      "options": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen",
+        "E) Heparin"
+      ],
+      "answers": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen"
+      ],
+      "explanation": "Clotting requires Thromboplastin, Ca2+, Prothrombin, Thrombin, Fibrinogen. Heparin is an anticoagulant.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "MSQ_P_H_08",
+      "stem": "Select all structural components found within a mammalian Haversian Canal: (Select all that apply)",
+      "options": [
+        "A) Arterioles & Capillaries",
+        "B) Venules",
+        "C) Nerve fibres",
+        "D) Lymphatic vessels",
+        "E) Red bone marrow"
+      ],
+      "answers": [
+        "A) Arterioles & Capillaries",
+        "B) Venules",
+        "C) Nerve fibres",
+        "D) Lymphatic vessels"
+      ],
+      "explanation": "Haversian canal transmits artery, vein, nerve, and lymph vessel through osteon.",
+      "difficulty": "Hard",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "MSQ_P_H_09",
+      "stem": "Select all factors contributing to the resting membrane potential of a neurone: (Select all that apply)",
+      "options": [
+        "A) Active Na+/K+ ATPase pump (3 Na+ out, 2 K+ in)",
+        "B) High permeability of resting membrane to K+",
+        "C) Low permeability of resting membrane to Na+",
+        "D) Presence of non-diffusible negative proteins inside cyton",
+        "E) Influx of calcium ions"
+      ],
+      "answers": [
+        "A) Active Na+/K+ ATPase pump (3 Na+ out, 2 K+ in)",
+        "B) High permeability of resting membrane to K+",
+        "C) Low permeability of resting membrane to Na+",
+        "D) Presence of non-diffusible negative proteins inside cyton"
+      ],
+      "explanation": "Resting potential (-70mV) is maintained by Na+/K+ pump, K+ leakiness, and intracellular negative proteins.",
+      "difficulty": "Hard",
+      "image": "1. Primitive animal tissue.png"
+    },
+    {
+      "id": "MSQ_P_H_10",
+      "stem": "Select all true statements regarding White Fat vs Brown Fat: (Select all that apply)",
+      "options": [
+        "A) White fat is monolocular; Brown fat is multilocular",
+        "B) Brown fat produces heat via uncoupling protein-1 (thermogenin)",
+        "C) Brown fat is rich in cytochrome mitochondria giving brown color",
+        "D) White fat serves primary role in long-term energy storage",
+        "E) White fat generates heat in hibernating animals"
+      ],
+      "answers": [
+        "A) White fat is monolocular; Brown fat is multilocular",
+        "B) Brown fat produces heat via uncoupling protein-1 (thermogenin)",
+        "C) Brown fat is rich in cytochrome mitochondria giving brown color",
+        "D) White fat serves primary role in long-term energy storage"
+      ],
+      "explanation": "Brown fat is multilocular with rich mitochondria/cytochromes for thermogenesis in newborns/hibernators; White fat is monolocular energy storage.",
+      "difficulty": "Hard",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    }
+  ]
+}

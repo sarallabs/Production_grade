@@ -1,0 +1,45 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 7,
+  "subtopic_name": "2.3 Compound Epithelium \u2014 Multi-Layered & Transitional Epithelia",
+  "topic_name": "Epithelial Tissue",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Compound Epithelium",
+  "questions": [
+    {
+      "id": "qb_subtopic7_001",
+      "type": "Compare",
+      "question": "Distinguish between Keratinized and Non-Keratinized Stratified Squamous Epithelium with examples.",
+      "answer_2mark": "Keratinized stratified squamous epithelium has dead surface cells packed with insoluble keratin protein, forming a dry waterproof barrier (skin epidermis). Non-keratinized epithelium retains nucleated surface cells on moist surfaces (esophagus, oral cavity).",
+      "answer_5mark": [
+        "1. **Stratified Architecture**: Both contain multiple cell layers (basal cuboidal germinative layer stacking into flattened apical squamous cells).",
+        "2. **Keratinization Process**: In keratinized epithelium, surface cells undergo cornification, lose nuclei, and become filled with tough, insoluble **keratin** protein.",
+        "3. **Dehydration Protection**: Keratinized epithelium forms an impermeable, waterproof barrier preventing desiccation (found on human skin epidermis).",
+        "4. **Non-Keratinized Epithelium**: Surface cells remain living and nucleated, requiring a moist fluid environment to prevent cell drying.",
+        "5. **Locations**: Non-keratinized lines mucous membranes subject to mechanical friction (oral cavity, pharynx, esophagus, vagina, cornea)."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Compound Epithelium",
+      "bloom_level": "Analyze",
+      "difficulty": "Medium",
+      "diagram_ref": "Keratinized vs Non-Keratinized Stratified Epithelium Diagram"
+    },
+    {
+      "id": "qb_subtopic7_002",
+      "type": "Explain",
+      "question": "Explain the unique structural adaptations of Transitional Epithelium (Urothelium) during bladder distension.",
+      "answer_2mark": "Transitional epithelium (urothelium) consists of 4\u20136 layers of elastic cells with surface umbrella cells containing rigid protein plaques. When the urinary bladder fills, umbrella cells flatten and slide laterally without rupturing tissue integrity.",
+      "answer_5mark": [
+        "1. Transitional epithelium (Urothelium) is a specialized plastic compound epithelium restricted to the urinary system (renal pelvis, ureter, urinary bladder).",
+        "2. In an empty organ, it appears 4\u20136 cell layers thick with large, dome-shaped apical **umbrella cells**.",
+        "3. Apical membranes of umbrella cells feature rigid protein plaques (*uroplakins*) separated by flexible membrane hinges.",
+        "4. As urine accumulates, umbrella cells unfold their membrane plaques and stretch flat from cuboidal into squamous morphology.",
+        "5. Intercellular junctions remain intact while cell layers slide laterally, expanding organ volume without tearing the lining.",
+        "6. Uroplakin plaques also act as a chemical barrier preventing hypertonic urine from pulling water out of blood capillaries."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Compound Epithelium",
+      "bloom_level": "Understand",
+      "difficulty": "Hard",
+      "diagram_ref": "Transitional Epithelium (Relaxed vs Stretched) Diagram"
+    }
+  ]
+}

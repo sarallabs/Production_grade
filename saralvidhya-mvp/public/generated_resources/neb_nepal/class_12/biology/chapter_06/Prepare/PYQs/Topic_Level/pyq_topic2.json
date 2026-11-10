@@ -1,0 +1,33 @@
+{
+  "title": "Topic 2: Epithelial Tissue & Cell Junctions",
+  "items": [
+    {
+      "id": "PYQ_T2_01",
+      "exam": "NEET 2020",
+      "stem": "[Topic_Level_pyq_topic2] Cuboidal epithelium with brush border of microvilli is found in:",
+      "options": [
+        "A) Lining of intestine",
+        "B) Duct of salivary glands",
+        "C) Proximal convoluted tubule of nephron",
+        "D) Eustachian tube"
+      ],
+      "answer": "C) Proximal convoluted tubule of nephron",
+      "explanation": "PCT of nephron has simple cuboidal brush-bordered epithelium for selective reabsorption.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PYQ_T2_02",
+      "exam": "NEET 2018",
+      "stem": "[Topic_Level_pyq_topic2] The ciliated columnar epithelial cells in humans are known to occur in:",
+      "options": [
+        "A) Eustachian tube and stomach lining",
+        "B) Bronchioles and Fallopian tubes",
+        "C) Bile duct and oesophagus",
+        "D) Fallopian tubes and urethra"
+      ],
+      "answer": "B) Bronchioles and Fallopian tubes",
+      "explanation": "Ciliated columnar epithelium propels mucus in respiratory bronchioles and ova in Fallopian tubes.",
+      "image": "1. Modified_Ciliated_Epithelium_Specialisations.png"
+    }
+  ]
+}

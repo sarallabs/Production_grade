@@ -1,0 +1,27 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 11,
+  "subtopic_name": "3.3 Fluid Connective Tissue \u2014 Blood and Lymph",
+  "topic_name": "Connective Tissue",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Fluid Connective Tissue",
+  "questions": [
+    {
+      "id": "qb_subtopic11_001",
+      "type": "Describe",
+      "question": "Describe the composition of human blood plasma and formed elements.",
+      "answer_2mark": "Blood consists of 55% liquid Plasma (90-92% water, plasma proteins albumin, globulin, fibrinogen) and 45% Formed Elements (RBCs, Granulocyte/Agranulocyte WBCs, and Thrombocytes).",
+      "answer_5mark": [
+        "1. **Blood Composition**: Whole blood is a liquid connective tissue consisting of 55% extracellular **Plasma** and 45% **Formed Elements** (corpuscles).",
+        "2. **Plasma Constituents**: Contains 90\u201392% water and 6\u20138% vital plasma proteins: **Albumin** (osmotic pressure), **Globulins** (immunoglobulins/defense), and **Fibrinogen** (blood clotting).",
+        "3. **Erythrocytes (RBCs)**: Biconcave, enucleated corpuscles (5\u20135.5 million/mm\u00b3) packed with hemoglobin (12-16 g/dL) for gas transport; 120-day lifespan.",
+        "4. **Leucocytes (WBCs)**: Nucleated immune defense cells (6,000\u20138,000/mm\u00b3). Subdivided into **Granulocytes** (Neutrophils, Eosinophils, Basophils) and **Agranulocytes** (Lymphocytes B/T, Monocytes).",
+        "5. **Thrombocytes (Platelets)**: Enucleated cell fragments (150,000\u2013350,000/mm\u00b3) derived from bone marrow megakaryocytes; essential for blood coagulation cascades."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Fluid Connective Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "Blood Composition and Formed Elements Diagram"
+    }
+  ]
+}

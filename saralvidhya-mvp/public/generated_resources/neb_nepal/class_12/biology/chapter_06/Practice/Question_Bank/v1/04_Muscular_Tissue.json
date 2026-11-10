@@ -1,0 +1,152 @@
+{
+  "version": "v1",
+  "mark_type": "2-mark",
+  "topic": "Muscular Tissue",
+  "chapter": "Unit 6: Animal Tissue",
+  "questions": [
+    {
+      "id": "v1_04_001",
+      "type": "Definition",
+      "question": "Define muscular tissue.",
+      "answer": "Muscular tissue is a specialised animal tissue composed of elongated, contractile cells (muscle fibres) that can generate force through contraction. It is responsible for all movement in the body — voluntary, involuntary, and cardiac.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_002",
+      "type": "List",
+      "question": "Name the three types of muscular tissue.",
+      "answer": "The three types of muscular tissue are: (1) Skeletal (Striated/Voluntary) muscle; (2) Smooth (Non-striated/Involuntary) muscle; (3) Cardiac (Heart/Involuntary) muscle.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_003",
+      "type": "Difference",
+      "question": "Distinguish between skeletal muscle and smooth muscle.",
+      "answer": "Skeletal muscle is striated (shows cross-striations), multinucleated, voluntary (under conscious control), and attaches to bones. Smooth muscle is non-striated, uninucleate, involuntary, and found in walls of internal organs (gut, blood vessels, bladder).",
+      "mindmap_path": "Animal Tissue > Muscular Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_004",
+      "type": "Difference",
+      "question": "Distinguish between red muscle and white muscle.",
+      "answer": "Red muscle fibres are rich in myoglobin (an oxygen-storing protein), contain many mitochondria, and are fatigue-resistant — suited for sustained aerobic activity. White muscle fibres have little myoglobin, fewer mitochondria, and are fast-contracting but fatigue quickly — suited for rapid, short bursts of activity.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Striped > Red muscle / White muscle",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_005",
+      "type": "Fact",
+      "question": "What are intercalated discs and in which type of muscle are they found?",
+      "answer": "Intercalated discs are specialised junctions (containing gap junctions and desmosomes) found at the ends of cardiac muscle cells. They electrically and mechanically couple adjacent cardiac muscle cells, allowing the heart to contract as a coordinated unit (functional syncytium).",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Cardiac / Heart muscle",
+      "bloom_level": "Remember",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_006",
+      "type": "Explain",
+      "question": "Why is cardiac muscle said to be 'involuntary and non-fatiguing'?",
+      "answer": "Cardiac muscle is involuntary because it contracts rhythmically without conscious control, governed by the sinoatrial (SA) node. It is non-fatiguing because cardiac muscle cells have a very high density of mitochondria and an abundant blood supply, enabling continuous aerobic energy production throughout life.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Cardiac / Heart muscle",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_007",
+      "type": "Difference",
+      "question": "Distinguish between single-unit and multi-unit smooth muscle.",
+      "answer": "Single-unit (visceral) smooth muscle has cells electrically coupled via gap junctions, causing the entire sheet to contract together as one unit (e.g., gut wall, uterus). Multi-unit smooth muscle has cells that contract independently in response to individual nerve stimulation (e.g., iris of the eye, piloerector muscles), allowing fine graded control.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Unstriped / Smooth",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_04_008",
+      "type": "TrueFalse",
+      "question": "True or False: Skeletal muscle is involuntary. Justify.",
+      "answer": "False. Skeletal muscle is voluntary — it contracts under conscious control via the somatic nervous system. Smooth muscle and cardiac muscle are involuntary.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Striped / Striated / Skeletal",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_009",
+      "type": "TrueFalse",
+      "question": "True or False: Cardiac muscle is striated and involuntary. Justify.",
+      "answer": "True. Cardiac muscle shows striations (cross-striations due to organised sarcomere arrangement) and is involuntary (controlled by the intrinsic cardiac conduction system, not conscious will).",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Cardiac / Heart muscle",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_010",
+      "type": "Explain",
+      "question": "What is the role of myoglobin in red muscle?",
+      "answer": "Myoglobin is an oxygen-storing protein found in red muscle fibres. It stores oxygen within the muscle cell and releases it during sustained activity, enabling continuous aerobic (oxidative) metabolism. Its high oxygen affinity ensures a steady oxygen supply to mitochondria during prolonged exercise.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Striped > Red muscle",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_011",
+      "type": "Fact",
+      "question": "What is the other name for smooth muscle and where is it found?",
+      "answer": "Smooth muscle is also called unstriated, non-striated, or involuntary muscle. It is found in the walls of internal (visceral) organs such as the digestive tract, blood vessels, respiratory tract, urinary bladder, and uterus.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Unstriped / Smooth",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_012",
+      "type": "Difference",
+      "question": "Distinguish between cardiac muscle and skeletal muscle in three key ways.",
+      "answer": "(1) Cardiac muscle cells are branched; skeletal muscle cells are unbranched. (2) Cardiac muscle cells are uninucleate (one nucleus per cell); skeletal muscle is multinucleated. (3) Cardiac muscle is involuntary with intercalated discs; skeletal muscle is voluntary with no intercalated discs.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_013",
+      "type": "Explain",
+      "question": "Explain the significance of striations in skeletal and cardiac muscle.",
+      "answer": "Striations in skeletal and cardiac muscle result from the regular, alternating arrangement of thick myosin (A-bands) and thin actin (I-bands) filaments within sarcomeres. This organised arrangement is essential for the sliding filament mechanism of contraction, enabling powerful and coordinated force generation.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Striped / Striated / Skeletal",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_04_014",
+      "type": "List",
+      "question": "List all the alternative names for skeletal muscle.",
+      "answer": "Skeletal muscle is also called: (1) Striped muscle; (2) Striated muscle; (3) Voluntary muscle; (4) Somatic muscle.",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Striped / Striated / Skeletal",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_04_015",
+      "type": "Explain",
+      "question": "Why is smooth muscle suited for sustained, slow contractions?",
+      "answer": "Smooth muscle is suited for sustained, slow contractions because: it uses much less ATP than skeletal muscle for the same force; it can maintain a contracted state (tonic contraction) for long periods without fatigue; and its actin-myosin interaction is slower but energy-efficient, making it ideal for maintaining organ tone (e.g., maintaining blood vessel diameter).",
+      "mindmap_path": "Animal Tissue > Muscular Tissue > Unstriped / Smooth",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_04_016",
+      "type": "Difference",
+      "question": "Distinguish between voluntary and involuntary muscle with examples.",
+      "answer": "Voluntary muscle is under conscious control via the somatic nervous system. Example: skeletal muscle (biceps, quadriceps). Involuntary muscle contracts without conscious control, governed by the autonomic nervous system. Examples: smooth muscle (gut, blood vessels) and cardiac muscle (heart).",
+      "mindmap_path": "Animal Tissue > Muscular Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Easy"
+    }
+  ]
+}

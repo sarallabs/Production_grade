@@ -1,0 +1,30 @@
+{
+  "short_id": "short_05_modified_glandular",
+  "short_title": "Modified & Glandular Epithelium",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L2_Modified", "L3_Ciliated", "L4_KinoCiliated", "L4_StereoCiliated", "L3_BrushBordered", "L3_NeuroSensory", "L3_Pigmented", "L3_Germinal", "L3_Glandular", "L4_ByDucts", "L4_ByConsistency", "L4_ByQuantity", "L4_ByCellCount", "L4_ByComplexity"],
+  "pedagogical_mode": "Causal & Process-Oriented",
+  "segments": [
+    {
+      "segment_id": "S05_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Some epithelial cells don't just cover surfaces — they have evolved to beat, absorb, sense, secrete, and produce gametes. These are the modified epithelia.",
+      "video_prompt": "High-speed macro microscopy animation of cilia beating rhythmically on tracheal epithelium surface — a river of mucus flows over them. Title card: 'Modified Epithelium'. Cinematic teal and deep-blue colour scheme."
+    },
+    {
+      "segment_id": "S05_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Six types of modified epithelium: Kino-ciliated (9+2 microtubule arrangement, true motile cilia, moves mucus in respiratory tract, ova in fallopian tubes, CSF in neurocoel). Stereo-ciliated (non-motile microvilli, epididymis, sperm maturation). Brush-bordered (microvilli, intestine and PCT, maximise absorption). Neuro-sensory (receptor cells in taste buds, olfactory epithelium, inner ear). Pigmented (melanin, retina, absorbs excess light). Germinal (gamete production, seminiferous tubules, ovary). Glandular classified by ducts: exocrine, endocrine, heterocrine. By consistency: serous, mucous, mixed. By secretion mode: apocrine, merocrine, holocrine. By cell count: unicellular or multicellular. By structure: simple or compound — tubular, alveolar, tubulo-alveolar.",
+      "video_prompt": "Six icons appear in a vertical list: a waving cilia icon, a brush border absorption icon, a nerve cell receptor icon, a melanin pigment icon, a gamete production icon, and a secretion droplet icon. Each pulses as named. Then a hierarchical decision tree animation builds from 'Glandular Epithelium' through five branching criteria — each branch appears as a neon-lit node. Goblet cell (unicellular, merocrine) and parotid gland (multicellular, serous, compound) shown as leaf examples. Dark navy background, gold node accents."
+    },
+    {
+      "segment_id": "S05_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Connective Tissue — the binding force behind every organ.",
+      "video_prompt": "Title card: 'Up Next: Connective Tissue'. Background: soft SEM-style image of collagen fibres. Smooth wipe to black."
+    }
+  ]
+}

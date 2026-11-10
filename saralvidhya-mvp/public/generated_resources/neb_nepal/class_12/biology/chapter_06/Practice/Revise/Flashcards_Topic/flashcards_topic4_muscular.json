@@ -1,0 +1,88 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_T4_01",
+      "term": "Skeletal Muscle Characteristics",
+      "definition": "Voluntary, cross-striated, multinucleated syncytial muscle fibers under somatic motor neural control.",
+      "category": "Skeletal Muscle",
+      "image": "00.png"
+    },
+    {
+      "id": "FC_T4_02",
+      "term": "Smooth Muscle Characteristics",
+      "definition": "Involuntary, non-striated, uninucleated spindle-shaped (fusiform) cells lining visceral organs under autonomic control.",
+      "category": "Smooth Muscle",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "FC_T4_03",
+      "term": "Cardiac Muscle Characteristics",
+      "definition": "Involuntary, cross-striated, single-nucleated branched cardiocytes joined by specialized intercalated discs.",
+      "category": "Cardiac Muscle",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "FC_T4_04",
+      "term": "Sarcomere Definition",
+      "definition": "Functional contractile unit of myofibrils bounded between two adjacent Z-lines.",
+      "category": "Muscle Microstructure",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "FC_T4_05",
+      "term": "Anisotropic A-Band",
+      "definition": "Dark central sarcomere band formed by thick myosin filaments; length remains constant during contraction.",
+      "category": "Muscle Microstructure",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "FC_T4_06",
+      "term": "Isotropic I-Band",
+      "definition": "Light sarcomere band containing thin actin filaments; shortens during muscle contraction.",
+      "category": "Muscle Microstructure",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "FC_T4_07",
+      "term": "Role of Sarcoplasmic Reticulum & Ca2+",
+      "definition": "Stores Ca2+; nerve depolarization triggers Ca2+ release to bind Troponin C, moving Tropomyosin away from actin active sites.",
+      "category": "Sliding Filament Theory",
+      "image": "3. Proteins.png"
+    },
+    {
+      "id": "FC_T4_08",
+      "term": "Red Muscle Fibers (Slow-Twitch)",
+      "definition": "High myoglobin and mitochondria content; rich capillary supply; slow contraction speed; high fatigue resistance.",
+      "category": "Fiber Types",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "FC_T4_09",
+      "term": "White Muscle Fibers (Fast-Twitch)",
+      "definition": "Low myoglobin; high sarcoplasmic reticulum; relies on anaerobic glycolysis; fast contraction with rapid fatigue.",
+      "category": "Fiber Types",
+      "image": "4. White_Muscle.png"
+    },
+    {
+      "id": "FC_T4_10",
+      "term": "Muscle Connective Tissue Sheaths",
+      "definition": "Endomysium (encloses single fiber), Perimysium (encloses fascicle bundle), Epimysium (encloses whole muscle belly).",
+      "category": "Muscle Anatomy",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "FC_T4_11",
+      "term": "Intercalated Discs",
+      "definition": "Junctional structures in cardiac muscle containing Fascia Adherens, Desmosomes, and Gap Junctions for electrical syncytium.",
+      "category": "Cardiac Muscle",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "FC_T4_12",
+      "term": "Single-Unit vs Multi-Unit Smooth Muscle",
+      "definition": "Single-unit (visceral, gap junctions, myogenic e.g. gut); Multi-unit (neurogenic, independent units e.g. arrector pili).",
+      "category": "Smooth Muscle",
+      "image": "2. Single-Unit.png"
+    }
+  ]
+}

@@ -1,0 +1,201 @@
+{
+  "questions": [
+    {
+      "id": "PA_MSQ_E1",
+      "stem": "Select all primary animal tissue types established in histology: (Select all that apply)",
+      "options": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue",
+        "E) Vascular Tissue only"
+      ],
+      "answers": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "difficulty": "Easy",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PA_MSQ_E2",
+      "stem": "Select all locations containing Simple Cuboidal Epithelium: (Select all that apply)",
+      "options": [
+        "A) Thyroid gland follicles",
+        "B) Salivary gland ducts",
+        "C) PCT of renal nephron",
+        "D) Dry skin surface",
+        "E) Ovary surface"
+      ],
+      "answers": [
+        "A) Thyroid gland follicles",
+        "B) Salivary gland ducts",
+        "C) PCT of renal nephron",
+        "E) Ovary surface"
+      ],
+      "explanation": "Simple cuboidal lines thyroid follicles, salivary ducts, renal PCT, ovary surface.",
+      "difficulty": "Easy",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PA_MSQ_E3",
+      "stem": "Which components constitute formed blood elements? (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Serum Albumin",
+        "E) Plasma Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed elements = RBC, WBC, Platelets.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MSQ_E4",
+      "stem": "Select all characteristics belonging to Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium",
+        "C) Cross-striated banding",
+        "D) Intercalated Discs",
+        "E) Subject to fatigue"
+      ],
+      "answers": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium",
+        "C) Cross-striated banding",
+        "E) Subject to fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, subject to fatigue.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    },
+    {
+      "id": "PA_MSQ_E5",
+      "stem": "Which anatomical sites feature Hyaline Cartilage covers? (Select all that apply)",
+      "options": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Intervertebral discs",
+        "E) Tracheal rings"
+      ],
+      "answers": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "E) Tracheal rings"
+      ],
+      "explanation": "Hyaline cartilage lines bone articular ends, nose, ribs, trachea.",
+      "difficulty": "Easy",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_MSQ_E6",
+      "stem": "Select all anatomical locations lined by Simple Squamous Epithelium: (Select all that apply)",
+      "options": [
+        "A) Endothelium of blood vessels",
+        "B) Mesothelium of pericardium",
+        "C) Bowman's capsule parietal layer",
+        "D) Pulmonary alveoli air sacs",
+        "E) Skin epidermis"
+      ],
+      "answers": [
+        "A) Endothelium of blood vessels",
+        "B) Mesothelium of pericardium",
+        "C) Bowman's capsule parietal layer",
+        "D) Pulmonary alveoli air sacs"
+      ],
+      "explanation": "Simple squamous lines blood vessel endothelium, mesothelium, Bowman's capsule, and lung alveoli.",
+      "difficulty": "Easy",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PA_MSQ_E7",
+      "stem": "Select all functions performed by Epithelial Tissue sheets: (Select all that apply)",
+      "options": [
+        "A) Physical protection",
+        "B) Selective absorption",
+        "C) Glandular secretion",
+        "D) Sensory perception",
+        "E) High-voltage action potential conduction"
+      ],
+      "answers": [
+        "A) Physical protection",
+        "B) Selective absorption",
+        "C) Glandular secretion",
+        "D) Sensory perception"
+      ],
+      "explanation": "Epithelium protects, absorbs, secretes, and perceives sensations.",
+      "difficulty": "Easy",
+      "image": "1. Understanding_Epithelial_Tissue_Functions.png"
+    },
+    {
+      "id": "PA_MSQ_E8",
+      "stem": "Which features characterize Yellow Elastic Connective Tissue? (Select all that apply)",
+      "options": [
+        "A) Branching yellow elastin fibers",
+        "B) High elasticity and recoil capacity",
+        "C) Found in walls of large elastic arteries",
+        "D) Present in vocal cords",
+        "E) Inelastic thick white collagen bundles"
+      ],
+      "answers": [
+        "A) Branching yellow elastin fibers",
+        "B) High elasticity and recoil capacity",
+        "C) Found in walls of large elastic arteries",
+        "D) Present in vocal cords"
+      ],
+      "explanation": "Elastic CT contains branching elastin fibers giving high elasticity to arteries and vocal cords.",
+      "difficulty": "Easy",
+      "image": "2. Fibres_of_Proper_Connective_Tissue.png"
+    },
+    {
+      "id": "PA_MSQ_E9",
+      "stem": "Select all cell types present in nervous tissue organ structures: (Select all that apply)",
+      "options": [
+        "A) Excitable Neurones",
+        "B) Support Neuroglia",
+        "C) Ependymal lining cells",
+        "D) Schwann myelinating cells",
+        "E) Mineralized Osteocytes"
+      ],
+      "answers": [
+        "A) Excitable Neurones",
+        "B) Support Neuroglia",
+        "C) Ependymal lining cells",
+        "D) Schwann myelinating cells"
+      ],
+      "explanation": "Nervous tissue comprises neurones and various neuroglial support cells.",
+      "difficulty": "Easy",
+      "image": "2. Neurones.png"
+    },
+    {
+      "id": "PA_MSQ_E10",
+      "stem": "Which formed blood elements lack a nucleus at mature functional stage? (Select all that apply)",
+      "options": [
+        "A) Mature Human Erythrocytes (RBC)",
+        "B) Blood Thrombocytes (Platelets)",
+        "C) Monocytes",
+        "D) Lymphocytes",
+        "E) Neutrophils"
+      ],
+      "answers": [
+        "A) Mature Human Erythrocytes (RBC)",
+        "B) Blood Thrombocytes (Platelets)"
+      ],
+      "explanation": "Human RBCs and Platelets are non-nucleated in mature peripheral circulation.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    }
+  ]
+}

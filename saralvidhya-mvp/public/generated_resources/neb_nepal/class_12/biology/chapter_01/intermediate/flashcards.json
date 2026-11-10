@@ -1,0 +1,67 @@
+{
+  "chapter": "Biology Chapter 1",
+  "subject": "Biology",
+  "level": "intermediate",
+  "flashcards": [
+    {
+      "front": "Who is considered the Father of Plant Anatomy?",
+      "back": "N. Grew is considered the Father of Plant Anatomy."
+    },
+    {
+      "front": "What is a tissue?",
+      "back": "A tissue is a group of cells having a common origin and performing one or more particular functions."
+    },
+    {
+      "front": "What are the two main types of plant tissues based on their dividing capacity?",
+      "back": "The two main types of plant tissues are Meristematic tissue and Permanent tissue."
+    },
+    {
+      "front": "What is meristematic tissue?",
+      "back": "Meristematic tissue is a group of immature cells which has the capacity of cell division. The term 'meristem' is derived from the Greek word 'meristos' meaning divisible."
+    },
+    {
+      "front": "List the characteristic features of meristematic cells.",
+      "back": "Meristematic cells are small, thin-walled, living, compactly arranged with no intercellular spaces, usually isodiametric, spherical, oval or polygonal, possess dense cytoplasm, a large nucleus, and usually absent or very small vacuoles. They contain proplastids."
+    },
+    {
+      "front": "Classify meristems based on origin and development.",
+      "back": "Based on origin and development, meristems are classified into: Promeristem (earliest embryonic meristematic cells), Primary Meristem (derived from promeristem, found at tips of root, stem, appendages, and responsible for primary growth), and Secondary Meristem (formed from dedifferentiation of permanent tissues, involved in secondary growth)."
+    },
+    {
+      "front": "What is a promesitem?",
+      "back": "Promeristem is the earliest embryonic meristematic cells of a growing organ, found at the tip of stem and root, giving rise to primary meristem."
+    },
+    {
+      "front": "What is primary meristem?",
+      "back": "Primary meristem is derived from promeristem, found at the tips of root, stem, and appendages. It retains its power of division throughout life and forms the primary structure of the plant body."
+    },
+    {
+      "front": "What is secondary meristem?",
+      "back": "Secondary meristems are formed when some primary permanent tissues regain their meristematic capacity. They are lateral in position and involved in secondary growth, like vascular cambium and cork cambium."
+    },
+    {
+      "front": "Classify meristems based on their position in the plant body.",
+      "back": "Based on position, meristems are classified into: Apical Meristems (at root and shoot tips, increase length), Intercalary Meristems (between permanent tissues, e.g., at leaf bases in grasses, increase length), and Lateral Meristems (along lateral sides of roots and stems, increase thickness)."
+    },
+    {
+      "front": "What is the function of apical meristems?",
+      "back": "Apical meristems are located at the tips of roots and shoots and are responsible for the primary growth, i.e., increase in length of the plant body."
+    },
+    {
+      "front": "What is intercalary meristem and where is it found?",
+      "back": "Intercalary meristem is found between regions of permanent tissues and is considered a detached part of the apical meristem. It is found at the base of internodes in grasses and at the base of leaves in some plants, contributing to longitudinal growth."
+    },
+    {
+      "front": "What is the function of lateral meristems?",
+      "back": "Lateral meristems, such as vascular cambium and cork cambium, are responsible for secondary growth, which leads to an increase in the girth or thickness of plant organs like stems and roots."
+    },
+    {
+      "front": "Classify meristems based on their function.",
+      "back": "Based on function, meristems are classified into: Protoderm (forms epidermis), Procambium (forms vascular tissues), and Ground Meristem (forms ground tissues like cortex, pith, etc.)."
+    },
+    {
+      "front": "Describe the shoot apex.",
+      "back": "The shoot apex is a dome-shaped structure at the tip of the shoot, covered by young leaves. It contains meristematic tissue responsible for developing new leaves, buds, and floral structures, and contributes to the elongation of the stem."
+    }
+  ]
+}

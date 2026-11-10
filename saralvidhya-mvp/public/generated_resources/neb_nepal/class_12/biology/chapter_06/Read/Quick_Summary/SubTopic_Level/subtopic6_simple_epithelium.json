@@ -1,0 +1,42 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 6,
+  "subtopic_name": "2.2 Simple Epithelium \u2014 Single-Layered Epithelia",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 109,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Simple Epithelium",
+  "sections": [
+    {
+      "subsection_header": "2.2 Simple Epithelium \u2014 Single-Layered Epithelia",
+      "bullets": [
+        "**Single-Layer Structure**: Composed of a single layer of cells resting directly on the basement membrane; specialized for filtration, absorption, and secretion.",
+        "**Simple Squamous Epithelium**: Thin, flat, tile-like cells. Includes **Endothelium** (endodermal origin lining blood vessels/heart) and **Mesothelium** (mesodermal origin lining body cavities).",
+        "**Simple Cuboidal Epithelium**: Cube-shaped cells with central round nucleus. Subtypes: non-ciliated (glands), ciliated (bronchioles), and brush-bordered with microvilli (PCT of nephron).",
+        "**Simple Columnar Epithelium**: Tall pillar-like cells with basal oval nucleus. Subtypes: non-ciliated (stomach), ciliated (Fallopian tubes), and brush-bordered (intestinal mucosa).",
+        "**Pseudostratified Epithelium**: Single layer of column-like cells of unequal heights with basal nuclei giving a false multi-layered look; ciliated with goblet cells in upper respiratory tract."
+      ],
+      "mermaid_diagram": null,
+      "visual_references": [
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\00 Guide_to_Simple_Epithelial_Tissues.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\1. Simple_Squamous_Epithelium_Architecture_Guide.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\2. Simple_Cuboidal_Epithelium_Anatomy.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\3. Simple_Columnar_Epithelium_Overview.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "word_count_check": "Target reached for sub-topic quick study",
+    "must_know_filtering": true,
+    "formula_preservation": true,
+    "infographics_count": 5,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Simple Epithelium"
+    }
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "name": "Mutual Funds",
+  "children": [
+    {
+      "name": "Fundamentals",
+      "id": "topic_3.1",
+      "children": [
+        {
+          "name": "Definition & Structure",
+          "id": "subtopic_3.1.1"
+        },
+        {
+          "name": "Benefits vs. Drawbacks",
+          "id": "subtopic_3.1.2"
+        }
+      ]
+    },
+    {
+      "name": "Types of Funds",
+      "id": "topic_3.2",
+      "children": [
+        {
+          "name": "By Function",
+          "id": "subtopic_3.2.1"
+        },
+        {
+          "name": "Equity Funds",
+          "id": "subtopic_3.2.2"
+        },
+        {
+          "name": "Debt & Other Funds",
+          "id": "subtopic_3.2.3"
+        },
+        {
+          "name": "Specialized Strategies",
+          "id": "subtopic_3.2.4"
+        }
+      ]
+    },
+    {
+      "name": "Exchange Traded Funds (ETFs)",
+      "id": "topic_3.3",
+      "children": [
+        {
+          "name": "ETF Mechanics",
+          "id": "subtopic_3.3.1"
+        }
+      ]
+    },
+    {
+      "name": "Operations & Regulations",
+      "id": "topic_3.4",
+      "children": [
+        {
+          "name": "Plan Options",
+          "id": "subtopic_3.4.1"
+        },
+        {
+          "name": "SIP & SWP",
+          "id": "subtopic_3.4.2"
+        },
+        {
+          "name": "SEBI Regulations",
+          "id": "subtopic_3.4.3"
+        }
+      ]
+    },
+    {
+      "name": "Performance Measurement",
+      "id": "topic_3.5",
+      "children": [
+        {
+          "name": "Ratios",
+          "id": "subtopic_3.5.1"
+        },
+        {
+          "name": "Hedge Funds vs. Mutual Funds",
+          "id": "subtopic_3.5.2"
+        }
+      ]
+    }
+  ]
+}

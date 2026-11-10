@@ -1,0 +1,26 @@
+# Question Bank — 4.1 Striped / Skeletal Muscle
+
+**MindmapPath**: `UNIT 6: ANIMAL TISSUE > Muscular Tissue > Striped / Striated / Skeletal Muscle`
+**Depth Level**: `Sub-Topic Level (L-2)`
+
+---
+
+## Q1. Describe the ultrastructure of a Sarcomere in skeletal muscle.
+
+**Type:** Describe  |  **Bloom's:** Understand  |  **Difficulty:** Hard
+**Mindmap Path:** `UNIT 6: ANIMAL TISSUE > Muscular Tissue > Striped / Striated / Skeletal Muscle`
+**Recommended Diagram:** Sarcomere Ultrastructure Diagram
+
+### 📝 2-Mark Short Answer
+A Sarcomere is the functional contractile unit between two Z-lines, comprising a dark central A-band (myosin thick filaments) and light I-bands (actin thin filaments).
+
+### 📜 5-Mark Detailed Answer
+1. **Sarcomere Definition**: The basic structural and functional unit of myofibrillar contraction extending between two successive **Z-lines** (Z-discs).
+2. **A-Band (Anisotropic)**: Dark central zone containing thick **myosin** filaments overlapping with thin actin filaments.
+3. **I-Band (Isotropic)**: Light zone containing only thin **actin** filaments, bisected vertically by the proteinaceous Z-line.
+4. **H-Zone**: Lighter central region of the A-band containing thick myosin filaments only (no actin overlap).
+5. **M-Line**: Dark transverse line in the center of the H-zone that anchors thick myosin filaments.
+6. **Contraction Mechanism**: During cross-bridge sliding, thin actin filaments slide inward over thick myosin filaments, shortening the I-band and H-zone while A-band length remains constant.
+
+---
+

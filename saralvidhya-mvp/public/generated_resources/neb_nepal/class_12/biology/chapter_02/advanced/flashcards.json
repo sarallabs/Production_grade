@@ -1,0 +1,107 @@
+{
+  "chapter": "Biology Chapter 2",
+  "subject": "Biology",
+  "level": "advanced",
+  "flashcards": [
+    {
+      "front": "What is the formula for DPD and what does each term represent?",
+      "back": "DPD = OP − TP. DPD (Diffusion Pressure Deficit) is the net driving force for water entry into a cell. OP (Osmotic Pressure) is the pressure required to prevent osmosis. TP (Turgor Pressure) is the hydrostatic pressure of cell contents against the wall. DPD = 0 in pure water and in a fully turgid cell."
+    },
+    {
+      "front": "What is the DPD of a flaccid cell and why?",
+      "back": "DPD of a flaccid cell = OP (its maximum value). This is because TP = 0 (cell contents exert no pressure on the wall). Therefore DPD = OP − 0 = OP. A flaccid cell has the greatest 'thirst' for water."
+    },
+    {
+      "front": "What is water potential (Ψ) and how does adding solutes affect it?",
+      "back": "Water potential is the chemical potential of water — its tendency to move. Pure water has the highest water potential (Ψ = 0 by convention). Adding solutes lowers water potential (makes it more negative). Osmosis always moves water from higher Ψ (less negative) to lower Ψ (more negative)."
+    },
+    {
+      "front": "Distinguish between cohesion and adhesion in the context of ascent of sap.",
+      "back": "Cohesion: intermolecular attraction between water molecules via hydrogen bonds (up to ~350 atm). Maintains the continuous, unbroken water column in xylem. Adhesion: attraction between water molecules and the hydrophilic xylem vessel/tracheid walls. Prevents the water column from slipping downward under gravity."
+    },
+    {
+      "front": "Why does the Cohesion-Tension theory explain ascent of sap in tall trees better than Root Pressure theory?",
+      "back": "Root pressure is only ~2 atm, capable of lifting water ~21 metres — insufficient for trees >90 m. It is also absent in gymnosperms and seasonal. Cohesion-Tension uses transpiration pull (negative pressure) transmitted through a continuous water column maintained by cohesion (~350 atm) and adhesion — capable of lifting water to any height. It is a purely physical mechanism requiring no living cells."
+    },
+    {
+      "front": "How did Strasburgher's experiment disprove vital force theories of ascent of sap?",
+      "back": "Strasburgher (and MacDougal) killed all living cells in the stem using picric acid or by boiling. Despite this, water continued to rise through the xylem. This proved that living cells are NOT required for ascent of sap, disproving both Godlewski's relay pump theory and Bose's pulsation theory."
+    },
+    {
+      "front": "Describe the ionic mechanism of stomatal opening.",
+      "back": "1. Light activates H⁺-ATPase in guard cell membrane → H⁺ exported out. 2. Membrane hyperpolarises → K⁺ channels open → K⁺ (with Cl⁻/malate²⁻) floods into guard cells. 3. Solute concentration ↑ → water potential ↓ → water enters by osmosis. 4. Guard cells swell; thicker inner walls (facing pore) resist stretching less than outer walls → cells bow outward → pore opens."
+    },
+    {
+      "front": "Why do the thicker inner walls of guard cells cause the stomatal pore to open when the cells become turgid?",
+      "back": "The inner walls (facing the pore) are thicker and less elastic than the outer walls. When turgor pressure increases, the thinner outer walls stretch and expand more than the inner walls. This uneven expansion causes the guard cells to curve/bow outward, which mechanically pulls the inner walls apart and opens the stomatal pore."
+    },
+    {
+      "front": "What is Graham's Law of Diffusion and how does it apply to plant gas exchange?",
+      "back": "Graham's Law: Rate of diffusion ∝ 1/√(molecular mass). Lighter molecules diffuse faster. In plants: CO₂ (M=44) and O₂ (M=32) can diffuse independently through the same stomatal pore simultaneously ('independent diffusion'), each following its own partial pressure gradient. This enables simultaneous CO₂ uptake for photosynthesis and O₂ release."
+    },
+    {
+      "front": "Mechanistically, how does plasmolysis occur and why is it reversible?",
+      "back": "Plasmolysis: Cell placed in hypertonic solution → external OP > cell sap OP → exosmosis → water leaves cell → TP drops to 0 → protoplast shrinks → plasma membrane pulls away from rigid cell wall (which remains intact). Reversible (deplasmolysis) because the cell wall maintains structural integrity. When returned to hypotonic solution → endosmosis → protoplast rehydrates → regains contact with wall."
+    },
+    {
+      "front": "What is the difference between transpiration and guttation in terms of driving force?",
+      "back": "Transpiration: driven by negative pressure (transpiration pull / tension) created by evaporation at leaf mesophyll. Water is 'pulled' upward — force originates at the top. Guttation: driven by positive root pressure — osmotic activity of root cells builds hydrostatic pressure that 'pushes' liquid water upward and out through hydathodes. Force originates at the bottom."
+    },
+    {
+      "front": "Why does guttation leave white deposits on leaf margins but transpiration does not?",
+      "back": "Guttation involves exudation of liquid water (not pure water — it contains dissolved mineral salts, organic solutes like sugars and potassium compounds). When this liquid water evaporates from the leaf surface, the dissolved minerals and organics are left behind as a white crystalline residue. Transpiration releases only water vapour, leaving no dissolved solutes."
+    },
+    {
+      "front": "Compare the three types of transpiration with their approximate percentages.",
+      "back": "1. Stomatal transpiration: ~90% of total water loss; through stomata; regulated by guard cells. 2. Cuticular transpiration: 3–10%; through the waxy cuticle covering the epidermis; always occurring (no regulation). 3. Lenticular transpiration: ~1%; through lenticels in the bark of woody/perennial plants; minimal."
+    },
+    {
+      "front": "What is incipient plasmolysis and what are the cell's pressure values at this point?",
+      "back": "Incipient plasmolysis is the stage at which the protoplast just begins to pull away from the cell wall — the threshold of plasmolysis. At this point: TP = 0 (no turgor pressure), WP = 0, DPD = OP (maximum). The cell has lost all its turgor but the protoplast has just separated from the wall. It is the boundary between a flaccid cell and a plasmolysed cell."
+    },
+    {
+      "front": "Why is transpiration described as a 'necessary evil' in plant physiology?",
+      "back": "'Evil': 97–99% of absorbed water is lost — a massive apparent waste. Yet 'necessary' because: (1) Creates transpiration pull → drives ascent of sap → delivers minerals from soil to all plant parts. (2) Evaporative cooling → prevents leaf overheating. (3) Maintains cell turgidity. (4) Drives continuous flow of water and dissolved minerals through plant body. Without transpiration, tall plants could not survive."
+    },
+    {
+      "front": "What experimental evidence supports the Cohesion-Tension theory?",
+      "back": "1. Dixon's mercury experiment: A transpiring twig attached to a water-mercury tube causes mercury to rise — demonstrates suction/pull. Blocking stomata stops the rise. 2. Stain test (eosin): Dye travels through xylem to leaves → confirms xylem is the path. 3. Ringing test: Removal of cortex + phloem does not stop water movement to leaves → xylem alone suffices. 4. Strasburgher experiment: Dead stems still conduct water → physical (not biological) mechanism."
+    },
+    {
+      "front": "How does ABA (abscisic acid) cause stomatal closure during drought?",
+      "back": "Under water stress, ABA is synthesized in leaves. ABA binds to receptors on guard cell membranes → triggers Ca²⁺ signalling cascade → activates K⁺ outward channels → K⁺ exits guard cells → solute concentration ↓ → water potential of guard cells ↑ → water exits by osmosis → turgor pressure ↓ → guard cells become flaccid → pore closes. This reduces transpiration and conserves water under drought."
+    },
+    {
+      "front": "What is the significance of independent diffusion in plant physiology?",
+      "back": "Independent diffusion means different molecules diffuse simultaneously through the same pore, each according to its own concentration gradient (partial pressure), without interfering with each other. Significance for plants: CO₂ (for photosynthesis), O₂ (released during photosynthesis or taken up during respiration), and water vapour (transpiration) can all move simultaneously through stomata. This enables continuous, simultaneous gas exchange and water regulation."
+    },
+    {
+      "front": "How does Ganong's potometer work and what does it actually measure?",
+      "back": "Ganong's potometer consists of a transpiring shoot inserted in a water-filled tube with a graduated capillary side arm. An air bubble is introduced into the capillary. As the shoot transpires, it absorbs water, causing the air bubble to move toward the plant. The rate of bubble movement measures the rate of water absorption, which is approximately equal to the rate of transpiration (since most absorbed water is transpired). It does NOT directly measure transpiration — it measures water uptake."
+    },
+    {
+      "front": "Why is root pressure absent or negligible in gymnosperms, and how do they still transport water?",
+      "back": "Root pressure depends on active osmotic processes in living root cells, which in gymnosperms are less developed for this purpose. However, gymnosperms rely entirely on the Cohesion-Tension mechanism for ascent of sap: transpiration pull + cohesion (H-bonds between water molecules) + adhesion (water to tracheid walls). Their narrow tracheids (compared to angiosperm vessels) actually help maintain stronger tension without cavitation. Xeromorphic adaptations (needle leaves, thick cuticle, sunken stomata) reduce transpiration loss."
+    },
+    {
+      "front": "Explain the stain test and ringing test as evidence for xylem being the path of ascent of sap.",
+      "back": "Stain Test (Eosin): A cut shoot is placed in eosin (red dye) solution. After time, cross-sections show xylem tissue stained red → water moves through xylem. Ringing Test: A ring of bark (cortex + phloem + cambium) is removed from the stem, leaving xylem intact. The plant does NOT wilt → water still reaches leaves through intact xylem. If xylem is removed but phloem left intact, the plant wilts. Together, these prove xylem (tracheids/vessels) is the sole pathway for water ascent."
+    },
+    {
+      "front": "What is imbibition and why was the imbibition theory rejected as the main mechanism for ascent of sap?",
+      "back": "Imbibition: absorption of water by colloidal substances (e.g., starch, cellulose, proteins) causing them to swell. Imbibition force can be very strong (~1000 atm for dry seeds). Rejected as main mechanism for ascent of sap because: (1) Movement rate is extremely slow — too slow to supply leaves during active transpiration. (2) Cannot sustain continuous flow. (3) Cannot explain the rapid rise seen in transpiring plants. Imbibition is important in seed germination and initial water absorption, not long-distance transport."
+    },
+    {
+      "front": "What are hydathodes and how do they structurally differ from stomata?",
+      "back": "Hydathodes: specialized water-secreting structures located at leaf tips and margins, associated with xylem endings. Structure: consist of loosely arranged epithem cells (thin-walled, no chloroplasts) overlying xylem endings, with a water pore (modified stomata-like opening) above. Unlike true stomata, hydathode pores cannot open and close — they are permanently open and NOT regulated by guard cells. They passively allow liquid water (and dissolved solutes) to exit under root pressure."
+    },
+    {
+      "front": "A cell has OP = 8 atm and TP = 8 atm. What is its DPD? What happens when it is placed in a solution with OP = 5 atm?",
+      "back": "DPD = OP − TP = 8 − 8 = 0. The cell is fully turgid. When placed in solution with OP = 5 atm (hypotonic — less concentrated than cell sap): The external solution has higher water potential than the cell → water will leave the cell by exosmosis → TP decreases → DPD becomes positive → cell loses some turgidity until a new equilibrium is reached. The cell will deflate slightly but may not fully plasmolyse depending on the concentration difference."
+    },
+    {
+      "front": "How does high wind speed initially increase and then potentially decrease transpiration?",
+      "back": "Initially HIGH wind: removes the saturated water vapour layer that builds up around leaves (boundary layer effect) → increases the vapour pressure gradient between leaf interior and atmosphere → increases transpiration rate. However, EXCESSIVE wind: causes mechanical stimulation and increased CO₂ concentration changes in guard cells, and may cause stomata to close (possibly as a stress response) → reduces stomatal transpiration. Additionally, very high wind may dry out and damage stomatal tissues. Net effect: moderate wind increases transpiration; extreme wind may reduce it."
+    }
+  ]
+}

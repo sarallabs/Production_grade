@@ -1,0 +1,30 @@
+{
+  "short_id": "short_02_epithelial_overview",
+  "short_title": "Epithelial Tissue — Overview & Characteristics",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L1_Epithelial", "L2_Surfaces", "L2_Characteristics", "L3_TightJunction", "L3_AdherensJunction", "L3_Desmosome", "L3_GapJunction"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S02_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Every surface you touch on your body — and every surface inside it — is covered by the same tissue type. What is it, and what makes it so effective?",
+      "video_prompt": "Animated cinematic cross-section of human skin surface. Camera zooms into the epidermis, resolving individual squamous epithelial cells — flat, tightly packed like hexagonal floor tiles. Golden-teal colour scheme, macro biology visual style."
+    },
+    {
+      "segment_id": "S02_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Epithelial tissue covers external, internal, and glandular surfaces. Four characteristics: avascular — no blood supply; minimal matrix — cells tightly packed; rests on a basement membrane; held by four junctions — tight junctions seal gaps, adherens junctions link actin, desmosomes anchor against pull, gap junctions allow ion exchange. Surfaces covered: 2 in acoelomates, 3 in pseudocoelomates, 4 in coelomates.",
+      "video_prompt": "Split panel infographic. Left side: body silhouette showing location labels for external (skin), internal (gut, lung), and glandular (thyroid) surfaces. Right side: a zoomed cross-section of epithelial cells on a basement membrane showing all four junction types as molecular callouts — tight (claudin rings), adherens (cadherin links), desmosome (intermediate filament anchors), gap (connexin channels). Clean scientific illustration, white background with blue-teal accents."
+    },
+    {
+      "segment_id": "S02_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: the subtypes of simple epithelium — single layers with very specific jobs.",
+      "video_prompt": "Title card: 'Up Next: Simple Epithelium'. Background: a fading microscopic image of simple squamous cells. Transition swipe to black with neon line accent."
+    }
+  ]
+}

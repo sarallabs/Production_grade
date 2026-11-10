@@ -1,0 +1,17 @@
+{
+  "questions": [
+    {
+      "id": "MCQ_E1",
+      "stem": "Which of the following is a fundamental unit?",
+      "options": [
+        "A) Newton",
+        "B) Pascal",
+        "C) Kilogram",
+        "D) Joule"
+      ],
+      "answer": "C) Kilogram",
+      "explanation": "Kilogram is one of the seven base SI units.",
+      "difficulty": "Easy"
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "chapter": "Biology Chapter 2",
+  "subject": "Biology",
+  "level": "intermediate",
+  "flashcards": [
+    {
+      "front": "State the formula for DPD and what each term means.",
+      "back": "DPD = OP − TP. DPD (Diffusion Pressure Deficit) = net driving force for water entry. OP (Osmotic Pressure) = pressure needed to prevent osmosis. TP (Turgor Pressure) = pressure of cell contents against cell wall. DPD is also called Suction Pressure. DPD = 0 in pure water and in a fully turgid cell."
+    },
+    {
+      "front": "What is water potential? How do solutes affect it?",
+      "back": "Water potential (Ψ) is the chemical potential of water — its tendency to move. Pure water has the highest water potential (Ψ = 0). Adding solutes lowers water potential (makes it more negative). Osmosis always moves water from higher Ψ (less negative) to lower Ψ (more negative)."
+    },
+    {
+      "front": "Distinguish between endosmosis and exosmosis.",
+      "back": "Endosmosis: water moves INTO the cell when it is placed in a hypotonic solution (lower concentration than cell sap). Cell becomes turgid. Exosmosis: water moves OUT of the cell when placed in a hypertonic solution (higher concentration than cell sap). Cell becomes flaccid or plasmolysed."
+    },
+    {
+      "front": "What is plasmolysis? Name one practical application.",
+      "back": "Plasmolysis is the shrinkage of a plant cell's protoplast away from the cell wall due to exosmosis in a hypertonic solution. Practical application: Food preservation (pickling, jams) — the high salt/sugar concentration causes plasmolysis in bacteria/fungi, killing them."
+    },
+    {
+      "front": "What are the pressure relationships in a fully turgid cell?",
+      "back": "In a fully turgid cell: TP = OP (Turgor Pressure equals Osmotic Pressure). Therefore DPD = OP − TP = 0. WP (Wall Pressure) = TP. No net water movement occurs."
+    },
+    {
+      "front": "Why did Strasburgher's experiment disprove vital force theories?",
+      "back": "Strasburgher killed all living cells in a plant stem using picric acid/boiling. Water still continued to rise through the xylem. This proved that living cells are NOT required for ascent of sap — disproving Godlewski's relay pump theory and Bose's pulsation theory, which depended on living cell activity."
+    },
+    {
+      "front": "Name and explain the three pillars of Dixon's Cohesion-Tension Theory.",
+      "back": "1. Cohesion — strong H-bond attraction between water molecules (up to ~350 atm) — maintains continuous water column in xylem. 2. Adhesion — attraction of water to hydrophilic xylem walls — prevents column from slipping due to gravity. 3. Transpiration Pull — evaporation from leaf mesophyll creates negative pressure/tension transmitted through water column to roots, pulling water upward."
+    },
+    {
+      "front": "Why is Root Pressure Theory insufficient to explain ascent of sap in tall trees?",
+      "back": "Root pressure is typically only ~2 atm, capable of lifting water only ~21 metres. Trees like Sequoia are 90+ metres tall — far beyond root pressure capacity. Also: root pressure is absent in gymnosperms and only noticeable during the rainy season. The Cohesion-Tension mechanism, which can withstand tensions of hundreds of atmospheres, is required."
+    },
+    {
+      "front": "What is independent diffusion and why is it important in plants?",
+      "back": "Independent diffusion: different molecules diffuse simultaneously through the same pore, each following its own concentration gradient, without interfering with one another. Important in plants: CO₂ can diffuse inward for photosynthesis while O₂ diffuses outward and water vapour exits through transpiration — all through the same stomatal pore simultaneously."
+    },
+    {
+      "front": "How do guard cells open and close stomata?",
+      "back": "Opening: K⁺ ions enter guard cells → solute concentration ↑ → water potential ↓ → water enters by osmosis → guard cells become turgid → uneven swelling (thicker inner walls) → cells bow outward → pore opens. Closing: K⁺ exits → water leaves → guard cells become flaccid → pore closes. Light triggers opening; darkness/drought/ABA triggers closing."
+    },
+    {
+      "front": "What are the three types of transpiration and their percentages?",
+      "back": "1. Stomatal transpiration: ~90% through stomata — regulated by guard cells. 2. Cuticular transpiration: 3–10% through the waxy cuticle — always occurring, not regulated. 3. Lenticular transpiration: ~1% through lenticels in bark of woody plants."
+    },
+    {
+      "front": "What does Ganong's potometer measure and how does it work?",
+      "back": "Ganong's potometer measures the rate of water absorption by a transpiring shoot, which approximately equals the rate of transpiration. A cut transpiring shoot is inserted in water-filled tube with a calibrated capillary side arm. An air bubble is introduced; as the shoot absorbs water, the bubble moves toward the shoot. The bubble's movement rate = water absorption rate ≈ transpiration rate."
+    },
+    {
+      "front": "What is the cobalt chloride paper experiment and what does it prove?",
+      "back": "Blue cobalt chloride paper is placed on both surfaces of a leaf and sealed. The paper on the lower (abaxial) surface of a dicot leaf turns pink faster. This proves: (1) Transpiration occurs from leaf surfaces. (2) More stomata are present on the lower surface of dorsiventral (dicot) leaves — so more water vapour is lost from that surface."
+    },
+    {
+      "front": "Compare guttation and transpiration across 4 features.",
+      "back": "1. Form of water: Transpiration = vapour; Guttation = liquid droplets. 2. Driving force: Transpiration = transpiration pull (negative pressure); Guttation = root pressure (positive pressure). 3. Structures: Transpiration = stomata/cuticle/lenticels; Guttation = hydathodes. 4. Timing: Transpiration = mainly daytime; Guttation = night / early morning."
+    },
+    {
+      "front": "What evidence confirms that xylem is the path for ascent of sap?",
+      "back": "1. Stain Test: Plant placed in eosin (red dye) solution — xylem vessels stain red, confirming water moves through xylem. 2. Ringing Test: A ring of bark (cortex + phloem) is removed, leaving xylem intact — leaves remain fresh and turgid, proving xylem alone is sufficient for water transport."
+    }
+  ]
+}

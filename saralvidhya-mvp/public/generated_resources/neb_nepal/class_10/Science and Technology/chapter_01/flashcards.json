@@ -1,0 +1,32 @@
+[
+  {
+    "id": "FC1",
+    "question": "What is an independent variable?",
+    "answer": "The variable that is manipulated or changed directly by the researcher."
+  },
+  {
+    "id": "FC2",
+    "question": "What is a dependent variable?",
+    "answer": "The variable whose value is measured and depends on the independent variable."
+  },
+  {
+    "id": "FC3",
+    "question": "Why do we need controlled variables?",
+    "answer": "To keep other factors constant so the experiment remains fair and findings are valid."
+  },
+  {
+    "id": "FC4",
+    "question": "How many fundamental SI units are there?",
+    "answer": "Seven (meter, kilogram, second, kelvin, ampere, candela, mole)."
+  },
+  {
+    "id": "FC5",
+    "question": "What is a derived unit?",
+    "answer": "A unit composed of two or more fundamental base units (e.g., $m/s$, Newton, Pascal)."
+  },
+  {
+    "id": "FC6",
+    "question": "What is the requirement for adding two physical quantities?",
+    "answer": "They must have the exact same composition of fundamental units."
+  }
+]

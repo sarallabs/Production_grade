@@ -1,0 +1,109 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_MAIN_01",
+      "term": "Xavier Bichat's Legacy",
+      "definition": "Father of Histology who defined 21 primary tissue types without microscope.",
+      "category": "History & Fundamentals",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "FC_MAIN_02",
+      "term": "Phylum Coelenterata",
+      "definition": "First animal phylum in evolution to exhibit true tissue-level grade of organization.",
+      "category": "History & Fundamentals",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "FC_MAIN_03",
+      "term": "Simple Squamous Epithelium",
+      "definition": "Flattened pavement endothelium lining blood vessels and alveolar air sacs.",
+      "category": "Epithelial Tissue",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "FC_MAIN_04",
+      "term": "Transitional Epithelium (Urothelium)",
+      "definition": "Plastic distensible compound epithelium with umbrella cells lining urinary bladder.",
+      "category": "Epithelial Tissue",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "FC_MAIN_05",
+      "term": "Tight Junctions vs Gap Junctions",
+      "definition": "Tight junctions seal fluid barriers; Gap junctions pass ions/signals between cells.",
+      "category": "Epithelial Tissue",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "FC_MAIN_06",
+      "term": "Fibroblasts & Mast Cells",
+      "definition": "Fibroblasts synthesize matrix/collagen; Mast cells release histamine/heparin/serotonin.",
+      "category": "Connective Tissue",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "FC_MAIN_07",
+      "term": "White Fat vs Brown Fat",
+      "definition": "White fat is monolocular energy storage; Brown fat is multilocular UCP-1 heat generator.",
+      "category": "Connective Tissue",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "FC_MAIN_08",
+      "term": "Compact Bone Osteon",
+      "definition": "Haversian canal surrounded by concentric lamellae, lacunae with osteocytes, and canaliculi.",
+      "category": "Connective Tissue",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "FC_MAIN_09",
+      "term": "Skeletal vs Smooth Muscle",
+      "definition": "Skeletal muscle is voluntary, striated, syncytial; Smooth muscle is involuntary, unstriated, fusiform.",
+      "category": "Muscular Tissue",
+      "image": "00.png"
+    },
+    {
+      "id": "FC_MAIN_10",
+      "term": "Cardiac Intercalated Discs",
+      "definition": "Junctional complexes with fascia adherens, desmosomes, and gap junctions for cardiac syncytium.",
+      "category": "Muscular Tissue",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "FC_MAIN_11",
+      "term": "Sarcomere Contraction",
+      "definition": "I-band and H-zone shorten, Z-lines approximate, while A-band length remains constant.",
+      "category": "Muscular Tissue",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "FC_MAIN_12",
+      "term": "Nissl's Granules",
+      "definition": "Clumps of RER and free ribosomes synthesizing protein in cyton and dendrites; absent in axon.",
+      "category": "Nervous Tissue",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "FC_MAIN_13",
+      "term": "Astrocytes & Blood-Brain Barrier",
+      "definition": "Star-shaped CNS glia forming perivascular end-feet surrounding brain capillaries.",
+      "category": "Nervous Tissue",
+      "image": "CNS.png"
+    },
+    {
+      "id": "FC_MAIN_14",
+      "term": "Oligodendrocytes vs Schwann Cells",
+      "definition": "Oligodendrocytes form CNS myelin; Schwann cells form PNS myelin.",
+      "category": "Nervous Tissue",
+      "image": "PNS.png"
+    },
+    {
+      "id": "FC_MAIN_15",
+      "term": "Saltatory Action Potential",
+      "definition": "Fast impulse conduction leaping from Node of Ranvier to Node of Ranvier in myelinated axons.",
+      "category": "Nervous Tissue",
+      "image": "3. Node of Ranvier.png"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "front": "What does the Sharpe Ratio measure and what is its formula?",
+    "back": "It measures the excess return per unit of total risk. Formula: (Rp - Rf) / Standard Deviation of Portfolio."
+  },
+  {
+    "front": "What does the Treynor Ratio measure and what is its formula?",
+    "back": "It measures the excess return per unit of systematic risk. Formula: (Rp - Rf) / Beta of Portfolio."
+  },
+  {
+    "front": "What is the formula for Jensen's Alpha and what does a positive result indicate?",
+    "back": "Alpha = Rp - [Rf + Beta * (Rm - Rf)]. A positive result indicates risk-adjusted outperformance (manager skill)."
+  },
+  {
+    "front": "How do you decompose total risk (variance) into systematic and unsystematic risk?",
+    "back": "Total Variance (sigma_p^2) = Systematic Risk (Beta^2 * sigma_m^2) + Unsystematic Risk (Residual Variance, sigma_ep^2)."
+  },
+  {
+    "front": "What is the coefficient of determination (R-squared) in performance measurement?",
+    "back": "It is the square of the correlation coefficient (r^2) and measures the percentage of total risk explained by systematic (market) risk."
+  },
+  {
+    "front": "What determines whether the Sharpe or Treynor ratio is more appropriate for ranking a portfolio?",
+    "back": "Sharpe is appropriate if the portfolio is the investor's sole asset (focuses on total risk). Treynor is appropriate if the portfolio is part of a larger diversified holding (focuses on systematic risk)."
+  },
+  {
+    "front": "What is the primary purpose of the Dividend Equalization Reserve (DER)?",
+    "back": "To prevent dilution of distributable income per unit when new units are issued or existing units are repurchased mid-period."
+  },
+  {
+    "front": "How is the January Dividend Equalization component per unit calculated if units are issued at month-end?",
+    "back": "January Income / Outstanding Units prior to the new issue."
+  },
+  {
+    "front": "What is the role of an Authorized Participant (AP) in an ETF?",
+    "back": "An AP manages the real-time creation and redemption of ETF units in-kind, keeping the market price aligned with the underlying NAV."
+  },
+  {
+    "front": "How does an Authorized Participant arbitrage when an ETF trades at a premium to NAV?",
+    "back": "The AP buys the underlying stocks in the spot market, exchanges them with the ETF sponsor for new ETF units, and sells the ETF units on the exchange."
+  },
+  {
+    "front": "What is side-pocketing in a mutual fund scheme?",
+    "back": "The accounting practice of segregating default-grade or highly illiquid debt securities into a locked, separate scheme to protect liquid assets."
+  },
+  {
+    "front": "What are the rules regarding subscriptions and redemptions in a side-pocketed scheme?",
+    "back": "No new subscriptions or redemptions are permitted. The units are locked until the AMC recovers capital from the distressed assets."
+  },
+  {
+    "front": "What is the difference between a Soft Hurdle and a Hard Hurdle in hedge fund fee structures?",
+    "back": "A soft hurdle allows performance fees on all returns once the hurdle is beaten. A hard hurdle allows performance fees only on returns that exceed the hurdle rate."
+  },
+  {
+    "front": "What is the High-Water Mark (HWM) rule in hedge funds?",
+    "back": "A rule preventing performance fees unless the fund value exceeds its highest previously achieved historical year-end valuation."
+  },
+  {
+    "front": "How is the post-tax capital gains treatment of Arbitrage Funds structured in India?",
+    "back": "They are taxed as Equity-Oriented Funds: STCG (<12 months) at 15% flat; LTCG (>=12 months) at 12.5% flat (above ₹1.25 lakhs exemption)."
+  },
+  {
+    "front": "Why do arbitrage funds offer tax planning opportunities over debt funds for short-term investing?",
+    "back": "They provide low-risk returns similar to debt funds but are taxed under equity tax rates (15% STCG) which are much lower than debt fund rates (marginal slab rate)."
+  },
+  {
+    "front": "What is the formula for the Effective Annualized Yield on a 365-day basis?",
+    "back": "Effective Yield = (1 + HPY)^(365 / days of holding) - 1."
+  },
+  {
+    "front": "How is the price of Sovereign Gold Bonds (SGBs) determined at issue and redemption?",
+    "back": "Based on the simple average of the closing price of 999 purity gold published by the India Bullion and Jewellers Association (IBJA) for the last 3 business days of the preceding week."
+  },
+  {
+    "front": "What annual interest rate do SGBs pay and how is it taxed?",
+    "back": "They pay 2.50% p.a. on the nominal value (paid semi-annually). The interest is taxed at the investor's slab rate, but capital gains on maturity are exempt."
+  },
+  {
+    "front": "What is the minimum net worth requirement for a SEBI-registered Asset Management Company (AMC)?",
+    "back": "₹50 crores."
+  }
+]

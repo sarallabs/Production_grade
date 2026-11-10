@@ -1,0 +1,33 @@
+{
+  "title": "Topic 4: Muscular Tissue Architecture",
+  "items": [
+    {
+      "id": "PYQ_T4_01",
+      "exam": "NEET 2017",
+      "stem": "Smooth muscles are:",
+      "options": [
+        "A) Involuntary, fusiform, non-striated",
+        "B) Voluntary, multinucleated, cylindrical",
+        "C) Involuntary, cylindrical, striated",
+        "D) Voluntary, spindle-shaped, non-striated"
+      ],
+      "answer": "A) Involuntary, fusiform, non-striated",
+      "explanation": "Smooth muscle cells are involuntary, unstriated, and fusiform (spindle-shaped) with a central nucleus.",
+      "image": "00.png"
+    },
+    {
+      "id": "PYQ_T4_02",
+      "exam": "AIIMS 2018",
+      "stem": "Intercalated discs with gap junctions are unique characteristics of:",
+      "options": [
+        "A) Skeletal muscle",
+        "B) Smooth muscle",
+        "C) Cardiac muscle",
+        "D) Tendon tissue"
+      ],
+      "answer": "C) Cardiac muscle",
+      "explanation": "Intercalated discs connect adjacent cardiac muscle cells (cardiocytes) for coordinated electrical contraction.",
+      "image": "2. Intercalated_Discs.png"
+    }
+  ]
+}

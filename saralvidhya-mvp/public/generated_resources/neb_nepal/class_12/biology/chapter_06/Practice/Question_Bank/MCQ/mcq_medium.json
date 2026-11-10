@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MCQ_M1",
+      "stem": "Areolar loose connective tissue underlying epithelium contains which cell combination?",
+      "options": [
+        "A) Chondrocytes and ossein",
+        "B) Fibroblasts, Mast cells, Histocytes, Plasma cells",
+        "C) Myocytes and myofibrils",
+        "D) Neuroglia"
+      ],
+      "answer": "B) Fibroblasts, Mast cells, Histocytes, Plasma cells",
+      "explanation": "Areolar CT contains fibroblasts, mast cells, histocytes, plasma cells.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PQB_MCQ_M2",
+      "stem": "White adipose tissue differs from brown fat because white adipocytes are:",
+      "options": [
+        "A) Multilocular",
+        "B) Monolocular for energy storage and insulation",
+        "C) Rich in thermogenin",
+        "D) Non-vascular"
+      ],
+      "answer": "B) Monolocular for energy storage and insulation",
+      "explanation": "White fat is monolocular for long-term energy storage.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PQB_MCQ_M3",
+      "stem": "Which fibrocartilaginous structure acts as a shock absorber between spinal vertebrae?",
+      "options": [
+        "A) Costal cartilage",
+        "B) Intervertebral disc",
+        "C) Nasal septum",
+        "D) Tracheal ring"
+      ],
+      "answer": "B) Intervertebral disc",
+      "explanation": "Intervertebral discs contain fibrocartilage to absorb compression.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PQB_MCQ_M4",
+      "stem": "During skeletal muscle contraction, calcium ions bind directly to:",
+      "options": [
+        "A) Myosin heavy chain",
+        "B) Troponin C",
+        "C) Actin actinic subunit",
+        "D) Tropomyosin strand"
+      ],
+      "answer": "B) Troponin C",
+      "explanation": "Ca2+ binds Troponin C to shift Tropomyosin.",
+      "difficulty": "Medium",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PQB_MCQ_M5",
+      "stem": "Ciliated ependymal neuroglial cells line brain ventricles to secrete and circulate:",
+      "options": [
+        "A) Lymph fluid",
+        "B) Cerebrospinal fluid (CSF)",
+        "C) Blood plasma",
+        "D) Synovial fluid"
+      ],
+      "answer": "B) Cerebrospinal fluid (CSF)",
+      "explanation": "Ependymal cells line CNS ventricles to circulate CSF.",
+      "difficulty": "Medium",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PQB_MCQ_M6",
+      "stem": "Which compound epithelium lines sweat gland ducts and pancreatic ducts?",
+      "options": [
+        "A) Stratified Squamous",
+        "B) Stratified Cuboidal Epithelium",
+        "C) Stratified Columnar",
+        "D) Urothelium"
+      ],
+      "answer": "B) Stratified Cuboidal Epithelium",
+      "explanation": "Stratified cuboidal lines sweat and pancreatic ducts.",
+      "difficulty": "Medium",
+      "image": "00 Compound_Epithelial_Tissues_Guide.png"
+    },
+    {
+      "id": "PQB_MCQ_M7",
+      "stem": "Reticular white collagen CT forming liver and spleen internal scaffolding matrix is rich in:",
+      "options": [
+        "A) Type I Collagen",
+        "B) Type III Collagen (Reticulin)",
+        "C) Elastin",
+        "D) Ossein"
+      ],
+      "answer": "B) Type III Collagen (Reticulin)",
+      "explanation": "Type III collagen forms reticular framework of lymphoid organs.",
+      "difficulty": "Medium",
+      "image": "00 Connective_Tissue_Structure_and_Function.png"
+    },
+    {
+      "id": "PQB_MCQ_M8",
+      "stem": "Which plasma protein maintains blood osmotic pressure to prevent tissue edema?",
+      "options": [
+        "A) Fibrinogen",
+        "B) Serum Albumin",
+        "C) Gamma Globulin",
+        "D) Prothrombin"
+      ],
+      "answer": "B) Serum Albumin",
+      "explanation": "Albumin maintains capillary colloid osmotic pressure.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MCQ_M9",
+      "stem": "Fast-twitch white skeletal muscle fibres rely primarily on:",
+      "options": [
+        "A) Aerobic oxidative phosphorylation",
+        "B) Anaerobic glycolysis with glycogen breakdown",
+        "C) Fatty acid beta-oxidation",
+        "D) Myoglobin storage"
+      ],
+      "answer": "B) Anaerobic glycolysis with glycogen breakdown",
+      "explanation": "White muscle relies on fast anaerobic glycolysis.",
+      "difficulty": "Medium",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PQB_MCQ_M10",
+      "stem": "Which neurone structural type has one cyton and a single axon with NO dendrites?",
+      "options": [
+        "A) Multipolar",
+        "B) Bipolar",
+        "C) Unipolar neurone",
+        "D) Pseudounipolar"
+      ],
+      "answer": "C) Unipolar neurone",
+      "explanation": "Unipolar neurones have 1 axon and no dendrites.",
+      "difficulty": "Medium",
+      "image": "5. Structure.png"
+    }
+  ]
+}

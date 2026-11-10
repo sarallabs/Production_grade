@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 15,
+  "subtopic_name": "5.1 Neuroglia \u2014 Non-Neuronal Glial Support Cells",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 197,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia",
+  "sections": [
+    {
+      "header": "5.1 Neuroglia \u2014 Non-Neuronal Glial Support Cells",
+      "level": 2,
+      "content": "### 5.1 Neuroglia \u2014 Non-Neuronal Glial Cell Subtypes\n\n**Neuroglia** (or Glial Cells) constitute the specialized non-neuronal supportive framework of nervous tissue. Comprising over 50% of brain volume and outnumbering neurons 10-to-1, neuroglial cells retain mitotic division capacity throughout life.\n\n#### Central Nervous System (CNS) Glial Cells\n\n1. **Astrocytes**: Star-shaped cells with extensive cytoplasmic processes ending in vascular feet.\n   - Form the protective **Blood-Brain Barrier (BBB)** by surrounding brain capillaries.\n   - Regulate extracellular \\(\text{K}^+\\) concentration and uptake neurotransmitters (glutamate).\n2. **Oligodendrocytes**: Cells with few branching processes.\n   - Synthesize and maintain lipid-rich **myelin sheaths** around multiple central nerve axons in brain and spinal cord white matter.\n3. **Microglia**: Small, elongated cells derived from embryonic mesodermal monocytes.\n   - Function as resident phagocytic macrophages in CNS tissue, clearing pathogens and necrotic debris.\n4. **Ependymal Cells**: Simple ciliated cuboidal or columnar epithelial cells lining cerebral brain ventricles and the spinal central canal.\n   - Cilia beat rhythmically to circulate **Cerebrospinal Fluid (CSF)**.\n\n#### Peripheral Nervous System (PNS) Glial Cells\n\n1. **Schwann Cells (Neurolemmocytes)**: Form neurolemma and myelin sheaths around peripheral nerve fibers; facilitate PNS axon regeneration.\n2. **Satellite (Stellate) Cells**: Flattened cells surrounding neuronal cell bodies inside PNS sensory and autonomic ganglia.",
+      "mermaid_diagram": null,
+      "visual_references": [
+        "5. Nervous Tissue\\2. Neuroglia\\00.png",
+        "5. Nervous Tissue\\2. Neuroglia\\leaves\\CNS.png",
+        "5. Nervous Tissue\\2. Neuroglia\\leaves\\PNS.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia"
+    }
+  }
+}

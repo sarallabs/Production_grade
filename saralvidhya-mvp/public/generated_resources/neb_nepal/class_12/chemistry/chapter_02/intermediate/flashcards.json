@@ -1,0 +1,67 @@
+{
+  "chapter": "Chemistry Chapter 2",
+  "subject": "Chemistry",
+  "level": "intermediate",
+  "flashcards": [
+    {
+      "front": "What is an electrolytic solution?",
+      "back": "An electrolytic solution is a solution that allows the passage of electric current through it."
+    },
+    {
+      "front": "What is ionic equilibrium?",
+      "back": "Ionic equilibrium is the dynamic equilibrium that exists in an electrolytic solution between the ions and the undissociated molecules of the solute."
+    },
+    {
+      "front": "State the first postulate of Arrhenius Theory of Ionization regarding electrolytes dissolved in water.",
+      "back": "When an electrolyte (acid, base, or salt) dissolves in water, it dissociates into positively charged ions (cations) and negatively charged ions (anions)."
+    },
+    {
+      "front": "What are cations and anions?",
+      "back": "Cations are ions carrying a positive charge, and anions are ions carrying a negative charge."
+    },
+    {
+      "front": "According to Arrhenius theory, what is the state of a solid electrolyte?",
+      "back": "In the solid state, electrolytes are composed of ions held together by electrostatic forces. Dissolution separates these ions."
+    },
+    {
+      "front": "Describe the dynamic equilibrium in an electrolyte solution according to Arrhenius theory.",
+      "back": "In solution, ions can recombine to form unionized molecules, establishing a dynamic equilibrium between ions and undissociated molecules, represented by AB ⇌ A⁺ + B⁻."
+    },
+    {
+      "front": "Define the ionization constant (K) for an electrolyte AB ionizing into A⁺ and B⁻.",
+      "back": "The ionization constant K is given by the expression: K = [A⁺][B⁻] / [AB], where [ ] represents the molar concentration of the species."
+    },
+    {
+      "front": "What is the net electrical charge of an electrolyte solution?",
+      "back": "An electrolyte solution is electrically neutral because the total positive charge from cations equals the total negative charge from anions."
+    },
+    {
+      "front": "How do ions facilitate the flow of electric current in a solution?",
+      "back": "When an electric current is passed through the solution, ions move towards oppositely charged electrodes. This movement of ions is responsible for the flow of electric current."
+    },
+    {
+      "front": "What are the properties of an electrolyte solution attributed to according to Arrhenius theory?",
+      "back": "The properties of an electrolyte solution are due to the ions that the electrolyte produces in the solution."
+    },
+    {
+      "front": "What is the degree of ionization (α)?",
+      "back": "The degree of ionization (α) is the fraction of the total number of molecules of an electrolyte that are present as free ions in the solution. It is calculated as: α = (Number of molecules ionized into ions) / (Total number of molecules dissolved)."
+    },
+    {
+      "front": "How does the nature of the electrolyte affect its degree of ionization?",
+      "back": "Strong electrolytes are almost completely ionized (high α), while weak electrolytes are feebly ionized (low α)."
+    },
+    {
+      "front": "Explain the role of the solvent in ionization.",
+      "back": "The solvent's ability to weaken the electrostatic forces between ions (measured by its dielectric constant) influences ionization. Solvents with higher dielectric constants promote greater ionization."
+    },
+    {
+      "front": "How does the concentration of the solution affect the degree of ionization?",
+      "back": "The degree of ionization is inversely proportional to the concentration. Ionization increases on dilution because there are more solvent molecules available to interact with the solute molecules."
+    },
+    {
+      "front": "How does temperature affect the degree of ionization?",
+      "back": "Higher temperatures generally increase the degree of ionization because increased kinetic energy of molecules reduces interionic forces of attraction."
+    }
+  ]
+}

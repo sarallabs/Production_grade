@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PR_MCQ_E1",
+      "stem": "Which tissue forms the outermost protective covering of animal organs?",
+      "options": [
+        "A) Connective",
+        "B) Epithelial",
+        "C) Muscular",
+        "D) Nervous"
+      ],
+      "answer": "B) Epithelial",
+      "explanation": "Epithelial tissue forms protective covers.",
+      "difficulty": "Easy",
+      "image": "00 Epithelial_Tissue_Classification_Diagram.png"
+    },
+    {
+      "id": "PR_MCQ_E2",
+      "stem": "A Ligament attaches:",
+      "options": [
+        "A) Muscle to bone",
+        "B) Bone to bone",
+        "C) Muscle to muscle",
+        "D) Cartilage to bone"
+      ],
+      "answer": "B) Bone to bone",
+      "explanation": "Ligaments attach bone to bone.",
+      "difficulty": "Easy",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PR_MCQ_E3",
+      "stem": "Which blood protein is essential for forming insoluble fibrin threads during clotting?",
+      "options": [
+        "A) Albumin",
+        "B) Globulin",
+        "C) Fibrinogen",
+        "D) Hemoglobin"
+      ],
+      "answer": "C) Fibrinogen",
+      "explanation": "Fibrinogen converts into insoluble fibrin.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PR_MCQ_E4",
+      "stem": "Smooth muscle cells are structurally described as being:",
+      "options": [
+        "A) Voluntary, striated",
+        "B) Involuntary, fusiform, non-striated",
+        "C) Involuntary, branched",
+        "D) Syncytial"
+      ],
+      "answer": "B) Involuntary, fusiform, non-striated",
+      "explanation": "Smooth muscle is involuntary and fusiform.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    },
+    {
+      "id": "PR_MCQ_E5",
+      "stem": "The primary structural unit of the central nervous system is:",
+      "options": [
+        "A) Cyton & Axon",
+        "B) Nephron",
+        "C) Osteon",
+        "D) Sarcomere"
+      ],
+      "answer": "A) Cyton & Axon",
+      "explanation": "Neurone consists of Soma cyton and neurites.",
+      "difficulty": "Easy",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PR_MCQ_E6",
+      "stem": "Mucus secreting goblet cells are specialized modified:",
+      "options": [
+        "A) Squamous cells",
+        "B) Unicellular columnar epithelial cells",
+        "C) Chondrocytes",
+        "D) Osteocytes"
+      ],
+      "answer": "B) Unicellular columnar epithelial cells",
+      "explanation": "Goblet cells are modified columnar cells.",
+      "difficulty": "Easy",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PR_MCQ_E7",
+      "stem": "Dense regular connective tissue sheath enclosing bone externally is:",
+      "options": [
+        "A) Perichondrium",
+        "B) Periosteum",
+        "C) Epimysium",
+        "D) Endoneurium"
+      ],
+      "answer": "B) Periosteum",
+      "explanation": "Periosteum covers bone externally.",
+      "difficulty": "Easy",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PR_MCQ_E8",
+      "stem": "Which granular WBC increases in circulating blood during allergic hypersensitivity?",
+      "options": [
+        "A) Neutrophil",
+        "B) Eosinophil",
+        "C) Basophil",
+        "D) Monocyte"
+      ],
+      "answer": "B) Eosinophil",
+      "explanation": "Eosinophils increase during allergic reactions.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PR_MCQ_E9",
+      "stem": "Which resident CNS glia cell acts as a phagocytic macrophage defense cell?",
+      "options": [
+        "A) Astrocyte",
+        "B) Microglia",
+        "C) Oligodendrocyte",
+        "D) Ependymal cell"
+      ],
+      "answer": "B) Microglia",
+      "explanation": "Microglia are phagocytic neuroglia in CNS.",
+      "difficulty": "Easy",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PR_MCQ_E10",
+      "stem": "Yellow elastic cartilage forms the flexible framework of external ear and:",
+      "options": [
+        "A) Articular bone ends",
+        "B) Epiglottis",
+        "C) Intervertebral discs",
+        "D) Rib cartilage"
+      ],
+      "answer": "B) Epiglottis",
+      "explanation": "Elastic cartilage forms ear pinna and epiglottis.",
+      "difficulty": "Easy",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    }
+  ]
+}

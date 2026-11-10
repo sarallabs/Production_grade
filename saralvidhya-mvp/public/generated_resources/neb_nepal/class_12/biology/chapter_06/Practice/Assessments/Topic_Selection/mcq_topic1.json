@@ -1,0 +1,135 @@
+{
+  "topic": "Topic 1: History & Fundamentals of Histology",
+  "questions": [
+    {
+      "id": "PA_T1_MCQ_01",
+      "stem": "Which eminent French anatomist is recognized as the 'Father of Histology' for defining 21 distinct tissue types without microscopic aid?",
+      "options": [
+        "A) Marcello Malpighi",
+        "B) Xavier Bichat",
+        "C) Robert Hooke",
+        "D) Anton van Leeuwenhoek"
+      ],
+      "answer": "B) Xavier Bichat",
+      "explanation": "Xavier Bichat coined the term 'tissue' and classified 21 primary tissues.",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "PA_T1_MCQ_02",
+      "stem": "Microscopic investigation of animal tissues was first systematically pioneered by which Italian biologist?",
+      "options": [
+        "A) Xavier Bichat",
+        "B) Marcello Malpighi",
+        "C) Theodor Schwann",
+        "D) Rudolf Virchow"
+      ],
+      "answer": "B) Marcello Malpighi",
+      "explanation": "Marcello Malpighi pioneered microscopic histology and discovered capillaries.",
+      "image": "3. Marcello_Malpighi__Histology_Pioneer.png"
+    },
+    {
+      "id": "PA_T1_MCQ_03",
+      "stem": "In animal phylogeny, true tissue level of organization first evolved in which invertebrate phylum?",
+      "options": [
+        "A) Phylum Porifera",
+        "B) Phylum Coelenterata (Cnidaria)",
+        "C) Phylum Platyhelminthes",
+        "D) Phylum Annelida"
+      ],
+      "answer": "B) Phylum Coelenterata (Cnidaria)",
+      "explanation": "True tissue grade organization originated in Coelenterates (e.g. Hydra).",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "PA_T1_MCQ_04",
+      "stem": "Which structural biological hierarchy correctly progresses from microscopic elements to whole organism?",
+      "options": [
+        "A) Cell -> Organ -> Tissue -> Organ System -> Organism",
+        "B) Cell -> Tissue -> Organ -> Organ System -> Organism",
+        "C) Tissue -> Cell -> Organ -> Organ System -> Organism",
+        "D) Organ -> Tissue -> Cell -> Organism -> Organ System"
+      ],
+      "answer": "B) Cell -> Tissue -> Organ -> Organ System -> Organism",
+      "explanation": "Biological hierarchy: Cell -> Tissue -> Organ -> Organ System -> Organism.",
+      "image": "5. Biological_Hierarchy__Cells_to_Organisms.png"
+    },
+    {
+      "id": "PA_T1_MCQ_05",
+      "stem": "How many principal primary tissue classes constitute the somatic structure of complex multicellular animals?",
+      "options": [
+        "A) Two",
+        "B) Three",
+        "C) Four",
+        "D) Six"
+      ],
+      "answer": "C) Four",
+      "explanation": "Animal soma comprises 4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PA_T1_MCQ_06",
+      "stem": "Which germ layer gives origin to connective tissue and muscular tissue during embryonic gastrulation?",
+      "options": [
+        "A) Ectoderm",
+        "B) Mesoderm",
+        "C) Endoderm",
+        "D) Blastocoel"
+      ],
+      "answer": "B) Mesoderm",
+      "explanation": "Connective tissue and muscular tissue originate from embryonic mesoderm.",
+      "image": "2. Origin Mesoderm.png"
+    },
+    {
+      "id": "PA_T1_MCQ_07",
+      "stem": "Which primary tissue type exhibits all three embryonic germ layer origins (Ectoderm, Mesoderm, Endoderm)?",
+      "options": [
+        "A) Connective Tissue",
+        "B) Muscular Tissue",
+        "C) Epithelial Tissue",
+        "D) Nervous Tissue"
+      ],
+      "answer": "C) Epithelial Tissue",
+      "explanation": "Epithelium derives from all 3 germ layers (Ectoderm epidermis, Mesoderm endothelium, Endoderm gut lining).",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "PA_T1_MCQ_08",
+      "stem": "The branch of biological science dealing with the microscopic study of tissue architecture is named:",
+      "options": [
+        "A) Cytology",
+        "B) Histology",
+        "C) Anatomy",
+        "D) Physiology"
+      ],
+      "answer": "B) Histology",
+      "explanation": "Histology is the microscopic study of tissues (coined by Mayer).",
+      "image": "00 Animal_Histology_History_and_Hierarchy.png"
+    },
+    {
+      "id": "PA_T1_MCQ_09",
+      "stem": "The non-cellular adhesive basement membrane underlying epithelial cell sheets is composed of:",
+      "options": [
+        "A) Basal lamina and Reticular lamina",
+        "B) Ossein matrix and Hydroxyapatite",
+        "C) Chondrin and Elastin",
+        "D) Myosin and Actin"
+      ],
+      "answer": "A) Basal lamina and Reticular lamina",
+      "explanation": "Basement membrane = Basal lamina (epithelial origin) + Reticular lamina (connective origin).",
+      "image": "3. The_Epithelial_Basement_Membrane_Gateway.png"
+    },
+    {
+      "id": "PA_T1_MCQ_10",
+      "stem": "Which primary tissue type covers external body surfaces and lines internal visceral organs?",
+      "options": [
+        "A) Connective Tissue",
+        "B) Epithelial Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "answer": "B) Epithelial Tissue",
+      "explanation": "Epithelial tissue forms protective covers and linings across body surfaces and organs.",
+      "image": "00 Epithelial_Tissue_Classification_Diagram.png"
+    }
+  ]
+}

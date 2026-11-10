@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PR_MCQ_M1",
+      "stem": "Areolar loose connective tissue matrix contains which structural combination?",
+      "options": [
+        "A) Chondrocytes and ossein",
+        "B) Fibroblasts, mast cells, collagen, elastic fibers",
+        "C) Myocytes",
+        "D) Neuroglia"
+      ],
+      "answer": "B) Fibroblasts, mast cells, collagen, elastic fibers",
+      "explanation": "Areolar CT contains fibroblasts, mast cells, and fibers.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PR_MCQ_M2",
+      "stem": "White fat adipocytes differ from brown fat because white fat cells are:",
+      "options": [
+        "A) Multilocular",
+        "B) Monolocular for energy storage",
+        "C) Rich in thermogenin",
+        "D) Non-vascular"
+      ],
+      "answer": "B) Monolocular for energy storage",
+      "explanation": "White fat is monolocular energy storage.",
+      "difficulty": "Medium",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PR_MCQ_M3",
+      "stem": "Fibrocartilaginous intervertebral spinal discs function as:",
+      "options": [
+        "A) Lubricants",
+        "B) Mechanical shock absorbers",
+        "C) Red marrow sites",
+        "D) Blood filters"
+      ],
+      "answer": "B) Mechanical shock absorbers",
+      "explanation": "Fibrocartilage absorbs compression in spinal discs.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PR_MCQ_M4",
+      "stem": "Calcium ions released during muscle stimulation bind directly to subunit:",
+      "options": [
+        "A) Myosin",
+        "B) Troponin C",
+        "C) Actin",
+        "D) Tropomyosin"
+      ],
+      "answer": "B) Troponin C",
+      "explanation": "Ca2+ binds Troponin C during muscle contraction.",
+      "difficulty": "Medium",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PR_MCQ_M5",
+      "stem": "Ciliated ependymal neuroglia line brain ventricles to secrete fluid:",
+      "options": [
+        "A) Lymph",
+        "B) Cerebrospinal fluid (CSF)",
+        "C) Blood plasma",
+        "D) Synovial fluid"
+      ],
+      "answer": "B) Cerebrospinal fluid (CSF)",
+      "explanation": "Ependymal cells line ventricles and secrete CSF.",
+      "difficulty": "Medium",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PR_MCQ_M6",
+      "stem": "Compound stratified cuboidal epithelium lines ducts of:",
+      "options": [
+        "A) Skin surface",
+        "B) Sweat glands",
+        "C) Lung alveoli",
+        "D) Stomach lumen"
+      ],
+      "answer": "B) Sweat glands",
+      "explanation": "Stratified cuboidal lines sweat gland ducts.",
+      "difficulty": "Medium",
+      "image": "00 Compound_Epithelial_Tissues_Guide.png"
+    },
+    {
+      "id": "PR_MCQ_M7",
+      "stem": "Reticular Type III collagen connective tissue frames internal matrix of:",
+      "options": [
+        "A) Tendons",
+        "B) Lymphoid organs (Spleen, lymph nodes)",
+        "C) Bones",
+        "D) Arteries"
+      ],
+      "answer": "B) Lymphoid organs (Spleen, lymph nodes)",
+      "explanation": "Reticular CT forms scaffolding of spleen and lymph nodes.",
+      "difficulty": "Medium",
+      "image": "00 Connective_Tissue_Structure_and_Function.png"
+    },
+    {
+      "id": "PR_MCQ_M8",
+      "stem": "Which plasma protein maintains capillary blood colloid osmotic pressure?",
+      "options": [
+        "A) Fibrinogen",
+        "B) Serum Albumin",
+        "C) Globulin",
+        "D) Prothrombin"
+      ],
+      "answer": "B) Serum Albumin",
+      "explanation": "Albumin maintains capillary colloid osmotic pressure.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PR_MCQ_M9",
+      "stem": "Fast-twitch white muscle fibers generate rapid contraction energy via:",
+      "options": [
+        "A) Aerobic respiration",
+        "B) Anaerobic glycogen glycolysis",
+        "C) Beta-oxidation",
+        "D) Myoglobin storage"
+      ],
+      "answer": "B) Anaerobic glycogen glycolysis",
+      "explanation": "White muscle relies on anaerobic glycogen glycolysis.",
+      "difficulty": "Medium",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PR_MCQ_M10",
+      "stem": "Unipolar sensory neurones featuring 1 axon and NO dendrites occur during:",
+      "options": [
+        "A) Adult brain stage",
+        "B) Embryonic developmental stage",
+        "C) Cardiac muscle",
+        "D) Spinal ventral horn"
+      ],
+      "answer": "B) Embryonic developmental stage",
+      "explanation": "Unipolar neurones occur in embryonic nervous system.",
+      "difficulty": "Medium",
+      "image": "5. Structure.png"
+    }
+  ]
+}

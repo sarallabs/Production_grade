@@ -1,0 +1,32 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "persona": "Intermediate",
+  "type": "detailed_summary",
+  "D_max_detected": 8,
+  "D_target_used": 5,
+  "source": "Biology Textbook pp. 193-239 (PDF primary) + Mermaid mindmap",
+  "sections": [
+    "H1. History + Classification + Histo-components",
+    "H2. Epithelial Tissue (2.1 General Features, 2.2 Simple Epithelium x4 types, 2.3 Compound x2 types, 2.4 Modified x6 types + full Gland classification x5 axes)",
+    "H3. Connective Tissue (3.2-3.4 Proper CT: cells/matrix/fibres, 3.5 Loose+Dense-matrix subtypes, 3.6 Cartilage x4 + Bone long bone + Haversian, 3.7 Blood full + WBC DC + Clotting cascade + Lymph)",
+    "H4. Muscular Tissue (Sarcomere anatomy, 3 types, Hierarchical organisation, Sliding filament)",
+    "H5. Nervous Tissue (CNS+PNS Neuroglia, Neurone structure, Myelinated vs Non-myelinated, 5 types by structure, Gray/White matter)"
+  ],
+  "image_refs_embedded": 37,
+  "mermaid_diagrams_embedded": 8,
+  "tables_embedded": 18,
+  "validation_report": {
+    "all_subtopics_covered": true,
+    "definitions_present": true,
+    "tables_used_for_multi_row_data": true,
+    "mermaid_for_every_multi_stage_process": true,
+    "visuals_at_correct_D_target_level": true,
+    "no_placeholders": true,
+    "filler_padding": false,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 5,
+      "coverage_ratio_applied": "60%"
+    }
+  }
+}

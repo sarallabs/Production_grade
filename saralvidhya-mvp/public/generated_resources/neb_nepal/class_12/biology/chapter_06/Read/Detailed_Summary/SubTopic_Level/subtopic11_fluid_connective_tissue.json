@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 11,
+  "subtopic_name": "3.3 Fluid Connective Tissue \u2014 Blood and Lymph",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 237,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Fluid Connective Tissue",
+  "sections": [
+    {
+      "header": "3.3 Fluid Connective Tissue \u2014 Blood and Lymph",
+      "level": 2,
+      "content": "### 3.3 Fluid Connective Tissue \u2014 Blood and Lymph Microvascular Components\n\n**Fluid Connective Tissue** (Vascular or Mobile Connective Tissue) is a specialized liquid tissue circulating continuously through closed blood vessels and lymphatic channels.\n\n#### 1. Blood Composition and Formed Elements\n\n```\nWhole Blood (100%)\n \u251c\u2500\u2500 Plasma (55% Volume)\n \u2502     \u251c\u2500\u2500 Water (90\u201392%)\n \u2502     \u251c\u2500\u2500 Plasma Proteins (6\u20138%): Albumin | Globulins | Fibrinogen\n \u2502     \u2514\u2500\u2500 Dissolved Nutrients & Electrolytes (Na+, Ca2+, Cl-, Glucose)\n \u2514\u2500\u2500 Formed Elements / Blood Cells (45% Volume)\n       \u251c\u2500\u2500 RBCs / Erythrocytes (5\u20135.5 million/mm\u00b3): Biconcave, Hemoglobin, Enucleated\n       \u251c\u2500\u2500 WBCs / Leucocytes (6,000\u20138,000/mm\u00b3): Nucleated Immune Cells\n       \u2502     \u251c\u2500\u2500 Granulocytes: Neutrophils (60%) | Eosinophils (2-3%) | Basophils (0.5-1%)\n       \u2502     \u2514\u2500\u2500 Agranulocytes: Lymphocytes B & T (20-25%) | Monocytes (6-8%)\n       \u2514\u2500\u2500 Platelets / Thrombocytes (150,000\u2013350,000/mm\u00b3): Clotting Cell Fragments\n```\n\n#### Detailed Leucocyte Differential (WBC Subtypes)\n- **Neutrophils**: Multilobed nucleus; highly phagocytic first responders to bacterial infections.\n- **Eosinophils**: Bilobed nucleus; release histaminase during allergic reactions and combat parasitic infections.\n- **Basophils**: S-shaped nucleus; release histamine, heparin, and serotonin during inflammatory cascades.\n- **Lymphocytes**: Large spherical nucleus; **B-lymphocytes** differentiate into antibody-producing plasma cells; **T-lymphocytes** execute cell-mediated immunity.\n- **Monocytes**: Kidney-shaped nucleus; largest WBCs that exit circulation to become tissue **macrophages**.\n\n#### 2. Lymph Architecture\n**Lymph** is interstitial tissue fluid that enters lymphatic capillaries. It consists of blood plasma filtered across blood capillaries, rich in small plasma proteins and **lymphocytes**, but completely devoid of RBCs, platelets, and large clotting complexes.",
+      "mermaid_diagram": null,
+      "visual_references": [
+        "3. Conective Tissue\\4. Fluid Connective Tissue (Vascular  Mobile Connective Tissue)\\00 Guide_to_Fluid_Connective_Tissue.png",
+        "3. Conective Tissue\\4. Fluid Connective Tissue (Vascular  Mobile Connective Tissue)\\1. Anatomy_and_Chemistry_of_Blood.png",
+        "3. Conective Tissue\\4. Fluid Connective Tissue (Vascular  Mobile Connective Tissue)\\2. Physiology_and_Pathway_of_Lymph.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Fluid Connective Tissue"
+    }
+  }
+}

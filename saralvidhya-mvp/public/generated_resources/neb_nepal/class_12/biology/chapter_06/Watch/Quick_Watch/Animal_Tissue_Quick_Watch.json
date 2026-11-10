@@ -1,0 +1,117 @@
+{
+  "act_no": 1,
+  "act_title": "Unit 6: Animal Tissue — Quick Watch",
+  "act_duration_seconds": 1080,
+  "opening_hook": {
+    "script": "What holds your body together, lets your heart beat without ever stopping, and lets you feel every touch of a feather or a burn? The answer lies in your tissues — and in this chapter, we'll unlock all four of them. Let's go.",
+    "duration_seconds": 30
+  },
+  "segments": [
+    {
+      "segment_no": 1,
+      "start_time_seconds": 30,
+      "end_time_seconds": 90,
+      "covers_element_ids": ["L0_Root", "L1_History", "L2_Bichat", "L2_Malpighi", "L2_Mayer", "L2_Coelenterata"],
+      "script": "Before we dive in, meet the three scientists who built the science of tissues. Marcello Malpighi (1628–1694) peered through early microscopes and became the founder of histology. Over a century later, Xavier Bichat (1771–1802) dissected organs without a microscope, identified twenty-one types of elementary tissues, coined the word 'tissue', and earned the title father of histology and founder of animal histology. And in 1801, Karl Mayer gave this science its formal name — histology. Animal tissues first evolved in Phylum Coelenterata — the first phylum to achieve a true tissue-grade of organisation. Tissues form the second level of the biological hierarchy: Cell → Tissue → Organ → Organ System → Organism. Animal tissues come in four types: Epithelial, Connective, Muscular, and Nervous.",
+      "visual_cues": [
+        {
+          "element_id": "L1_History",
+          "cue": "Three-panel portrait sequence: Malpighi, Bichat, Mayer with animated name/date/contribution labels.",
+          "video_generation_prompt": "Three elegant portrait panels appear sequentially on a dark academic background. Malpighi in 17th century attire on the left, Bichat in 18th century French clothing in the center, and Mayer on the right. As each portrait appears, a clean serif text label animates in below with their name, dates, and key contribution. Soft candlelight warmth, museum portrait style, smooth cross-dissolve transitions."
+        },
+        {
+          "element_id": "L0_Root",
+          "cue": "3D animated hierarchy diagram: Cell → Tissue → Organ → Organ System → Organism. Then four tissue-type cards.",
+          "video_generation_prompt": "A clean 3D motion graphics animation on a dark slate background shows the levels of biological organization stacking vertically as glowing golden cards. CELL at bottom, then TISSUE (highlighted in amber glow), ORGAN, ORGAN SYSTEM, ORGANISM at top. Then four horizontal cards sweep in side by side labeled: EPITHELIAL, CONNECTIVE, MUSCULAR, NERVOUS — each with a distinct color accent."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 2,
+      "start_time_seconds": 90,
+      "end_time_seconds": 390,
+      "covers_element_ids": ["L1_Epithelial", "L2_Surfaces", "L2_Characteristics", "L2_Layers", "L3_Simple", "L3_Compound", "L2_Modified"],
+      "script": "Epithelial tissue covers all body surfaces — outer, inner, and glandular. It is avascular, has minimal matrix, and is held together by four junction types: tight, adherens, desmosome, and gap junctions. Simple Epithelium has one cell layer. Simple Squamous forms the endothelium in capillaries and the mesothelium in body cavities. Simple Cuboidal handles secretion and absorption in kidney tubules and thyroid. Simple Columnar lines the stomach and intestine. Pseudostratified lines the trachea and bronchi. Compound Epithelium has multiple layers for protection. Stratified Squamous is non-keratinised in the oral cavity and keratinised in skin. Transitional Epithelium lines the urinary tract and can stretch. Modified Epithelium includes six specialisations: ciliated (kino 9+2 and stereo), brush-bordered, neuro-sensory, pigmented, germinal, and glandular. Glands are classified by ducts, consistency, secretion quantity, cell count, and structural complexity.",
+      "visual_cues": [
+        {
+          "element_id": "L3_Simple",
+          "cue": "Anatomical cross-section diagram showing all four simple epithelium types with cell shapes and location labels.",
+          "video_generation_prompt": "A clean, clinical-style anatomical diagram displays four epithelium cross-sections in horizontal bands from left to right: squamous (flat tiles), cuboidal (cube-shaped), columnar (tall cylinders), pseudostratified (mixed heights). Each band is color-coded and has callout labels for cell shape, nucleus position, and a location example. White background, bright lab-report style visuals."
+        },
+        {
+          "element_id": "L3_Compound",
+          "cue": "Animation contrasting relaxed vs stretched transitional epithelium cells showing shape change.",
+          "video_generation_prompt": "A split screen animation: on the left, relaxed transitional epithelium cells are rounded and stacked in 5-6 layers with a visible basement membrane. On the right, stretched cells flatten to squamous shape with the basement membrane becoming invisible. Smooth tween animation between the two states with an arrow showing the stretching force. Clean medical illustration style, blue and white palette."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 3,
+      "start_time_seconds": 390,
+      "end_time_seconds": 720,
+      "covers_element_ids": ["L1_Connective", "L2_Proper", "L2_Supportive", "L2_Fluid", "L3_Cartilage", "L3_Bone", "L3_Blood"],
+      "script": "Connective tissue binds, supports, and transports. Proper Connective Tissue has cells (fibroblasts, mast cells, histocytes), matrix (jelly-like or gel), and fibres (collagen for strength, elastic for elasticity, reticular for frameworks). Loose varieties — areolar and adipose — cushion and fill. Dense varieties — tendons and ligaments — handle mechanical load. Supportive CT includes avascular Cartilage with chondrocytes in lacunae: hyaline, calcified, fibro-cartilage, and elastic types. Bone is vascular, with osteocytes in an ossein matrix. Long bones have a compact diaphysis with the Haversian (osteon) system and a spongy epiphysis with red bone marrow. Fluid CT includes Blood — 55% plasma and 45% formed elements (RBCs, WBCs including granulocytes and agranulocytes, and platelets) — and Lymph.",
+      "visual_cues": [
+        {
+          "element_id": "L3_Bone",
+          "cue": "Labelled cross-section of a long bone from epiphysis to diaphysis with a zoom into the Haversian canal system.",
+          "video_generation_prompt": "A cinematic 3D cross-sectional model of a long bone. The camera starts at the epiphysis showing spongy bone filled with red marrow, then dolly-moves towards the diaphysis showing compact bone. The camera zooms into the Haversian system, revealing concentric lamellae rings around a central canal with blood vessels, osteocytes in lacunae, and canaliculi branching outward. Medical illustration style with warm amber bone tones."
+        },
+        {
+          "element_id": "L3_Blood",
+          "cue": "Pie chart of blood composition, then a WBC classification tree.",
+          "video_generation_prompt": "A clean infographic animation. First, a pie chart divides blood into 55% plasma (golden yellow) and 45% formed elements (red). The 45% section then explodes into sub-categories showing RBCs (red discs), WBCs (large blue cells), and platelets (small fragments). A decision tree then animates showing WBC types: granulocytes (neutrophils, basophils, eosinophils) and agranulocytes (lymphocytes B and T, monocytes). Dark background, neon blue and red accent labels."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 4,
+      "start_time_seconds": 720,
+      "end_time_seconds": 930,
+      "covers_element_ids": ["L1_Muscular", "L2_Skeletal", "L2_Smooth", "L2_Cardiac"],
+      "script": "Muscle tissue is mesodermal, specialised for contraction and relaxation. Skeletal (striped) muscle is voluntary, multi-nucleated, with transverse striations. It contains red muscle (myoglobin-rich) and white muscle (myoglobin-absent). The sliding filament theory by Huxley and Hanson explains contraction. It fatigues quickly. Smooth (unstriped) muscle is involuntary, spindle-shaped, uninucleated, and found in visceral organs performing peristalsis. It has single-unit (contracts as a whole) and multi-unit (independent contraction) types. Cardiac muscle is involuntary, branched, connected by intercalated discs, located only in the heart, and never fatigues. It is the least abundant muscle type.",
+      "visual_cues": [
+        {
+          "element_id": "L1_Muscular",
+          "cue": "Three side-by-side muscle fibre microscopy images — striated, smooth, and cardiac with intercalated discs.",
+          "video_generation_prompt": "A triptych of high-resolution pseudo-microscopy renders. Left panel: parallel striated skeletal muscle fibres with clear alternating dark and light bands and multiple nuclei at periphery. Center panel: spindle-shaped smooth muscle cells with central nuclei arranged in sheets. Right panel: branching cardiac muscle cells with Z-shaped intercalated discs visible as dark lines. Each panel has a clean label at the top. SEM-style monochrome with blue tint."
+        },
+        {
+          "element_id": "L2_Skeletal",
+          "cue": "Sarcomere animation showing actin/myosin sliding during contraction — Z-lines, I-band narrowing, H-band disappearing.",
+          "video_generation_prompt": "A 3D sarcomere animation. Actin (thin, red) and myosin (thick, blue) filaments are shown in a resting state with labeled Z-lines, A-band, I-band, H-band, and M-line. On contraction trigger, actin slides inward over myosin — the I-band visibly narrows, the H-band disappears, while the A-band stays constant. Smooth 60fps animation with crisp molecular biology illustration style."
+        }
+      ],
+      "is_socratic_question_segment": false
+    },
+    {
+      "segment_no": 5,
+      "start_time_seconds": 930,
+      "end_time_seconds": 1050,
+      "covers_element_ids": ["L1_Nervous", "L2_Neuroglia", "L2_Neurone", "L3_Soma", "L3_Neurite", "L3_Myelin"],
+      "script": "Nervous tissue is ectodermal in origin and controls, coordinates, and integrates the organism through nerve impulse conduction. It has two cell types. Neuroglia are supportive cells that can divide. CNS neuroglia include astrocytes, oligodendrocytes, microglia (mesodermal, phagocytic), and ependymal cells (secrete CSF). PNS neuroglia are stellate and Schwann cells. Neurones are the structural and functional units — they cannot divide after birth. They have a soma (cell body) and neurites (dendrites receive signals; one axon sends signals). Classified by myelin as myelinated (saltatory conduction at Nodes of Ranvier) or non-myelinated; by structure as unipolar, bipolar, or multipolar; by function as sensory (afferent), motor (efferent), or intermediate (adjustor). Grey matter is soma-rich; white matter is myelin-rich.",
+      "visual_cues": [
+        {
+          "element_id": "L2_Neurone",
+          "cue": "Detailed labelled neuron diagram with soma, dendrites, axon, myelin sheath, Nodes of Ranvier, and synaptic terminals.",
+          "video_generation_prompt": "A large, detailed anatomical illustration of a multipolar neuron on a dark background. The soma is shown centrally with Nissl's granules visible inside. Multiple dendrites extend outward on the left. The single long axon extends right, wrapped in a myelin sheath rendered as segmented blue cylinders, with gaps (Nodes of Ranvier) visible at regular intervals. The axon terminates in a synaptic bulb with vesicles. All parts are labeled with clean white arrow callouts."
+        },
+        {
+          "element_id": "L3_Myelin",
+          "cue": "Electric pulse animation running down a myelinated neuron with saltatory conduction at Nodes of Ranvier.",
+          "video_generation_prompt": "An animated electric impulse (shown as a bright white-blue arc) jumps rapidly from node to node along a myelinated axon in saltatory conduction mode. The myelin segments glow briefly as the impulse passes. Camera tracks alongside the impulse at high speed. Dark background, neon blue and gold colour scheme, cinematic depth of field."
+        }
+      ],
+      "is_socratic_question_segment": false
+    }
+  ],
+  "closing_recap": {
+    "script": "To summarise: Epithelial tissue covers and lines — avascular, junctioned, and stratified. Connective tissue binds, supports, and flows — from soft areolar to hard bone and liquid blood. Muscular tissue contracts — skeletal voluntary, smooth visceral, cardiac tireless. Nervous tissue conducts — neuroglia support, neurons signal. For the full deep-dive, watch the Detailed Watch version or explore the individual Shorts!",
+    "duration_seconds": 30
+  },
+  "act_word_count": 2520,
+  "duration_gap_note": ""
+}

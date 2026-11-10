@@ -1,0 +1,17 @@
+{
+  "questions": [
+    {
+      "id": "MCQ_M1",
+      "stem": "In an experiment to study the rate of sugar dissolving in water at different temperatures, what is the temperature?",
+      "options": [
+        "A) Dependent variable",
+        "B) Independent variable",
+        "C) Controlled variable",
+        "D) Constant"
+      ],
+      "answer": "B) Independent variable",
+      "explanation": "Temperature is deliberately manipulated by the researcher.",
+      "difficulty": "Medium"
+    }
+  ]
+}

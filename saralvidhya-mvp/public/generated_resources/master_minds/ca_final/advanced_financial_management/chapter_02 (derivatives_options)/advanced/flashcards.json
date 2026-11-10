@@ -1,0 +1,42 @@
+[
+  {
+    "front": "What is the fundamental difference in risk-payoff symmetry between futures and options contracts?",
+    "back": "Futures have symmetrical payoff profiles where both parties face linear risk-reward. Options have asymmetrical payoff profiles where the buyer's risk is capped at the premium paid while the profit potential is unlimited (calls) or large (puts), and the writer faces capped profit and large/unlimited risk."
+  },
+  {
+    "front": "What is the formula for the risk-neutral probability of an up-move (p) in a single-period binomial model?",
+    "back": "p = (e^(r*t) - d) / (u - d), where 'u' is the up-move factor, 'd' is the down-move factor, 'r' is the risk-free rate (continuously compounded), and 't' is the time step in years."
+  },
+  {
+    "front": "Define Option Gamma (Γ) and explain its behavior for at-the-money (ATM) vs. deep out-of-the-money (OTM) options.",
+    "back": "Gamma measures the rate of change of an option's Delta with respect to changes in the underlying stock price. Gamma is positive for long options and peaks when the option is at-the-money (ATM). It approaches zero for options that are deep in-the-money (ITM) or deep out-of-the-money (OTM)."
+  },
+  {
+    "front": "What is the Put-Call Parity formula for European options with continuous compounding?",
+    "back": "C + X * e^(-r*T) = S_0 + P, where C is the Call premium, X is the strike price, r is the risk-free rate, T is time to expiration, S_0 is the spot stock price, and P is the Put premium."
+  },
+  {
+    "front": "If C + X * e^(-r*T) > S_0 + P, what is the mispricing and what is the resulting arbitrage strategy?",
+    "back": "The Call (or cash) is overvalued relative to the Put (or stock). The arbitrageur performs a Conversion: Short the Call, Buy the Put, Buy the Stock, and Borrow the present value of the strike price (or lend net proceeds) to lock in a risk-free profit."
+  },
+  {
+    "front": "How is the stock price adjusted in the Black-Scholes-Merton model to account for a discrete dividend paid during the option's life?",
+    "back": "The spot stock price S_0 is replaced with S_0* = S_0 - D * e^(-r*t_d), where D is the dividend amount and t_d is the time in years until the dividend is paid."
+  },
+  {
+    "front": "What is Option Vega (ν), and what are its signs for long call and long put options?",
+    "back": "Vega measures the sensitivity of an option's premium to a 1% change in the implied volatility of the underlying asset. Vega is positive for both long call and long put options, meaning buyers benefit from rising volatility."
+  },
+  {
+    "front": "How is the option Delta (Δ) calculated in the Binomial Replicating Portfolio method?",
+    "back": "Δ = (C_u - C_d) / (S_u - S_d), which represents the change in option payoffs divided by the change in underlying stock prices between the up and down states."
+  },
+  {
+    "front": "What is the difference between European and American options in a multi-period binomial tree valuation?",
+    "back": "For European options, the value at intermediate nodes is solely the discounted expected value of the next period's option values. For American options, the value at each node is the maximum of the immediate exercise value (Intrinsic Value) and the discounted expected value (Hold Value)."
+  },
+  {
+    "front": "Why is Option Rho (ρ) positive for call options but negative for put options?",
+    "back": "An increase in interest rates reduces the present value of the strike price (X * e^(-r*T)). For calls, this reduces the present value of the cash outflow needed to buy the stock. For puts, this reduces the present value of the cash inflow to be received upon selling the stock."
+  }
+]

@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 14,
+  "subtopic_name": "4.3 Cardiac Muscle \u2014 Myocardial Architecture",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 202,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Cardiac / Heart Muscle",
+  "sections": [
+    {
+      "header": "4.3 Cardiac Muscle \u2014 Myocardial Architecture",
+      "level": 2,
+      "content": "### 4.3 Cardiac Muscle \u2014 Specialized Myocardial Syncytium\n\n**Cardiac Muscle** (Myocardium) is a specialized involuntary muscle tissue restricted exclusively to the wall of the heart. It combines structural features of skeletal muscle (striations) with physiological characteristics of smooth muscle (involuntary autorhythmicity).\n\n#### Structural Characteristics\n- **Branched Cellular Network**: Muscle fibers are short, cylindrical, and form anastomosing branched networks.\n- **Uninucleate / Binucleate Central Nucleus**: Unlike peripheral skeletal nuclei, cardiac nuclei are positioned centrally within the muscle fiber.\n- **Light Striations**: Contains sarcomeres with A-bands and I-bands, though less distinctly striated than skeletal muscle.\n\n#### Intercalated Discs \u2014 Pathognomonic Junctional Complexes\nAt cell-to-cell boundaries, adjacent cardiac cell membranes interdigitate to form dark transverse bands called **Intercalated Discs**.\n\n```\nIntercalated Disc Junctional Complex\n \u251c\u2500\u2500 Desmosomes (Macula Adherens)\n \u2502     \u2514\u2500\u2500 Provide strong mechanical adhesion, preventing cells from pulling apart during contraction\n \u2514\u2500\u2500 Gap Junctions (Nexus)\n       \u2514\u2500\u2500 Provide low-resistance electrical channels for rapid ionic flow (Na+, Ca2+),\n           allowing the myocardium to contract as a functional electrical syncytium\n```\n\n#### Physiological Non-Fatiguability\nCardiac muscle contracts rhythmically without fatigue throughout an organism's lifespan. This non-fatiguing property is sustained by an extraordinary density of **mitochondria** (occupying ~40% of cytoplasmic volume), abundant myoglobin, and continuous aerobic perfusion via coronary circulation.",
+      "mermaid_diagram": "graph TD\n    A[Sinoatrial SA Node Impulse] --> B[Gap Junctions in Intercalated Discs]\n    B --> C[Rapid Ion Flow Across Myocardium]\n    C --> D[Synchronous Contraction as Functional Syncytium]",
+      "visual_references": [
+        "4. Muscular Tissue\\4. Cardiac Heart Muscle\\00.png",
+        "4. Muscular Tissue\\4. Cardiac Heart Muscle\\leaves\\1. Involuntary, branched, never fatigues.png",
+        "4. Muscular Tissue\\4. Cardiac Heart Muscle\\leaves\\2. Intercalated_Discs.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Cardiac / Heart Muscle"
+    }
+  }
+}

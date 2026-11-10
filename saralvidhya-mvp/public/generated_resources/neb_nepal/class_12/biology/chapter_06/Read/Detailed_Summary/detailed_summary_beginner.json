@@ -1,0 +1,32 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "persona": "Beginner",
+  "type": "detailed_summary",
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "source": "Biology Textbook pp. 193-239 (PDF primary) + Mermaid mindmap",
+  "sections": [
+    "H1. History of Animal Histology",
+    "H2. Epithelial Tissue — The Covering Tissue (Simple, Compound, Modified overview)",
+    "H3. Connective Tissue — Proper CT (cells/fibres/areolar/adipose/dense) + Supportive CT + Fluid CT",
+    "H4. Muscular Tissue — 3 types comparison + sarcomere + sliding filament",
+    "H5. Nervous Tissue — Neuroglia + Neurone anatomy + myelinated vs non-myelinated"
+  ],
+  "image_refs_embedded": 20,
+  "mermaid_diagrams_embedded": 5,
+  "tables_embedded": 9,
+  "validation_report": {
+    "all_subtopics_covered": true,
+    "definitions_present": true,
+    "tables_used_for_multi_row_data": true,
+    "mermaid_for_every_multi_stage_process": true,
+    "visuals_at_correct_D_target_level": true,
+    "no_placeholders": true,
+    "filler_padding": false,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "coverage_ratio_applied": "30%"
+    }
+  }
+}

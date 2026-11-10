@@ -1,0 +1,30 @@
+{
+  "short_id": "short_04_compound_epithelium",
+  "short_title": "Compound Epithelium — Stratified & Transitional",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L3_Compound", "L4_Stratified", "L5_NonKeratinised", "L5_Keratinised", "L4_StratifiedCuboidal", "L4_StratifiedColumnar", "L4_Transitional"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S04_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "What covers your skin, lines your mouth, and can stretch to hold a full urinary bladder? Three types of compound epithelium — all built for protection and stress.",
+      "video_prompt": "Split-screen: left shows skin epidermis histology (striated layers, keratinised top). Right shows an animated empty vs. filled urinary bladder cross-section. Both panels dissolve into a title: 'Compound Epithelium'. Cinematic colour-graded biology style."
+    },
+    {
+      "segment_id": "S04_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Compound epithelium has many layers; only the innermost layer touches the basement membrane. Stratified squamous non-keratinised is in moist surfaces — mouth, oesophagus, vagina. Keratinised is in skin and all keratin derivatives: fish scales, reptile scutes, bird feathers, mammal hair, nail, horn, hoof. Keratin is a scleroprotein — hard, insoluble, waterproof. Stratified cuboidal is rare, in salivary and sweat gland ducts. Stratified columnar in conjunctiva and pharynx. Transitional epithelium or urothelium — relaxed cells are rounded; stretched cells flatten to squamous. Basement membrane visible when relaxed, invisible when stretched. Lines the urinary tract for high expansion.",
+      "video_prompt": "Left panel: comparison diagram of non-keratinised (smooth pink free border) vs. keratinised skin (rough cornified outer layer). Centre: collage of keratin derivatives in phylogenetic order — fish scales, reptile scutes, bird feathers, mammal nail. Right panel: transitional epithelium morphing animation — empty bladder with dome-shaped cells → filled bladder with flat squamous cells, baseline membrane appearing/disappearing. Smooth tween animation, clinical blue and white palette."
+    },
+    {
+      "segment_id": "S04_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Modified Epithelium — the six specialised forms.",
+      "video_prompt": "Title card: 'Up Next: Modified Epithelium'. Backdrop of cilia waving on a cell surface. Smooth wipe to black."
+    }
+  ]
+}

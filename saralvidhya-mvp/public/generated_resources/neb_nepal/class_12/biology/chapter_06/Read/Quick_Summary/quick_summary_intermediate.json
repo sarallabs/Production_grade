@@ -1,0 +1,28 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 918,
+  "D_max_detected": 8,
+  "D_target_used": 5,
+  "source": "Biology Textbook pp. 193-239 (PDF primary) + Mermaid mindmap",
+  "sections_summary": [
+    "History & Overview",
+    "Epithelial Tissue (Simple + Compound + Modified)",
+    "Connective Tissue (Proper + Supportive + Fluid)",
+    "Muscular Tissue (Striped/Unstriped/Cardiac + Coverings)",
+    "Nervous Tissue (CNS + PNS Neuroglia + Neurone anatomy)"
+  ],
+  "image_refs_embedded": 37,
+  "mermaid_diagrams_embedded": 1,
+  "validation_report": {
+    "word_count_check": "918 words — within 750–1000 target",
+    "key_visuals_covered": true,
+    "filler_padding": false,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 5,
+      "coverage_ratio_applied": "60%"
+    }
+  }
+}

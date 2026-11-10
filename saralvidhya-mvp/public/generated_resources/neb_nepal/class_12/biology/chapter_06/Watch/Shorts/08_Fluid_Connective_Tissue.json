@@ -1,0 +1,30 @@
+{
+  "short_id": "short_08_fluid_ct",
+  "short_title": "Fluid Connective Tissue — Blood & Lymph",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L2_Fluid", "L3_Blood", "L4_Plasma", "L4_RBC", "L4_WBC", "L5_Granulocytes", "L6_Neutrophils", "L6_Basophils", "L6_Eosinophils", "L5_Agranulocytes", "L6_Lymphocytes", "L6_Monocytes", "L4_Platelet", "L3_Lymph"],
+  "pedagogical_mode": "Causal & Process-Oriented",
+  "segments": [
+    {
+      "segment_id": "S08_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "What flows through 100,000 kilometres of vessels, carries oxygen to every cell, and fights every infection? Blood — your fluid connective tissue.",
+      "video_prompt": "Cinematic slow-motion animation inside a blood vessel. RBCs (red biconcave discs) flow in a stream. A large WBC (round, nucleated) tumbles slowly. Platelets (tiny irregular fragments) glitter. Golden bioluminescent lighting, deep-red vessel walls. Camera tracks alongside the cells."
+    },
+    {
+      "segment_id": "S08_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Blood has two components. Plasma (55%): water, albumin, globulins, fibrinogen, plus solutes. Formed elements (45%): RBCs are biconcave, anucleate, haemoglobin-containing, 4.5 to 5.5 million per mm³, lifespan 120 days, made in red bone marrow, destroyed in the spleen. WBCs are nucleated and amoeboid, 4,000 to 11,000 per mm³. Granulocytes: neutrophils (60–70%, phagocytise bacteria), basophils (histamine and heparin), eosinophils (anti-parasitic). Agranulocytes: lymphocytes B and T (antibody and cell-mediated immunity), monocytes (become macrophages). Platelets: anucleate cell fragments, 2.5 lakh per mm³, essential for blood clotting. Lymph: filtered plasma that leaks into interstitial space, collected by lymphatic capillaries, processed in lymph nodes, returned to blood via the thoracic duct.",
+      "video_prompt": "Infographic animation sequence: A test tube fills with blood — plasma (golden) separates above the red cell layer. Then zoom into formed elements — RBCs (biconcave red discs), WBCs explode into a branching tree (granulocytes left: neutrophil, basophil, eosinophil; agranulocytes right: lymphocyte B and T, monocyte), platelets (tiny fragments). Each branch has a function icon (phagocyte, shield, scissors). Then a lymph circulation diagram: capillary wall leakage → interstitial fluid → lymph capillary → lymph node (filtering icon) → thoracic duct → subclavian vein. Dark lab background, neon labels."
+    },
+    {
+      "segment_id": "S08_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Muscular Tissue — the body's engine of movement.",
+      "video_prompt": "Title card: 'Up Next: Muscular Tissue'. Background: striated skeletal muscle fibres in biopsy slide style. Smooth wipe to black."
+    }
+  ]
+}

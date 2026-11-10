@@ -1,0 +1,17 @@
+{
+  "questions": [
+    {
+      "id": "MCQ_H1",
+      "stem": "Check the validity of the equation v^2 = u^2 + 2as.",
+      "options": [
+        "A) Valid",
+        "B) Invalid",
+        "C) Partially valid",
+        "D) Cannot be determined"
+      ],
+      "answer": "A) Valid",
+      "explanation": "Units on both sides are m^2/s^2, making the equation dimensionally uniform.",
+      "difficulty": "Hard"
+    }
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_T3_01",
+      "term": "Fibroblasts",
+      "definition": "Principal connective tissue cells synthesizing extracellular ground substance, collagen, and elastin fibers.",
+      "category": "Connective Cells",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "FC_T3_02",
+      "term": "Mast Cells",
+      "definition": "Connective tissue immune cells secreting Histamine (vasodilator), Heparin (anticoagulant), and Serotonin.",
+      "category": "Connective Cells",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "FC_T3_03",
+      "term": "Histocytes (Tissue Macrophages)",
+      "definition": "Phagocytic monocyte-derived cells that engulf foreign pathogens and cellular debris in connective tissue matrix.",
+      "category": "Connective Cells",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "FC_T3_04",
+      "term": "Plasma Cells",
+      "definition": "Differentiated B-lymphocytes with 'cartwheel' nuclear chromatin that synthesize circulating antibodies.",
+      "category": "Connective Cells",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "FC_T3_05",
+      "term": "Loose Areolar Connective Tissue",
+      "definition": "Matrix under skin containing fibroblasts, mast cells, macrophages, collagen, and elastic fibers forming body packing.",
+      "category": "Loose CT",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "FC_T3_06",
+      "term": "White Adipose Tissue (WAT)",
+      "definition": "Monolocular fat cells storing triglycerides for long-term energy storage and mechanical cushioning.",
+      "category": "Loose CT",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "FC_T3_07",
+      "term": "Brown Adipose Tissue (BAT)",
+      "definition": "Multilocular fat cells packed with mitochondria expressing UCP-1 (Thermogenin) for non-shivering thermogenesis.",
+      "category": "Loose CT",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "FC_T3_08",
+      "term": "Tendons",
+      "definition": "Dense regular white fibrous CT containing parallel Type I collagen bundles connecting skeletal muscle to bone.",
+      "category": "Dense CT",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "FC_T3_09",
+      "term": "Ligaments",
+      "definition": "Yellow elastic CT containing branching elastic fibers connecting bone to bone across joints.",
+      "category": "Dense CT",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "FC_T3_10",
+      "term": "Hyaline Cartilage",
+      "definition": "Avascular solid pliable chondrin matrix with chondrocytes in lacunae; lines bone articular ends, nose, and ribs.",
+      "category": "Cartilage",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "FC_T3_11",
+      "term": "Fibrocartilage",
+      "definition": "Toughest cartilage rich in Type I collagen bundles; lacks perichondrium; forms intervertebral discs.",
+      "category": "Cartilage",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "FC_T3_12",
+      "term": "Compact Bone Osteon (Haversian System)",
+      "definition": "Functional unit of compact bone comprising central Haversian canal, concentric ossein lamellae, lacunae, and canaliculi.",
+      "category": "Bone",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "FC_T3_13",
+      "term": "Volkmann's Canals",
+      "definition": "Transverse vascular channels connecting adjacent Haversian canals with periosteal blood vessels in compact bone.",
+      "category": "Bone",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "FC_T3_14",
+      "term": "Erythrocytes (RBCs)",
+      "definition": "Non-nucleated biconcave blood discs packed with hemoglobin carrying oxygen in peripheral circulation.",
+      "category": "Fluid CT",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "FC_T3_15",
+      "term": "Leucocytes (WBCs)",
+      "definition": "Nucleated immune blood cells split into Granulocytes (Neutrophils, Eosinophils, Basophils) and Agranulocytes (Monocytes, Lymphocytes).",
+      "category": "Fluid CT",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    }
+  ]
+}

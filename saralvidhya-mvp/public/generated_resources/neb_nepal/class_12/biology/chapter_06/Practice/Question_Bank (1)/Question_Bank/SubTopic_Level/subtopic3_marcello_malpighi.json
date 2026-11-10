@@ -1,0 +1,45 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 3,
+  "subtopic_name": "1.3 Marcello Malpighi \u2014 Pioneer of Microscopic Anatomy",
+  "topic_name": "History & Overview",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > History & Overview > Marcello Malpighi",
+  "questions": [
+    {
+      "id": "qb_subtopic3_001",
+      "type": "Fact",
+      "question": "What key microscopic circulatory discovery was made by Marcello Malpighi in 1661?",
+      "answer_2mark": "In 1661, Marcello Malpighi discovered blood capillaries in frog lungs, demonstrating the microscopic vascular link between arteries and veins and confirming William Harvey's theory of closed circulation.",
+      "answer_5mark": [
+        "1. Marcello Malpighi (1628\u20131694) was an Italian physician and pioneer microscopist.",
+        "2. In 1661, he examined the living, inflated lungs of frogs under early compound light microscopes.",
+        "3. He discovered minute, thin-walled vessels connecting terminal arterioles to venules, which he named capillaries.",
+        "4. This discovery provided the definitive physical proof of William Harvey's 1628 hypothesis of closed blood circulation.",
+        "5. He proved that blood flows from the arterial system into venous channels through microscopic tissue networks.",
+        "6. For this and other microscopic discoveries, Malpighi is celebrated as the Pioneer of Microscopic Anatomy."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > History & Overview > Marcello Malpighi",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "Malpighi's Capillary Microcirculation Diagram"
+    },
+    {
+      "id": "qb_subtopic3_002",
+      "type": "List",
+      "question": "List three anatomical structures named in honor of Marcello Malpighi.",
+      "answer_2mark": "Three major eponymous structures are: 1) Malpighian corpuscles (renal glomerulus and Bowman's capsule in kidneys), 2) Malpighian layer (stratum basale of skin epidermis), and 3) Malpighian tubules (excretory organs in insects).",
+      "answer_5mark": [
+        "1. **Renal Malpighian Corpuscles**: The spherical blood-filtering units in mammalian kidney cortex consisting of a capillary glomerulus surrounded by Bowman's capsule.",
+        "2. **Cutaneous Malpighian Layer**: The deep germinative layer (*stratum basale* and *stratum spinosum*) of the epidermis responsible for continuous mitotic skin cell renewal.",
+        "3. **Splenic Malpighian Corpuscles**: White pulp lymphoid nodules surrounding central arterioles inside the spleen.",
+        "4. **Arthropod Malpighian Tubules**: Branching excretory tubules extending from the alimentary canal in insects and arachnids.",
+        "5. These diverse eponymous terms highlight Malpighi's extensive comparative microscopic investigations across animal phyla."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > History & Overview > Marcello Malpighi",
+      "bloom_level": "Remember",
+      "difficulty": "Medium",
+      "diagram_ref": "Renal Malpighian Corpuscle Diagram"
+    }
+  ]
+}

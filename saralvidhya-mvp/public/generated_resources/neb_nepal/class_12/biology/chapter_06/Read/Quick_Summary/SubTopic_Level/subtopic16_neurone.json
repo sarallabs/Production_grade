@@ -1,0 +1,44 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 16,
+  "subtopic_name": "5.2 Neurone \u2014 Structural and Functional Neural Architecture",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 88,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neurone",
+  "sections": [
+    {
+      "subsection_header": "5.2 Neurone \u2014 Structural and Functional Neural Architecture",
+      "bullets": [
+        "**Unit of Nervous System**: Neurons are structural and functional excitable units specialized for receiving, conducting, and transmitting nerve impulses.",
+        "**Structural Parts**: **Soma / Cyton** (cell body containing nucleus & **Nissl's granules** RER/ribosomes) and **Neurites** (**Dendrites** short branched centripetal processes; **Axon** single long centrifugal process ending in synaptic telodendria).",
+        "**Myelin Sheath**: **Myelinated** (wrapped in lipid sheath with **Nodes of Ranvier** for rapid saltatory conduction) vs **Non-myelinated** (continuous slow conduction).",
+        "**Structural Types**: Apolar (Hydra), Pseudopolar (dorsal root ganglion), Unipolar (embryo), Bipolar (retina/olfactory), Multipolar (cerebral cortex).",
+        "**Functional Direction**: Sensory/Afferent, Motor/Efferent, Interneuron/Adjustor."
+      ],
+      "mermaid_diagram": "graph TD\n    D[Dendrites Receptive] --> C[Soma / Cyton Integration]\n    C --> AH[Axon Hillock Action Potential Origin]\n    AH --> A[Axon Conduction]\n    A --> T[Telodendria Synaptic Output]",
+      "visual_references": [
+        "5. Nervous Tissue\\3. Neurone\\00.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\1. Parts Soma and Neurite.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\2. Nissls_ granules.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\3. Node of Ranvier.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\4. Direction.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\5. Structure.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\6. Matter.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "word_count_check": "Target reached for sub-topic quick study",
+    "must_know_filtering": true,
+    "formula_preservation": true,
+    "infographics_count": 7,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neurone"
+    }
+  }
+}

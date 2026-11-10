@@ -1,0 +1,36 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 8,
+  "subtopic_name": "2.4 Modified & Glandular Epithelium",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 232,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Modified & Glandular Epithelium",
+  "sections": [
+    {
+      "header": "2.4 Modified & Glandular Epithelium",
+      "level": 2,
+      "content": "### 2.4 Modified and Glandular Epithelial Specializations\n\nEpithelial cells exhibit remarkable evolutionary plasticity, modifying their cytoplasmic machinery and apical membranes to execute specialized physiological tasks.\n\n#### Modified Non-Glandular Epithelia\n- **Ciliated Epithelium**: Apical membrane bears hair-like projections. **Kino-cilia** possess motile 9+2 microtubule axonemes (e.g. respiratory tract), whereas **Stereo-cilia** feature non-motile 0+0 actin core projections (e.g. epididymis, inner ear hair cells).\n- **Neuro-sensory Epithelium**: Epithelial cells integrated with sensory nerve endings (e.g. gustatory taste buds, olfactory epithelium).\n- **Germinal Epithelium**: Cuboidal layer lining gonads undergoing meiosis to produce gametes (spermatogonia, oogonia).\n\n#### Glandular Epithelium Classification Axes\n\n```\nGlandular Epithelium\n \u251c\u2500\u2500 By Presence of Ducts: Exocrine | Endocrine | Heterocrine (Mixed)\n \u251c\u2500\u2500 By Mode of Secretion: Merocrine (Eccrine) | Apocrine | Holocrine\n \u251c\u2500\u2500 By Secretion Type: Serous (Watery) | Mucous (Viscous Mucin) | Mixed\n \u251c\u2500\u2500 By Cell Number: Unicellular (Goblet) | Multicellular (Salivary)\n \u2514\u2500\u2500 By Architectural Complexity:\n       \u251c\u2500\u2500 Simple Glands: Simple Tubular, Simple Coiled Tubular, Simple Alveolar\n       \u2514\u2500\u2500 Compound Glands: Compound Tubular, Compound Alveolar, Compound Tubulo-Alveolar\n```\n\n#### Secretory Mechanisms (Modes of Secretion)\n1. **Merocrine (Eccrine)**: Secretory vesicles release products via standard exocytosis with zero cellular damage (e.g. pancreas, salivary glands, eccrine sweat glands).\n2. **Apocrine**: Secretory granules accumulate at the apical cytoplasm, which pinches off during release (e.g. mammary glands, apocrine sweat glands).\n3. **Holocrine**: The entire cell fills with secretory products, disintegrates, and dies to discharge its contents (e.g. sebaceous cutaneous glands).",
+      "mermaid_diagram": "graph TD\n    A[Merocrine] -->|Exocytosis| B[Zero Cell Damage]\n    C[Apocrine] -->|Apical Pinching| D[Partial Cytoplasm Loss]\n    E[Holocrine] -->|Total Lysis| F[Entire Cell Disintegration]",
+      "visual_references": [
+        "2. Epithelial Tissue\\4. Modified Epithelium\\00 Modified_Epithelium_Types_and_Functions.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\1. Modified_Ciliated_Epithelium_Specialisations.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\2. Specialised_Brush-Bordered_Epithelium_Guide.png",
+        "2. Epithelial Tissue\\4. Modified Epithelium\\6. Glandular_Epithelium_Classification_Overview.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 4,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Modified & Glandular Epithelium"
+    }
+  }
+}

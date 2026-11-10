@@ -1,0 +1,30 @@
+{
+  "short_id": "short_10_nervous",
+  "short_title": "Nervous Tissue — Neuroglia & Neurons",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L1_Nervous", "L2_Neuroglia", "L3_CNS_Glia", "L4_Astrocyte", "L4_Oligodendrocyte", "L4_Microglia", "L4_Ependymal", "L3_PNS_Glia", "L4_Stellate", "L4_SchwannCell", "L2_Neurone", "L3_Soma", "L3_Neurite", "L4_Dendrite", "L4_Axon", "L3_Myelin", "L4_NodesOfRanvier", "L3_Structure_Function", "L4_Unipolar", "L4_Bipolar", "L4_Multipolar", "L3_Connection", "L4_Sensory", "L4_Motor", "L4_Intermediate", "L3_Color", "L4_GreyMatter", "L4_WhiteMatter"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S10_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Eighty-six billion neurons — and yet you can't grow a single new one after birth. The brain's architecture is fixed, but its connections are limitless.",
+      "video_prompt": "Electric pulse arcs from Node of Ranvier to Node of Ranvier along a myelinated axon — saltatory conduction shown as bright blue sparks jumping gaps. Camera pulls back to reveal the axon is one of billions forming a glowing neural network — the human brain cortex visualised as a luminous gold-blue mesh. Dramatic cinematic reveal, deep-space background."
+    },
+    {
+      "segment_id": "S10_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Nervous tissue is ectodermal — except microglia which are mesodermal. It controls, coordinates, integrates, and regulates through nerve impulse conduction. Two cell types. Neuroglia can divide. CNS glia: astrocytes (star-shaped, regulate neuro-environment, form the blood-brain barrier, heal injury); oligodendrocytes (form CNS myelin); microglia (CNS macrophages, phagocytise debris); ependymal cells (line ventricles, secrete CSF). PNS glia: stellate satellite cells (nourish soma), Schwann cells (form PNS myelin, enable nerve regeneration). Neurons cannot divide after birth. Soma contains nucleus, Nissl's granules (rough ER), and mitochondria. Dendrites carry signals to the soma — Nissl granules present. Single axon carries signals away from soma — myelinated in many neurons. Nodes of Ranvier between Schwann cell segments enable saltatory conduction. By structure: unipolar, bipolar, multipolar (most common). By function: sensory or afferent (receptors to CNS), motor or efferent (CNS to effectors), intermediate or adjustor (within CNS, most numerous). Grey matter is soma-rich. White matter is myelin-rich axon bundles.",
+      "video_prompt": "Three-panel sequence: (1) Neuroglia schematic — neuron at centre surrounded by astrocyte (star-shaped, foot-processes on capillary), oligodendrocyte (wraps CNS axon), microglia (phagocytic pseudopodia toward debris), ependymal cells (lining ventricle with cilia). Schwann cell wraps PNS axon below. All labelled. (2) Detailed labelled multipolar neuron: soma with Nissl granules, multiple dendrites (arrows IN), single axon (arrow OUT), myelin sheath (blue segments), Nodes of Ranvier (gaps), synaptic terminal bulbs. (3) Reflex arc animation: receptor → afferent neuron (upward arrow) → spinal cord interneuron → efferent neuron (downward arrow) → effector (muscle contracting). Clean medical illustration style, dark navy background, neon callout labels."
+    },
+    {
+      "segment_id": "S10_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "That completes Unit 6: Animal Tissue. For a full chapter walkthrough, watch the Quick Watch or Detailed Watch. Good luck!",
+      "video_prompt": "End card: a 2x2 tissue type icon grid — Epithelial, Connective, Muscular, Nervous — all glowing with their respective colours on a dark background. Chapter title: 'Unit 6: Animal Tissue — Complete'. Playlist tiles for Quick Watch and Detailed Watch appear at the bottom. Soft orchestral outro music. Fade to black."
+    }
+  ]
+}

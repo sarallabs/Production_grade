@@ -1,0 +1,135 @@
+{
+  "topic": "Topic 2: Epithelial Tissue & Cell Junctions",
+  "questions": [
+    {
+      "id": "PA_T2_MCQ_01",
+      "stem": "Which type of simple epithelium consists of single-layer flattened pavement cells lining blood vessel endothelium?",
+      "options": [
+        "A) Simple Cuboidal",
+        "B) Simple Columnar",
+        "C) Simple Squamous",
+        "D) Pseudostratified"
+      ],
+      "answer": "C) Simple Squamous",
+      "explanation": "Simple squamous pavement epithelium lines blood vessel endothelium.",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PA_T2_MCQ_02",
+      "stem": "Simple cuboidal epithelium with microvilli brush border is specially adapted for reabsorption in:",
+      "options": [
+        "A) Stomach lumen",
+        "B) PCT of renal nephron",
+        "C) Oesophagus",
+        "D) Trachea"
+      ],
+      "answer": "B) PCT of renal nephron",
+      "explanation": "Renal PCT is lined by simple cuboidal brush-bordered epithelium.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PA_T2_MCQ_03",
+      "stem": "Mucus-secreting unicellular Goblet cells interspersed in simple columnar epithelium occur in:",
+      "options": [
+        "A) Thyroid gland",
+        "B) Gut stomach and intestinal mucosa",
+        "C) Kidney glomerulus",
+        "D) Dry skin epidermis"
+      ],
+      "answer": "B) Gut stomach and intestinal mucosa",
+      "explanation": "Goblet cells are unicellular exocrine glands in stomach and intestine mucosa.",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PA_T2_MCQ_04",
+      "stem": "Pseudostratified ciliated columnar epithelium lines which major anatomical structure?",
+      "options": [
+        "A) Trachea and respiratory tract",
+        "B) Urinary bladder",
+        "C) Thyroid follicles",
+        "D) Oral cavity"
+      ],
+      "answer": "A) Trachea and respiratory tract",
+      "explanation": "Pseudostratified ciliated columnar epithelium lines trachea and large bronchi.",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PA_T2_MCQ_05",
+      "stem": "Non-keratinized stratified squamous epithelium protects moist internal mucous membranes such as:",
+      "options": [
+        "A) Skin epidermis",
+        "B) Oesophagus and oral cavity",
+        "C) Renal tubule",
+        "D) Thyroid gland"
+      ],
+      "answer": "B) Oesophagus and oral cavity",
+      "explanation": "Non-keratinized stratified squamous lines moist surfaces like oral cavity and oesophagus.",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "PA_T2_MCQ_06",
+      "stem": "Distensible plastic urothelium capable of stretching as volume expands lines the lumen of:",
+      "options": [
+        "A) Stomach",
+        "B) Urinary bladder",
+        "C) Gall bladder",
+        "D) Trachea"
+      ],
+      "answer": "B) Urinary bladder",
+      "explanation": "Transitional epithelium (urothelium) lines the urinary bladder.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PA_T2_MCQ_07",
+      "stem": "Which motile cell surface modification propels mucus sweeps across respiratory passage walls?",
+      "options": [
+        "A) Microvilli",
+        "B) Stereocilia",
+        "C) Motile Kino-cilia",
+        "D) Keratin scales"
+      ],
+      "answer": "C) Motile Kino-cilia",
+      "explanation": "Motile cilia propel trapped particles and mucus sweep along respiratory mucosa.",
+      "image": "1. Modified_Ciliated_Epithelium_Specialisations.png"
+    },
+    {
+      "id": "PA_T2_MCQ_08",
+      "stem": "Sensory neuro-epithelium responsible for olfaction odor detection is named:",
+      "options": [
+        "A) Schneiderian / Olfactory membrane",
+        "B) Germinal epithelium",
+        "C) Pigmented epithelium",
+        "D) Urothelium"
+      ],
+      "answer": "A) Schneiderian / Olfactory membrane",
+      "explanation": "Olfactory epithelium (Schneiderian membrane) perceives smells in nasal cavity.",
+      "image": "3. The_Olfactory_Gateway_to_Smelling.png"
+    },
+    {
+      "id": "PA_T2_MCQ_09",
+      "stem": "Which epithelial cell junction seals cell membranes together to prevent fluid leakage across sheets?",
+      "options": [
+        "A) Gap junction",
+        "B) Tight junction (Zona Occludens)",
+        "C) Desmosome",
+        "D) Hemidesmosome"
+      ],
+      "answer": "B) Tight junction (Zona Occludens)",
+      "explanation": "Tight junctions form occluding barriers blocking intercellular fluid leakage.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PA_T2_MCQ_10",
+      "stem": "Ductless glands secreting hormones directly into surrounding blood capillaries are classified as:",
+      "options": [
+        "A) Exocrine glands",
+        "B) Endocrine glands",
+        "C) Holocrine glands",
+        "D) Merocrine glands"
+      ],
+      "answer": "B) Endocrine glands",
+      "explanation": "Endocrine glands are ductless glands secreting hormones into circulation.",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    }
+  ]
+}

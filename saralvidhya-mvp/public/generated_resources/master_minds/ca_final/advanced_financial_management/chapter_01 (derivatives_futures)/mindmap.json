@@ -1,0 +1,65 @@
+{
+  "name": "Derivatives - Futures",
+  "children": [
+    {
+      "name": "Fundamentals & Markets",
+      "id": "topic_1",
+      "children": [
+        {
+          "name": "Core Definitions",
+          "id": "subtopic_1.1"
+        },
+        {
+          "name": "Market Types",
+          "id": "subtopic_1.2"
+        }
+      ]
+    },
+    {
+      "name": "Margins",
+      "id": "topic_2",
+      "children": [
+        {
+          "name": "Margin Mechanics",
+          "id": "subtopic_2.1"
+        },
+        {
+          "name": "Daily Settlement & MTM",
+          "id": "subtopic_2.2"
+        }
+      ]
+    },
+    {
+      "name": "Strategies",
+      "id": "topic_3",
+      "children": [
+        {
+          "name": "Hedging & Price Discovery",
+          "id": "subtopic_3.1"
+        },
+        {
+          "name": "Arbitrage Strategies",
+          "id": "subtopic_3.2"
+        }
+      ]
+    },
+    {
+      "name": "Methods",
+      "id": "topic_4",
+      "children": [
+        {
+          "name": "Pricing Methods",
+          "id": "subtopic_4.1"
+        },
+        {
+          "name": "Expiry & Rollover Methods",
+          "id": "subtopic_4.2"
+        },
+        {
+          "name": "Trend & Momentum Methods",
+          "id": "subtopic_4.3"
+        }
+      ]
+    }
+  ]
+}

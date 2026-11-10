@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PA_MCQ_E1",
+      "stem": "Which tissue type covers exterior body surfaces and lines hollow internal visceral organs?",
+      "options": [
+        "A) Connective Tissue",
+        "B) Epithelial Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "answer": "B) Epithelial Tissue",
+      "explanation": "Epithelial tissue forms protective covers.",
+      "difficulty": "Easy",
+      "image": "00 General_Features_of_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PA_MCQ_E2",
+      "stem": "The basement membrane supporting epithelial cells consists of basal lamina and:",
+      "options": [
+        "A) Ossein lamina",
+        "B) Reticular lamina",
+        "C) Chondrin lamina",
+        "D) Elastic lamina"
+      ],
+      "answer": "B) Reticular lamina",
+      "explanation": "Basement membrane = Basal lamina + Reticular lamina.",
+      "difficulty": "Easy",
+      "image": "2. Avascular_Tissue_Survival_and_Respiration.png"
+    },
+    {
+      "id": "PA_MCQ_E3",
+      "stem": "Which simple epithelium is composed of a single layer of flattened pavement-like cells?",
+      "options": [
+        "A) Simple Cuboidal",
+        "B) Simple Columnar",
+        "C) Simple Squamous",
+        "D) Pseudostratified"
+      ],
+      "answer": "C) Simple Squamous",
+      "explanation": "Simple squamous epithelium features flat pavement cells.",
+      "difficulty": "Easy",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PA_MCQ_E4",
+      "stem": "Microvilli lining the PCT of renal nephrons form a brush border to:",
+      "options": [
+        "A) Impede urine flow",
+        "B) Maximize surface area for selective reabsorption",
+        "C) Secretes mucin",
+        "D) Filter blood cells"
+      ],
+      "answer": "B) Maximize surface area for selective reabsorption",
+      "explanation": "Brush border microvilli increase absorption surface area.",
+      "difficulty": "Easy",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PA_MCQ_E5",
+      "stem": "Goblet cells interspersed in simple columnar gut epithelium function to secrete:",
+      "options": [
+        "A) Hydrochloric acid",
+        "B) Mucus",
+        "C) Pepsinogen",
+        "D) Bile salts"
+      ],
+      "answer": "B) Mucus",
+      "explanation": "Goblet cells are unicellular exocrine glands secreting mucus.",
+      "difficulty": "Easy",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PA_MCQ_E6",
+      "stem": "Which epithelial modification propels trapped particles along the respiratory tract mucosa?",
+      "options": [
+        "A) Microvilli",
+        "B) Stereocilia",
+        "C) Motile Kino-cilia",
+        "D) Keratin scales"
+      ],
+      "answer": "C) Motile Kino-cilia",
+      "explanation": "Motile cilia move mucus sweeps in respiratory passages.",
+      "difficulty": "Easy",
+      "image": "1. Modified_Ciliated_Epithelium_Specialisations.png"
+    },
+    {
+      "id": "PA_MCQ_E7",
+      "stem": "Non-keratinized stratified squamous epithelium lines which moist anatomical site?",
+      "options": [
+        "A) Dry skin epidermis",
+        "B) Oral cavity and oesophagus",
+        "C) Thyroid follicles",
+        "D) Kidney glomeruli"
+      ],
+      "answer": "B) Oral cavity and oesophagus",
+      "explanation": "Non-keratinized stratified squamous protects moist surfaces like mouth.",
+      "difficulty": "Easy",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PA_MCQ_E8",
+      "stem": "The distensible plastic epithelium lining the lumen of the urinary bladder is:",
+      "options": [
+        "A) Endothelium",
+        "B) Transitional Epithelium (Urothelium)",
+        "C) Mesothelium",
+        "D) Germinal Epithelium"
+      ],
+      "answer": "B) Transitional Epithelium (Urothelium)",
+      "explanation": "Urothelium stretches as the bladder fills.",
+      "difficulty": "Easy",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PA_MCQ_E9",
+      "stem": "Ductless glands releasing chemical messengers directly into blood capillaries are:",
+      "options": [
+        "A) Exocrine glands",
+        "B) Endocrine glands",
+        "C) Heterocrine glands",
+        "D) Holocrine glands"
+      ],
+      "answer": "B) Endocrine glands",
+      "explanation": "Endocrine glands are ductless glands secreting hormones.",
+      "difficulty": "Easy",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    },
+    {
+      "id": "PA_MCQ_E10",
+      "stem": "Which cell junction prevents leakage of digestive fluids across epithelial cell sheets?",
+      "options": [
+        "A) Gap junction",
+        "B) Tight junction (Zona occludens)",
+        "C) Desmosome",
+        "D) Hemidesmosome"
+      ],
+      "answer": "B) Tight junction (Zona occludens)",
+      "explanation": "Tight junctions seal cell membranes to block fluid leakage.",
+      "difficulty": "Easy",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    }
+  ]
+}

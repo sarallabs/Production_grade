@@ -1,0 +1,202 @@
+{
+  "questions": [
+    {
+      "id": "PE_MSQ_01",
+      "stem": "Which of the following are primary animal tissue types? (Select all that apply)",
+      "options": [
+        "A) Epithelial tissue",
+        "B) Connective tissue",
+        "C) Vascular tissue only",
+        "D) Muscular tissue",
+        "E) Nervous tissue"
+      ],
+      "answers": [
+        "A) Epithelial tissue",
+        "B) Connective tissue",
+        "D) Muscular tissue",
+        "E) Nervous tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "difficulty": "Easy",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PE_MSQ_02",
+      "stem": "Select all cell junctions present in epithelial tissue:",
+      "options": [
+        "A) Tight junction",
+        "B) Adherens junction",
+        "C) Desmosome",
+        "D) Gap junction",
+        "E) Synaptic knob"
+      ],
+      "answers": [
+        "A) Tight junction",
+        "B) Adherens junction",
+        "C) Desmosome",
+        "D) Gap junction"
+      ],
+      "explanation": "Epithelial junctions: Tight, Adherens, Desmosome, Gap.",
+      "difficulty": "Easy",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PE_MSQ_03",
+      "stem": "Which components are part of formed elements in blood? (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Albumins",
+        "E) Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed elements = RBC, WBC, Platelets; Albumins & Fibrinogen are plasma proteins.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_MSQ_04",
+      "stem": "Select all characteristics of Skeletal Muscle:",
+      "options": [
+        "A) Voluntary control",
+        "B) Syncytial multinucleated",
+        "C) Striated bands",
+        "D) Intercalated discs",
+        "E) Fatigues quickly"
+      ],
+      "answers": [
+        "A) Voluntary control",
+        "B) Syncytial multinucleated",
+        "C) Striated bands",
+        "E) Fatigues quickly"
+      ],
+      "explanation": "Skeletal muscle is voluntary, striated, syncytial, fatigues.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    },
+    {
+      "id": "PE_MSQ_05",
+      "stem": "[MSQ_msq_prep_easy] Which locations contain Simple Squamous Epithelium? (Select all that apply)",
+      "options": [
+        "A) Lung alveoli",
+        "B) Endothelium of blood vessels",
+        "C) Mesothelium of coelom",
+        "D) PCT of kidney",
+        "E) Bowman's capsule"
+      ],
+      "answers": [
+        "A) Lung alveoli",
+        "B) Endothelium of blood vessels",
+        "C) Mesothelium of coelom",
+        "E) Bowman's capsule"
+      ],
+      "explanation": "Squamous lines alveoli, endothelium, mesothelium, Bowman's capsule.",
+      "difficulty": "Easy",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PE_MSQ_06",
+      "stem": "Which types of fibres occur in Connective Tissue Proper? (Select all that apply)",
+      "options": [
+        "A) Collagen white fibres",
+        "B) Yellow elastic fibres",
+        "C) Reticular network fibres",
+        "D) Myofibril protein fibres",
+        "E) Axon nerve fibres"
+      ],
+      "answers": [
+        "A) Collagen white fibres",
+        "B) Yellow elastic fibres",
+        "C) Reticular network fibres"
+      ],
+      "explanation": "3 fibre types in CT Proper: Collagen, Elastic, Reticular.",
+      "difficulty": "Easy",
+      "image": "2. Fibres_of_Proper_Connective_Tissue.png"
+    },
+    {
+      "id": "MSQ_P_E_07",
+      "stem": "Which of the following are functions of Epithelial Tissue? (Select all that apply)",
+      "options": [
+        "A) Protection",
+        "B) Secretion",
+        "C) Absorption",
+        "D) Contraction",
+        "E) Gaseous diffusion"
+      ],
+      "answers": [
+        "A) Protection",
+        "B) Secretion",
+        "C) Absorption",
+        "E) Gaseous diffusion"
+      ],
+      "explanation": "Epithelium protects, secretes, absorbs, and diffuses gases. Contraction = muscular tissue.",
+      "difficulty": "Easy",
+      "image": "1. Understanding_Epithelial_Tissue_Functions.png"
+    },
+    {
+      "id": "MSQ_P_E_08",
+      "stem": "Select all locations where Simple Cuboidal Epithelium is found:",
+      "options": [
+        "A) Thyroid follicles",
+        "B) Duct of salivary glands",
+        "C) PCT of nephron",
+        "D) Skin surface",
+        "E) Ovary surface"
+      ],
+      "answers": [
+        "A) Thyroid follicles",
+        "B) Duct of salivary glands",
+        "C) PCT of nephron",
+        "E) Ovary surface"
+      ],
+      "explanation": "Cuboidal lines thyroid, salivary ducts, PCT, ovary surface.",
+      "difficulty": "Easy",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "MSQ_P_E_09",
+      "stem": "Which elements form the ground substance matrix of Connective Tissue? (Select all that apply)",
+      "options": [
+        "A) Mucopolysaccharides (Hyaluronic acid)",
+        "B) Glycoproteins",
+        "C) Water and mineral salts",
+        "D) Actin filaments",
+        "E) Proteoglycans"
+      ],
+      "answers": [
+        "A) Mucopolysaccharides (Hyaluronic acid)",
+        "B) Glycoproteins",
+        "C) Water and mineral salts",
+        "E) Proteoglycans"
+      ],
+      "explanation": "CT matrix = Hyaluronic acid, glycoproteins, water, minerals, proteoglycans.",
+      "difficulty": "Easy",
+      "image": "00 Connective_Tissue_Structure_and_Function.png"
+    },
+    {
+      "id": "MSQ_P_E_10",
+      "stem": "Select all features belonging to Smooth Muscle Tissue:",
+      "options": [
+        "A) Spindle-shaped fusiform myocytes",
+        "B) Single central nucleus",
+        "C) Involuntary autonomic control",
+        "D) Transverse striations",
+        "E) Slow sustained contractions"
+      ],
+      "answers": [
+        "A) Spindle-shaped fusiform myocytes",
+        "B) Single central nucleus",
+        "C) Involuntary autonomic control",
+        "E) Slow sustained contractions"
+      ],
+      "explanation": "Smooth muscle is spindle-shaped, uninucleated, involuntary, unstriated, slow-contracting.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    }
+  ]
+}

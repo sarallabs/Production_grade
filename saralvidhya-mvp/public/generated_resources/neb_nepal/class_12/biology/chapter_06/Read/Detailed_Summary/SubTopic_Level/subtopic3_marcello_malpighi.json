@@ -1,0 +1,33 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 3,
+  "subtopic_name": "1.3 Marcello Malpighi \u2014 Pioneer of Microscopic Anatomy",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 151,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > History & Overview > Marcello Malpighi",
+  "sections": [
+    {
+      "header": "1.3 Marcello Malpighi \u2014 Pioneer of Microscopic Anatomy",
+      "level": 2,
+      "content": "### 1.3 Marcello Malpighi \u2014 Pioneer of Microscopic Histology\n\n**Marcello Malpighi** (1628\u20131694) was an Italian physician and biologist widely celebrated as the **Pioneer and Founder of Microscopic Anatomy**. By applying newly invented light microscopes to animal tissues, Malpighi uncovered microscopic structures previously invisible to the human eye.\n\n#### Landmark Histological Discoveries\n1. **Discovery of Capillaries (1661)**: Malpighi observed the microcirculation in frog lungs, demonstrating microscopic capillary networks connecting arterial arterioles to venous venules. This discovery provided the missing physical link in William Harvey's circulatory model.\n2. **Renal Malpighian Corpuscles**: Identified the renal corpuscles (composed of the glomerulus and surrounding capsule) responsible for blood filtration in the kidney nephron.\n3. **Cutaneous Malpighian Layer**: Described the deep germinative layer (*stratum basale* and *stratum spinosum*) of the mammalian epidermis.\n4. **Insect Excretory Tubules**: Discovered the excretory Malpighian tubules in arthropods.\n\nMalpighi's observational breakthroughs laid the empirical foundation for modern cellular histology and microscopic pathology.",
+      "mermaid_diagram": "graph LR\n    A[Arterial Arterioles] --> B[Microscopic Capillary Network]\n    B --> C[Venous Venules]",
+      "visual_references": [
+        "1. History & Fundamentals\\3. Marcello_Malpighi__Histology_Pioneer.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 1,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > History & Overview > Marcello Malpighi"
+    }
+  }
+}

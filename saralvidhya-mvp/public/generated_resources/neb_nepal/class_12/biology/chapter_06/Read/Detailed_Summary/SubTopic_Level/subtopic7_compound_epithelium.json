@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 7,
+  "subtopic_name": "2.3 Compound Epithelium \u2014 Multi-Layered & Transitional Epithelia",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 188,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Compound Epithelium",
+  "sections": [
+    {
+      "header": "2.3 Compound Epithelium \u2014 Multi-Layered & Transitional Epithelia",
+      "level": 2,
+      "content": "### 2.3 Compound Epithelium \u2014 Protective Multi-Layered Fabrics\n\n**Compound Epithelium** comprises multiple stacked cellular strata. Because of its multi-layered thickness, its principal physiological role is mechanical protection against physical abrasion, chemical corrosion, and desiccation rather than absorption or filtration.\n\n#### Major Sub-Classifications\n\n1. **Stratified Squamous Epithelium**:\n   - **Keratinized Type**: Surface cell layers undergo **cornification**, losing their nuclei and becoming filled with tough, insoluble **keratin** protein filaments. Provides a waterproof barrier on the mammalian skin epidermis.\n   - **Non-Keratinized Type**: Surface cells retain living nuclei and cytoplasm. Lines moist mucous membranes subjected to friction, such as the oral cavity, esophagus, pharynx, vagina, and cornea.\n2. **Stratified Cuboidal & Columnar Epithelia**:\n   - Multi-layered cube or column structures limited to large gland ducts (sweat gland ducts, mammary gland ducts) and portions of the male urethra.\n3. **Transitional Epithelium (Urothelium / Plastic Epithelium)**:\n   - Specialized 4\u20136 layer thick expandable epithelium restricted to the urinary system (renal pelvis, ureters, urinary bladder).\n   - Surface **umbrella cells** feature specialized rigid protein plaques on their apical membranes. When the bladder fills, umbrella cells stretch and slide laterally, flattening from cuboidal to squamous morphology without breaking intercellular junctions.",
+      "mermaid_diagram": "graph TD\n    A[Empty Bladder] -->|Fluid Accumulation| B[Umbrella Cells Flatten]\n    B --> C[Lateral Cell Sliding]\n    C -->|Distension| D[Expanded Urothelium Without Membrane Rupture]",
+      "visual_references": [
+        "2. Epithelial Tissue\\3. Compound (Multiple Layer)\\00 Compound_Epithelial_Tissues_Guide.png",
+        "2. Epithelial Tissue\\3. Compound (Multiple Layer)\\1. Stratified_Epithelium_Types_and_Functions.png",
+        "2. Epithelial Tissue\\3. Compound (Multiple Layer)\\2. Transitional_Epithelium_Structure_and_Function.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Compound Epithelium"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 4,
+  "subtopic_name": "1.4 Phylum Coelenterata \u2014 Evolutionary Origin of Animal Tissues",
+  "topic_name": "History & Overview",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > History & Overview > Phylum Coelenterata",
+  "questions": [
+    {
+      "id": "qb_subtopic4_001",
+      "type": "Explain",
+      "question": "Explain why Phylum Coelenterata (Cnidaria) represents a landmark evolutionary milestone in tissue development.",
+      "answer_2mark": "Phylum Coelenterata is the earliest animal phylum to evolve a true 'tissue grade of body organization', transitioning from loose cellular aggregates (Porifera) to integrated epithelial tissue layers with cellular division of labor.",
+      "answer_5mark": [
+        "1. Unicellular protozoans and cellular-level sponges (Porifera) lack true integrated tissues.",
+        "2. Phylum Coelenterata (Cnidaria, e.g. *Hydra*, jellyfish) represents the phylogenetic origin of true animal tissues.",
+        "3. Coelenterates display a **diploblastic** body wall derived from two embryonic germ layers: outer ectoderm and inner endoderm.",
+        "4. The ectoderm forms a functional protective **epidermis**, while the endoderm forms a digestive **gastrodermis**.",
+        "5. These cell layers are separated by a gelatinous acellular matrix called the **mesoglea**.",
+        "6. Coelenterates also exhibit the earliest specialized neural tissue, organized as a diffuse nerve net.",
+        "7. This tissue-grade organization established the blueprint for organ system development in higher Metazoa."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > History & Overview > Phylum Coelenterata",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "Diploblastic Body Wall of Coelenterata Diagram"
+    }
+  ]
+}

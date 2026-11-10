@@ -1,0 +1,107 @@
+{
+  "chapter": "Chemistry Chapter 2",
+  "subject": "Chemistry",
+  "level": "advanced",
+  "flashcards": [
+    {
+      "front": "A 0.01 M solution of a weak acid HA shows a pH of 3. Calculate the degree of ionization (α) of the acid.",
+      "back": "Given: Concentration of HA = 0.01 M, pH = 3.\nFrom pH, we can calculate the concentration of H⁺ ions: [H⁺] = 10⁻ᵖᴴ = 10⁻³ M.\nFor a weak acid HA, the ionization is HA ⇌ H⁺ + A⁻.\nAccording to the stoichiometry, for every mole of HA ionized, one mole of H⁺ is produced.\nSo, [H⁺] = α × Concentration of HA.\nRearranging the formula, α = [H⁺] / Concentration of HA.\nSubstituting the given values: α = 10⁻³ M / 0.01 M = 0.1.\nTherefore, the degree of ionization (α) of the acid is 0.1 or 10%."
+    },
+    {
+      "front": "Compare the ionization of a strong electrolyte like NaCl in water with that of a weak electrolyte like acetic acid in water, focusing on the equilibrium established and the relative extent of dissociation.",
+      "back": "Strong electrolytes like NaCl dissociate almost completely into ions when dissolved in water (NaCl → Na⁺ + Cl⁻). The equilibrium lies far to the right, with very few undissociated NaCl molecules present. The degree of ionization (α) is very close to 1. Weak electrolytes like acetic acid (CH₃COOH) only partially dissociate into ions in water (CH₃COOH ⇌ H⁺ + CH₃COO⁻). A dynamic equilibrium is established between the undissociated molecules and the ions, where both coexist in significant amounts. The degree of ionization (α) is much less than 1."
+    },
+    {
+      "front": "Arrhenius theory explains that electrolytes yield ions when dissolved in polar solvents. Why is the dielectric constant of the solvent a crucial factor in determining the extent of ionization? Provide an example to illustrate.",
+      "back": "The dielectric constant of a solvent quantifies its ability to reduce the electrostatic force of attraction between oppositely charged ions. When an electrolyte dissolves, the solvent molecules surround the ions, effectively weakening the ionic bond. A solvent with a high dielectric constant (like water, ε ≈ 80) can significantly reduce these forces, promoting ionization and separating the ions. A solvent with a low dielectric constant (like benzene, ε ≈ 2.3) has a weaker effect, leading to less ionization. For instance, HCl ionizes extensively in water but very poorly in benzene."
+    },
+    {
+      "front": "Consider a 0.1 M solution of a weak base BOH. If the ionization constant (Kb) is 1.0 × 10⁻⁵, calculate the concentration of OH⁻ ions and the pH of the solution.",
+      "back": "For a weak base BOH, the ionization is BOH ⇌ B⁺ + OH⁻.\nThe ionization constant is given by Kb = [B⁺][OH⁻] / [BOH].\nAssuming the degree of ionization (α) is small, we can approximate [BOH] ≈ initial concentration = 0.1 M.\nAlso, [OH⁻] ≈ α × initial concentration of BOH.\nKb ≈ (α × 0.1) × (α × 0.1) / 0.1 = α² × 0.1.\nSo, α² = Kb / 0.1 = (1.0 × 10⁻⁵) / 0.1 = 1.0 × 10⁻⁴.\nα = √(1.0 × 10⁻⁴) = 0.01.\nNow, [OH⁻] = α × 0.1 = 0.01 × 0.1 = 0.001 M = 10⁻³ M.\npOH = -log₁₀[OH⁻] = -log₁₀(10⁻³) = 3.\npH + pOH = 14.\npH = 14 - pOH = 14 - 3 = 11."
+    },
+    {
+      "front": "What is meant by the term 'ionic equilibrium'? Give an example of an electrolyte showing ionic equilibrium in aqueous solution.",
+      "back": "Ionic equilibrium refers to the dynamic equilibrium that exists in an electrolytic solution between the undissociated molecules of the electrolyte and the ions formed from its dissociation. This equilibrium is established because ions can recombine to form molecules, and molecules can dissociate to form ions. An example is a solution of acetic acid (CH₃COOH). In water, it undergoes partial ionization: CH₃COOH(aq) ⇌ H⁺(aq) + CH₃COO⁻(aq). At equilibrium, all three species – undissociated acetic acid molecules, hydrogen ions, and acetate ions – are present in the solution."
+    },
+    {
+      "front": "Explain why dilution of an electrolyte solution generally leads to an increase in the degree of ionization.",
+      "back": "According to Ostwald's dilution law (though not explicitly detailed in this excerpt, the principle applies), the degree of ionization (α) of a weak electrolyte is inversely proportional to the square root of the concentration (α ∝ 1/√C). As the concentration decreases (dilution), the ratio of solvent molecules to solute molecules increases. More solvent molecules are available to solvate and separate the ions, and the reduced concentration of ions leads to less recombination. Consequently, more solute molecules dissociate, increasing the degree of ionization."
+    },
+    {
+      "front": "A substance 'X' dissolves in water to form a solution that conducts electricity. What can be concluded about the nature of 'X' based on the Arrhenius theory?",
+      "back": "Based on the Arrhenius theory, if substance 'X' forms a solution that conducts electricity when dissolved in water, it implies that 'X' is an electrolyte. This means that 'X' dissociates or ionizes in water to produce charged particles (ions). These mobile ions are responsible for carrying the electric current through the solution. Therefore, 'X' is either an acid, a base, or a salt."
+    },
+    {
+      "front": "Consider two solutions: 0.1 M NaCl and 0.1 M CH₃COOH. Which solution will have a higher boiling point and why?",
+      "back": "The 0.1 M NaCl solution will have a higher boiling point. This is because NaCl is a strong electrolyte and dissociates almost completely into two ions (Na⁺ and Cl⁻). Therefore, it produces approximately twice the number of solute particles in the solution compared to undissociated molecules. Acetic acid (CH₃COOH) is a weak electrolyte and only partially dissociates, resulting in fewer solute particles (a mixture of CH₃COOH, H⁺, and CH₃COO⁻). Colligative properties, like boiling point elevation, depend on the number of solute particles. More particles mean a greater colligative effect, hence a higher boiling point for NaCl."
+    },
+    {
+      "front": "Why is the degree of ionization of a strong electrolyte considered to be very close to 1?",
+      "back": "Strong electrolytes, by definition, dissociate almost completely into ions when dissolved in a polar solvent like water. The forces holding the ions together in the solid state are significantly overcome by the solvation energy provided by the polar solvent. The equilibrium AB ⇌ A⁺ + B⁻ lies overwhelmingly towards the product side (ions). Therefore, the fraction of molecules that remain undissociated is negligible, making the degree of ionization (α) very close to 1 (or 100%)."
+    },
+    {
+      "front": "If an electrolyte exhibits significant ionization, what property of its solution will be significantly enhanced?",
+      "back": "If an electrolyte exhibits significant ionization, it will produce a high concentration of mobile ions in the solution. These mobile ions are charge carriers. Therefore, the electrical conductivity of its solution will be significantly enhanced. Substances that ionize extensively are good conductors of electricity."
+    },
+    {
+      "front": "Svante Arrhenius proposed that even solid electrolytes are composed of ions. What happens to these ions when the electrolyte dissolves in a polar solvent like water?",
+      "back": "According to Arrhenius's theory, when a solid electrolyte (composed of ions held by electrostatic forces) dissolves in a polar solvent like water, the solvent molecules surround the ions. The polar nature of the solvent effectively weakens and 'cuts off' the electrostatic forces of attraction between the cations and anions in the solid lattice, allowing them to separate and become free-moving ions in the solution."
+    },
+    {
+      "front": "Explain the role of solvent in the ionization of an electrolyte, referencing the concept of dielectric constant.",
+      "back": "The solvent plays a crucial role by solvating the ions. The polar molecules of the solvent surround the cations and anions, weakening the electrostatic force of attraction between them. The dielectric constant of the solvent is a measure of its ability to do this. A solvent with a higher dielectric constant (like water) is more effective at reducing the force of attraction between ions, thus promoting ionization and dissociation of the electrolyte."
+    },
+    {
+      "front": "A solution of a substance is electrically neutral. Does this contradict the Arrhenius theory that electrolytes form ions? Justify your answer.",
+      "back": "No, this does not contradict the Arrhenius theory. The theory states that electrolytes form positive ions (cations) and negative ions (anions). In any electrolytic solution, the total positive charge from all cations is always equal to the total negative charge from all anions. This electrical neutrality of the solution as a whole is maintained, even though it contains charged ions."
+    },
+    {
+      "front": "How does temperature affect the degree of ionization of an electrolyte in solution?",
+      "back": "An increase in temperature generally increases the degree of ionization of an electrolyte. Higher temperatures impart more kinetic energy to the molecules and ions. This increased molecular motion leads to a decrease in the interionic forces of attraction between ions, making it easier for them to remain dissociated or for undissociated molecules to ionize. For endothermic ionization processes, higher temperatures further favor dissociation."
+    },
+    {
+      "front": "Consider the electrolyte AB ⇌ A⁺ + B⁻. If the concentration of AB is 0.5 M and the ionization constant (K) is 1.0 × 10⁻⁶, calculate the equilibrium concentration of A⁺.",
+      "back": "For the equilibrium AB ⇌ A⁺ + B⁻, K = [A⁺][B⁻] / [AB].\nLet α be the degree of ionization. Then, at equilibrium:\n[A⁺] = 0.5α\n[B⁻] = 0.5α\n[AB] = 0.5(1-α)\nK = (0.5α)(0.5α) / (0.5(1-α)) = 0.5α² / (1-α).\nSince K is very small (1.0 × 10⁻⁶), α will be very small. We can approximate (1-α) ≈ 1.\nSo, K ≈ 0.5α².\nα² = K / 0.5 = (1.0 × 10⁻⁶) / 0.5 = 2.0 × 10⁻⁶.\nα = √(2.0 × 10⁻⁶) ≈ 1.414 × 10⁻³.\nNow, calculate [A⁺] = 0.5α = 0.5 × (1.414 × 10⁻³) ≈ 0.707 × 10⁻³ M."
+    },
+    {
+      "front": "According to Arrhenius, 'each ion behaves osmotically as a molecule'. Explain what this statement implies for colligative properties.",
+      "back": "This statement implies that for osmotic pressure and other colligative properties (like boiling point elevation, freezing point depression, vapor pressure lowering), each ion produced by the dissociation of an electrolyte contributes to the total number of solute particles independently, just as an undissociated molecule would. For example, if one molecule of NaCl dissociates into two ions (Na⁺ and Cl⁻), it effectively contributes as two particles to the colligative property, whereas an undissociated molecule contributes as one particle. This leads to a larger effect on colligative properties for electrolytes than for non-electrolytes of the same molar concentration."
+    },
+    {
+      "front": "What is the primary difference between a strong electrolyte and a weak electrolyte in terms of their ionization in solution?",
+      "back": "The primary difference lies in the extent of ionization. Strong electrolytes are substances that ionize almost completely in solution, meaning a very large fraction of their molecules dissociate into ions. Weak electrolytes, on the other hand, ionize only to a limited extent in solution, with a significant number of undissociated molecules remaining in equilibrium with the ions."
+    },
+    {
+      "front": "An unknown substance 'Y' when dissolved in water increases the electrical conductivity of water significantly. If 'Y' is a neutral molecule in its pure state, what can be inferred about its behavior in water?",
+      "back": "If substance 'Y' is a neutral molecule in its pure state but significantly increases the electrical conductivity of water upon dissolving, it implies that 'Y' is an electrolyte that undergoes ionization in water. This means 'Y' reacts with water to form ions, or it is a polar molecule that dissociates into ions upon solvation. Examples include strong acids like HCl or strong bases like NaOH, which are molecular in pure form but ionize extensively in water."
+    },
+    {
+      "front": "If the concentration of a weak acid is decreased by a factor of 4, how would its degree of ionization change, assuming it remains a weak acid?",
+      "back": "The degree of ionization (α) of a weak electrolyte is generally inversely proportional to the square root of its concentration (α ∝ 1/√C), based on Ostwald's dilution law. If the concentration is decreased by a factor of 4, the new concentration is C/4. The new degree of ionization (α') would be proportional to 1/√(C/4) = 1/(√C / 2) = 2/√C. This means the degree of ionization would increase by a factor of 2 (double) when the concentration is decreased by a factor of 4."
+    },
+    {
+      "front": "Compare the effect of a polar solvent (like ethanol, ε ≈ 24.3) and a non-polar solvent (like hexane, ε ≈ 2.0) on the ionization of an electrolyte like acetic acid.",
+      "back": "Ethanol, being a polar solvent with a moderate dielectric constant, will facilitate the ionization of acetic acid to a greater extent than hexane, which is non-polar and has a very low dielectric constant. In ethanol, the polarity helps to separate the ions formed from acetic acid dissociation (H⁺ and CH₃COO⁻). In hexane, the very low dielectric constant means the electrostatic attraction between these ions would remain very strong, hindering dissociation, and acetic acid would exist primarily as undissociated molecules."
+    },
+    {
+      "front": "A student observes that adding more water to a solution of a weak acid increases the number of ions present. Does this mean the total amount of acid that has ionized has increased?",
+      "back": "Yes, this is correct. While the *concentration* of ions decreases upon dilution, the *total number* of ions in the solution increases. This is because dilution reduces the concentration of undissociated acid molecules, shifting the equilibrium (HA ⇌ H⁺ + A⁻) to the right according to Le Chatelier's principle, leading to further ionization of the remaining undissociated molecules. Therefore, more molecules ionize, increasing the total number of ions in the larger volume of solution."
+    },
+    {
+      "front": "Explain why only substances that ionize in solution can conduct electricity.",
+      "back": "Electrical conductivity in solutions requires the presence of mobile charged particles. According to the Arrhenius theory, ionization of a substance in solution produces positively charged ions (cations) and negatively charged ions (anions). When an electric potential difference is applied across the solution, these mobile ions are free to move towards oppositely charged electrodes, thus carrying the electric current. Substances that do not ionize in solution (non-electrolytes) do not produce these mobile charged carriers and therefore cannot conduct electricity."
+    },
+    {
+      "front": "Consider an electrolyte AB that dissociates as AB ⇌ A⁺ + B⁻. If the temperature is increased, how would this typically affect the equilibrium position and the degree of ionization?",
+      "back": "Typically, the ionization of an electrolyte is an endothermic process (it requires energy to break the ionic bonds and solvate the ions). If the ionization process is endothermic, increasing the temperature will shift the equilibrium to the right, favoring the formation of ions. This leads to an increase in the degree of ionization (α), as more molecules will dissociate into ions at a higher temperature."
+    },
+    {
+      "front": "The Arrhenius theory states that a solution of an electrolyte is electrically neutral. However, on passing current, ions move towards electrodes. How is this apparent contradiction resolved?",
+      "back": "The overall electrical neutrality of the solution is maintained because for every cation formed, a corresponding anion is also formed, ensuring that the total positive charge equals the total negative charge. When an electric current is passed, it's the *movement* of these pre-existing charged ions towards oppositely charged electrodes that constitutes the flow of current. The external electric field causes the directional motion of ions without altering the overall charge balance within the bulk of the solution itself."
+    },
+    {
+      "front": "In 1887, Svante Arrhenius proposed a theory for electrolytic dissociation. What was the fundamental idea behind his theory regarding electrolytes in solution?",
+      "back": "The fundamental idea behind Arrhenius's theory was that when an electrolyte (acid, base, or salt) is dissolved in a polar solvent, particularly water, it dissociates into electrically charged particles called ions. These ions are responsible for the characteristic properties of electrolytes, such as their ability to conduct electricity and influence colligative properties. He proposed that a dynamic equilibrium exists between the undissociated molecules and the ions in solution."
+    }
+  ]
+}

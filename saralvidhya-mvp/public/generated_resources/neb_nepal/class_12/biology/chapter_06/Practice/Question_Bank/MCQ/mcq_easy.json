@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MCQ_E1",
+      "stem": "Which tissue type acts as the principal body lining and protective boundary layer?",
+      "options": [
+        "A) Connective",
+        "B) Epithelial",
+        "C) Muscular",
+        "D) Nervous"
+      ],
+      "answer": "B) Epithelial",
+      "explanation": "Epithelial tissue forms protective covers.",
+      "difficulty": "Easy",
+      "image": "00 Epithelial_Tissue_Classification_Diagram.png"
+    },
+    {
+      "id": "PQB_MCQ_E2",
+      "stem": "Ligament connects which two skeletal structures together across joint capsules?",
+      "options": [
+        "A) Muscle to bone",
+        "B) Bone to bone",
+        "C) Muscle to muscle",
+        "D) Cartilage to bone"
+      ],
+      "answer": "B) Bone to bone",
+      "explanation": "Ligaments attach bone to bone.",
+      "difficulty": "Easy",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PQB_MCQ_E3",
+      "stem": "Which plasma protein is converted into insoluble fibrin thread mesh during coagulation?",
+      "options": [
+        "A) Albumin",
+        "B) Globulin",
+        "C) Fibrinogen",
+        "D) Hemoglobin"
+      ],
+      "answer": "C) Fibrinogen",
+      "explanation": "Fibrinogen converts into insoluble fibrin during blood clotting.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MCQ_E4",
+      "stem": "Which muscle tissue type is involuntary and unstriated?",
+      "options": [
+        "A) Skeletal",
+        "B) Smooth",
+        "C) Cardiac",
+        "D) Voluntary"
+      ],
+      "answer": "B) Smooth",
+      "explanation": "Smooth muscle is involuntary and unstriated.",
+      "difficulty": "Easy",
+      "image": "00.png"
+    },
+    {
+      "id": "PQB_MCQ_E5",
+      "stem": "The basic structural unit of nervous tissue consists of soma cyton and:",
+      "options": [
+        "A) Nephron",
+        "B) Neurite processes (Axon & Dendrites)",
+        "C) Osteon",
+        "D) Sarcomere"
+      ],
+      "answer": "B) Neurite processes (Axon & Dendrites)",
+      "explanation": "Neurones comprise Soma cyton and Neurites.",
+      "difficulty": "Easy",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PQB_MCQ_E6",
+      "stem": "Simple columnar epithelium lining stomach lumen functions primarily for:",
+      "options": [
+        "A) Diffusion",
+        "B) Secretion and absorption",
+        "C) Filtration",
+        "D) Contraction"
+      ],
+      "answer": "B) Secretion and absorption",
+      "explanation": "Columnar cells secrete mucus and absorb nutrients.",
+      "difficulty": "Easy",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PQB_MCQ_E7",
+      "stem": "Which dense connective tissue sheath encloses bone surfaces externally?",
+      "options": [
+        "A) Perichondrium",
+        "B) Periosteum",
+        "C) Epimysium",
+        "D) Endoneurium"
+      ],
+      "answer": "B) Periosteum",
+      "explanation": "Periosteum covers bone externally.",
+      "difficulty": "Easy",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PQB_MCQ_E8",
+      "stem": "Which leucocyte count increases during allergic skin reactions and parasitic infections?",
+      "options": [
+        "A) Neutrophil",
+        "B) Eosinophil",
+        "C) Basophil",
+        "D) Monocyte"
+      ],
+      "answer": "B) Eosinophil",
+      "explanation": "Eosinophils increase during allergic reactions.",
+      "difficulty": "Easy",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MCQ_E9",
+      "stem": "Which non-excitable brain neuroglia cell acts as an active macrophage phagocyte?",
+      "options": [
+        "A) Astrocyte",
+        "B) Microglia",
+        "C) Oligodendrocyte",
+        "D) Ependymal cell"
+      ],
+      "answer": "B) Microglia",
+      "explanation": "Microglia are phagocytic neuroglia in CNS.",
+      "difficulty": "Easy",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PQB_MCQ_E10",
+      "stem": "Which cartilage type forms the elastic framework of external ear pinna and epiglottis?",
+      "options": [
+        "A) Hyaline",
+        "B) Yellow Elastic Cartilage",
+        "C) Fibrocartilage",
+        "D) Calcified"
+      ],
+      "answer": "B) Yellow Elastic Cartilage",
+      "explanation": "Elastic cartilage forms ear pinna and epiglottis.",
+      "difficulty": "Easy",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+[
+  {
+    "front": "What is M. A. K. Halliday’s central thesis regarding the functional architecture of natural language?",
+    "back": "Function is not an extrinsic afterthought; it is built into the very lexicogrammatical architecture and semantic system of all natural languages."
+  },
+  {
+    "front": "What is the principle of 'Multifunctionality' in Systemic Functional Linguistics (SFL)?",
+    "back": "Every natural clause does not serve an isolated function; it simultaneously integrates three distinct strands of meaning: Ideational, Interpersonal, and Textual."
+  },
+  {
+    "front": "Define the Ideational Metafunction and its two subcomponents.",
+    "back": "Language representing human reality:\n1. Experiential Meaning: Realized through Transitivity (Processes, Participants, Circumstances).\n2. Logical Meaning: Realized through Parataxis (coordination) and Hypotaxis (subordination)."
+  },
+  {
+    "front": "How is Experiential Meaning grammatically realized in Systemic Functional Linguistics?",
+    "back": "Through the grammatical system of Transitivity: Processes (verbs: material, mental, relational), Participants (Actor, Goal, Sensor), and Circumstances (Locative, Manner, Time)."
+  },
+  {
+    "front": "Define the Interpersonal Metafunction and its grammatical systems.",
+    "back": "Language functioning as social action to enact roles, status, and attitudes. Realized through:\n1. Mood Structure: Declarative, Interrogative, Imperative.\n2. Modality: Modulating probability, obligation, necessity, and inclination."
+  },
+  {
+    "front": "Define the Textual Metafunction and its operational role in discourse.",
+    "back": "Language creating texture—weaving ideational and interpersonal strands into cohesive, relevant discourse. Realized through Thematic Structure (Theme/Rheme), Information Focus (Given/New), and Cohesion (reference, ellipsis, conjunctions)."
+  },
+  {
+    "front": "How does the Context of Situation correlate with Halliday’s semantic metafunctions?",
+    "back": "Field of Discourse (what is happening) -> Realized by Experiential Meaning (Transitivity).\nTenor of Discourse (who is taking part) -> Realized by Interpersonal Meaning (Mood/Modality).\nMode of Discourse (the role assigned to language) -> Realized by Textual Meaning (Theme/Cohesion)."
+  },
+  {
+    "front": "How does Halliday analyze Ben Jonson's line: 'Or leave a kiss within the cup, and I'll not ask for wine'?",
+    "back": "Experiential: Physical acts of leaving a kiss vs. demanding wine.\nInterpersonal: Reciprocal exchange (imperative request followed by an offer).\nTextual: Rhythmical poetic meter balanced paratactically by 'and'."
+  },
+  {
+    "front": "How do the five core functions of communication (Sipacio & Balgos) map onto Halliday’s Metafunctions?",
+    "back": "Control / Regulation -> Interpersonal Metafunction (Tenor / Imperative mood).\nSocial Interaction -> Interpersonal & Textual Metafunctions (Tenor & Mode / Phatic).\nMotivation -> Interpersonal & Ideational Metafunctions (Tenor & Field / Modals).\nEmotional Expression -> Interpersonal Metafunction (Tenor / 1st Person).\nInformation Dissemination -> Ideational Metafunction (Field / Transitivity)."
+  },
+  {
+    "front": "How does sociolinguistic analysis of the Philippine Linguistic Landscape reveal relations of power?",
+    "back": "Regulatory public signs (e.g., 'BAWAL TUMAWID: NAKAMAMATAY') utilize imperative grammar and stark typography to manifest state authority (Tenor) and enforce pedestrian safety (Field) in public visual space (Mode)."
+  }
+]
+

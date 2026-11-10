@@ -1,0 +1,37 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 9,
+  "subtopic_name": "3.1 Proper Connective Tissue \u2014 Cells, Matrix, and Fibers",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 288,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Proper Connective Tissue",
+  "sections": [
+    {
+      "header": "3.1 Proper Connective Tissue \u2014 Cells, Matrix, and Fibers",
+      "level": 2,
+      "content": "### 3.1 Proper Connective Tissue \u2014 Cellular & Extracellular Architecture\n\n**Connective Tissue Proper** forms the universal packing and binding framework of the vertebrate body. Unlike epithelium, connective tissue is characterized by widely spaced cells embedded within an abundant extracellular matrix (ECM).\n\n#### 1. Cellular Components\n- **Fibroblasts**: Most abundant stellate cells; actively synthesize extracellular ground matrix and protein fiber precursors.\n- **Mast Cells**: Oval granular cells mediating inflammatory response; secrete **Histamine** (vasodilator), **Heparin** (anticoagulant), and **Serotonin** (vasoconstrictor).\n- **Histiocytes (Tissue Macrophages)**: Phagocytic cells derived from blood monocytes that engulf pathogens and cellular debris.\n- **Plasma Cells**: Differentiated B-lymphocytes featuring a characteristic **'cartwheel' or 'clock-face' chromatin nucleus**; actively synthesize circulating immunoglobulin antibodies.\n\n#### 2. Extracellular Fibers\n- **Collagen (White) Fibers**: Composed of protein tropocollagen organized into unbranched parallel bundles. Flexible but inextensible with immense tensile strength.\n- **Elastic (Yellow) Fibers**: Composed of elastin protein; branched single fibers capable of stretching up to 150% of resting length.\n- **Reticular Fibers**: Delicate, silver-staining (*argyrophilic*) branching networks of reticulin protein forming structural stromata for soft organs.\n\n#### 3. Loose vs Dense Subtypes\n\n| Type | Structural Organization | Key Examples & Functions |\n| :--- | :--- | :--- |\n| **Loose Areolar** | Loose arrangement of fibers & ground jelly | Universal packing tissue under skin and surrounding nerves/vessels |\n| **Loose Adipose** | Adipocytes filled with fat droplets | **White Adipose** (unilocular droplet, energy storage) vs **Brown Adipose** (multilocular droplets + rich mitochondria, thermogenesis) |\n| **Dense Regular** | Parallel collagen bundles | **Tendons** (connect muscle to bone, high tensile strength) |\n| **Dense Irregular** | Meshwork collagen bundles | Dermis of skin, organ capsules |\n| **Dense Elastic** | Branching elastic fibers | **Ligaments** (connect bone to bone) |",
+      "mermaid_diagram": null,
+      "visual_references": [
+        "3. Conective Tissue\\2. Proper Connective Tissue\\00 Proper_Connective_Tissue_Infographic.png",
+        "3. Conective Tissue\\2. Proper Connective Tissue\\1. Proper_Connective_Tissue_Cellular_Diversity.png",
+        "3. Conective Tissue\\2. Proper Connective Tissue\\2. Fibres_of_Proper_Connective_Tissue.png",
+        "3. Conective Tissue\\2. Proper Connective Tissue\\3. Areolar_and_Adipose_Tissue_Comparison.png",
+        "3. Conective Tissue\\2. Proper Connective Tissue\\4. Dense-Matrix_Connective_Tissue_Overview.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 5,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Proper Connective Tissue"
+    }
+  }
+}

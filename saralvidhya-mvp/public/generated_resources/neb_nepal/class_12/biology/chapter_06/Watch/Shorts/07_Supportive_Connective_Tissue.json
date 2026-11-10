@@ -1,0 +1,30 @@
+{
+  "short_id": "short_07_supportive_ct",
+  "short_title": "Supportive Connective Tissue — Cartilage & Bone",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L2_Supportive", "L3_Cartilage", "L4_Hyaline", "L4_Calcified", "L4_FibroCartilage", "L4_Elastic", "L3_Bone", "L4_CartilaginousOssification", "L4_MembranousOssification", "L4_SesamoidOssification", "L4_Epiphysis", "L4_Diaphysis", "L5_HaversianSystem"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S07_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "Your skeleton is not one material — it is two: flexible cartilage and rigid bone. Both are connective tissues, built for very different demands.",
+      "video_prompt": "Side-by-side 3D render: left shows translucent glassy hyaline cartilage with visible chondrocytes in lacunae; right shows compact bone cross-section with a glowing Haversian canal at the centre surrounded by concentric lamellae. Deep blue and amber colour scheme, precision 3D render style."
+    },
+    {
+      "segment_id": "S07_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Cartilage is avascular and aneural. Chondrocytes live in lacunae within chondrin matrix, covered by perichondrium. Hyaline: fine collagen, smooth, in trachea and articular surfaces. Calcified: calcium deposits, rock-hard, at epiphyseal ends. Fibro-cartilage: densest collagen, strongest, in intervertebral discs and pubic symphysis. Elastic: elastic fibres, flexible, in pinna and epiglottis. Bone is vascular — osteocytes in lacunae within ossein plus hydroxyapatite matrix. Formation: cartilaginous endochondral for long bones, membranous for flat skull bones, sesamoid for patella. Long bone: epiphysis (spongy, red marrow, blood production), diaphysis (compact, yellow marrow). Structural unit: Haversian osteon — Haversian canal with blood vessels, concentric lamellae, osteocytes in lacunae, canaliculi, and Volkmann's canals connecting osteons.",
+      "video_prompt": "Top panel: a 2x2 grid of cartilage histology images — hyaline (clear glassy matrix), calcified (opaque dense), fibro-cartilage (white dense fibres), elastic (yellow branching fibres). Each labelled with type and location. Bottom panel: 3D cinematic zoom from the epiphysis (spongy trabecular bone, red marrow fill) into the diaphysis (compact bone cortex), then into a single osteon — Haversian canal centre glows amber, concentric lamellae rings, osteocytes in lacunae, canaliculi branching. Clinical precision render, warm bone tones."
+    },
+    {
+      "segment_id": "S07_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Fluid Connective Tissue — blood and lymph.",
+      "video_prompt": "Title card: 'Up Next: Blood & Lymph'. Background: animated red blood cells flowing through a capillary. Smooth wipe to black."
+    }
+  ]
+}

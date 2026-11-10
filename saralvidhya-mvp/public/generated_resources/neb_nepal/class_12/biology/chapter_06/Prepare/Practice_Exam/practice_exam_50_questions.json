@@ -1,0 +1,789 @@
+{
+  "title": "Animal Tissue Master Practice Exam (50 Questions - Mixed MCQs & MSQs)",
+  "composition": "35 Single-Choice MCQs + 15 Multiple-Select MSQs",
+  "questions": [
+    {
+      "id": "PE_T1_01",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), identify the French anatomist who defined 21 primary tissue types without microscopic aid:",
+      "options": [
+        "A) Xavier Bichat",
+        "B) Marcello Malpighi",
+        "C) Robert Hooke",
+        "D) Anton van Leeuwenhoek"
+      ],
+      "answer": "A) Xavier Bichat",
+      "explanation": "Xavier Bichat coined the term tissue and defined 21 primary tissue classes.",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "PE_T1_02",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), microscopic investigation of animal tissues was systematically pioneered by which biologist?",
+      "options": [
+        "A) Xavier Bichat",
+        "B) Marcello Malpighi",
+        "C) Theodor Schwann",
+        "D) Rudolf Virchow"
+      ],
+      "answer": "B) Marcello Malpighi",
+      "explanation": "Marcello Malpighi pioneered microscopic histology.",
+      "image": "3. Marcello_Malpighi__Histology_Pioneer.png"
+    },
+    {
+      "id": "PE_T1_03",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), true tissue level of organization first evolved in which invertebrate phylum?",
+      "options": [
+        "A) Porifera",
+        "B) Coelenterata (Cnidaria)",
+        "C) Platyhelminthes",
+        "D) Annelida"
+      ],
+      "answer": "B) Coelenterata (Cnidaria)",
+      "explanation": "Tissue grade organization originated in Coelenterates (Hydra).",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "PE_T1_04",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), embryonic mesoderm gives origin to which pair of primary tissues?",
+      "options": [
+        "A) Epithelial and Nervous",
+        "B) Connective and Muscular",
+        "C) Epithelial and Muscular",
+        "D) Connective and Nervous"
+      ],
+      "answer": "B) Connective and Muscular",
+      "explanation": "Connective tissue and muscle arise from embryonic mesoderm.",
+      "image": "2. Origin Mesoderm.png"
+    },
+    {
+      "id": "PE_T1_05",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), which primary tissue type originates from all three germ layers (Ectoderm, Mesoderm, Endoderm)?",
+      "type": "MCQ",
+      "options": [
+        "A) Muscular Tissue",
+        "B) Nervous Tissue",
+        "C) Epithelial Tissue",
+        "D) Connective Tissue"
+      ],
+      "answer": "C) Epithelial Tissue",
+      "explanation": "Epithelia derive from ectoderm, mesoderm, and endoderm.",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "PE_T1_06",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), the non-cellular basement membrane underlying epithelial sheets contains basal lamina and:",
+      "options": [
+        "A) Reticular lamina",
+        "B) Hydroxyapatite matrix",
+        "C) Elastic lamellae",
+        "D) Ossein canals"
+      ],
+      "answer": "A) Reticular lamina",
+      "explanation": "Basement membrane = Basal lamina + Reticular lamina.",
+      "image": "3. The_Epithelial_Basement_Membrane_Gateway.png"
+    },
+    {
+      "id": "PE_T1_07",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1), avascular epithelial sheets obtain metabolic nutrients primarily via:",
+      "options": [
+        "A) Direct intra-epithelial capillary blood flow",
+        "B) Simple diffusion from underlying connective tissue blood vessels",
+        "C) Active transport from lumen air space",
+        "D) Perichondrial canaliculi"
+      ],
+      "answer": "B) Simple diffusion from underlying connective tissue blood vessels",
+      "explanation": "Epithelial cells depend on nutrient diffusion across the basement membrane.",
+      "image": "2. Avascular_Tissue_Survival_and_Respiration.png"
+    },
+    {
+      "id": "PE_T1_08",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1 - MSQ), select all historical milestones established in animal histology: (Select all that apply)",
+      "options": [
+        "A) Xavier Bichat defined 21 primary tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the term 'Histology' in 1819",
+        "D) True tissue level first evolved in Phylum Coelenterata",
+        "E) Leeuwenhoek discovered Haversian osteons"
+      ],
+      "answers": [
+        "A) Xavier Bichat defined 21 primary tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the term 'Histology' in 1819",
+        "D) True tissue level first evolved in Phylum Coelenterata"
+      ],
+      "explanation": "Bichat, Malpighi, Mayer, and Coelenterate evolution represent foundational histology milestones.",
+      "image": "2. The_History_of_Histology.png"
+    },
+    {
+      "id": "PE_T1_09",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1 - MSQ), select all primary tissue classes in complex animals: (Select all that apply)",
+      "options": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue",
+        "E) Vascular Tissue as fifth primary class"
+      ],
+      "answers": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PE_T1_10",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC1] In Practice Exam (Topic 1 - MSQ), select all embryonic germ layers giving rise to Epithelial Tissues: (Select all that apply)",
+      "options": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI mucosa)",
+        "D) Neural crest only",
+        "E) Blastoderm only"
+      ],
+      "answers": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI mucosa)"
+      ],
+      "explanation": "Epithelium arises from Ectoderm, Mesoderm, and Endoderm.",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "PE_T2_01",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), simple squamous epithelium lining blood vessels is called:",
+      "options": [
+        "A) Mesothelium",
+        "B) Endothelium",
+        "C) Urothelium",
+        "D) Epidermis"
+      ],
+      "answer": "B) Endothelium",
+      "explanation": "Endothelium lines blood and lymph vessels.",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "PE_T2_02",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), simple cuboidal epithelium with microvilli brush border occurs in:",
+      "options": [
+        "A) Stomach mucosa",
+        "B) Proximal Convoluted Tubule (PCT) of nephron",
+        "C) Respiratory trachea",
+        "D) Oesophagus"
+      ],
+      "answer": "B) Proximal Convoluted Tubule (PCT) of nephron",
+      "explanation": "Renal PCT features simple cuboidal brush-bordered epithelium.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PE_T2_03",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), mucus-secreting unicellular exocrine glands in stomach mucosa are called:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Goblet cells",
+        "C) Mast cells",
+        "D) Parietal cells"
+      ],
+      "answer": "B) Goblet cells",
+      "explanation": "Goblet cells are unicellular exocrine glands.",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "PE_T2_04",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), pseudostratified ciliated columnar epithelium is characteristically found lining the:",
+      "options": [
+        "A) Trachea",
+        "B) Urinary bladder",
+        "C) Thyroid gland",
+        "D) Skin surface"
+      ],
+      "answer": "A) Trachea",
+      "explanation": "Trachea and bronchi are lined by pseudostratified ciliated columnar epithelium.",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PE_T2_05",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), non-keratinized stratified squamous epithelium lines which moist cavity?",
+      "options": [
+        "A) Dry skin epidermis",
+        "B) Oral cavity and Oesophagus",
+        "C) Thyroid follicle",
+        "D) Renal PCT"
+      ],
+      "answer": "B) Oral cavity and Oesophagus",
+      "explanation": "Non-keratinized stratified squamous lines moist internal cavities.",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "PE_T2_06",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), distensible plastic urothelium featuring surface umbrella cells lines the:",
+      "options": [
+        "A) Stomach",
+        "B) Urinary bladder",
+        "C) Trachea",
+        "D) Gall bladder"
+      ],
+      "answer": "B) Urinary bladder",
+      "explanation": "Transitional epithelium (urothelium) lines the urinary bladder.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PE_T2_07",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2), cell junctions that seal adjacent cell membranes preventing fluid leakage are:",
+      "options": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Gap junctions",
+        "C) Desmosomes",
+        "D) Synapses"
+      ],
+      "answer": "A) Tight junctions (Zona Occludens)",
+      "explanation": "Tight junctions form occluding barriers preventing fluid leakage.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PE_T2_08",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2 - MSQ), select all anatomical locations lined by Simple Cuboidal Epithelium: (Select all that apply)",
+      "options": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary",
+        "E) Stomach mucosal lining"
+      ],
+      "answers": [
+        "A) Thyroid gland follicles",
+        "B) Salivary and pancreatic ducts",
+        "C) Proximal Convoluted Tubule (PCT) of nephron",
+        "D) Germinal surface of ovary"
+      ],
+      "explanation": "Simple cuboidal lines thyroid follicles, gland ducts, renal PCT, and ovary surface.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PE_T2_09",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2 - MSQ), select all cell junction types connecting adjacent epithelial cells: (Select all that apply)",
+      "options": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)",
+        "E) Synaptic boutons"
+      ],
+      "answers": [
+        "A) Tight junctions (Zona Occludens)",
+        "B) Adherens junctions (Zona Adherens)",
+        "C) Desmosomes (Macula Adherens)",
+        "D) Gap junctions (Nexus)"
+      ],
+      "explanation": "Epithelial junctions include Tight, Adherens, Desmosome, and Gap junctions.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PE_T2_10",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC2] In Practice Exam (Topic 2 - MSQ), select all characteristics of Transitional Epithelium (Urothelium): (Select all that apply)",
+      "options": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis",
+        "E) Keratinized dead cell stratum corneum"
+      ],
+      "answers": [
+        "A) Multilayered plastic compound epithelium",
+        "B) Surface umbrella / pear-shaped cells",
+        "C) High stretch capability without cell separation",
+        "D) Lines urinary bladder, ureters, and renal pelvis"
+      ],
+      "explanation": "Urothelium is a distensible compound epithelium lining the urinary tract.",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PE_T3_01",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), matrix-producing connective tissue cells synthesizing collagen and elastin fibers are:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "D) Plasma cells"
+      ],
+      "answer": "A) Fibroblasts",
+      "explanation": "Fibroblasts synthesize fibers and ground substance.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_02",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), histamine, heparin, and serotonin are released during inflammation by:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Macrophages",
+        "D) Adipocytes"
+      ],
+      "answer": "B) Mast cells",
+      "explanation": "Mast cells release histamine, heparin, and serotonin.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_03",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), tissue macrophages residing in loose connective tissue proper are:",
+      "options": [
+        "A) Histocytes",
+        "B) Plasma cells",
+        "C) Chondrocytes",
+        "D) Osteocytes"
+      ],
+      "answer": "A) Histocytes",
+      "explanation": "Histocytes are phagocytic macrophages in connective tissue proper.",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PE_T3_04",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), antibody-producing plasma cells differentiate from activated:",
+      "options": [
+        "A) T-lymphocytes",
+        "B) B-lymphocytes",
+        "C) Neutrophils",
+        "D) Monocytes"
+      ],
+      "answer": "B) B-lymphocytes",
+      "explanation": "Plasma cells derive from antigen-stimulated B-lymphocytes.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_05",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), tendons attaching skeletal muscle to bone consist of:",
+      "options": [
+        "A) Dense Regular White Fibrous CT",
+        "B) Dense Irregular Collagenous CT",
+        "C) Yellow Elastic CT",
+        "D) Loose Areolar CT"
+      ],
+      "answer": "A) Dense Regular White Fibrous CT",
+      "explanation": "Tendons are composed of dense regular white fibrous CT.",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PE_T3_06",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), tough shock-absorbing cartilage in intervertebral discs lacking perichondrium is:",
+      "options": [
+        "A) Hyaline cartilage",
+        "B) Elastic cartilage",
+        "C) Fibrocartilage",
+        "D) Calcified cartilage"
+      ],
+      "answer": "C) Fibrocartilage",
+      "explanation": "Fibrocartilage has thick collagen bundles and forms intervertebral discs.",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PE_T3_07",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3), the structural unit of compact bone comprising Haversian canal and lamellae is:",
+      "options": [
+        "A) Osteon / Haversian System",
+        "B) Trabecula",
+        "C) Perichondrium",
+        "D) Sarcomere"
+      ],
+      "answer": "A) Osteon / Haversian System",
+      "explanation": "The osteon is the functional structural unit of compact bone.",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PE_T3_08",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3 - MSQ), select all cell types residing in Loose Areolar Connective Tissue matrix: (Select all that apply)",
+      "options": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells",
+        "E) Mineralized Osteocytes"
+      ],
+      "answers": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Phagocytic Histocytes / Macrophages",
+        "D) Antibody-producing Plasma cells"
+      ],
+      "explanation": "Areolar CT matrix contains fibroblasts, mast cells, histocytes, and plasma cells.",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_T3_09",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3 - MSQ), select all Granulocytic Leucocytes in circulating blood: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Monocytes",
+        "E) Lymphocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutrophils, Eosinophils, Basophils.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_T3_10",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC3] In Practice Exam (Topic 3 - MSQ), select all formed blood elements: (Select all that apply)",
+      "options": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)",
+        "D) Serum Albumin",
+        "E) Plasma Fibrinogen"
+      ],
+      "answers": [
+        "A) Erythrocytes (RBC)",
+        "B) Leucocytes (WBC)",
+        "C) Thrombocytes (Platelets)"
+      ],
+      "explanation": "Formed blood elements comprise RBCs, WBCs, and Platelets.",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_T4_01",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), skeletal muscle fibers are described histologically as:",
+      "options": [
+        "A) Involuntary, unstriated, uninucleated fusiform cells",
+        "B) Voluntary, cross-striated, multinucleated syncytium",
+        "C) Involuntary, cross-striated, branched cardiocytes",
+        "D) Voluntary, non-striated spindle cells"
+      ],
+      "answer": "B) Voluntary, cross-striated, multinucleated syncytium",
+      "explanation": "Skeletal muscle is voluntary, striated, and syncytial.",
+      "image": "00.png"
+    },
+    {
+      "id": "PE_T4_02",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), smooth muscle cells lining the gastrointestinal visceral wall are:",
+      "options": [
+        "A) Voluntary and striated",
+        "B) Involuntary, non-striated, fusiform spindle cells",
+        "C) Multinucleated branched syncytium",
+        "D) Voluntary and non-striated"
+      ],
+      "answer": "B) Involuntary, non-striated, fusiform spindle cells",
+      "explanation": "Smooth muscle cells are spindle-shaped, uninucleated, involuntary, and unstriated.",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "PE_T4_03",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), structural intercalated discs with gap junctions and desmosomes are unique to:",
+      "options": [
+        "A) Skeletal muscle",
+        "B) Smooth muscle",
+        "C) Cardiac muscle",
+        "D) Visceral muscle"
+      ],
+      "answer": "C) Cardiac muscle",
+      "explanation": "Intercalated discs connect cardiac muscle cells into a functional syncytium.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PE_T4_04",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), the functional contractile unit of a myofibril bounded by Z-lines is:",
+      "options": [
+        "A) Sarcomere",
+        "B) Sarcolemma",
+        "C) Sarcoplasm",
+        "D) Fascicle"
+      ],
+      "answer": "A) Sarcomere",
+      "explanation": "The sarcomere is the contractile unit of myofibrils between Z-lines.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PE_T4_05",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), during skeletal muscle contraction, which band length remains CONSTANT?",
+      "options": [
+        "A) I-band",
+        "B) H-zone",
+        "C) A-band",
+        "D) Distance between Z-lines"
+      ],
+      "answer": "C) A-band",
+      "explanation": "A-band represents thick myosin length and remains constant during contraction.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PE_T4_06",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), calcium ions released from sarcoplasmic reticulum bind directly to:",
+      "options": [
+        "A) Myosin heavy chain",
+        "B) Troponin C",
+        "C) Tropomyosin",
+        "D) F-actin"
+      ],
+      "answer": "B) Troponin C",
+      "explanation": "Ca2+ binds Troponin C, triggering tropomyosin shift to unmask actin binding sites.",
+      "image": "3. Proteins.png"
+    },
+    {
+      "id": "PE_T4_07",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4), red muscle fibers resist fatigue because they contain abundant:",
+      "options": [
+        "A) Myoglobin and mitochondria",
+        "B) Fast ATPase and glycogen",
+        "C) Sarcoplasmic reticulum only",
+        "D) Lactic acid enzymes"
+      ],
+      "answer": "A) Myoglobin and mitochondria",
+      "explanation": "Red muscle has high myoglobin and mitochondria for slow-twitch aerobic respiration.",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PE_T4_08",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4 - MSQ), select all characteristics belonging to Skeletal Muscle histology: (Select all that apply)",
+      "options": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue",
+        "E) Intercalated discs with gap junctions"
+      ],
+      "answers": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, and fatigable.",
+      "image": "00.png"
+    },
+    {
+      "id": "PE_T4_09",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4 - MSQ), select all features distinguishing Cardiac Muscle from Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue",
+        "E) Syncytial multinucleation"
+      ],
+      "answers": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, fatigue-resistant, and connected by intercalated discs.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PE_T4_10",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC4] In Practice Exam (Topic 4 - MSQ), select all connective tissue sheaths organizing skeletal muscle blocks: (Select all that apply)",
+      "options": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)"
+      ],
+      "explanation": "Muscle sheaths = Endomysium, Perimysium, Epimysium.",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PE_T5_01",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), the metabolic cell body of a neurone containing the nucleus is the:",
+      "options": [
+        "A) Axon",
+        "B) Cyton / Soma",
+        "C) Dendrite",
+        "D) Synaptic knob"
+      ],
+      "answer": "B) Cyton / Soma",
+      "explanation": "Cyton (Soma) is the main cell body of a neurone.",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PE_T5_02",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), Nissl's granules in cyton and dendrites consist of clumps of:",
+      "options": [
+        "A) Smooth ER and lipids",
+        "B) Rough Endoplasmic Reticulum and free Ribosomes",
+        "C) Lysosomes and Golgi bodies",
+        "D) Microtubules and centrioles"
+      ],
+      "answer": "B) Rough Endoplasmic Reticulum and free Ribosomes",
+      "explanation": "Nissl's granules are RER and free ribosomes synthesizing protein.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PE_T5_03",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), Nissl's granules are strictly ABSENT in:",
+      "options": [
+        "A) Cyton",
+        "B) Axon and Axon Hillock",
+        "C) Main dendrites",
+        "D) Soma cytoplasm"
+      ],
+      "answer": "B) Axon and Axon Hillock",
+      "explanation": "Nissl's granules are absent in axon hillock and axon.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PE_T5_04",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), saltatory nerve impulse propagation leaps along myelinated axons at:",
+      "options": [
+        "A) Synaptic knobs",
+        "B) Uninsulated Nodes of Ranvier",
+        "C) Schwann cell nuclei",
+        "D) Axon hillock"
+      ],
+      "answer": "B) Uninsulated Nodes of Ranvier",
+      "explanation": "Action potentials jump from Node of Ranvier to Node of Ranvier.",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PE_T5_05",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), which CNS neuroglia construct the Blood-Brain Barrier (BBB)?",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "answer": "A) Astrocytes",
+      "explanation": "Astrocytes form perivascular end-feet creating the Blood-Brain Barrier.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_06",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), myelin sheath in the Central Nervous System (CNS) is synthesized by:",
+      "options": [
+        "A) Schwann cells",
+        "B) Oligodendrocytes",
+        "C) Astrocytes",
+        "D) Microglia"
+      ],
+      "answer": "B) Oligodendrocytes",
+      "explanation": "Oligodendrocytes form CNS myelin; Schwann cells form PNS myelin.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_07",
+      "type": "MCQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5), phagocytic macrophage defense neuroglia in the CNS are:",
+      "options": [
+        "A) Astrocytes",
+        "B) Microglia",
+        "C) Ependymal cells",
+        "D) Satellite cells"
+      ],
+      "answer": "B) Microglia",
+      "explanation": "Microglia act as tissue macrophages defending the CNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_08",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5 - MSQ), select all neuroglial cells residing in the Central Nervous System (CNS): (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia: Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PE_T5_09",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5 - MSQ), select all neuroglial cells residing in the Peripheral Nervous System (PNS): (Select all that apply)",
+      "options": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells",
+        "C) CNS Astrocytes",
+        "D) CNS Microglia",
+        "E) CNS Oligodendrocytes"
+      ],
+      "answers": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells"
+      ],
+      "explanation": "PNS neuroglia include Schwann cells and Satellite cells.",
+      "image": "PNS.png"
+    },
+    {
+      "id": "PE_T5_10",
+      "type": "MSQ",
+      "stem": "[Master Practice Exam - TOPIC5] In Practice Exam (Topic 5 - MSQ), select all anatomical locations containing Bipolar Neurones: (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs",
+        "D) Cerebral cortex",
+        "E) Dorsal root ganglion"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory mucosa of nose",
+        "C) Inner ear vestibular and cochlear organs"
+      ],
+      "explanation": "Bipolar neurones occur in retina, olfactory mucosa, and inner ear.",
+      "image": "5. Structure.png"
+    }
+  ]
+}

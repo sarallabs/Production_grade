@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MCQ_H1",
+      "stem": "In cardiac muscle, rapid electrical impulse synchronization across cardiocytes occurs via:",
+      "options": [
+        "A) Desmosomes",
+        "B) Gap junctions in intercalated discs",
+        "C) Neuromuscular junction endplates",
+        "D) Tight junctions"
+      ],
+      "answer": "B) Gap junctions in intercalated discs",
+      "explanation": "Intercalated disc gap junctions permit electrical syncytium.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PQB_MCQ_H2",
+      "stem": "Which collagen fibre type forms the main white inelastic structural bundle of tendons?",
+      "options": [
+        "A) Type I Collagen",
+        "B) Type II Collagen",
+        "C) Type IV Collagen",
+        "D) Elastin"
+      ],
+      "answer": "A) Type I Collagen",
+      "explanation": "Type I collagen forms thick white inelastic tendon bundles.",
+      "difficulty": "Hard",
+      "image": "2. Fibres_of_Proper_Connective_Tissue.png"
+    },
+    {
+      "id": "PQB_MCQ_H3",
+      "stem": "Cartilage matrix avascularity is actively maintained because chondrin secretes:",
+      "options": [
+        "A) Vascular endothelial growth factor",
+        "B) Anti-angiogenic factors inhibiting blood vessel invasion",
+        "C) Calcium hydroxyapatite",
+        "D) Myoglobin"
+      ],
+      "answer": "B) Anti-angiogenic factors inhibiting blood vessel invasion",
+      "explanation": "Chondrin secretes anti-angiogenic signals keeping cartilage avascular.",
+      "difficulty": "Hard",
+      "image": "00 Cartilage_and_Bone_Comparison_Guide.png"
+    },
+    {
+      "id": "PQB_MCQ_H4",
+      "stem": "Which structural tissue sheath directly encloses a bundle of muscle fibres called a fascicle?",
+      "options": [
+        "A) Epimysium",
+        "B) Perimysium",
+        "C) Endomysium",
+        "D) Periosteum"
+      ],
+      "answer": "B) Perimysium",
+      "explanation": "Perimysium encloses a fascicle of muscle fibers.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PQB_MCQ_H5",
+      "stem": "Action potential saltatory conduction leaping along myelinated nerve fibers requires high Na+ channel density at:",
+      "options": [
+        "A) Myelin sheath lipid wraps",
+        "B) Uninsulated Nodes of Ranvier axolemma",
+        "C) Schwann cell cytoplasm",
+        "D) Synaptic vesicles"
+      ],
+      "answer": "B) Uninsulated Nodes of Ranvier axolemma",
+      "explanation": "Nodes of Ranvier have high Na+ channel density for leaping conduction.",
+      "difficulty": "Hard",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PQB_MCQ_H6",
+      "stem": "Which cell type synthesizes humoral antibody immunoglobulins in connective tissue during infection?",
+      "options": [
+        "A) Histocyte",
+        "B) Mast cell",
+        "C) Plasma cell",
+        "D) Fibroblast"
+      ],
+      "answer": "C) Plasma cell",
+      "explanation": "Plasma cells produce antibody immunoglobulins.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_MCQ_H7",
+      "stem": "Single-unit smooth muscle differs from multi-unit smooth muscle because single-unit muscle is:",
+      "options": [
+        "A) Neurogenic",
+        "B) Myogenic with gap junction electrical syncytium",
+        "C) Voluntary",
+        "D) Striated"
+      ],
+      "answer": "B) Myogenic with gap junction electrical syncytium",
+      "explanation": "Single-unit smooth muscle acts as myogenic syncytium.",
+      "difficulty": "Hard",
+      "image": "2. Single-Unit.png"
+    },
+    {
+      "id": "PQB_MCQ_H8",
+      "stem": "Long bone epiphysis differs from diaphysis because epiphysis contains:",
+      "options": [
+        "A) Yellow fatty marrow",
+        "B) Red hemopoietic marrow in spongy trabeculae",
+        "C) Compact osteons",
+        "D) Avascular chondrin"
+      ],
+      "answer": "B) Red hemopoietic marrow in spongy trabeculae",
+      "explanation": "Epiphysis contains spongy bone with red blood-forming marrow.",
+      "difficulty": "Hard",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PQB_MCQ_H9",
+      "stem": "Mature post-mitotic human neurones cannot undergo cellular division because they lack active:",
+      "options": [
+        "A) Mitochondria",
+        "B) Centrioles",
+        "C) Ribosomes",
+        "D) Axons"
+      ],
+      "answer": "B) Centrioles",
+      "explanation": "Mature neurones lose active centrioles after foetal development.",
+      "difficulty": "Hard",
+      "image": "3. No mitosis.png"
+    },
+    {
+      "id": "PQB_MCQ_H10",
+      "stem": "Longest skeletal muscle block in the human body is:",
+      "options": [
+        "A) Gluteus maximus",
+        "B) Sartorius (tailor's muscle)",
+        "C) Stapedius",
+        "D) Masseter"
+      ],
+      "answer": "B) Sartorius (tailor's muscle)",
+      "explanation": "Sartorius is the longest muscle in the human body.",
+      "difficulty": "Hard",
+      "image": "00.png"
+    }
+  ]
+}

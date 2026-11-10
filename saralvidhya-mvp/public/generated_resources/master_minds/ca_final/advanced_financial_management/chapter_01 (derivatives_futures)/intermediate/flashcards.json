@@ -1,0 +1,62 @@
+[
+  {
+    "front": "What is the main difference between Forwards and Futures regarding counterparty risk?",
+    "back": "Forwards carry significant counterparty default risk because they are OTC contracts. Futures have negligible default risk as the exchange clearing house guarantees all trades."
+  },
+  {
+    "front": "Define 'Mark-to-Market' (MTM).",
+    "back": "The daily settlement process in futures markets where the exchange adjusts trader accounts based on the daily closing price, converting unrealized profits/losses into cash."
+  },
+  {
+    "front": "What is the formula for the theoretical futures price of a non-dividend paying stock under continuous compounding?",
+    "back": "F = S * e^(r*T), where S is the spot price, r is the annualized risk-free rate, and T is time to maturity in years."
+  },
+  {
+    "front": "How do you adjust the spot price in the futures pricing formula if a stock pays a discrete dividend (D) at time t_d before expiration?",
+    "back": "F = (S - PV(D)) * e^(r*T), where PV(D) = D * e^(-r * t_d). The present value of the dividend is subtracted from the spot price."
+  },
+  {
+    "front": "What is the continuous compounding futures pricing formula for a stock index with dividend yield 'd'?",
+    "back": "F = S * e^((r - d) * T), where S is the spot index, r is the risk-free rate, d is the dividend yield, and T is time to maturity in years."
+  },
+  {
+    "front": "What is a Margin Call?",
+    "back": "A demand by a broker for a trader to deposit additional funds (variation margin) when the daily MTM losses push the margin account balance below the maintenance margin level."
+  },
+  {
+    "front": "To what level must a trader restore their margin account balance after receiving a margin call?",
+    "back": "The balance must be restored all the way back to the Initial Margin level (not just the maintenance margin level)."
+  },
+  {
+    "front": "Explain 'Contango'.",
+    "back": "A market condition where the futures price of an asset is higher than the current spot price (F > S), typically due to positive costs of carry."
+  },
+  {
+    "front": "Explain 'Backwardation'.",
+    "back": "A market condition where the futures price of an asset is lower than the current spot price (F < S), usually caused by a high convenience yield or high dividend payouts."
+  },
+  {
+    "front": "Under what condition is Cash and Carry Arbitrage profitable?",
+    "back": "When the actual market futures price is greater than the theoretical futures price (F_market > F_theoretical)."
+  },
+  {
+    "front": "What are the initial actions in a Cash and Carry Arbitrage?",
+    "back": "Borrow funds at the risk-free rate, buy the underlying stock in the spot market, and sell (short) the futures contract."
+  },
+  {
+    "front": "Under what condition is Reverse Cash and Carry Arbitrage profitable?",
+    "back": "When the actual market futures price is less than the theoretical futures price (F_market < F_theoretical)."
+  },
+  {
+    "front": "What are the initial actions in a Reverse Cash and Carry Arbitrage?",
+    "back": "Short-sell the underlying stock in the spot market, invest the proceeds at the risk-free rate, and buy (long) the futures contract."
+  },
+  {
+    "front": "How is the Initial Margin typically determined by an exchange?",
+    "back": "It is set using the Value-at-Risk (VaR) framework, covering the maximum daily price change plus 3 standard deviations (mean + 3 * standard deviation) to cover 99.7% of price movements."
+  },
+  {
+    "front": "If futures prices are positively correlated with interest rates, how do futures prices compare to forward prices?",
+    "back": "Futures prices will exceed forward prices (F_futures > F_forward) because daily MTM gains can be reinvested at higher interest rates."
+  }
+]

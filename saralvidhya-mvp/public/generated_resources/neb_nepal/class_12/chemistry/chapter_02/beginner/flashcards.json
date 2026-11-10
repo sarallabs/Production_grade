@@ -1,0 +1,47 @@
+{
+  "chapter": "Chemistry Chapter 2",
+  "subject": "Chemistry",
+  "level": "beginner",
+  "flashcards": [
+    {
+      "front": "What are solutions that allow electricity to pass through them called?",
+      "back": "Solutions that allow electricity to pass through them are called electrolytic solutions."
+    },
+    {
+      "front": "What is the term for the equilibrium between ions and undissociated molecules in a solution?",
+      "back": "This equilibrium is called ionic equilibrium."
+    },
+    {
+      "front": "What are positively charged ions called according to Arrhenius theory?",
+      "back": "Positively charged ions are called cations."
+    },
+    {
+      "front": "What are negatively charged ions called according to Arrhenius theory?",
+      "back": "Negatively charged ions are called anions."
+    },
+    {
+      "front": "What is the name of the constant that describes the dynamic equilibrium between ions and unionized molecules?",
+      "back": "This constant is called the ionization constant."
+    },
+    {
+      "front": "What does the degree of ionization (a) represent?",
+      "back": "The degree of ionization (a) is the fraction of molecules that exist as free ions in a solution."
+    },
+    {
+      "front": "How does the nature of an electrolyte affect its degree of ionization?",
+      "back": "Strong electrolytes are almost completely ionized, while weak electrolytes are feebly ionized."
+    },
+    {
+      "front": "What is the dielectric constant of a solvent?",
+      "back": "The dielectric constant measures a solvent's ability to weaken the force of attraction between electrical charges."
+    },
+    {
+      "front": "How does concentration affect the ionization of an electrolyte?",
+      "back": "Ionization increases as the concentration of the solution decreases (on dilution)."
+    },
+    {
+      "front": "How does temperature generally affect the ionization of an electrolyte?",
+      "back": "Higher temperatures generally lead to greater ionization of electrolytes."
+    }
+  ]
+}

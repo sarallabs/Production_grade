@@ -1,0 +1,36 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 13,
+  "subtopic_name": "4.2 Unstriped / Smooth Muscle",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 191,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Unstriped / Smooth Muscle",
+  "sections": [
+    {
+      "header": "4.2 Unstriped / Smooth Muscle",
+      "level": 2,
+      "content": "### 4.2 Unstriped / Smooth Muscle \u2014 Visceral Non-Striated Musculature\n\n**Smooth Muscle** (Unstriped, Non-striated, or Involuntary Muscle) lines the tunics of internal hollow visceral organs and blood vessels, executing slow, sustained involuntary contractions.\n\n#### Structural Characteristics\n- **Fusiform Cell Morphology**: Individual muscle fibers are spindle-shaped (fusiform) with broad central bodies and tapering ends.\n- **Uninucleate Architecture**: Each cell contains a single, centrally located oval nucleus.\n- **Absence of Sarcomeric Striations**: Actin and myosin filaments are present but do not form regular repeating sarcomeres; instead, thin actin filaments criss-cross the cytoplasm, anchoring to cytoplasmic **dense bodies** (analogous to Z-lines).\n\n#### Functional Classification\n\n1. **Single-Unit (Visceral) Smooth Muscle**:\n   - Muscle fibers are densely interconnected by low-resistance **gap junctions**.\n   - Action potentials spread rapidly from cell to cell, causing the entire muscle sheet to contract rhythmically as a single coordinated functional unit (e.g. muscular coats of stomach, intestines, bile duct, uterus).\n2. **Multi-Unit Smooth Muscle**:\n   - Individual muscle fibers operate independently, each receiving separate autonomic motor nerve terminals.\n   - Lacks gap junctions; permits fine, incremental contractile control (e.g. ciliary body and iris muscles of the eye, arrector pili hair muscles, wall of large arteries).",
+      "mermaid_diagram": null,
+      "visual_references": [
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\00.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\1. Smooth - Involuntary, Spindle shaped.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\2. Single-Unit.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\3. Multi-Unit.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 4,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Unstriped / Smooth Muscle"
+    }
+  }
+}

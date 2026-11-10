@@ -1,0 +1,162 @@
+{
+  "topic": "Topic 4: Muscular Tissue Architecture",
+  "questions": [
+    {
+      "id": "PE_T4_01",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), skeletal muscle fibers are described histologically as:",
+      "options": [
+        "A) Involuntary, unstriated, uninucleated fusiform cells",
+        "B) Voluntary, cross-striated, multinucleated syncytium",
+        "C) Involuntary, cross-striated, branched cardiocytes",
+        "D) Voluntary, non-striated spindle cells"
+      ],
+      "answer": "B) Voluntary, cross-striated, multinucleated syncytium",
+      "explanation": "Skeletal muscle is voluntary, striated, and syncytial.",
+      "image": "00.png"
+    },
+    {
+      "id": "PE_T4_02",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), smooth muscle cells lining the gastrointestinal visceral wall are:",
+      "options": [
+        "A) Voluntary and striated",
+        "B) Involuntary, non-striated, fusiform spindle cells",
+        "C) Multinucleated branched syncytium",
+        "D) Voluntary and non-striated"
+      ],
+      "answer": "B) Involuntary, non-striated, fusiform spindle cells",
+      "explanation": "Smooth muscle cells are spindle-shaped, uninucleated, involuntary, and unstriated.",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "PE_T4_03",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), structural intercalated discs with gap junctions and desmosomes are unique to:",
+      "options": [
+        "A) Skeletal muscle",
+        "B) Smooth muscle",
+        "C) Cardiac muscle",
+        "D) Visceral muscle"
+      ],
+      "answer": "C) Cardiac muscle",
+      "explanation": "Intercalated discs connect cardiac muscle cells into a functional syncytium.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PE_T4_04",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), the functional contractile unit of a myofibril bounded by Z-lines is:",
+      "options": [
+        "A) Sarcomere",
+        "B) Sarcolemma",
+        "C) Sarcoplasm",
+        "D) Fascicle"
+      ],
+      "answer": "A) Sarcomere",
+      "explanation": "The sarcomere is the contractile unit of myofibrils between Z-lines.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PE_T4_05",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), during skeletal muscle contraction, which band length remains CONSTANT?",
+      "options": [
+        "A) I-band",
+        "B) H-zone",
+        "C) A-band",
+        "D) Distance between Z-lines"
+      ],
+      "answer": "C) A-band",
+      "explanation": "A-band represents thick myosin length and remains constant during contraction.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PE_T4_06",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), calcium ions released from sarcoplasmic reticulum bind directly to:",
+      "options": [
+        "A) Myosin heavy chain",
+        "B) Troponin C",
+        "C) Tropomyosin",
+        "D) F-actin"
+      ],
+      "answer": "B) Troponin C",
+      "explanation": "Ca2+ binds Troponin C, triggering tropomyosin shift to unmask actin binding sites.",
+      "image": "3. Proteins.png"
+    },
+    {
+      "id": "PE_T4_07",
+      "type": "MCQ",
+      "stem": "In Practice Exam (Topic 4), red muscle fibers resist fatigue because they contain abundant:",
+      "options": [
+        "A) Myoglobin and mitochondria",
+        "B) Fast ATPase and glycogen",
+        "C) Sarcoplasmic reticulum only",
+        "D) Lactic acid enzymes"
+      ],
+      "answer": "A) Myoglobin and mitochondria",
+      "explanation": "Red muscle has high myoglobin and mitochondria for slow-twitch aerobic respiration.",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PE_T4_08",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 4 - MSQ), select all characteristics belonging to Skeletal Muscle histology: (Select all that apply)",
+      "options": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue",
+        "E) Intercalated discs with gap junctions"
+      ],
+      "answers": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, and fatigable.",
+      "image": "00.png"
+    },
+    {
+      "id": "PE_T4_09",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 4 - MSQ), select all features distinguishing Cardiac Muscle from Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue",
+        "E) Syncytial multinucleation"
+      ],
+      "answers": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, fatigue-resistant, and connected by intercalated discs.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PE_T4_10",
+      "type": "MSQ",
+      "stem": "In Practice Exam (Topic 4 - MSQ), select all connective tissue sheaths organizing skeletal muscle blocks: (Select all that apply)",
+      "options": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)"
+      ],
+      "explanation": "Muscle sheaths = Endomysium, Perimysium, Epimysium.",
+      "image": "1. Anatomy.png"
+    }
+  ]
+}

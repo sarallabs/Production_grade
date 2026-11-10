@@ -1,0 +1,15 @@
+Plant physiology encompasses the study of all functional processes in plants — metabolism, growth, movement, and reproduction. Stephan Hales is the father of plant physiology; Sir J.C. Bose holds that distinction for India. Palladin (1927) defined its goal as a thorough mechanistic understanding of plant phenomena reducible to physical and chemical principles.
+
+**Water Relations** form the foundation. Water constitutes 75–90% of active protoplasm and serves as a raw material for photosynthesis, a solvent for metabolic reactants, a medium for mineral transport, and a regulator of cell turgidity. Plant movements — stomatal aperture changes, flower opening — are fundamentally turgor-driven.
+
+**Diffusion** is the passive, spontaneous movement of molecules from high to low chemical potential (no energy required). The Diffusion Pressure Deficit (DPD = Osmotic Pressure − Turgor Pressure) quantifies the net driving force for water movement. Independent diffusion allows simultaneous, non-interfering gas exchange through stomata.
+
+**Osmosis** is a specialized form of diffusion: movement of water across a differentially permeable membrane from high water potential to low water potential. Endosmosis (water influx in hypotonic medium) creates turgor pressure; exosmosis (water efflux in hypertonic medium) leads to plasmolysis — shrinkage of the protoplast away from the cell wall, reversible by deplasmolysis. DPD reaches zero when Turgor Pressure equals Osmotic Pressure (fully turgid cell).
+
+**Ascent of Sap** through xylem tracheids and vessels against gravity is explained best by Dixon's Cohesion-Tension Theory: strong intermolecular hydrogen bonds (cohesion, up to 350 atm) maintain a continuous water column; adhesion to hydrophilic xylem walls prevents gravitational slippage; evaporation at leaf mesophyll creates a transpiration pull (negative pressure/tension) that propagates down to roots. Vital force theories (Godlewski, Bose) and Root Pressure Theory (max ~2 atm, ~21 m lift) are insufficient for tall trees (>90 m).
+
+**Transpiration** — loss of water vapour from aerial parts — accounts for 97–99% of water absorbed. Stomatal transpiration dominates (~90%), followed by cuticular (~3–10%) and lenticular (~1%). Guard cells regulate stomatal aperture via K⁺ ion-driven osmotic changes: K⁺ influx → lowered water potential → osmotic water entry → uneven swelling (thicker inner walls) → pore opening. Factors: light, temperature (optimal ~35°C), humidity, wind, cuticle thickness, stomatal density.
+
+**Guttation** is the exudation of liquid water droplets through hydathodes at leaf margins, driven by positive root pressure under high soil moisture and low transpiration (night/early morning). Unlike transpiration, guttation leaves mineral/organic residues on leaf margins and can cause marginal injury.
+
+The chapter reveals plant water relations as an elegant interplay of thermodynamic gradients, structural adaptations, and ion-transport mechanisms operating across molecular to whole-plant scales.

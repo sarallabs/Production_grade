@@ -1,0 +1,62 @@
+[
+  {
+    "front": "What is the core difference between a Futures contract and an Options contract regarding the obligation of the buyer?",
+    "back": "In a futures contract, the buyer has a binding obligation to buy the asset. In an options contract, the buyer has the right to buy (or sell) but no obligation to do so."
+  },
+  {
+    "front": "Define the intrinsic value of a Call option and a Put option.",
+    "back": "Intrinsic Value (Call) = Max(0, S - X) where S is spot price and X is strike price. Intrinsic Value (Put) = Max(0, X - S)."
+  },
+  {
+    "front": "How does an increase in underlying asset volatility affect the pricing of call and put options?",
+    "back": "It increases the price of both call and put options because higher volatility raises the probability of the stock making large, favorable price swings."
+  },
+  {
+    "front": "How do rising interest rates affect Call and Put option premiums?",
+    "back": "Higher interest rates increase Call option prices (leveraged alternative to buying stock) and decrease Put option prices (reduces PV of the strike price received)."
+  },
+  {
+    "front": "State the Put-Call Parity formula under continuous compounding.",
+    "back": "C_0 + X * e^(-rt) = P_0 + S_0 (where C_0 is Call price, X is strike, r is interest rate, t is time, P_0 is Put price, S_0 is stock price)."
+  },
+  {
+    "front": "What is the formula for the risk-neutral probability of an up-move (p) in a binomial pricing tree under continuous compounding?",
+    "back": "p = (e^(rt) - d) / (u - d) where u is the up-factor, d is the down-factor, r is the risk-free rate, and t is the time step."
+  },
+  {
+    "front": "Explain the range and signs of Delta (Δ) for Call and Put options.",
+    "back": "Call Delta is positive and ranges from 0 to +1. Put Delta is negative and ranges from -1 to 0."
+  },
+  {
+    "front": "Which Option Greek measures the acceleration/rate of change of Delta in response to stock price changes?",
+    "back": "Gamma (Γ). It is always positive for long options and peaks when the option is At-the-Money (ATM)."
+  },
+  {
+    "front": "What is Theta (θ) and what is its typical sign for a long option holder?",
+    "back": "Theta measures the rate of decay of the option's value over time. It is negative for long option holders as options lose time value daily."
+  },
+  {
+    "front": "What is Vega (ν) and how does it relate to option pricing?",
+    "back": "Vega measures the sensitivity of the option premium to a 1% change in implied volatility. It is positive for both long calls and long puts."
+  },
+  {
+    "front": "What is Rho (ρ) and what are its signs for calls and puts?",
+    "back": "Rho measures the sensitivity of option prices to changes in interest rates. Call Rho is positive, while Put Rho is negative."
+  },
+  {
+    "front": "How is a Long Straddle constructed and when is it used?",
+    "back": "By buying one call and one put option with the same strike price and expiry date. It is used when high volatility is expected, regardless of direction."
+  },
+  {
+    "front": "What are the upper and lower breakeven points for a Long Straddle?",
+    "back": "Upper Breakeven = Strike Price + Total Premium Paid. Lower Breakeven = Strike Price - Total Premium Paid."
+  },
+  {
+    "front": "How do you adjust the Black-Scholes model if a dividend is paid during the option's life?",
+    "back": "Subtract the present value of the dividend from the current stock price (S_0* = S_0 - D * e^(-r*t_d)) and use this adjusted stock price (S_0*) in the BSM formula."
+  },
+  {
+    "front": "In binomial delta-hedging, how do you calculate the number of stock shares (Delta) needed to hedge a short option position?",
+    "back": "Delta = (C_u - C_d) / (S_u - S_d) where C_u, C_d are call payoffs and S_u, S_d are stock prices in up/down states."
+  }
+]

@@ -1,0 +1,215 @@
+{
+  "version": "v1",
+  "mark_type": "2-mark",
+  "topic": "Epithelial Tissue",
+  "chapter": "Unit 6: Animal Tissue",
+  "questions": [
+    {
+      "id": "v1_02_001",
+      "type": "Definition",
+      "question": "Define epithelial tissue.",
+      "answer": "Epithelial tissue is a type of animal tissue that lines all free body surfaces, covers organs, and forms glands. It is characterised by closely packed cells with minimal intercellular matrix, avascular nature, and is held together by specialised cell junctions.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_002",
+      "type": "Fact",
+      "question": "Why is epithelial tissue described as avascular?",
+      "answer": "Epithelial tissue is avascular because it lacks blood vessels. Nutrition and gas exchange occur by diffusion from the underlying connective tissue through the basement membrane.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Characteristics",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_003",
+      "type": "List",
+      "question": "Name the four types of cell junctions found in epithelial tissue.",
+      "answer": "The four types of cell junctions in epithelial tissue are: (1) Tight junction — seals the space between cells; (2) Adherens junction — links cell membranes; (3) Desmosome — provides mechanical strength; (4) Gap junction — allows direct communication between cells.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Characteristics > Cell junctions",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_004",
+      "type": "Difference",
+      "question": "Distinguish between simple epithelium and compound epithelium.",
+      "answer": "Simple epithelium consists of a single layer of cells resting on the basement membrane. Compound (stratified) epithelium consists of multiple layers of cells, with only the basal layer touching the basement membrane. Simple epithelium functions mainly in secretion and absorption, while compound epithelium mainly provides protection.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_005",
+      "type": "List",
+      "question": "Name the types of simple epithelium.",
+      "answer": "The types of simple epithelium are: (1) Simple squamous; (2) Simple cuboidal; (3) Simple columnar; (4) Pseudostratified.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Simple Epithelium",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_006",
+      "type": "Difference",
+      "question": "Distinguish between endothelium and mesothelium.",
+      "answer": "Endothelium is a simple squamous epithelium of endodermal origin that lines blood vessels (capillaries, endocardium, tunica interna). Mesothelium is of mesodermal origin and lines the body cavities (parietal and visceral/splanchnic layers).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Simple Epithelium > Squamous",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_007",
+      "type": "Definition",
+      "question": "What is pseudostratified epithelium?",
+      "answer": "Pseudostratified epithelium is a type of simple epithelium that appears stratified because the nuclei of its cells are at different levels, but all cells rest on the basement membrane. It is typically ciliated and contains goblet cells, and lines the respiratory tract.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Simple Epithelium > Pseudostratified",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_008",
+      "type": "Difference",
+      "question": "Distinguish between kino-ciliated and stereo-ciliated epithelium.",
+      "answer": "Kino-ciliated epithelium has true motile cilia with a 9+2 microtubule arrangement (axoneme), which actively beat to move substances. Stereo-ciliated epithelium has non-motile stereocilia with a 0+0 (no central tubules) arrangement, which function mainly in absorption.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Ciliated",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_02_009",
+      "type": "List",
+      "question": "List three types of modified epithelium.",
+      "answer": "Three types of modified epithelium are: (1) Ciliated epithelium (with kino-cilia or stereo-cilia); (2) Glandular epithelium (secretory); (3) Neuro-sensory epithelium (sensory receptor cells).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_010",
+      "type": "Explain",
+      "question": "What is brush-bordered epithelium and where is it found?",
+      "answer": "Brush-bordered epithelium has microvilli on the free surface, which increase the surface area for absorption. It is found in the proximal convoluted tubule (PCT) of nephrons (cuboidal type) and in the intestinal mucosa (columnar type).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Brush-bordered",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_011",
+      "type": "Difference",
+      "question": "Distinguish between exocrine, endocrine, and heterocrine glands.",
+      "answer": "Exocrine glands have ducts and secrete onto body surfaces or into body cavities. Endocrine glands are ductless and secrete hormones directly into the bloodstream. Heterocrine (mixed) glands have both exocrine and endocrine components, e.g., the pancreas.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Glandular > By Ducts",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_012",
+      "type": "Difference",
+      "question": "Distinguish between apocrine, merocrine, and holocrine glands based on secretion mode.",
+      "answer": "Merocrine glands secrete by exocytosis without loss of cytoplasm (e.g., salivary glands). Apocrine glands lose part of their apical cytoplasm during secretion (e.g., mammary glands). Holocrine glands release their entire cellular content upon disintegration (e.g., sebaceous glands).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Glandular > By Quantity",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_02_013",
+      "type": "Difference",
+      "question": "Distinguish between serous and mucous glands.",
+      "answer": "Serous glands secrete a watery, enzyme-rich fluid (e.g., parotid salivary gland). Mucous glands secrete a thick, viscous mucus rich in glycoproteins (e.g., mucous cells of the stomach). Mixed glands produce both serous and mucous secretions.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Glandular > By Consistency",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_014",
+      "type": "Fact",
+      "question": "How many free surfaces does epithelium have in coelomates, pseudocoelomates, and acoelomates?",
+      "answer": "Coelomates have 4 free surfaces; pseudocoelomates have 3 free surfaces; acoelomates have 2 free surfaces.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Surfaces",
+      "bloom_level": "Remember",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_015",
+      "type": "List",
+      "question": "Name the types of compound epithelium.",
+      "answer": "The types of compound (stratified) epithelium are: (1) Stratified squamous (keratinised and non-keratinised); (2) Stratified cuboidal (rare); (3) Stratified columnar (uncommon); (4) Transitional (urothelium/plastic epithelium).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Compound Epithelium",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_016",
+      "type": "Definition",
+      "question": "What is transitional epithelium (urothelium)?",
+      "answer": "Transitional epithelium, also called urothelium or plastic epithelium, is a type of stratified epithelium found lining the urinary bladder and ureters. Its cells can change shape — squamous when stretched (bladder full) and cuboidal when relaxed (bladder empty).",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Compound Epithelium > Transitional",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_017",
+      "type": "Difference",
+      "question": "Distinguish between keratinised and non-keratinised stratified squamous epithelium.",
+      "answer": "Keratinised stratified squamous epithelium has dead, keratin-filled surface cells (e.g., skin/epidermis) providing a waterproof barrier. Non-keratinised stratified squamous epithelium has living surface cells (e.g., oral mucosa, oesophagus, vagina) providing protection against abrasion while remaining moist.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Compound Epithelium > Stratified > Squamous",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_018",
+      "type": "Definition",
+      "question": "What is germinal epithelium?",
+      "answer": "Germinal epithelium is a type of modified epithelium that gives rise to germ cells (gametes). It lines the gonads — the germinal epithelium of the ovary produces oocytes and that of the testis produces spermatogonia.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Germinal",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_019",
+      "type": "TrueFalse",
+      "question": "True or False: Epithelial tissue contains a rich blood supply. Justify.",
+      "answer": "False. Epithelial tissue is avascular — it has no blood vessels. Nutrients and oxygen reach epithelial cells by diffusion from the underlying connective tissue through the basement membrane.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Characteristics",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_02_020",
+      "type": "Explain",
+      "question": "What is the role of cell junctions in epithelial tissue?",
+      "answer": "Cell junctions in epithelial tissue serve to: Tight junctions — seal the intercellular space and prevent leakage; Adherens junctions — link adjacent cell membranes for structural integrity; Desmosomes — provide mechanical strength to resist shear forces; Gap junctions — allow direct communication and exchange of ions/molecules between adjacent cells.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Characteristics > Cell junctions",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_021",
+      "type": "List",
+      "question": "Classify glandular epithelium by complexity, naming all types.",
+      "answer": "By complexity, glands are classified as: Simple glands — Simple tubular, Simple branched tubular, Simple coiled tubular, Simple alveolar, Simple branched alveolar. Compound glands — Compound tubular, Compound alveolar, Compound tubulo-alveolar.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Glandular > By Complexity",
+      "bloom_level": "Remember",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_02_022",
+      "type": "Fact",
+      "question": "What type of epithelium lines the PCT (proximal convoluted tubule) of nephrons?",
+      "answer": "Simple cuboidal brush-bordered epithelium lines the proximal convoluted tubule (PCT) of nephrons. The microvilli (brush border) greatly increase the surface area for reabsorption.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Layers > Simple Epithelium > Cuboidal > Brush-bordered",
+      "bloom_level": "Remember",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_02_023",
+      "type": "Explain",
+      "question": "What is pigmented epithelium and where is it found?",
+      "answer": "Pigmented epithelium contains melanin or other pigment granules within the epithelial cells. A key example is the retinal pigment epithelium (RPE) of the eye, which absorbs stray light to improve visual acuity and supports the photoreceptor cells.",
+      "mindmap_path": "Animal Tissue > Epithelial Tissue > Modified Epithelium > Pigmented",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    }
+  ]
+}

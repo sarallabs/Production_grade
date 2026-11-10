@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PA_MCQ_H1",
+      "stem": "Which antibody-synthesizing connective tissue cell exhibits a distinctive 'cartwheel' chromatin arrangement?",
+      "options": [
+        "A) Histocyte",
+        "B) Mast cell",
+        "C) Plasma cell",
+        "D) Fibroblast"
+      ],
+      "answer": "C) Plasma cell",
+      "explanation": "Plasma cells differentiate from B-lymphocytes.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PA_MCQ_H2",
+      "stem": "Brown adipose tissue generates metabolic heat in newborn infants due to high mitochondrial density expressing:",
+      "options": [
+        "A) Calmodulin",
+        "B) Thermogenin (Uncoupling Protein-1)",
+        "C) Myoglobin",
+        "D) Troponin C"
+      ],
+      "answer": "B) Thermogenin (Uncoupling Protein-1)",
+      "explanation": "Thermogenin uncouples oxidative phosphorylation.",
+      "difficulty": "Hard",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PA_MCQ_H3",
+      "stem": "Transverse Volkmann's canals in compact bone function to connect adjacent:",
+      "options": [
+        "A) Osteocytes in lacunae",
+        "B) Haversian canals with periosteal blood vessels",
+        "C) Bone marrow cavities",
+        "D) Concentric lamellae"
+      ],
+      "answer": "B) Haversian canals with periosteal blood vessels",
+      "explanation": "Volkmann's canals connect Haversian canals together.",
+      "difficulty": "Hard",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PA_MCQ_H4",
+      "stem": "During skeletal muscle contraction, which band length remains CONSTANT while I-band shortens?",
+      "options": [
+        "A) Z-line distance",
+        "B) A-band",
+        "C) M-line length",
+        "D) H-zone"
+      ],
+      "answer": "B) A-band",
+      "explanation": "A-band represents myosin length and remains constant.",
+      "difficulty": "Hard",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PA_MCQ_H5",
+      "stem": "Which CNS neuroglial cell extends perivascular feet to form the protective Blood-Brain Barrier (BBB)?",
+      "options": [
+        "A) Oligodendrocyte",
+        "B) Microglia",
+        "C) Astrocyte",
+        "D) Ependymal cell"
+      ],
+      "answer": "C) Astrocyte",
+      "explanation": "Astrocytes form the blood-brain barrier.",
+      "difficulty": "Hard",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_MCQ_H6",
+      "stem": "Sensory pseudounipolar neurones featuring a single nerve process that divides into two branches reside in:",
+      "options": [
+        "A) Retina of eye",
+        "B) Cerebral cortex",
+        "C) Dorsal Root Ganglia (DRG)",
+        "D) Ventral horn"
+      ],
+      "answer": "C) Dorsal Root Ganglia (DRG)",
+      "explanation": "Pseudounipolar sensory neurones reside in spinal DRG.",
+      "difficulty": "Hard",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PA_MCQ_H7",
+      "stem": "Which structural tissue layer encloses an individual muscle axon or myocyte fibre bundle?",
+      "options": [
+        "A) Epimysium",
+        "B) Perimysium",
+        "C) Endomysium",
+        "D) Periosteum"
+      ],
+      "answer": "C) Endomysium",
+      "explanation": "Endomysium surrounds individual muscle fibers.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PA_MCQ_H8",
+      "stem": "Saltatory nerve impulse conduction leaps along myelinated axolemma specifically at:",
+      "options": [
+        "A) Synaptic knobs",
+        "B) Nodes of Ranvier",
+        "C) Axon hillock only",
+        "D) Schwann cell nuclei"
+      ],
+      "answer": "B) Nodes of Ranvier",
+      "explanation": "Depolarization jumps from one Node of Ranvier to the next.",
+      "difficulty": "Hard",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PA_MCQ_H9",
+      "stem": "Which intracellular structure is strictly ABSENT inside the axon hillock and axoplasm of a motor neurone?",
+      "options": [
+        "A) Mitochondria",
+        "B) Neurofibrils",
+        "C) Nissl's granules (RER + ribosomes)",
+        "D) Microtubules"
+      ],
+      "answer": "C) Nissl's granules (RER + ribosomes)",
+      "explanation": "Nissl's granules are absent in axon hillock and axon.",
+      "difficulty": "Hard",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PA_MCQ_H10",
+      "stem": "Which blood coagulation factor acts as an anticoagulant inhibitor preventing intra-vascular clotting in health?",
+      "options": [
+        "A) Fibrinogen",
+        "B) Prothrombin",
+        "C) Heparin",
+        "D) Thromboplastin"
+      ],
+      "answer": "C) Heparin",
+      "explanation": "Heparin produced by mast cells is a natural anticoagulant.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    }
+  ]
+}

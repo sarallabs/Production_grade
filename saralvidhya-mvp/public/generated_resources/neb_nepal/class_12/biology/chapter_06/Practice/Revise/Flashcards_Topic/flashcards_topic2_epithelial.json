@@ -1,0 +1,102 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_T2_01",
+      "term": "Simple Squamous Epithelium",
+      "definition": "Single layer of flattened pavement cells; lines blood vessel endothelium, peritoneal mesothelium, and lung alveoli.",
+      "category": "Simple Epithelium",
+      "image": "1. Simple_Squamous_Epithelium_Architecture_Guide.png"
+    },
+    {
+      "id": "FC_T2_02",
+      "term": "Simple Cuboidal Epithelium",
+      "definition": "Cube-like cells with central spherical nuclei; lines thyroid follicles, salivary gland ducts, and germinal ovary surface.",
+      "category": "Simple Epithelium",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "FC_T2_03",
+      "term": "Brush-Bordered Cuboidal Epithelium",
+      "definition": "Simple cuboidal cells with microvilli lining the PCT of renal nephron for maximum absorption.",
+      "category": "Epithelial Specialisations",
+      "image": "2. Specialised_Brush-Bordered_Epithelium_Guide.png"
+    },
+    {
+      "id": "FC_T2_04",
+      "term": "Simple Columnar Epithelium",
+      "definition": "Tall pillar-like cells with oval basal nuclei; lines stomach, intestine mucosa, and gall bladder.",
+      "category": "Simple Epithelium",
+      "image": "3. Simple_Columnar_Epithelium_Overview.png"
+    },
+    {
+      "id": "FC_T2_05",
+      "term": "Goblet Cells",
+      "definition": "Unicellular exocrine mucus-secreting glands interspersed within columnar epithelium of GI and respiratory tracts.",
+      "category": "Glandular Epithelium",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    },
+    {
+      "id": "FC_T2_06",
+      "term": "Pseudostratified Ciliated Columnar Epithelium",
+      "definition": "Single cell layer of varying heights appearing multi-layered; ciliated variant lines trachea and large bronchi.",
+      "category": "Pseudostratified Epithelium",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "FC_T2_07",
+      "term": "Keratinized Stratified Squamous Epithelium",
+      "definition": "Multi-layered compound epithelium covered by dead keratinized stratum corneum; forms epidermis of dry skin.",
+      "category": "Compound Epithelium",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "FC_T2_08",
+      "term": "Non-Keratinized Stratified Squamous Epithelium",
+      "definition": "Multi-layered living surface cells lining moist membranes: oral cavity, pharynx, oesophagus, vagina, cornea.",
+      "category": "Compound Epithelium",
+      "image": "1. Stratified_Epithelium_Types_and_Functions.png"
+    },
+    {
+      "id": "FC_T2_09",
+      "term": "Transitional Epithelium (Urothelium)",
+      "definition": "Distensible plastic compound epithelium with pear-shaped/umbrella surface cells lining urinary bladder and ureters.",
+      "category": "Compound Epithelium",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "FC_T2_10",
+      "term": "Tight Junctions (Zona Occludens)",
+      "definition": "Occluding junctions that fuse adjacent cell membranes, preventing fluid leakage across epithelial barriers.",
+      "category": "Cell Junctions",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "FC_T2_11",
+      "term": "Desmosomes (Macula Adherens)",
+      "definition": "Button-like anchoring junctions coupled to keratin intermediate filaments that resist severe mechanical shear.",
+      "category": "Cell Junctions",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "FC_T2_12",
+      "term": "Gap Junctions (Nexus)",
+      "definition": "Communicating channel junctions formed by connexon proteins allowing ion and second-messenger passage.",
+      "category": "Cell Junctions",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    },
+    {
+      "id": "FC_T2_13",
+      "term": "Exocrine vs Endocrine Glands",
+      "definition": "Exocrine glands retain ducts to secrete enzymes/mucus; Endocrine glands are ductless, releasing hormones into blood.",
+      "category": "Glandular Epithelium",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    },
+    {
+      "id": "FC_T2_14",
+      "term": "Glandular Modes of Secretion",
+      "definition": "Merocrine (exocytosis e.g. sweat), Apocrine (apical loss e.g. mammary), Holocrine (cell breakdown e.g. sebaceous).",
+      "category": "Glandular Epithelium",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    }
+  ]
+}

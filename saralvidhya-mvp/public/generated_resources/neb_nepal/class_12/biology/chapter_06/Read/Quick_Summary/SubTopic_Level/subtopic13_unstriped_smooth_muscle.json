@@ -1,0 +1,40 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 13,
+  "subtopic_name": "4.2 Unstriped / Smooth Muscle",
+  "persona": "Intermediate",
+  "type": "quick_summary",
+  "word_count": 86,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Unstriped / Smooth Muscle",
+  "sections": [
+    {
+      "subsection_header": "4.2 Unstriped / Smooth Muscle",
+      "bullets": [
+        "**Involuntary Visceral Distribution**: Located in walls of internal hollow visceral organs (stomach, intestines, blood vessels, ureters, uterus); controlled by autonomic nervous system.",
+        "**Spindle-Shaped Unbranched Architecture**: Fusiform fibers with pointed tapering ends, containing a single central oval nucleus; lacking cross-striations.",
+        "**Non-Striated Contraction**: Actin and myosin myofilaments arranged in lattice networks attached to dense bodies rather than organized sarcomeres.",
+        "**Single-Unit vs Multi-Unit Subtypes**: **Single-unit** (fibers linked by gap junctions, contract as single syncytium in gut/uterus) vs **Multi-unit** (independently innervated fibers without gap junctions in ciliary eye muscle/arrector pili)."
+      ],
+      "mermaid_diagram": null,
+      "visual_references": [
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\00.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\1. Smooth - Involuntary, Spindle shaped.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\2. Single-Unit.png",
+        "4. Muscular Tissue\\3. Unstriped Smooth muscular tissue\\leaves\\3. Multi-Unit.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "word_count_check": "Target reached for sub-topic quick study",
+    "must_know_filtering": true,
+    "formula_preservation": true,
+    "infographics_count": 4,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Unstriped / Smooth Muscle"
+    }
+  }
+}

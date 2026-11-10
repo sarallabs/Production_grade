@@ -1,0 +1,70 @@
+[
+  {
+    "front": "What is a Mutual Fund?",
+    "back": "A trust that pools savings from multiple investors and invests them in a diversified portfolio of securities under professional management."
+  },
+  {
+    "front": "Which regulatory body governs Mutual Funds in India?",
+    "back": "The Securities and Exchange Board of India (SEBI)."
+  },
+  {
+    "front": "Who is the Sponsor of a Mutual Fund?",
+    "back": "The promoter who establishes the mutual fund trust, registers it with SEBI, and contributes at least 40% of the net worth of the AMC."
+  },
+  {
+    "front": "What is the primary role of the Board of Trustees in a Mutual Fund?",
+    "back": "To hold the fund's assets in trust for the benefit of unit holders and ensure the AMC complies with SEBI regulations and the Trust Deed."
+  },
+  {
+    "front": "What is the role of the Asset Management Company (AMC)?",
+    "back": "To act as the investment manager of the mutual fund, responsible for launching schemes and making buy/sell decisions for the portfolios."
+  },
+  {
+    "front": "What is the role of a Custodian in a Mutual Fund?",
+    "back": "An independent entity that takes physical and electronic custody of all securities purchased by the mutual fund to prevent fraud."
+  },
+  {
+    "front": "State the formula for Net Asset Value (NAV) per unit.",
+    "back": "NAV = (Total Assets of the Scheme - Total Liabilities of the Scheme) / Total Number of Outstanding Units"
+  },
+  {
+    "front": "How do open-ended and closed-ended funds differ in liquidity?",
+    "back": "Open-ended funds allow daily subscription and redemption at NAV-based prices. Closed-ended funds can only be bought/sold on stock exchanges after the NFO."
+  },
+  {
+    "front": "What is an ELSS, and what is its tax benefit in India?",
+    "back": "Equity Linked Savings Scheme; a diversified equity fund that offers tax deductions up to Rs. 1.5 lakhs under Section 80C of the Income Tax Act."
+  },
+  {
+    "front": "What is the lock-in period for units in an ELSS fund?",
+    "back": "3 years from the date of unit allotment."
+  },
+  {
+    "front": "How does an Exit Load affect the redemption price of a unit?",
+    "back": "It reduces the redemption price: Redemption Price = NAV * (1 - Exit Load %)."
+  },
+  {
+    "front": "What is the benefit of Rupee Cost Averaging in a SIP?",
+    "back": "By investing a fixed amount regularly, investors buy more units when the NAV is low and fewer when the NAV is high, lowering the average cost per unit."
+  },
+  {
+    "front": "How does a Dividend Payout Option affect the NAV of a scheme?",
+    "back": "It causes the NAV to drop by the amount of the dividend distributed on the ex-dividend date."
+  },
+  {
+    "front": "What is a Gilt Fund?",
+    "back": "A debt mutual fund that invests exclusively in central and state government securities and Treasury bills, having zero credit risk."
+  },
+  {
+    "front": "What is Tracking Error in the context of Index Funds?",
+    "back": "The standard deviation of the difference in returns between the index fund and the benchmark index it replicates, caused by fees, cash holdings, and transaction costs."
+  },
+  {
+    "front": "What is the Total Expense Ratio (TER)?",
+    "back": "The total annual recurring operating costs (management, custodian, RTA, audit fees) of a scheme expressed as a percentage of its average daily net assets."
+  },
+  {
+    "front": "How does a Hedge Fund differ from a Mutual Fund regarding regulation and access?",
+    "back": "Hedge funds are lightly regulated private partnerships for high-net-worth individuals, using high leverage and short positions, whereas mutual funds are highly regulated public pools."
+  }
+]

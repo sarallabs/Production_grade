@@ -1,0 +1,37 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 6,
+  "subtopic_name": "2.2 Simple Epithelium \u2014 Single-Layered Epithelia",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 215,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Simple Epithelium",
+  "sections": [
+    {
+      "header": "2.2 Simple Epithelium \u2014 Single-Layered Epithelia",
+      "level": 2,
+      "content": "### 2.2 Simple Epithelium \u2014 Structure, Morphologies, and Locations\n\n**Simple Epithelium** consists of a single uniform layer of epithelial cells anchored directly to the underlying basement membrane. Because of its thin structural profile, simple epithelium is primarily adapted for diffusion, filtration, secretion, and nutrient absorption.\n\n#### Structural Classification\n\n| Type | Cell Morphology | Nuclear Position | Major Anatomical Locations | Primary Function |\n| :--- | :--- | :--- | :--- | :--- |\n| **Simple Squamous** | Flat, pavement-like tiles | Central flattened | Endothelium (blood vessels), Mesothelium (pericardium, pleura), Alveoli | Rapid passive diffusion & filtration |\n| **Simple Cuboidal** | Cube-shaped | Central spherical | Thyroid follicles, Kidney tubules, PCT (brush-bordered) | Secretion & active reabsorption |\n| **Simple Columnar** | Tall, pillar-shaped | Basal oval | Stomach lining, Intestines (microvilli), Fallopian tubes (ciliated) | Absorption & mucin secretion |\n| **Pseudostratified** | Variable height column cells | Multi-level basal | Trachea, Bronchi (ciliated with goblet cells) | Mucociliary clearance |\n\n#### Morphological Specializations\n- **Endothelium vs Mesothelium**: Simple squamous endothelium forms smooth non-thrombogenic linings inside vascular vessels, whereas mesothelium secretes lubricating serous fluid inside coelomic body cavities.\n- **Brush-Bordered Modification**: Dense apical microvilli in the **Proximal Convoluted Tubule (PCT)** of nephrons increase surface area over 20-fold for maximum solute reabsorption.",
+      "mermaid_diagram": null,
+      "visual_references": [
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\00 Guide_to_Simple_Epithelial_Tissues.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\1. Simple_Squamous_Epithelium_Architecture_Guide.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\2. Simple_Cuboidal_Epithelium_Anatomy.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\3. Simple_Columnar_Epithelium_Overview.png",
+        "2. Epithelial Tissue\\2. Simple (Single layer)\\4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 5,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > Simple Epithelium"
+    }
+  }
+}

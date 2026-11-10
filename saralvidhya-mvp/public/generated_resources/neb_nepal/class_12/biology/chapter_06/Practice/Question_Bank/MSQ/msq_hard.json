@@ -1,0 +1,204 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MSQ_H1",
+      "stem": "Identify all neuroglial cells residing in the Central Nervous System (CNS): (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia = Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "difficulty": "Hard",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PQB_MSQ_H2",
+      "stem": "Identify all characteristics belonging to Red Muscle fibres: (Select all that apply)",
+      "options": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "D) Fast-twitch rapid fatigue",
+        "E) Aerobic respiration"
+      ],
+      "answers": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "E) Aerobic respiration"
+      ],
+      "explanation": "Red muscle is rich in myoglobin/mitochondria, slow-twitch, aerobic.",
+      "difficulty": "Hard",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PQB_MSQ_H3",
+      "stem": "Identify all tissue macrophages derived from blood monocytes: (Select all that apply)",
+      "options": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells (Lungs)",
+        "D) Langerhans cells (Skin)",
+        "E) Chondrocytes"
+      ],
+      "answers": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells (Lungs)",
+        "D) Langerhans cells (Skin)"
+      ],
+      "explanation": "Kupffer, Microglia, Dust cells, Langerhans are specialized monocyte-derived histocytes.",
+      "difficulty": "Hard",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PQB_MSQ_H4",
+      "stem": "Identify all features distinguishing Cardiac Muscle from Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Resistance to fatigue",
+        "E) Syncytial multinucleated fibers"
+      ],
+      "answers": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, has intercalated discs, fatigue-resistant.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PQB_MSQ_H5",
+      "stem": "Identify all factors required during blood clotting cascade to form Fibrin: (Select all that apply)",
+      "options": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen",
+        "E) Heparin"
+      ],
+      "answers": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen"
+      ],
+      "explanation": "Clotting requires Thromboplastin, Ca2+, Prothrombin, Thrombin, Fibrinogen.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MSQ_H6",
+      "stem": "In Question Bank Hard deck, select all true statements regarding Synaptic Transmission in neurones: (Select all that apply)",
+      "options": [
+        "A) Action potential arrives at presynaptic axon terminal knob",
+        "B) Voltage-gated Ca2+ channels open triggering neurotransmitter exocytosis",
+        "C) Neurotransmitters diffuse across synaptic cleft",
+        "D) Binding to postsynaptic receptors generates graded potential",
+        "E) Electrical synapses utilize Nissl's granules for signal transmission"
+      ],
+      "answers": [
+        "A) Action potential arrives at presynaptic axon terminal knob",
+        "B) Voltage-gated Ca2+ channels open triggering neurotransmitter exocytosis",
+        "C) Neurotransmitters diffuse across synaptic cleft",
+        "D) Binding to postsynaptic receptors generates graded potential"
+      ],
+      "explanation": "Chemical synaptic transmission involves Ca2+ influx, neurotransmitter release, diffusion, and receptor binding.",
+      "difficulty": "Hard",
+      "image": "4. Direction.png"
+    },
+    {
+      "id": "PQB_MSQ_H7",
+      "stem": "In Question Bank Hard deck, select all physiological mechanisms operating in Single-Unit vs Multi-Unit Smooth Muscle: (Select all that apply)",
+      "options": [
+        "A) Single-unit smooth muscle cells are electrically coupled via gap junctions",
+        "B) Single-unit smooth muscle exhibits myogenic pacemaker activity",
+        "C) Multi-unit smooth muscle cells are neurogenic and independently innervated",
+        "D) Multi-unit smooth muscle occurs in ciliary body of eye and arrector pili",
+        "E) Multi-unit smooth muscle contracts as a single synchronized syncytium"
+      ],
+      "answers": [
+        "A) Single-unit smooth muscle cells are electrically coupled via gap junctions",
+        "B) Single-unit smooth muscle exhibits myogenic pacemaker activity",
+        "C) Multi-unit smooth muscle cells are neurogenic and independently innervated",
+        "D) Multi-unit smooth muscle occurs in ciliary body of eye and arrector pili"
+      ],
+      "explanation": "Single-unit is myogenic with gap junctions; multi-unit is neurogenic with independent cell units.",
+      "difficulty": "Hard",
+      "image": "2. Single-Unit.png"
+    },
+    {
+      "id": "PQB_MSQ_H8",
+      "stem": "In Question Bank Hard deck, select all structural features of Intercalated Discs in cardiac muscle: (Select all that apply)",
+      "options": [
+        "A) Transverse Fascia Adherens anchor actin filaments",
+        "B) Macula Adherens (Desmosomes) prevent cell separation during contraction",
+        "C) Longitudinal Gap Junctions transmit electrical action potential impulses",
+        "D) Permits functional syncytial contraction of myocardium",
+        "E) Tight junctions (Zona Occludens) blocking all ionic movement"
+      ],
+      "answers": [
+        "A) Transverse Fascia Adherens anchor actin filaments",
+        "B) Macula Adherens (Desmosomes) prevent cell separation during contraction",
+        "C) Longitudinal Gap Junctions transmit electrical action potential impulses",
+        "D) Permits functional syncytial contraction of myocardium"
+      ],
+      "explanation": "Intercalated discs feature fascia adherens, desmosomes, and gap junctions for cardiac syncytium.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PQB_MSQ_H9",
+      "stem": "In Question Bank Hard deck, select all cellular characteristics of Plasma Cells in connective tissue: (Select all that apply)",
+      "options": [
+        "A) Differentiated from active B-lymphocytes upon antigen encounter",
+        "B) Distinctive 'cartwheel' or 'clock-face' heterochromatin nucleus",
+        "C) Abundant rough endoplasmic reticulum for immunoglobulin synthesis",
+        "D) Synthesize and secrete circulating humoral antibodies",
+        "E) Phagocytose bacterial debris via lysosomal enzymes"
+      ],
+      "answers": [
+        "A) Differentiated from active B-lymphocytes upon antigen encounter",
+        "B) Distinctive 'cartwheel' or 'clock-face' heterochromatin nucleus",
+        "C) Abundant rough endoplasmic reticulum for immunoglobulin synthesis",
+        "D) Synthesize and secrete circulating humoral antibodies"
+      ],
+      "explanation": "Plasma cells stem from B-lymphocytes, have cartwheel nuclei, abundant RER, and synthesize antibodies.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_MSQ_H10",
+      "stem": "In Question Bank Hard deck, select all characteristics of Astrocyte neuroglia in the CNS: (Select all that apply)",
+      "options": [
+        "A) Star-shaped glial cells with multiple radiating processes",
+        "B) Form perivascular end-feet surrounding brain capillaries",
+        "C) Constitute physical structural Blood-Brain Barrier (BBB)",
+        "D) Regulate extracellular K+ ion concentration and glutamate uptake",
+        "E) Synthesize myelin sheath around CNS axon fibers"
+      ],
+      "answers": [
+        "A) Star-shaped glial cells with multiple radiating processes",
+        "B) Form perivascular end-feet surrounding brain capillaries",
+        "C) Constitute physical structural Blood-Brain Barrier (BBB)",
+        "D) Regulate extracellular K+ ion concentration and glutamate uptake"
+      ],
+      "explanation": "Astrocytes are star-shaped, form BBB perivascular feet, and balance ionic/glutamate homeostasis. Oligodendrocytes synthesize CNS myelin.",
+      "difficulty": "Hard",
+      "image": "CNS.png"
+    }
+  ]
+}

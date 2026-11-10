@@ -1,0 +1,192 @@
+{
+  "topic": "Topic 1: History & Fundamentals of Histology",
+  "msqs": [
+    {
+      "id": "PQB_T1_MSQ_01",
+      "stem": "From Question Bank perspective, in Topic 1, select all historical milestones established in animal histology: (Select all that apply)",
+      "options": [
+        "A) Xavier Bichat classified 21 tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the formal term 'Histology'",
+        "D) True tissue level first evolved in Phylum Coelenterata",
+        "E) Anton van Leeuwenhoek discovered the Haversian osteon system"
+      ],
+      "answers": [
+        "A) Xavier Bichat classified 21 tissue types without microscope",
+        "B) Marcello Malpighi pioneered microscopic tissue investigation",
+        "C) Mayer coined the formal term 'Histology'",
+        "D) True tissue level first evolved in Phylum Coelenterata"
+      ],
+      "explanation": "Bichat, Malpighi, Mayer, and Coelenterate evolution represent foundational histology milestones.",
+      "image": "2. The_History_of_Histology.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_02",
+      "stem": "From Question Bank perspective, in Topic 1, select all primary tissue classes found in complex animals: (Select all that apply)",
+      "options": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue",
+        "E) Vascular Tissue as separate primary class"
+      ],
+      "answers": [
+        "A) Epithelial Tissue",
+        "B) Connective Tissue",
+        "C) Muscular Tissue",
+        "D) Nervous Tissue"
+      ],
+      "explanation": "4 primary tissues: Epithelial, Connective, Muscular, Nervous.",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_03",
+      "stem": "From Question Bank perspective, in Topic 1, select all embryonic germ layers that give rise to Epithelial Tissues: (Select all that apply)",
+      "options": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI tract mucosa)",
+        "D) Neural crest only",
+        "E) Blastoderm only"
+      ],
+      "answers": [
+        "A) Ectoderm (Skin epidermis)",
+        "B) Mesoderm (Endothelium & Mesothelium)",
+        "C) Endoderm (GI tract mucosa)"
+      ],
+      "explanation": "Epithelial tissue arises from Ectoderm, Mesoderm, and Endoderm.",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_04",
+      "stem": "From Question Bank perspective, in Topic 1, select all components forming the epithelial basement membrane: (Select all that apply)",
+      "options": [
+        "A) Basal lamina secreted by epithelial cells",
+        "B) Reticular lamina secreted by connective tissue",
+        "C) Type IV Collagen and Laminin glycoproteins",
+        "D) Reticular collagen fibers and Perlecan",
+        "E) Mineralized calcium phosphate crystals"
+      ],
+      "answers": [
+        "A) Basal lamina secreted by epithelial cells",
+        "B) Reticular lamina secreted by connective tissue",
+        "C) Type IV Collagen and Laminin glycoproteins",
+        "D) Reticular collagen fibers and Perlecan"
+      ],
+      "explanation": "Basement membrane comprises basal lamina and reticular lamina rich in Type IV collagen, laminin, and perlecan.",
+      "image": "3. The_Epithelial_Basement_Membrane_Gateway.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_05",
+      "stem": "From Question Bank perspective, in Topic 1, select all true statements regarding biological organization hierarchy: (Select all that apply)",
+      "options": [
+        "A) Cells assemble into functional tissues",
+        "B) Tissues combine to form organs",
+        "C) Organs cooperate within organ systems",
+        "D) Organ systems constitute the intact organism",
+        "E) Organs assemble directly into tissues"
+      ],
+      "answers": [
+        "A) Cells assemble into functional tissues",
+        "B) Tissues combine to form organs",
+        "C) Organs cooperate within organ systems",
+        "D) Organ systems constitute the intact organism"
+      ],
+      "explanation": "Biological hierarchy progresses: Cell -> Tissue -> Organ -> Organ System -> Organism.",
+      "image": "5. Biological_Hierarchy__Cells_to_Organisms.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_06",
+      "stem": "From Question Bank perspective, in Topic 1, select all tissues derived exclusively from embryonic Mesoderm: (Select all that apply)",
+      "options": [
+        "A) Loose and Dense Connective Tissues",
+        "B) Skeletal, Smooth, and Cardiac Muscles",
+        "C) Vascular Blood and Bone tissues",
+        "D) Dermis of skin and Cartilage",
+        "E) Central Nervous System neurones"
+      ],
+      "answers": [
+        "A) Loose and Dense Connective Tissues",
+        "B) Skeletal, Smooth, and Cardiac Muscles",
+        "C) Vascular Blood and Bone tissues",
+        "D) Dermis of skin and Cartilage"
+      ],
+      "explanation": "Connective tissues, muscle types, bone, blood, and dermis originate from mesoderm.",
+      "image": "2. Origin Mesoderm.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_07",
+      "stem": "From Question Bank perspective, in Topic 1, select all key histological characteristics of Epithelial Tissue: (Select all that apply)",
+      "options": [
+        "A) Tightly packed cells with minimal intercellular matrix",
+        "B) Avascular nature (lacks direct blood vessels)",
+        "C) High regenerative and mitotic capacity",
+        "D) Rests upon non-cellular basement membrane",
+        "E) Abundant vascular matrix separating cells"
+      ],
+      "answers": [
+        "A) Tightly packed cells with minimal intercellular matrix",
+        "B) Avascular nature (lacks direct blood vessels)",
+        "C) High regenerative and mitotic capacity",
+        "D) Rests upon non-cellular basement membrane"
+      ],
+      "explanation": "Epithelial tissue is tightly packed, avascular, highly regenerative, and rests on a basement membrane.",
+      "image": "00 General_Features_of_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_08",
+      "stem": "From Question Bank perspective, in Topic 1, select all specialized structural functions of epithelial coverings: (Select all that apply)",
+      "options": [
+        "A) Physical protection against mechanical abrasion",
+        "B) Barrier against pathogen entry",
+        "C) Prevention of fluid desiccation",
+        "D) Trans-epithelial selective absorption and secretion",
+        "E) High-force mechanical tendon traction"
+      ],
+      "answers": [
+        "A) Physical protection against mechanical abrasion",
+        "B) Barrier against pathogen entry",
+        "C) Prevention of fluid desiccation",
+        "D) Trans-epithelial selective absorption and secretion"
+      ],
+      "explanation": "Epithelia protect, block pathogens, prevent drying, and regulate absorption/secretion.",
+      "image": "1. Understanding_Epithelial_Tissue_Functions.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_09",
+      "stem": "From Question Bank perspective, in Topic 1, select all organisms demonstrating tissue-level grade of organization: (Select all that apply)",
+      "options": [
+        "A) Hydra (Coelenterata)",
+        "B) Aurelia jellyfish (Cnidaria)",
+        "C) Metridium sea anemone (Cnidaria)",
+        "D) Sponges (Porifera)",
+        "E) Amoeba (Protozoa)"
+      ],
+      "answers": [
+        "A) Hydra (Coelenterata)",
+        "B) Aurelia jellyfish (Cnidaria)",
+        "C) Metridium sea anemone (Cnidaria)"
+      ],
+      "explanation": "Coelenterates (Hydra, Aurelia, Metridium) exhibit tissue-level organization. Sponges display cellular grade.",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "PQB_T1_MSQ_10",
+      "stem": "From Question Bank perspective, in Topic 1, select all pathways by which avascular epithelial cells receive oxygen and nutrients: (Select all that apply)",
+      "options": [
+        "A) Simple diffusion from underlying connective tissue capillaries",
+        "B) Trans-basement membrane nutrient transport",
+        "C) Intercellular gap junction metabolite sharing",
+        "D) Direct intra-epithelial arteriolar blood flow",
+        "E) Perichondrial canaliculi mineral transport"
+      ],
+      "answers": [
+        "A) Simple diffusion from underlying connective tissue capillaries",
+        "B) Trans-basement membrane nutrient transport",
+        "C) Intercellular gap junction metabolite sharing"
+      ],
+      "explanation": "Avascular epithelial cells receive nutrients via diffusion across the basement membrane from CT capillaries.",
+      "image": "2. Avascular_Tissue_Survival_and_Respiration.png"
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_T5_01",
+      "term": "Neurone Cyton / Soma",
+      "definition": "Main metabolic cell body of neurone containing nucleus, organelles, and Nissl's granules.",
+      "category": "Neurone Anatomy",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "FC_T5_02",
+      "term": "Nissl's Granules",
+      "definition": "Clumps of Rough Endoplasmic Reticulum and free ribosomes synthesizing protein in cyton and dendrites; ABSENT in axon.",
+      "category": "Neurone Anatomy",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "FC_T5_03",
+      "term": "Axon Hillock",
+      "definition": "Conical region connecting cyton to axon; lacks Nissl's granules; site of action potential initiation.",
+      "category": "Neurone Anatomy",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "FC_T5_04",
+      "term": "Nodes of Ranvier",
+      "definition": "Uninsulated gaps in axon myelin sheath rich in voltage-gated Na+ channels enabling saltatory impulse conduction.",
+      "category": "Nerve Conduction",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "FC_T5_05",
+      "term": "Saltatory Impulse Conduction",
+      "definition": "Fast leaping action potential propagation from node to node along myelinated axons up to 120 m/s.",
+      "category": "Nerve Conduction",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "FC_T5_06",
+      "term": "Astrocytes (CNS Neuroglia)",
+      "definition": "Star-shaped glial cells forming Blood-Brain Barrier (BBB) perivascular end-feet and maintaining ionic homeostasis.",
+      "category": "CNS Neuroglia",
+      "image": "CNS.png"
+    },
+    {
+      "id": "FC_T5_07",
+      "term": "Oligodendrocytes (CNS Neuroglia)",
+      "definition": "Glial cells forming myelin sheath around multiple axons inside the Central Nervous System.",
+      "category": "CNS Neuroglia",
+      "image": "CNS.png"
+    },
+    {
+      "id": "FC_T5_08",
+      "term": "Microglia (CNS Neuroglia)",
+      "definition": "Small phagocytic macrophage neuroglia defending CNS tissue against infection and clearing debris.",
+      "category": "CNS Neuroglia",
+      "image": "CNS.png"
+    },
+    {
+      "id": "FC_T5_09",
+      "term": "Ependymal Cells (CNS Neuroglia)",
+      "definition": "Ciliated epithelial-like cells lining brain ventricles and central spinal canal; circulate Cerebrospinal Fluid (CSF).",
+      "category": "CNS Neuroglia",
+      "image": "CNS.png"
+    },
+    {
+      "id": "FC_T5_10",
+      "term": "Schwann Cells (PNS Neuroglia)",
+      "definition": "PNS neuroglial cells wrapping around peripheral axons to synthesize myelin sheath.",
+      "category": "PNS Neuroglia",
+      "image": "PNS.png"
+    },
+    {
+      "id": "FC_T5_11",
+      "term": "Post-Mitotic Nature of Neurones",
+      "definition": "Mature human neurones lack active centrioles and cannot divide post-birth.",
+      "category": "Neurone Physiology",
+      "image": "3. No mitosis.png"
+    },
+    {
+      "id": "FC_T5_12",
+      "term": "Chemical Synapses & Neurotransmitters",
+      "definition": "Presynaptic Ca2+ influx causes neurotransmitter exocytosis into synaptic cleft, binding postsynaptic receptors.",
+      "category": "Synaptic Transmission",
+      "image": "4. Direction.png"
+    }
+  ]
+}

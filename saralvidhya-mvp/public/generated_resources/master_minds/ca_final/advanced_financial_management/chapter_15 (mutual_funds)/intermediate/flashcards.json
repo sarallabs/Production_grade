@@ -1,0 +1,54 @@
+[
+  {
+    "front": "What is the minimum net worth requirement for an AMC in India, and what percentage must the sponsor contribute?",
+    "back": "The minimum net worth is ₹10 crore, and the sponsor must contribute at least 40% of this net worth."
+  },
+  {
+    "front": "Under SEBI guidelines, what is the composition requirement for a mutual fund's Board of Trustees?",
+    "back": "At least two-thirds (66.67%) of the trustees must be independent of the sponsor."
+  },
+  {
+    "front": "How does a Capital Protection Oriented Fund (CPOF) secure the investor's principal?",
+    "back": "It invests a calculated majority of the corpus in high-quality debt instruments that grow to equal the original principal at maturity, and allocates the remaining portion to equity for growth."
+  },
+  {
+    "front": "What is the formula for the Treynor Ratio, and which risk metric does it use?",
+    "back": "Treynor Ratio = (Rp - Rf) / Beta. It uses systematic risk (Beta) as the risk metric."
+  },
+  {
+    "front": "What is the formula for the Sharpe Ratio, and which risk metric does it use?",
+    "back": "Sharpe Ratio = (Rp - Rf) / Standard Deviation. It uses total risk (Standard Deviation) as the risk metric."
+  },
+  {
+    "front": "What is the mathematical definition of Jensen's Alpha?",
+    "back": "Jensen's Alpha = Rp - [Rf + Beta * (Rm - Rf)]. It represents the absolute excess return of a portfolio relative to its CAPM-predicted return."
+  },
+  {
+    "front": "Define Tracking Error and explain its relevance in passive mutual funds.",
+    "back": "Tracking Error is the standard deviation of the difference in returns between a fund and its benchmark. A lower tracking error (closer to 0) indicates more efficient index replication."
+  },
+  {
+    "front": "Explain the concept of 'Side-Pocketing' in debt mutual funds.",
+    "back": "It is the segregation of defaulted or highly illiquid debt securities from the healthy liquid assets of a scheme into a locked segregated portfolio, allowing normal trading in the healthy portion."
+  },
+  {
+    "front": "What is the purpose of a 'Dividend Equalization Account' in open-ended schemes?",
+    "back": "It prevents the dilution of accumulated undistributed earnings for existing investors by requiring new subscribers to pay their share of accumulated income (DER) and paying it out to redeeming investors."
+  },
+  {
+    "front": "What is the valuation rule for non-traded equity shares in mutual funds?",
+    "back": "If a share is not traded for 60 days, it is valued in good faith by capitalization of earnings or net asset value methods, adjusted by a discount for lower liquidity."
+  },
+  {
+    "front": "Contrast Flexi-Cap and Multi-Cap funds under current SEBI rules.",
+    "back": "Multi-Cap funds must allocate at least 25% of assets each to large, mid, and small-caps. Flexi-Cap funds have no market-cap restrictions but must invest at least 65% in equities overall."
+  },
+  {
+    "front": "What is the formula for calculating redemption price when an exit load applies?",
+    "back": "Redemption Price = NAV * (1 - Exit Load %)"
+  },
+  {
+    "front": "What is the key advantage of Arbitrage Funds over Liquid Funds for retail investors in India?",
+    "back": "Arbitrage funds offer similar low-risk, steady returns but are taxed as equity funds, which historically carry lower tax rates than debt-taxed liquid funds."
+  }
+]

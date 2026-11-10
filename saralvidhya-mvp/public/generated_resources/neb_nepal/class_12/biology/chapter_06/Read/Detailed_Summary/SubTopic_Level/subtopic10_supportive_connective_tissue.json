@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 10,
+  "subtopic_name": "3.2 Supportive Connective Tissue \u2014 Cartilage and Bone",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 263,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Supportive Connective Tissue",
+  "sections": [
+    {
+      "header": "3.2 Supportive Connective Tissue \u2014 Cartilage and Bone",
+      "level": 2,
+      "content": "### 3.2 Supportive Connective Tissue \u2014 Cartilage and Osseous Microarchitecture\n\n**Supportive Connective Tissue** (Skeletal Tissue) comprises rigid and semi-rigid connective tissues\u2014Cartilage and Bone\u2014that construct the vertebrate endoskeleton.\n\n#### Cartilage Microarchitecture\nCartilage is a firm, flexible, **avascular** tissue. Its solid matrix consists of **chondrin** (a chondroitin sulfate-protein complex). Mature cartilage cells (**chondrocytes**) occur in groups of 1\u20134 inside fluid-filled fluid matrix cavities called **lacunae**.\n\n- **Hyaline Cartilage**: Translucent, bluish-white matrix with fine collagen fibrils; forms costal cartilages, tracheal rings, nasal septum, and articular surfaces of long bones.\n- **Fibro-cartilage (White Fibrous)**: Dense collagen bundles; toughest cartilage type, forming intervertebral discs and the pubic symphysis.\n- **Elastic Cartilage (Yellow Fibrous)**: Rich in branching elastic fibers; highly flexible, forming external ear pinna and epiglottis.\n- **Calcified Cartilage**: Hardened by calcium salt deposition; found in head of humerus/femur in elderly individuals.\n\n#### Bone (Osseous Tissue) Microarchitecture\nBone is a hard, rigid, highly **vascularized** skeletal tissue. Its extracellular matrix is composed of **ossein** protein impregnated with inorganic mineral crystals of **hydroxyapatite** [\\(\text{Ca}_{10}(\text{PO}_4)_6(\text{OH})_2\\)]. Mature bone cells (**osteocytes**) reside within lacunae and extend cytoplasmic processes through microscopic channels called **canaliculi**.\n\n#### Structural Organization of a Long Bone\n\n```\nLong Bone (e.g., Femur)\n \u251c\u2500\u2500 Epiphysis (Expanded Ends)\n \u2502     \u251c\u2500\u2500 Cancellous / Spongy Bone (Trabecular Network)\n \u2502     \u2514\u2500\u2500 Red Bone Marrow (Active Hemopoiesis / Blood Cell Synthesis)\n \u2514\u2500\u2500 Diaphysis (Central Shaft)\n       \u251c\u2500\u2500 Compact Bone (Dense Mineralized Matrix)\n       \u251c\u2500\u2500 Yellow Bone Marrow (Fat Storage Cavity)\n       \u2514\u2500\u2500 Haversian Systems (Osteons)\n             \u251c\u2500\u2500 Central Haversian Canal (Blood Vessels & Nerves)\n             \u251c\u2500\u2500 Concentric Ossein Lamellae\n             \u251c\u2500\u2500 Osteocytes in Lacunae\n             \u2514\u2500\u2500 Transverse Volkmann's Canals\n```",
+      "mermaid_diagram": "graph TD\n    A[Central Haversian Canal] -->|Blood Supply| B[Concentric Ossein Lamellae]\n    B --> C[Osteocytes inside Lacunae]\n    C -->|Cytoplasmic Exchange| D[Canaliculi Channels]",
+      "visual_references": [
+        "3. Conective Tissue\\3. Supportive Connective Tissue\\00 Cartilage_and_Bone_Comparison_Guide.png",
+        "3. Conective Tissue\\3. Supportive Connective Tissue\\1. Cartilage_Anatomy_and_Tissue_Types.png",
+        "3. Conective Tissue\\3. Supportive Connective Tissue\\2. Architecture_of_Bone_Anatomy.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Supportive Connective Tissue"
+    }
+  }
+}

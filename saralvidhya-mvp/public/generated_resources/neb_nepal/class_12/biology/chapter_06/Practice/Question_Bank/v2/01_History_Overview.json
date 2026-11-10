@@ -1,0 +1,97 @@
+{
+  "version": "v2",
+  "mark_type": "5-mark",
+  "topic": "History & Overview",
+  "chapter": "Unit 6: Animal Tissue",
+  "questions": [
+    {
+      "id": "v2_01_001",
+      "type": "Describe",
+      "question": "Describe the contributions of Xavier Bichat to the field of animal histology.",
+      "answer_points": [
+        "1. Xavier Bichat (1771–1802 AD) was a French anatomist and pathologist who is considered the Founder and Father of animal histology.",
+        "2. He coined the term 'tissue' in animal anatomy, establishing tissue — not the organ — as the central element of human anatomy.",
+        "3. He was the first to propose that organs are not discrete entities but collections of often disparate tissues, revolutionising the understanding of body organisation.",
+        "4. Despite working entirely without a microscope, he distinguished 21 types of elementary tissues from which the organs of the human body are composed.",
+        "5. His approach to anatomy was systematic and analytical: he studied how the same tissue types appear in different organs, enabling a tissue-level analysis of the body.",
+        "6. He is credited with two major titles: 'Founder of animal histology' and 'Father of histology', reflecting both his conceptual and classificatory contributions.",
+        "7. Bichat's work provided the conceptual foundation upon which modern histology, cell biology, and pathology were later built."
+      ],
+      "mindmap_path": "Animal Tissue > History > Xavier Bichat",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "None"
+    },
+    {
+      "id": "v2_01_002",
+      "type": "Compare",
+      "question": "Compare and contrast the contributions of Xavier Bichat, Marcello Malpighi, and Karl Mayer to histology.",
+      "answer_points": [
+        "1. Marcello Malpighi (17th century) pioneered the use of the microscope in biological studies, making early observations of microscopic structures in tissues and organs — he is called the Founder of histology.",
+        "2. Xavier Bichat (1771–1802) coined the term 'tissue', proposed the tissue-level organisation of the body, and classified 21 elementary tissue types without a microscope — he is called the Founder and Father of animal histology.",
+        "3. Karl Mayer formally named the discipline 'histology' in 1801 from the Greek 'histos' (tissue) and 'logos' (study).",
+        "4. Comparison Table: | Aspect | Malpighi | Bichat | Mayer | | Title | Founder of Histology | Founder & Father of Animal Histology | — | | Key contribution | Microscopic biological studies | Coined 'tissue', classified 21 types | Coined 'histology' (1801) | | Microscope used | Yes | No | — |",
+        "5. All three scientists were foundational: Malpighi provided the microscopic groundwork, Bichat the conceptual and classificatory framework, and Mayer the formal terminology.",
+        "6. Bichat's contribution is the most transformative conceptually as it redefined the organ-centred view of anatomy into a tissue-centred perspective, which remains the basis of modern histopathology."
+      ],
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Analyze",
+      "difficulty": "Hard",
+      "diagram_ref": "None"
+    },
+    {
+      "id": "v2_01_003",
+      "type": "Explain",
+      "question": "Explain the concept of 'tissue grade of organisation' with reference to Phylum Coelenterata and its significance in animal evolution.",
+      "answer_points": [
+        "1. Tissue grade of organisation refers to the level of biological complexity in which similar cells are grouped together to form tissues, each performing specific functions, representing a step above the cellular grade.",
+        "2. In the cellular grade (Protozoa, Porifera), cells function relatively independently. In the tissue grade, cells cooperate as part of a tissue for a shared specialised function.",
+        "3. Phylum Coelenterata is the first animal phylum to exhibit tissue-grade organisation, making it the earliest group with true tissues.",
+        "4. In Coelenterata, cells are organised into two primary tissue layers — the ectoderm (outer) and endoderm (inner) — separated by non-cellular mesoglea. Each layer constitutes a true tissue with specific functions.",
+        "5. This tissue organisation enables division of labour: ectodermal cells handle protection and sensory reception, while endodermal cells manage digestion and nutrient absorption.",
+        "6. Grades of organisation in ascending order: Protoplasmic → Cellular → Tissue grade (Coelenterata) → Organ grade → Organ-system grade (Vertebrates).",
+        "7. The tissue-grade of Coelenterata represents the critical evolutionary step that prefigured the complex organ systems of higher animals, making it a landmark phylum in evolutionary biology."
+      ],
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "Grades of organisation diagram showing evolutionary progression"
+    },
+    {
+      "id": "v2_01_004",
+      "type": "Describe",
+      "question": "Write a detailed note on the historical development of histology as a scientific discipline.",
+      "answer_points": [
+        "1. Histology as a discipline evolved over several centuries through contributions from multiple scientists across Europe.",
+        "2. Marcello Malpighi (17th century) pioneered microscopic biological observation, making the first detailed microscopic studies of tissue microstructure in animals and plants — establishing the observational foundation of histology.",
+        "3. Marie François Xavier Bichat (1771–1802 AD) made the most conceptually significant advance: he coined the term 'tissue,' proposed that organs are collections of tissues, and classified 21 elementary tissue types — all without microscopic tools.",
+        "4. Karl Mayer gave the discipline its formal name by coining the term 'histology' in 1801 (from Greek: histos = tissue, logos = study), crystallising it as a distinct scientific field.",
+        "5. The improvement of compound microscopes in the 19th century allowed deeper study of cellular microstructure, leading to the Cell Theory (Schleiden and Schwann, 1839) which further advanced histological understanding.",
+        "6. In the 20th century, electron microscopy, histochemistry, and immunohistochemistry greatly expanded histological capabilities, enabling the study of organelle-level structure and molecular expression in tissues.",
+        "7. Today, histology is indispensable in both basic biological research and clinical medicine, particularly in histopathology, where tissue examination is critical for cancer diagnosis, infectious disease identification, and organ health assessment."
+      ],
+      "mindmap_path": "Animal Tissue > History",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "None"
+    },
+    {
+      "id": "v2_01_005",
+      "type": "Application",
+      "question": "Explain the significance of Phylum Coelenterata as the first phylum with tissue-grade organisation from an evolutionary perspective.",
+      "answer_points": [
+        "1. Phylum Coelenterata is evolutionarily significant as it represents the transition from cellular-grade to tissue-grade organisation in the animal kingdom.",
+        "2. In animals below Coelenterata (e.g., Porifera), cells are semi-autonomous and loosely organised; there are no true tissues with coordinated specialisation.",
+        "3. In Coelenterata, cells are grouped into true functional tissue layers (ectoderm and endoderm), enabling specialised roles: protection, digestion, reproduction, and sensory function.",
+        "4. This tissue-level organisation introduced the concept of division of labour among cells, which is the cornerstone of increasing biological complexity in higher animals.",
+        "5. The presence of specialised cells like cnidoblasts (nematocysts) within tissue layers in Coelenterata demonstrates an advanced level of cellular differentiation that is only possible with tissue-grade organisation.",
+        "6. This grade provided the evolutionary blueprint for the development of organ-grade (Platyhelminthes, Aschelminthes) and organ-system-grade organisation (Annelida to Vertebrata) seen in more complex phyla.",
+        "7. From a biomedical perspective, studying Coelenterata tissues helps biologists understand the origins of fundamental tissue properties such as cell adhesion, extracellular matrix formation, and tissue polarity — properties that are conserved in human tissues."
+      ],
+      "mindmap_path": "Animal Tissue > History > Phylum Coelenterata",
+      "bloom_level": "Apply",
+      "difficulty": "Hard",
+      "diagram_ref": "Grades of organisation in the animal kingdom"
+    }
+  ]
+}

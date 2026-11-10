@@ -1,0 +1,170 @@
+{
+  "version": "v1",
+  "mark_type": "2-mark",
+  "topic": "Nervous Tissue",
+  "chapter": "Unit 6: Animal Tissue",
+  "questions": [
+    {
+      "id": "v1_05_001",
+      "type": "Definition",
+      "question": "Define nervous tissue.",
+      "answer": "Nervous tissue is a specialised animal tissue composed of neurons (nerve cells) and supporting glial cells (neuroglia). It is the functional unit of the nervous system, responsible for receiving stimuli, integrating information, and transmitting nerve impulses.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_002",
+      "type": "Definition",
+      "question": "What is neuroglia?",
+      "answer": "Neuroglia (glial cells) are the non-neuronal, supportive cells of the nervous system. They outnumber neurons and provide structural support, insulation (myelin), nutrition, protection, and maintenance of the extracellular environment for neurons.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neuroglia",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_003",
+      "type": "List",
+      "question": "Name the four types of neuroglia found in the CNS.",
+      "answer": "The four types of neuroglia in the CNS are: (1) Astrocytes — provide structural support and maintain the blood-brain barrier; (2) Oligodendrocytes — form myelin sheaths in the CNS; (3) Microglia — immune cells of the CNS (phagocytic); (4) Ependymal cells — line brain ventricles and produce cerebrospinal fluid (CSF).",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neuroglia > CNS",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_004",
+      "type": "List",
+      "question": "Name the two types of neuroglia found in the PNS.",
+      "answer": "The two types of neuroglia in the PNS are: (1) Schwann cells — form myelin sheaths around PNS axons; (2) Satellite (Stellate) cells — surround and support the cell bodies of neurons in peripheral ganglia.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neuroglia > PNS",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_005",
+      "type": "Difference",
+      "question": "Distinguish between Schwann cells and oligodendrocytes.",
+      "answer": "Both form myelin sheaths. Schwann cells are in the PNS — one Schwann cell myelinates one segment of one axon. Oligodendrocytes are in the CNS — one oligodendrocyte can myelinate multiple segments of several different axons.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neuroglia",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_006",
+      "type": "List",
+      "question": "Name the three main parts of a neuron.",
+      "answer": "The three main parts of a neuron are: (1) Soma (Cyton) — cell body containing the nucleus, organelles, and Nissl bodies; (2) Dendrites — short, branched processes that receive incoming signals; (3) Axon — single long process that transmits impulses away from the soma.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Structure / Parts",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_007",
+      "type": "Definition",
+      "question": "What is the myelin sheath and what is its function?",
+      "answer": "The myelin sheath is a lipid-rich insulating layer formed by Schwann cells (PNS) or oligodendrocytes (CNS) that wraps around axons. It insulates the axon, preventing current leakage and enabling rapid saltatory conduction (impulse jumps between Nodes of Ranvier).",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Myelin Sheath",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_008",
+      "type": "Difference",
+      "question": "Distinguish between myelinated and non-myelinated nerve fibres.",
+      "answer": "Myelinated fibres have a myelin sheath; impulses travel rapidly via saltatory conduction (jumping between Nodes of Ranvier) — found in somatic motor and sensory fibres. Non-myelinated fibres lack a myelin sheath; impulses travel slowly by continuous conduction — found in autonomic fibres and pain/temperature fibres.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Myelin Sheath",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_009",
+      "type": "Definition",
+      "question": "What are Nodes of Ranvier?",
+      "answer": "Nodes of Ranvier are small, unmyelinated gaps (interruptions) in the myelin sheath along a myelinated axon. At these nodes, the axon membrane is exposed, allowing rapid regeneration of the action potential during saltatory conduction.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Myelin Sheath > Myelinated",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_010",
+      "type": "Difference",
+      "question": "Distinguish between sensory, motor, and intermediate neurons based on function.",
+      "answer": "Sensory (afferent) neurons carry impulses from sense organs to the CNS. Motor (efferent) neurons carry impulses from the CNS to effectors (muscles/glands). Intermediate (adjustor/interneurons) neurons are located entirely within the CNS, connecting sensory and motor neurons, and are involved in integration and decision-making.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Connection / Location",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_011",
+      "type": "Difference",
+      "question": "Distinguish between gray matter and white matter in the nervous system.",
+      "answer": "Gray matter contains neuronal cell bodies, dendrites, and unmyelinated axons — it appears gray due to the absence of myelin. White matter contains myelinated axons — it appears white due to the lipid-rich myelin sheaths. In the spinal cord, gray matter is central (H-shaped); white matter is peripheral. In the cerebral cortex, gray matter is peripheral and white matter is internal.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Color",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_012",
+      "type": "List",
+      "question": "Classify neurons by the number of processes (structural classification).",
+      "answer": "Neurons are classified structurally as: (1) Apolar — no processes (rare; embryonic neurons); (2) Unipolar — one process (pseudopolar: one process that divides; common in sensory neurons); (3) Bipolar — two processes (one dendrite, one axon; found in retina, cochlea); (4) Multipolar — multiple dendrites and one axon (most common; motor neurons of spinal cord, Purkinje cells).",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Structure and Function",
+      "bloom_level": "Remember",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_013",
+      "type": "Explain",
+      "question": "What are Nissl bodies and what is their significance in the soma of a neuron?",
+      "answer": "Nissl bodies are basophilic (blue-staining) granules in the neuronal soma composed of rough endoplasmic reticulum (rER) and ribosomes. They are sites of protein synthesis — producing neurotransmitters, receptors, structural proteins, and enzymes needed for neuronal function. Disappearance of Nissl bodies (chromatolysis) indicates neuronal injury.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Structure / Parts > Soma / Cyton",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_05_014",
+      "type": "Difference",
+      "question": "Distinguish between dendrites and axons structurally and functionally.",
+      "answer": "Dendrites are short, branched, tapering processes that carry impulses toward the soma (afferent to cell body); they are multiple per neuron and lack a myelin sheath. The axon is a single, long, uniform process that carries impulses away from the soma (efferent from cell body); it may be myelinated and ends in terminal branches (telodendria) at synapses.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Structure / Parts > Neurite",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    },
+    {
+      "id": "v1_05_015",
+      "type": "TrueFalse",
+      "question": "True or False: Neurons can regenerate after damage in the CNS. Justify.",
+      "answer": "Generally False for CNS neurons. Unlike PNS neurons (which can regenerate along the myelin sheath with Schwann cell guidance), CNS neurons have very limited regeneration capacity due to inhibitory factors in the CNS environment (e.g., myelin-associated glycoprotein from oligodendrocytes) and the formation of glial scar tissue.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone",
+      "bloom_level": "Understand",
+      "difficulty": "Hard"
+    },
+    {
+      "id": "v1_05_016",
+      "type": "Fact",
+      "question": "What is the structural and functional unit of nervous tissue?",
+      "answer": "The neuron (nerve cell) is the structural and functional unit of nervous tissue. It is specialised to receive, integrate, and transmit electrical and chemical signals (nerve impulses).",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone",
+      "bloom_level": "Remember",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_017",
+      "type": "Explain",
+      "question": "Explain the difference between afferent and efferent neurons.",
+      "answer": "Afferent (sensory) neurons carry impulses toward the CNS — from peripheral receptors (skin, eyes, ears) to the brain or spinal cord. Efferent (motor) neurons carry impulses away from the CNS — from the brain or spinal cord to effectors (muscles and glands). 'Afferent' = approaching; 'Efferent' = exiting.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neurone > Connection / Location",
+      "bloom_level": "Understand",
+      "difficulty": "Easy"
+    },
+    {
+      "id": "v1_05_018",
+      "type": "Difference",
+      "question": "Distinguish between astrocytes and microglia in the CNS.",
+      "answer": "Astrocytes are the largest glial cells; they provide structural support, regulate the extracellular environment, maintain the blood-brain barrier, and supply nutrients to neurons. Microglia are the immune cells of the CNS; they are phagocytic, removing debris, dead cells, and pathogens — the CNS equivalent of macrophages.",
+      "mindmap_path": "Animal Tissue > Nervous Tissue > Neuroglia > CNS",
+      "bloom_level": "Understand",
+      "difficulty": "Medium"
+    }
+  ]
+}

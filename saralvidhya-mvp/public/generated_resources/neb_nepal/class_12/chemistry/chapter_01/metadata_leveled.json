@@ -1,0 +1,38 @@
+{
+  "chapter_number": 1,
+  "chapter_name": "Volumetric Analysis",
+  "subject": "Chemistry",
+  "pdf": "12_chem1.pdf",
+  "completed": {
+    "beginner": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ],
+    "intermediate": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ],
+    "advanced": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ]
+  }
+}

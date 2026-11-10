@@ -1,0 +1,198 @@
+{
+  "questions": [
+    {
+      "id": "PQB_MSQ_M1",
+      "stem": "Identify all cell types present in loose connective tissue matrix: (Select all that apply)",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "D) Osteons",
+        "E) Plasma cells"
+      ],
+      "answers": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "E) Plasma cells"
+      ],
+      "explanation": "Areolar CT contains fibroblasts, mast cells, histocytes, plasma cells.",
+      "difficulty": "Medium",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PQB_MSQ_M2",
+      "stem": "Identify all Granulocytic Leucocytes in human blood: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Monocytes",
+        "E) Lymphocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutrophils, Eosinophils, Basophils.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MSQ_M3",
+      "stem": "From a Question Bank perspective, select all locations featuring Pseudostratified Ciliated Columnar Epithelium: (Select all that apply)",
+      "options": [
+        "A) Trachea lumen",
+        "B) Large bronchi branches",
+        "C) Nasopharynx passage",
+        "D) Fallopian tube mucosa",
+        "E) Urinary bladder urothelium"
+      ],
+      "answers": [
+        "A) Trachea lumen",
+        "B) Large bronchi branches",
+        "C) Nasopharynx passage"
+      ],
+      "explanation": "Pseudostratified ciliated columnar lines trachea, bronchi, and nasopharynx.",
+      "difficulty": "Medium",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PQB_MSQ_M4",
+      "stem": "From a Question Bank perspective, select all connective tissue sheaths organizing skeletal muscle blocks: (Select all that apply)",
+      "options": [
+        "A) Endomysium surrounding individual fibers",
+        "B) Perimysium surrounding muscle fascicles",
+        "C) Epimysium surrounding whole muscle belly",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium surrounding individual fibers",
+        "B) Perimysium surrounding muscle fascicles",
+        "C) Epimysium surrounding whole muscle belly"
+      ],
+      "explanation": "Muscle sheaths = Endomysium, Perimysium, Epimysium.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PQB_MSQ_M5",
+      "stem": "In Question Bank Medium deck, select all sensory organs containing Bipolar Neurones: (Select all that apply)",
+      "options": [
+        "A) Retina of eye",
+        "B) Olfactory epithelium of nose",
+        "C) Vestibulocochlear organ of inner ear",
+        "D) Cerebral cortex pyramidal layer",
+        "E) Spinal dorsal root ganglion"
+      ],
+      "answers": [
+        "A) Retina of eye",
+        "B) Olfactory epithelium of nose",
+        "C) Vestibulocochlear organ of inner ear"
+      ],
+      "explanation": "Bipolar neurones are found in retina, olfactory mucosa, and inner ear.",
+      "difficulty": "Medium",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PQB_MSQ_M6",
+      "stem": "In Question Bank Medium deck, select all characteristics of Dense Regular Connective Tissue: (Select all that apply)",
+      "options": [
+        "A) Compact parallel white collagen fiber bundles",
+        "B) Fibroblasts arranged in rows between collagen strands",
+        "C) High tensile strength along direction of fiber orientation",
+        "D) Forms Tendons connecting muscle to bone",
+        "E) Random meshwork of fibers resisting multidirectional stress"
+      ],
+      "answers": [
+        "A) Compact parallel white collagen fiber bundles",
+        "B) Fibroblasts arranged in rows between collagen strands",
+        "C) High tensile strength along direction of fiber orientation",
+        "D) Forms Tendons connecting muscle to bone"
+      ],
+      "explanation": "Dense regular CT contains parallel collagen bundles and row-arranged fibroblasts in tendons.",
+      "difficulty": "Medium",
+      "image": "4. Dense-Matrix_Connective_Tissue_Overview.png"
+    },
+    {
+      "id": "PQB_MSQ_M7",
+      "stem": "In Question Bank Medium deck, select all true statements regarding Bone vs Cartilage matrix: (Select all that apply)",
+      "options": [
+        "A) Bone matrix is hard and mineralized with Ossein and Calcium Phosphate",
+        "B) Cartilage matrix is solid pliable chondrin with anti-angiogenic factors",
+        "C) Bone possesses Haversian canals and rich blood supply",
+        "D) Cartilage is avascular and nourished by perichondrial diffusion",
+        "E) Both bone and cartilage matrix contain mineralized calcium hydroxyapatite"
+      ],
+      "answers": [
+        "A) Bone matrix is hard and mineralized with Ossein and Calcium Phosphate",
+        "B) Cartilage matrix is solid pliable chondrin with anti-angiogenic factors",
+        "C) Bone possesses Haversian canals and rich blood supply",
+        "D) Cartilage is avascular and nourished by perichondrial diffusion"
+      ],
+      "explanation": "Bone has mineralized ossein and Haversian canals; cartilage has pliable avascular chondrin.",
+      "difficulty": "Medium",
+      "image": "00 Cartilage_and_Bone_Comparison_Guide.png"
+    },
+    {
+      "id": "PQB_MSQ_M8",
+      "stem": "In Question Bank Medium deck, select all features of Transitional Epithelium (Urothelium): (Select all that apply)",
+      "options": [
+        "A) Multilayered compound plastic epithelium",
+        "B) Surface pear-shaped or umbrella cells",
+        "C) High distensibility and stretch capacity",
+        "D) Lines urinary bladder, ureters, and renal pelvis",
+        "E) Keratinized protective dead stratum corneum"
+      ],
+      "answers": [
+        "A) Multilayered compound plastic epithelium",
+        "B) Surface pear-shaped or umbrella cells",
+        "C) High distensibility and stretch capacity",
+        "D) Lines urinary bladder, ureters, and renal pelvis"
+      ],
+      "explanation": "Urothelium is a distensible compound epithelium with umbrella cells lining urinary tract.",
+      "difficulty": "Medium",
+      "image": "2. Transitional_Epithelium_Structure_and_Function.png"
+    },
+    {
+      "id": "PQB_MSQ_M9",
+      "stem": "In Question Bank Medium deck, select all true statements regarding Blood Clotting mechanism: (Select all that apply)",
+      "options": [
+        "A) Injured tissues release Thromboplastin",
+        "B) Calcium ions (Ca2+) are required for prothrombin activator formation",
+        "C) Active Thrombin converts soluble Fibrinogen into insoluble Fibrin",
+        "D) Blood platelets aggregate to form primary platelet plug",
+        "E) Heparin acts as essential enzyme converting fibrinogen to fibrin"
+      ],
+      "answers": [
+        "A) Injured tissues release Thromboplastin",
+        "B) Calcium ions (Ca2+) are required for prothrombin activator formation",
+        "C) Active Thrombin converts soluble Fibrinogen into insoluble Fibrin",
+        "D) Blood platelets aggregate to form primary platelet plug"
+      ],
+      "explanation": "Clotting involves thromboplastin release, Ca2+, thrombin conversion of fibrinogen to fibrin, and platelet aggregation.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PQB_MSQ_M10",
+      "stem": "In Question Bank Medium deck, select all neuroglial cells present in Peripheral Nervous System (PNS): (Select all that apply)",
+      "options": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells",
+        "C) CNS Astrocytes",
+        "D) CNS Microglia",
+        "E) CNS Oligodendrocytes"
+      ],
+      "answers": [
+        "A) Myelinating Schwann cells",
+        "B) Ganglionic Satellite cells"
+      ],
+      "explanation": "PNS neuroglia include Schwann cells and Satellite cells.",
+      "difficulty": "Medium",
+      "image": "PNS.png"
+    }
+  ]
+}

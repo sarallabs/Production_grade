@@ -1,0 +1,255 @@
+{
+  "name": "Biology Chapter 2",
+  "children": [
+    {
+      "name": "Plant Physiology",
+      "children": [
+        {
+          "name": "Introduction",
+          "children": [
+            {
+              "name": "Definition of Physiology"
+            },
+            {
+              "name": "Definition of Plant Physiology"
+            },
+            {
+              "name": "Key Figures",
+              "children": [
+                {
+                  "name": "Stephan Hales (Father of Plant Physiology)"
+                },
+                {
+                  "name": "Sir J.C. Bose (Father of Indian Plant Physiology)"
+                }
+              ]
+            },
+            {
+              "name": "Aims of Plant Physiology Study (Palladin)"
+            }
+          ]
+        },
+        {
+          "name": "Water Relations",
+          "children": [
+            {
+              "name": "Importance of Water for Plants",
+              "children": [
+                {
+                  "name": "Major chemical component of protoplasm (75-90%)"
+                },
+                {
+                  "name": "Raw material for photosynthesis"
+                },
+                {
+                  "name": "Medium of dispersion for organic components"
+                },
+                {
+                  "name": "Maintains turgidity of cells"
+                },
+                {
+                  "name": "Solvent for metabolic reactants"
+                },
+                {
+                  "name": "Carrier for substances"
+                },
+                {
+                  "name": "Essential for physical and chemical properties of organic constituents"
+                },
+                {
+                  "name": "Associated with various plant movements (stomatal, flower opening)"
+                },
+                {
+                  "name": "Involved in nutrient absorption, translocation, transpiration, respiration, growth"
+                },
+                {
+                  "name": "Plays role in plant species composition and distribution"
+                }
+              ]
+            },
+            {
+              "name": "Key Terms",
+              "children": [
+                {
+                  "name": "Diffusion"
+                },
+                {
+                  "name": "Osmosis"
+                },
+                {
+                  "name": "Transpiration"
+                }
+              ]
+            },
+            {
+              "name": "Diffusion",
+              "children": [
+                {
+                  "name": "Definition: Movement of molecules from higher to lower concentration until equilibrium"
+                },
+                {
+                  "name": "Characteristics",
+                  "children": [
+                    {
+                      "name": "Occurs without stirring/shaking"
+                    },
+                    {
+                      "name": "Does not require energy"
+                    },
+                    {
+                      "name": "Equalizes concentration in different regions"
+                    }
+                  ]
+                },
+                {
+                  "name": "Rate of Diffusion",
+                  "children": [
+                    {
+                      "name": "Gases > Liquids > Solids"
+                    }
+                  ]
+                },
+                {
+                  "name": "Experiment (Copper Sulphate in Water)"
+                },
+                {
+                  "name": "Factors Affecting Rate of Diffusion",
+                  "children": [
+                    {
+                      "name": "Temperature (Increases rate)"
+                    },
+                    {
+                      "name": "Density of Medium (Greater density, slower rate)"
+                    },
+                    {
+                      "name": "Density of Diffusion Particles (Graham's Law: inversely proportional to square root of density)"
+                    },
+                    {
+                      "name": "Size of Diffusing Molecules (Smaller molecules diffuse faster)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Diffusion Pressure",
+                  "children": [
+                    {
+                      "name": "Pressure exerted by diffusion of particles"
+                    },
+                    {
+                      "name": "Proportional to concentration"
+                    },
+                    {
+                      "name": "Experiment (Porous Pot with Hydrogen Gas)"
+                    },
+                    {
+                      "name": "Pure solvent has higher diffusion pressure than its solution"
+                    }
+                  ]
+                },
+                {
+                  "name": "Diffusion Pressure Deficit (DPD)",
+                  "children": [
+                    {
+                      "name": "Definition: Reduction in diffusion pressure of a solution compared to pure solvent"
+                    },
+                    {
+                      "name": "Caused by solute particles lowering free energy of solvent"
+                    },
+                    {
+                      "name": "Also known as Suction Pressure (SP) or Suction Force (SF)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Independent Diffusion",
+                  "children": [
+                    {
+                      "name": "Diffusion of one substance independent of others"
+                    },
+                    {
+                      "name": "Important in plants for gas exchange (CO2 intake, O2 output)"
+                    },
+                    {
+                      "name": "Partial pressure describes diffusion pressure of individual substance"
+                    }
+                  ]
+                },
+                {
+                  "name": "Significance of Diffusion",
+                  "children": [
+                    {
+                      "name": "Transpiration (water vapour loss)"
+                    },
+                    {
+                      "name": "Exchange of gases (photosynthesis, respiration)"
+                    },
+                    {
+                      "name": "Basis for osmosis"
+                    },
+                    {
+                      "name": "Transport over short distances (intracellular, intercellular)"
+                    },
+                    {
+                      "name": "Passive uptake of salts"
+                    },
+                    {
+                      "name": "Distribution of hormones"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "name": "Osmosis",
+              "children": [
+                {
+                  "name": "Definition: Special type of diffusion of water across a semi-permeable membrane"
+                },
+                {
+                  "name": "Movement from higher water concentration (dilute solution) to lower water concentration (stronger solution)"
+                },
+                {
+                  "name": "Alternative Definition: Movement from higher chemical potential of water to lower chemical potential"
+                },
+                {
+                  "name": "Passive transport (no energy required)"
+                },
+                {
+                  "name": "Solute addition lowers water potential"
+                },
+                {
+                  "name": "Semi-permeable membrane definition and examples"
+                },
+                {
+                  "name": "Types of Osmosis",
+                  "children": [
+                    {
+                      "name": "Exosmosis (outward movement of water in hypertonic solution)"
+                    },
+                    {
+                      "name": "Endosmosis (inward movement of water in hypotonic solution)"
+                    }
+                  ]
+                },
+                {
+                  "name": "Types of Solutions",
+                  "children": [
+                    {
+                      "name": "Isotonic Solution (same concentration)"
+                    },
+                    {
+                      "name": "Hypertonic Solution (higher concentration)"
+                    },
+                    {
+                      "name": "Hypotonic Solution (lower concentration)"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

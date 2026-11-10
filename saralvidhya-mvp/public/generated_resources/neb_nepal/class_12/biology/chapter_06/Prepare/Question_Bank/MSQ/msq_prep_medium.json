@@ -1,0 +1,198 @@
+{
+  "questions": [
+    {
+      "id": "PE_MSQ_07",
+      "stem": "Select all cells present in Proper Connective Tissue matrix:",
+      "options": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "D) Osteons",
+        "E) Plasma cells"
+      ],
+      "answers": [
+        "A) Fibroblasts",
+        "B) Mast cells",
+        "C) Histocytes",
+        "E) Plasma cells"
+      ],
+      "explanation": "Proper CT matrix contains fibroblasts, mast cells, histocytes, plasma cells.",
+      "difficulty": "Medium",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PE_MSQ_08",
+      "stem": "Which glands release secretion via Exocytosis or Apical Pinching without total cell destruction? (Select all that apply)",
+      "options": [
+        "A) Merocrine glands",
+        "B) Apocrine glands",
+        "C) Holocrine glands",
+        "D) Sebaceous glands",
+        "E) Salivary glands"
+      ],
+      "answers": [
+        "A) Merocrine glands",
+        "B) Apocrine glands",
+        "E) Salivary glands"
+      ],
+      "explanation": "Merocrine (salivary) exocytoses; Apocrine pinches apex; Holocrine ruptures whole cell.",
+      "difficulty": "Medium",
+      "image": "6. Glandular_Epithelium_Classification_Overview.png"
+    },
+    {
+      "id": "PE_MSQ_09",
+      "stem": "Select all features true for Mammalian Erythrocytes:",
+      "options": [
+        "A) Biconcave shape",
+        "B) Non-nucleated at maturity",
+        "C) Perform anaerobic respiration",
+        "D) Contain abundant mitochondria",
+        "E) 120-day lifespan"
+      ],
+      "answers": [
+        "A) Biconcave shape",
+        "B) Non-nucleated at maturity",
+        "C) Perform anaerobic respiration",
+        "E) 120-day lifespan"
+      ],
+      "explanation": "Mammalian RBCs lack nuclei/mitochondria, undergo anaerobic respiration, live 120 days.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_MSQ_10",
+      "stem": "Which of the following structures contain Hyaline Cartilage? (Select all that apply)",
+      "options": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "D) Intervertebral discs",
+        "E) Tracheal rings"
+      ],
+      "answers": [
+        "A) Articular ends of long bones",
+        "B) Nasal septum",
+        "C) Costal cartilage of ribs",
+        "E) Tracheal rings"
+      ],
+      "explanation": "Hyaline cartilage lines articular ends, nasal septum, ribs, trachea. Intervertebral discs = fibrocartilage.",
+      "difficulty": "Medium",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PE_MSQ_11",
+      "stem": "Select all Granulocytic Leucocytes found in human blood:",
+      "options": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils",
+        "D) Lymphocytes",
+        "E) Monocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Eosinophils",
+        "C) Basophils"
+      ],
+      "explanation": "Granulocytes = Neutro, Eosino, Baso; Agranulocytes = Lympho, Mono.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PE_MSQ_12",
+      "stem": "[MSQ_msq_prep_medium] Which locations feature Pseudostratified Ciliated Columnar Epithelium? (Select all that apply)",
+      "options": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx",
+        "D) Oviduct / Fallopian tube",
+        "E) Urinary bladder"
+      ],
+      "answers": [
+        "A) Trachea",
+        "B) Large bronchi",
+        "C) Nasopharynx"
+      ],
+      "explanation": "Pseudostratified lines trachea, bronchi, nasopharynx. Oviduct = simple ciliated columnar.",
+      "difficulty": "Medium",
+      "image": "4. Pseudostratified_Columnar_Epithelium_Diagram.png"
+    },
+    {
+      "id": "PE_MSQ_13",
+      "stem": "Select all connective tissue sheaths found in skeletal muscle architecture:",
+      "options": [
+        "A) Endomysium",
+        "B) Perimysium",
+        "C) Epimysium",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium",
+        "B) Perimysium",
+        "C) Epimysium"
+      ],
+      "explanation": "Muscle sheaths: Endomysium, Perimysium, Epimysium.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "MSQ_P_M_08",
+      "stem": "Which statements correctly describe Cartilage matrix (Chondrin)? (Select all that apply)",
+      "options": [
+        "A) Solid and pliable matrix",
+        "B) Resists compression",
+        "C) Contains chondrocytes in lacunae",
+        "D) Richly vascularized with capillaries",
+        "E) Secreted by chondroblasts"
+      ],
+      "answers": [
+        "A) Solid and pliable matrix",
+        "B) Resists compression",
+        "C) Contains chondrocytes in lacunae",
+        "E) Secreted by chondroblasts"
+      ],
+      "explanation": "Cartilage matrix is solid, pliable, resists compression, avascular, secreted by chondroblasts.",
+      "difficulty": "Medium",
+      "image": "00 Cartilage_and_Bone_Comparison_Guide.png"
+    },
+    {
+      "id": "MSQ_P_M_09",
+      "stem": "Select all leucocytes capable of amoeboid phagocytosis: (Select all that apply)",
+      "options": [
+        "A) Neutrophils",
+        "B) Monocytes / Tissue Macrophages",
+        "C) Basophils",
+        "D) Eosinophils",
+        "E) Erythrocytes"
+      ],
+      "answers": [
+        "A) Neutrophils",
+        "B) Monocytes / Tissue Macrophages"
+      ],
+      "explanation": "Neutrophils and Monocytes/Macrophages are active phagocytic leucocytes.",
+      "difficulty": "Medium",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "MSQ_P_M_10",
+      "stem": "Which structures are present in a typical Multipolar Neurone? (Select all that apply)",
+      "options": [
+        "A) Cyton (Soma)",
+        "B) Multiple branching Dendrites",
+        "C) Single long Axon",
+        "D) Nissl's granules in cyton",
+        "E) Multiple Axons"
+      ],
+      "answers": [
+        "A) Cyton (Soma)",
+        "B) Multiple branching Dendrites",
+        "C) Single long Axon",
+        "D) Nissl's granules in cyton"
+      ],
+      "explanation": "Multipolar neurones have 1 cyton, multiple dendrites, 1 axon, Nissl's granules.",
+      "difficulty": "Medium",
+      "image": "5. Structure.png"
+    }
+  ]
+}

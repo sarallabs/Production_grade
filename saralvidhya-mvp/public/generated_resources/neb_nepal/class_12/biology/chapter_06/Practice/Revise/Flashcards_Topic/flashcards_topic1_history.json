@@ -1,0 +1,88 @@
+{
+  "flashcards": [
+    {
+      "id": "FC_T1_01",
+      "term": "Father of Histology",
+      "definition": "Xavier Bichat (defined 21 tissue types without microscopic aid).",
+      "category": "History of Histology",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "FC_T1_02",
+      "term": "Microscopic Histology Founder",
+      "definition": "Marcello Malpighi (pioneered systematic microscopic analysis of animal tissues).",
+      "category": "History of Histology",
+      "image": "3. Marcello_Malpighi__Histology_Pioneer.png"
+    },
+    {
+      "id": "FC_T1_03",
+      "term": "Origin of the Term 'Histology'",
+      "definition": "Coined by Mayer in 1819 to designate the microscopic study of tissue architecture.",
+      "category": "History of Histology",
+      "image": "00 Animal_Histology_History_and_Hierarchy.png"
+    },
+    {
+      "id": "FC_T1_04",
+      "term": "First Phylum with Tissue Level Organization",
+      "definition": "Phylum Coelenterata (Cnidaria), e.g. Hydra.",
+      "category": "Tissue Evolution",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    },
+    {
+      "id": "FC_T1_05",
+      "term": "Biological Structural Hierarchy",
+      "definition": "Cell -> Tissue -> Organ -> Organ System -> Organism.",
+      "category": "Biological Hierarchy",
+      "image": "5. Biological_Hierarchy__Cells_to_Organisms.png"
+    },
+    {
+      "id": "FC_T1_06",
+      "term": "Four Primary Tissue Types",
+      "definition": "Epithelial, Connective, Muscular, and Nervous Tissue.",
+      "category": "Tissue Classification",
+      "image": "00 Animal_Tissue_and_Histology_Foundations.png"
+    },
+    {
+      "id": "FC_T1_07",
+      "term": "Germ Layer Origins of Epithelium",
+      "definition": "Derived from all 3 germ layers: Ectoderm (skin), Mesoderm (endothelium), Endoderm (gut lining).",
+      "category": "Embryology",
+      "image": "4. Tri-lineage_Origins_of_Epithelium.png"
+    },
+    {
+      "id": "FC_T1_08",
+      "term": "Germ Layer Origins of Connective & Muscle Tissues",
+      "definition": "Derived exclusively from embryonic Mesoderm.",
+      "category": "Embryology",
+      "image": "2. Origin Mesoderm.png"
+    },
+    {
+      "id": "FC_T1_09",
+      "term": "Basement Membrane Architecture",
+      "definition": "Non-cellular sheet comprising Basal Lamina (epithelial origin) + Reticular Lamina (connective tissue origin).",
+      "category": "Epithelial Structure",
+      "image": "3. The_Epithelial_Basement_Membrane_Gateway.png"
+    },
+    {
+      "id": "FC_T1_10",
+      "term": "Avascular Nature of Epithelia",
+      "definition": "Lacks direct blood vessels; receives oxygen and nutrients via diffusion from underlying connective tissue capillaries.",
+      "category": "Epithelial Physiology",
+      "image": "2. Avascular_Tissue_Survival_and_Respiration.png"
+    },
+    {
+      "id": "FC_T1_11",
+      "term": "Primary Functions of Epithelial Covering",
+      "definition": "Physical protection, barrier against pathogens, prevention of fluid loss, selective absorption, and secretion.",
+      "category": "Epithelial Physiology",
+      "image": "1. Understanding_Epithelial_Tissue_Functions.png"
+    },
+    {
+      "id": "FC_T1_12",
+      "term": "Cellular Packing in Epithelium",
+      "definition": "Tightly packed cells held by junctional complexes with minimal intercellular matrix.",
+      "category": "Epithelial Architecture",
+      "image": "00 General_Features_of_Epithelial_Tissue.png"
+    }
+  ]
+}

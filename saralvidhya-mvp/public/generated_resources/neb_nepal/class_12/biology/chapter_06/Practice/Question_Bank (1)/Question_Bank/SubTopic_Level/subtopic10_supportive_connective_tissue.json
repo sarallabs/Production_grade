@@ -1,0 +1,45 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 10,
+  "subtopic_name": "3.2 Supportive Connective Tissue \u2014 Cartilage and Bone",
+  "topic_name": "Connective Tissue",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Supportive Connective Tissue",
+  "questions": [
+    {
+      "id": "qb_subtopic10_001",
+      "type": "Compare",
+      "question": "Compare Cartilage and Bone in terms of matrix composition, vascularity, and cell arrangement.",
+      "answer_2mark": "Cartilage has a semi-rigid avascular chondrin matrix with chondrocytes in lacunae. Bone has a rigid vascular mineralized ossein matrix with hydroxyapatite calcium salts and osteocytes in lacunae linked by canaliculi.",
+      "answer_5mark": [
+        "1. **Matrix Mineralization**: Cartilage matrix is composed of flexible, semi-rigid **chondrin** (chondroitin sulfate). Bone matrix is composed of rigid **ossein** impregnated with inorganic hydroxyapatite calcium phosphate crystals.",
+        "2. **Vascularity**: Cartilage is entirely **avascular** (nourished by perichondrium diffusion). Bone is heavily **vascularized** via Haversian and Volkmann canals.",
+        "3. **Cellular Architecture**: Cartilage cells (**chondrocytes**) occur in lacunae in groups of 1\u20134 without canaliculi. Bone cells (**osteocytes**) lie singly in lacunae interconnected by fine cytoplasmic **canaliculi**.",
+        "4. **Growth Pattern**: Cartilage exhibits both appositional and interstitial growth. Bone grows exclusively by appositional deposition.",
+        "5. **Structural Roles**: Cartilage provides flexible shock absorption at joint ends. Bone forms the primary load-bearing endoskeleton."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Supportive Connective Tissue",
+      "bloom_level": "Analyze",
+      "difficulty": "Hard",
+      "diagram_ref": "Cartilage vs Bone Microscopic Structure Diagram"
+    },
+    {
+      "id": "qb_subtopic10_002",
+      "type": "Mechanism",
+      "question": "Describe the microscopic architecture of an Osteon (Haversian System) in compact bone.",
+      "answer_2mark": "An Osteon consists of a central Haversian canal containing blood vessels and nerves, surrounded by concentric ossein lamellae, with osteocytes housed inside lacunae interconnected by canaliculi.",
+      "answer_5mark": [
+        "1. **Haversian Canal**: The central longitudinal canal containing nutrient artery, vein, lymphatic vessel, and nerve fibers.",
+        "2. **Concentric Lamellae**: Concentric rings of hard ossein matrix impregnated with calcium phosphate crystals arranged around the Haversian canal.",
+        "3. **Lacunae**: Fluid-filled cavities situated between adjacent lamellae, housing mature **osteocytes**.",
+        "4. **Canaliculi**: Radiating microscopic canals housing osteocyte cytoplasmic processes, allowing nutrient and gas transport between osteocytes and the central canal.",
+        "5. **Volkmann's Canals**: Transverse or oblique canals connecting adjacent Haversian canals to each other and to the periosteum.",
+        "6. *Functional Result*: The Haversian system ensures efficient nutrient delivery to osteocytes in highly mineralized bone."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Connective Tissue > Supportive Connective Tissue",
+      "bloom_level": "Understand",
+      "difficulty": "Hard",
+      "diagram_ref": "Haversian System (Osteon) Compact Bone Diagram"
+    }
+  ]
+}

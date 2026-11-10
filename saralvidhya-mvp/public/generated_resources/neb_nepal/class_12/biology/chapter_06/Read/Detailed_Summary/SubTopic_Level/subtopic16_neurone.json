@@ -1,0 +1,39 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 16,
+  "subtopic_name": "5.2 Neurone \u2014 Structural and Functional Neural Architecture",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 276,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neurone",
+  "sections": [
+    {
+      "header": "5.2 Neurone \u2014 Structural and Functional Neural Architecture",
+      "level": 2,
+      "content": "### 5.2 Neurone \u2014 Structural Anatomy, Myelination, and Classifications\n\nThe **Neurone** (Nerve Cell) is the structural and functional unit of nervous tissue. Specialized for electrical excitability, neurons generate and propagate action potentials across synaptic networks.\n\n#### 1. Structural Anatomy of a Neuron\n\n- **Soma / Cyton (Perikaryon)**: The central cell body containing a prominent spherical nucleus and abundant cytoplasmic organelles.\n  - **Nissl's Granules**: Large basophilic clumps of rough endoplasmic reticulum (RER) and free polyribosomes responsible for active protein synthesis. Present in cyton and dendrites, but **absent in axon hillock and axon**.\n- **Dendrites**: Short, highly branched receptive processes conducting impulses **centripetally** (toward the cyton). Contain Nissl's granules.\n- **Axon**: Single long, uniform cylindrical process originating from the **axon hillock**. Conducts impulses **centrifugally** (away from the cyton) to terminal branch buttons (**telodendria**) containing synaptic vesicles filled with neurotransmitters (acetylcholine, norepinephrine).\n\n#### 2. Myelination & Conduction Velocity\n- **Myelinated Nerve Fibers**: Axon is enveloped by a lipid-rich **myelin sheath** interrupted at periodic gaps called **Nodes of Ranvier**. Impulse jumps from node to node via **saltatory conduction**, increasing transmission speed up to 100-fold.\n- **Non-Myelinated Nerve Fibers**: Enclosed by Schwann cell cytoplasm without spiraled myelin wrapping; impulse conducts continuously at slower velocities.\n\n#### 3. Morphological & Functional Classifications\n\n```\nStructural Types of Neurons\n \u251c\u2500\u2500 Apolar / Non-polar: No distinct axon/dendrites (e.g. Hydra nerve net)\n \u251c\u2500\u2500 Unipolar: Single axon extending from cyton (e.g. embryonic stage)\n \u251c\u2500\u2500 Pseudounipolar: Single process splits T-wise into peripheral & central axons (e.g. Dorsal Root Ganglion)\n \u251c\u2500\u2500 Bipolar: One axon and one dendrite at opposite poles (e.g. Retina of eye, Olfactory epithelium)\n \u2514\u2500\u2500 Multipolar: One axon and multiple dendrites (e.g. Cerebral cortex, Motor spinal neurons)\n```",
+      "mermaid_diagram": "graph TD\n    D[Dendrites Receptive] --> C[Soma / Cyton Integration]\n    C --> AH[Axon Hillock Action Potential Origin]\n    AH --> A[Axon Conduction]\n    A --> T[Telodendria Synaptic Output]",
+      "visual_references": [
+        "5. Nervous Tissue\\3. Neurone\\00.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\1. Parts Soma and Neurite.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\2. Nissls_ granules.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\3. Node of Ranvier.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\4. Direction.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\5. Structure.png",
+        "5. Nervous Tissue\\3. Neurone\\leaves\\6. Matter.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 7,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neurone"
+    }
+  }
+}

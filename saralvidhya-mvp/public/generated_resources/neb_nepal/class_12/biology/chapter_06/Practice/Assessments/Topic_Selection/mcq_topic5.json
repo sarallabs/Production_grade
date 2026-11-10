@@ -1,0 +1,135 @@
+{
+  "topic": "Topic 5: Nervous Tissue & Neuroglia",
+  "questions": [
+    {
+      "id": "PA_T5_MCQ_01",
+      "stem": "The main metabolic cell body of a neurone containing nucleus and Nissl's granules is named:",
+      "options": [
+        "A) Axon",
+        "B) Cyton / Soma",
+        "C) Dendrite",
+        "D) Synaptic knob"
+      ],
+      "answer": "B) Cyton / Soma",
+      "explanation": "The Cyton (Soma) is the cell body of a neurone.",
+      "image": "1. Parts Soma and Neurite.png"
+    },
+    {
+      "id": "PA_T5_MCQ_02",
+      "stem": "Nissl's granules present inside cyton and dendrites are composed of:",
+      "options": [
+        "A) Smooth ER and lipids",
+        "B) Rough Endoplasmic Reticulum and Ribosomes",
+        "C) Golgi complex and lysosomes",
+        "D) Centrioles and microtubules"
+      ],
+      "answer": "B) Rough Endoplasmic Reticulum and Ribosomes",
+      "explanation": "Nissl's granules consist of RER clumps and free ribosomes for protein synthesis.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PA_T5_MCQ_03",
+      "stem": "Nissl's granules are strictly ABSENT in which part of a motor neurone?",
+      "options": [
+        "A) Cyton",
+        "B) Axon and Axon Hillock",
+        "C) Dendrites",
+        "D) Soma cytoplasm"
+      ],
+      "answer": "B) Axon and Axon Hillock",
+      "explanation": "Nissl's granules are absent in the axon hillock and axon.",
+      "image": "2. Nissls_ granules.png"
+    },
+    {
+      "id": "PA_T5_MCQ_04",
+      "stem": "Saltatory action potential impulse conduction leaps along myelinated axolemma specifically at:",
+      "options": [
+        "A) Synaptic knobs",
+        "B) Uninsulated Nodes of Ranvier",
+        "C) Schwann cell nuclei",
+        "D) Axon hillock base"
+      ],
+      "answer": "B) Uninsulated Nodes of Ranvier",
+      "explanation": "In myelinated axons, action potentials jump from Node of Ranvier to Node of Ranvier.",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PA_T5_MCQ_05",
+      "stem": "Which CNS neuroglial cell extends perivascular end-feet to construct the Blood-Brain Barrier (BBB)?",
+      "options": [
+        "A) Oligodendrocyte",
+        "B) Microglia",
+        "C) Astrocyte",
+        "D) Ependymal cell"
+      ],
+      "answer": "C) Astrocyte",
+      "explanation": "Astrocytes form perivascular feet constructing the Blood-Brain Barrier.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_T5_MCQ_06",
+      "stem": "Which neuroglial cell synthesizes myelin sheath around axons inside the Central Nervous System (CNS)?",
+      "options": [
+        "A) Schwann cell",
+        "B) Oligodendrocyte",
+        "C) Astrocyte",
+        "D) Microglia"
+      ],
+      "answer": "B) Oligodendrocyte",
+      "explanation": "Oligodendrocytes form myelin sheaths in CNS; Schwann cells form myelin in PNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_T5_MCQ_07",
+      "stem": "Phagocytic macrophage defense neuroglia residing in the Central Nervous System are:",
+      "options": [
+        "A) Astrocytes",
+        "B) Microglia",
+        "C) Ependymal cells",
+        "D) Satellite cells"
+      ],
+      "answer": "B) Microglia",
+      "explanation": "Microglia are phagocytic macrophages in the CNS.",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_T5_MCQ_08",
+      "stem": "Sensory pseudounipolar neurones featuring a single process dividing into peripheral and central branches reside in:",
+      "options": [
+        "A) Retina of eye",
+        "B) Cerebral cortex",
+        "C) Dorsal Root Ganglia (DRG) of spinal nerves",
+        "D) Ventral horn"
+      ],
+      "answer": "C) Dorsal Root Ganglia (DRG) of spinal nerves",
+      "explanation": "Pseudounipolar sensory neurones reside in spinal Dorsal Root Ganglia.",
+      "image": "5. Structure.png"
+    },
+    {
+      "id": "PA_T5_MCQ_09",
+      "stem": "Mature post-mitotic human neurones lose the ability to undergo cell division post-birth due to absence of active:",
+      "options": [
+        "A) Mitochondria",
+        "B) Centrioles",
+        "C) Ribosomes",
+        "D) Neurofibrils"
+      ],
+      "answer": "B) Centrioles",
+      "explanation": "Mature neurones lack active centrioles, rendering them post-mitotic.",
+      "image": "3. No mitosis.png"
+    },
+    {
+      "id": "PA_T5_MCQ_10",
+      "stem": "Direction of nerve impulse transmission across a typical multipolar neurone is:",
+      "options": [
+        "A) Axon -> Cyton -> Dendrite",
+        "B) Dendrite -> Cyton -> Axon -> Synapse",
+        "C) Synapse -> Axon -> Cyton",
+        "D) Cyton -> Dendrite -> Axon"
+      ],
+      "answer": "B) Dendrite -> Cyton -> Axon -> Synapse",
+      "explanation": "Nerve impulses travel centripetally along dendrites to cyton, then centrifugally down the axon.",
+      "image": "4. Direction.png"
+    }
+  ]
+}

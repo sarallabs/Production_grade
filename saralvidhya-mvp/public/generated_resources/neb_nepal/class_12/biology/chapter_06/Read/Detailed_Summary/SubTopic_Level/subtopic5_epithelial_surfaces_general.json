@@ -1,0 +1,35 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 5,
+  "subtopic_name": "2.1 Surfaces & General Characteristics of Epithelial Tissue",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 235,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > General Features & Surfaces",
+  "sections": [
+    {
+      "header": "2.1 Surfaces & General Characteristics of Epithelial Tissue",
+      "level": 2,
+      "content": "### 2.1 Surfaces & General Characteristics of Epithelial Tissue\n\n**Epithelial Tissue** (or Epithelium) is one of the four primary tissue types in animals. Derived from all three embryonic germ layers (ectoderm, mesoderm, and endoderm), epithelium covers external body surfaces, lines internal cavities, and forms glandular structures.\n\n#### Fundamental Characteristics\n1. **High Cellularity & Minimal Matrix**: Composed almost entirely of closely packed cells with extremely minimal intercellular substance (*substantia intercellularis*).\n2. **Basement Membrane Support**: Rests on a non-cellular **basement membrane** composed of an upper *basal lamina* (secreted by epithelial cells, containing collagen type IV and laminin) and a lower *reticular lamina* (secreted by connective tissue, containing reticular fibers).\n3. **Avascular Nature**: Lacks direct capillary blood vessels (**avascular**). Oxygen, glucose, and nutrients diffuse upward from rich vascular networks in the underlying connective tissue through the basement membrane.\n4. **Surface Count Distribution**:\n   - **Acoelomate animals**: 2 functional surfaces.\n   - **Pseudocoelomate animals**: 3 functional surfaces.\n   - **Coelomate animals**: 4 functional surfaces.\n\n#### Specialized Intercellular Junctions\n- **Tight Junctions (Zonula Occludens)**: Transmembrane occludin and claudin proteins fuse adjacent cell membranes, preventing fluid leakage across epithelial barriers.\n- **Adherens Junctions (Zonula Adherens)**: Cadherin links anchored to actin microfilament bundles form continuous adhesion belts.\n- **Desmosomes (Macula Adherens)**: Button-like plaques anchored to keratin intermediate filaments provide high tensile mechanical strength.\n- **Gap Junctions (Nexus)**: Hexameric **connexon** channel complexes permit direct intercellular transport of ions (\\(\text{Ca}^{2+}, \text{cAMP}\\)) and small metabolic signaling molecules.",
+      "mermaid_diagram": "graph TD\n    A[Epithelial Cell Layer] --> B[Basal Lamina Collagen IV + Laminin]\n    B --> C[Reticular Lamina Reticular Fibers]\n    C --> D[Vascular Connective Tissue Layer Diffusion Source]",
+      "visual_references": [
+        "2. Epithelial Tissue\\1. General Features\\00 General_Features_of_Epithelial_Tissue.png",
+        "2. Epithelial Tissue\\1. General Features\\6. Cell_Junctions_in_Epithelial_Tissue.png",
+        "2. Epithelial Tissue\\1. General Features\\3. The_Epithelial_Basement_Membrane_Gateway.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 3,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Epithelial Tissue > General Features & Surfaces"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "short_id": "short_03_simple_epithelium",
+  "short_title": "Simple Epithelium — Squamous, Cuboidal, Columnar & Pseudostratified",
+  "duration_seconds": 90,
+  "covers_element_ids": ["L3_Simple", "L4_Squamous", "L4_Endothelium", "L4_Mesothelium", "L4_Cuboidal", "L4_NonCiliatedCuboidal", "L4_CiliatedCuboidal", "L4_BrushCuboidal", "L4_Columnar", "L4_Pseudostratified"],
+  "pedagogical_mode": "Descriptive & Spatial",
+  "segments": [
+    {
+      "segment_id": "S03_hook",
+      "start_time_seconds": 0,
+      "end_time_seconds": 8,
+      "script": "A single layer of cells — yet four completely different types. Simple epithelium is where one layer does everything from gas exchange to immune filtration.",
+      "video_prompt": "A row of four simple epithelium types appears side-by-side from left to right as the narrator speaks: flat squamous tiles, cube-shaped cuboidal, tall columnar (with cilia on top), and mixed-height pseudostratified. Each glows in sequence as it is mentioned. Clean lab-report diagram style, white background, colour-coded cells."
+    },
+    {
+      "segment_id": "S03_body",
+      "start_time_seconds": 8,
+      "end_time_seconds": 78,
+      "script": "Simple squamous cells are flat, tile-like. Endothelium lines capillaries and the heart; mesothelium lines body cavities. Simple cuboidal has equal height and width — non-ciliated in kidney and thyroid; ciliated in respiratory bronchioles; brush-bordered in the PCT. Simple columnar is taller than wide — non-ciliated in stomach and gut; ciliated in fallopian tube and neurocoel; brush-bordered in intestinal mucosa. Pseudostratified — all cells touch the basement membrane but nuclei are staggered — traps particles in the trachea and bronchi.",
+      "video_prompt": "Step-by-step anatomical build-up. Each epithelium type appears as a cross-section panel in sequence. For each type: show cell shape (colour-coded), nucleus position (labelled dot), and a small organ location icon (lung alveolus, kidney tubule, fallopian tube, trachea). Pseudostratified has an arrow showing 'All cells touch BM' with staggered nucleus dots. Clinical white-background diagram style."
+    },
+    {
+      "segment_id": "S03_close",
+      "start_time_seconds": 78,
+      "end_time_seconds": 90,
+      "script": "Next: Compound and Transitional Epithelium — multiple layers, more protection.",
+      "video_prompt": "Title card: 'Up Next: Compound Epithelium'. Background: a fading histology slide image of stratified squamous skin cells. Smooth swipe transition to black."
+    }
+  ]
+}

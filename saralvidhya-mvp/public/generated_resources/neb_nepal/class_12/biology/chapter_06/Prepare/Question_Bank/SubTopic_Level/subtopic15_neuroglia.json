@@ -1,0 +1,27 @@
+{
+  "chapter": "Unit 6: Animal Tissue",
+  "level": "Sub-Topic (L-2)",
+  "subtopic_id": 15,
+  "subtopic_name": "5.1 Neuroglia \u2014 Non-Neuronal Glial Support Cells",
+  "topic_name": "Nervous Tissue",
+  "mindmap_path": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia",
+  "questions": [
+    {
+      "id": "qb_subtopic15_001",
+      "type": "Describe",
+      "question": "Describe the types and functions of Central Nervous System (CNS) neuroglial cells.",
+      "answer_2mark": "CNS neuroglia include Astrocytes (Blood-Brain Barrier formation), Oligodendrocytes (CNS myelin sheath synthesis), Microglia (phagocytic immune defense), and Ependymal cells (ciliated CSF circulation).",
+      "answer_5mark": [
+        "1. **Astrocytes**: Star-shaped cells whose vascular feet cover brain capillaries, forming the protective **Blood-Brain Barrier (BBB)** and regulating extracellular K+ concentration.",
+        "2. **Oligodendrocytes**: Cells with few branching processes that synthesize and maintain lipid **myelin sheaths** around multiple central nerve axons in brain and spinal cord white matter.",
+        "3. **Microglia**: Small mesoderm-derived phagocytic cells that act as resident macrophages in CNS tissue, clearing pathogens and damaged cell debris.",
+        "4. **Ependymal Cells**: Simple ciliated cuboidal cells lining brain ventricles and central canal of spinal cord; cilia beat rhythmically to circulate **Cerebrospinal Fluid (CSF)**.",
+        "5. *Summary*: CNS glia provide structural support, myelination, immune surveillance, and fluid circulation."
+      ],
+      "mindmap_path": "UNIT 6: ANIMAL TISSUE > Nervous Tissue > Neuroglia",
+      "bloom_level": "Understand",
+      "difficulty": "Medium",
+      "diagram_ref": "CNS Neuroglia Cell Subtypes Diagram"
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "front": "What does the word 'derivative' mean in financial markets?",
+    "back": "A financial contract whose value is derived from or linked to an underlying asset like stocks, bonds, currencies, or commodities."
+  },
+  {
+    "front": "Name three main types of market participants in the derivatives market.",
+    "back": "Hedgers (who reduce risk), Speculators (who take risk for profit), and Arbitrageurs (who exploit price differences for riskless profit)."
+  },
+  {
+    "front": "What is the key difference in trading units between cash and derivatives markets?",
+    "back": "In the cash market, you can buy or sell single shares. In the derivatives market, you must trade in standardized lots consisting of multiple shares."
+  },
+  {
+    "front": "Do holders of stock futures contracts receive dividends paid by the company?",
+    "back": "No, holders of futures contracts are not legal owners of the shares and therefore do not receive dividends."
+  },
+  {
+    "front": "What is a forward contract?",
+    "back": "A customized, private agreement between two parties to buy or sell an asset at a future date at a price agreed today, traded over-the-counter (OTC)."
+  },
+  {
+    "front": "What is a futures contract?",
+    "back": "A standardized, exchange-traded contract to buy or sell an asset at a future date at a price agreed today, with daily mark-to-market settlement."
+  },
+  {
+    "front": "What is the main benefit of exchange-traded futures over OTC forwards?",
+    "back": "Negligible counterparty default risk, because the exchange's clearing house acts as the counterparty to every trade, guaranteeing settlement."
+  },
+  {
+    "front": "What is Initial Margin in futures trading?",
+    "back": "The upfront cash or collateral deposit required from both buyers and sellers to open a futures position."
+  },
+  {
+    "front": "What is Maintenance Margin?",
+    "back": "The minimum balance that must be maintained in the margin account to keep a futures position active without triggering a margin call."
+  },
+  {
+    "front": "What is Variation Margin?",
+    "back": "The additional funds needed to restore the margin account balance back to the Initial Margin level after it drops below the Maintenance Margin."
+  },
+  {
+    "front": "Explain the concept of 'Zero-Sum Game' in futures.",
+    "back": "The total financial gains of all winning positions exactly equal the total financial losses of all losing positions (net sum of gains and losses is zero)."
+  },
+  {
+    "front": "What is 'Marking-to-Market' (MTM)?",
+    "back": "The daily adjustment of a trader's margin account to reflect profits or losses based on the closing futures price at the end of each day."
+  },
+  {
+    "front": "State the Cost of Carry formula for a stock future without dividends under simple interest.",
+    "back": "F = S * [1 + (r * T / 1200)], where S is the spot price, r is the annualized risk-free interest rate, and T is time to expiry in months."
+  },
+  {
+    "front": "How does an expected dividend affect the theoretical futures price of a stock?",
+    "back": "It reduces the futures price because the buyer of the future does not receive the dividend. Formula: F = S * [1 + (r * T / 1200)] - D."
+  },
+  {
+    "front": "What does 'Contango' mean?",
+    "back": "A market condition where the futures price of an asset is higher than its spot price (F > S)."
+  },
+  {
+    "front": "What does 'Backwardation' mean?",
+    "back": "A market state where the futures price of an asset is lower than its spot price (F < S)."
+  },
+  {
+    "front": "What is the underlying asset for Nifty Futures?",
+    "back": "The Nifty 50 Stock Index, which represents a basket of 50 large-capitalization stocks on the National Stock Exchange of India."
+  },
+  {
+    "front": "Why is leverage higher in the futures market compared to the cash market?",
+    "back": "Because you only pay a fraction of the contract value (margin, e.g. 10-20%) as an upfront payment but get price exposure to the entire contract value."
+  },
+  {
+    "front": "What is the net cost of carry in index futures?",
+    "back": "It is the risk-free rate of interest minus the dividend yield (r - d)."
+  },
+  {
+    "front": "If you are bullish on a stock, what position should you take in stock futures?",
+    "back": "You should take a 'Long' position (buy the futures contract)."
+  }
+]

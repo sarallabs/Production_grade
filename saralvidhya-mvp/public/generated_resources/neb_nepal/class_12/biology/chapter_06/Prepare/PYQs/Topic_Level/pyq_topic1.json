@@ -1,0 +1,33 @@
+{
+  "title": "Topic 1: History & Fundamentals of Histology",
+  "items": [
+    {
+      "id": "PYQ_T1_01",
+      "exam": "NEET 2021",
+      "stem": "Who is recognized as the Father of Histology who classified 21 elementary animal tissue types?",
+      "options": [
+        "A) Marcello Malpighi",
+        "B) Xavier Bichat",
+        "C) Robert Hooke",
+        "D) Anton von Leeuwenhoek"
+      ],
+      "answer": "B) Xavier Bichat",
+      "explanation": "Xavier Bichat coined the term 'tissue' and identified 21 fundamental tissue types without using a microscope.",
+      "image": "1. Xavier_Bichat__Architect_of_Histology.png"
+    },
+    {
+      "id": "PYQ_T1_02",
+      "exam": "AIPMT 2014",
+      "stem": "Animal tissue grade of structural organization first evolved in which animal phylum?",
+      "options": [
+        "A) Porifera",
+        "B) Coelenterata (Cnidaria)",
+        "C) Platyhelminthes",
+        "D) Annelida"
+      ],
+      "answer": "B) Coelenterata (Cnidaria)",
+      "explanation": "Cnidarians (Coelenterates) are the first metazoans to exhibit true tissue-level organization.",
+      "image": "4. Phylum_Coelenterata_Tissue_Evolution.png"
+    }
+  ]
+}

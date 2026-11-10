@@ -1,0 +1,37 @@
+{
+  "chapter": "Unit 6 - Animal Tissue",
+  "subtopic_id": 12,
+  "subtopic_name": "4.1 Striped / Skeletal Muscle",
+  "persona": "Advanced",
+  "type": "detailed_summary",
+  "word_count": 246,
+  "D_max_detected": 8,
+  "D_target_used": 2,
+  "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Striped / Striated / Skeletal Muscle",
+  "sections": [
+    {
+      "header": "4.1 Striped / Skeletal Muscle",
+      "level": 2,
+      "content": "### 4.1 Striped / Skeletal Muscle \u2014 Striated Syncytial Microarchitecture\n\n**Skeletal Muscle** (Striped or Voluntary Muscle) constitutes the bulk of body somatic musculature attached to bones. It generates mechanical force for locomotion and postural stability under voluntary somatic motor control.\n\n#### Microscopic & Ultrastructural Organization\n- **Syncytial Fiber Architecture**: Skeletal muscle fibers are long, unbranched cylindrical cells formed by fusion of embryonic myoblasts, resulting in a **multinucleated syncytium** with multiple nuclei pushed to the peripheral plasma membrane (**sarcolemma**).\n- **Striations & Sarcomere Unit**: Myofibrils exhibit distinct transverse striations due to repeating longitudinal arrangements of thick (**myosin**) and thin (**actin**) myofilaments:\n  - **A-Band (Anisotropic Band)**: Dark central region containing overlapping thick myosin filaments.\n  - **I-Band (Isotropic Band)**: Light region containing thin actin filaments bisected by a proteinaceous **Z-line (Z-disc)**.\n  - **Sarcomere**: The basic structural and functional contractile unit spanning between two adjacent Z-lines.\n\n#### Red vs White Muscle Fiber Comparison\n\n| Functional Characteristic | Red Muscle Fibers (Slow-Twitch) | White Muscle Fibers (Fast-Twitch) |\n| :--- | :--- | :--- |\n| **Myoglobin Content** | Abundant (Deep red appearance) | Very low / Absent (Pale white appearance) |\n| **Mitochondrial Density** | Extremely high (Oxidative) | Low (Glycolytic) |\n| **Capillary Supply** | Dense capillary network | Sparse capillary network |\n| **Primary Metabolism** | Aerobic respiration | Anaerobic glycolysis |\n| **Contraction Speed & Fatigue** | Slow sustained contractions; Highly fatigue-resistant (e.g. postural back muscles) | Fast powerful contractions; Fatigues rapidly (e.g. extraocular eye muscles) |",
+      "mermaid_diagram": "graph LR\n    Z1[Z-Line] --- I1[Light I-Band Actin] --- A[Dark A-Band Myosin] --- I2[Light I-Band Actin] --- Z2[Z-Line]",
+      "visual_references": [
+        "4. Muscular Tissue\\2. Striped, Striated, Skeletal\\00.png",
+        "4. Muscular Tissue\\2. Striped, Striated, Skeletal\\leaves\\1. Anatomy.png",
+        "4. Muscular Tissue\\2. Striped, Striated, Skeletal\\leaves\\2. Sarcomere.png",
+        "4. Muscular Tissue\\2. Striped, Striated, Skeletal\\leaves\\3. Red Muscle.png",
+        "4. Muscular Tissue\\2. Striped, Striated, Skeletal\\leaves\\4. White_Muscle.png"
+      ]
+    }
+  ],
+  "validation_report": {
+    "exhaustive_coverage": true,
+    "definitions_present": true,
+    "bold_terms_on_first_use": true,
+    "infographics_count": 5,
+    "mindmap_coverage": {
+      "D_max_detected": 8,
+      "D_target_used": 2,
+      "MindmapPath": "UNIT 6: ANIMAL TISSUE > Muscular Tissue > Striped / Striated / Skeletal Muscle"
+    }
+  }
+}

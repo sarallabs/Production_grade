@@ -1,0 +1,144 @@
+{
+  "questions": [
+    {
+      "id": "PR_MCQ_H1",
+      "stem": "Cardiac muscle electrical coupling occurs via gap junctions situated in:",
+      "options": [
+        "A) Desmosomes",
+        "B) Intercalated discs",
+        "C) Neuromuscular junctions",
+        "D) Tight junctions"
+      ],
+      "answer": "B) Intercalated discs",
+      "explanation": "Intercalated disc gap junctions permit electrical syncytium.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PR_MCQ_H2",
+      "stem": "Type I collagen forms thick white inelastic structural bundles in:",
+      "options": [
+        "A) Tendons",
+        "B) Elastic cartilage",
+        "C) Reticular tissue",
+        "D) Blood vessels"
+      ],
+      "answer": "A) Tendons",
+      "explanation": "Type I collagen forms thick white inelastic tendon bundles.",
+      "difficulty": "Hard",
+      "image": "2. Fibres_of_Proper_Connective_Tissue.png"
+    },
+    {
+      "id": "PR_MCQ_H3",
+      "stem": "Cartilage matrix avascularity is maintained by chondrin secreting signal:",
+      "options": [
+        "A) VEGF",
+        "B) Anti-angiogenic factors",
+        "C) Calcium hydroxyapatite",
+        "D) Myoglobin"
+      ],
+      "answer": "B) Anti-angiogenic factors",
+      "explanation": "Chondrin secretes anti-angiogenic signals keeping cartilage avascular.",
+      "difficulty": "Hard",
+      "image": "00 Cartilage_and_Bone_Comparison_Guide.png"
+    },
+    {
+      "id": "PR_MCQ_H4",
+      "stem": "Connective tissue sheath enclosing a muscle fascicle bundle is:",
+      "options": [
+        "A) Epimysium",
+        "B) Perimysium",
+        "C) Endomysium",
+        "D) Periosteum"
+      ],
+      "answer": "B) Perimysium",
+      "explanation": "Perimysium encloses a fascicle of muscle fibers.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PR_MCQ_H5",
+      "stem": "Saltatory nerve conduction leaps along axolemma specifically at:",
+      "options": [
+        "A) Myelin sheath wraps",
+        "B) Uninsulated Nodes of Ranvier",
+        "C) Schwann cell nuclei",
+        "D) Synapses"
+      ],
+      "answer": "B) Uninsulated Nodes of Ranvier",
+      "explanation": "Nodes of Ranvier have high Na+ channel density for leaping conduction.",
+      "difficulty": "Hard",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PR_MCQ_H6",
+      "stem": "Plasma cells synthesize antibody immunoglobulins in connective tissue from:",
+      "options": [
+        "A) T-lymphocytes",
+        "B) B-lymphocytes",
+        "C) Monocytes",
+        "D) Eosinophils"
+      ],
+      "answer": "B) B-lymphocytes",
+      "explanation": "Plasma cells differentiate from B-lymphocytes.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    },
+    {
+      "id": "PR_MCQ_H7",
+      "stem": "Single-unit smooth muscle acts as a myogenic electrical syncytium via:",
+      "options": [
+        "A) Desmosomes",
+        "B) Gap junctions",
+        "C) Tight junctions",
+        "D) Synapses"
+      ],
+      "answer": "B) Gap junctions",
+      "explanation": "Single-unit smooth muscle cells are coupled by gap junctions.",
+      "difficulty": "Hard",
+      "image": "2. Single-Unit.png"
+    },
+    {
+      "id": "PR_MCQ_H8",
+      "stem": "Spongy bone trabeculae in long bone epiphysis contain:",
+      "options": [
+        "A) Yellow marrow",
+        "B) Red hemopoietic marrow",
+        "C) Compact osteons",
+        "D) Chondrin"
+      ],
+      "answer": "B) Red hemopoietic marrow",
+      "explanation": "Epiphysis contains spongy bone with red blood-forming marrow.",
+      "difficulty": "Hard",
+      "image": "2. Architecture_of_Bone_Anatomy.png"
+    },
+    {
+      "id": "PR_MCQ_H9",
+      "stem": "Mature neurones lose mitotic ability post-birth due to loss of active:",
+      "options": [
+        "A) Mitochondria",
+        "B) Centrioles",
+        "C) Ribosomes",
+        "D) Axons"
+      ],
+      "answer": "B) Centrioles",
+      "explanation": "Mature neurones lose active centrioles.",
+      "difficulty": "Hard",
+      "image": "3. No mitosis.png"
+    },
+    {
+      "id": "PR_MCQ_H10",
+      "stem": "Longest muscle in human anatomy is:",
+      "options": [
+        "A) Gluteus maximus",
+        "B) Sartorius",
+        "C) Stapedius",
+        "D) Masseter"
+      ],
+      "answer": "B) Sartorius",
+      "explanation": "Sartorius is the longest human muscle.",
+      "difficulty": "Hard",
+      "image": "00.png"
+    }
+  ]
+}

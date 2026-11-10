@@ -1,0 +1,193 @@
+{
+  "topic": "Topic 4: Muscular Tissue Architecture",
+  "questions": [
+    {
+      "id": "PA_T4_MSQ_01",
+      "stem": "In Topic 4, select all characteristics belonging to Skeletal Muscle histology: (Select all that apply)",
+      "options": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue",
+        "E) Intercalated discs with gap junctions"
+      ],
+      "answers": [
+        "A) Voluntary neural control",
+        "B) Multinucleated syncytium with peripheral nuclei",
+        "C) Cross-striated A and I bands",
+        "D) Subject to rapid fatigue"
+      ],
+      "explanation": "Skeletal muscle is voluntary, syncytial, striated, and fatigable.",
+      "image": "00.png"
+    },
+    {
+      "id": "PA_T4_MSQ_02",
+      "stem": "In Topic 4, select all features distinguishing Cardiac Muscle from Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue",
+        "E) Syncytial multinucleation"
+      ],
+      "answers": [
+        "A) Involuntary autonomic innervation",
+        "B) Branched cardiocytes with central nuclei",
+        "C) Intercalated discs providing electrical coupling",
+        "D) Resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, fatigue-resistant, and connected by intercalated discs.",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PA_T4_MSQ_03",
+      "stem": "In Topic 4, select all connective tissue sheaths organizing skeletal muscle blocks: (Select all that apply)",
+      "options": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)",
+        "D) Perichondrium",
+        "E) Periosteum"
+      ],
+      "answers": [
+        "A) Endomysium (enclosing single muscle fiber)",
+        "B) Perimysium (enclosing muscle fascicle bundle)",
+        "C) Epimysium (enclosing whole muscle belly)"
+      ],
+      "explanation": "Muscle sheaths = Endomysium, Perimysium, Epimysium.",
+      "image": "1. Anatomy.png"
+    },
+    {
+      "id": "PA_T4_MSQ_04",
+      "stem": "In Topic 4, select all characteristics of Red Muscle Fibers (Slow Oxidative): (Select all that apply)",
+      "options": [
+        "A) High myoglobin content giving red color",
+        "B) Abundant mitochondria for aerobic respiration",
+        "C) Rich blood capillary supply",
+        "D) Slow contraction velocity with high fatigue resistance",
+        "E) Anaerobic glycogen breakdown"
+      ],
+      "answers": [
+        "A) High myoglobin content giving red color",
+        "B) Abundant mitochondria for aerobic respiration",
+        "C) Rich blood capillary supply",
+        "D) Slow contraction velocity with high fatigue resistance"
+      ],
+      "explanation": "Red muscle has high myoglobin, mitochondria, capillaries, aerobic respiration, and high fatigue resistance.",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PA_T4_MSQ_05",
+      "stem": "In Topic 4, select all characteristics of White Muscle Fibers (Fast Glycolytic): (Select all that apply)",
+      "options": [
+        "A) Low myoglobin and fewer mitochondria",
+        "B) High sarcoplasmic reticulum and fast myosin ATPase",
+        "C) Primary reliance on anaerobic glycolysis",
+        "D) Fast contraction speed with rapid fatigue",
+        "E) Aerobic slow-twitch endurance"
+      ],
+      "answers": [
+        "A) Low myoglobin and fewer mitochondria",
+        "B) High sarcoplasmic reticulum and fast myosin ATPase",
+        "C) Primary reliance on anaerobic glycolysis",
+        "D) Fast contraction speed with rapid fatigue"
+      ],
+      "explanation": "White muscle has low myoglobin, fast ATPase, anaerobic glycolysis, and rapid fatigue.",
+      "image": "4. White_Muscle.png"
+    },
+    {
+      "id": "PA_T4_MSQ_06",
+      "stem": "In Topic 4, select all regulatory and contractile proteins in Sarcomere: (Select all that apply)",
+      "options": [
+        "A) Actin thin filaments",
+        "B) Myosin thick filaments",
+        "C) Tropomyosin regulatory strands",
+        "D) Troponin C, I, T complex",
+        "E) Ossein protein matrix"
+      ],
+      "answers": [
+        "A) Actin thin filaments",
+        "B) Myosin thick filaments",
+        "C) Tropomyosin regulatory strands",
+        "D) Troponin C, I, T complex"
+      ],
+      "explanation": "Sarcomere proteins: Actin, Myosin, Tropomyosin, and Troponin.",
+      "image": "3. Proteins.png"
+    },
+    {
+      "id": "PA_T4_MSQ_07",
+      "stem": "In Topic 4, select all ultrastructural Sarcomere changes during muscle contraction: (Select all that apply)",
+      "options": [
+        "A) Shortening of I-band",
+        "B) Narrowing or disappearance of H-zone",
+        "C) Constant length of A-band",
+        "D) Movement of Z-lines closer together",
+        "E) Lengthening of A-band myosin filaments"
+      ],
+      "answers": [
+        "A) Shortening of I-band",
+        "B) Narrowing or disappearance of H-zone",
+        "C) Constant length of A-band",
+        "D) Movement of Z-lines closer together"
+      ],
+      "explanation": "During contraction, I-band and H-zone shorten, Z-lines approximate, while A-band stays constant.",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PA_T4_MSQ_08",
+      "stem": "In Topic 4, select all anatomical locations containing Smooth Muscle tissue: (Select all that apply)",
+      "options": [
+        "A) Wall of gastrointestinal stomach and intestine",
+        "B) Wall of blood vessels (Arteries & Veins)",
+        "C) Wall of urinary bladder and ureters",
+        "D) Wall of respiratory bronchioles",
+        "E) Biceps brachii muscle"
+      ],
+      "answers": [
+        "A) Wall of gastrointestinal stomach and intestine",
+        "B) Wall of blood vessels (Arteries & Veins)",
+        "C) Wall of urinary bladder and ureters",
+        "D) Wall of respiratory bronchioles"
+      ],
+      "explanation": "Smooth muscle lines GI tract, blood vessels, urinary bladder, and bronchioles.",
+      "image": "1. Smooth - Involuntary, Spindle shaped.png"
+    },
+    {
+      "id": "PA_T4_MSQ_09",
+      "stem": "In Topic 4, select all features of Single-Unit Smooth Muscle (Visceral Muscle): (Select all that apply)",
+      "options": [
+        "A) Cells electrically linked via gap junctions",
+        "B) Demonstrates myogenic pacemaker activity",
+        "C) Muscle sheet contracts as a single unit syncytium",
+        "D) Present in walls of stomach, intestine, and uterus",
+        "E) Neurogenic independent cell unit activation"
+      ],
+      "answers": [
+        "A) Cells electrically linked via gap junctions",
+        "B) Demonstrates myogenic pacemaker activity",
+        "C) Muscle sheet contracts as a single unit syncytium",
+        "D) Present in walls of stomach, intestine, and uterus"
+      ],
+      "explanation": "Single-unit smooth muscle is myogenic, coupled by gap junctions, and contracts as a syncytium in visceral organs.",
+      "image": "2. Single-Unit.png"
+    },
+    {
+      "id": "PA_T4_MSQ_10",
+      "stem": "In Topic 4, select all cell junctions present inside Cardiac Intercalated Discs: (Select all that apply)",
+      "options": [
+        "A) Fascia Adherens (anchoring actin filaments)",
+        "B) Macula Adherens / Desmosomes (mechanical anchoring)",
+        "C) Gap Junctions (longitudinal impulse transmission)",
+        "D) Tight Junctions (blocking all ionic flow)",
+        "E) Neuromuscular endplate synapse"
+      ],
+      "answers": [
+        "A) Fascia Adherens (anchoring actin filaments)",
+        "B) Macula Adherens / Desmosomes (mechanical anchoring)",
+        "C) Gap Junctions (longitudinal impulse transmission)"
+      ],
+      "explanation": "Intercalated discs contain Fascia Adherens, Desmosomes, and Gap Junctions.",
+      "image": "2. Intercalated_Discs.png"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "pyqs": [
+    {
+      "id": "PYQ_01",
+      "exam": "NEET 2021",
+      "stem": "Which of the following statements is INCORRECT regarding epithelial tissue?",
+      "options": [
+        "A) Cells are compactly packed with little intercellular matrix",
+        "B) It is avascular in nature",
+        "C) Free surface faces either a body fluid or the outside environment",
+        "D) It contains abundant collagen white fibre bundles"
+      ],
+      "answer": "D) It contains abundant collagen white fibre bundles",
+      "explanation": "Epithelial tissue contains NO fibres in its matrix; collagen white fibres belong to connective tissue.",
+      "image": "00 General_Features_of_Epithelial_Tissue.png"
+    },
+    {
+      "id": "PYQ_02",
+      "exam": "NEET 2020",
+      "stem": "Cuboidal epithelium with brush border of microvilli is found in:",
+      "options": [
+        "A) Lining of intestine",
+        "B) Duct of salivary glands",
+        "C) Proximal convoluted tubule of nephron",
+        "D) Eustachian tube"
+      ],
+      "answer": "C) Proximal convoluted tubule of nephron",
+      "explanation": "PCT of nephron has simple cuboidal brush-bordered epithelium for maximum selective reabsorption.",
+      "image": "2. Simple_Cuboidal_Epithelium_Anatomy.png"
+    },
+    {
+      "id": "PYQ_03",
+      "exam": "NEET 2019",
+      "stem": "Select the CORRECTLY matched pair:",
+      "options": [
+        "A) Tendon — Specialised connective tissue",
+        "B) Adipose tissue — Dense connective tissue",
+        "C) Areolar tissue — Loose connective tissue",
+        "D) Cartilage — Loose connective tissue"
+      ],
+      "answer": "C) Areolar tissue — Loose connective tissue",
+      "explanation": "Areolar and Adipose are Loose Connective Tissues; Tendon is Dense Regular CT; Cartilage is Supportive CT.",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PYQ_04",
+      "exam": "NEET 2018",
+      "stem": "The ciliated columnar epithelial cells in humans are known to occur in:",
+      "options": [
+        "A) Eustachian tube and stomach lining",
+        "B) Bronchioles and Fallopian tubes",
+        "C) Bile duct and oesophagus",
+        "D) Fallopian tubes and urethra"
+      ],
+      "answer": "B) Bronchioles and Fallopian tubes",
+      "explanation": "Ciliated columnar epithelium moves mucus in bronchioles and ova in Fallopian tubes.",
+      "image": "1. Modified_Ciliated_Epithelium_Specialisations.png"
+    },
+    {
+      "id": "PYQ_05",
+      "exam": "AIPMT 2015",
+      "stem": "The function of the gap junction is to:",
+      "options": [
+        "A) Perform cementing to keep neighbouring cells together",
+        "B) Facilitate communication between adjoining cells by connecting cytoplasm",
+        "C) Stop substances from leaking across tissue",
+        "D) Anchor cell to basement membrane"
+      ],
+      "answer": "B) Facilitate communication between adjoining cells by connecting cytoplasm",
+      "explanation": "Gap junctions allow rapid transfer of ions, small molecules, and signals between cells.",
+      "image": "6. Cell_Junctions_in_Epithelial_Tissue.png"
+    }
+  ]
+}

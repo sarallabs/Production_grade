@@ -1,0 +1,82 @@
+# Question Bank — Connective Tissue
+**Chapter:** Unit 6: Animal Tissue  |  **Mark Type:** 5-mark
+**Total Questions:** 5
+
+---
+
+## Q1. Classify connective tissue with a neat diagram/table, giving two examples for each major type.
+**Type:** Classify  |  **Bloom's:** Understand  |  **Difficulty:** Medium
+**Mindmap Path:** `Animal Tissue > Connective Tissue`
+**Recommended Diagram:** Classification tree of connective tissue
+
+**Answer:**
+1. Connective tissue is broadly classified into three categories: Proper Connective Tissue, Supportive Connective Tissue, and Fluid Connective Tissue.
+2. Proper Connective Tissue: Contains fibroblasts, mast cells, histocytes, lymphocytes, and plasma cells in a jelly/gel-like matrix with collagen, elastic, and reticular fibres. (a) Loose-matrix: Areolar tissue (packing tissue, fills organ spaces) and Adipose tissue (fat storage, white and brown adipocytes); (b) Dense-matrix: Dense Fibrous (white fibrous, tendons, ligaments), Elastic CT, and Reticular tissue (stroma of spleen, liver).
+3. Supportive Connective Tissue: Provides structural support. (a) Cartilage — avascular; chondrocytes in lacunae; matrix is chondrin. Types: Hyaline, Calcified, Fibrocartilage (strongest), Elastic cartilage; (b) Bone — vascular; osteocytes in lacunae with canaliculi; matrix is ossein (calcium phosphate). Formation types: Cartilaginous, Membranous, Sesamoid. Shape types: Flat, Irregular, Short, Long.
+4. Fluid Connective Tissue (Vascular/Mobile CT): (a) Blood — plasma (55%) + blood corpuscles (45%: RBCs, WBCs, Platelets); (b) Lymph — colourless, contains lymphocytes, lacks RBCs.
+5. Classification Table: | Type | Matrix | Vascularity | Cells | Examples | | Proper CT | Jelly/gel | Vascular | Fibroblasts, mast cells | Areolar, adipose, tendon | | Cartilage | Chondrin | Avascular | Chondrocytes | Hyaline, fibrocartilage | | Bone | Ossein | Vascular | Osteocytes | Long bones, skull | | Fluid CT | Plasma/lymph fluid | Mobile | RBCs, WBCs, lymphocytes | Blood, lymph |
+6. The diversity of connective tissue types reflects the variety of structural and physiological roles required in the body — from mechanical support and storage to transport and immune defence.
+
+---
+
+## Q2. Describe the structure of a long bone including its components and the Haversian system.
+**Type:** Describe  |  **Bloom's:** Understand  |  **Difficulty:** Medium
+**Mindmap Path:** `Animal Tissue > Connective Tissue > Supportive > Bone`
+**Recommended Diagram:** Labelled cross-section of a long bone and Haversian system
+
+**Answer:**
+1. A long bone (e.g., femur, humerus) has a tubular shaft called the diaphysis and two expanded ends called epiphyses.
+2. Epiphysis: Composed of spongy (cancellous) bone with a honeycomb-like trabecular arrangement. The spaces contain red bone marrow, which is the site of haematopoiesis (blood cell formation).
+3. Diaphysis: Composed of compact (dense) bone surrounding a central medullary cavity (marrow cavity). The medullary cavity contains yellow bone marrow, which stores fat. The diaphysis is covered externally by periosteum.
+4. Haversian System (Osteon): The structural unit of compact bone. Consists of: (a) Haversian canal — central canal containing blood vessels (artery, vein) and nerves; (b) Concentric lamellae — rings of calcified bone matrix around the Haversian canal; (c) Lacunae — small spaces between lamellae housing osteocytes; (d) Canaliculi — tiny channels connecting lacunae to each other and to the Haversian canal for nutrient exchange; (e) Volkmann's canals — transverse canals connecting adjacent Haversian canals.
+5. Articular cartilage (hyaline) covers the epiphyseal surfaces to reduce friction at joints.
+6. Between the epiphysis and diaphysis lies the epiphyseal plate (growth plate) in growing bones — a band of hyaline cartilage responsible for longitudinal bone growth.
+7. The compact bone of the diaphysis provides maximum strength with minimum weight (hollow tube principle), while the spongy bone of the epiphysis distributes compressive forces across joints.
+
+---
+
+## Q3. Compare and contrast the four types of cartilage using five key parameters.
+**Type:** Compare  |  **Bloom's:** Analyze  |  **Difficulty:** Hard
+**Mindmap Path:** `Animal Tissue > Connective Tissue > Supportive > Cartilage`
+**Recommended Diagram:** Comparison table and microscopic appearance of cartilage types
+
+**Answer:**
+1. The four types of cartilage are Hyaline cartilage, Calcified cartilage, Fibrocartilage, and Elastic cartilage.
+2. Comparison Table: | Feature | Hyaline | Calcified | Fibrocartilage | Elastic | | Matrix | Chondrin, clear | Calcium salts deposit | Dense collagen fibres | Elastic fibres | | Colour | Glassy/bluish | White/chalky | White | Yellow | | Strength | Moderate | Very hard | Strongest | Flexible | | Location | Articular surfaces, costal cartilage, trachea | Growth plate of ageing bone | Intervertebral discs, pubic symphysis | Ear pinna, epiglottis, larynx | | Flexibility | Moderate | None | Low | High |
+3. Hyaline cartilage is the most common type, appearing glassy due to the uniform chondrin matrix with relatively few collagen fibres; forms the cartilaginous skeleton of the embryo.
+4. Fibrocartilage is the strongest due to abundant collagen (white) fibres; found where maximum tensile strength is required (intervertebral discs, menisci of knee).
+5. Elastic cartilage contains elastic (yellow) fibres, making it the most flexible; maintains shape while allowing bending (e.g., ear pinna, epiglottis).
+6. All cartilage types are avascular — nourishment occurs by diffusion through the matrix from the surrounding perichondrium, which explains why cartilage heals very slowly after injury.
+
+---
+
+## Q4. Describe the composition of blood as a fluid connective tissue and the functions of each component.
+**Type:** Describe  |  **Bloom's:** Understand  |  **Difficulty:** Medium
+**Mindmap Path:** `Animal Tissue > Connective Tissue > Fluid > Blood`
+**Recommended Diagram:** Labelled diagram of blood components (pie chart + cell drawings)
+
+**Answer:**
+1. Blood is a fluid connective tissue consisting of plasma (55%) and blood corpuscles (45%).
+2. Plasma: The liquid matrix of blood. Contains water (~90%), plasma proteins (albumin, globulin, fibrinogen), nutrients, hormones, gases (O2, CO2), waste products, and electrolytes. Functions: transport of substances, maintenance of osmotic pressure, immunity (globulins), clotting (fibrinogen).
+3. Red Blood Cells (Erythrocytes): Biconcave, enucleated (in mammals) cells containing haemoglobin. Function: transport oxygen from lungs to tissues and carbon dioxide from tissues to lungs.
+4. White Blood Cells (Leucocytes): Nucleated cells of the immune system. Granulocytes: Neutrophils (50–70%; phagocytic; first responders to infection), Eosinophils (2–4%; anti-allergic; counter parasites), Basophils (<1%; release histamine and heparin). Agranulocytes: Lymphocytes (20–30%; B-cells make antibodies; T-cells cell-mediated immunity), Monocytes (2–8%; largest WBC; differentiate into macrophages; phagocytic).
+5. Platelets (Thrombocytes): Cell fragments derived from megakaryocytes. Function: haemostasis (blood clotting) — they aggregate at wound sites and initiate the coagulation cascade.
+6. Lymph: A related fluid connective tissue — colourless plasma-derived fluid flowing through lymphatic vessels. Contains lymphocytes and lacks RBCs. Functions: returns tissue fluid to circulation, transports absorbed dietary fats (chyle), and participates in immune surveillance.
+7. Blood is classified as connective tissue because it: (a) is of mesodermal origin; (b) consists of cells in an extracellular matrix (plasma); and (c) connects and serves all body tissues.
+
+---
+
+## Q5. Compare tendon and ligament as dense connective tissues under five parameters.
+**Type:** Compare  |  **Bloom's:** Analyze  |  **Difficulty:** Medium
+**Mindmap Path:** `Animal Tissue > Connective Tissue > Proper > Dense > Fibrous`
+**Recommended Diagram:** Diagram comparing tendon and ligament structure
+
+**Answer:**
+1. Tendons and ligaments are both dense fibrous connective tissues but differ in structure, composition, and function.
+2. Comparison Table: | Parameter | Tendon | Ligament | | Definition | Connects muscle to bone | Connects bone to bone | | Fibre type | Predominantly collagen (white) | Collagen + elastic fibres | | Arrangement | Parallel bundles | Interlacing/parallel | | Flexibility | Limited (inextensible) | Some elasticity | | Location | Biceps-to-bone, Achilles tendon | Knee (ACL, PCL), ankle |
+3. Tendons must resist the large pulling forces of muscle contraction, so they are composed of tightly packed parallel collagen fibres with minimal elastic component, giving maximum tensile strength in one direction.
+4. Ligaments need to allow limited joint movement while maintaining stability, so they contain a higher proportion of elastic fibres alongside collagen, allowing controlled stretching without permanent deformation.
+5. Both tendons and ligaments contain fibroblasts (tenocytes/ligament fibroblasts) as their primary cells, with a dense collagen matrix and poor vascularity — explaining their slow repair after injury.
+6. Clinically, tendon and ligament injuries (ruptures, sprains) are common in sports medicine. Tendon repair is slightly faster due to a somewhat better blood supply than ligaments.
+
+---

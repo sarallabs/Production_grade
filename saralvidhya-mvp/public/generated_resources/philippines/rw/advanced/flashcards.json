@@ -1,0 +1,128 @@
+{
+  "subject": "rw",
+  "unit": "week_2",
+  "level": "advanced",
+  "total_cards": 20,
+  "flashcards": [
+    {
+      "id": "card_01",
+      "front": "Contrast 'Reading for Information' with 'Critical Reading' using epistemological terms.",
+      "back": "Reading for information is positivist and submissive, treating text as authoritative data; critical reading is a dialectical duel and a hermeneutics of suspicion that interrogates warrants, biases, and ideological consequences.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_02",
+      "front": "Explain the significance of Montaigne's 'essais' (1580) in the history of secular inquiry.",
+      "back": "Montaigne broke from scholastic dogma, establishing the essay as a personal, skeptical exploration of an inquiring mind, inviting the reader into an egalitarian intellectual partnership.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_03",
+      "front": "Map Hirschberg's Cognitive Triad to Bloom's Revised Taxonomy.",
+      "back": "Analysis maps to Deconstructing/Differentiating (L-4); Synthesis maps to Integrating/Creating (L-6); Evaluation maps to Auditing/Judging (L-5).",
+      "level": "advanced"
+    },
+    {
+      "id": "card_04",
+      "front": "How does Synthesis function as an epistemic antidote to dogmatism and arrogance?",
+      "back": "By forcing the integration of conflicting, credible cross-disciplinary data, proving that complex real-world disputes resist single-variable dogmatic solutions.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_05",
+      "front": "What does 'Demystifying the Writer' achieve within democratic critical pedagogy?",
+      "back": "It dismantles the author-as-oracle fallacy, re-framing texts as fallible human constructions subject to empirical audit, bias analysis, and ideological critique.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_06",
+      "front": "How does argument inversion operate as a heuristic against confirmation bias?",
+      "back": "It compels the reader to systematically inhabit and construct the strongest possible justification for the counter-thesis (e.g., canine testing enabling insulin discovery).",
+      "level": "advanced"
+    },
+    {
+      "id": "card_07",
+      "front": "Deconstruct how incommensurable moral warrants shape ideological debates (e.g. Jefferson vs. Marx).",
+      "back": "Jefferson derives legitimacy from individual natural rights and equal opportunity; Marx derives legitimacy from the labor theory of value. Claims are logically valid only within their respective axiomatic frameworks.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_08",
+      "front": "Demonstrate how interdisciplinary triangulation refutes reductionism in academic claims.",
+      "back": "Empirical historical resistance data (Fallen Timbers, Tippecanoe) directly falsified the psychological hypothesis that oppressed populations are innately submissive.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_09",
+      "front": "Analyze the epistemic implication of Dr. Susumu Tonegawa's 1976 discovery for evidence auditing.",
+      "back": "Scientific evidence is iterative and temporally contingent. Citing pre-1976 consensus asserting antibody generation is an insoluble mystery introduces obsolete, invalid data.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_10",
+      "front": "Explain why the 'Ad Hominem' fallacy represents a genetic fallacy in formal argumentation.",
+      "back": "Because the truth-value or validity of a proposition is logically independent of the personal virtues, flaws, or motives of the person asserting it.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_11",
+      "front": "Differentiate between formal validity and material truth using the Italian musicality syllogism.",
+      "back": "The syllogism ('All Italians are musical; Luigi is Italian; therefore Luigi is musical') is formally valid, but materially false because the major premise lacks empirical truth.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_12",
+      "front": "Deconstruct Petitio Principii (Begging the Question) through the lens of epistemology.",
+      "back": "It is a circular epistemic failure where the claim to be demonstrated is embedded as an unproven assumption in the premises, producing zero explanatory advancement.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_13",
+      "front": "Why is the economic rationale against margin annotation criticized as 'penny-wise and pound-foolish'?",
+      "back": "Preserving textbook resale value optimizes marginal financial capital at the catastrophic expense of cognitive capital gained through active marginal interrogation.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_14",
+      "front": "Expose the satirical irony in Andy Rooney's rhetorical homage to Fowler's Modern English Usage.",
+      "back": "Rooney adopts Fowler's definitive persona to playfully subvert prescriptivism\u2014violating rules against split infinitives, zeugma, and 'It is I' to expose the absurdity of grammatical pedantry.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_15",
+      "front": "Evaluate Mark Twain's thesis in 'The Lowest Animal' through the Toulmin Argumentation Model.",
+      "back": "Claim: Man is morally inferior to beasts. Data: Humans torture and hoard. Warrant: True superiority demands ethical benevolence. Rebuttal: Beastly actions lack vindictive malice.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_16",
+      "front": "How do premise signals ('inasmuch as') and conclusion signals ('which entails') guide logical deduction?",
+      "back": "'Inasmuch as' establishes the evidentiary grounds; 'which entails' signals that the consequent is a necessary deductive implication of those grounds.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_17",
+      "front": "Define Dharwadker's two forms of Intertextuality through Bakhtinian dialogic theory.",
+      "back": "Form 1 (Book in a Book) is literary polyphony; Form 2 (Other Text in a Book) incorporates socio-historical narratives (Rosa Parks, JFK) with inherent story arcs into literary fiction.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_18",
+      "front": "Analyze the 'Destabilization' function of Intertextuality as a deconstructive tool.",
+      "back": "It subverts settled interpretations of canon by exposing latent colonial, patriarchal, or classist ideologies in the source text through modern reframing.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_19",
+      "front": "Explain the concept of 'Simultaneous Reciprocal Reinterpretation' in literary hermeneutics.",
+      "back": "A dynamic bidirectional dialectic where both source and host texts continuously interrogate, decenter, and reframe one another in cultural memory.",
+      "level": "advanced"
+    },
+    {
+      "id": "card_20",
+      "front": "Synthesize the ontological distinction between digital Hypertext and cultural Intertextuality.",
+      "back": "Hypertext is a cybernetic architecture of electronic nodes navigated by user clicks; Intertextuality is a cultural semiotic web of historical echoes decoded in human consciousness.",
+      "level": "advanced"
+    }
+  ]
+}

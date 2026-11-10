@@ -1,0 +1,204 @@
+{
+  "questions": [
+    {
+      "id": "PA_MSQ_H1",
+      "stem": "Select all neuroglial cells residing in Central Nervous System (CNS): (Select all that apply)",
+      "options": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells",
+        "E) Schwann cells"
+      ],
+      "answers": [
+        "A) Astrocytes",
+        "B) Oligodendrocytes",
+        "C) Microglia",
+        "D) Ependymal cells"
+      ],
+      "explanation": "CNS neuroglia = Astrocytes, Oligodendrocytes, Microglia, Ependymal. Schwann = PNS.",
+      "difficulty": "Hard",
+      "image": "CNS.png"
+    },
+    {
+      "id": "PA_MSQ_H2",
+      "stem": "Select all characteristics belonging to Red Muscle fibres: (Select all that apply)",
+      "options": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "D) Fast-twitch rapid fatigue",
+        "E) Aerobic respiration"
+      ],
+      "answers": [
+        "A) High myoglobin content",
+        "B) Rich blood capillary network",
+        "C) Abundant mitochondria",
+        "E) Aerobic respiration"
+      ],
+      "explanation": "Red muscle is rich in myoglobin/mitochondria, slow-twitch, aerobic.",
+      "difficulty": "Hard",
+      "image": "3. Red Muscle.png"
+    },
+    {
+      "id": "PA_MSQ_H3",
+      "stem": "Select all tissue macrophages derived from blood monocytes: (Select all that apply)",
+      "options": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells (Lungs)",
+        "D) Langerhans cells (Skin)",
+        "E) Chondrocytes"
+      ],
+      "answers": [
+        "A) Kupffer cells (Liver)",
+        "B) Microglia (Brain)",
+        "C) Dust cells (Lungs)",
+        "D) Langerhans cells (Skin)"
+      ],
+      "explanation": "Kupffer, Microglia, Dust cells, Langerhans are monocyte-derived histocytes.",
+      "difficulty": "Hard",
+      "image": "1. Connective_Tissue_Components_and_Functions.png"
+    },
+    {
+      "id": "PA_MSQ_H4",
+      "stem": "Select all features distinguishing Cardiac Muscle from Skeletal Muscle: (Select all that apply)",
+      "options": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Resistance to fatigue",
+        "E) Syncytial multinucleated fibers"
+      ],
+      "answers": [
+        "A) Involuntary autonomic control",
+        "B) Branched cardiocyte arrangement",
+        "C) Presence of Intercalated Discs",
+        "D) Resistance to fatigue"
+      ],
+      "explanation": "Cardiac muscle is involuntary, branched, has intercalated discs, fatigue-resistant.",
+      "difficulty": "Hard",
+      "image": "2. Intercalated_Discs.png"
+    },
+    {
+      "id": "PA_MSQ_H5",
+      "stem": "Select all factors required during blood clotting cascade to form Fibrin: (Select all that apply)",
+      "options": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen",
+        "E) Heparin"
+      ],
+      "answers": [
+        "A) Calcium ions (Ca2+)",
+        "B) Thromboplastin",
+        "C) Prothrombin",
+        "D) Fibrinogen"
+      ],
+      "explanation": "Clotting requires Thromboplastin, Ca2+, Prothrombin, Thrombin, Fibrinogen.",
+      "difficulty": "Hard",
+      "image": "1. Anatomy_and_Chemistry_of_Blood.png"
+    },
+    {
+      "id": "PA_MSQ_H6",
+      "stem": "Select all true features of White Adipose Tissue vs Brown Adipose Tissue: (Select all that apply)",
+      "options": [
+        "A) White adipocytes are monolocular; Brown adipocytes are multilocular",
+        "B) Brown fat contains high density of cytochrome mitochondria",
+        "C) Brown fat expresses Thermogenin (UCP-1) for heat generation",
+        "D) White fat serves as primary long-term energy reservoir",
+        "E) White fat generates heat in hibernating newborn mammals"
+      ],
+      "answers": [
+        "A) White adipocytes are monolocular; Brown adipocytes are multilocular",
+        "B) Brown fat contains high density of cytochrome mitochondria",
+        "C) Brown fat expresses Thermogenin (UCP-1) for heat generation",
+        "D) White fat serves as primary long-term energy reservoir"
+      ],
+      "explanation": "Brown fat is multilocular, rich in mitochondria/UCP-1 for thermogenesis; White fat is monolocular energy storage.",
+      "difficulty": "Hard",
+      "image": "3. Areolar_and_Adipose_Tissue_Comparison.png"
+    },
+    {
+      "id": "PA_MSQ_H7",
+      "stem": "Select all ultrastructural events occurring in Sarcomere during Skeletal Muscle contraction: (Select all that apply)",
+      "options": [
+        "A) Shortening of I-band length",
+        "B) Disappearance or narrowing of H-zone",
+        "C) Constant length of A-band",
+        "D) Approximation of adjacent Z-lines",
+        "E) Elongation of Myosin thick filaments"
+      ],
+      "answers": [
+        "A) Shortening of I-band length",
+        "B) Disappearance or narrowing of H-zone",
+        "C) Constant length of A-band",
+        "D) Approximation of adjacent Z-lines"
+      ],
+      "explanation": "During contraction, I-band and H-zone shorten, Z-lines move closer, while A-band remains constant.",
+      "difficulty": "Hard",
+      "image": "2. Sarcomere.png"
+    },
+    {
+      "id": "PA_MSQ_H8",
+      "stem": "Select all structural characteristics of Myelinated Axons in peripheral nerves: (Select all that apply)",
+      "options": [
+        "A) Concentric myelin wraps formed by Schwann cells",
+        "B) Saltatory action potential propagation across Nodes of Ranvier",
+        "C) High concentration of voltage-gated Na+ channels at Nodes",
+        "D) Increased nerve impulse conduction velocity",
+        "E) Continuous slow wave uninsulated axon depolarization"
+      ],
+      "answers": [
+        "A) Concentric myelin wraps formed by Schwann cells",
+        "B) Saltatory action potential propagation across Nodes of Ranvier",
+        "C) High concentration of voltage-gated Na+ channels at Nodes",
+        "D) Increased nerve impulse conduction velocity"
+      ],
+      "explanation": "Myelinated nerve fibers feature Schwann myelin wraps, high Na+ channel density at Nodes, and fast saltatory conduction.",
+      "difficulty": "Hard",
+      "image": "3. Node of Ranvier.png"
+    },
+    {
+      "id": "PA_MSQ_H9",
+      "stem": "Select all properties distinguishing Fibrocartilage from Hyaline Cartilage: (Select all that apply)",
+      "options": [
+        "A) Abundant parallel bundles of Type I collagen fibers",
+        "B) Highest tensile strength among all cartilage types",
+        "C) Absence of perichondrium sheath",
+        "D) Located in intervertebral discs and pubic symphysis",
+        "E) Smooth glass-like transparent matrix with Type II collagen"
+      ],
+      "answers": [
+        "A) Abundant parallel bundles of Type I collagen fibers",
+        "B) Highest tensile strength among all cartilage types",
+        "C) Absence of perichondrium sheath",
+        "D) Located in intervertebral discs and pubic symphysis"
+      ],
+      "explanation": "Fibrocartilage has Type I collagen bundles, high tensile strength, lacks perichondrium, and forms intervertebral discs.",
+      "difficulty": "Hard",
+      "image": "1. Cartilage_Anatomy_and_Tissue_Types.png"
+    },
+    {
+      "id": "PA_MSQ_H10",
+      "stem": "Select all cell types in Connective Tissue Proper derived from mesenchyme lineage: (Select all that apply)",
+      "options": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Antibody-producing Plasma cells derived from B-lymphocytes",
+        "D) Phagocytic Histocytes / Macrophages",
+        "E) Keratin-synthesizing Epidermal Keratinocytes"
+      ],
+      "answers": [
+        "A) Matrix-producing Fibroblasts",
+        "B) Histamine-releasing Mast cells",
+        "C) Antibody-producing Plasma cells derived from B-lymphocytes",
+        "D) Phagocytic Histocytes / Macrophages"
+      ],
+      "explanation": "Fibroblasts, Mast cells, Plasma cells, and Macrophages are mesenchymal connective tissue cells.",
+      "difficulty": "Hard",
+      "image": "1. Proper_Connective_Tissue_Cellular_Diversity.png"
+    }
+  ]
+}

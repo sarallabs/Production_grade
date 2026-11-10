@@ -1,0 +1,18 @@
+{
+  "chapter_number": 2,
+  "chapter_name": "Derivatives - Futures",
+  "subject": "Afm",
+  "pdf": "AFM_Part1_Derivative_Futures.docx",
+  "completed": {
+    "beginner": [
+      "question_bank",
+      "detailed_view",
+      "summary",
+      "flashcards",
+      "quiz",
+      "short_podcast",
+      "long_podcast",
+      "video_script"
+    ]
+  }
+}

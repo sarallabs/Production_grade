@@ -1,0 +1,105 @@
+{
+  "name": "Chemistry Chapter 2",
+  "children": [
+    {
+      "name": "Ionic Equilibrium",
+      "children": [
+        {
+          "name": "Postulates of Arrhenius Theory of Ionization",
+          "children": [
+            {
+              "name": "Definition of Ions (Cations and Anions)"
+            },
+            {
+              "name": "Electrolytes in Solution Yield Ions"
+            },
+            {
+              "name": "Dynamic Equilibrium between Ions and Unionized Molecules"
+            },
+            {
+              "name": "Ionization Constant (K)"
+            },
+            {
+              "name": "Electrical Neutrality of Electrolytic Solutions"
+            },
+            {
+              "name": "Movement of Ions towards Electrodes"
+            },
+            {
+              "name": "Properties of Electrolytes Due to Ions"
+            },
+            {
+              "name": "Ions Behave Osmotically as Molecules"
+            },
+            {
+              "name": "Degree of Ionization (a)"
+            }
+          ]
+        },
+        {
+          "name": "Factors Affecting the Degree of Ionization",
+          "children": [
+            {
+              "name": "Nature of Electrolytes (Strong vs. Weak)"
+            },
+            {
+              "name": "Nature of Solvent (Dielectric Constant)"
+            },
+            {
+              "name": "Concentration (Inverse Relationship)"
+            },
+            {
+              "name": "Temperature (Direct Relationship)"
+            }
+          ]
+        },
+        {
+          "name": "Ostwald's Dilution Law",
+          "children": [
+            {
+              "name": "Application of Law of Mass Action to Ionic Equilibrium"
+            },
+            {
+              "name": "Derivation of Ostwald's Dilution Law (Kc = α² / [(1 − α)V])"
+            },
+            {
+              "name": "Application to Weak Electrolytes (Kc = α²/V or α ∝ √V)"
+            },
+            {
+              "name": "Application to Strong Electrolytes (Quadratic Equation)"
+            },
+            {
+              "name": "Experimental Verification (Using Conductivity Measurements)"
+            },
+            {
+              "name": "Formula for Degree of Dissociation (α = Λv / Λ∞)"
+            },
+            {
+              "name": "Limitations of the Law (Fails for Strong Electrolytes)"
+            }
+          ]
+        },
+        {
+          "name": "Concepts of Acids and Bases",
+          "children": [
+            {
+              "name": "Etymology of 'Acid' and 'Alkali'"
+            },
+            {
+              "name": "General Properties of Acids (Sour taste, Corrosive, Indicator change, Reaction with metals/carbonates)"
+            },
+            {
+              "name": "General Properties of Alkaline Substances (Soapy touch, Neutralize acids)"
+            },
+            {
+              "name": "Historical Generalizations (Lavoisier, Davy)"
+            },
+            {
+              "name": "Arrhenius Concept of Acids and Bases"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

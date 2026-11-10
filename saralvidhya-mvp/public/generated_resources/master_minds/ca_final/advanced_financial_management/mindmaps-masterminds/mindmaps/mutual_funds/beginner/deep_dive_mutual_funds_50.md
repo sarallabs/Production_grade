@@ -1,0 +1,28 @@
+# Deep Dive: Information Disclosure
+
+> **Chapter:** Mutual Funds | **Level:** Beginner Deep Dive
+
+--- 
+
+## 📚 Reference Books & Study Material
+
+- **NISM Series V-A: Mutual Fund Distributors Certification Workbook** by *National Institute of Securities Markets* — [Visit Resource](https://www.nism.ac.in)
+- **Mutual Funds: A Practitioner's Guide** by *SEBI / AMFI guidelines* — [Visit Resource](https://www.amfiindia.com)
+- **Modern Investment Management: An Equilibrium Approach** by *Bob Litterman* — [Visit Resource](https://www.wiley.com)
+- **SEBI (Mutual Funds) Regulations, 1996** by *Securities and Exchange Board of India* — [Visit Resource](https://www.sebi.gov.in)
+
+## 🔬 Advanced Context & Institutional Insights
+
+In deep dive mode, we explore the institutional application and regulatory background of this concept. Under SEBI rules, Indian derivatives are subject to standard margins (SPAN + Exposure) and are tightly regulated to ensure systemic safety.
+
+### Quantitative Modeling & Mathematical Context
+
+> **Model Parameters:** No specific quantitative model details.
+
+**Mutual Funds:** Must publish NAV daily by 11:00 PM, disclose full portfolio holdings monthly, and release semi-annual audited financial statements.
+**Hedge Funds:** Portfolios are disclosed only to their private investors (usually quarterly or semi-annually). NAV disclosure is weekly or monthly, and reports are not published in the public domain.
+
+--- 
+
+## 🔗 Navigation
+- 🔙 **[Back to Core Lesson](./concept_mutual_funds_50.md)**
