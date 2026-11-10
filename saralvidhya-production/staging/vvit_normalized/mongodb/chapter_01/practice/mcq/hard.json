@@ -1,0 +1,477 @@
+{
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "subject": "VVIT — MongoDB NoSQL Database Systems",
+  "assessment_type": "MCQ",
+  "difficulty": "hard",
+  "persona": "Advanced",
+  "bloom_band": "L5-L6",
+  "generated_at": "2026-11-02T10:55:32.675889+00:00",
+  "D_max_detected": 4,
+  "D_target_ratio": "100%",
+  "D_target_used": 4,
+  "total_questions": 10,
+  "source_files_used": [
+    "mongodb-reference.md",
+    "mongodb-reference-doc.md",
+    "VVIT_MongoDB_Mindmap.txt"
+  ],
+  "questions": [
+    {
+      "id": "VVIT_MongoDB_mcq_hard_01",
+      "type": "mcq",
+      "question": {
+        "stem": "Inspect the slide query `db.students.find({ age: { $gt: 16, $lt: 10 } })`; why does this range filter evaluate to an empty result set across all numeric `age` values?",
+        "options": {
+          "A": "Because chaining `$gt` and `$lt` inside the same field object applies an implicit logical AND, and no number can be simultaneously greater than `16` and less than `10`",
+          "B": "Because MongoDB forbids placing more than one comparison operator inside a single field filter",
+          "C": "Because `$gt` and `$lt` only operate on string fields rather than numeric fields",
+          "D": "Because `find()` requires an explicit `$or` wrapper whenever two comparison operators are used"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "Multiple operator conditions inside the same field object (`{ $gt: 16, $lt: 10 }`) are evaluated as a conjunction (logical AND). Since no scalar number is strictly greater than 16 and strictly less than 10 at the same time, the predicate is unsatisfiable (`{ $gt: 10, $lt: 16 }` or `{ $gt: 16, $lt: 20 }` is needed for a valid range). (Key Takeaway: Multiple comparison operators on one field form an implicit AND range condition.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Critique",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators > Comparison & Inequality Operators > Relational Thresholds",
+          "level": "L4",
+          "node_id": "node_079",
+          "node_name": "Relational Thresholds ($gt greater than, $gte greater or equal, $lt less than, $lte less or equal, $ne not equal)"
+        },
+        "distractor_patterns": {
+          "B": "common_misconception",
+          "C": "common_misconception",
+          "D": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slide 15 & Mindmap Node 5.1",
+        "marks": 1
+      },
+      "stem": "Inspect the slide query `db.students.find({ age: { $gt: 16, $lt: 10 } })`; why does this range filter evaluate to an empty result set across all numeric `age` values?",
+      "options": {
+        "A": "Because chaining `$gt` and `$lt` inside the same field object applies an implicit logical AND, and no number can be simultaneously greater than `16` and less than `10`",
+        "B": "Because MongoDB forbids placing more than one comparison operator inside a single field filter",
+        "C": "Because `$gt` and `$lt` only operate on string fields rather than numeric fields",
+        "D": "Because `find()` requires an explicit `$or` wrapper whenever two comparison operators are used"
+      },
+      "correct_key": "A",
+      "explanation": "Multiple operator conditions inside the same field object (`{ $gt: 16, $lt: 10 }`) are evaluated as a conjunction (logical AND). Since no scalar number is strictly greater than 16 and strictly less than 10 at the same time, the predicate is unsatisfiable (`{ $gt: 10, $lt: 16 }` or `{ $gt: 16, $lt: 20 }` is needed for a valid range). (Key Takeaway: Multiple comparison operators on one field form an implicit AND range condition.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_02",
+      "type": "mcq",
+      "question": {
+        "stem": "A database administrator needs to empty 10 million records from `students` while preserving custom JSON schema validators and secondary B-tree indexes; which command is architecturally sound?",
+        "options": {
+          "A": "`db.dropDatabase()` followed by `use schoolDB`",
+          "B": "`db.students.drop()`",
+          "C": "`db.students.deleteMany({})`",
+          "D": "`db.students.deleteOne({})`"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "`db.students.deleteMany({})` deletes every document in the collection while retaining the collection container, validation rules, and secondary indexes. In contrast, `db.students.drop()` destroys the collection along with all its indexes and validation metadata. (Key Takeaway: Use `deleteMany({})` to purge documents when collection metadata and indexes must persist.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Evaluate",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs > Collection Truncation vs. Collection Dropping > Schema & Index Persistence",
+          "level": "L4",
+          "node_id": "node_127",
+          "node_name": "Schema & Index Persistence (deleteMany({}) empties data but retains collection metadata and secondary indexes)"
+        },
+        "distractor_patterns": {
+          "A": "adjacent_concept_confusion",
+          "B": "partial_truth",
+          "D": "near_miss_value"
+        },
+        "source_reference": "Slides 6, 10 & Doc Sections 2, 3",
+        "marks": 1
+      },
+      "stem": "A database administrator needs to empty 10 million records from `students` while preserving custom JSON schema validators and secondary B-tree indexes; which command is architecturally sound?",
+      "options": {
+        "A": "`db.dropDatabase()` followed by `use schoolDB`",
+        "B": "`db.students.drop()`",
+        "C": "`db.students.deleteMany({})`",
+        "D": "`db.students.deleteOne({})`"
+      },
+      "correct_key": "C",
+      "explanation": "`db.students.deleteMany({})` deletes every document in the collection while retaining the collection container, validation rules, and secondary indexes. In contrast, `db.students.drop()` destroys the collection along with all its indexes and validation metadata. (Key Takeaway: Use `deleteMany({})` to purge documents when collection metadata and indexes must persist.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_03",
+      "type": "mcq",
+      "question": {
+        "stem": "Which query pipeline correctly implements deterministic Page 3 retrieval (`5` records per page, ordered from highest to lowest `grade`, returning only `name` and `grade` without `_id`)?",
+        "options": {
+          "A": "`db.students.find({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(10).limit(5)`",
+          "B": "`db.students.find({}, { name: 1, grade: 1 }).sort({ grade: 1 }).skip(15).limit(5)`",
+          "C": "`db.students.findOne({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(10).limit(5)`",
+          "D": "`db.students.find({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(5).limit(10)`"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "For Page 3 at 5 records per page, the first 2 pages (`2 * 5 = 10` records) must be skipped via `.skip(10)` and capped at `.limit(5)`. Ordering highest to lowest requires `.sort({ grade: -1 })`, and returning only `name` and `grade` requires `{ name: 1, grade: 1, _id: 0 }`. (Key Takeaway: Page $k$ of size $N$ uses `skip((k-1)*N).limit(N)` chained on a sorted `find()` cursor.)"
+      },
+      "meta": {
+        "bloom_level": "L6",
+        "cognitive_level": "Creating",
+        "action_word_used": "Design",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Cursor Pipeline Transformation & Pagination > Pagination Control (\"skip()\" & \"limit()\") > Standard Pagination Idiom",
+          "level": "L4",
+          "node_id": "node_101",
+          "node_name": "Standard Pagination Idiom (Chaining sort().skip(offset).limit(pageSize) for robust page traversal)"
+        },
+        "distractor_patterns": {
+          "B": "reversed_relationship",
+          "C": "adjacent_concept_confusion",
+          "D": "near_miss_value"
+        },
+        "source_reference": "Slides 11-12 & Doc Section 4",
+        "marks": 1
+      },
+      "stem": "Which query pipeline correctly implements deterministic Page 3 retrieval (`5` records per page, ordered from highest to lowest `grade`, returning only `name` and `grade` without `_id`)?",
+      "options": {
+        "A": "`db.students.find({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(10).limit(5)`",
+        "B": "`db.students.find({}, { name: 1, grade: 1 }).sort({ grade: 1 }).skip(15).limit(5)`",
+        "C": "`db.students.findOne({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(10).limit(5)`",
+        "D": "`db.students.find({}, { name: 1, grade: 1, _id: 0 }).sort({ grade: -1 }).skip(5).limit(10)`"
+      },
+      "correct_key": "A",
+      "explanation": "For Page 3 at 5 records per page, the first 2 pages (`2 * 5 = 10` records) must be skipped via `.skip(10)` and capped at `.limit(5)`. Ordering highest to lowest requires `.sort({ grade: -1 })`, and returning only `name` and `grade` requires `{ name: 1, grade: 1, _id: 0 }`. (Key Takeaway: Page $k$ of size $N$ uses `skip((k-1)*N).limit(N)` chained on a sorted `find()` cursor.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_04",
+      "type": "mcq",
+      "question": {
+        "stem": "When evaluating `db.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] })`, which student record will be excluded from the returned cursor?",
+        "options": {
+          "A": "`{ name: \"Rahul\", age: 16 }`",
+          "B": "`{ name: \"Meera\", age: 18 }`",
+          "C": "`{ name: \"Aditi\", age: 19 }`",
+          "D": "`{ name: \"Kabir\", age: 21 }`"
+        }
+      },
+      "answer": {
+        "key": "B",
+        "explanation": "The `$or` operator evaluates to true if at least one sub-condition in its array matches (`age >= 19` OR `name == \"Rahul\"`). `{ name: \"Meera\", age: 18 }` fails both conditions (`18 < 19` and `\"Meera\" != \"Rahul\"`), so it is excluded. (Key Takeaway: Logical `$or` excludes a document only when every sub-condition in its array evaluates to false.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Deduce",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators > Compound Logical Operators > Logical Disjunction",
+          "level": "L4",
+          "node_id": "node_085",
+          "node_name": "Logical Disjunction ($or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] evaluates to true if either sub-clause matches)"
+        },
+        "distractor_patterns": {
+          "A": "partial_truth",
+          "C": "near_miss_value",
+          "D": "partial_truth"
+        },
+        "source_reference": "Slides 14-15",
+        "marks": 1
+      },
+      "stem": "When evaluating `db.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] })`, which student record will be excluded from the returned cursor?",
+      "options": {
+        "A": "`{ name: \"Rahul\", age: 16 }`",
+        "B": "`{ name: \"Meera\", age: 18 }`",
+        "C": "`{ name: \"Aditi\", age: 19 }`",
+        "D": "`{ name: \"Kabir\", age: 21 }`"
+      },
+      "correct_key": "B",
+      "explanation": "The `$or` operator evaluates to true if at least one sub-condition in its array matches (`age >= 19` OR `name == \"Rahul\"`). `{ name: \"Meera\", age: 18 }` fails both conditions (`18 < 19` and `\"Meera\" != \"Rahul\"`), so it is excluded. (Key Takeaway: Logical `$or` excludes a document only when every sub-condition in its array evaluates to false.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_05",
+      "type": "mcq",
+      "question": {
+        "stem": "What architectural risk arises if an engineer runs `db.dropDatabase()` immediately after connecting to a MongoDB deployment without verifying the active session context?",
+        "options": {
+          "A": "`db.dropDatabase()` executes strictly against whichever database is currently selected in the session and permanently deletes it without undo capability",
+          "B": "`db.dropDatabase()` automatically drops every user database across the entire server cluster at once",
+          "C": "`db.dropDatabase()` only deletes empty databases and leaves populated collections untouched",
+          "D": "`db.dropDatabase()` moves collections to the `local` recycle partition for 30 days"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "`db.dropDatabase()` takes no database-name parameter; it operates strictly against the currently selected database context and permanently purges all of its collections and documents with no undo mechanism. (Key Takeaway: Always verify the active `use <databaseName>` context before invoking irreversible `db.dropDatabase()`.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Assess",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Destruction & Removal (\"db.dropDatabase()\") > Safety & Execution Invariants > Irreversible Deletion Invariant",
+          "level": "L4",
+          "node_id": "node_022",
+          "node_name": "Irreversible Deletion Invariant (Deletion cannot be rolled back or undone once confirmed by storage engine)"
+        },
+        "distractor_patterns": {
+          "B": "common_misconception",
+          "C": "reversed_relationship",
+          "D": "common_misconception"
+        },
+        "source_reference": "Slide 3 & Doc Section 1",
+        "marks": 1
+      },
+      "stem": "What architectural risk arises if an engineer runs `db.dropDatabase()` immediately after connecting to a MongoDB deployment without verifying the active session context?",
+      "options": {
+        "A": "`db.dropDatabase()` executes strictly against whichever database is currently selected in the session and permanently deletes it without undo capability",
+        "B": "`db.dropDatabase()` automatically drops every user database across the entire server cluster at once",
+        "C": "`db.dropDatabase()` only deletes empty databases and leaves populated collections untouched",
+        "D": "`db.dropDatabase()` moves collections to the `local` recycle partition for 30 days"
+      },
+      "correct_key": "A",
+      "explanation": "`db.dropDatabase()` takes no database-name parameter; it operates strictly against the currently selected database context and permanently purges all of its collections and documents with no undo mechanism. (Key Takeaway: Always verify the active `use <databaseName>` context before invoking irreversible `db.dropDatabase()`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_06",
+      "type": "mcq",
+      "question": {
+        "stem": "Suppose an application inserts `{ name: \"Aditi\", grade: 8 }` via `db.students.insertOne()` without supplying an `_id` field; how does MongoDB guarantee document identity?",
+        "options": {
+          "A": "MongoDB rejects the insert until an explicit integer primary key is provided",
+          "B": "MongoDB uses the `name` field as the immutable primary key by default",
+          "C": "MongoDB automatically generates and assigns a unique 12-byte `ObjectId` to the `_id` field",
+          "D": "MongoDB stores the document without any `_id` field until `updateOne()` is called"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "Every MongoDB document requires a unique `_id` primary key; when omitted during `insertOne()` or `insertMany()`, MongoDB automatically allocates a unique 12-byte `ObjectId` for `_id`. (Key Takeaway: Omitted `_id` fields are automatically populated with a unique 12-byte `ObjectId` on insert.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Justify",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create) > Single Document Insertion (\"insertOne()\") > Execution & Identity Guarantees > Primary Key Allocation",
+          "level": "L4",
+          "node_id": "node_053",
+          "node_name": "Primary Key Allocation (Generates unique 12-byte ObjectId \"_id\" automatically if omitted by caller)"
+        },
+        "distractor_patterns": {
+          "A": "common_misconception",
+          "B": "adjacent_concept_confusion",
+          "D": "common_misconception"
+        },
+        "source_reference": "Slide 7, Slide 11 & Mindmap Node 3.1",
+        "marks": 1
+      },
+      "stem": "Suppose an application inserts `{ name: \"Aditi\", grade: 8 }` via `db.students.insertOne()` without supplying an `_id` field; how does MongoDB guarantee document identity?",
+      "options": {
+        "A": "MongoDB rejects the insert until an explicit integer primary key is provided",
+        "B": "MongoDB uses the `name` field as the immutable primary key by default",
+        "C": "MongoDB automatically generates and assigns a unique 12-byte `ObjectId` to the `_id` field",
+        "D": "MongoDB stores the document without any `_id` field until `updateOne()` is called"
+      },
+      "correct_key": "C",
+      "explanation": "Every MongoDB document requires a unique `_id` primary key; when omitted during `insertOne()` or `insertMany()`, MongoDB automatically allocates a unique 12-byte `ObjectId` for `_id`. (Key Takeaway: Omitted `_id` fields are automatically populated with a unique 12-byte `ObjectId` on insert.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_07",
+      "type": "mcq",
+      "question": {
+        "stem": "Why does `db.students.find({}, { name: 1, grade: 1 })` still return three fields (`_id`, `name`, and `grade`) per document instead of only two?",
+        "options": {
+          "A": "Because MongoDB always includes the `_id` primary key field in projections by default unless `{ _id: 0 }` is explicitly specified",
+          "B": "Because `grade: 1` automatically pulls in all numeric metadata fields",
+          "C": "Because an empty query filter `{}` overrides the second projection argument",
+          "D": "Because `find()` requires at least three fields in every returned cursor batch"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "In MongoDB projections, the `_id` field is included by default (`_id: 1`) even when an inclusion whitelist like `{ name: 1, grade: 1 }` is specified; suppressing it requires explicitly adding `_id: 0`. (Key Takeaway: The `_id` field is projected by default unless explicitly excluded with `_id: 0`.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Explain",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Field Projection Mechanics > Primary Key \"_id\" Special Rule > Mandatory Zero Suppression",
+          "level": "L4",
+          "node_id": "node_093",
+          "node_name": "Mandatory Zero Suppression (Must pass \"{ _id: 0 }\" explicitly to omit primary key from returned document)"
+        },
+        "distractor_patterns": {
+          "B": "common_misconception",
+          "C": "reversed_relationship",
+          "D": "near_miss_value"
+        },
+        "source_reference": "Slide 11 & Doc Section 4",
+        "marks": 1
+      },
+      "stem": "Why does `db.students.find({}, { name: 1, grade: 1 })` still return three fields (`_id`, `name`, and `grade`) per document instead of only two?",
+      "options": {
+        "A": "Because MongoDB always includes the `_id` primary key field in projections by default unless `{ _id: 0 }` is explicitly specified",
+        "B": "Because `grade: 1` automatically pulls in all numeric metadata fields",
+        "C": "Because an empty query filter `{}` overrides the second projection argument",
+        "D": "Because `find()` requires at least three fields in every returned cursor batch"
+      },
+      "correct_key": "A",
+      "explanation": "In MongoDB projections, the `_id` field is included by default (`_id: 1`) even when an inclusion whitelist like `{ name: 1, grade: 1 }` is specified; suppressing it requires explicitly adding `_id: 0`. (Key Takeaway: The `_id` field is projected by default unless explicitly excluded with `_id: 0`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_08",
+      "type": "mcq",
+      "question": {
+        "stem": "An ingestion microservice needs to persist 500 heterogeneous student profiles (`{ name: \"Meera\", grade: 7 }`, `{ name: \"Rahul\", grade: 9, subjects: [\"Math\"] }`) with minimal network roundtrips; which design is optimal?",
+        "options": {
+          "A": "Execute 500 sequential `db.students.insertOne()` calls inside a client loop",
+          "B": "Pass all 500 documents as a single array into `db.students.insertMany([...])`, leveraging polymorphic BSON schema support in one batch call",
+          "C": "Run `db.createCollection()` 500 times before inserting each document",
+          "D": "Use `db.students.updateMany({}, { $push: ... })` on an empty collection"
+        }
+      },
+      "answer": {
+        "key": "B",
+        "explanation": "`insertMany([doc1, doc2, ...])` transmits an array of documents in a single batch call and natively supports heterogeneous document structures within the same collection without pre-declaring columns. (Key Takeaway: `insertMany()` minimizes network roundtrips while supporting polymorphic document schemas.)"
+      },
+      "meta": {
+        "bloom_level": "L6",
+        "cognitive_level": "Creating",
+        "action_word_used": "Formulate",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create) > Batch Document Ingestion (\"insertMany()\") > Array Payload Architecture > Batch Document Array",
+          "level": "L4",
+          "node_id": "node_056",
+          "node_name": "Batch Document Array (db.<collection>.insertMany([doc1, doc2, ...]) receives an array of documents)"
+        },
+        "distractor_patterns": {
+          "A": "partial_truth",
+          "C": "common_misconception",
+          "D": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slide 7 & Doc Section 3",
+        "marks": 1
+      },
+      "stem": "An ingestion microservice needs to persist 500 heterogeneous student profiles (`{ name: \"Meera\", grade: 7 }`, `{ name: \"Rahul\", grade: 9, subjects: [\"Math\"] }`) with minimal network roundtrips; which design is optimal?",
+      "options": {
+        "A": "Execute 500 sequential `db.students.insertOne()` calls inside a client loop",
+        "B": "Pass all 500 documents as a single array into `db.students.insertMany([...])`, leveraging polymorphic BSON schema support in one batch call",
+        "C": "Run `db.createCollection()` 500 times before inserting each document",
+        "D": "Use `db.students.updateMany({}, { $push: ... })` on an empty collection"
+      },
+      "correct_key": "B",
+      "explanation": "`insertMany([doc1, doc2, ...])` transmits an array of documents in a single batch call and natively supports heterogeneous document structures within the same collection without pre-declaring columns. (Key Takeaway: `insertMany()` minimizes network roundtrips while supporting polymorphic document schemas.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_09",
+      "type": "mcq",
+      "question": {
+        "stem": "Which compound query expression selects students whose `grade` is neither `7` nor `8` AND whose `age` is strictly less than `19`?",
+        "options": {
+          "A": "`db.students.find({ $or: [{ grade: { $in: [7, 8] } }, { age: { $lte: 19 } }] })`",
+          "B": "`db.students.find({ grade: { $ne: [7, 8] }, age: { $gt: 19 } })`",
+          "C": "`db.students.find({ $and: [{ grade: { $nin: [7, 8] } }, { age: { $lt: 19 } }] })`",
+          "D": "`db.students.find({ grade: { $nin: [7, 8] }, age: { $lte: 19 } })`"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "`$nin: [7, 8]` matches documents whose `grade` is not in `[7, 8]`, `$lt: 19` enforces strictly less than `19` (unlike `$lte: 19`), and wrapping both inside `$and: [...]` enforces logical conjunction. (Key Takeaway: Combine `$nin` for array exclusion and `$lt` for strict upper bounds inside `$and`.)"
+      },
+      "meta": {
+        "bloom_level": "L6",
+        "cognitive_level": "Creating",
+        "action_word_used": "Synthesize",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators",
+          "level": "L2",
+          "node_id": "node_077",
+          "node_name": "Conditional Filter Operators"
+        },
+        "distractor_patterns": {
+          "A": "reversed_relationship",
+          "B": "adjacent_concept_confusion",
+          "D": "near_miss_value"
+        },
+        "source_reference": "Slides 14-15",
+        "marks": 1
+      },
+      "stem": "Which compound query expression selects students whose `grade` is neither `7` nor `8` AND whose `age` is strictly less than `19`?",
+      "options": {
+        "A": "`db.students.find({ $or: [{ grade: { $in: [7, 8] } }, { age: { $lte: 19 } }] })`",
+        "B": "`db.students.find({ grade: { $ne: [7, 8] }, age: { $gt: 19 } })`",
+        "C": "`db.students.find({ $and: [{ grade: { $nin: [7, 8] } }, { age: { $lt: 19 } }] })`",
+        "D": "`db.students.find({ grade: { $nin: [7, 8] }, age: { $lte: 19 } })`"
+      },
+      "correct_key": "C",
+      "explanation": "`$nin: [7, 8]` matches documents whose `grade` is not in `[7, 8]`, `$lt: 19` enforces strictly less than `19` (unlike `$lte: 19`), and wrapping both inside `$and: [...]` enforces logical conjunction. (Key Takeaway: Combine `$nin` for array exclusion and `$lt` for strict upper bounds inside `$and`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_hard_10",
+      "type": "mcq",
+      "question": {
+        "stem": "If a developer mistakenly runs `db.students.updateOne({ name: \"Rahul\" }, { age: 20 })` in modern MongoDB instead of wrapping `{ age: 20 }` inside `{ $set: { age: 20 } }`, why is the `$set` operator critical?",
+        "options": {
+          "A": "Because `updateOne()` requires atomic update operators such as `$set` to modify target fields in place without overwriting the entire document",
+          "B": "Because `$set` is the only operator capable of filtering by `{ name: \"Rahul\" }`",
+          "C": "Because omitting `$set` automatically drops the `students` collection",
+          "D": "Because `$set` converts `updateOne()` into a multi-document `updateMany()` operation"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "`updateOne(filter, update)` requires update operators like `$set`, `$inc`, `$push`, or `$pull` in its second argument so that specific fields are modified in place without replacing unreferenced fields of the document. (Key Takeaway: `updateOne()` relies on update operators like `$set` for targeted in-place field mutation.)"
+      },
+      "meta": {
+        "bloom_level": "L5",
+        "cognitive_level": "Evaluating",
+        "action_word_used": "Validate",
+        "difficulty": "hard",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Update Scope & Execution Methods > Single Document Mutation (\"updateOne()\") > First Match Update",
+          "level": "L4",
+          "node_id": "node_105",
+          "node_name": "First Match Update (updateOne(filter, update) modifies strictly the first document matching query filter)"
+        },
+        "distractor_patterns": {
+          "B": "adjacent_concept_confusion",
+          "C": "common_misconception",
+          "D": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slides 9, 16 & Doc Section 3",
+        "marks": 1
+      },
+      "stem": "If a developer mistakenly runs `db.students.updateOne({ name: \"Rahul\" }, { age: 20 })` in modern MongoDB instead of wrapping `{ age: 20 }` inside `{ $set: { age: 20 } }`, why is the `$set` operator critical?",
+      "options": {
+        "A": "Because `updateOne()` requires atomic update operators such as `$set` to modify target fields in place without overwriting the entire document",
+        "B": "Because `$set` is the only operator capable of filtering by `{ name: \"Rahul\" }`",
+        "C": "Because omitting `$set` automatically drops the `students` collection",
+        "D": "Because `$set` converts `updateOne()` into a multi-document `updateMany()` operation"
+      },
+      "correct_key": "A",
+      "explanation": "`updateOne(filter, update)` requires update operators like `$set`, `$inc`, `$push`, or `$pull` in its second argument so that specific fields are modified in place without replacing unreferenced fields of the document. (Key Takeaway: `updateOne()` relies on update operators like `$set` for targeted in-place field mutation.)"
+    }
+  ],
+  "validation_report": {
+    "question_count_verified": true,
+    "zero_images_verified": true,
+    "zero_metadata_in_md_verified": true,
+    "question_mark_invariant_verified": true,
+    "zero_overlap_verified": true
+  }
+}

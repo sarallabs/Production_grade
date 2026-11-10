@@ -1,0 +1,126 @@
+{
+  "subject": "MongoDB NoSQL Database Systems",
+  "course": "VVIT",
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "artifact_type": "quick_summary",
+  "persona": "beginner",
+  "bloom_taxonomy_band": "L1-L2 (Remembering & Understanding)",
+  "mindmap_depth": "L0-L2 (30% of D_max=4)",
+  "d_max": 4,
+  "word_count": 1505,
+  "avg_sentence_length_words": 12.38,
+  "webp_optimized": true,
+  "webp_quality": 75,
+  "locked_verbatim_definitions_count": 7,
+  "figures_count": 7,
+  "figures": [
+    {
+      "figure_no": "Fig 1.1",
+      "image_tag": "1.0",
+      "title": "Database Operations and Storage Lifecycle Overview",
+      "module": "Module 1: Database Operations & Storage Lifecycle"
+    },
+    {
+      "figure_no": "Fig 2.1",
+      "image_tag": "2.0",
+      "title": "Collection Architecture and Structural Lifecycle Overview",
+      "module": "Module 2: Collection Architecture & Structural Management"
+    },
+    {
+      "figure_no": "Fig 3.1",
+      "image_tag": "3.0",
+      "title": "CRUD Create: Document Ingestion Architecture Overview",
+      "module": "Module 3: Document Ingestion Mechanics (CRUD Create)"
+    },
+    {
+      "figure_no": "Fig 4.1",
+      "image_tag": "4.0",
+      "title": "CRUD Read: Document Retrieval Architecture Comparison (find() vs. findOne())",
+      "module": "Module 4: Document Retrieval & Query Architecture (CRUD Read)"
+    },
+    {
+      "figure_no": "Fig 5.1",
+      "image_tag": "5.0",
+      "title": "Advanced Query Filtering, Field Projection, and Cursor Pagination Overview",
+      "module": "Module 5: Advanced Query Filtering, Projection & Pagination"
+    },
+    {
+      "figure_no": "Fig 6.1",
+      "image_tag": "6.0",
+      "title": "CRUD Update: In-Place Field Modification and Atomic Operators Overview",
+      "module": "Module 6: Field Modification & In-Place Update Operators (CRUD Update)"
+    },
+    {
+      "figure_no": "Fig 7.1",
+      "image_tag": "7.0",
+      "title": "CRUD Delete: Document Deletion Mechanics and Namespace Pruning Overview",
+      "module": "Module 7: Document Deletion & Collection Pruning (CRUD Delete)"
+    }
+  ],
+  "sections": [
+    {
+      "section_id": "1.0",
+      "title": "1. Database Operations & Storage Lifecycle",
+      "mindmap_path": "VVIT MongoDB > 1. Database Operations & Storage Lifecycle",
+      "figures": [
+        "1.0"
+      ]
+    },
+    {
+      "section_id": "2.0",
+      "title": "2. Collection Architecture & Structural Management",
+      "mindmap_path": "VVIT MongoDB > 2. Collection Architecture & Structural Management",
+      "figures": [
+        "2.0"
+      ]
+    },
+    {
+      "section_id": "3.0",
+      "title": "3. Document Ingestion Mechanics (CRUD Create)",
+      "mindmap_path": "VVIT MongoDB > 3. Document Ingestion Mechanics (CRUD Create)",
+      "figures": [
+        "3.0"
+      ]
+    },
+    {
+      "section_id": "4.0",
+      "title": "4. Document Retrieval & Query Architecture (CRUD Read)",
+      "mindmap_path": "VVIT MongoDB > 4. Document Retrieval & Query Architecture (CRUD Read)",
+      "figures": [
+        "4.0"
+      ]
+    },
+    {
+      "section_id": "5.0",
+      "title": "5. Advanced Query Filtering, Projection & Pagination",
+      "mindmap_path": "VVIT MongoDB > 5. Advanced Query Filtering, Projection & Pagination",
+      "figures": [
+        "5.0"
+      ]
+    },
+    {
+      "section_id": "6.0",
+      "title": "6. Field Modification & In-Place Update Operators (CRUD Update)",
+      "mindmap_path": "VVIT MongoDB > 6. Field Modification & In-Place Update Operators (CRUD Update)",
+      "figures": [
+        "6.0"
+      ]
+    },
+    {
+      "section_id": "7.0",
+      "title": "7. Document Deletion & Collection Pruning (CRUD Delete)",
+      "mindmap_path": "VVIT MongoDB > 7. Document Deletion & Collection Pruning (CRUD Delete)",
+      "figures": [
+        "7.0"
+      ]
+    }
+  ],
+  "validation_report": {
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true,
+    "zero_metadata_in_md": true,
+    "locked_definitions_verified": true,
+    "base64_76char_chunked": true,
+    "master_mindmap_excluded": true
+  }
+}

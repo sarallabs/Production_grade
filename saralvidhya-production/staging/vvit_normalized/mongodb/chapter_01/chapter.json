@@ -1,0 +1,86 @@
+{
+  "number": 1,
+  "title": "Databases, Collections & CRUD Operations",
+  "shortTitle": "Databases, Collections & CRUD",
+  "description": "Lazy database instantiation, collection provisioning & capped eviction, single/batch document ingestion with 12-byte ObjectId, find/findOne cursors, operators/projection/pagination, in-place atomic updates, and three-level deletion hierarchy.",
+  "estimatedMinutes": 60,
+  "heroImageBlob": "media/hero.png",
+  "assets": {
+    "heroImage": "media/hero.png"
+  },
+  "topics": [
+    {
+      "id": "topic_1",
+      "label": "Database Creation & Lazy Instantiation",
+      "order": 1,
+      "topicNum": 1,
+      "subtopics": [
+        "1.1 \"use <DATABASE_NAME>\" Context Switch & Lazy Allocation",
+        "1.2 \"db\" Global Reference & Active Namespace Verification",
+        "1.3 \"show dbs\" Storage Threshold & Default System Databases"
+      ]
+    },
+    {
+      "id": "topic_2",
+      "label": "Collection Lifecycle: Explicit, Capped & Drop",
+      "order": 2,
+      "topicNum": 2,
+      "subtopics": [
+        "2.1 \"db.createCollection(name, options)\" Explicit Provisioning",
+        "2.2 Capped Collections (\"capped: true\", \"size\", \"max\") & Auto-FIFO Eviction",
+        "2.3 Implicit Collection Creation & \"db.<collection>.drop()\" Cleanup"
+      ]
+    },
+    {
+      "id": "topic_3",
+      "label": "Document Ingestion & ObjectId Architecture",
+      "order": 3,
+      "topicNum": 3,
+      "subtopics": [
+        "3.1 \"insertOne()\" & \"insert()\" Single-Document Write Mechanics",
+        "3.2 \"insertMany()\" Batch Array Ingestion & 12-Byte \"_id: ObjectId\" Generation"
+      ]
+    },
+    {
+      "id": "topic_4",
+      "label": "Document Retrieval: Find vs FindOne Cursors",
+      "order": 4,
+      "topicNum": 4,
+      "subtopics": [
+        "4.1 \"find()\" Cursor Iterator vs \"findOne()\" Single-Document Resolution",
+        "4.2 \"pretty()\" JSON Formatting & Implicit Logical AND Compound Filters"
+      ]
+    },
+    {
+      "id": "topic_5",
+      "label": "Query Filtering, Projection & Cursor Pagination",
+      "order": 5,
+      "topicNum": 5,
+      "subtopics": [
+        "5.1 Comparison Operators (\"$eq\", \"$ne\", \"$gt\", \"$gte\", \"$lt\", \"$lte\", \"$in\", \"$nin\") & Logical Operators (\"$and\", \"$or\", \"$not\", \"$nor\")",
+        "5.2 Field Projection Rules: Inclusion (\"1\"), Exclusion (\"0\"), and the \"_id\" Exception",
+        "5.3 Cursor Chaining Pipeline: \"sort(1|-1)\", \"skip(n)\", and \"limit(n)\" Execution Order"
+      ]
+    },
+    {
+      "id": "topic_6",
+      "label": "In-Place Document Updates & Atomic Operators",
+      "order": 6,
+      "topicNum": 6,
+      "subtopics": [
+        "6.1 \"updateOne()\", \"updateMany()\", \"replaceOne()\" & Whole-Document Replacement Hazard",
+        "6.2 Atomic Update Modifiers (\"$set\", \"$unset\", \"$inc\", \"$push\", \"$pull\") & \"upsert: true\" Semantics"
+      ]
+    },
+    {
+      "id": "topic_7",
+      "label": "Three-Tier Deletion Hierarchy (Doc, Collection, DB)",
+      "order": 7,
+      "topicNum": 7,
+      "subtopics": [
+        "7.1 Document-Level Removal: \"deleteOne()\", \"deleteMany()\", \"remove()\" & \"deleteMany({})\" Preservation of Indexes",
+        "7.2 Collection Drop (\"db.collection.drop()\") vs Database Drop (\"db.dropDatabase()\") Destruction Scope"
+      ]
+    }
+  ]
+}

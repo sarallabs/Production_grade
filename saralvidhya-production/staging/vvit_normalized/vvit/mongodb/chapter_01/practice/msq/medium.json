@@ -1,0 +1,556 @@
+{
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "subject": "VVIT — MongoDB NoSQL Database Systems",
+  "assessment_type": "MSQ",
+  "difficulty": "medium",
+  "persona": "Intermediate",
+  "bloom_band": "L3-L4",
+  "generated_at": "2026-11-02T10:55:32.732026+00:00",
+  "D_max_detected": 4,
+  "D_target_ratio": "60%",
+  "D_target_used": 2,
+  "total_questions": 10,
+  "five_option_question_count": 8,
+  "correct_count_distribution": {
+    "1_correct": 1,
+    "2_correct": 4,
+    "3_correct": 3,
+    "4_correct": 1,
+    "5_correct": 1
+  },
+  "source_files_used": [
+    "mongodb-reference.md",
+    "mongodb-reference-doc.md",
+    "VVIT_MongoDB_Mindmap.txt"
+  ],
+  "questions": [
+    {
+      "id": "VVIT_MongoDB_msq_medium_01",
+      "type": "msq",
+      "question": {
+        "stem": "After running `use schoolDB` followed by `db.students.insertOne({ name: \"Aditi\", age: 18 })`, which state changes have occurred on the MongoDB server (Select all that apply)?",
+        "options": {
+          "A": "`schoolDB` remains hidden from `show dbs` until a second document is inserted",
+          "B": "`schoolDB` now physically exists on disk and appears in `show dbs`",
+          "C": "The `students` collection must still be created manually using `db.createCollection(\"students\")`",
+          "D": "The inserted document lacks an `_id` field because none was provided in `insertOne()`",
+          "E": "`show collections` inside `schoolDB` now lists `students`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "E"
+        ],
+        "explanation": "Inserting the first document `{ name: \"Aditi\", age: 18 }` into `db.students` automatically creates the `students` collection so it appears in `show collections` (E) and materializes `schoolDB` on disk so it appears in `show dbs` (B). (Key Takeaway: A single `insertOne()` call materializes both the target collection and the selected database.)"
+      },
+      "meta": {
+        "bloom_level": "L3",
+        "cognitive_level": "Applying",
+        "action_word_used": "Determine",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Context Switching & Creation (\"use <databaseName>\") > Lazy Allocation Mechanics > First-Write Materialization",
+          "level": "L4",
+          "node_id": "node_009",
+          "node_name": "First-Write Materialization (Database files and disk extents are created only upon the first document write)"
+        },
+        "distractor_rationale": "Option A is false because one document is sufficient to materialize the database; Option C is false because `students` is auto-created; Option D is false because `_id` is auto-generated.",
+        "source_reference": "Slides 1, 2, 5, 7 & Doc Sections 1-3",
+        "marks": 2
+      },
+      "stem": "After running `use schoolDB` followed by `db.students.insertOne({ name: \"Aditi\", age: 18 })`, which state changes have occurred on the MongoDB server (Select all that apply)?",
+      "options": {
+        "A": "`schoolDB` remains hidden from `show dbs` until a second document is inserted",
+        "B": "`schoolDB` now physically exists on disk and appears in `show dbs`",
+        "C": "The `students` collection must still be created manually using `db.createCollection(\"students\")`",
+        "D": "The inserted document lacks an `_id` field because none was provided in `insertOne()`",
+        "E": "`show collections` inside `schoolDB` now lists `students`"
+      },
+      "correct_keys": [
+        "B",
+        "E"
+      ],
+      "explanation": "Inserting the first document `{ name: \"Aditi\", age: 18 }` into `db.students` automatically creates the `students` collection so it appears in `show collections` (E) and materializes `schoolDB` on disk so it appears in `show dbs` (B). (Key Takeaway: A single `insertOne()` call materializes both the target collection and the selected database.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_02",
+      "type": "msq",
+      "question": {
+        "stem": "Which queries validly use comparison or array membership operators to filter documents in `db.students` (Select all that apply)?",
+        "options": {
+          "A": "`db.students.find({ age: { $gte: 18 } })`",
+          "B": "`db.students.find({ age: $in[17, 18, 19] })`",
+          "C": "`db.students.find({ age: { $in: [17, 18, 19] } })`",
+          "D": "`db.students.find({ age: { $ne: 17 } })`",
+          "E": "`db.students.find({ $gt: { age: 18 } })`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "C",
+          "D"
+        ],
+        "explanation": "In MongoDB query filters, comparison operators (`$gte`, `$in`, `$ne`) are placed inside a nested object attached to the field name: `{ age: { $gte: 18 } }` (A), `{ age: { $in: [17, 18, 19] } }` (C), and `{ age: { $ne: 17 } }` (D). Options B and E violate BSON operator nesting syntax. (Key Takeaway: Comparison operators must be nested inside the target field's filter object `{ <field>: { <operator>: <value> } }`.)"
+      },
+      "meta": {
+        "bloom_level": "L3",
+        "cognitive_level": "Applying",
+        "action_word_used": "Validate",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators",
+          "level": "L2",
+          "node_id": "node_077",
+          "node_name": "Conditional Filter Operators"
+        },
+        "distractor_rationale": "Option B uses invalid JavaScript bracket syntax without a colon or enclosing braces, and Option E inverts the field name and comparison operator hierarchy.",
+        "source_reference": "Slides 11, 14, 15",
+        "marks": 2
+      },
+      "stem": "Which queries validly use comparison or array membership operators to filter documents in `db.students` (Select all that apply)?",
+      "options": {
+        "A": "`db.students.find({ age: { $gte: 18 } })`",
+        "B": "`db.students.find({ age: $in[17, 18, 19] })`",
+        "C": "`db.students.find({ age: { $in: [17, 18, 19] } })`",
+        "D": "`db.students.find({ age: { $ne: 17 } })`",
+        "E": "`db.students.find({ $gt: { age: 18 } })`"
+      },
+      "correct_keys": [
+        "A",
+        "C",
+        "D"
+      ],
+      "explanation": "In MongoDB query filters, comparison operators (`$gte`, `$in`, `$ne`) are placed inside a nested object attached to the field name: `{ age: { $gte: 18 } }` (A), `{ age: { $in: [17, 18, 19] } }` (C), and `{ age: { $ne: 17 } }` (D). Options B and E violate BSON operator nesting syntax. (Key Takeaway: Comparison operators must be nested inside the target field's filter object `{ <field>: { <operator>: <value> } }`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_03",
+      "type": "msq",
+      "question": {
+        "stem": "How do `db.students.find({ age: 18 })` and `db.students.findOne({ age: 18 })` differ when multiple documents have `age: 18` (Select all that apply)?",
+        "options": {
+          "A": "`find({ age: 18 })` returns a cursor over all matching documents, whereas `findOne({ age: 18 })` returns only the first matching document object",
+          "B": "`findOne({ age: 18 })` supports chaining `.sort()` and `.limit()`, whereas `find({ age: 18 })` does not",
+          "C": "`find({ age: 18 })` supports chaining `.sort()`, `.skip()`, and `.limit()`, whereas `findOne({ age: 18 })` does not support cursor methods directly",
+          "D": "`findOne({ age: 18 })` rejects projection arguments, whereas `find({ age: 18 })` accepts them"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "C"
+        ],
+        "explanation": "`find()` returns an iterable cursor yielding all matching documents and supports cursor methods `.sort()`, `.skip()`, and `.limit()` (A, C). `findOne()` returns a single document object directly and does not support cursor methods (though both support projection as a second argument). (Key Takeaway: `find()` returns a chainable cursor for all matches; `findOne()` returns a single document object without cursor methods.)"
+      },
+      "meta": {
+        "bloom_level": "L4",
+        "cognitive_level": "Analyzing",
+        "action_word_used": "Differentiate",
+        "difficulty": "medium",
+        "total_options": 4,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read) > Single Document Lookup (\"findOne()\") > Architectural Distinctions from find() > Zero Cursor Method Support",
+          "level": "L4",
+          "node_id": "node_074",
+          "node_name": "Zero Cursor Method Support (Does not support cursor methods sort(), limit(), or skip() directly on returned object)"
+        },
+        "distractor_rationale": "Option B reverses which method supports cursor modifiers, and Option D is false because `findOne(query, projection)` explicitly supports a projection argument.",
+        "source_reference": "Slides 8, 12, 13 & Doc Sections 3, 4",
+        "marks": 2
+      },
+      "stem": "How do `db.students.find({ age: 18 })` and `db.students.findOne({ age: 18 })` differ when multiple documents have `age: 18` (Select all that apply)?",
+      "options": {
+        "A": "`find({ age: 18 })` returns a cursor over all matching documents, whereas `findOne({ age: 18 })` returns only the first matching document object",
+        "B": "`findOne({ age: 18 })` supports chaining `.sort()` and `.limit()`, whereas `find({ age: 18 })` does not",
+        "C": "`find({ age: 18 })` supports chaining `.sort()`, `.skip()`, and `.limit()`, whereas `findOne({ age: 18 })` does not support cursor methods directly",
+        "D": "`findOne({ age: 18 })` rejects projection arguments, whereas `find({ age: 18 })` accepts them"
+      },
+      "correct_keys": [
+        "A",
+        "C"
+      ],
+      "explanation": "`find()` returns an iterable cursor yielding all matching documents and supports cursor methods `.sort()`, `.skip()`, and `.limit()` (A, C). `findOne()` returns a single document object directly and does not support cursor methods (though both support projection as a second argument). (Key Takeaway: `find()` returns a chainable cursor for all matches; `findOne()` returns a single document object without cursor methods.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_04",
+      "type": "msq",
+      "question": {
+        "stem": "Consider `db.students.find({ grade: { $gte: 8 } }, { name: 1, grade: 1, _id: 0 })`; which operational behaviors occur during its execution (Select all that apply)?",
+        "options": {
+          "A": "Documents with `grade: 8` are excluded because `$gte` tests strict inequality",
+          "B": "Documents with `grade: 8`, `grade: 9`, or `grade: 10` satisfy the first filter argument",
+          "C": "The `name` and `grade` fields are explicitly included in every returned document",
+          "D": "The `_id` primary key field is suppressed from every returned document",
+          "E": "Other unmentioned fields such as `subjects` or `promoted` are omitted from the output"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "explanation": "`$gte: 8` matches grades 8 and higher (B). The inclusion projection `{ name: 1, grade: 1, _id: 0 }` includes `name` and `grade` (C), suppresses `_id` via `_id: 0` (D), and excludes all other unmentioned fields like `subjects` (E). (Key Takeaway: An inclusion projection with `_id: 0` emits strictly the fields marked `1`.)"
+      },
+      "meta": {
+        "bloom_level": "L4",
+        "cognitive_level": "Analyzing",
+        "action_word_used": "Deconstruct",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 4,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Field Projection Mechanics",
+          "level": "L2",
+          "node_id": "node_087",
+          "node_name": "Field Projection Mechanics"
+        },
+        "distractor_rationale": "Option A confuses `$gte` (greater than or equal to) with `$gt` (strictly greater than).",
+        "source_reference": "Slide 11 & Doc Section 4",
+        "marks": 2
+      },
+      "stem": "Consider `db.students.find({ grade: { $gte: 8 } }, { name: 1, grade: 1, _id: 0 })`; which operational behaviors occur during its execution (Select all that apply)?",
+      "options": {
+        "A": "Documents with `grade: 8` are excluded because `$gte` tests strict inequality",
+        "B": "Documents with `grade: 8`, `grade: 9`, or `grade: 10` satisfy the first filter argument",
+        "C": "The `name` and `grade` fields are explicitly included in every returned document",
+        "D": "The `_id` primary key field is suppressed from every returned document",
+        "E": "Other unmentioned fields such as `subjects` or `promoted` are omitted from the output"
+      },
+      "correct_keys": [
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "explanation": "`$gte: 8` matches grades 8 and higher (B). The inclusion projection `{ name: 1, grade: 1, _id: 0 }` includes `name` and `grade` (C), suppresses `_id` via `_id: 0` (D), and excludes all other unmentioned fields like `subjects` (E). (Key Takeaway: An inclusion projection with `_id: 0` emits strictly the fields marked `1`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_05",
+      "type": "msq",
+      "question": {
+        "stem": "Which single command increments `attempts` by `1` and appends `\"History\"` to `subjects` for the first student named `\"Rahul\"` (Select all that apply)?",
+        "options": {
+          "A": "`db.students.updateOne({ name: \"Rahul\" }, { $set: { attempts: 1 }, $pull: { subjects: \"History\" } })`",
+          "B": "`db.students.updateMany({ name: \"Rahul\" }, { $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+          "C": "`db.students.updateOne({ name: \"Rahul\" }, { $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+          "D": "`db.students.insertOne({ name: \"Rahul\", $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+          "E": "`db.students.updateOne({ name: \"Rahul\" }, { $push: { attempts: 1 }, $inc: { subjects: \"History\" } })`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "C"
+        ],
+        "explanation": "Targeting only the first matching student requires `updateOne({ name: \"Rahul\" }, ...)`, incrementing a numeric field uses `$inc: { attempts: 1 }`, and appending an element to an array uses `$push: { subjects: \"History\" }` (C). (Key Takeaway: Pair `updateOne()` with `$inc` for numeric addition and `$push` for array appending.)"
+      },
+      "meta": {
+        "bloom_level": "L3",
+        "cognitive_level": "Applying",
+        "action_word_used": "Construct",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 1,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Atomic Field Update Operators",
+          "level": "L2",
+          "node_id": "node_110",
+          "node_name": "Atomic Field Update Operators"
+        },
+        "distractor_rationale": "Option A uses `$set` and `$pull`; Option B uses `updateMany()` affecting all matches; Option D uses `insertOne()`; Option E swaps `$push` and `$inc`.",
+        "source_reference": "Slide 16",
+        "marks": 2
+      },
+      "stem": "Which single command increments `attempts` by `1` and appends `\"History\"` to `subjects` for the first student named `\"Rahul\"` (Select all that apply)?",
+      "options": {
+        "A": "`db.students.updateOne({ name: \"Rahul\" }, { $set: { attempts: 1 }, $pull: { subjects: \"History\" } })`",
+        "B": "`db.students.updateMany({ name: \"Rahul\" }, { $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+        "C": "`db.students.updateOne({ name: \"Rahul\" }, { $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+        "D": "`db.students.insertOne({ name: \"Rahul\", $inc: { attempts: 1 }, $push: { subjects: \"History\" } })`",
+        "E": "`db.students.updateOne({ name: \"Rahul\" }, { $push: { attempts: 1 }, $inc: { subjects: \"History\" } })`"
+      },
+      "correct_keys": [
+        "C"
+      ],
+      "explanation": "Targeting only the first matching student requires `updateOne({ name: \"Rahul\" }, ...)`, incrementing a numeric field uses `$inc: { attempts: 1 }`, and appending an element to an array uses `$push: { subjects: \"History\" }` (C). (Key Takeaway: Pair `updateOne()` with `$inc` for numeric addition and `$push` for array appending.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_06",
+      "type": "msq",
+      "question": {
+        "stem": "When executing `db.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] })`, which documents from `students` will be returned (Select all that apply)?",
+        "options": {
+          "A": "`{ name: \"Rahul\", age: 17 }`",
+          "B": "`{ name: \"Meera\", age: 17 }`",
+          "C": "`{ name: \"Kabir\", age: 18 }`",
+          "D": "`{ name: \"Aditi\", age: 18 }`",
+          "E": "`{ name: \"Vikram\", age: 20 }`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "E"
+        ],
+        "explanation": "The `$or` filter matches any document where either `age >= 19` OR `name == \"Rahul\"`. `{ name: \"Rahul\", age: 17 }` matches the second clause (A), and `{ name: \"Vikram\", age: 20 }` matches the first clause (E). Documents with `age < 19` and `name != \"Rahul\"` fail both clauses. (Key Takeaway: `$or` includes documents satisfying at least one branch of its condition array.)"
+      },
+      "meta": {
+        "bloom_level": "L3",
+        "cognitive_level": "Applying",
+        "action_word_used": "Evaluate",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators > Compound Logical Operators > Logical Disjunction",
+          "level": "L4",
+          "node_id": "node_085",
+          "node_name": "Logical Disjunction ($or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] evaluates to true if either sub-clause matches)"
+        },
+        "distractor_rationale": "Options B, C, and D have `age < 19` and names other than `\"Rahul\"`, failing both sub-conditions of the `$or` array.",
+        "source_reference": "Slide 15",
+        "marks": 2
+      },
+      "stem": "When executing `db.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] })`, which documents from `students` will be returned (Select all that apply)?",
+      "options": {
+        "A": "`{ name: \"Rahul\", age: 17 }`",
+        "B": "`{ name: \"Meera\", age: 17 }`",
+        "C": "`{ name: \"Kabir\", age: 18 }`",
+        "D": "`{ name: \"Aditi\", age: 18 }`",
+        "E": "`{ name: \"Vikram\", age: 20 }`"
+      },
+      "correct_keys": [
+        "A",
+        "E"
+      ],
+      "explanation": "The `$or` filter matches any document where either `age >= 19` OR `name == \"Rahul\"`. `{ name: \"Rahul\", age: 17 }` matches the second clause (A), and `{ name: \"Vikram\", age: 20 }` matches the first clause (E). Documents with `age < 19` and `name != \"Rahul\"` fail both clauses. (Key Takeaway: `$or` includes documents satisfying at least one branch of its condition array.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_07",
+      "type": "msq",
+      "question": {
+        "stem": "Which statements accurately compare `db.students.deleteMany({})` and `db.students.drop()` when cleaning up data (Select all that apply)?",
+        "options": {
+          "A": "Both commands remove secondary indexes defined on `students`",
+          "B": "`db.students.deleteMany({})` removes every document in `students`",
+          "C": "`db.students.drop()` retains the empty `students` collection in `show collections`",
+          "D": "`db.students.deleteMany({})` leaves the `students` collection container intact",
+          "E": "`db.students.drop()` permanently deletes the `students` collection, its documents, and its indexes"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "D",
+          "E"
+        ],
+        "explanation": "`db.students.deleteMany({})` deletes all documents (B) without dropping the collection container or its indexes (D), whereas `db.students.drop()` permanently removes the collection container, all documents, and all indexes (E). (Key Takeaway: `deleteMany({})` empties data in place; `drop()` destroys the collection and its indexes.)"
+      },
+      "meta": {
+        "bloom_level": "L4",
+        "cognitive_level": "Analyzing",
+        "action_word_used": "Compare",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs",
+          "level": "L2",
+          "node_id": "node_125",
+          "node_name": "Data Cleanup Architectural Tradeoffs"
+        },
+        "distractor_rationale": "Option A is false because `deleteMany({})` preserves indexes, and Option C is false because `drop()` removes the collection from `show collections`.",
+        "source_reference": "Slides 6, 10 & Doc Sections 2, 3",
+        "marks": 2
+      },
+      "stem": "Which statements accurately compare `db.students.deleteMany({})` and `db.students.drop()` when cleaning up data (Select all that apply)?",
+      "options": {
+        "A": "Both commands remove secondary indexes defined on `students`",
+        "B": "`db.students.deleteMany({})` removes every document in `students`",
+        "C": "`db.students.drop()` retains the empty `students` collection in `show collections`",
+        "D": "`db.students.deleteMany({})` leaves the `students` collection container intact",
+        "E": "`db.students.drop()` permanently deletes the `students` collection, its documents, and its indexes"
+      },
+      "correct_keys": [
+        "B",
+        "D",
+        "E"
+      ],
+      "explanation": "`db.students.deleteMany({})` deletes all documents (B) without dropping the collection container or its indexes (D), whereas `db.students.drop()` permanently removes the collection container, all documents, and all indexes (E). (Key Takeaway: `deleteMany({})` empties data in place; `drop()` destroys the collection and its indexes.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_08",
+      "type": "msq",
+      "question": {
+        "stem": "What happens when `db.students.updateMany({ age: 18 }, { $set: { promoted: true } })` executes against a collection where some `{ age: 18 }` documents do not yet have a `promoted` field (Select all that apply)?",
+        "options": {
+          "A": "Documents lacking the `promoted` field are skipped by `updateMany()`",
+          "B": "Existing fields such as `name` and `age` are erased from matching documents",
+          "C": "Every document with `age: 18` is updated across the entire collection",
+          "D": "`$set` adds `{ promoted: true }` to matching documents lacking the field and updates it on those that already have it"
+        }
+      },
+      "answer": {
+        "keys": [
+          "C",
+          "D"
+        ],
+        "explanation": "`updateMany()` applies the update to every document matching `{ age: 18 }` (C), and the `$set` operator sets the value of `promoted` to `true` (creating the field if absent) while preserving all other fields like `name` and `age` (D). (Key Takeaway: `updateMany()` with `$set` creates or updates the target field across all matching documents.)"
+      },
+      "meta": {
+        "bloom_level": "L3",
+        "cognitive_level": "Applying",
+        "action_word_used": "Predict",
+        "difficulty": "medium",
+        "total_options": 4,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Update Scope & Execution Methods",
+          "level": "L2",
+          "node_id": "node_103",
+          "node_name": "Update Scope & Execution Methods"
+        },
+        "distractor_rationale": "Option A is false because `$set` creates missing fields, and Option B is false because `$set` performs in-place modification without erasing other fields.",
+        "source_reference": "Slides 9, 16 & Doc Section 3",
+        "marks": 2
+      },
+      "stem": "What happens when `db.students.updateMany({ age: 18 }, { $set: { promoted: true } })` executes against a collection where some `{ age: 18 }` documents do not yet have a `promoted` field (Select all that apply)?",
+      "options": {
+        "A": "Documents lacking the `promoted` field are skipped by `updateMany()`",
+        "B": "Existing fields such as `name` and `age` are erased from matching documents",
+        "C": "Every document with `age: 18` is updated across the entire collection",
+        "D": "`$set` adds `{ promoted: true }` to matching documents lacking the field and updates it on those that already have it"
+      },
+      "correct_keys": [
+        "C",
+        "D"
+      ],
+      "explanation": "`updateMany()` applies the update to every document matching `{ age: 18 }` (C), and the `$set` operator sets the value of `promoted` to `true` (creating the field if absent) while preserving all other fields like `name` and `age` (D). (Key Takeaway: `updateMany()` with `$set` creates or updates the target field across all matching documents.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_09",
+      "type": "msq",
+      "question": {
+        "stem": "Which operations in the MongoDB shell are permanent and cannot be undone once executed (Select all that apply)?",
+        "options": {
+          "A": "Deleting the active database via `db.dropDatabase()`",
+          "B": "Dropping a collection and its indexes via `db.students.drop()`",
+          "C": "Removing a single matched document via `db.students.deleteOne({ name: \"Kabir\" })`",
+          "D": "Removing multiple matched documents via `db.students.deleteMany({ age: 17 })`",
+          "E": "Truncating all collection records via `db.students.deleteMany({})`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "explanation": "All five destructive operations — `db.dropDatabase()` (A), `db.<collection>.drop()` (B), `deleteOne()` (C), filtered `deleteMany()` (D), and empty-filter `deleteMany({})` (E) — permanently remove data from the storage engine and cannot be undone without external backups. (Key Takeaway: Database drops, collection drops, and document deletions are irreversible in MongoDB.)"
+      },
+      "meta": {
+        "bloom_level": "L4",
+        "cognitive_level": "Analyzing",
+        "action_word_used": "Categorize",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 5,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs",
+          "level": "L2",
+          "node_id": "node_125",
+          "node_name": "Data Cleanup Architectural Tradeoffs"
+        },
+        "distractor_rationale": "None — all five deletion and drop operations permanently purge data without built-in undo.",
+        "source_reference": "Slides 3, 6, 10 & Doc Sections 1-3",
+        "marks": 2
+      },
+      "stem": "Which operations in the MongoDB shell are permanent and cannot be undone once executed (Select all that apply)?",
+      "options": {
+        "A": "Deleting the active database via `db.dropDatabase()`",
+        "B": "Dropping a collection and its indexes via `db.students.drop()`",
+        "C": "Removing a single matched document via `db.students.deleteOne({ name: \"Kabir\" })`",
+        "D": "Removing multiple matched documents via `db.students.deleteMany({ age: 17 })`",
+        "E": "Truncating all collection records via `db.students.deleteMany({})`"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "explanation": "All five destructive operations — `db.dropDatabase()` (A), `db.<collection>.drop()` (B), `deleteOne()` (C), filtered `deleteMany()` (D), and empty-filter `deleteMany({})` (E) — permanently remove data from the storage engine and cannot be undone without external backups. (Key Takeaway: Database drops, collection drops, and document deletions are irreversible in MongoDB.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_medium_10",
+      "type": "msq",
+      "question": {
+        "stem": "In `db.students.find().sort({ age: 1 }).skip(10).limit(5)`, which roles are performed by the chained cursor methods (Select all that apply)?",
+        "options": {
+          "A": "`sort({ age: 1 })` orders all matching documents from lowest to highest `age`",
+          "B": "`skip(10)` omits the first 10 documents from the ordered result sequence",
+          "C": "`limit(5)` restricts each document to at most 5 fields",
+          "D": "`skip(10)` deletes the first 10 documents from the `students` collection on disk",
+          "E": "`limit(5)` caps the maximum number of documents returned by the cursor to 5"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "B",
+          "E"
+        ],
+        "explanation": "In a pagination pipeline, `sort({ age: 1 })` orders documents in ascending order (A), `skip(10)` omits the first 10 results (B), and `limit(5)` caps the number of returned documents at 5 (E). Neither `skip()` nor `limit()` modifies disk data or restricts field counts. (Key Takeaway: `sort()`, `skip()`, and `limit()` transform cursor output order, offset, and page size.)"
+      },
+      "meta": {
+        "bloom_level": "L4",
+        "cognitive_level": "Analyzing",
+        "action_word_used": "Analyze",
+        "difficulty": "medium",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Cursor Pipeline Transformation & Pagination > Pagination Control (\"skip()\" & \"limit()\") > Standard Pagination Idiom",
+          "level": "L4",
+          "node_id": "node_101",
+          "node_name": "Standard Pagination Idiom (Chaining sort().skip(offset).limit(pageSize) for robust page traversal)"
+        },
+        "distractor_rationale": "Option C confuses `limit()` with field projection, and Option D confuses cursor offset skipping with document deletion.",
+        "source_reference": "Slide 12 & Doc Section 4",
+        "marks": 2
+      },
+      "stem": "In `db.students.find().sort({ age: 1 }).skip(10).limit(5)`, which roles are performed by the chained cursor methods (Select all that apply)?",
+      "options": {
+        "A": "`sort({ age: 1 })` orders all matching documents from lowest to highest `age`",
+        "B": "`skip(10)` omits the first 10 documents from the ordered result sequence",
+        "C": "`limit(5)` restricts each document to at most 5 fields",
+        "D": "`skip(10)` deletes the first 10 documents from the `students` collection on disk",
+        "E": "`limit(5)` caps the maximum number of documents returned by the cursor to 5"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "E"
+      ],
+      "explanation": "In a pagination pipeline, `sort({ age: 1 })` orders documents in ascending order (A), `skip(10)` omits the first 10 results (B), and `limit(5)` caps the number of returned documents at 5 (E). Neither `skip()` nor `limit()` modifies disk data or restricts field counts. (Key Takeaway: `sort()`, `skip()`, and `limit()` transform cursor output order, offset, and page size.)"
+    }
+  ],
+  "validation_report": {
+    "question_count_verified": true,
+    "five_option_prevalence_verified": true,
+    "zero_images_verified": true,
+    "zero_metadata_in_md_verified": true,
+    "question_mark_invariant_verified": true,
+    "zero_overlap_verified": true
+  }
+}

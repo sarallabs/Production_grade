@@ -1,0 +1,52 @@
+{
+  "id": "vvit",
+  "name": "Vasireddy Venkatadri Institute of Technology",
+  "shortName": "VVIT",
+  "academicTerm": "2026–27",
+  "branding": {
+    "appName": "Saral Vidhya",
+    "primaryColor": "#546C60",
+    "accentColor": "#9CC0B4",
+    "logoBlob": "assets/logo.png",
+    "faviconBlob": "assets/favicon.png",
+    "programLabel": "Autonomous Engineering"
+  },
+  "assets": {
+    "logo": "assets/logo.png",
+    "favicon": "assets/favicon.png"
+  },
+  "features": {
+    "examinerConsole": true,
+    "expertPanel": true,
+    "pyq": true,
+    "ask": true,
+    "guidedFlow": true,
+    "toolOrder": [
+      "read.quick",
+      "read.detailed",
+      "learn.mindmap",
+      "learn.videos",
+      "practice.flashcards",
+      "practice.mcq",
+      "practice.msq",
+      "podcasts",
+      "prepare.pre_final_exam"
+    ]
+  },
+  "hierarchy": ["department", "semester", "subject"],
+  "nodes": [
+    {
+      "id": "cse",
+      "type": "department",
+      "name": "Computer Science & Engineering",
+      "order": 1
+    },
+    {
+      "id": "sem_3",
+      "type": "semester",
+      "name": "Semester III",
+      "parentId": "cse",
+      "order": 1
+    }
+  ]
+}

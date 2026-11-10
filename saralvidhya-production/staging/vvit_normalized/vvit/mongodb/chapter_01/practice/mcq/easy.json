@@ -1,0 +1,477 @@
+{
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "subject": "VVIT — MongoDB NoSQL Database Systems",
+  "assessment_type": "MCQ",
+  "difficulty": "easy",
+  "persona": "Beginner",
+  "bloom_band": "L1-L2",
+  "generated_at": "2026-11-02T10:55:32.675889+00:00",
+  "D_max_detected": 4,
+  "D_target_ratio": "30%",
+  "D_target_used": 1,
+  "total_questions": 10,
+  "source_files_used": [
+    "mongodb-reference.md",
+    "mongodb-reference-doc.md",
+    "VVIT_MongoDB_Mindmap.txt"
+  ],
+  "questions": [
+    {
+      "id": "VVIT_MongoDB_mcq_easy_01",
+      "type": "mcq",
+      "question": {
+        "stem": "What shell directive switches the active working database context to `schoolDB` for subsequent commands?",
+        "options": {
+          "A": "`db.selectDatabase(\"schoolDB\")`",
+          "B": "`use schoolDB`",
+          "C": "`show schoolDB`",
+          "D": "`db.createDatabase(\"schoolDB\")`"
+        }
+      },
+      "answer": {
+        "key": "B",
+        "explanation": "The `use <databaseName>` statement switches and selects the current database context so every subsequent command runs against `schoolDB`. MongoDB has no dedicated `createDatabase` or `selectDatabase` command. (Key Takeaway: The `use <databaseName>` command switches the active database session context.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Identify",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Context Switching & Creation (\"use <databaseName>\")",
+          "level": "L2",
+          "node_id": "node_003",
+          "node_name": "Database Context Switching & Creation (\"use <databaseName>\")"
+        },
+        "distractor_patterns": {
+          "A": "common_misconception",
+          "C": "adjacent_concept_confusion",
+          "D": "common_misconception"
+        },
+        "source_reference": "Slide 1 & Doc Section 1",
+        "marks": 1
+      },
+      "stem": "What shell directive switches the active working database context to `schoolDB` for subsequent commands?",
+      "options": {
+        "A": "`db.selectDatabase(\"schoolDB\")`",
+        "B": "`use schoolDB`",
+        "C": "`show schoolDB`",
+        "D": "`db.createDatabase(\"schoolDB\")`"
+      },
+      "correct_key": "B",
+      "explanation": "The `use <databaseName>` statement switches and selects the current database context so every subsequent command runs against `schoolDB`. MongoDB has no dedicated `createDatabase` or `selectDatabase` command. (Key Takeaway: The `use <databaseName>` command switches the active database session context.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_02",
+      "type": "mcq",
+      "question": {
+        "stem": "When does a newly selected database first materialize on disk and appear inside `show dbs` output?",
+        "options": {
+          "A": "Immediately upon typing the `use` command in the shell",
+          "B": "After running `show collections` inside the empty namespace",
+          "C": "Only once at least one document or collection is written into it",
+          "D": "After restarting the connected MongoDB server instance"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "Switching to a database name that does not exist yet selects it in memory, but MongoDB only creates the database on disk and lists it in `show dbs` once data is written into a collection within it. (Key Takeaway: MongoDB uses lazy database creation triggered by the first write operation.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Explain",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Catalog Inspection (\"show dbs\")",
+          "level": "L2",
+          "node_id": "node_010",
+          "node_name": "Database Catalog Inspection (\"show dbs\")"
+        },
+        "distractor_patterns": {
+          "A": "common_misconception",
+          "B": "adjacent_concept_confusion",
+          "D": "partial_truth"
+        },
+        "source_reference": "Slides 1-2 & Doc Section 1",
+        "marks": 1
+      },
+      "stem": "When does a newly selected database first materialize on disk and appear inside `show dbs` output?",
+      "options": {
+        "A": "Immediately upon typing the `use` command in the shell",
+        "B": "After running `show collections` inside the empty namespace",
+        "C": "Only once at least one document or collection is written into it",
+        "D": "After restarting the connected MongoDB server instance"
+      },
+      "correct_key": "C",
+      "explanation": "Switching to a database name that does not exist yet selects it in memory, but MongoDB only creates the database on disk and lists it in `show dbs` once data is written into a collection within it. (Key Takeaway: MongoDB uses lazy database creation triggered by the first write operation.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_03",
+      "type": "mcq",
+      "question": {
+        "stem": "Which method permanently deletes the currently selected database along with all of its collections and documents?",
+        "options": {
+          "A": "`db.removeDatabase()`",
+          "B": "`db.deleteDatabase()`",
+          "C": "`db.drop()`",
+          "D": "`db.dropDatabase()`"
+        }
+      },
+      "answer": {
+        "key": "D",
+        "explanation": "`db.dropDatabase()` permanently removes the currently selected database, including all collections and documents inside it, and cannot be undone. `db.<collection>.drop()` drops a single collection, whereas `removeDatabase` and `deleteDatabase` do not exist. (Key Takeaway: `db.dropDatabase()` permanently purges the active database context.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Recall",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Destruction & Removal (\"db.dropDatabase()\")",
+          "level": "L2",
+          "node_id": "node_017",
+          "node_name": "Database Destruction & Removal (\"db.dropDatabase()\")"
+        },
+        "distractor_patterns": {
+          "A": "common_misconception",
+          "B": "common_misconception",
+          "C": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slide 3 & Doc Section 1",
+        "marks": 1
+      },
+      "stem": "Which method permanently deletes the currently selected database along with all of its collections and documents?",
+      "options": {
+        "A": "`db.removeDatabase()`",
+        "B": "`db.deleteDatabase()`",
+        "C": "`db.drop()`",
+        "D": "`db.dropDatabase()`"
+      },
+      "correct_key": "D",
+      "explanation": "`db.dropDatabase()` permanently removes the currently selected database, including all collections and documents inside it, and cannot be undone. `db.<collection>.drop()` drops a single collection, whereas `removeDatabase` and `deleteDatabase` do not exist. (Key Takeaway: `db.dropDatabase()` permanently purges the active database context.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_04",
+      "type": "mcq",
+      "question": {
+        "stem": "Why would a developer explicitly invoke `db.createCollection(name, options)` instead of relying on automatic creation during insertion?",
+        "options": {
+          "A": "To configure schema validation rules or allocate a fixed-size capped collection ahead of time",
+          "B": "Because `insertOne()` fails with an error whenever a collection is absent",
+          "C": "To bypass generating `_id` primary keys on newly inserted documents",
+          "D": "Because `show dbs` requires explicit collection creation before displaying `admin`"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "`db.createCollection(name, options)` is optional for basic usage because MongoDB auto-creates collections on first insert, but explicit creation is necessary when configuring validation rules or capped collection sizes. (Key Takeaway: Explicit `db.createCollection()` enables schema validation and capped size configuration.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Summarize",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Creation Mechanics (\"db.createCollection()\")",
+          "level": "L2",
+          "node_id": "node_025",
+          "node_name": "Collection Creation Mechanics (\"db.createCollection()\")"
+        },
+        "distractor_patterns": {
+          "B": "reversed_relationship",
+          "C": "common_misconception",
+          "D": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slide 4 & Doc Section 2",
+        "marks": 1
+      },
+      "stem": "Why would a developer explicitly invoke `db.createCollection(name, options)` instead of relying on automatic creation during insertion?",
+      "options": {
+        "A": "To configure schema validation rules or allocate a fixed-size capped collection ahead of time",
+        "B": "Because `insertOne()` fails with an error whenever a collection is absent",
+        "C": "To bypass generating `_id` primary keys on newly inserted documents",
+        "D": "Because `show dbs` requires explicit collection creation before displaying `admin`"
+      },
+      "correct_key": "A",
+      "explanation": "`db.createCollection(name, options)` is optional for basic usage because MongoDB auto-creates collections on first insert, but explicit creation is necessary when configuring validation rules or capped collection sizes. (Key Takeaway: Explicit `db.createCollection()` enables schema validation and capped size configuration.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_05",
+      "type": "mcq",
+      "question": {
+        "stem": "What console command lists every existing collection inside the currently active database session?",
+        "options": {
+          "A": "`show dbs`",
+          "B": "`db.listTables()`",
+          "C": "`show collections`",
+          "D": "`db.collections.find()`"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "`show collections` enumerates every collection created explicitly or implicitly within the currently selected database. `show dbs` lists server databases rather than collections. (Key Takeaway: `show collections` displays all collections present in the active database.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Identify",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Inventory Inspection (\"show collections\")",
+          "level": "L2",
+          "node_id": "node_032",
+          "node_name": "Collection Inventory Inspection (\"show collections\")"
+        },
+        "distractor_patterns": {
+          "A": "adjacent_concept_confusion",
+          "B": "common_misconception",
+          "D": "partial_truth"
+        },
+        "source_reference": "Slide 5",
+        "marks": 1
+      },
+      "stem": "What console command lists every existing collection inside the currently active database session?",
+      "options": {
+        "A": "`show dbs`",
+        "B": "`db.listTables()`",
+        "C": "`show collections`",
+        "D": "`db.collections.find()`"
+      },
+      "correct_key": "C",
+      "explanation": "`show collections` enumerates every collection created explicitly or implicitly within the currently selected database. `show dbs` lists server databases rather than collections. (Key Takeaway: `show collections` displays all collections present in the active database.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_06",
+      "type": "mcq",
+      "question": {
+        "stem": "How does `db.students.insertMany([doc1, doc2])` require multiple documents to be passed as its argument?",
+        "options": {
+          "A": "As separate comma-delimited object arguments without brackets",
+          "B": "Wrapped inside a single JavaScript array of document objects",
+          "C": "Nested inside a `$push` update operator block",
+          "D": "Serialized as a newline-separated plain text string"
+        }
+      },
+      "answer": {
+        "key": "B",
+        "explanation": "`insertMany([doc1, doc2, ...])` inserts multiple documents in a single call and strictly requires the documents to be passed as an array (`[...]`). Passing unbracketed objects only inserts the first or raises an error. (Key Takeaway: `insertMany()` takes a single array containing multiple document objects.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Describe",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create) > Batch Document Ingestion (\"insertMany()\")",
+          "level": "L2",
+          "node_id": "node_054",
+          "node_name": "Batch Document Ingestion (\"insertMany()\")"
+        },
+        "distractor_patterns": {
+          "A": "common_misconception",
+          "C": "adjacent_concept_confusion",
+          "D": "common_misconception"
+        },
+        "source_reference": "Slide 7 & Doc Section 3",
+        "marks": 1
+      },
+      "stem": "How does `db.students.insertMany([doc1, doc2])` require multiple documents to be passed as its argument?",
+      "options": {
+        "A": "As separate comma-delimited object arguments without brackets",
+        "B": "Wrapped inside a single JavaScript array of document objects",
+        "C": "Nested inside a `$push` update operator block",
+        "D": "Serialized as a newline-separated plain text string"
+      },
+      "correct_key": "B",
+      "explanation": "`insertMany([doc1, doc2, ...])` inserts multiple documents in a single call and strictly requires the documents to be passed as an array (`[...]`). Passing unbracketed objects only inserts the first or raises an error. (Key Takeaway: `insertMany()` takes a single array containing multiple document objects.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_07",
+      "type": "mcq",
+      "question": {
+        "stem": "What value does `db.students.findOne({ name: \"Rahul\" })` return when zero documents in `students` match the filter?",
+        "options": {
+          "A": "An empty cursor object requiring iteration",
+          "B": "An empty array `[]`",
+          "C": "A boolean `false` literal",
+          "D": "`null`"
+        }
+      },
+      "answer": {
+        "key": "D",
+        "explanation": "`findOne(query, projection)` retrieves the first matching document directly as an object, or returns `null` if no document satisfies the query filter. Unlike `find()`, it never returns a cursor. (Key Takeaway: `findOne()` returns the first matching document object or `null` when unmatched.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "State",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read) > Single Document Lookup (\"findOne()\")",
+          "level": "L2",
+          "node_id": "node_069",
+          "node_name": "Single Document Lookup (\"findOne()\")"
+        },
+        "distractor_patterns": {
+          "A": "adjacent_concept_confusion",
+          "B": "common_misconception",
+          "C": "near_miss_value"
+        },
+        "source_reference": "Slides 8, 13 & Doc Sections 3, 4",
+        "marks": 1
+      },
+      "stem": "What value does `db.students.findOne({ name: \"Rahul\" })` return when zero documents in `students` match the filter?",
+      "options": {
+        "A": "An empty cursor object requiring iteration",
+        "B": "An empty array `[]`",
+        "C": "A boolean `false` literal",
+        "D": "`null`"
+      },
+      "correct_key": "D",
+      "explanation": "`findOne(query, projection)` retrieves the first matching document directly as an object, or returns `null` if no document satisfies the query filter. Unlike `find()`, it never returns a cursor. (Key Takeaway: `findOne()` returns the first matching document object or `null` when unmatched.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_08",
+      "type": "mcq",
+      "question": {
+        "stem": "In a `find()` projection document such as `{ name: 1, age: 1, _id: 0 }`, what do numeric flags `1` and `0` signify?",
+        "options": {
+          "A": "`1` includes the specified field in returned documents, whereas `0` excludes it",
+          "B": "`1` sorts the field in ascending order, whereas `0` sorts it in descending order",
+          "C": "`1` updates the field value to true, whereas `0` deletes the field from disk",
+          "D": "`1` restricts output to one record, whereas `0` returns all records"
+        }
+      },
+      "answer": {
+        "key": "A",
+        "explanation": "The second argument to `find(query, projection)` controls which fields are returned: `1` includes a field in the output and `0` excludes (suppresses) a field, such as `_id: 0`. (Key Takeaway: Projection uses `1` for field inclusion and `0` for field exclusion.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Interpret",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Field Projection Mechanics",
+          "level": "L2",
+          "node_id": "node_087",
+          "node_name": "Field Projection Mechanics"
+        },
+        "distractor_patterns": {
+          "B": "adjacent_concept_confusion",
+          "C": "common_misconception",
+          "D": "near_miss_value"
+        },
+        "source_reference": "Slide 11 & Doc Section 4",
+        "marks": 1
+      },
+      "stem": "In a `find()` projection document such as `{ name: 1, age: 1, _id: 0 }`, what do numeric flags `1` and `0` signify?",
+      "options": {
+        "A": "`1` includes the specified field in returned documents, whereas `0` excludes it",
+        "B": "`1` sorts the field in ascending order, whereas `0` sorts it in descending order",
+        "C": "`1` updates the field value to true, whereas `0` deletes the field from disk",
+        "D": "`1` restricts output to one record, whereas `0` returns all records"
+      },
+      "correct_key": "A",
+      "explanation": "The second argument to `find(query, projection)` controls which fields are returned: `1` includes a field in the output and `0` excludes (suppresses) a field, such as `_id: 0`. (Key Takeaway: Projection uses `1` for field inclusion and `0` for field exclusion.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_09",
+      "type": "mcq",
+      "question": {
+        "stem": "Which atomic update operator modifies specific fields inside `updateOne()` or `updateMany()` without replacing the entire document?",
+        "options": {
+          "A": "`$in`",
+          "B": "`$gte`",
+          "C": "`$set`",
+          "D": "`$ne`"
+        }
+      },
+      "answer": {
+        "key": "C",
+        "explanation": "`$set` is an update operator used inside `updateOne()` and `updateMany()` (for example, `{ $set: { age: 20 } }`) to set or replace designated field values while leaving unreferenced fields intact. `$in`, `$gte`, and `$ne` are query comparison operators. (Key Takeaway: The `$set` update operator modifies target fields in place.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Identify",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Atomic Field Update Operators",
+          "level": "L2",
+          "node_id": "node_110",
+          "node_name": "Atomic Field Update Operators"
+        },
+        "distractor_patterns": {
+          "A": "adjacent_concept_confusion",
+          "B": "adjacent_concept_confusion",
+          "D": "adjacent_concept_confusion"
+        },
+        "source_reference": "Slides 9, 14, 16 & Doc Section 3",
+        "marks": 1
+      },
+      "stem": "Which atomic update operator modifies specific fields inside `updateOne()` or `updateMany()` without replacing the entire document?",
+      "options": {
+        "A": "`$in`",
+        "B": "`$gte`",
+        "C": "`$set`",
+        "D": "`$ne`"
+      },
+      "correct_key": "C",
+      "explanation": "`$set` is an update operator used inside `updateOne()` and `updateMany()` (for example, `{ $set: { age: 20 } }`) to set or replace designated field values while leaving unreferenced fields intact. `$in`, `$gte`, and `$ne` are query comparison operators. (Key Takeaway: The `$set` update operator modifies target fields in place.)"
+    },
+    {
+      "id": "VVIT_MongoDB_mcq_easy_10",
+      "type": "mcq",
+      "question": {
+        "stem": "How does executing `db.students.deleteMany({})` with an empty filter differ from running `db.students.drop()`?",
+        "options": {
+          "A": "`deleteMany({})` removes only the first document, whereas `drop()` deletes every document",
+          "B": "`deleteMany({})` deletes all documents while keeping the collection container, whereas `drop()` removes the collection and its indexes",
+          "C": "`deleteMany({})` deletes the entire database, whereas `drop()` deletes only one collection",
+          "D": "`deleteMany({})` can be undone with rollback, whereas `drop()` is permanent"
+        }
+      },
+      "answer": {
+        "key": "B",
+        "explanation": "Passing an empty filter `{}` to `deleteMany({})` deletes all documents inside the collection without dropping the collection itself or its indexes. In contrast, `db.students.drop()` permanently removes the collection container, all its documents, and all its indexes. (Key Takeaway: `deleteMany({})` empties documents while preserving the collection and indexes; `drop()` destroys the collection and indexes.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Distinguish",
+        "difficulty": "easy",
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs",
+          "level": "L2",
+          "node_id": "node_125",
+          "node_name": "Data Cleanup Architectural Tradeoffs"
+        },
+        "distractor_patterns": {
+          "A": "adjacent_concept_confusion",
+          "C": "reversed_relationship",
+          "D": "common_misconception"
+        },
+        "source_reference": "Slides 6, 10 & Doc Sections 2, 3",
+        "marks": 1
+      },
+      "stem": "How does executing `db.students.deleteMany({})` with an empty filter differ from running `db.students.drop()`?",
+      "options": {
+        "A": "`deleteMany({})` removes only the first document, whereas `drop()` deletes every document",
+        "B": "`deleteMany({})` deletes all documents while keeping the collection container, whereas `drop()` removes the collection and its indexes",
+        "C": "`deleteMany({})` deletes the entire database, whereas `drop()` deletes only one collection",
+        "D": "`deleteMany({})` can be undone with rollback, whereas `drop()` is permanent"
+      },
+      "correct_key": "B",
+      "explanation": "Passing an empty filter `{}` to `deleteMany({})` deletes all documents inside the collection without dropping the collection itself or its indexes. In contrast, `db.students.drop()` permanently removes the collection container, all its documents, and all its indexes. (Key Takeaway: `deleteMany({})` empties documents while preserving the collection and indexes; `drop()` destroys the collection and indexes.)"
+    }
+  ],
+  "validation_report": {
+    "question_count_verified": true,
+    "zero_images_verified": true,
+    "zero_metadata_in_md_verified": true,
+    "question_mark_invariant_verified": true,
+    "zero_overlap_verified": true
+  }
+}

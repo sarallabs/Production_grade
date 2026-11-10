@@ -1,0 +1,766 @@
+{
+  "course_id": "VVIT_MONGODB_CRUD",
+  "course_name": "VVIT — MongoDB NoSQL Database Systems",
+  "unit": "Databases, Collections & CRUD Operations",
+  "study_track": "Quick_Study",
+  "persona": "intermediate",
+  "total_questions": 28,
+  "questions": [
+    {
+      "module_id": "M1",
+      "module_title": "Database Operations & Storage Lifecycle",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the immediate effect of executing use schoolDB followed by db.dropDatabase()?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Permanent database deletion — schoolDB and all of its collections and documents are removed",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Session connection closure — disconnects the shell session while leaving schoolDB on disk",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Collection data truncation — empties all documents while preserving every collection container",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Running use schoolDB selects schoolDB as the active database, and db.dropDatabase() permanently deletes schoolDB along with all of its collections and documents. (Key Takeaway: Switching database context followed by db.dropDatabase() permanently deletes that database.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M1",
+      "module_title": "Database Operations & Storage Lifecycle",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What does the shell variable `db` evaluate to inside an active `mongosh` session?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Active database pointer — displays the name of the database currently targeted by `use`",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Server process status — outputs the uptime and port of the running `mongod` daemon",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Collection list — enumerates every collection stored inside the active namespace",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Typing `db` in `mongosh` returns the name of the currently selected database pointer in memory (defaulting to `test` before `use <db>` is called). (Key Takeaway: `db` references the active session database context.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M1",
+      "module_title": "Database Operations & Storage Lifecycle",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Why does a newly selected database via `use schoolDB` not appear immediately in `show dbs` output?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Permission lock — `show dbs` hides user databases until `db.auth()` is executed",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Lazy allocation — MongoDB allocates zero disk storage until the first document or collection write occurs",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Cache delay — `mongosh` refreshes the catalog only after restarting the shell",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "MongoDB uses lazy database instantiation: `use schoolDB` only switches the in-memory session pointer and allocates disk files only when the first collection or document is written. (Key Takeaway: Empty databases with zero bytes on disk are omitted from `show dbs`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M1",
+      "module_title": "Database Operations & Storage Lifecycle",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which three built-in system databases are pre-populated in a standard MongoDB server deployment?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`admin`, `config`, and `local` — reserved system databases managing auth, sharding/metadata, and instance state",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`root`, `master`, and `tempdb` — legacy relational catalog schemas imported at startup",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`system`, `public`, and `default` — user-facing namespaces created for guest connections",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Every MongoDB deployment maintains `admin` (authentication and global roles), `config` (cluster/shard metadata), and `local` (instance-local replication/oplog data) alongside user databases. (Key Takeaway: `admin`, `config`, and `local` are MongoDB's core system databases.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Collection Architecture & Structural Management",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Why would a developer call db.createCollection(\"students\", options) explicitly instead of relying on automatic creation during insertOne()?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Index key generation — required whenever creating the default _id index on new documents",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Custom collection options — enables setting schema validation rules or a capped collection size",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Mandatory shell prerequisite — required before insertMany() can write an array of documents",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "Calling db.createCollection() is optional for most use cases since MongoDB automatically creates a collection on first insert, but explicit creation lets you set options like validation rules or a capped size. (Key Takeaway: Explicit createCollection() is used when configuring validation rules or capped collections.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Collection Architecture & Structural Management",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "When is calling `db.createCollection(name, options)` required instead of relying on implicit creation on first insert?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Standard CRUD workloads — every collection must be pre-declared before `insertOne()` can run",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Capped collections or schema validation — when configuring fixed-size circular buffers (`capped: true`) or `$jsonSchema` rules",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Primary key generation — when enabling automatic 12-byte `_id: ObjectId` assignment",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "While normal collections are created implicitly on first write, `db.createCollection(name, options)` is required upfront when specifying options such as `capped: true`, `size`, `max`, or validator rules. (Key Takeaway: Use `db.createCollection()` to configure capped collections or validators.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Collection Architecture & Structural Management",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How does a capped collection (`{ capped: true, size: 1048576, max: 500 }`) handle new inserts once its byte `size` or document `max` limit is reached?",
+      "options": [
+        {
+          "key": "A",
+          "text": "FIFO circular overwrite — automatically evicts the oldest documents in insertion order to make room for new writes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Write rejection error — throws a `CollectionFullException` until `deleteMany()` frees space",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Dynamic shard split — doubles the `size` ceiling automatically on disk",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Capped collections behave as fixed-size circular buffers that preserve insertion order and automatically overwrite the oldest documents (FIFO) without manual deletion. (Key Takeaway: Capped collections evict oldest documents in FIFO order when full.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M2",
+      "module_title": "Collection Architecture & Structural Management",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the return value and effect of executing `db.students.drop()` on an existing `students` collection?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Returns `true` and permanently removes the `students` collection container, all its documents, and all its indexes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Returns `{ deletedCount: n }` while keeping the empty `students` collection and its `_id` index intact",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Drops the entire parent database along with every other collection in the namespace",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`db.<collection>.drop()` completely removes the target collection metadata, all documents, and all associated B-tree indexes, returning `true` on success (or `false` if the collection did not exist). (Key Takeaway: `db.collection.drop()` removes both data and indexes for that collection.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Document Ingestion Mechanics (CRUD Create)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How must multiple student document objects be passed when calling db.students.insertMany()?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Separate comma arguments — passed directly as insertMany(doc1, doc2) without array brackets",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Nested $set wrapper — passed inside a single object as insertMany({ $set: [doc1, doc2] })",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Square-bracketed array — enclosed inside a single array argument as insertMany([doc1, doc2])",
+          "is_correct": true
+        }
+      ],
+      "correct_answer": "C",
+      "rationale": "The insertMany([doc1, doc2, ...]) method strictly requires multiple documents to be passed as an array enclosed in square brackets. (Key Takeaway: Always wrap multiple documents in an array when calling insertMany().)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Document Ingestion Mechanics (CRUD Create)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What argument structure must be passed to `db.students.insertMany()` to ingest multiple documents in a single network round-trip?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Array of document objects — `db.students.insertMany([ { name: \"A\" }, { name: \"B\" } ])` wrapped in square brackets",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Comma-separated objects — `db.students.insertMany({ name: \"A\" }, { name: \"B\" })` without array brackets",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Nested `$batch` operator — `db.students.insertMany({ $batch: [ ... ] })`",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`insertMany()` requires a JavaScript array `[ doc1, doc2, ... ]` as its first parameter; passing bare comma-separated objects causes the second object to be interpreted as the `options` parameter. (Key Takeaway: Always pass an array `[...]` of documents to `insertMany()`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Document Ingestion Mechanics (CRUD Create)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How is the 12-byte `_id: ObjectId` structured when MongoDB automatically generates a primary key for an inserted document?",
+      "options": [
+        {
+          "key": "A",
+          "text": "4-byte Unix timestamp + 5-byte random process/machine value + 3-byte incrementing counter (24 hex characters)",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "6-byte IPv4 address + 6-byte sequential auto-increment integer managed by a central lock table",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "12-byte SHA-256 hash computed strictly from the document's JSON field names",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Every 12-byte BSON `ObjectId` (rendered as 24 hexadecimal characters) consists of a 4-byte creation timestamp, a 5-byte random value unique to the machine/process, and a 3-byte monotonically incrementing counter. (Key Takeaway: `ObjectId` is a 12-byte identifier: 4B timestamp + 5B random + 3B counter.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M3",
+      "module_title": "Document Ingestion Mechanics (CRUD Create)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Why are `insertOne()` and `insertMany()` preferred over the legacy `db.collection.insert()` method in modern MongoDB drivers?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Explicit intent & standardized acknowledgment — they return `{ acknowledged: true, insertedId / insertedIds }` and enforce modern CRUD spec compliance",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Bypassing `_id` uniqueness — `insertOne()` allows duplicate `_id` values whereas `insert()` throws an error",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Schema enforcement — `insert()` only accepts strings whereas `insertOne()` accepts BSON objects",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`insert()` is deprecated because it ambiguously accepts either a single object or an array and returns legacy `WriteResult` objects, whereas `insertOne()` and `insertMany()` provide clear type safety and return `insertedId`/`insertedIds`. (Key Takeaway: Prefer `insertOne()` and `insertMany()` over deprecated `insert()`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Document Retrieval & Query Architecture (CRUD Read)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What does db.students.find({ grade: 8 }) return when executed against the students collection?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Filtered result cursor — an iterable cursor yielding all documents where grade equals 8",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Single document object — strictly the first matched document where grade equals 8 or null",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Integer match count — a numeric scalar representing how many documents have grade equal to 8",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Executing db.students.find({ grade: 8 }) retrieves all documents matching the query filter { grade: 8 } and returns them as an iterable cursor. (Key Takeaway: find(filter) returns a cursor over all matching documents.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Document Retrieval & Query Architecture (CRUD Read)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the fundamental return-type difference between `db.students.find({ age: 18 })` and `db.students.findOne({ age: 18 })`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`find()` returns an iterable cursor pointer (supporting `.sort()`, `.skip()`, `.limit()`), whereas `findOne()` returns a single document object (or `null`)",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`findOne()` returns a cursor limited to 1 batch, whereas `find()` returns a single merged JSON string",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Both return cursors, but `findOne()` automatically strips the `_id` field from the output",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`find()` always returns a cursor (even if 0 or 1 document matches), allowing cursor methods like `.sort()`, `.skip()`, `.limit()`, and `.pretty()`, whereas `findOne()` resolves immediately to the first document object or `null`. (Key Takeaway: `find()` returns a cursor; `findOne()` returns a document or `null`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Document Retrieval & Query Architecture (CRUD Read)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How does MongoDB evaluate a multi-field filter document such as `db.students.find({ age: 18, grade: \"A\" })`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Implicit logical AND — returns only documents where `age` equals `18` AND `grade` equals `\"A\"` simultaneously",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Implicit logical OR — returns documents matching either `age: 18` OR `grade: \"A\"`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Sequential fallback — searches for `age: 18` first and checks `grade: \"A\"` only if zero documents match",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Comma-separated key-value pairs inside a query filter object are combined using an implicit logical `AND`, requiring every specified condition to match. (Key Takeaway: Multiple fields in `{ field1: v1, field2: v2 }` form an implicit AND query.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M4",
+      "module_title": "Document Retrieval & Query Architecture (CRUD Read)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Why does calling `db.students.findOne({ age: 18 }).pretty()` throw a `TypeError` in the MongoDB shell?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`.pretty()` is a cursor method and `findOne()` returns a resolved BSON document (or `null`), not a cursor",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`.pretty()` requires passing `{ indent: 2 }` when chained after `findOne()`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`findOne()` only supports `.sort()` and `.limit()`, not `.pretty()`",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Because `findOne()` returns a document object directly rather than a cursor, cursor prototype methods such as `.pretty()`, `.sort()`, `.skip()`, and `.limit()` cannot be chained to `findOne()`. (Key Takeaway: `.pretty()` can only be chained on a `find()` cursor.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Advanced Query Filtering, Projection & Pagination",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which operator matches documents whose field value does NOT match any element inside a specified array?",
+      "options": [
+        {
+          "key": "A",
+          "text": "In-array inclusion ($in) — matches when the field value equals any element in the target array",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Not-in-array exclusion ($nin) — matches when the field value is absent from the target array",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Scalar inequality ($ne) — compares a field against a single constant rather than an array list",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "The $nin (not in array) operator matches documents where the field value does not exist in the specified array, whereas $in matches values present in the array. (Key Takeaway: $nin excludes documents whose field value appears in the given array.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Advanced Query Filtering, Projection & Pagination",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which projection document returns ONLY the `name` field of each student while hiding `_id` and all other fields?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`{ name: 1, _id: 0 }` — explicitly includes `name` (`1`) and suppresses the default `_id` field (`0`)",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`{ name: 1 }` — includes `name` and automatically excludes `_id`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`{ name: 1, age: 0 }` — mixes inclusion of `name` with exclusion of `age`",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "In MongoDB projections, `_id` is always returned by default unless explicitly excluded via `_id: 0`. Mixing inclusion (`1`) and exclusion (`0`) on regular fields is invalid, except for `{ <field>: 1, _id: 0 }`. (Key Takeaway: Use `{ field: 1, _id: 0 }` to return only specific fields without `_id`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Advanced Query Filtering, Projection & Pagination",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "In what canonical order does the MongoDB query engine execute `.limit(5)`, `.skip(10)`, and `.sort({ age: -1 })` when all three are chained on a `find()` cursor?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`sort()` first -> `skip()` second -> `limit()` third, regardless of the syntactic chaining order in the shell",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`limit()` first -> `sort()` second -> `skip()` third, sorting only the first 5 documents",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Strictly left-to-right in the exact textual order written by the developer",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "The MongoDB query planner normalizes cursor modifiers so that `.sort()` is always applied to the matching set first, `.skip()` advances past the offset second, and `.limit()` caps the returned page size last. (Key Takeaway: Cursor execution order is always `sort` -> `skip` -> `limit`.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M5",
+      "module_title": "Advanced Query Filtering, Projection & Pagination",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which query filter retrieves all students whose `age` is strictly greater than `18` using MongoDB's comparison operator syntax?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`db.students.find({ age: { $gt: 18 } })` — nests the `$gt` operator object inside the `age` field",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`db.students.find({ $gt: { age: 18 } })` — places `$gt` at the top level outside the field name",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`db.students.find({ age: \"> 18\" })` — passes a relational comparison string literal",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Field-level comparison operators (`$gt`, `$gte`, `$lt`, `$lte`, `$ne`, `$in`, `$nin`) are nested inside the target field's value object: `{ <field>: { $<operator>: <value> } }`. (Key Takeaway: Comparison operators follow `{ field: { $gt: value } }` syntax.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Field Modification & In-Place Update Operators (CRUD Update)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What happens when { $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } } is passed in one updateOne() call?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Combined atomic mutation — sets age, increments attempts, and appends \"History\" in one update",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Multi-operator syntax error — MongoDB allows only one update operator per updateOne() call",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Last-operator precedence — executes only $push while ignoring the preceding $set and $inc keys",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "As shown in Slide 16 ({ $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } }), multiple atomic update operators can be combined in a single updateOne() or updateMany() call. (Key Takeaway: Multiple update operators ($set, $inc, $push) can execute together in one update document.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Field Modification & In-Place Update Operators (CRUD Update)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which atomic update operator increments a numeric `age` field by `1` in-place without reading the document into client memory first?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`{ $inc: { age: 1 } }` — atomically adds the specified positive or negative delta to a numeric field",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`{ $set: { age: +1 } }` — overwrites the `age` field with the literal number `1`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`{ $push: { age: 1 } }` — appends `1` to an array field rather than incrementing a number",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`$inc` atomically increments (or decrements when given a negative number) a numeric field on the server, avoiding read-modify-write race conditions; `$set: { age: +1 }` would overwrite `age` with `1`. (Key Takeaway: Use `$inc` for atomic numeric increments and decrements.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Field Modification & In-Place Update Operators (CRUD Update)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "Which pair of update operators adds an element to an array field vs. removes matching elements from an array field?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`$push` appends a value to an array, whereas `$pull` removes all array elements matching a specified value or condition",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`$set` appends to an array, whereas `$unset` removes a single element while keeping the array",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`$add` inserts into an array, whereas `$drop` deletes an element from the array",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "In MongoDB updates, `$push` appends an item to an array field (e.g., `{ $push: { subjects: \"History\" } }`), while `$pull` removes matching items from an array field (e.g., `{ $pull: { subjects: \"Math\" } }`). `$unset` deletes the entire field key from the document. (Key Takeaway: `$push` appends to arrays; `$pull` removes matching elements from arrays.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M6",
+      "module_title": "Field Modification & In-Place Update Operators (CRUD Update)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What happens when `db.students.updateOne({ name: \"Kiran\" }, { $set: { age: 20 } }, { upsert: true })` runs and no document with `name: \"Kiran\"` exists?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Inserts a new document `{ name: \"Kiran\", age: 20 }` with a newly generated `_id` and returns `upsertedId`",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "Returns `{ matchedCount: 0, modifiedCount: 0 }` without modifying the collection",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Throws a `DocumentNotFound` exception because `updateOne` requires an existing match",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Setting `{ upsert: true }` creates and inserts a new document combining the equality filter fields and the `$set` update modifiers when zero documents match the query filter. (Key Takeaway: `upsert: true` inserts a new document when no match is found.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M7",
+      "module_title": "Document Deletion & Collection Pruning (CRUD Delete)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How does db.students.deleteMany({}) differ from db.students.drop() with respect to show collections?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Identical catalog removal — both commands remove students from the show collections list",
+          "is_correct": false
+        },
+        {
+          "key": "B",
+          "text": "Container preservation vs. removal — deleteMany({}) keeps students in show collections whereas drop() removes it",
+          "is_correct": true
+        },
+        {
+          "key": "C",
+          "text": "Index-only removal — deleteMany({}) drops all indexes whereas drop() preserves the _id index",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "B",
+      "rationale": "Calling db.students.deleteMany({}) deletes all documents inside students without dropping the collection itself, whereas removing the collection from show collections requires db.students.drop(). (Key Takeaway: deleteMany({}) empties documents but keeps the collection in show collections.)",
+      "bloom_level": "L3"
+    },
+    {
+      "module_id": "M7",
+      "module_title": "Document Deletion & Collection Pruning (CRUD Delete)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "What is the critical structural difference between running `db.students.deleteMany({})` and `db.students.drop()`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`deleteMany({})` removes all documents but keeps the collection container and B-tree indexes intact, whereas `drop()` destroys the collection and all its indexes",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`deleteMany({})` drops all indexes while keeping documents, whereas `drop()` removes only the first document",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "Both commands are identical in execution speed, index retention, and return value",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`deleteMany({})` scans and deletes every document while preserving the collection namespace and its B-tree indexes in memory/disk; `db.students.drop()` instantly frees the entire collection container and destroys all indexes. (Key Takeaway: `deleteMany({})` preserves indexes; `drop()` destroys the collection and its indexes.)",
+      "bloom_level": "L2"
+    },
+    {
+      "module_id": "M7",
+      "module_title": "Document Deletion & Collection Pruning (CRUD Delete)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "If 5 documents in `students` have `{ age: 19 }`, how many documents are removed by `db.students.deleteOne({ age: 19 })`?",
+      "options": [
+        {
+          "key": "A",
+          "text": "Strictly 1 document — removes only the first document that matches `{ age: 19 }` and stops",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "All 5 documents — removes every document matching `{ age: 19 }`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "0 documents — throws an `AmbiguousMatchError` when more than one document matches the filter",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "`deleteOne(filter)` deletes at most a single document—the first one matching the filter in scan order—and returns `{ acknowledged: true, deletedCount: 1 }`. (Key Takeaway: `deleteOne()` removes at most 1 matching document.)",
+      "bloom_level": "L1"
+    },
+    {
+      "module_id": "M7",
+      "module_title": "Document Deletion & Collection Pruning (CRUD Delete)",
+      "type": "mcq_3_option",
+      "prompt_type": "Question",
+      "stem": "How do the three deletion tiers in MongoDB rank from narrowest scope (retaining collection & indexes) to widest destruction scope?",
+      "options": [
+        {
+          "key": "A",
+          "text": "`deleteOne()` / `deleteMany()` (document level) -> `db.<collection>.drop()` (collection + indexes) -> `db.dropDatabase()` (entire database)",
+          "is_correct": true
+        },
+        {
+          "key": "B",
+          "text": "`db.dropDatabase()` -> `db.<collection>.drop()` -> `deleteOne()`",
+          "is_correct": false
+        },
+        {
+          "key": "C",
+          "text": "`db.<collection>.drop()` -> `deleteMany({})` -> `db.dropDatabase()`",
+          "is_correct": false
+        }
+      ],
+      "correct_answer": "A",
+      "rationale": "Document deletion (`deleteOne`/`deleteMany`) removes documents within a collection; collection drop (`db.col.drop()`) removes the collection and its indexes; database drop (`db.dropDatabase()`) removes the entire database and all its collections from disk. (Key Takeaway: MongoDB's 3-tier deletion hierarchy progresses from documents -> collection -> database.)",
+      "bloom_level": "L2"
+    }
+  ]
+}

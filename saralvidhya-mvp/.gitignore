@@ -213,3 +213,7 @@ AGENTS.md
 **/AGENTS.md
 CLAUDE.md
 **/CLAUDE.md
+# ProjectBrain cache
+.projectbrain.db
+.projectbrain.db-wal
+.projectbrain.db-shm

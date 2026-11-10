@@ -1,0 +1,20 @@
+{
+  "id": "mongodb",
+  "name": "NoSQL & MongoDB Essentials",
+  "code": "CS304PC",
+  "subtitle": "B.Tech CSE / IT",
+  "programLabel": "B.Tech Computer Science & Engineering",
+  "description": "MongoDB database creation, capped and standard collections, BSON & ObjectId ingestion, cursor retrieval, filtering, projection, pagination, atomic updates, and three-tier deletion.",
+  "credits": 3,
+  "order": 1,
+  "status": "active",
+  "parentNodeId": "sem_3",
+  "iconBlob": "assets/icon.png",
+  "assets": {
+    "icon": "assets/icon.png"
+  },
+  "cardStyle": {
+    "accentColor": "#546C60",
+    "badgeText": "Core NoSQL"
+  }
+}

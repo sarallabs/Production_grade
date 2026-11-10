@@ -1,0 +1,245 @@
+{
+  "subject": "MongoDB NoSQL Database Systems",
+  "course": "VVIT",
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "artifact_type": "detailed_summary",
+  "persona": "intermediate",
+  "bloom_taxonomy_band": "L3-L4 (Applying & Analyzing)",
+  "mindmap_depth": "L0-L3 (60% of D_max=4)",
+  "d_max": 4,
+  "word_count": 4452,
+  "avg_sentence_length_words": 21.24,
+  "webp_optimized": true,
+  "webp_quality": 75,
+  "locked_verbatim_definitions_count": 7,
+  "figures_count": 24,
+  "figures": [
+    {
+      "figure_no": "Fig 1.1",
+      "image_tag": "1.0",
+      "title": "Database Operations and Storage Lifecycle Overview",
+      "module": "Module 1: Database Operations & Storage Lifecycle"
+    },
+    {
+      "figure_no": "Fig 1.2",
+      "image_tag": "1.1",
+      "title": "Database Context Switching and Lazy Creation Mechanics (use databaseName)",
+      "module": "Module 1: Database Operations & Storage Lifecycle"
+    },
+    {
+      "figure_no": "Fig 1.3",
+      "image_tag": "1.2",
+      "title": "Database Catalog Inspection and Visibility Filtering (show dbs)",
+      "module": "Module 1: Database Operations & Storage Lifecycle"
+    },
+    {
+      "figure_no": "Fig 1.4",
+      "image_tag": "1.3",
+      "title": "Database Destruction and Permanent Extent Deallocation (db.dropDatabase())",
+      "module": "Module 1: Database Operations & Storage Lifecycle"
+    },
+    {
+      "figure_no": "Fig 2.1",
+      "image_tag": "2.0",
+      "title": "Collection Architecture and Structural Lifecycle Overview",
+      "module": "Module 2: Collection Architecture & Structural Management"
+    },
+    {
+      "figure_no": "Fig 2.2",
+      "image_tag": "2.1",
+      "title": "Implicit vs. Explicit Collection Creation Mechanics (db.createCollection())",
+      "module": "Module 2: Collection Architecture & Structural Management"
+    },
+    {
+      "figure_no": "Fig 2.3",
+      "image_tag": "2.2",
+      "title": "Active Database Collection Inventory Inspection (show collections)",
+      "module": "Module 2: Collection Architecture & Structural Management"
+    },
+    {
+      "figure_no": "Fig 2.4",
+      "image_tag": "2.3",
+      "title": "Collection Removal, Data Purge, and Index Tree Deallocation (db.collection.drop())",
+      "module": "Module 2: Collection Architecture & Structural Management"
+    },
+    {
+      "figure_no": "Fig 3.1",
+      "image_tag": "3.0",
+      "title": "CRUD Create: Document Ingestion Architecture Overview",
+      "module": "Module 3: Document Ingestion Mechanics (CRUD Create)"
+    },
+    {
+      "figure_no": "Fig 3.2",
+      "image_tag": "3.1",
+      "title": "Single Document BSON Insertion and 12-Byte ObjectId Allocation (insertOne())",
+      "module": "Module 3: Document Ingestion Mechanics (CRUD Create)"
+    },
+    {
+      "figure_no": "Fig 3.3",
+      "image_tag": "3.2",
+      "title": "Batch Document Array Ingestion and Single-Roundtrip Transmission (insertMany())",
+      "module": "Module 3: Document Ingestion Mechanics (CRUD Create)"
+    },
+    {
+      "figure_no": "Fig 4.1",
+      "image_tag": "4.0",
+      "title": "CRUD Read: Document Retrieval Architecture Comparison (find() vs. findOne())",
+      "module": "Module 4: Document Retrieval & Query Architecture (CRUD Read)"
+    },
+    {
+      "figure_no": "Fig 4.2",
+      "image_tag": "4.1",
+      "title": "Cursor-Based Querying, Batch Streaming, and Method Chaining (find())",
+      "module": "Module 4: Document Retrieval & Query Architecture (CRUD Read)"
+    },
+    {
+      "figure_no": "Fig 4.3",
+      "image_tag": "4.2",
+      "title": "Single Document Immediate Lookup and Null Fallback Mechanics (findOne())",
+      "module": "Module 4: Document Retrieval & Query Architecture (CRUD Read)"
+    },
+    {
+      "figure_no": "Fig 5.1",
+      "image_tag": "5.0",
+      "title": "Advanced Query Filtering, Field Projection, and Cursor Pagination Overview",
+      "module": "Module 5: Advanced Query Filtering, Projection & Pagination"
+    },
+    {
+      "figure_no": "Fig 5.2",
+      "image_tag": "5.1",
+      "title": "Conditional Comparison, Array Membership, and Logical Query Operators",
+      "module": "Module 5: Advanced Query Filtering, Projection & Pagination"
+    },
+    {
+      "figure_no": "Fig 5.3",
+      "image_tag": "5.2",
+      "title": "Field Projection Inclusion/Exclusion Masks and Primary Key _id Suppression",
+      "module": "Module 5: Advanced Query Filtering, Projection & Pagination"
+    },
+    {
+      "figure_no": "Fig 5.4",
+      "image_tag": "5.3",
+      "title": "Deterministic Cursor Pipeline Execution Order: sort() -> skip() -> limit()",
+      "module": "Module 5: Advanced Query Filtering, Projection & Pagination"
+    },
+    {
+      "figure_no": "Fig 6.1",
+      "image_tag": "6.0",
+      "title": "CRUD Update: In-Place Field Modification and Atomic Operators Overview",
+      "module": "Module 6: Field Modification & In-Place Update Operators (CRUD Update)"
+    },
+    {
+      "figure_no": "Fig 6.2",
+      "image_tag": "6.1",
+      "title": "Update Scope and Execution Targeting: updateOne() vs. updateMany()",
+      "module": "Module 6: Field Modification & In-Place Update Operators (CRUD Update)"
+    },
+    {
+      "figure_no": "Fig 6.3",
+      "image_tag": "6.2",
+      "title": "Atomic Scalar ($set, $inc) and Array ($push, $pull) Update Operators",
+      "module": "Module 6: Field Modification & In-Place Update Operators (CRUD Update)"
+    },
+    {
+      "figure_no": "Fig 7.1",
+      "image_tag": "7.0",
+      "title": "CRUD Delete: Document Deletion Mechanics and Namespace Pruning Overview",
+      "module": "Module 7: Document Deletion & Collection Pruning (CRUD Delete)"
+    },
+    {
+      "figure_no": "Fig 7.2",
+      "image_tag": "7.1",
+      "title": "Targeted vs. Multi-Document Deletion Execution: deleteOne() vs. deleteMany()",
+      "module": "Module 7: Document Deletion & Collection Pruning (CRUD Delete)"
+    },
+    {
+      "figure_no": "Fig 7.3",
+      "image_tag": "7.2",
+      "title": "Architectural Tradeoffs: deleteMany({}) vs. db.collection.drop() vs. db.dropDatabase()",
+      "module": "Module 7: Document Deletion & Collection Pruning (CRUD Delete)"
+    }
+  ],
+  "sections": [
+    {
+      "section_id": "1.0",
+      "title": "1. Database Operations & Storage Lifecycle",
+      "mindmap_path": "VVIT MongoDB > 1. Database Operations & Storage Lifecycle",
+      "figures": [
+        "1.0",
+        "1.1",
+        "1.2",
+        "1.3"
+      ]
+    },
+    {
+      "section_id": "2.0",
+      "title": "2. Collection Architecture & Structural Management",
+      "mindmap_path": "VVIT MongoDB > 2. Collection Architecture & Structural Management",
+      "figures": [
+        "2.0",
+        "2.1",
+        "2.2",
+        "2.3"
+      ]
+    },
+    {
+      "section_id": "3.0",
+      "title": "3. Document Ingestion Mechanics (CRUD Create)",
+      "mindmap_path": "VVIT MongoDB > 3. Document Ingestion Mechanics (CRUD Create)",
+      "figures": [
+        "3.0",
+        "3.1",
+        "3.2"
+      ]
+    },
+    {
+      "section_id": "4.0",
+      "title": "4. Document Retrieval & Query Architecture (CRUD Read)",
+      "mindmap_path": "VVIT MongoDB > 4. Document Retrieval & Query Architecture (CRUD Read)",
+      "figures": [
+        "4.0",
+        "4.1",
+        "4.2"
+      ]
+    },
+    {
+      "section_id": "5.0",
+      "title": "5. Advanced Query Filtering, Projection & Pagination",
+      "mindmap_path": "VVIT MongoDB > 5. Advanced Query Filtering, Projection & Pagination",
+      "figures": [
+        "5.0",
+        "5.1",
+        "5.2",
+        "5.3"
+      ]
+    },
+    {
+      "section_id": "6.0",
+      "title": "6. Field Modification & In-Place Update Operators (CRUD Update)",
+      "mindmap_path": "VVIT MongoDB > 6. Field Modification & In-Place Update Operators (CRUD Update)",
+      "figures": [
+        "6.0",
+        "6.1",
+        "6.2"
+      ]
+    },
+    {
+      "section_id": "7.0",
+      "title": "7. Document Deletion & Collection Pruning (CRUD Delete)",
+      "mindmap_path": "VVIT MongoDB > 7. Document Deletion & Collection Pruning (CRUD Delete)",
+      "figures": [
+        "7.0",
+        "7.1",
+        "7.2"
+      ]
+    }
+  ],
+  "validation_report": {
+    "figure_captions_verified": true,
+    "semantic_figure_tags_used": true,
+    "zero_metadata_in_md": true,
+    "locked_definitions_verified": true,
+    "base64_76char_chunked": true,
+    "master_mindmap_excluded": true
+  }
+}

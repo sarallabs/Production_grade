@@ -1,0 +1,556 @@
+{
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "subject": "VVIT — MongoDB NoSQL Database Systems",
+  "assessment_type": "MSQ",
+  "difficulty": "easy",
+  "persona": "Beginner",
+  "bloom_band": "L1-L2",
+  "generated_at": "2026-11-02T10:55:32.732026+00:00",
+  "D_max_detected": 4,
+  "D_target_ratio": "30%",
+  "D_target_used": 1,
+  "total_questions": 10,
+  "five_option_question_count": 8,
+  "correct_count_distribution": {
+    "1_correct": 1,
+    "2_correct": 4,
+    "3_correct": 3,
+    "4_correct": 1,
+    "5_correct": 1
+  },
+  "source_files_used": [
+    "mongodb-reference.md",
+    "mongodb-reference-doc.md",
+    "VVIT_MongoDB_Mindmap.txt"
+  ],
+  "questions": [
+    {
+      "id": "VVIT_MongoDB_msq_easy_01",
+      "type": "msq",
+      "question": {
+        "stem": "Which system databases appear by default when listing server storage via `show dbs` (Select all that apply)?",
+        "options": {
+          "A": "`admin`",
+          "B": "`schoolDB`",
+          "C": "`config`",
+          "D": "`students`",
+          "E": "`local`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "C",
+          "E"
+        ],
+        "explanation": "On a connected MongoDB server, `show dbs` lists default system partitions `admin`, `config`, and `local` alongside any user databases holding data. `schoolDB` is a user-created database, and `students` is a collection name rather than a database. (Key Takeaway: `admin`, `config`, and `local` are standard system databases displayed by `show dbs`.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Identify",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Catalog Inspection (\"show dbs\") > Visibility Filtering Conditions > System Database Defaults",
+          "level": "L4",
+          "node_id": "node_016",
+          "node_name": "System Database Defaults (Always enumerates system partitions including admin, config, and local)"
+        },
+        "distractor_rationale": "Option B (`schoolDB`) is an application database created only after user data insertion, and Option D (`students`) is a collection container rather than a database.",
+        "source_reference": "Slide 2",
+        "marks": 2
+      },
+      "stem": "Which system databases appear by default when listing server storage via `show dbs` (Select all that apply)?",
+      "options": {
+        "A": "`admin`",
+        "B": "`schoolDB`",
+        "C": "`config`",
+        "D": "`students`",
+        "E": "`local`"
+      },
+      "correct_keys": [
+        "A",
+        "C",
+        "E"
+      ],
+      "explanation": "On a connected MongoDB server, `show dbs` lists default system partitions `admin`, `config`, and `local` alongside any user databases holding data. `schoolDB` is a user-created database, and `students` is a collection name rather than a database. (Key Takeaway: `admin`, `config`, and `local` are standard system databases displayed by `show dbs`.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_02",
+      "type": "msq",
+      "question": {
+        "stem": "What properties characterize the `use <databaseName>` command in MongoDB sessions (Select all that apply)?",
+        "options": {
+          "A": "It immediately allocates data files on disk for empty databases",
+          "B": "It switches the current database context for all subsequent commands",
+          "C": "It requires the database to exist on disk prior to execution",
+          "D": "It delays physical database creation until data is written into a collection",
+          "E": "It permanently deletes any previously active database session"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "D"
+        ],
+        "explanation": "`use <databaseName>` switches the current database context for subsequent commands (B), and if the database does not exist yet, MongoDB creates it on disk only once data is inserted into a collection within it (D). (Key Takeaway: `use` switches session context immediately while deferring disk allocation until the first write.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Characterize",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Context Switching & Creation (\"use <databaseName>\")",
+          "level": "L2",
+          "node_id": "node_003",
+          "node_name": "Database Context Switching & Creation (\"use <databaseName>\")"
+        },
+        "distractor_rationale": "Options A and C violate lazy allocation mechanics, while Option E confuses context switching with `db.dropDatabase()`.",
+        "source_reference": "Slide 1 & Doc Section 1",
+        "marks": 2
+      },
+      "stem": "What properties characterize the `use <databaseName>` command in MongoDB sessions (Select all that apply)?",
+      "options": {
+        "A": "It immediately allocates data files on disk for empty databases",
+        "B": "It switches the current database context for all subsequent commands",
+        "C": "It requires the database to exist on disk prior to execution",
+        "D": "It delays physical database creation until data is written into a collection",
+        "E": "It permanently deletes any previously active database session"
+      },
+      "correct_keys": [
+        "B",
+        "D"
+      ],
+      "explanation": "`use <databaseName>` switches the current database context for subsequent commands (B), and if the database does not exist yet, MongoDB creates it on disk only once data is inserted into a collection within it (D). (Key Takeaway: `use` switches session context immediately while deferring disk allocation until the first write.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_03",
+      "type": "msq",
+      "question": {
+        "stem": "Which statements accurately describe collection creation mechanics inside MongoDB databases (Select all that apply)?",
+        "options": {
+          "A": "`db.createCollection(name, options)` explicitly creates a new collection container",
+          "B": "Collections can never be created without running `db.createCollection()` first",
+          "C": "Implicit collection creation allows configuring capped sizes before insertion",
+          "D": "Inserting a document via `insertOne()` or `insertMany()` automatically creates a missing collection"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "D"
+        ],
+        "explanation": "MongoDB supports explicit collection creation via `db.createCollection(name, options)` (A) as well as automatic implicit creation when a document is first inserted via `insertOne()` or `insertMany()` (D). Setting capped sizes or validation rules requires explicit `db.createCollection()`. (Key Takeaway: Collections can be created explicitly via `db.createCollection()` or implicitly upon first document insert.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Describe",
+        "difficulty": "easy",
+        "total_options": 4,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Creation Mechanics (\"db.createCollection()\")",
+          "level": "L2",
+          "node_id": "node_025",
+          "node_name": "Collection Creation Mechanics (\"db.createCollection()\")"
+        },
+        "distractor_rationale": "Option B is false because MongoDB auto-creates collections on first insert, and Option C is false because capped options require explicit `db.createCollection()`.",
+        "source_reference": "Slides 4, 7 & Doc Sections 2, 3",
+        "marks": 2
+      },
+      "stem": "Which statements accurately describe collection creation mechanics inside MongoDB databases (Select all that apply)?",
+      "options": {
+        "A": "`db.createCollection(name, options)` explicitly creates a new collection container",
+        "B": "Collections can never be created without running `db.createCollection()` first",
+        "C": "Implicit collection creation allows configuring capped sizes before insertion",
+        "D": "Inserting a document via `insertOne()` or `insertMany()` automatically creates a missing collection"
+      },
+      "correct_keys": [
+        "A",
+        "D"
+      ],
+      "explanation": "MongoDB supports explicit collection creation via `db.createCollection(name, options)` (A) as well as automatic implicit creation when a document is first inserted via `insertOne()` or `insertMany()` (D). Setting capped sizes or validation rules requires explicit `db.createCollection()`. (Key Takeaway: Collections can be created explicitly via `db.createCollection()` or implicitly upon first document insert.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_04",
+      "type": "msq",
+      "question": {
+        "stem": "What elements are permanently removed when executing `db.students.drop()` on an active database (Select all that apply)?",
+        "options": {
+          "A": "The parent database `schoolDB` and all sibling collections",
+          "B": "The `students` collection container itself",
+          "C": "Every BSON document stored inside `students`",
+          "D": "The `admin` and `config` system catalogs",
+          "E": "All indexes defined on the `students` collection"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "C",
+          "E"
+        ],
+        "explanation": "`db.<collection>.drop()` permanently removes the target collection container (B), all documents inside it (C), and all indexes defined on it (E). Sibling collections and the parent database remain untouched. (Key Takeaway: `db.<collection>.drop()` purges the collection container, its documents, and its indexes.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "List",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Removal & Destruction (\"db.<collection>.drop()\")",
+          "level": "L2",
+          "node_id": "node_039",
+          "node_name": "Collection Removal & Destruction (\"db.<collection>.drop()\")"
+        },
+        "distractor_rationale": "Option A confuses `db.collection.drop()` with `db.dropDatabase()`, and Option D falsely claims system databases are removed.",
+        "source_reference": "Slide 6 & Doc Section 2",
+        "marks": 2
+      },
+      "stem": "What elements are permanently removed when executing `db.students.drop()` on an active database (Select all that apply)?",
+      "options": {
+        "A": "The parent database `schoolDB` and all sibling collections",
+        "B": "The `students` collection container itself",
+        "C": "Every BSON document stored inside `students`",
+        "D": "The `admin` and `config` system catalogs",
+        "E": "All indexes defined on the `students` collection"
+      },
+      "correct_keys": [
+        "B",
+        "C",
+        "E"
+      ],
+      "explanation": "`db.<collection>.drop()` permanently removes the target collection container (B), all documents inside it (C), and all indexes defined on it (E). Sibling collections and the parent database remain untouched. (Key Takeaway: `db.<collection>.drop()` purges the collection container, its documents, and its indexes.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_05",
+      "type": "msq",
+      "question": {
+        "stem": "Which built-in methods belong to the CRUD Create category for adding documents to a collection (Select all that apply)?",
+        "options": {
+          "A": "`db.students.findOne()`",
+          "B": "`db.students.updateOne()`",
+          "C": "`db.students.insertOne()`",
+          "D": "`db.createCollection()`",
+          "E": "`db.students.insertMany()`"
+        }
+      },
+      "answer": {
+        "keys": [
+          "C",
+          "E"
+        ],
+        "explanation": "In MongoDB CRUD operations on a collection, `insertOne(document)` (C) and `insertMany([doc1, doc2, ...])` (E) perform Create operations by inserting single or multiple documents. `findOne()` is Read, `updateOne()` is Update, and `createCollection()` is a collection-level administrative command. (Key Takeaway: `insertOne()` and `insertMany()` are the two core CRUD Create document insertion methods.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Select",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create)",
+          "level": "L1",
+          "node_id": "node_046",
+          "node_name": "3. Document Ingestion Mechanics (CRUD Create)"
+        },
+        "distractor_rationale": "Option A is a Read method, Option B is an Update method, and Option D creates an empty collection container without inserting documents.",
+        "source_reference": "Slide 7 & Doc Section 3",
+        "marks": 2
+      },
+      "stem": "Which built-in methods belong to the CRUD Create category for adding documents to a collection (Select all that apply)?",
+      "options": {
+        "A": "`db.students.findOne()`",
+        "B": "`db.students.updateOne()`",
+        "C": "`db.students.insertOne()`",
+        "D": "`db.createCollection()`",
+        "E": "`db.students.insertMany()`"
+      },
+      "correct_keys": [
+        "C",
+        "E"
+      ],
+      "explanation": "In MongoDB CRUD operations on a collection, `insertOne(document)` (C) and `insertMany([doc1, doc2, ...])` (E) perform Create operations by inserting single or multiple documents. `findOne()` is Read, `updateOne()` is Update, and `createCollection()` is a collection-level administrative command. (Key Takeaway: `insertOne()` and `insertMany()` are the two core CRUD Create document insertion methods.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_06",
+      "type": "msq",
+      "question": {
+        "stem": "Which statement correctly identifies the return behavior of `db.students.find()` when called with no arguments (Select all that apply)?",
+        "options": {
+          "A": "It returns only the single oldest document in `students`",
+          "B": "It returns `null` unless a projection object is supplied",
+          "C": "It deletes all unmatched documents before returning",
+          "D": "It retrieves every document in the collection and returns a cursor",
+          "E": "It throws a syntax error because a query filter is mandatory"
+        }
+      },
+      "answer": {
+        "keys": [
+          "D"
+        ],
+        "explanation": "Calling `find()` with no arguments (or with an empty filter `{}`) matches every document in the collection and returns an iterable cursor (D). Only `findOne()` returns a single document or `null`. (Key Takeaway: Calling `find()` without arguments returns a cursor over all documents in the collection.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Recognize",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 1,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read) > Cursor-Based Querying (\"find()\")",
+          "level": "L2",
+          "node_id": "node_062",
+          "node_name": "Cursor-Based Querying (\"find()\")"
+        },
+        "distractor_rationale": "Options A and B confuse `find()` with `findOne()`, Option C confuses querying with deletion, and Option E is false because query arguments in `find()` are optional.",
+        "source_reference": "Slide 8 & Doc Section 3",
+        "marks": 2
+      },
+      "stem": "Which statement correctly identifies the return behavior of `db.students.find()` when called with no arguments (Select all that apply)?",
+      "options": {
+        "A": "It returns only the single oldest document in `students`",
+        "B": "It returns `null` unless a projection object is supplied",
+        "C": "It deletes all unmatched documents before returning",
+        "D": "It retrieves every document in the collection and returns a cursor",
+        "E": "It throws a syntax error because a query filter is mandatory"
+      },
+      "correct_keys": [
+        "D"
+      ],
+      "explanation": "Calling `find()` with no arguments (or with an empty filter `{}`) matches every document in the collection and returns an iterable cursor (D). Only `findOne()` returns a single document or `null`. (Key Takeaway: Calling `find()` without arguments returns a cursor over all documents in the collection.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_07",
+      "type": "msq",
+      "question": {
+        "stem": "Which comparison operators are valid inside a MongoDB query filter to test numeric thresholds or inequality (Select all that apply)?",
+        "options": {
+          "A": "`$gt` for strictly greater than comparisons",
+          "B": "`$gte` for greater than or equal to comparisons",
+          "C": "`$lt` for strictly less than comparisons",
+          "D": "`$lte` for less than or equal to comparisons",
+          "E": "`$ne` for not equal comparisons"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "B",
+          "C",
+          "D",
+          "E"
+        ],
+        "explanation": "All five operators — `$gt` (greater than), `$gte` (greater than or equal), `$lt` (less than), `$lte` (less than or equal), and `$ne` (not equal) — are valid MongoDB comparison operators listed in the reference guide. (Key Takeaway: `$gt`, `$gte`, `$lt`, `$lte`, and `$ne` form the core scalar comparison operator suite.)"
+      },
+      "meta": {
+        "bloom_level": "L1",
+        "cognitive_level": "Remembering",
+        "action_word_used": "Identify",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 5,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators > Comparison & Inequality Operators > Relational Thresholds",
+          "level": "L4",
+          "node_id": "node_079",
+          "node_name": "Relational Thresholds ($gt greater than, $gte greater or equal, $lt less than, $lte less or equal, $ne not equal)"
+        },
+        "distractor_rationale": "None — all five options A, B, C, D, and E are verified comparison operators from Slide 14.",
+        "source_reference": "Slide 14",
+        "marks": 2
+      },
+      "stem": "Which comparison operators are valid inside a MongoDB query filter to test numeric thresholds or inequality (Select all that apply)?",
+      "options": {
+        "A": "`$gt` for strictly greater than comparisons",
+        "B": "`$gte` for greater than or equal to comparisons",
+        "C": "`$lt` for strictly less than comparisons",
+        "D": "`$lte` for less than or equal to comparisons",
+        "E": "`$ne` for not equal comparisons"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "E"
+      ],
+      "explanation": "All five operators — `$gt` (greater than), `$gte` (greater than or equal), `$lt` (less than), `$lte` (less than or equal), and `$ne` (not equal) — are valid MongoDB comparison operators listed in the reference guide. (Key Takeaway: `$gt`, `$gte`, `$lt`, `$lte`, and `$ne` form the core scalar comparison operator suite.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_08",
+      "type": "msq",
+      "question": {
+        "stem": "Which operators are designated as atomic update operators for modifying document fields inside `updateOne()` or `updateMany()` (Select all that apply)?",
+        "options": {
+          "A": "`$set` for setting or replacing a field's value",
+          "B": "`$inc` for incrementing a numeric field",
+          "C": "`$nin` for matching values not in an array",
+          "D": "`$push` for appending an element to an array field",
+          "E": "`$pull` for removing matching elements from an array field"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "B",
+          "D",
+          "E"
+        ],
+        "explanation": "`$set` (A), `$inc` (B), `$push` (D), and `$pull` (E) are the four update operators used in `updateOne()` and `updateMany()`. `$nin` (C) is a query comparison/array filter operator, not an update operator. (Key Takeaway: `$set`, `$inc`, `$push`, and `$pull` perform atomic field and array updates.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Classify",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 4,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Atomic Field Update Operators",
+          "level": "L2",
+          "node_id": "node_110",
+          "node_name": "Atomic Field Update Operators"
+        },
+        "distractor_rationale": "Option C (`$nin`) is a read-time query filter operator used to exclude array values, not an update operator.",
+        "source_reference": "Slides 14, 16",
+        "marks": 2
+      },
+      "stem": "Which operators are designated as atomic update operators for modifying document fields inside `updateOne()` or `updateMany()` (Select all that apply)?",
+      "options": {
+        "A": "`$set` for setting or replacing a field's value",
+        "B": "`$inc` for incrementing a numeric field",
+        "C": "`$nin` for matching values not in an array",
+        "D": "`$push` for appending an element to an array field",
+        "E": "`$pull` for removing matching elements from an array field"
+      },
+      "correct_keys": [
+        "A",
+        "B",
+        "D",
+        "E"
+      ],
+      "explanation": "`$set` (A), `$inc` (B), `$push` (D), and `$pull` (E) are the four update operators used in `updateOne()` and `updateMany()`. `$nin` (C) is a query comparison/array filter operator, not an update operator. (Key Takeaway: `$set`, `$inc`, `$push`, and `$pull` perform atomic field and array updates.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_09",
+      "type": "msq",
+      "question": {
+        "stem": "How do `sort({ age: 1 })` and `sort({ age: -1 })` order query results returned by `find()` (Select all that apply)?",
+        "options": {
+          "A": "`sort({ age: 1 })` orders documents from highest to lowest `age`",
+          "B": "`sort({ age: 1 })` orders documents in ascending order from lowest to highest `age`",
+          "C": "`sort({ age: -1 })` orders documents in descending order from highest to lowest `age`",
+          "D": "`sort({ age: -1 })` omits the first document from the cursor output"
+        }
+      },
+      "answer": {
+        "keys": [
+          "B",
+          "C"
+        ],
+        "explanation": "In `sort({ field: 1 | -1 })`, passing `1` sorts results in ascending order (lowest to highest, B) and passing `-1` sorts results in descending order (highest to lowest, C). (Key Takeaway: `sort()` uses `1` for ascending order and `-1` for descending order.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Contrast",
+        "difficulty": "easy",
+        "total_options": 4,
+        "correct_count": 2,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Cursor Pipeline Transformation & Pagination",
+          "level": "L2",
+          "node_id": "node_094",
+          "node_name": "Cursor Pipeline Transformation & Pagination"
+        },
+        "distractor_rationale": "Option A reverses ascending and descending semantics, while Option D confuses `sort({ age: -1 })` with `skip(1)`.",
+        "source_reference": "Slide 12 & Doc Section 4",
+        "marks": 2
+      },
+      "stem": "How do `sort({ age: 1 })` and `sort({ age: -1 })` order query results returned by `find()` (Select all that apply)?",
+      "options": {
+        "A": "`sort({ age: 1 })` orders documents from highest to lowest `age`",
+        "B": "`sort({ age: 1 })` orders documents in ascending order from lowest to highest `age`",
+        "C": "`sort({ age: -1 })` orders documents in descending order from highest to lowest `age`",
+        "D": "`sort({ age: -1 })` omits the first document from the cursor output"
+      },
+      "correct_keys": [
+        "B",
+        "C"
+      ],
+      "explanation": "In `sort({ field: 1 | -1 })`, passing `1` sorts results in ascending order (lowest to highest, B) and passing `-1` sorts results in descending order (highest to lowest, C). (Key Takeaway: `sort()` uses `1` for ascending order and `-1` for descending order.)"
+    },
+    {
+      "id": "VVIT_MongoDB_msq_easy_10",
+      "type": "msq",
+      "question": {
+        "stem": "Which statements accurately describe `deleteOne()` and `deleteMany()` in MongoDB CRUD Delete operations (Select all that apply)?",
+        "options": {
+          "A": "`deleteOne(filter)` removes strictly the first document matching the query filter",
+          "B": "`deleteOne({})` drops the entire collection and its indexes from disk",
+          "C": "`deleteMany(filter)` requires at least two arguments to execute",
+          "D": "`deleteMany(filter)` deletes every document that satisfies the query filter",
+          "E": "`deleteMany({})` with an empty filter removes all documents without dropping the collection"
+        }
+      },
+      "answer": {
+        "keys": [
+          "A",
+          "D",
+          "E"
+        ],
+        "explanation": "`deleteOne(filter)` deletes the first matching document (A), `deleteMany(filter)` deletes all matching documents (D), and passing an empty filter `{}` to `deleteMany({})` removes every document while keeping the collection container intact (E). (Key Takeaway: `deleteOne()` removes a single match, while `deleteMany()` removes all matches or truncates documents with `{}`.)"
+      },
+      "meta": {
+        "bloom_level": "L2",
+        "cognitive_level": "Understanding",
+        "action_word_used": "Summarize",
+        "difficulty": "easy",
+        "total_options": 5,
+        "correct_count": 3,
+        "mindmap": {
+          "path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Document Deletion Execution Methods",
+          "level": "L2",
+          "node_id": "node_118",
+          "node_name": "Document Deletion Execution Methods"
+        },
+        "distractor_rationale": "Option B confuses document deletion with `db.collection.drop()`, and Option C is false because `deleteMany()` accepts a single filter object.",
+        "source_reference": "Slide 10 & Doc Section 3",
+        "marks": 2
+      },
+      "stem": "Which statements accurately describe `deleteOne()` and `deleteMany()` in MongoDB CRUD Delete operations (Select all that apply)?",
+      "options": {
+        "A": "`deleteOne(filter)` removes strictly the first document matching the query filter",
+        "B": "`deleteOne({})` drops the entire collection and its indexes from disk",
+        "C": "`deleteMany(filter)` requires at least two arguments to execute",
+        "D": "`deleteMany(filter)` deletes every document that satisfies the query filter",
+        "E": "`deleteMany({})` with an empty filter removes all documents without dropping the collection"
+      },
+      "correct_keys": [
+        "A",
+        "D",
+        "E"
+      ],
+      "explanation": "`deleteOne(filter)` deletes the first matching document (A), `deleteMany(filter)` deletes all matching documents (D), and passing an empty filter `{}` to `deleteMany({})` removes every document while keeping the collection container intact (E). (Key Takeaway: `deleteOne()` removes a single match, while `deleteMany()` removes all matches or truncates documents with `{}`.)"
+    }
+  ],
+  "validation_report": {
+    "question_count_verified": true,
+    "five_option_prevalence_verified": true,
+    "zero_images_verified": true,
+    "zero_metadata_in_md_verified": true,
+    "question_mark_invariant_verified": true,
+    "zero_overlap_verified": true
+  }
+}

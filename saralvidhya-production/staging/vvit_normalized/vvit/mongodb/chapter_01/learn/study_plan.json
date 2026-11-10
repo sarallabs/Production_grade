@@ -1,0 +1,202 @@
+{
+  "title": "Study Plan: MongoDB — Databases, Collections & CRUD Operations",
+  "course": "VVIT Autonomous B.Tech CSE / IT — NoSQL & MongoDB Essentials",
+  "unit": 1,
+  "topic": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "total_blueprints": 2,
+  "blueprints": {
+    "5_day_standard": {
+      "target_persona": "Undergraduate Semester Track (Regular Pacing)",
+      "daily_time_budget_mins": 60,
+      "total_time_mins": 300,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Topics 1 & 2: Database Lazy Instantiation & Collection Lifecycle",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "2-Level Mindmap (Topics 1 & 2, Sub-Topics 1.1–2.3)",
+              "duration_minutes": 10,
+              "activity": "L1 & L2 Hierarchy Orientation"
+            },
+            {
+              "resource": "Microcasts 1 & 2 (Database & Collection Creation)",
+              "duration_minutes": 15,
+              "activity": "Audio Conceptual Walkthrough"
+            },
+            {
+              "resource": "Quick & Detailed Study (Topics 1 & 2 + Quick Check)",
+              "duration_minutes": 20,
+              "activity": "Lazy Allocation, System DBs & Capped Collections"
+            },
+            {
+              "resource": "Easy MCQ Quiz",
+              "duration_minutes": 15,
+              "activity": "Formative Knowledge Check"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Topic 3: Document Ingestion & 12-Byte ObjectId Architecture",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "2-Level Mindmap (Topic 3, Sub-Topics 3.1–3.2)",
+              "duration_minutes": 10,
+              "activity": "Single vs Batch Write Mechanics"
+            },
+            {
+              "resource": "Microcast 3 (Single and Batch Document Ingestion)",
+              "duration_minutes": 10,
+              "activity": "Audio Deep-Dive"
+            },
+            {
+              "resource": "Sub-Topic Read (3.1 & 3.2) + Question Bank",
+              "duration_minutes": 25,
+              "activity": "insertOne(), insertMany() & 12-Byte ObjectId Anatomy"
+            },
+            {
+              "resource": "Flashcards (Beginner & Intermediate)",
+              "duration_minutes": 15,
+              "activity": "Active Recall Drill"
+            }
+          ]
+        },
+        {
+          "day": 3,
+          "topic": "Topics 4 & 5: Document Retrieval, Query Operators, Projection & Pagination",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "2-Level Mindmap (Topics 4 & 5, Sub-Topics 4.1–5.3)",
+              "duration_minutes": 10,
+              "activity": "Cursors, Operators & Pagination Pipeline"
+            },
+            {
+              "resource": "Microcasts 4 & 5 (Find vs FindOne & Filtering/Pagination)",
+              "duration_minutes": 15,
+              "activity": "Query Execution Audio Review"
+            },
+            {
+              "resource": "Detailed Study & Question Bank (Topics 4 & 5)",
+              "duration_minutes": 25,
+              "activity": "Filter Operators, Projection Rules & sort-skip-limit Order"
+            },
+            {
+              "resource": "Medium MCQ Quiz",
+              "duration_minutes": 10,
+              "activity": "Query Disambiguation Drill"
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "topic": "Topic 6: In-Place Document Updates & Atomic Field Modifiers",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "2-Level Mindmap (Topic 6, Sub-Topics 6.1–6.2)",
+              "duration_minutes": 10,
+              "activity": "Update Methods & Atomic Operators"
+            },
+            {
+              "resource": "Microcast 6 (In-Place Updates and Atomic Operators)",
+              "duration_minutes": 10,
+              "activity": "Atomic Modification Audio Walkthrough"
+            },
+            {
+              "resource": "Sub-Topic Read (6.1 & 6.2) + Question Bank",
+              "duration_minutes": 25,
+              "activity": "$set, $unset, $inc, $push, $pull & Upsert Semantics"
+            },
+            {
+              "resource": "Easy & Medium MSQ Quizzes",
+              "duration_minutes": 15,
+              "activity": "Multi-Select Constraint Verification"
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "topic": "Topic 7: Three-Tier Deletion Hierarchy & Full Exam Simulation",
+          "daily_budget_minutes": 60,
+          "schedule": [
+            {
+              "resource": "2-Level Mindmap & Microcast 7 (Topic 7, Sub-Topics 7.1–7.2)",
+              "duration_minutes": 15,
+              "activity": "deleteOne, deleteMany({}), drop() & dropDatabase()"
+            },
+            {
+              "resource": "Key Takeaways & Points to Remember",
+              "duration_minutes": 10,
+              "activity": "Index Preservation vs Namespace Destruction Matrix"
+            },
+            {
+              "resource": "PYQ Suite (VVIT MongoDB Past Questions)",
+              "duration_minutes": 15,
+              "activity": "High-Frequency University Shell Questions"
+            },
+            {
+              "resource": "Preparation Exam (Mock Test) + Hard MCQ/MSQ",
+              "duration_minutes": 20,
+              "activity": "Timed Examination Simulation"
+            }
+          ]
+        }
+      ]
+    },
+    "2_day_fast_track": {
+      "target_persona": "Exam Sprint / Mid-Term Revision",
+      "daily_time_budget_mins": 90,
+      "total_time_mins": 180,
+      "days": [
+        {
+          "day": 1,
+          "topic": "Databases, Collections, Ingestion & Query Retrieval (Topics 1–5)",
+          "daily_budget_minutes": 90,
+          "schedule": [
+            {
+              "resource": "Short Podcast + Key Takeaways (Topics 1–5)",
+              "duration_minutes": 25,
+              "activity": "High-Density Concept Reactivation"
+            },
+            {
+              "resource": "2-Level Mindmap L1 & L2 Read Sweep (Sub-Topics 1.1–5.3)",
+              "duration_minutes": 40,
+              "activity": "Lazy DB Creation, ObjectId, Filters, Projection & Pagination"
+            },
+            {
+              "resource": "Easy & Medium MCQ + MSQ Quizzes",
+              "duration_minutes": 25,
+              "activity": "Active Recall & Shell Syntax Check"
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "topic": "Atomic Updates, 3-Tier Deletion, PYQs & Mock Examination (Topics 6–7)",
+          "daily_budget_minutes": 90,
+          "schedule": [
+            {
+              "resource": "Microcasts 6 & 7 + Points to Remember",
+              "duration_minutes": 25,
+              "activity": "Atomic Update Modifiers, Upsert & 3-Tier Deletion Scope"
+            },
+            {
+              "resource": "Question Bank & PYQ Suite",
+              "duration_minutes": 35,
+              "activity": "Core Descriptive & Shell Query Problems"
+            },
+            {
+              "resource": "Preparation Exam (Mock Test) & Revise Flashcards",
+              "duration_minutes": 30,
+              "activity": "Timed Exam Simulation & Rapid Card Drill"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

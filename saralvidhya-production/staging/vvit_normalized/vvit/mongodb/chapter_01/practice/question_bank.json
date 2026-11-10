@@ -1,0 +1,1046 @@
+{
+  "schema_version": "2.0.0",
+  "subject": "VVIT — MongoDB NoSQL Database Systems",
+  "chapter": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "total_questions": 21,
+  "marks": {
+    "short": 2,
+    "comprehensive": 5,
+    "design": 10
+  },
+  "questions": [
+    {
+      "id": "QB_VVIT_MDB_001",
+      "card_id": "QB-01",
+      "mindmap_node_id": "node_003",
+      "topic_code": "1.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Context Switching & Creation (\"use <databaseName>\")",
+      "bloom_level": "Understand",
+      "difficulty": "easy",
+      "question": "In MongoDB database administration, how does the `use <databaseName>` statement manage session context switching and lazy disk materialization when a non-existent database name is specified?",
+      "verbatim_quote": "The `use` statement switches the current database context for all subsequent commands in the session. If the named database does not exist, MongoDB will create it as soon as data is written to it.",
+      "short_answer": "> \"The `use` statement switches the current database context for all subsequent commands in the session. If the named database does not exist, MongoDB will create it as soon as data is written to it.\"\n\nSelecting an unwritten database name establishes an in-memory session pointer only, deferring physical disk allocation until the first collection write occurs.",
+      "comprehensive_answer_points": [
+        "> \"The `use` statement switches the current database context for all subsequent commands in the session. If the named database does not exist, MongoDB will create it as soon as data is written to it.\"\n\n1. **Session Context Pointer**: Executing `use <databaseName>` immediately rebinds the shell's `db` global reference variable to the target namespace for all subsequent operations in the active client session.",
+        "2. **Absence of Dedicated Creation Command**: Unlike relational systems that require an explicit `CREATE DATABASE` DDL statement ahead of time, MongoDB has no dedicated command to pre-create an empty database container.",
+        "3. **Lazy Disk Materialization**: Selecting an unwritten database name via `use schoolDB` establishes an in-memory pointer only; the storage engine defers physical file allocation until the first collection write occurs.",
+        "4. **Context Switching Comparison Matrix**:\n\n| Lifecycle Phase | Command Executed | In-Memory `db` Context | Physical Disk Status | Visible in `show dbs` |\n| :--- | :--- | :--- | :--- | :--- |\n| **Context Selection** | `use schoolDB` | Bound to `schoolDB` | Unallocated on disk | Hidden |\n| **First Document Write** | `db.students.insertOne({ name: \"Aditi\", age: 18 })` | Bound to `schoolDB` | Materialized on disk | Visible (`0.000GB`) |",
+        "5. **Verification Workflow**:\n```javascript\nuse schoolDB\ndb.students.insertOne({ name: \"Aditi\", age: 18, grade: 8 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nIn traditional relational database management systems, provisioning a new database requires executing an explicit Data Definition Language (DDL) statement that immediately allocates system catalog entries, tablespaces, and physical disk extents before any table or row can be created. MongoDB fundamentally redesigns this provisioning lifecycle through **Dynamic Context Switching** and **Lazy Storage Materialization**. Rather than enforcing rigid upfront allocation, the MongoDB shell (`mongosh`) uses the `use <databaseName>` statement to unify context switching and just-in-time database creation.\n\n#### Core Architectural Analysis\n1. **Session-Level Namespace Binding**: Every interactive shell or driver session maintains an active database pointer represented by the global `db` variable. Issuing `use schoolDB` updates this pointer in client memory so that every subsequent operation—such as `db.students.insertOne()` or `show collections`—executes against the `schoolDB` namespace.\n2. **Elimination of Pre-Allocation Overhead**: MongoDB intentionally omits a dedicated `createDatabase()` command. When a developer switches to a database name that does not yet exist on the server, MongoDB accepts the context switch immediately without throwing a missing-catalog exception.\n3. **Deferred WiredTiger Allocation**: While `schoolDB` is selected in memory, zero bytes of physical disk storage are consumed and zero catalog files are written. This prevents abandoned or misspelled `use` commands from polluting the server storage catalog with empty database files.\n4. **First-Write Materialization Trigger**: Physical creation occurs strictly at the moment the first write operation (such as `db.students.insertOne({ name: \"Aditi\", age: 18 })` or explicit `db.createCollection(\"students\")`) is committed. At that exact juncture, the storage engine allocates both the `schoolDB` database namespace and the `students` collection container on disk.\n5. **Catalog Visibility Synchronization**: Because physical allocation is deferred until data persistence, an unwritten database selected solely via `use` remains completely invisible to server-wide catalog inspection (`show dbs`). Only after the first write does `schoolDB` appear in the storage inventory.\n6. **Multi-Database Session Isolation**: Administrators can seamlessly toggle between multiple operational namespaces (e.g., `use schoolDB`, `use admin`) within a single shell session, as each `use` directive cleanly rebinds the session pointer without closing the underlying TCP socket connection.\n\n#### Comparative Provisioning Matrix\n| Architectural Dimension | Relational DDL Provisioning | MongoDB Lazy Provisioning (`use <db>`) |\n| :--- | :--- | :--- |\n| **Dedicated Creation Command** | Mandatory (`CREATE DATABASE`) | None (`use <databaseName>` selects context) |\n| **Empty Database Persistence** | Immediately written to disk catalog | Exists only in session memory until first write |\n| **Trigger for Disk Allocation** | DDL execution time | First document insertion (`insertOne` / `insertMany`) |\n| **Typo / Unused Namespace Cost** | Leaves orphan empty catalog files | Zero disk footprint if no write occurs |\n\n#### End-to-End Implementation\n```javascript\n// Step 1: Select non-existent database in memory\nuse schoolDB\n\n// Step 2: Trigger physical materialization via first document write\ndb.students.insertOne({\n  name: \"Aditi\",\n  age: 18,\n  grade: 8\n});\n// schoolDB and students collection now physically exist on disk\n```\n\n#### Architectural Conclusion\nBy coupling `use <databaseName>` with first-write materialization, MongoDB achieves zero-ceremony onboarding for rapid application prototyping while guaranteeing that physical disk extents are allocated strictly for databases holding actual data.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A01",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_001",
+          "PYQ_MEDHA_MDB_013"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 1) & mongodb-reference-doc.pdf (Section 1)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_002",
+      "card_id": "QB-02",
+      "mindmap_node_id": "node_010",
+      "topic_code": "1.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Catalog Inspection (\"show dbs\")",
+      "bloom_level": "Understand",
+      "difficulty": "easy",
+      "question": "In MongoDB server catalog inspection, why does the show dbs command omit newly selected empty databases while always enumerating default system partitions?",
+      "verbatim_quote": "`show dbs` lists every database on the connected MongoDB server, along with its storage size.",
+      "short_answer": "> \"`show dbs` lists every database on the connected MongoDB server, along with its storage size.\"\n\nBecause `use` alone performs only in-memory selection, unwritten databases remain omitted until data is written, whereas default `admin`, `config`, and `local` partitions always appear.",
+      "comprehensive_answer_points": [
+        "> \"`show dbs` lists every database on the connected MongoDB server, along with its storage size.\"\n\n1. **Server-Wide Storage Inventory**: Executing `show dbs` inspects the physical storage engine catalog on the connected MongoDB server and outputs each database name paired with its allocated disk footprint.",
+        "2. **Physical Persistence Filter**: A database is listed by `show dbs` only when it physically holds at least one collection or document on disk, directly reflecting MongoDB's lazy creation invariant.",
+        "3. **Unwritten Context Exclusion**: If a session executes `use schoolDB` without inserting a document, `schoolDB` has zero disk extents and is excluded from `show dbs` output.",
+        "4. **Default System Partitions**:\n\n| Database Name | Category | Storage Role in MongoDB Server | Default Visibility |\n| :--- | :--- | :--- | :--- |\n| **`admin`** | System Partition | Root authentication, user roles, and server administration | Always listed (`0.000GB`) |\n| **`config`** | System Partition | Cluster metadata and sharding configuration state | Always listed (`0.000GB`) |\n| **`local`** | System Partition | Instance-specific data and replication oplog state | Always listed (`0.000GB`) |\n| **`schoolDB`** | User Database | Application collections (e.g., `students`) | Listed only after first write |",
+        "5. **Shell Inspection Output**:\n```javascript\nshow dbs\n// admin      0.000GB\n// config     0.000GB\n// local      0.000GB\n// schoolDB   0.000GB\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nEffective database administration requires accurate visibility into which namespaces physically reside on a database server and how much storage each partition consumes. In MongoDB, the `show dbs` shell helper serves as the primary diagnostic command for server-wide storage catalog inspection. Understanding why certain namespaces appear or remain hidden in `show dbs` requires examining how MongoDB separates transient session state from committed storage engine metadata.\n\n#### Core Architectural Analysis\n1. **Catalog Metadata Enumeration**: When an administrator runs `show dbs`, the shell dispatches an internal administrative command (`listDatabases`) to the connected MongoDB server instance. The storage engine scans its persisted namespace registry and returns an array of materialized databases along with their exact on-disk size formatted in gigabytes (for example, `0.000GB`).\n2. **Why Unwritten Databases Are Omitted**: Because `use <databaseName>` only modifies a local pointer inside the client shell without contacting the storage engine to allocate disk blocks, the server's physical catalog has no record of an unwritten database. Consequently, `show dbs` omits any database that has been selected via `use` but has not yet received a collection or document write.\n3. **Materialization Visibility Transition**: As soon as a client executes `db.students.insertOne({ name: \"Aditi\", age: 18 })` or `db.createCollection(\"students\")`, the storage engine allocates physical extents on disk and registers the namespace. Immediately thereafter, re-running `show dbs` includes `schoolDB   0.000GB` in the inventory.\n4. **The `admin` System Partition**: Every MongoDB deployment initializes the `admin` database by default to store authentication credentials, role-based access control definitions, and cluster-wide administrative commands.\n5. **The `config` System Partition**: The `config` database is pre-allocated by the server to track internal metadata, distributed session records, and shard chunk mappings in clustered deployments.\n6. **The `local` System Partition**: The `local` database stores node-specific operational metadata, startup logs, and replication oplog collections that are never replicated across other nodes.\n\n#### Storage Catalog Visibility Matrix\n| Database State | Shell Command Sequence | Disk Extent Count | Listed in `show dbs`? | Reported Footprint |\n| :--- | :--- | :--- | :--- | :--- |\n| **Pre-Initialized System DBs** | Fresh server startup | $\\ge 1$ system collections | Yes (`admin`, `config`, `local`) | `0.000GB` |\n| **Selected Unwritten User DB** | `use schoolDB` | `0` extents | No (Hidden) | Not applicable |\n| **Populated User DB** | `use schoolDB` + `insertOne(...)` | $\\ge 1$ data & index extents | Yes (`schoolDB`) | `0.000GB` |\n| **Dropped User DB** | `db.dropDatabase()` | `0` extents (unlinked) | No (Purged) | Not applicable |\n\n#### Diagnostic Verification Sequence\n```javascript\nuse schoolDB\nshow dbs\n// Output before write: only admin, config, local appear\n\ndb.students.insertOne({ name: \"Aditi\", age: 18 });\nshow dbs\n// admin      0.000GB\n// config     0.000GB\n// local      0.000GB\n// schoolDB   0.000GB\n```\n\n#### Architectural Conclusion\nThe `show dbs` command provides an authoritative view of physical disk utilization rather than transient session variables, ensuring administrators see only active user databases alongside mandatory `admin`, `config`, and `local` system partitions.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A02",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_002"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 2)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_003",
+      "card_id": "QB-03",
+      "mindmap_node_id": "node_017",
+      "topic_code": "1.3",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 1. Database Operations & Storage Lifecycle > Database Destruction & Removal (\"db.dropDatabase()\")",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB storage lifecycle management, what are the execution semantics, destruction scope, and irreversibility invariants of the db.dropDatabase() command?",
+      "verbatim_quote": "`db.dropDatabase()` permanently deletes the currently selected database, including all of its collections and documents. This action cannot be undone.",
+      "short_answer": "> \"`db.dropDatabase()` permanently deletes the currently selected database, including all of its collections and documents. This action cannot be undone.\"\n\nBecause it takes no arguments and acts strictly on the active `db` context pointer, administrators must verify the selected database via `use` before execution.",
+      "comprehensive_answer_points": [
+        "> \"`db.dropDatabase()` permanently deletes the currently selected database, including all of its collections and documents. This action cannot be undone.\"\n\n1. **Total Namespace Destruction**: Calling `db.dropDatabase()` permanently removes the entire currently selected database container along with every internal collection, BSON document, and index inside it.",
+        "2. **Context-Bound Execution**: The method takes zero parameters and acts strictly upon whatever database is currently referenced by the active session's `db` pointer.",
+        "3. **Irreversibility Invariant**: Once `db.dropDatabase()` completes, physical storage extents are unlinked from the server catalog and the deletion cannot be undone without external backups.",
+        "4. **Pre-Drop vs. Post-Drop State Comparison**:\n\n| Architectural Component | State Before `db.dropDatabase()` | State After `db.dropDatabase()` |\n| :--- | :--- | :--- |\n| **Database Entry in `show dbs`** | Listed (`schoolDB 0.000GB`) | Completely removed from server catalog |\n| **Internal Collections (`students`)** | Intact and queryable | Permanently destroyed from disk |\n| **Stored Documents & Indexes** | Persisted in disk extents | Unlinked and deallocated immediately |",
+        "5. **Safe Administrative Execution Pattern**:\n```javascript\nuse schoolDB\ndb.dropDatabase();\n// schoolDB and all its collections and documents are permanently removed\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nAt the terminal boundary of the database lifecycle, administrators must decommission obsolete test environments, staging namespaces, or retired application databases to reclaim physical disk space. In MongoDB, full database decommissioning is performed through the `db.dropDatabase()` method. Because this command executes an immediate, irreversible purge across an entire database namespace, understanding its context sensitivity and storage engine behavior is essential for safe database operations.\n\n#### Core Architectural Analysis\n1. **Zero-Argument Contextual Invocation**: Unlike SQL's `DROP DATABASE <name>`, which requires passing the target database identifier as an explicit syntax token, MongoDB's `db.dropDatabase()` accepts no database name argument. Instead, it resolves its target implicitly from the session's active `db` context pointer.\n2. **Mandatory Context Verification**: Because `db.dropDatabase()` targets the active session pointer, executing it while pointed at the wrong namespace will catastrophically destroy unintended production data. Therefore, the canonical operational sequence always pairs an explicit `use <databaseName>` context switch immediately prior to invoking `db.dropDatabase()`.\n3. **Hierarchical Cascade Purge**: When invoked against `schoolDB`, the storage engine iterates through every collection registered under `schoolDB` (such as `students` and `courses`), drops all associated B-tree indexes, deletes all BSON documents, and finally removes the `schoolDB` catalog entry itself.\n4. **Filesystem Extent Deallocation**: At the storage layer, `db.dropDatabase()` unlinks the physical data and index files associated with the database, immediately freeing those storage blocks back to the underlying operating system filesystem.\n5. **Strict Irreversibility Invariant**: MongoDB does not maintain an internal recycle bin or undo log for dropped databases. Once `db.dropDatabase()` returns its confirmation document (`{ ok: 1, dropped: \"schoolDB\" }`), the action cannot be undone.\n6. **Post-Drop Session Behavior**: Interestingly, after `db.dropDatabase()` purges `schoolDB` from disk, the shell session's `db` pointer still references the name `schoolDB` in memory; if a subsequent write is executed without changing context, MongoDB will lazily recreate a fresh `schoolDB` from scratch.\n\n#### Database Destruction Impact Matrix\n| System Dimension | Effect of `db.dropDatabase()` | Operational Implication |\n| :--- | :--- | :--- |\n| **Target Resolution** | Reads current `db` session pointer | Requires explicit `use <databaseName>` check first |\n| **Collections & Documents** | 100% purged across active database | Eliminates need to drop collections individually |\n| **Secondary Indexes** | All index trees deallocated | Frees both data and index disk space |\n| **Rollback Capability** | Strictly irreversible | Recoverable only from external snapshot backups |\n\n#### Complete Decommissioning Workflow\n```javascript\n// Step 1: Explicitly switch to the target database to be deleted\nuse schoolDB\n\n// Step 2: Execute permanent database deletion\ndb.dropDatabase();\n// schoolDB and all its data are permanently removed\n\n// Step 3: Confirm removal from server catalog\nshow dbs\n```\n\n#### Architectural Conclusion\nThe `db.dropDatabase()` command provides a clean, single-call administrative mechanism to purge an entire database namespace, its collections, and its documents, governed by strict session context binding and irreversible storage deallocation.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A03",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_003"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 3) & mongodb-reference-doc.pdf (Section 1)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_004",
+      "card_id": "QB-04",
+      "mindmap_node_id": "node_025",
+      "topic_code": "2.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Creation Mechanics (\"db.createCollection()\")",
+      "bloom_level": "Analyze",
+      "difficulty": "medium",
+      "question": "In MongoDB collection architecture, what is the technical distinction between implicit auto-creation during initial document insertion and explicit provisioning via db.createCollection(name, options)?",
+      "verbatim_quote": "`db.createCollection(name, options)` explicitly creates a new collection. Optional in most cases — MongoDB auto-creates a collection on first insert — but useful for setting validation rules or a capped size.",
+      "short_answer": "> \"`db.createCollection(name, options)` explicitly creates a new collection. Optional in most cases — MongoDB auto-creates a collection on first insert — but useful for setting validation rules or a capped size.\"\n\nImplicit creation occurs automatically on first `insertOne()` or `insertMany()`, whereas explicit creation pre-allocates an empty container with custom governance options.",
+      "comprehensive_answer_points": [
+        "> \"`db.createCollection(name, options)` explicitly creates a new collection. Optional in most cases — MongoDB auto-creates a collection on first insert — but useful for setting validation rules or a capped size.\"\n\n1. **Implicit Just-In-Time Creation**: In standard workflows, developers omit collection setup commands because MongoDB automatically creates a target collection upon the first `insertOne()` or `insertMany()` call.",
+        "2. **Explicit Provisioning Syntax**: Executing `db.createCollection(<name>, <options>)` explicitly registers an empty collection inside the active database before any documents are inserted.",
+        "3. **Schema Validation Enforcement**: Explicit creation allows passing a validator option to enforce BSON data types and required fields on incoming writes.",
+        "4. **Capped Collection Pre-Allocation**: The `options` parameter enables creating fixed-size circular ring-buffer collections (`capped: true`) that automatically overwrite the oldest documents once full.",
+        "5. **Provisioning Pathway Comparison**:\n\n| Provisioning Feature | Implicit Auto-Creation (`insertOne`) | Explicit Creation (`db.createCollection`) |\n| :--- | :--- | :--- |\n| **Trigger Mechanism** | First document write operation | Dedicated administrative method call |\n| **Initial Document Count** | $\\ge 1$ document immediately | `0` documents (empty container) |\n| **Custom Options (`options`)** | Uses default collection settings | Configures validation rules or capped size |\n\n```javascript\nuse schoolDB\ndb.createCollection(\"students\");\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nA foundational pillar of MongoDB's developer agility is its flexible collection lifecycle. Whereas relational databases mandate rigid `CREATE TABLE` statements defining column names, data types, and length constraints prior to data ingestion, MongoDB offers a dual-mode provisioning architecture: **Implicit Auto-Creation** for rapid, frictionless development and **Explicit Collection Provisioning** via `db.createCollection(name, options)` for production governance and specialized storage layouts.\n\n#### Core Architectural Analysis\n1. **Implicit Auto-Creation Mechanics**: When an application executes `db.students.insertOne({ name: \"Rahul\", age: 19 })` against a database where the `students` collection does not yet exist, the storage engine intercepts the write, dynamically allocates the `students` namespace with default parameters, builds the default `_id` index, and persists the document in one seamless step.\n2. **Explicit Creation via `db.createCollection()`**: When an empty collection must exist before data arrival—or when non-default collection properties are required—administrators invoke `db.createCollection(<name>, <options>)`. Executing `db.createCollection(\"students\")` immediately materializes an empty `students` container on disk and makes both the collection (`show collections`) and its parent database (`show dbs`) visible.\n3. **Schema Validation Rules**: Through the second `<options>` parameter of `db.createCollection()`, engineering teams can attach JSON Schema validation rules (`validator`). This enforces structural invariants—such as requiring `name` to be a string and `age` to be an integer—combining NoSQL flexibility with relational-grade governance.\n4. **Capped Collections (Circular Ring Buffers)**: Explicit provisioning is required to configure capped collections (`{ capped: true, size: 1048576 }`). Capped collections pre-allocate a fixed contiguous byte size on disk and preserve insertion order, automatically overwriting the oldest documents in First-In-First-Out (FIFO) fashion when capacity is reached, which is ideal for high-throughput event logs.\n5. **Operational Selection Criteria**: Standard application entities with evolving schemas rely on implicit auto-creation during initial document insertion, while regulated enterprise entities and bounded telemetry streams use explicit `db.createCollection(name, options)` to enforce structural governance from day one.\n6. **Zero-Document Materialization**: Unlike `use <databaseName>`, which stays in session memory only, `db.createCollection(\"students\")` writes namespace metadata directly to the storage engine catalog even though zero documents have been inserted yet.\n\n#### Collection Provisioning Comparison Matrix\n| Architectural Attribute | Implicit Auto-Creation | Explicit `db.createCollection(name, options)` |\n| :--- | :--- | :--- |\n| **Invocation Syntax** | `db.students.insertOne({...})` | `db.createCollection(\"students\", options)` |\n| **Empty Container Support** | Cannot create an empty collection | Creates an empty collection (`0` docs) |\n| **Schema Validation** | None at creation time | Supported via `options` validator object |\n| **Capped Storage Allocation** | Not supported implicitly | Supported via `{ capped: true, size: ... }` |\n\n#### Implementation Examples\n```javascript\nuse schoolDB\n\n// Pathway A: Explicit creation of an empty collection container\ndb.createCollection(\"students\");\n\n// Pathway B: Implicit auto-creation upon first document write\ndb.courses.insertOne({ title: \"Database Systems\", credits: 4 });\n```\n\n#### Architectural Conclusion\nBy supporting both implicit auto-creation on first write and explicit `db.createCollection(name, options)` provisioning, MongoDB balances zero-overhead schema evolution with fine-grained administrative control over validation rules and capped storage containers.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B01",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_004"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 4) & mongodb-reference-doc.pdf (Section 2)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_005",
+      "card_id": "QB-05",
+      "mindmap_node_id": "node_032",
+      "topic_code": "2.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Inventory Inspection (\"show collections\")",
+      "bloom_level": "Understand",
+      "difficulty": "easy",
+      "question": "In MongoDB namespace management, how does the show collections command enumerate collections within the active database scope, and what visibility rules govern its output?",
+      "verbatim_quote": "`show collections` lists every collection that exists in the currently selected database.",
+      "short_answer": "> \"`show collections` lists every collection that exists in the currently selected database.\"\n\nLike databases in `show dbs`, a collection appears in this active database listing only after physical materialization on disk via explicit `db.createCollection()` or an initial `insertOne()` or `insertMany()` document insert.",
+      "comprehensive_answer_points": [
+        "> \"`show collections` lists every collection that exists in the currently selected database.\"\n\n1. **Database-Scoped Enumeration**: While `show dbs` inspects the entire connected MongoDB server instance, `show collections` is strictly scoped to the active database currently selected via `use <databaseName>`.",
+        "2. **Materialization Requirement**: A collection identifier is displayed by `show collections` only after physical disk creation through `db.createCollection()` or an initial `insertOne()` or `insertMany()` document write.",
+        "3. **Empty Database Behavior**: Running `show collections` inside a freshly selected, unwritten database returns an empty result list because no collection namespaces have been written to physical disk extents yet.",
+        "4. **Catalog Inspection Scope Comparison**:\n\n| Diagnostic Command | Inspection Scope | Output Granularity | Visibility Prerequisite |\n| :--- | :--- | :--- | :--- |\n| **`show dbs`** | Server-wide instance | Database names + disk size (`GB`) | At least one materialized collection |\n| **`show collections`** | Active `db` namespace only | Collection names (e.g., `students`) | Explicit creation or first document insert |",
+        "5. **Verification Script**:\n```javascript\nuse schoolDB\ndb.createCollection(\"students\");\nshow collections\n// Output lists materialized collection: students\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nWhen navigating a multi-collection NoSQL database, developers and database administrators need a fast, reliable diagnostic command to inspect the structural inventory of the active working namespace. In MongoDB, the `show collections` command provides this database-scoped catalog inspection. Understanding how `show collections` resolves its target namespace and filters unwritten references clarifies the architectural relationship between session context, lazy allocation, and collection persistence.\n\n#### Core Architectural Analysis\n1. **Contextual Dependency on `use <databaseName>`**: Because `show collections` accepts no parameters, its output is governed entirely by the active `db` session pointer. Before inspecting collections, an administrator must ensure the correct database context is active by executing `use schoolDB`. Every collection belonging to `schoolDB` is then enumerated alphabetically.\n2. **Two Pathways to Catalog Visibility**: A collection becomes registered in the database namespace catalog—and therefore visible in `show collections`—through exactly two mechanisms: explicit creation via `db.createCollection(\"students\")` (even when holding zero documents) or implicit creation via a first document insertion such as `db.students.insertOne({ name: \"Aditi\", age: 18 })`.\n3. **Exclusion of Read-Only References**: Merely referencing a non-existent collection in a read query—for example, running `db.nonExistent.find()` or `db.nonExistent.findOne()`—returns an empty cursor or `null` without creating the collection on disk. Consequently, `nonExistent` will never appear in `show collections`.\n4. **Post-Truncation Persistence vs. Drop**: If all documents in `students` are deleted using `db.students.deleteMany({})`, the empty collection container remains registered in the catalog and **continues to appear** in `show collections`. Conversely, if `db.students.drop()` is executed, the collection container is destroyed and **disappears** from `show collections`.\n5. **Contrast with Server-Wide Inspection**: Whereas `show dbs` operates at the server cluster layer and reports disk storage metrics (`0.000GB`), `show collections` operates strictly within the active database boundary and outputs collection names.\n6. **Interactive Shell Workflow**: Developers routinely pair `use <db>` and `show collections` at the start of administrative debugging sessions to verify collection naming conventions and confirm physical schema materialization before issuing CRUD queries.\n\n#### Collection Visibility State Table\n| Preceding Operation on `schoolDB` | Physical Container Exists? | Document Count | Visible in `show collections`? |\n| :--- | :--- | :--- | :--- |\n| `use schoolDB` (only) | No | `0` | No (Empty output) |\n| `db.createCollection(\"students\")` | Yes | `0` | Yes (`students`) |\n| `db.students.insertOne({ name: \"Rahul\" })` | Yes | `1` | Yes (`students`) |\n| `db.students.deleteMany({})` | Yes | `0` | Yes (`students`) |\n| `db.students.drop()` | No | `0` | No (Removed from catalog) |\n\n#### Shell Session Walkthrough\n```javascript\n// Step 1: Select target database context\nuse schoolDB\n\n// Step 2: Provision collection explicitly or via insertOne, then inspect inventory\ndb.createCollection(\"students\");\nshow collections\n// Output:\n// students\n```\n\n#### Architectural Conclusion\nThe `show collections` command serves as the definitive namespace inventory check within an active MongoDB database, accurately reflecting all explicitly created and write-materialized collection containers stored on disk.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A04",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_005"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 5)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_006",
+      "card_id": "QB-06",
+      "mindmap_node_id": "node_039",
+      "topic_code": "2.3",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 2. Collection Architecture & Structural Management > Collection Removal & Destruction (\"db.<collection>.drop()\")",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB structural maintenance, how does executing `db.<collectionName>`.drop() affect stored BSON documents, collection metadata, and associated index structures?",
+      "verbatim_quote": "`db.<collection>.drop()` permanently removes a collection, its documents, and its indexes.",
+      "short_answer": "> \"`db.<collection>.drop()` permanently removes a collection, its documents, and its indexes.\"\n\nThis irreversible container-level operation immediately reclaims data and index disk extents for the named target collection while leaving all sibling collections in the active database completely untouched.",
+      "comprehensive_answer_points": [
+        "> \"`db.<collection>.drop()` permanently removes a collection, its documents, and its indexes.\"\n\n1. **Targeted Collection Removal**: Calling `db.<collectionName>.drop()` (such as `db.students.drop()`) permanently eliminates the target collection container from the currently active database.",
+        "2. **Complete Document & Index Purge**: In addition to deleting every BSON document stored inside the collection, `drop()` automatically deallocates the default `_id` index and any secondary indexes defined on that collection.",
+        "3. **Sibling Collection Isolation**: Dropping a single collection affects only that named namespace; other collections within the same database remain completely untouched.",
+        "4. **Irreversibility & Return Semantics**: The operation cannot be undone once executed, returning `true` when an existing collection is dropped and `false` if the collection did not exist.",
+        "5. **Collection Drop Impact Matrix**:\n\n| Target Component | Effect of `db.students.drop()` | Post-Execution Status |\n| :--- | :--- | :--- |\n| **`students` Documents** | Permanently deleted | `0` documents |\n| **`students` Indexes & Metadata** | Unlinked and destroyed | Removed from `show collections` |\n| **Other Collections in `schoolDB`** | Completely unaffected | Intact and operational |\n\n```javascript\ndb.students.drop();\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nDuring application refactoring or data lifecycle management, engineering teams frequently need to decommission an entire entity collection without disturbing the rest of the active database. MongoDB provides the `db.<collectionName>.drop()` method to perform surgical, container-level destruction. Understanding how `drop()` interacts with BSON data extents, B-tree index structures, and the database catalog is critical for safe schema maintenance.\n\n#### Core Architectural Analysis\n1. **Container-Level Namespace Removal**: Invoking `db.students.drop()` instructs the storage engine to remove the `students` collection entry from the active database's namespace catalog. Once completed, `students` no longer appears when `show collections` is executed in the shell.\n2. **Instantaneous Bulk Extent Deallocation**: Rather than scanning and deleting documents one by one across data pages, `db.students.drop()` unlinks the underlying storage extents allocated to the `students` collection in a single metadata operation, making it orders of magnitude faster than document-by-document deletion on large datasets.\n3. **Automatic Index Tree Destruction**: Every MongoDB collection maintains at least a primary `_id` B-tree index alongside any user-defined secondary indexes. Executing `db.students.drop()` automatically destroys all indexes defined on `students`, freeing their memory buffers and disk footprints simultaneously.\n4. **Metadata and Validator Purge**: Any collection-level configuration options attached during `db.createCollection()`—such as JSON schema validators or capped collection ring-buffer parameters—are permanently erased when the collection is dropped.\n5. **Boolean Return Contract & Sibling Isolation**: In `mongosh`, `db.students.drop()` evaluates to a boolean acknowledgment: it returns `true` if the collection existed and was successfully dropped, or `false` if the target namespace did not exist. Meanwhile, sibling collections in the same database (such as `courses` or `faculty`) remain 100% isolated and unaffected.\n6. **Strict Irreversibility Invariant**: Just like `db.dropDatabase()`, `db.<collectionName>.drop()` is permanently destructive and cannot be undone via shell commands once executed.\n\n#### Structural Comparison: `drop()` vs. Other Removal Operations\n| Operational Dimension | `db.students.drop()` | `db.students.deleteMany({})` | `db.dropDatabase()` |\n| :--- | :--- | :--- | :--- |\n| **Destruction Granularity** | Single named collection | Documents inside one collection | Entire active database |\n| **Collection Container** | Destroyed completely | Retained (empty container) | All containers destroyed |\n| **Collection Indexes** | Destroyed completely | Retained intact | All indexes destroyed |\n| **Sibling Collections** | Preserved untouched | Preserved untouched | Destroyed completely |\n\n#### Execution Example\n```javascript\nuse schoolDB\n\n// Step 1: Verify collection exists prior to removal\nshow collections\n// students\n\n// Step 2: Permanently remove the students collection, its documents, and its indexes\ndb.students.drop();\n// The \"students\" collection and all its documents are removed\n\n// Step 3: Confirm collection is no longer in catalog\nshow collections\n```\n\n#### Architectural Conclusion\nThe `db.<collectionName>.drop()` command delivers fast, irreversible container-level removal that purges a target collection's stored BSON documents, schema validation metadata, and secondary B-tree indexes in one atomic catalog operation while preserving all sibling collections inside the active database namespace on disk.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A05",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_006"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 6) & mongodb-reference-doc.pdf (Section 2)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_007",
+      "card_id": "QB-07",
+      "mindmap_node_id": "node_047",
+      "topic_code": "3.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create) > Single Document Insertion (\"insertOne()\")",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB CRUD Create operations, how does `db.<collectionName>`.insertOne(document) handle single BSON document persistence, dynamic collection initialization, and primary key allocation?",
+      "verbatim_quote": "Inserts a single document into a collection. If the collection doesn't exist yet, MongoDB creates it automatically.",
+      "short_answer": "> \"Inserts a single document into a collection. If the collection doesn't exist yet, MongoDB creates it automatically.\"\n\nExecuting `db.<collectionName>.insertOne(<document>)` serializes the single JSON object into BSON and automatically generates a unique 12-byte `ObjectId` primary key for the `_id` field when omitted.",
+      "comprehensive_answer_points": [
+        "> \"Inserts a single document into a collection. If the collection doesn't exist yet, MongoDB creates it automatically.\"\n\n1. **Single-Document Persistence Syntax**: `db.<collectionName>.insertOne(<document>)` accepts a single JavaScript object literal containing key-value pairs and persists it as a BSON document.",
+        "2. **Polymorphic Field Support**: Documents inserted via `insertOne()` can store strings, integers, booleans, arrays (such as `subjects: [\"Math\", \"Science\"]`), and nested objects.",
+        "3. **Automatic Collection & Database Creation**: If the specified collection does not exist in the current database, MongoDB creates both the collection and database automatically upon insertion.",
+        "4. **Automatic `_id` Primary Key Generation**: When the caller omits the `_id` attribute, MongoDB automatically injects a unique `_id` (`ObjectId`) to guarantee document identity.",
+        "5. **Payload Structure Matrix & Code Example**:\n\n| Field Name | Sample Value | BSON Data Type | Provisioning Source |\n| :--- | :--- | :--- | :--- |\n| **`_id`** | `ObjectId(\"...\")` | 12-byte ObjectId | Auto-generated by MongoDB |\n| **`name`** | `\"Rahul\"` | String | Caller payload |\n| **`age` / `grade`** | `19` / `9` | Integer | Caller payload |\n| **`subjects`** | `[\"Math\", \"Science\"]` | Array of Strings | Caller payload |\n\n```javascript\ndb.students.insertOne({\n  name: \"Rahul\",\n  grade: 9,\n  subjects: [\"Math\", \"Science\"]\n});\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nThe foundational write primitive in MongoDB's CRUD (Create, Read, Update, Delete) architecture is `db.<collectionName>.insertOne(<document>)`. Designed for transactional single-record creation—such as registering a new student, recording an academic enrollment, or creating a user profile—`insertOne()` encapsulates BSON serialization, automatic primary key generation, and just-in-time namespace provisioning inside a single atomic operation.\n\n#### Core Architectural Analysis\n1. **Document Payload & BSON Serialization**: The caller passes a single JSON-like object literal—for example, `{ name: \"Rahul\", age: 19 }` or `{ name: \"Rahul\", grade: 9, subjects: [\"Math\", \"Science\"] }`. The driver serializes this structure into Binary JSON (BSON), preserving rich data types including numbers, strings, arrays, and embedded sub-documents.\n2. **Mandatory `_id` Primary Key Invariant**: Every document stored in a MongoDB collection must possess a unique `_id` field that acts as the primary key and is indexed automatically. If the document passed to `insertOne()` does not specify an `_id` field, MongoDB automatically generates a 12-byte `ObjectId` (comprising a 4-byte timestamp, 5-byte random value, and 3-byte incrementing counter) and prepends it to the document.\n3. **Just-In-Time Namespace Initialization**: When `db.students.insertOne(...)` is executed on a non-existent `students` collection (or inside a newly selected `schoolDB` database), MongoDB does not raise a missing-table error. Instead, it dynamically initializes the `schoolDB` database, creates the `students` collection, builds the default `_id` index, and writes the document.\n4. **Single-Document Atomicity**: In MongoDB, write operations are atomic at the single-document level. Even when a document contains complex nested arrays like `subjects: [\"Math\", \"Science\"]`, `insertOne()` guarantees that either the entire document is persisted intact or nothing is written.\n5. **Write Acknowledgment Payload**: Upon completion, `insertOne()` returns a result document containing `{ acknowledged: true, insertedId: ObjectId(\"...\") }`, allowing application code to immediately reference the newly assigned primary key.\n6. **Strict Single-Object Contract**: Passing an array `[doc1, doc2]` to `insertOne()` is invalid and rejected; `insertOne()` strictly expects a single document object, whereas arrays of documents belong to `insertMany()`.\n\n#### `insertOne()` Execution Lifecycle Matrix\n| Execution Stage | Engine Action | Architectural Guarantee |\n| :--- | :--- | :--- |\n| **1. Payload Validation** | Verifies argument is a single BSON object | Rejects array payloads (`[...]`) |\n| **2. Identity Allocation** | Checks for `_id`; generates `ObjectId` if absent | Enforces primary key uniqueness |\n| **3. Namespace Check** | Verifies if `db` and `collection` exist on disk | Auto-creates missing database/collection |\n| **4. Storage Commit** | Appends BSON document and updates `_id` index | Returns `{ acknowledged: true, insertedId }` |\n\n#### Complete Code Implementation\n```javascript\nuse schoolDB\n\n// Insert a student document with scalar fields (Slide 7)\ndb.students.insertOne({\n  name: \"Rahul\",\n  age: 19\n});\n\n// Insert a student document containing an embedded array field (Doc Section 3)\ndb.students.insertOne({\n  name: \"Rahul\",\n  grade: 9,\n  subjects: [\"Math\", \"Science\"]\n});\n```\n\n#### Architectural Conclusion\nThrough `db.<collectionName>.insertOne(document)`, MongoDB streamlines single-entity persistence by combining polymorphic BSON serialization, automatic `_id` key generation, and lazy collection creation into a single atomic call.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A06",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_007"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 7) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_008",
+      "card_id": "QB-08",
+      "mindmap_node_id": "node_054",
+      "topic_code": "3.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create) > Batch Document Ingestion (\"insertMany()\")",
+      "bloom_level": "Apply",
+      "difficulty": "medium",
+      "question": "In MongoDB bulk data ingestion, how does `db.<collectionName>`.insertMany`([doc1, doc2, ...])` process array payloads to optimize network roundtrip efficiency?",
+      "verbatim_quote": "Inserts multiple documents into a collection in a single call, passed as an array.",
+      "short_answer": "> \"Inserts multiple documents into a collection in a single call, passed as an array.\"\n\nBy bundling multiple BSON document objects inside a bracketed array `[...]` in `db.<collectionName>.insertMany([doc1, doc2, ...])`, MongoDB minimizes client-server network roundtrips and assigns each document a unique `_id`.",
+      "comprehensive_answer_points": [
+        "> \"Inserts multiple documents into a collection in a single call, passed as an array.\"\n\n1. **Array Payload Requirement**: `db.<collectionName>.insertMany([doc1, doc2, ...])` strictly requires its argument to be an array (`[...]`) containing one or more BSON document objects.",
+        "2. **Single-Roundtrip Bulk Transmission**: Rather than opening separate network requests for each record, `insertMany()` transmits the entire document array in a single batch call to the MongoDB server.",
+        "3. **Schema Flexibility Across Array Elements**: Documents inside the same `insertMany()` array do not need identical fields; each element is persisted independently with its own auto-generated `_id`.",
+        "4. **Batch Ingestion Metrics Matrix**:\n\n| Batch Dimension | Sequential `insertOne()` Calls ($N$ Docs) | Single `insertMany([doc1, ...])` Call |\n| :--- | :--- | :--- |\n| **Input Argument Type** | Single object `{...}` per call | Array of objects `[{...}, {...}]` |\n| **Network Roundtrips** | $N$ client-server roundtrips | `1` bulk network transmission |\n| **Return Acknowledgment** | Single `insertedId` per call | Map of all `insertedIds` |",
+        "5. **Code Implementation**:\n```javascript\ndb.students.insertMany([\n  { name: \"Meera\", age: 17, grade: 7 },\n  { name: \"Kabir\", age: 18, grade: 8 }\n]);\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nWhen seeding databases, importing batch academic records, or ingesting high-velocity telemetry streams, inserting documents one at a time via sequential `insertOne()` calls introduces severe network latency because every call waits for a synchronous TCP roundtrip acknowledgment. MongoDB solves this bottleneck with `db.<collectionName>.insertMany([<document1>, <document2>, ...])`, a bulk ingestion primitive that transmits an array of BSON documents in a single server call.\n\n#### Core Architectural Analysis\n1. **Mandatory Array Delimiter Syntax**: Unlike `insertOne()`, which accepts a bare `{...}` object, `insertMany()` requires square brackets `[{...}, {...}]` encapsulating an ordered list of document objects. Passing a single unbracketed object to `insertMany()` throws a client type error.\n2. **Network Roundtrip Amortization**: By packaging multiple documents—such as `{ name: \"Meera\", age: 17 }` and `{ name: \"Kabir\", age: 18 }`—into one wire-protocol message, `insertMany()` amortizes network socket overhead and storage engine lock acquisition across the entire batch.\n3. **Per-Document `_id` Synthesis**: During batch processing, MongoDB inspects each element in the array individually. Any document lacking an explicit `_id` field is assigned its own unique 12-byte `ObjectId`, ensuring zero primary key collisions across the batch.\n4. **Polymorphic Schema Support Within a Batch**: Because MongoDB enforces no rigid column table schema by default, documents within the same `insertMany()` call can possess heterogeneous attributes—for example, one student record may include `age: 17` while another includes `grade: 8` and `subjects: [\"Math\"]`.\n5. **Dynamic Collection Provisioning**: Just like `insertOne()`, if `db.students.insertMany([...])` is invoked when `students` does not yet exist on disk, the storage engine automatically creates the collection and persists the entire array in one step.\n6. **Indexed Acknowledgment Map**: Upon completion, `insertMany()` returns `{ acknowledged: true, insertedIds: { '0': ObjectId(...), '1': ObjectId(...) } }`, mapping each zero-based array index position to its generated primary key so client applications can correlate every inserted record.\n\n#### Comparative Performance & Syntax Matrix\n| Architectural Parameter | `db.students.insertOne(doc)` | `db.students.insertMany([doc1, doc2])` |\n| :--- | :--- | :--- |\n| **Parameter Structure** | Single BSON object `{ key: value }` | Array of BSON objects `[{...}, {...}]` |\n| **Documents Persisted** | Strictly `1` document per call | $1$ to $N$ documents per batch call |\n| **Auto-Create Collection** | Yes, on first write operation | Yes, on first batch write operation |\n| **Primary Use Case** | Transactional single-user form submission | Bulk seeding, ETL imports, batch logs |\n\n#### Production Code Examples\n```javascript\nuse schoolDB\n\n// Batch insert using age attribute (Slide 7 standard)\ndb.students.insertMany([\n  { name: \"Meera\", age: 17 },\n  { name: \"Kabir\", age: 18 }\n]);\n\n// Batch insert using grade attribute (Reference Doc Section 3 standard)\ndb.students.insertMany([\n  { name: \"Meera\", grade: 7 },\n  { name: \"Kabir\", grade: 8 }\n]);\n```\n\n#### Architectural Conclusion\nBy accepting an array of heterogeneous BSON documents in a single network call, `db.<collectionName>.insertMany()` maximizes write throughput while preserving automatic collection creation and individual primary key allocation.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B02",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_008",
+          "PYQ_MEDHA_MDB_014"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 7) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_009",
+      "card_id": "QB-09",
+      "mindmap_node_id": "node_046",
+      "topic_code": "3.0",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 3. Document Ingestion Mechanics (CRUD Create)",
+      "bloom_level": "Analyze",
+      "difficulty": "medium",
+      "question": "In MongoDB write path engineering, what are the syntactic, payload, and operational tradeoffs between single-document insertion via insertOne() and batch array ingestion via insertMany()?",
+      "verbatim_quote": "`insertOne(document)` inserts a single document into a collection.\n- `insertMany([doc1, doc2, ...])` inserts multiple documents in a single call, passed as an array.",
+      "short_answer": "> \"`insertOne(document)` inserts a single document into a collection.\n- `insertMany([doc1, doc2, ...])` inserts multiple documents in a single call, passed as an array.\"\n\nBoth methods automatically create missing collections and assign `_id` keys, trading single-record simplicity (`insertedId`) against batched network throughput (`insertedIds`).",
+      "comprehensive_answer_points": [
+        "> \"`insertOne(document)` inserts a single document into a collection.\n- `insertMany([doc1, doc2, ...])` inserts multiple documents in a single call, passed as an array.\"\n\n1. **Syntactic Signature Contrast**: `insertOne(<document>)` accepts a single document object `{...}`, whereas `insertMany([<doc1>, <doc2>, ...])` mandates an array wrapper `[...]`.",
+        "2. **Shared Auto-Provisioning Guarantee**: Both methods automatically create the target collection (and parent database) on disk if the namespace does not yet exist.",
+        "3. **Primary Key Synthesis**: Both methods automatically allocate a unique 12-byte `ObjectId` (`_id`) for every document that omits an explicit `_id` key.",
+        "4. **Comprehensive Ingestion Comparison Table**:\n\n| Ingestion Dimension | `db.<collection>.insertOne()` | `db.<collection>.insertMany()` |\n| :--- | :--- | :--- |\n| **Accepted Argument** | Single object `{ name: \"Rahul\", age: 19 }` | Array `[{ name: \"Meera\" }, { name: \"Kabir\" }]` |\n| **Write Cardinality** | Strictly `1` document | Multiple ($N \\ge 1$) documents |\n| **Returned Key Field** | `insertedId` (single ObjectId) | `insertedIds` (indexed ObjectId map) |\n| **Implicit Collection Creation** | Yes | Yes |",
+        "5. **Unified CRUD Create Demonstration**:\n```javascript\ndb.students.insertOne({ name: \"Rahul\", age: 19 });\ndb.students.insertMany([{ name: \"Meera\", age: 17 }, { name: \"Kabir\", age: 18 }]);\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nThe Create layer of MongoDB's CRUD API is purposefully split into two explicit methods: `db.<collectionName>.insertOne()` and `db.<collectionName>.insertMany()`. Rather than overloading a single ambiguous `insert()` function that guesses whether the caller passed an object or an array, modern MongoDB drivers enforce strict method contracts. Analyzing both methods side by side reveals how MongoDB unifies underlying storage guarantees while optimizing for distinct application write patterns.\n\n#### Core Architectural Analysis\n1. **Explicit Type Contracts**: `insertOne(<document>)` enforces a single-object contract (`{ name: \"Rahul\", age: 19 }`), immediately rejecting arrays. Conversely, `insertMany([<doc1>, <doc2>, ...])` enforces an array contract (`[{ name: \"Meera\", age: 17 }, { name: \"Kabir\", age: 18 }]`), rejecting bare objects. This eliminates accidental bulk writes or malformed payload bugs.\n2. **Shared Just-In-Time Provisioning**: Both methods share identical catalog initialization semantics. If `schoolDB` has just been selected via `use schoolDB` and `students` does not exist, executing either `insertOne()` or `insertMany()` triggers immediate physical creation of the `schoolDB` database and `students` collection.\n3. **Nested Array vs. Batch Array Distinction**: A frequent conceptual pitfall is confusing an array *field* inside a single document with an array *of documents*. In `db.students.insertOne({ name: \"Rahul\", grade: 9, subjects: [\"Math\", \"Science\"] })`, `subjects` is an embedded array inside one document. In `insertMany([...])`, the outer brackets represent separate BSON documents.\n4. **Network Socket Utilization**: Inserting 100 student records via a loop of `insertOne()` calls incurs 100 sequential network roundtrips. Passing those 100 objects inside a single `insertMany([...])` call transmits a single batched wire-protocol payload, dramatically boosting ingestion throughput.\n5. **Atomicity Scope**: `insertOne()` is completely atomic for its single document. In `insertMany()`, each individual document insertion within the array is atomic at the document level, and by default documents are processed in serial array order.\n6. **Acknowledgment Structure**: `insertOne()` returns `{ acknowledged: true, insertedId: ObjectId(...) }`, whereas `insertMany()` returns `{ acknowledged: true, insertedIds: { 0: ObjectId(...), 1: ObjectId(...) } }`.\n\n#### Architectural Tradeoff Matrix\n| Evaluation Criterion | `insertOne(<document>)` | `insertMany([<doc1>, <doc2>, ...])` |\n| :--- | :--- | :--- |\n| **Outer Delimiter** | Curly braces `{ ... }` | Square brackets `[ { ... }, { ... } ]` |\n| **Embedded Array Support** | Yes (e.g., `subjects: [\"Math\", \"Science\"]`) | Yes, inside each individual document object |\n| **Network Overhead** | One roundtrip per document | One roundtrip per batch array |\n| **Collection Auto-Creation** | Automatic on first call | Automatic on first call |\n| **Default `_id` Injection** | Automatic per document | Automatic for every document in array |\n\n#### Comparative Code Implementation\n```javascript\nuse schoolDB\n\n// 1. Single document insertion with an embedded array field\ndb.students.insertOne({\n  name: \"Rahul\",\n  grade: 9,\n  subjects: [\"Math\", \"Science\"]\n});\n\n// 2. Multi-document batch insertion using an outer array payload\ndb.students.insertMany([\n  { name: \"Meera\", grade: 7 },\n  { name: \"Kabir\", grade: 8 }\n]);\n```\n\n#### Architectural Conclusion\nTogether, `insertOne()` and `insertMany()` provide type-safe, high-performance ingestion primitives that pair BSON schema flexibility and automatic collection creation with predictable single-record and batch semantics.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C01",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_015"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 7) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_010",
+      "card_id": "QB-10",
+      "mindmap_node_id": "node_062",
+      "topic_code": "4.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read) > Cursor-Based Querying (\"find()\")",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB CRUD Read operations, how does `db.<collectionName>`.find(query, projection) evaluate query filters and stream matching documents through a client-side cursor?",
+      "verbatim_quote": "Retrieves all documents in a collection that match a given query filter, returning a cursor. Calling `find()` with no arguments returns every document in the collection.",
+      "short_answer": "> \"Retrieves all documents in a collection that match a given query filter, returning a cursor. Calling `find()` with no arguments returns every document in the collection.\"\n\nBecause `db.<collectionName>.find(<query>, <projection>)` returns an iterable cursor, callers can stream batches lazily and chain `sort()`, `skip()`, and `limit()` modifiers.",
+      "comprehensive_answer_points": [
+        "> \"Retrieves all documents in a collection that match a given query filter, returning a cursor. Calling `find()` with no arguments returns every document in the collection.\"\n\n1. **Dual-Parameter Signature**: `db.<collectionName>.find(<query>, <projection>)` accepts an optional first `<query>` filter object to select matching documents and an optional second `<projection>` object to restrict returned fields.",
+        "2. **Unfiltered Match-All Behavior**: Invoking `db.students.find()` with no arguments—or passing an empty filter `{}`—matches every document in the `students` collection.",
+        "3. **Equality Filter Evaluation**: Passing a key-value predicate such as `{ age: 18 }` or `{ grade: 8 }` restricts the output strictly to documents whose field equals that value.",
+        "4. **Cursor Return & Method Chaining**: Because `find()` returns a cursor pointer rather than a single static object, callers can chain `.sort()`, `.skip()`, and `.limit()` modifiers onto it.",
+        "5. **Query Invocation Comparison Matrix**:\n\n| Query Expression | Filter Semantics | Returned Result Structure |\n| :--- | :--- | :--- |\n| **`db.students.find()`** | No filter (matches all documents) | Cursor over entire collection |\n| **`db.students.find({})`** | Explicit empty filter (matches all) | Cursor over entire collection |\n| **`db.students.find({ age: 18 })`** | Equality match on `age = 18` | Cursor over all matching documents |\n\n```javascript\ndb.students.find({ age: 18 });\ndb.students.find({ grade: 8 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nIn MongoDB's CRUD Read architecture, `db.<collectionName>.find(<query>, <projection>)` serves as the primary multi-document retrieval engine, analogous to the `SELECT ... FROM ... WHERE` statement in relational SQL. Rather than materializing millions of matching BSON documents into client memory all at once, `find()` evaluates query predicates on the server and returns a **client-side cursor** that streams results efficiently in batches.\n\n#### Core Architectural Analysis\n1. **Query Filter Evaluation (`<query>`)**: The first argument to `find()` is a BSON predicate document that specifies selection conditions. When `db.students.find({ age: 18 })` or `db.students.find({ grade: 8 })` is executed, the query engine scans the collection (or an applicable index) and selects every document where the target field matches the specified value.\n2. **Match-All Default Invariant**: When `find()` is invoked with zero arguments (`db.students.find()`) or with an explicit empty filter document (`db.students.find({})`), the query engine applies zero filtering constraints and returns every document in the collection.\n3. **Projection Masking (`<projection>`)**: The optional second argument defines which fields are transmitted back to the client (`1` for inclusion, `0` for exclusion). To apply a projection while still matching all documents, an empty filter `{}` must occupy the first parameter slot—for example, `db.students.find({}, { name: 1, age: 1, _id: 0 })`.\n4. **Cursor Streaming Mechanics**: `find()` always returns a cursor object—even when zero documents match (an empty cursor) or only one document matches. In `mongosh`, the shell automatically iterates the first batch of the cursor to display matching documents on screen.\n5. **Pipeline Modifier Chaining**: Because `find()` returns a lazy cursor object before query execution is finalized, developers can chain transformation methods—specifically `.sort()`, `.skip()`, and `.limit()`—directly onto `db.students.find(...)` to control ordering and pagination on the server.\n6. **Operator Extensibility**: Beyond simple equality checks, the `<query>` filter object accepts nested comparison operators (`$gt`, `$gte`, `$lt`, `$lte`, `$ne`), array operators (`$in`, `$nin`), and logical operators (`$or`, `$and`).\n\n#### `find()` Parameter & Behavior Matrix\n| Invocation Pattern | `<query>` Argument | `<projection>` Argument | Result Set Returned |\n| :--- | :--- | :--- | :--- |\n| `db.students.find()` | Omitted (Match all) | Omitted (All fields) | Cursor of all documents with all fields |\n| `db.students.find({ age: 18 })` | `{ age: 18 }` | Omitted (All fields) | Cursor of documents where `age == 18` |\n| `db.students.find({ grade: { $gte: 8 } })` | `{ grade: { $gte: 8 } }` | Omitted (All fields) | Cursor of documents where `grade >= 8` |\n| `db.students.find({}, { name: 1, _id: 0 })` | `{}` (Match all) | `{ name: 1, _id: 0 }` | Cursor of all documents with `name` only |\n\n#### Practical Query Examples\n```javascript\nuse schoolDB\n\n// Retrieve all documents in the students collection\ndb.students.find();\n\n// Retrieve all documents where age equals 18\ndb.students.find({ age: 18 });\n\n// Retrieve all documents where grade is 8 or higher\ndb.students.find({ grade: { $gte: 8 } });\n```\n\n#### Architectural Conclusion\nBy returning an iterable, chainable cursor and supporting expressive filter and projection documents, `db.<collectionName>.find()` forms the versatile backbone of multi-document querying in MongoDB.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_A07",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_009"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 8, 11) & mongodb-reference-doc.pdf (Sections 3, 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_011",
+      "card_id": "QB-11",
+      "mindmap_node_id": "node_069",
+      "topic_code": "4.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read) > Single Document Lookup (\"findOne()\")",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB document retrieval, how does `db.<collectionName>`.findOne(query, projection) execute first-match object resolution and handle non-matching query filters?",
+      "verbatim_quote": "Retrieves the first document that matches a given query filter, returning a single document (or null) instead of a cursor.",
+      "short_answer": "> \"Retrieves the first document that matches a given query filter, returning a single document (or null) instead of a cursor.\"\n\nBecause `db.<collectionName>.findOne(<query>, <projection>)` returns a resolved document object or `null`, it supports projection but disallows cursor methods like `sort()` and `limit()`.",
+      "comprehensive_answer_points": [
+        "> \"Retrieves the first document that matches a given query filter, returning a single document (or null) instead of a cursor.\"\n\n1. **Direct Single-Document Return**: Unlike `find()`, which returns a cursor, `db.<collectionName>.findOne(<query>, <projection>)` resolves and returns the first matching document object directly.",
+        "2. **Graceful `null` Fallback**: When zero documents in the collection satisfy the `<query>` predicate, `findOne()` evaluates cleanly to `null`.",
+        "3. **Projection Support**: Like `find()`, `findOne()` accepts a second `<projection>` argument (e.g., `{ name: 1, _id: 0 }`) to include or exclude specific fields in the returned document.",
+        "4. **Incompatibility with Cursor Modifiers**: Because the return value of `findOne()` is a resolved document (or `null`) rather than a cursor object, cursor methods such as `.sort()`, `.limit()`, and `.skip()` cannot be chained onto `findOne()`.",
+        "5. **`findOne()` Execution Matrix & Code**:\n\n| Scenario | Query Call | Return Value |\n| :--- | :--- | :--- |\n| **Match Found** | `db.students.findOne({ name: \"Rahul\" })` | First matching document object `{ _id: ..., name: \"Rahul\", ... }` |\n| **Projected Match** | `db.students.findOne({ age: { $gte: 18 } }, { name: 1, _id: 0 })` | `{ name: \"Aditi\" }` (single projected object) |\n| **No Match Found** | `db.students.findOne({ name: \"Unknown\" })` | `null` |\n\n```javascript\ndb.students.findOne({ name: \"Rahul\" });\ndb.students.findOne({ age: { $gte: 18 } }, { name: 1, _id: 0 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nMany application workflows—such as user authentication, profile lookup by name or identifier, and existence checks—require retrieving at most a single document rather than iterating over a multi-document cursor. For these point-lookup scenarios, MongoDB provides `db.<collectionName>.findOne(<query>, <projection>)`. Understanding how `findOne()` differs in return type, termination behavior, and method chaining from `find()` is essential for writing bug-free MongoDB queries.\n\n#### Core Architectural Analysis\n1. **First-Match Short-Circuit Execution**: When `db.students.findOne({ name: \"Rahul\" })` is executed, the MongoDB query engine scans the collection until it encounters the very first document satisfying `{ name: \"Rahul\" }`. Immediately upon finding that match, the scan halts and the single document is returned to the caller.\n2. **Terminal Object vs. Cursor Return**: Whereas `find()` always returns a cursor pointer, `findOne()` unwraps the result and returns the raw JavaScript/BSON document object directly. This allows application code to access fields immediately without cursor iteration.\n3. **Deterministic `null` Resolution**: If no document in the `students` collection matches the filter predicate, `findOne()` returns the literal value `null`. This provides a clean boolean check in application logic to verify whether an entity exists.\n4. **Full Projection Compatibility**: The second parameter of `findOne(<query>, <projection>)` operates identically to `find()`. Passing `db.students.findOne({ age: { $gte: 18 } }, { name: 1, _id: 0 })` (or `{ grade: { $gte: 8 } }, { name: 1, _id: 0 }`) strips out the default `_id` and all unreferenced fields, returning only `{ name: \"Aditi\" }` for the first matching student.\n5. **Why Cursor Methods Fail on `findOne()`**: Because `findOne()` executes immediately and returns a resolved document object (or `null`) instead of a lazy cursor, chaining cursor pipeline methods such as `db.students.findOne().sort({ age: -1 })` or `.limit(1)` raises a `TypeError`. If sorting before selecting a single document is required, developers must use `db.students.find().sort(...).limit(1)`.\n6. **Empty Filter Behavior**: Calling `db.students.findOne()` with no arguments or `{}` simply returns the first document stored in the collection in natural storage order.\n\n#### `findOne()` Operational Behavior Matrix\n| Query Aspect | `db.students.findOne(<query>, <projection>)` | Architectural Consequence |\n| :--- | :--- | :--- |\n| **Return Data Type** | Single BSON Document or `null` | Direct property access without cursor loop |\n| **Multiple Matches in DB** | Returns strictly the **first** match found | Subsequent matching documents are ignored |\n| **Zero Matches in DB** | Returns `null` | Simplifies missing-record error handling |\n| **Projection Parameter** | Supported as 2nd argument (`{ name: 1, _id: 0 }`) | Reduces payload size to required fields |\n| **`.sort()` / `.limit()` Chaining** | **Not supported** directly | Must use `find().sort().limit(1)` if order matters |\n\n#### Code Implementation\n```javascript\nuse schoolDB\n\n// 1. Retrieve the first student document matching name \"Rahul\"\ndb.students.findOne({ name: \"Rahul\" });\n\n// 2. Retrieve only the name of the first student with age >= 18 (Slide 13)\ndb.students.findOne(\n  { age: { $gte: 18 } },\n  { name: 1, _id: 0 }\n);\n\n// 3. Equivalent lookup using grade >= 8 (Reference Doc Section 4)\ndb.students.findOne(\n  { grade: { $gte: 8 } },\n  { name: 1, _id: 0 }\n);\n```\n\n#### Architectural Conclusion\nBy returning a single resolved document (or `null`) and supporting field projection as its second parameter, `findOne()` provides an ergonomic, low-overhead point-lookup primitive when cursor streaming and sorting are unnecessary.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B03",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_010"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 8, 13) & mongodb-reference-doc.pdf (Sections 3, 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_012",
+      "card_id": "QB-12",
+      "mindmap_node_id": "node_061",
+      "topic_code": "4.0",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 4. Document Retrieval & Query Architecture (CRUD Read)",
+      "bloom_level": "Analyze",
+      "difficulty": "medium",
+      "question": "In MongoDB query architecture, why does find() return an iterable cursor capable of pipeline chaining whereas findOne() returns a terminal document object or null?",
+      "verbatim_quote": "`findOne()` behaves like `find()` but always returns a single document (the first match) rather than a cursor, and does not support cursor methods like `sort()` or `limit()` directly.",
+      "short_answer": "> \"`findOne()` behaves like `find()` but always returns a single document (the first match) rather than a cursor, and does not support cursor methods like `sort()` or `limit()` directly.\"\n\nWhile `find()` yields an iterable cursor for multi-document streaming and pagination chaining, `findOne()` halts at the first match to return a terminal object or `null`.",
+      "comprehensive_answer_points": [
+        "> \"`findOne()` behaves like `find()` but always returns a single document (the first match) rather than a cursor, and does not support cursor methods like `sort()` or `limit()` directly.\"\n\n1. **Return Type Divergence**: `find()` always returns a cursor pointer over zero, one, or many matching documents, whereas `findOne()` directly returns the first matching document object or `null`.",
+        "2. **Cardinality & Scan Termination**: `find()` scans the collection to yield every document satisfying the filter, while `findOne()` halts immediately upon resolving the first match.",
+        "3. **Cursor Pipeline Support**: Because `sort()`, `limit()`, and `skip()` are cursor transformation methods, they can be chained onto `find()` (`db.students.find().sort({ age: -1 })`), but cannot be called on `findOne()`.",
+        "4. **Shared Parameter Signature**: Both methods accept identical `(<query>, <projection>)` arguments to filter documents and mask returned fields.",
+        "5. **Architectural Comparison Table**:\n\n| Feature Dimension | `db.<collection>.find(query, projection)` | `db.<collection>.findOne(query, projection)` |\n| :--- | :--- | :--- |\n| **Return Object** | Iterable Cursor | Single Document Object or `null` |\n| **Max Documents Returned** | All matching documents ($0$ to $N$) | Strictly $1$ (first match only) |\n| **No-Match Output** | Empty cursor | `null` |\n| **Supports `sort()` / `limit()` / `skip()`** | Yes (via cursor chaining) | No (not a cursor) |\n\n```javascript\ndb.students.find({ age: 18 }).sort({ name: 1 }).limit(5);\ndb.students.findOne({ name: \"Rahul\" }, { name: 1, _id: 0 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nA central design decision in MongoDB's Read API is the separation of multi-document set queries (`find()`) from single-entity point lookups (`findOne()`). Although both methods share the exact same two-argument signature—`(<query>, <projection>)`—their internal execution models and return types are fundamentally different. Understanding why `find()` yields an iterable cursor while `findOne()` yields a terminal document object explains how MongoDB supports both scalable pagination pipelines and direct record access.\n\n#### Core Architectural Analysis\n1. **Deferred Cursor Evaluation in `find()`**: When `db.students.find({ age: { $gte: 18 } })` is called, it constructs a query plan and returns a **cursor** handle rather than immediately pulling every matching document across the network. Because the cursor represents an unevaluated query stream, modifier methods like `.sort({ age: -1 })`, `.skip(10)`, and `.limit(5)` can be chained onto it to refine the server execution plan before documents are fetched.\n2. **Immediate Resolution in `findOne()`**: In contrast, `db.students.findOne({ age: { $gte: 18 } }, { name: 1, _id: 0 })` immediately executes the query on the server with an implicit internal limit of one document. It unwraps the response and returns the matching BSON document directly to the caller.\n3. **Handling Zero Matches**: When a query predicate matches no documents in the collection, `find()` returns a valid cursor object whose iteration yields zero items. Conversely, `findOne()` returns the primitive value `null`, enabling direct conditional checks without cursor exhaustion methods.\n4. **Why `findOne()` Rejects Cursor Modifiers**: Because `findOne()` returns either a plain document `{ name: \"Rahul\" }` or `null`, neither return value possesses cursor prototype methods. Attempting `db.students.findOne({ age: 18 }).sort({ name: 1 })` fails because `.sort()` is a method of the `Cursor` class, not of a BSON document.\n5. **Unified Filter and Projection Semantics**: Despite their return-type differences, both methods interpret `<query>` filters (including `$gt`, `$lt`, `$in`, `$or`) and `<projection>` masks (`{ name: 1, _id: 0 }`) identically.\n6. **Selecting the Optimal Read Method**: Engineers use `findOne()` when looking up a unique record (such as by `_id` or unique username) or checking existence, and use `find()` whenever multiple documents, sorting, or paginated windows (`skip`/`limit`) are required.\n\n#### Comprehensive Read Architecture Matrix\n| Architectural Dimension | `db.<collection>.find(query, projection)` | `db.<collection>.findOne(query, projection)` |\n| :--- | :--- | :--- |\n| **Primary Purpose** | Set retrieval, reporting, pagination | Single-record lookup, existence check |\n| **Return Value Type** | `Cursor` pointer | Single `Document` object or `null` |\n| **Empty Filter `()` / `({})`** | Streams every document in collection | Returns the very first document in collection |\n| **Projection Support** | Yes (2nd argument `{ field: 1 | 0 }`) | Yes (2nd argument `{ field: 1 | 0 }`) |\n| **`sort()`, `skip()`, `limit()`** | Fully supported via method chaining | Not supported directly |\n\n#### Side-by-Side Code Comparison\n```javascript\nuse schoolDB\n\n// 1. find(): Returns a cursor; supports projection and cursor chaining\ndb.students.find(\n  { age: { $gte: 18 } },\n  { name: 1, age: 1, _id: 0 }\n).sort({ age: -1 }).limit(5);\n\n// 2. findOne(): Returns a single document (or null); supports projection only\ndb.students.findOne(\n  { age: { $gte: 18 } },\n  { name: 1, _id: 0 }\n);\n```\n\n#### Architectural Conclusion\nThe dichotomy between `find()` and `findOne()` gives developers both a lazy, chainable cursor pipeline for sorted, paginated result sets and an immediate, null-safe object resolver for single-document lookups.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C02",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_016"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 8, 11, 12, 13) & mongodb-reference-doc.pdf (Sections 3, 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_013",
+      "card_id": "QB-13",
+      "mindmap_node_id": "node_077",
+      "topic_code": "5.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Conditional Filter Operators",
+      "bloom_level": "Apply",
+      "difficulty": "medium",
+      "question": "In MongoDB query predicate design, how do comparison operators, array membership operators, and compound logical operators construct complex document selection filters?",
+      "verbatim_quote": "A query filter narrows results to documents matching specific field values or query operators (e.g. `$gt`, `$lt`, `$in`). An empty filter (`{}`) matches every document.",
+      "short_answer": "> \"A query filter narrows results to documents matching specific field values or query operators (e.g. `$gt`, `$lt`, `$in`). An empty filter (`{}`) matches every document.\"\n\nComparison (`$gt`, `$gte`, `$lt`, `$lte`, `$ne`) and membership (`$in`, `$nin`) operators nest inside field objects, whereas `$or` and `$and` take condition arrays.",
+      "comprehensive_answer_points": [
+        "> \"A query filter narrows results to documents matching specific field values or query operators (e.g. `$gt`, `$lt`, `$in`). An empty filter (`{}`) matches every document.\"\n\n1. **Relational Comparison Operators**: Placed inside a field's filter value (`{ field: { $<op>: value } }`), `$gt` (greater than), `$gte` (greater than or equal), `$lt` (less than), `$lte` (less than or equal), and `$ne` (not equal) evaluate threshold bounds.",
+        "2. **Array Membership Operators**: `$in` matches documents where the field value equals any element in a specified array (`{ age: { $in: [17, 18, 19] } }`), while `$nin` selects documents whose value is not in the array.",
+        "3. **Compound Logical Operators**: `$or` and `$and` take a top-level array of condition objects (`[{ cond1 }, {.",
+        "4. **Complete Query Operator Reference Table**:\n\n| Operator Family | Operators | Syntax Pattern | Evaluation Semantics |\n| :--- | :--- | :--- | :--- |\n| **Comparison** | `$gt`, `$gte`, `$lt`, `$lte`, `$ne` | `{ age: { $gte: 18 } }` | Compares field value against scalar threshold |\n| **Set Membership** | `$in`, `$nin` | `{ age: { $in: [17, 18, 19] } }` | Checks inclusion or exclusion in array list |\n| **Logical** | `$or`, `$and` | `{ $or: [{ cond1 }, { cond2 }] }` | Combines multiple filter clauses |",
+        "5. **Action Queries**:\n```javascript\ndb.students.find({ age: { $in: [17, 18, 19] } });\ndb.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nReal-world analytical queries rarely rely on simple exact-value matching (`{ age: 18 }`). Applications routinely need to filter documents across numeric ranges, check whether a field matches a discrete list of allowed values, or combine multiple predicates using Boolean algebra. MongoDB expresses these complex predicates directly inside the BSON query filter document using **Comparison Operators**, **Array Membership Operators**, and **Logical Operators**.\n\n#### Core Architectural Analysis\n1. **Field-Scoped Comparison Syntax**: All relational comparison operators—`$gt` (greater than), `$gte` (greater than or equal), `$lt` (less than), `$lte` (less than or equal), and `$ne` (not equal)—are nested as a sub-document inside the target field key: `{ <field>: { $<operator>: <value> } }`. For example, `{ age: { $gte: 18 } }` selects every student aged 18 or older.\n2. **Multi-Bound Chaining on a Single Field**: Multiple comparison operators can be combined inside the same field object to express interval bounds—for instance, `{ age: { $gt: 16, $lt: 20 } }` (or testing contradictory bounds like `{ age: { $gt: 16, $lt: 10 } }`, which evaluates both conditions simultaneously and returns an empty cursor).\n3. **Set Inclusion via `$in` and Exclusion via `$nin`**: Rather than writing verbose chains of equality checks on the same field, `$in` evaluates whether a field's value matches any element inside a target array: `db.students.find({ age: { $in: [17, 18, 19] } })`. Its inverse, `$nin` (not in array), selects documents whose field value does not match any element in the list.\n4. **Logical Disjunction (`$or`)**: Unlike comparison operators that sit *inside* a field name, logical operators sit at the outer level and take an **array of condition objects**. In `db.students.find({ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] })`, a document is returned if its `age` is at least 19 OR its `name` equals `\"Rahul\"`.\n5. **Logical Conjunction (`$and`)**: The `$and` operator takes an array of condition objects (`{ $and: [{ cond1 }, { cond2 }] }`) and selects a document only if every single condition object in the array is satisfied.\n6. **Composability Across Read, Update, and Delete**: Filter operators are universal across MongoDB CRUD—the exact same filter syntax works inside `find()`, `findOne()`, `updateOne()`, `updateMany()`, `deleteOne()`, and `deleteMany()`.\n\n#### Query Operator Taxonomy & Syntax Matrix\n| Operator | Category | Formal Meaning | Canonical Filter Example |\n| :--- | :--- | :--- | :--- |\n| **`$gt` / `$gte`** | Comparison | Strictly greater / Greater or equal | `{ age: { $gte: 18 } }` |\n| **`$lt` / `$lte`** | Comparison | Strictly less / Less or equal | `{ age: { $gt: 16, $lt: 20 } }` |\n| **`$ne`** | Comparison | Not equal to value | `{ age: { $ne: 17 } }` |\n| **`$in` / `$nin`** | Array Membership | Value in array / Not in array | `{ age: { $in: [17, 18, 19] } }` |\n| **`$or` / `$and`** | Logical | Logical OR / Logical AND | `{ $or: [{ age: { $gte: 19 } }, { name: \"Rahul\" }] }` |\n\n#### Production Query Examples\n```javascript\nuse schoolDB\n\n// 1. Combined range comparison on a single field\ndb.students.find({ age: { $gt: 16, $lt: 20 } });\n\n// 2. Set membership using $in\ndb.students.find({ age: { $in: [17, 18, 19] } });\n\n// 3. Compound disjunction using $or\ndb.students.find({\n  $or: [\n    { age: { $gte: 19 } },\n    { name: \"Rahul\" }\n  ]\n});\n```\n\n#### Architectural Conclusion\nBy nesting comparison and set-membership operators inside field keys while placing logical `$or` and `$and` operators over arrays of condition clauses, MongoDB enables declarative, composable query filtering without SQL string concatenation.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B04",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_011",
+          "PYQ_MEDHA_MDB_017"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 14, 15) & mongodb-reference-doc.pdf (Section 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_014",
+      "card_id": "QB-14",
+      "mindmap_node_id": "node_087",
+      "topic_code": "5.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Field Projection Mechanics",
+      "bloom_level": "Apply",
+      "difficulty": "medium",
+      "question": "In MongoDB read optimization, how does the projection parameter of find() and findOne() control field inclusion, field exclusion, and default _id primary key suppression?",
+      "verbatim_quote": "The second argument to `find()` is a projection, which controls which fields are included or excluded in the returned documents. Use `1` to include a field and `0` to exclude it.",
+      "short_answer": "> \"The second argument to `find()` is a projection, which controls which fields are included or excluded in the returned documents. Use `1` to include a field and `0` to exclude it.\"\n\nMongoDB always includes the `_id` primary key by default in projected results unless explicitly suppressed with `_id: 0`.",
+      "comprehensive_answer_points": [
+        "> \"The second argument to `find()` is a projection, which controls which fields are included or excluded in the returned documents. Use `1` to include a field and `0` to exclude it.\"\n\n1. **Positional Signature**: Projection is passed as the **second argument** to `find(<query>, <projection>)` or `findOne(<query>, <projection>)`; if all documents are targeted, an empty filter `{}` must occupy the first argument.",
+        "2. **Inclusion (`1`) vs. Exclusion (`0`) Flags**: Setting `{ field: 1 }` restricts output to the named fields, whereas `{ field: 0 }` omits the specified fields while returning all others.",
+        "3. **Default `_id` Inclusion Rule**: Even when an inclusion projection specifies `{ name: 1, age: 1 }`, MongoDB automatically includes `_id` in every returned document by default.",
+        "4. **Explicit `_id: 0` Suppression**: To omit the primary key from an inclusion projection, the caller must explicitly include `_id: 0` alongside the included fields.",
+        "5. **Projection Behavior Matrix & Code**:\n\n| Projection Document | Returned Fields | `_id` Field Included? |\n| :--- | :--- | :--- |\n| **Omitted** | All fields in document | Yes (Default) |\n| **`{ name: 1, age: 1 }`** | `_id`, `name`, `age` | Yes (Implicit default) |\n| **`{ name: 1, age: 1, _id: 0 }`** | `name`, `age` only | No (Explicitly suppressed) |\n\n```javascript\ndb.students.find({}, { name: 1, age: 1, _id: 0 });\ndb.students.findOne({ grade: { $gte: 8 } }, { name: 1, _id: 0 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nIn production document databases, individual BSON documents frequently store dozens of attributes, embedded arrays, and metadata objects. Returning the entire document when an application UI only needs a student's `name` and `age` wastes network bandwidth and client deserialization memory. MongoDB solves this through **Field Projection**, passed as the second parameter to both `find(<query>, <projection>)` and `findOne(<query>, <projection>)`.\n\n#### Core Architectural Analysis\n1. **Two-Argument Positional Contract**: Because projection is strictly the second argument of `find(query, projection)`, developers cannot pass a projection document as the first argument (doing so would be interpreted as a query filter looking for documents whose field literally equals the number `1` or `0`). When projecting across every document in a collection, an empty query filter `{}` must be supplied first: `db.students.find({}, { name: 1, age: 1, _id: 0 })`.\n2. **Explicit Field Inclusion (`1`)**: Specifying `{ name: 1, age: 1 }` (or `{ name: 1, grade: 1 }`) instructs the MongoDB server to construct a lean response document containing only the explicitly flagged fields, automatically stripping unreferenced fields such as `subjects` or `promoted`.\n3. **Explicit Field Exclusion (`0`)**: Specifying `{ subjects: 0 }` instructs the server to return every field in the matching document *except* the excluded fields.\n4. **The Special `_id` Default Inclusion Rule**: By architectural design, the primary key field `_id` is always included in projected results (`_id: 1` implicitly), even when the caller specifies an explicit inclusion list like `{ name: 1, age: 1 }`.\n5. **Mandatory Zero Suppression (`_id: 0`)**: The sole exception where `1` (inclusion) and `0` (exclusion) may be combined in the same projection document is when suppressing the `_id` key inside an inclusion projection: `{ name: 1, age: 1, _id: 0 }`. Adding `_id: 0` cleanly strips the `ObjectId` so only `{ name: \"Aditi\", age: 18 }` is transmitted.\n6. **Compatibility with `findOne()`**: Projection works identically in single-document lookups—for example, `db.students.findOne({ age: { $gte: 18 } }, { name: 1, _id: 0 })` returns only the `name` field of the first qualifying student.\n\n#### Field Projection Evaluation Matrix\n| Query & Projection Call | Filter Applied | Fields Returned per Document |\n| :--- | :--- | :--- |\n| `db.students.find({})` | Match all documents | `_id`, `name`, `age`, `grade`, `subjects`, ... |\n| `db.students.find({}, { name: 1, age: 1 })` | Match all documents | `_id`, `name`, `age` |\n| `db.students.find({}, { name: 1, age: 1, _id: 0 })` | Match all documents | `name`, `age` (pure payload) |\n| `db.students.findOne({ grade: { $gte: 8 } }, { name: 1, _id: 0 })` | First match `grade >= 8` | `name` only |\n\n#### Implementation Examples\n```javascript\nuse schoolDB\n\n// 1. Project only name and age for every student, suppressing _id (Slide 11)\ndb.students.find({}, { name: 1, age: 1, _id: 0 });\n\n// 2. Project only name and grade for every student, suppressing _id (Doc Section 4)\ndb.students.find({}, { name: 1, grade: 1, _id: 0 });\n\n// 3. Project only name in a single-document findOne() lookup (Slide 13)\ndb.students.findOne(\n  { age: { $gte: 18 } },\n  { name: 1, _id: 0 }\n);\n```\n\n#### Architectural Conclusion\nField projection enables surgical control over read payloads in `find()` and `findOne()`, reducing network transfer size while enforcing explicit `_id: 0` opt-out semantics for primary key suppression.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B05",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_012"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 11, 13) & mongodb-reference-doc.pdf (Section 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_015",
+      "card_id": "QB-15",
+      "mindmap_node_id": "node_094",
+      "topic_code": "5.3",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 5. Advanced Query Filtering, Projection & Pagination > Cursor Pipeline Transformation & Pagination",
+      "bloom_level": "Apply",
+      "difficulty": "medium",
+      "question": "In MongoDB result set pagination, how are the cursor modifier methods sort(), skip(), and limit() chained together to implement deterministic page traversal?",
+      "verbatim_quote": "`limit()` caps the number of documents returned by a query. `skip()` omits a given number of documents from the start of the results — commonly combined for pagination.",
+      "short_answer": "> \"`limit()` caps the number of documents returned by a query. `skip()` omits a given number of documents from the start of the results — commonly combined for pagination.\"\n\nPairing `sort({ field: 1 | -1 })` (`1` ascending, `-1` descending) with `skip(n)` and `limit(n)` implements deterministic server-side page traversal.",
+      "comprehensive_answer_points": [
+        "> \"`limit()` caps the number of documents returned by a query. `skip()` omits a given number of documents from the start of the results — commonly combined for pagination.\"\n\n1. **Result Ordering (`sort()`)**: `db.<collection>.find().sort({ <field>: 1 | -1 })` sorts matching documents by the target field using `1` for ascending order (lowest to highest) and `-1` for descending order (highest to lowest).",
+        "2. **Offset Omission (`skip()`)**: `.skip(<n>)` instructs the cursor to discard the first $n$ documents from the beginning of the ordered result stream.",
+        "3. **Result Count Cap (`limit()`)**: `.limit(<n>)` restricts the cursor to emit at most $n$ documents after any skip offset is applied.",
+        "4. **Cursor Pagination Pipeline Matrix**:\n\n| Cursor Method | Syntax | Parameter Meaning | Role in Pagination |\n| :--- | :--- | :--- | :--- |\n| **`sort()`** | `.sort({ age: 1 })` / `.sort({ age: -1 })` | `1` = Ascending, `-1` = Descending | Guarantees deterministic ordering |\n| **`skip()`** | `.skip(10)` | Number of leading docs to omit | Advances cursor to target page offset |\n| **`limit()`** | `.limit(5)` | Maximum docs returned | Caps output to fixed page size |",
+        "5. **Pagination Code Implementation**:\n```javascript\ndb.students.find().sort({ age: -1 });\ndb.students.find().sort({ age: 1 }).skip(10).limit(5);\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nWhen applications display large collections in user interfaces or API endpoints, returning thousands of documents in a single response degrades network latency and browser responsiveness. Instead, systems divide result sets into discrete pages of fixed size. MongoDB implements server-side ordering and pagination through three chainable cursor methods—`sort()`, `skip()`, and `limit()`—applied directly to `db.<collectionName>.find()`.\n\n#### Core Architectural Analysis\n1. **Deterministic Ordering via `sort({ <field>: 1 | -1 })`**: Because natural storage order on disk can shift as documents grow or get deleted, pagination requires a deterministic sort order first. Passing `1` sorts values in ascending order (lowest to highest numeric value or A-to-Z strings), whereas passing `-1` sorts values in descending order (highest to lowest numeric value or Z-to-A strings).\n2. **Page Offset Traversal via `skip(<n>)`**: The `skip(n)` method instructs the query execution engine to step over the first $n$ matching documents of the sorted stream before emitting results. For a page size of $P$ and 1-based page number $k$, the offset is calculated as $\\text{skip} = (k - 1) \\times P$. For example, `.skip(10)` with a page size of `5` skips pages 1 and 2 (documents 1–10) to start at document 11 (Page 3).\n3. **Page Size Enforcement via `limit(<n>)`**: The `limit(n)` method caps the maximum number of documents returned by the cursor to $n$. Once $n$ documents have been emitted after the skip offset, the server closes the cursor batch.\n4. **Canonical Pipeline Execution Order**: Even if chained in a different syntactic sequence, MongoDB logically evaluates cursor modifiers in the canonical pipeline order: **1. `sort()` $\\rightarrow$ 2. `skip()` $\\rightarrow$ 3. `limit()`**. Writing `.sort(...).skip(...).limit(...)` explicitly mirrors this execution order.\n5. **Cursor-Only Availability**: All three methods belong strictly to the `Cursor` prototype returned by `find()` and cannot be invoked directly on `findOne()`.\n6. **Combining Filter, Projection, and Pagination**: A single `find(query, projection)` call can seamlessly chain `.sort()`, `.skip()`, and `.limit()` to filter, project, sort, and paginate in one server query.\n\n#### Pagination Pipeline Evaluation Table\n| Chained Query Expression | Sort Direction | Skipped Docs | Returned Count | Result Slice |\n| :--- | :--- | :--- | :--- | :--- |\n| `db.students.find().sort({ age: -1 })` | Descending (`-1`) | `0` | All matching | Highest to lowest age |\n| `db.students.find().sort({ age: 1 }).limit(5)` | Ascending (`1`) | `0` | `5` | Page 1 (Docs 1–5) |\n| `db.students.find().sort({ age: 1 }).skip(5).limit(5)` | Ascending (`1`) | `5` | `5` | Page 2 (Docs 6–10) |\n| `db.students.find().sort({ age: 1 }).skip(10).limit(5)` | Ascending (`1`) | `10` | `5` | Page 3 (Docs 11–15) |\n\n#### Complete Code Examples\n```javascript\nuse schoolDB\n\n// 1. Order students from highest to lowest age (Slide 12)\ndb.students.find().sort({ age: -1 });\n\n// 2. Order students from highest to lowest grade (Doc Section 4)\ndb.students.find().sort({ grade: -1 });\n\n// 3. Paginated query: sort ascending, skip first 10, return next 5\ndb.students.find().sort({ age: 1 }).skip(10).limit(5);\ndb.students.find().sort({ grade: 1 }).skip(10).limit(5);\n```\n\n#### Architectural Conclusion\nBy chaining `sort({ field: 1 | -1 })`, `skip(n)`, and `limit(n)` onto `find()` cursors, MongoDB provides a clean, declarative pipeline for server-side sorting and offset-based pagination.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C03",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_018"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 12) & mongodb-reference-doc.pdf (Section 4)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_016",
+      "card_id": "QB-16",
+      "mindmap_node_id": "node_103",
+      "topic_code": "6.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Update Scope & Execution Methods",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB CRUD Update operations, how do updateOne(filter, update) and updateMany(filter, update) differ in target document scope while preserving unreferenced fields?",
+      "verbatim_quote": "Updates the first document that matches a query filter, using update operators such as `$set` to modify specific fields without replacing the whole document.",
+      "short_answer": "> \"Updates the first document that matches a query filter, using update operators such as `$set` to modify specific fields without replacing the whole document.\"\n\nWhile `updateOne(filter, update)` mutates only the first match, `updateMany(filter, update)` applies those operators across every matching document while preserving unreferenced fields.",
+      "comprehensive_answer_points": [
+        "> \"Updates the first document that matches a query filter, using update operators such as `$set` to modify specific fields without replacing the whole document.\"\n\n1. **Two-Argument Update Signature**: Both `updateOne(<filter>, <update>)` and `updateMany(<filter>, <update>)` require a first `<filter>` argument to select documents and a second `<update>` document containing update operators.",
+        "2. **Single-Match Scope (`updateOne`)**: `updateOne()` stops after mutating the very first document satisfying the filter criteria, even if other documents also match.",
+        "3. **Multi-Match Scope (`updateMany`)**: `updateMany()` iterates across the entire collection and applies the exact same update operators to every document matching the filter.",
+        "4. **In-Place Field Preservation**: Using operators like `$set` alters only the specified attributes while leaving `_id` and all other existing attributes untouched.",
+        "5. **Update Scope Comparison Matrix & Code**:\n\n| Update Method | Target Scope | Example Invocation | Effect on Unreferenced Fields |\n| :--- | :--- | :--- | :--- |\n| **`updateOne(filter, update)`** | First matching document only | `db.students.updateOne({ name: \"Rahul\" }, { $set: { age: 20 } })` | Preserved intact |\n| **`updateMany(filter, update)`** | Every matching document | `db.students.updateMany({ age: 18 }, { $set: { promoted: true } })` | Preserved intact |\n\n```javascript\ndb.students.updateOne({ name: \"Rahul\" }, { $set: { age: 20 } });\ndb.students.updateMany({ age: 18 }, { $set: { promoted: true } });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nModifying persisted data in a document database requires clear control over both **mutation cardinality** (whether one record or an entire cohort should change) and **field preservation** (ensuring that updating a single attribute does not erase the rest of the document). MongoDB addresses these requirements through `db.<collectionName>.updateOne(<filter>, <update>)` and `db.<collectionName>.updateMany(<filter>, <update>)`.\n\n#### Core Architectural Analysis\n1. **Shared Two-Parameter Contract**: Both methods accept `<filter>` as their first parameter (using the exact same predicate syntax as `find()`) and `<update>` as their second parameter (containing dollar-prefixed update operators such as `$set`, `$inc`, `$push`, or `$pull`).\n2. **Targeted Point Mutation via `updateOne()`**: When `db.students.updateOne({ name: \"Rahul\" }, { $set: { age: 20 } })` (or `{ $set: { grade: 10 } }`) executes, the storage engine locates the first document matching `{ name: \"Rahul\" }`, modifies its `age` field in-place to `20`, and immediately terminates without touching any subsequent documents that might share the same name.\n3. **Cohort-Wide Bulk Mutation via `updateMany()`**: When `db.students.updateMany({ age: 18 }, { $set: { promoted: true } })` (or `{ grade: 8 }, { $set: { promoted: true } }`) executes, the engine locates **every** document in `students` where `age` equals `18` and sets `promoted: true` across the entire matching cohort.\n4. **Non-Destructive In-Place Field Modification**: By requiring update operators like `$set`, both `updateOne()` and `updateMany()` perform surgical in-place modifications. Unreferenced fields in the document (such as `_id`, `name`, or `subjects`) remain completely intact.\n5. **Dynamic Field Creation on Update**: If the field specified inside `$set` (for example, `promoted: true`) does not currently exist on a matching document, MongoDB dynamically adds that field to the document during the update.\n6. **Telemetry Acknowledgment**: Both methods return an execution summary containing `matchedCount` (how many documents satisfied `<filter>`) and `modifiedCount` (how many documents actually changed value).\n\n#### `updateOne()` vs. `updateMany()` Comparison Matrix\n| Architectural Dimension | `db.students.updateOne(filter, update)` | `db.students.updateMany(filter, update)` |\n| :--- | :--- | :--- |\n| **Maximum Documents Updated** | Strictly `1` (first match) | All matching documents ($0$ to $N$) |\n| **Empty Filter `{}` Behavior** | Updates only the first document in collection | Updates every document in collection |\n| **Missing Field in `$set`** | Creates field on the single matched document | Creates field on all matched documents |\n| **Unreferenced Attributes** | Preserved untouched | Preserved untouched |\n\n#### Complete Code Examples\n```javascript\nuse schoolDB\n\n// 1. Single-document update (Slide 9 & Doc Section 3)\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $set: { age: 20 } }\n);\n\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $set: { grade: 10 } }\n);\n\n// 2. Multi-document cohort update (Slide 9 & Doc Section 3)\ndb.students.updateMany(\n  { age: 18 },\n  { $set: { promoted: true } }\n);\n\ndb.students.updateMany(\n  { grade: 8 },\n  { $set: { promoted: true } }\n);\n```\n\n#### Architectural Conclusion\nBy pairing identical filter-and-operator syntax with explicit single-match (`updateOne`) and multi-match (`updateMany`) scope controls, MongoDB ensures safe, predictable in-place document updates.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B06",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_019"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 9) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_017",
+      "card_id": "QB-17",
+      "mindmap_node_id": "node_110",
+      "topic_code": "6.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update) > Atomic Field Update Operators",
+      "bloom_level": "Apply",
+      "difficulty": "medium",
+      "question": "In MongoDB in-place document mutation, how do the atomic update operators $set, $inc, $push, and $pull modify scalar fields and array structures within a single update call?",
+      "verbatim_quote": "`$set` replaces a field's value; `$inc` adds to a numeric field; `$push`/`$pull` add to or remove from an array field.",
+      "short_answer": "> \"`$set` replaces a field's value; `$inc` adds to a numeric field; `$push`/`$pull` add to or remove from an array field.\"\n\nThese four atomic update operators mutate scalar attributes, numeric counters, and embedded arrays in-place inside `updateOne()` or `updateMany()` without full-document replacement.",
+      "comprehensive_answer_points": [
+        "> \"`$set` replaces a field's value; `$inc` adds to a numeric field; `$push`/`$pull` add to or remove from an array field.\"\n\n1. **Scalar Assignment (`$set`)**: `{ $set: { age: 20 } }` replaces a field's existing value or creates the field if missing.",
+        "2. **Numeric Increment (`$inc`)**: `{ $inc: { attempts: 1 } }` atomically adds a positive or negative number to a numeric field.",
+        "3. **Array Element Append (`$push`)**: `{ $push: { subjects: \"History\" } }` appends a new item to the end of an array field.",
+        "4. **Array Element Removal (`$pull`)**: `{ $pull: { subjects: \"Science\" } }` removes matching instances of the specified value from an array field.",
+        "5. **Update Operator Reference Table & Code**:\n\n| Operator | Target Type | Mutation Behavior | Example |\n| :--- | :--- | :--- | :--- |\n| **`$set`** | Any field | Replaces field value | `{ $set: { age: 20 } }` |\n| **`$inc`** | Numeric | Increments numeric value | `{ $inc: { attempts: 1 } }` |\n| **`$push`** | Array | Appends item to array | `{ $push: { subjects: \"History\" } }` |\n| **`$pull`** | Array | Removes item from array | `{ $pull: { subjects: \"Science\" } }` |\n\n```javascript\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } }\n);\ndb.students.updateOne({ name: \"Rahul\" }, { $pull: { subjects: \"Science\" } });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nA defining strength of MongoDB's BSON document model is the ability to store rich scalar attributes, numeric counters, and embedded arrays inside a single record. If updating an array or incrementing a counter required fetching the entire document to the client, modifying it in memory, and writing the whole document back, concurrent writes would suffer from race conditions and lost updates. MongoDB prevents this through **Atomic Field Update Operators**: `$set`, `$inc`, `$push`, and `$pull`.\n\n#### Core Architectural Analysis\n1. **Field Value Replacement (`$set`)**: The `$set` operator (`{ $set: { age: 20 } }`) overwrites the value of the targeted field in-place while leaving every other attribute untouched. If the targeted field does not exist in the matched document, `$set` dynamically creates it.\n2. **Atomic Counter Adjustment (`$inc`)**: The `$inc` operator (`{ $inc: { attempts: 1 } }`) modifies numeric fields by adding a specified delta directly inside the storage engine. Passing a positive number increments the field; passing a negative number decrements it. Because the addition happens atomically on the server, concurrent increments never overwrite one another.\n3. **In-Place Array Appending (`$push`)**: Embedded arrays (such as `subjects: [\"Math\", \"Science\"]`) can be extended without rewriting the array from the client. Passing `{ $push: { subjects: \"History\" } }` appends `\"History\"` to the end of the `subjects` array.\n4. **Value-Based Array Pruning (`$pull`)**: Conversely, `{ $pull: { subjects: \"Science\" } }` scans the target array and removes every element matching `\"Science\"`, shrinking the array in-place.\n5. **Multi-Operator Composition in a Single Call**: MongoDB allows combining multiple distinct update operators inside a single `<update>` document—for example, executing `$set`, `$inc`, and `$push` together in one `updateOne()` call so all three changes occur atomically on the matched document.\n6. **Applicability Across `updateOne()` and `updateMany()`**: All four operators work identically whether applied to a single document via `updateOne()` or across an entire filtered cohort via `updateMany()`.\n\n#### Atomic Update Operators Comparison Matrix\n| Operator | Category | Operation Semantics | Before State | Update Expression | After State |\n| :--- | :--- | :--- | :--- | :--- | :--- |\n| **`$set`** | Scalar / Any | Replaces or creates field value | `age: 19` | `{ $set: { age: 20 } }` | `age: 20` |\n| **`$inc`** | Numeric | Increments/decrements number | `attempts: 2` | `{ $inc: { attempts: 1 } }` | `attempts: 3` |\n| **`$push`** | Array | Appends element to array | `[\"Math\", \"Science\"]` | `{ $push: { subjects: \"History\" } }` | `[\"Math\", \"Science\", \"History\"]` |\n| **`$pull`** | Array | Removes matching element | `[\"Math\", \"Science\", \"History\"]` | `{ $pull: { subjects: \"Science\" } }` | `[\"Math\", \"History\"]` |\n\n#### Production Code Implementation (Slide 16)\n```javascript\nuse schoolDB\n\n// Combine $set, $inc, and $push in a single atomic updateOne() call\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  {\n    $set: { age: 20 },\n    $inc: { attempts: 1 },\n    $push: { subjects: \"History\" }\n  }\n);\n\n// Remove \"Science\" from the subjects array using $pull\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $pull: { subjects: \"Science\" } }\n);\n```\n\n#### Architectural Conclusion\nBy executing `$set`, `$inc`, `$push`, and `$pull` directly inside the storage engine, MongoDB performs high-speed, race-free scalar and array mutations without roundtrip document replacement.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C04",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_020"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 14, 16)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_018",
+      "card_id": "QB-18",
+      "mindmap_node_id": "node_102",
+      "topic_code": "6.0",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 6. Field Modification & In-Place Update Operators (CRUD Update)",
+      "bloom_level": "Evaluate",
+      "difficulty": "hard",
+      "question": "In MongoDB state management, how can scalar and array update operators be combined inside updateOne() or updateMany() to execute atomic multi-field document transitions?",
+      "verbatim_quote": "Operators used inside query filters and update documents to express conditions and modifications.",
+      "short_answer": "> \"Operators used inside query filters and update documents to express conditions and modifications.\"\n\nCombining `$set`, `$inc`, `$push`, and `$pull` as top-level keys inside one `updateOne()` or `updateMany()` call executes atomic multi-field scalar and array transitions simultaneously.",
+      "comprehensive_answer_points": [
+        "> \"Operators used inside query filters and update documents to express conditions and modifications.\"\n\n1. **Compound Update Document Structure**: The second `<update>` argument of `updateOne()` and `updateMany()` can hold multiple top-level operator keys (`$set`, `$inc`, `$push`, `$pull`) simultaneously.",
+        "2. **Document-Level Write Atomicity**: When multiple operators are combined in one `updateOne()` call, MongoDB acquires an exclusive document write lock so no concurrent reader sees a half-updated record.",
+        "3. **Orthogonal Field Targeting**: In a single update call, `$set` can update scalar attributes (`age: 20`), `$inc` can increment a numeric counter (`attempts: 1`), and `$push` can append to an array (`subjects: \"History\"`).",
+        "4. **State Transition Breakdown Table**:\n\n| Operator Key | Sub-Document Payload | Target Field Role | Atomic Transition Effect |\n| :--- | :--- | :--- | :--- |\n| **`$set`** | `{ age: 20 }` | Scalar attribute | Updates student age to `20` |\n| **`$inc`** | `{ attempts: 1 }` | Exam counter | Increments attempt count by `+1` |\n| **`$push`** | `{ subjects: \"History\" }` | Enrolled course list | Appends `\"History\"` to array |\n| **`$pull`** | `{ subjects: \"Science\" }` | Enrolled course list | Removes `\"Science\"` from array |",
+        "5. **Compound Execution Script**:\n```javascript\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } }\n);\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nIn enterprise academic and transactional systems, a single business event frequently requires mutating multiple attributes of different data types on the same entity—for example, updating a student's current `age` or `grade`, incrementing their exam `attempts` counter, and enrolling them in a new course inside their `subjects` array. In MongoDB, executing these three changes as three separate network calls would waste bandwidth and risk leaving the document in an inconsistent intermediate state if a crash occurred mid-way. MongoDB solves this by supporting **Compound Multi-Operator Updates** inside a single `updateOne()` or `updateMany()` invocation.\n\n#### Core Architectural Analysis\n1. **Top-Level Operator Key Composition**: In MongoDB's update syntax, operator keywords (`$set`, `$inc`, `$push`, `$pull`) are top-level keys of the `<update>` parameter object, while the targeted document fields sit inside each operator's sub-object. This structural design allows multiple operators to coexist cleanly in a single JSON payload.\n2. **All-or-Nothing Document Atomicity**: MongoDB guarantees single-document atomicity for all write operations. When `db.students.updateOne({ name: \"Rahul\" }, { $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } })` is executed, the storage engine applies all three modifications under a single write lock. Concurrent readers using `find()` or `findOne()` will observe either the state before any of the three operators ran or the state after all three completed.\n3. **Combining Filter Operators with Update Operators**: The first `<filter>` argument can utilize comparison (`$gt`, `$gte`, `$lt`, `$lte`, `$ne`), array (`$in`, `$nin`), or logical (`$or`, `$and`) operators to select target documents, while the second `<update>` argument applies `$set`, `$inc`, `$push`, or `$pull`.\n4. **Lifecycle of Array Enrollments (`$push` vs. `$pull`)**: As a student adds a subject, `$push` appends the string to the `subjects` array; if the student later drops a course, a subsequent update with `{ $pull: { subjects: \"Science\" } }` cleanly removes that specific element without disturbing other courses in the array.\n5. **Scaling from Single Entity to Cohort (`updateMany`)**: If an institution needs to promote all 18-year-old students (`{ age: 18 }`), `updateMany()` applies `{ $set: { promoted: true } }` across every matching student document in the collection.\n6. **Prevention of Accidental Document Replacement**: Always wrapping field modifications inside `$set`, `$inc`, `$push`, or `$pull` ensures that unreferenced fields are preserved rather than overwritten.\n\n#### Multi-Operator State Transition Matrix\n| Business Requirement | MongoDB Method | Filter Argument | Update Operator Argument |\n| :--- | :--- | :--- | :--- |\n| **Update Rahul's age, attempts & add History** | `updateOne()` | `{ name: \"Rahul\" }` | `{ $set: { age: 20 }, $inc: { attempts: 1 }, $push: { subjects: \"History\" } }` |\n| **Drop Science from Rahul's subjects** | `updateOne()` | `{ name: \"Rahul\" }` | `{ $pull: { subjects: \"Science\" } }` |\n| **Promote all students aged 18** | `updateMany()` | `{ age: 18 }` | `{ $set: { promoted: true } }` |\n| **Promote all students in grade 8** | `updateMany()` | `{ grade: 8 }` | `{ $set: { promoted: true } }` |\n\n#### End-to-End State Management Script\n```javascript\nuse schoolDB\n\n// Step 1: Initial document creation\ndb.students.insertOne({\n  name: \"Rahul\",\n  age: 19,\n  attempts: 0,\n  subjects: [\"Math\", \"Science\"]\n});\n\n// Step 2: Atomic multi-operator transition ($set + $inc + $push)\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  {\n    $set: { age: 20 },\n    $inc: { attempts: 1 },\n    $push: { subjects: \"History\" }\n  }\n);\n\n// Step 3: Remove an element from array using $pull\ndb.students.updateOne(\n  { name: \"Rahul\" },\n  { $pull: { subjects: \"Science\" } }\n);\n```\n\n#### Architectural Conclusion\nCombining `$set`, `$inc`, `$push`, and `$pull` inside `updateOne()` and `updateMany()` empowers developers to express complex, multi-attribute state transitions atomically in a single server roundtrip.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C05",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_019",
+          "PYQ_MEDHA_MDB_020"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 9, 14, 16) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_019",
+      "card_id": "QB-19",
+      "mindmap_node_id": "node_118",
+      "topic_code": "7.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Document Deletion Execution Methods",
+      "bloom_level": "Apply",
+      "difficulty": "easy",
+      "question": "In MongoDB CRUD Delete operations, how do deleteOne(filter) and deleteMany(filter) control document removal granularity, and what occurs when an empty filter document {} is passed?",
+      "verbatim_quote": "Deletes every document that matches a query filter. Passing an empty filter (`{}`) deletes all documents in the collection, without dropping the collection itself.",
+      "short_answer": "> \"Deletes every document that matches a query filter. Passing an empty filter (`{}`) deletes all documents in the collection, without dropping the collection itself.\"\n\nWhereas `deleteOne(filter)` removes strictly the first matching document, `deleteMany(filter)` removes all matches and `deleteMany({})` truncates the collection while preserving its container.",
+      "comprehensive_answer_points": [
+        "> \"Deletes every document that matches a query filter. Passing an empty filter (`{}`) deletes all documents in the collection, without dropping the collection itself.\"\n\n1. **Targeted Single-Record Removal (`deleteOne`)**: `db.<collectionName>.deleteOne(<filter>)` locates and deletes strictly the first document that satisfies the query filter, leaving any remaining matches intact.",
+        "2. **Filtered Multi-Record Removal (`deleteMany`)**: `db.<collectionName>.deleteMany(<filter>)` removes every document in the collection that matches the filter criteria (such as `{ age: 17 }` or `{ grade: 7 }`).",
+        "3. **Total Collection Truncation (`deleteMany({})`)**: Passing an empty filter object `{}` to `deleteMany({})` matches and deletes all documents in the collection while keeping the empty collection container and its indexes intact.",
+        "4. **Deletion Granularity Matrix & Code**:\n\n| Delete Command | Filter Argument | Deletion Scope | Collection Container Status |\n| :--- | :--- | :--- | :--- |\n| **`db.students.deleteOne({ name: \"Kabir\" })`** | `{ name: \"Kabir\" }` | First matching document only | Preserved |\n| **`db.students.deleteMany({ age: 17 })`** | `{ age: 17 }` | Every document where `age == 17` | Preserved |\n| **`db.students.deleteMany({})`** | `{}` (Empty filter) | Every document in collection | Preserved (empty) |\n\n```javascript\ndb.students.deleteOne({ name: \"Kabir\" });\ndb.students.deleteMany({ age: 17 });\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nThe final pillar of MongoDB's CRUD architecture is document deletion, governed by `db.<collectionName>.deleteOne(<filter>)` and `db.<collectionName>.deleteMany(<filter>)`. Just as `updateOne()` and `updateMany()` separate single-document mutation from cohort-wide mutation, `deleteOne()` and `deleteMany()` enforce explicit cardinality boundaries for data removal so developers do not accidentally purge entire tables when intending to delete a single record.\n\n#### Core Architectural Analysis\n1. **First-Match Boundary in `deleteOne(<filter>)`**: When `db.students.deleteOne({ name: \"Kabir\" })` is executed, the storage engine scans the `students` collection until it finds the first document matching `{ name: \"Kabir\" }`. It removes that single document from the data extents, updates all associated collection indexes, and immediately halts. Even if five students are named `\"Kabir\"`, four remain untouched.\n2. **Cohort-Wide Purge in `deleteMany(<filter>)`**: When `db.students.deleteMany({ age: 17 })` (or `db.students.deleteMany({ grade: 7 })`) is executed, the engine continues scanning across the entire collection and removes every single document satisfying the filter predicate.\n3. **Collection Truncation via Empty Filter `deleteMany({})`**: Passing an empty filter object `{}` to `deleteMany({})` matches 100% of the documents in the collection. Executing `db.students.deleteMany({})` empties all documents from `students`, analogous to `DELETE FROM students` in SQL, while leaving the `students` collection namespace and its index definitions intact on disk.\n4. **Empty Filter on `deleteOne({})`**: Passing an empty filter `{}` to `deleteOne({})` matches all documents but halts after deleting only the very first document in natural storage order.\n5. **Support for Rich Query Operators**: Both `deleteOne()` and `deleteMany()` accept the full suite of conditional query operators (`$gt`, `$lt`, `$in`, `$nin`, `$or`, `$and`) inside their `<filter>` parameter.\n6. **Return Acknowledgment Telemetry**: Both methods return `{ acknowledged: true, deletedCount: <n> }`, reporting the exact number of documents removed so calling applications can verify deletion impact.\n\n#### Document Deletion Methods Comparison Matrix\n| Method Call | Filter Predicate | `deletedCount` Range | Effect on Collection Container |\n| :--- | :--- | :--- | :--- |\n| `db.students.deleteOne({ name: \"Kabir\" })` | `{ name: \"Kabir\" }` | `0` or `1` | Retained intact |\n| `db.students.deleteMany({ age: 17 })` | `{ age: 17 }` | $0$ to $M$ (matching) | Retained intact |\n| `db.students.deleteMany({ grade: 7 })` | `{ grade: 7 }` | $0$ to $M$ (matching) | Retained intact |\n| `db.students.deleteMany({})` | `{}` (Match all) | All $N$ docs in collection | Retained (0 documents) |\n\n#### Complete Code Examples\n```javascript\nuse schoolDB\n\n// 1. Delete the first document matching name \"Kabir\" (Slide 10 & Doc Section 3)\ndb.students.deleteOne({ name: \"Kabir\" });\n\n// 2. Delete every document where age equals 17 (Slide 10)\ndb.students.deleteMany({ age: 17 });\n\n// 3. Delete every document where grade equals 7 (Doc Section 3)\ndb.students.deleteMany({ grade: 7 });\n\n// 4. Delete all documents in the collection without dropping the collection\ndb.students.deleteMany({});\n```\n\n#### Architectural Conclusion\nThrough `deleteOne(filter)` and `deleteMany(filter)`, MongoDB provides precise, filter-driven document deletion ranging from surgical single-record removal to complete collection truncation via `deleteMany({})`.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_B07",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_006"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slide 10) & mongodb-reference-doc.pdf (Section 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_020",
+      "card_id": "QB-20",
+      "mindmap_node_id": "node_126",
+      "topic_code": "7.2.1",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs > Collection Truncation vs. Collection Dropping",
+      "bloom_level": "Analyze",
+      "difficulty": "medium",
+      "question": "In MongoDB data lifecycle engineering, what is the architectural distinction between truncating a collection with `db.<collection>`.deleteMany({}) and dropping it with `db.<collection>`.drop()?",
+      "verbatim_quote": "`db.collection.drop()` permanently removes a collection and all of the documents it contains, along with any indexes defined on it. This action cannot be undone.",
+      "short_answer": "> \"`db.collection.drop()` permanently removes a collection and all of the documents it contains, along with any indexes defined on it. This action cannot be undone.\"\n\nConversely, `db.<collection>.deleteMany({})` deletes all documents using an empty filter while preserving the collection container, validation rules, and secondary indexes in `show collections`.",
+      "comprehensive_answer_points": [
+        "> \"`db.collection.drop()` permanently removes a collection and all of the documents it contains, along with any indexes defined on it. This action cannot be undone.\"\n\n1. **Shared Data Outcome**: Both `db.students.deleteMany({})` and `db.students.drop()` result in zero BSON documents remaining stored for that target entity.",
+        "2. **Container & Catalog Survival (`deleteMany({})`)**: `deleteMany({})` operates strictly at the document layer; after execution, `students` still exists as an empty collection container and continues to appear in `show collections`.",
+        "3. **Index & Validator Preservation (`deleteMany({})`)**: All secondary B-tree indexes, the primary `_id` index structure, and any JSON schema validation rules defined on the collection survive `deleteMany({})` completely intact.",
+        "4. **Total Namespace Destruction (`drop()`)**: `db.students.drop()` operates at the container layer, eliminating the collection from `show collections` and permanently destroying all of its indexes and metadata.",
+        "5. **Truncation vs. Drop Comparison Matrix**:\n\n| Architectural Dimension | `db.students.deleteMany({})` | `db.students.drop()` |\n| :--- | :--- | :--- |\n| **All Documents Removed?** | Yes (`deletedCount: N`) | Yes (Extents unlinked) |\n| **Visible in `show collections`?** | Yes (`students` remains) | No (Namespace removed) |\n| **Indexes & Options Retained?** | Yes (Preserved intact) | No (Permanently destroyed) |\n\n```javascript\ndb.students.deleteMany({});\ndb.students.drop();\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nA classic architectural question in MongoDB administration is deciding whether to clear a collection's contents using `db.<collectionName>.deleteMany({})` or to remove the collection using `db.<collectionName>.drop()`. Although both commands remove all stored documents, they operate at completely different layers of the storage engine hierarchy—Data Manipulation (DML-equivalent) versus Data Definition (DDL-equivalent)—with major implications for index survival, schema validation, and execution speed.\n\n#### Core Architectural Analysis\n1. **Document-Level Truncation via `deleteMany({})`**: Passing an empty filter `{}` to `db.students.deleteMany({})` instructs the query engine to match every document in `students` and delete them from the data extents. Crucially, the `students` collection container itself is **not** dropped.\n2. **Preservation of Indexes and Collection Options**: Because `deleteMany({})` preserves the collection container, all secondary indexes, the default `_id` index structure, and any `db.createCollection()` options (such as schema validation rules or capped ring-buffer configurations) remain active on disk. When new documents are inserted moments later, indexes do not need to be recreated by the administrator.\n3. **Catalog Visibility After `deleteMany({})`**: Running `show collections` immediately after `db.students.deleteMany({})` still lists `students` because the registered container namespace remains intact in the active database catalog.\n4. **Container-Level Destruction via `db.students.drop()`**: Calling `db.students.drop()` destroys the entire `students` namespace. Every document, every index defined on the collection, and all collection metadata are permanently removed in a single catalog operation.\n5. **Catalog Visibility After `drop()`**: Running `show collections` after `db.students.drop()` no longer lists `students`. If a subsequent `insertOne()` writes to `db.students`, MongoDB auto-creates a brand-new collection with default settings (any previous custom indexes or validators are gone).\n6. **Operational Selection Guideline**: Use `deleteMany({})` when resetting a staging or test table that must keep its indexes and validation schema for immediate reuse; use `drop()` when permanently retiring an obsolete collection or reclaiming full index and data disk extents instantaneously.\n\n#### Truncation vs. Dropping Tradeoff Matrix\n| Architectural Attribute | `db.students.deleteMany({})` | `db.students.drop()` |\n| :--- | :--- | :--- |\n| **Operation Layer** | Document CRUD Delete | Collection Namespace Destruction |\n| **Remaining Document Count** | `0` documents | `0` documents |\n| **Listed in `show collections`** | Yes (`students` remains listed) | No (Removed from catalog) |\n| **Secondary Indexes** | Retained (emptied, ready for writes) | Permanently dropped |\n| **Validation / Capped Options** | Retained intact | Permanently dropped |\n| **Return Value** | `{ acknowledged: true, deletedCount: N }` | `true` or `false` |\n\n#### Comparative Code Demonstration\n```javascript\nuse schoolDB\n\n// Approach A: Empty all documents but keep the students collection & indexes\ndb.students.deleteMany({});\nshow collections\n// Output: students (still exists)\n\n// Approach B: Permanently remove the students collection, documents & indexes\ndb.students.drop();\nshow collections\n// Output: (students is gone)\n```\n\n#### Architectural Conclusion\nDistinguishing `deleteMany({})` from `drop()` ensures engineers preserve critical index definitions and collection metadata when clearing records, while reserving `drop()` for complete namespace and index deallocation.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C06",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_006"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 6, 10) & mongodb-reference-doc.pdf (Sections 2, 3)"
+      }
+    },
+    {
+      "id": "QB_VVIT_MDB_021",
+      "card_id": "QB-21",
+      "mindmap_node_id": "node_129",
+      "topic_code": "7.2.2",
+      "mindmap_path": "VVIT MongoDB: Databases, Collections & CRUD Operations > 7. Document Deletion & Collection Pruning (CRUD Delete) > Data Cleanup Architectural Tradeoffs > Collection Drop vs. Database Drop",
+      "bloom_level": "Evaluate",
+      "difficulty": "hard",
+      "question": "In MongoDB storage administration, how do `db.<collection>`.deleteMany({}), `db.<collection>`.drop(), and db.dropDatabase() compare across destruction scope, index retention, and namespace persistence?",
+      "verbatim_quote": "`deleteMany(filter)` deletes every matching document. An empty filter (`{}`) deletes all documents without dropping the collection.",
+      "short_answer": "> \"`deleteMany(filter)` deletes every matching document. An empty filter (`{}`) deletes all documents without dropping the collection.\"\n\nAcross MongoDB's destruction hierarchy, `deleteMany({})` retains the collection and indexes, `db.<collection>.drop()` destroys one collection and its indexes, and `db.dropDatabase()` purges the entire active database.",
+      "comprehensive_answer_points": [
+        "> \"`deleteMany(filter)` deletes every matching document. An empty filter (`{}`) deletes all documents without dropping the collection.\"\n\n1. **Tier 1 — Document Truncation (`deleteMany({})`)**: Empties all BSON documents inside the target collection while preserving the collection container, its indexes, and sibling collections.",
+        "2. **Tier 2 — Collection Destruction (`db.<collection>.drop()`)**: Permanently removes the named collection, its documents, and all its indexes, while leaving sibling collections and the parent database intact.",
+        "3. **Tier 3 — Database Destruction (`db.dropDatabase()`)**: Permanently purges the entire currently selected database, destroying every collection, document, and index inside it and removing the database from `show dbs`.",
+        "4. **Three-Tier Destruction Hierarchy Matrix**:\n\n| Destruction Dimension | `db.students.deleteMany({})` | `db.students.drop()` | `db.dropDatabase()` |\n| :--- | :--- | :--- | :--- |\n| **Target Scope** | All docs in `students` | Entire `students` collection | Entire active database (`schoolDB`) |\n| **`students` Container** | Preserved | Destroyed | Destroyed |\n| **`students` Indexes** | Preserved | Destroyed | Destroyed |\n| **Sibling Collections** | Preserved | Preserved | Destroyed |\n| **`schoolDB` in `show dbs`** | Preserved | Preserved (if other cols exist) | Removed |",
+        "5. **Progressive Escalation Script**:\n```javascript\nuse schoolDB\ndb.students.deleteMany({});\ndb.students.drop();\ndb.dropDatabase();\n```"
+      ],
+      "design_answer": "#### Architectural Introduction\nA comprehensive mastery of MongoDB storage lifecycle administration requires understanding how data removal scales across the three structural tiers of the database engine: **Documents**, **Collections**, and **Databases**. MongoDB maps each of these structural tiers to a dedicated removal command: `db.<collection>.deleteMany({})` at the document tier, `db.<collection>.drop()` at the collection tier, and `db.dropDatabase()` at the database tier. Evaluating these three commands across destruction blast radius, index survival, and catalog visibility prevents catastrophic administrative errors.\n\n#### Core Architectural Analysis\n1. **Document-Tier Truncation (`db.<collection>.deleteMany({})`)**: Passing an empty filter `{}` to `deleteMany()` removes every document inside the targeted collection (`students`), resetting its document count to zero. However, the collection namespace remains registered in `show collections`, and all index B-trees and validation rules remain intact on disk.\n2. **Collection-Tier Destruction (`db.<collection>.drop()`)**: Invoking `db.students.drop()` escalates destruction to the collection container itself. It unlinks the data extents of `students`, drops all secondary and `_id` indexes belonging to `students`, and removes `students` from `show collections`. All other collections inside `schoolDB` (such as `courses` or `faculty`) remain completely unaffected.\n3. **Database-Tier Destruction (`db.dropDatabase()`)**: Invoking `db.dropDatabase()` escalates destruction to the highest namespace boundary—the active database selected via `use <databaseName>`. It iterates through every collection in `schoolDB`, drops all collections, documents, and indexes, unlinks the database's physical storage files, and removes `schoolDB` from `show dbs`.\n4. **Irreversibility Across All Three Tiers**: None of the three operations can be undone via a MongoDB shell rollback command once committed by the storage engine. Recovery requires restoring from backups or re-running ingestion scripts.\n5. **Index Rebuild Cost Considerations**: When millions of records must be cleared daily from a staging collection that has complex secondary indexes, `deleteMany({})` keeps the index definitions alive, whereas `drop()` requires the application to issue `createIndex()` commands again before production traffic resumes.\n6. **Context Safety Protocol**: Before executing `drop()` or `dropDatabase()`, administrators should always inspect `db` (`use schoolDB`), `show collections`, and `show dbs` to verify the exact blast radius.\n\n#### Master Three-Tier Destruction Comparison Matrix\n| Architectural Criterion | Tier 1: `db.students.deleteMany({})` | Tier 2: `db.students.drop()` | Tier 3: `db.dropDatabase()` |\n| :--- | :--- | :--- | :--- |\n| **Granularity Level** | Document Layer | Collection Layer | Database Layer |\n| **Documents in `students`** | Deleted (`0` left) | Deleted (`0` left) | Deleted (`0` left) |\n| **`students` Container** | Retained in catalog | Removed from catalog | Removed from catalog |\n| **Indexes on `students`** | Retained intact | Permanently dropped | Permanently dropped |\n| **Sibling Collections in `schoolDB`** | Untouched | Untouched | Permanently dropped |\n| **`schoolDB` in `show dbs`** | Remains visible | Remains if other collections exist | Permanently removed |\n\n#### Complete Administrative Lifecycle Script\n```javascript\nuse schoolDB\n\n// Tier 1: Truncate all documents inside students, keeping the collection and indexes\ndb.students.deleteMany({});\n\n// Tier 2: Permanently drop the students collection, its documents, and its indexes\ndb.students.drop();\n\n// Tier 3: Permanently delete the entire schoolDB database and all its collections\ndb.dropDatabase();\n```\n\n#### Architectural Conclusion\nBy clearly delineating document truncation (`deleteMany({})`), collection dropping (`db.<collection>.drop()`), and database deletion (`db.dropDatabase()`), MongoDB provides administrators with exact, predictable control over data cleanup scope and metadata retention.",
+      "marks": {
+        "short": 2,
+        "comprehensive": 5,
+        "design": 10
+      },
+      "evaluation_tier": {
+        "short_criteria": [
+          "Exact technical definition and MongoDB command syntax",
+          "Core operational invariant and storage behavior"
+        ],
+        "comprehensive_criteria": [
+          "5 structured analytical points covering engine mechanics",
+          "Comparative Markdown table contrasting operational states",
+          "Syntax-highlighted JavaScript mongosh code block"
+        ],
+        "design_criteria": [
+          "Architectural introduction and storage engine context",
+          "6 numbered analytical points detailing end-to-end execution",
+          "Comprehensive comparative tradeoff matrix",
+          "Production JavaScript code implementation and architectural conclusion"
+        ]
+      },
+      "pyq_provenance": {
+        "saralvidhya_pyq_id": "PYQ_SV_MDB_C07",
+        "medha_pyq_ids": [
+          "PYQ_MEDHA_MDB_003",
+          "PYQ_MEDHA_MDB_006"
+        ],
+        "source_reference": "mongodb-reference.pdf (Slides 3, 6, 10) & mongodb-reference-doc.pdf (Sections 1, 2, 3)"
+      }
+    }
+  ]
+}

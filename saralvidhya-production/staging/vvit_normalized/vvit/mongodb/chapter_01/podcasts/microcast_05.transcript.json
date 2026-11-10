@@ -1,0 +1,67 @@
+{
+  "title": "5. MongoDB Query Filtering, Projection and Pagination",
+  "stem": "5.MongoDB_Query_Filtering_Projection_and_Pagination",
+  "media_filename": "5.MongoDB_Query_Filtering_Projection_and_Pagination.m4a",
+  "detected_language": "English",
+  "model": "whisper-large-v3",
+  "duration_seconds": 100.66,
+  "duration_str": "01:40",
+  "total_words": 207,
+  "total_paragraphs": 3,
+  "full_transcript": "This is the brief on MongoDB query filtering, projection, and cursor pagination. For VVIT B.Tech CSE students, we are breaking down how MongoDB filters documents with comparison and logical operators, shapes returned fields with projection, and paginates large result sets using the sort, skip, and limit pipeline. First, when filtering beyond exact equality, MongoDB uses dollar-prefixed comparison operators inside the query document: $gt and $gte for greater than, $lt and $lte for less than, $ne for not equal, and $in or $nin to match against an array of candidate values. You can combine multiple conditions using $and, $or, $not, and $nor. Second, the second parameter of find(query, projection) controls which fields are returned: use 1 to include fields and 0 to exclude fields. You cannot mix inclusion and exclusion in the same projection, with one critical exception: the _id field is always included by default unless you explicitly suppress it with _id: 0. Finally, cursor modifiers let you paginate results using sort({ field: 1 | -1 }), where 1 is ascending and -1 is descending, along with skip(n) and limit(n). No matter what order you chain them in mongosh, MongoDB's query engine always executes sort first, then skip, and finally limit to guarantee deterministic pagination across pages.",
+  "paragraphs": [
+    "This is the brief on MongoDB query filtering, projection, and cursor pagination. For VVIT B.Tech CSE students, we are breaking down how MongoDB filters documents with comparison and logical operators, shapes returned fields with projection, and paginates large result sets using the sort, skip, and limit pipeline.",
+    "First, when filtering beyond exact equality, MongoDB uses dollar-prefixed comparison operators inside the query document: $gt and $gte for greater than, $lt and $lte for less than, $ne for not equal, and $in or $nin to match against an array of candidate values. You can combine multiple conditions using $and, $or, $not, and $nor. Second, the second parameter of find(query, projection) controls which fields are returned: use 1 to include fields and 0 to exclude fields. You cannot mix inclusion and exclusion in the same projection, with one critical exception: the _id field is always included by default unless you explicitly suppress it with _id: 0.",
+    "Finally, cursor modifiers let you paginate results using sort({ field: 1 | -1 }), where 1 is ascending and -1 is descending, along with skip(n) and limit(n). No matter what order you chain them in mongosh, MongoDB's query engine always executes sort first, then skip, and finally limit to guarantee deterministic pagination across pages."
+  ],
+  "segments": [
+    {
+      "id": 0,
+      "start": 0.0,
+      "end": 11.5,
+      "text": "This is the brief on MongoDB query filtering, projection, and cursor pagination."
+    },
+    {
+      "id": 1,
+      "start": 11.5,
+      "end": 26.0,
+      "text": "For VVIT B.Tech CSE students, we are breaking down how MongoDB filters documents with comparison and logical operators, shapes returned fields with projection, and paginates large result sets using the sort, skip, and limit pipeline."
+    },
+    {
+      "id": 2,
+      "start": 26.0,
+      "end": 44.0,
+      "text": "First, when filtering beyond exact equality, MongoDB uses dollar-prefixed comparison operators inside the query document: $gt and $gte for greater than, $lt and $lte for less than, $ne for not equal, and $in or $nin to match against an array of candidate values."
+    },
+    {
+      "id": 3,
+      "start": 44.0,
+      "end": 52.5,
+      "text": "You can combine multiple conditions using $and, $or, $not, and $nor."
+    },
+    {
+      "id": 4,
+      "start": 52.5,
+      "end": 65.0,
+      "text": "Second, the second parameter of find(query, projection) controls which fields are returned: use 1 to include fields and 0 to exclude fields."
+    },
+    {
+      "id": 5,
+      "start": 65.0,
+      "end": 79.5,
+      "text": "You cannot mix inclusion and exclusion in the same projection, with one critical exception: the _id field is always included by default unless you explicitly suppress it with _id: 0."
+    },
+    {
+      "id": 6,
+      "start": 79.5,
+      "end": 90.0,
+      "text": "Finally, cursor modifiers let you paginate results using sort({ field: 1 | -1 }), where 1 is ascending and -1 is descending, along with skip(n) and limit(n)."
+    },
+    {
+      "id": 7,
+      "start": 90.0,
+      "end": 100.66,
+      "text": "No matter what order you chain them in mongosh, MongoDB's query engine always executes sort first, then skip, and finally limit to guarantee deterministic pagination across pages."
+    }
+  ]
+}

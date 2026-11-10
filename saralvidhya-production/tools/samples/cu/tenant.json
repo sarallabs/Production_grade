@@ -1,0 +1,35 @@
+{
+  "id": "cu",
+  "name": "Chalapathi Institute of Engineering & Technology (Autonomous)",
+  "shortName": "Chalapathi University",
+  "academicTerm": "Sem V · 2026",
+  "branding": {
+    "appName": "Chalapathi Learning Portal",
+    "primaryColor": "#1E3A8A",
+    "accentColor": "#BD7D52",
+    "logoBlob": "assets/logo.png",
+    "faviconBlob": "assets/favicon.png",
+    "programLabel": "B.Tech CSE"
+  },
+  "assets": {
+    "logo": "assets/logo.png",
+    "favicon": "assets/favicon.png"
+  },
+  "features": {
+    "examinerConsole": false,
+    "expertPanel": false,
+    "pyq": true,
+    "ask": true,
+    "guidedFlow": true
+  },
+  "hierarchy": ["department", "semester", "subject"],
+  "nodes": [
+    { "id": "cse", "type": "department", "name": "Computer Science & Engineering", "parentId": null, "order": 1 },
+    { "id": "cse_s5", "type": "semester", "name": "Semester 5", "parentId": "cse", "order": 1 }
+  ],
+  "contractVersion": "1.1.0",
+  "storage": {
+    "bucket": "saralvidhya-artifacts",
+    "prefix": "cu"
+  }
+}

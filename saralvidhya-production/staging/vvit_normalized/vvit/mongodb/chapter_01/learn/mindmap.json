@@ -1,0 +1,211 @@
+{
+  "subject": "VVIT",
+  "chapter_folder": "MongoDB",
+  "chapter_title": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+  "D_max": 4,
+  "D_target": 2,
+  "levels_included": [
+    "L-0 (Chapter Root)",
+    "L-1 (7 Core Topics)",
+    "L-2 (17 Sub-Topics)"
+  ],
+  "pruning_policy": "trimmed_to_L1_and_L2_hierarchy",
+  "total_nodes": 25,
+  "counts_by_level": {
+    "L-0": 1,
+    "L-1": 7,
+    "L-2": 17
+  },
+  "hierarchy": {
+    "node_id": "node_001",
+    "level": 0,
+    "code": "0.0",
+    "label": "VVIT MongoDB: Databases, Collections & CRUD Operations",
+    "source_reference": "mongodb-reference.pdf & mongodb-reference-doc.pdf",
+    "children": [
+      {
+        "node_id": "node_002",
+        "level": 1,
+        "code": "1.0",
+        "label": "1. Database Operations & Storage Lifecycle",
+        "source_reference": "mongodb-reference.pdf (Slides 1-3) & mongodb-reference-doc.pdf (Section 1)",
+        "children": [
+          {
+            "node_id": "node_003",
+            "level": 2,
+            "code": "1.1",
+            "label": "1.1 Database Context Switching & Creation (\"use <databaseName>\")",
+            "source_reference": "Slide 1 & Doc Section 1"
+          },
+          {
+            "node_id": "node_010",
+            "level": 2,
+            "code": "1.2",
+            "label": "1.2 Database Catalog Inspection (\"show dbs\")",
+            "source_reference": "Slide 2"
+          },
+          {
+            "node_id": "node_017",
+            "level": 2,
+            "code": "1.3",
+            "label": "1.3 Database Destruction & Removal (\"db.dropDatabase()\")",
+            "source_reference": "Slide 3 & Doc Section 1"
+          }
+        ]
+      },
+      {
+        "node_id": "node_024",
+        "level": 1,
+        "code": "2.0",
+        "label": "2. Collection Architecture & Structural Management",
+        "source_reference": "mongodb-reference.pdf (Slides 4-6) & mongodb-reference-doc.pdf (Section 2)",
+        "children": [
+          {
+            "node_id": "node_025",
+            "level": 2,
+            "code": "2.1",
+            "label": "2.1 Collection Creation Mechanics (\"db.createCollection()\")",
+            "source_reference": "Slide 4 & Doc Section 2"
+          },
+          {
+            "node_id": "node_032",
+            "level": 2,
+            "code": "2.2",
+            "label": "2.2 Collection Inventory Inspection (\"show collections\")",
+            "source_reference": "Slide 5 & Doc Section 2"
+          },
+          {
+            "node_id": "node_039",
+            "level": 2,
+            "code": "2.3",
+            "label": "2.3 Collection Removal & Destruction (\"db.<collection>.drop()\")",
+            "source_reference": "Slide 6 & Doc Section 2"
+          }
+        ]
+      },
+      {
+        "node_id": "node_046",
+        "level": 1,
+        "code": "3.0",
+        "label": "3. Document Ingestion Mechanics (CRUD Create)",
+        "source_reference": "mongodb-reference.pdf (Slide 7) & mongodb-reference-doc.pdf (Section 3)",
+        "children": [
+          {
+            "node_id": "node_047",
+            "level": 2,
+            "code": "3.1",
+            "label": "3.1 Single Document Insertion (\"insertOne()\")",
+            "source_reference": "Slide 7 & Doc Section 3"
+          },
+          {
+            "node_id": "node_054",
+            "level": 2,
+            "code": "3.2",
+            "label": "3.2 Batch Document Ingestion (\"insertMany()\")",
+            "source_reference": "Slide 7 & Doc Section 3"
+          }
+        ]
+      },
+      {
+        "node_id": "node_061",
+        "level": 1,
+        "code": "4.0",
+        "label": "4. Document Retrieval & Query Architecture (CRUD Read)",
+        "source_reference": "mongodb-reference.pdf (Slides 8, 13) & mongodb-reference-doc.pdf (Sections 3, 4)",
+        "children": [
+          {
+            "node_id": "node_062",
+            "level": 2,
+            "code": "4.1",
+            "label": "4.1 Cursor-Based Querying (\"find()\")",
+            "source_reference": "Slide 8 & Doc Section 3"
+          },
+          {
+            "node_id": "node_069",
+            "level": 2,
+            "code": "4.2",
+            "label": "4.2 Single Document Lookup (\"findOne()\")",
+            "source_reference": "Slide 13 & Doc Section 3"
+          }
+        ]
+      },
+      {
+        "node_id": "node_076",
+        "level": 1,
+        "code": "5.0",
+        "label": "5. Advanced Query Filtering, Projection & Pagination",
+        "source_reference": "mongodb-reference.pdf (Slides 11-12, 14-15) & mongodb-reference-doc.pdf (Section 4)",
+        "children": [
+          {
+            "node_id": "node_077",
+            "level": 2,
+            "code": "5.1",
+            "label": "5.1 Conditional Filter Operators",
+            "source_reference": "Slides 11-12 & Doc Section 4"
+          },
+          {
+            "node_id": "node_087",
+            "level": 2,
+            "code": "5.2",
+            "label": "5.2 Field Projection Mechanics",
+            "source_reference": "Slide 14 & Doc Section 4"
+          },
+          {
+            "node_id": "node_094",
+            "level": 2,
+            "code": "5.3",
+            "label": "5.3 Cursor Pipeline Transformation & Pagination",
+            "source_reference": "Slide 15 & Doc Section 4"
+          }
+        ]
+      },
+      {
+        "node_id": "node_102",
+        "level": 1,
+        "code": "6.0",
+        "label": "6. Field Modification & In-Place Update Operators (CRUD Update)",
+        "source_reference": "mongodb-reference.pdf (Slides 9, 14, 16) & mongodb-reference-doc.pdf (Section 3)",
+        "children": [
+          {
+            "node_id": "node_103",
+            "level": 2,
+            "code": "6.1",
+            "label": "6.1 Update Scope & Execution Methods",
+            "source_reference": "Slides 9, 14 & Doc Section 3"
+          },
+          {
+            "node_id": "node_110",
+            "level": 2,
+            "code": "6.2",
+            "label": "6.2 Atomic Field Update Operators",
+            "source_reference": "Slide 16 & Doc Section 3"
+          }
+        ]
+      },
+      {
+        "node_id": "node_117",
+        "level": 1,
+        "code": "7.0",
+        "label": "7. Document Deletion & Collection Pruning (CRUD Delete)",
+        "source_reference": "mongodb-reference.pdf (Slide 10) & mongodb-reference-doc.pdf (Section 3)",
+        "children": [
+          {
+            "node_id": "node_118",
+            "level": 2,
+            "code": "7.1",
+            "label": "7.1 Document Deletion Execution Methods",
+            "source_reference": "Slide 10 & Doc Section 3"
+          },
+          {
+            "node_id": "node_125",
+            "level": 2,
+            "code": "7.2",
+            "label": "7.2 Data Cleanup Architectural Tradeoffs",
+            "source_reference": "Slides 3, 6, 10 & Doc Sections 1-3"
+          }
+        ]
+      }
+    ]
+  },
+  "title": "Databases, Collections & CRUD Operations"
+}
