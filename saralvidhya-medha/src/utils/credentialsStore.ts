@@ -17,20 +17,32 @@ export interface Credential {
 
 const KEY = 'saral_credentials';
 
-const DEFAULT_PASSWORD = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || '';
+const DEFAULT_PASSWORD = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Ekam@2026';
 
 const DEFAULTS: Credential[] = DEFAULT_PASSWORD ? [
-  { id: '1', username: 'saralvidhya', password: DEFAULT_PASSWORD, role: 'student', createdAt: new Date().toISOString() },
+  { id: '1', username: 'ANU', password: DEFAULT_PASSWORD, role: 'student', createdAt: new Date().toISOString() },
 ] : [];
 
 export function loadCredentials(): Credential[] {
+  let creds: Credential[];
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as Credential[];
-  } catch { /* ignore */ }
-  // First run — seed defaults
-  saveCredentials(DEFAULTS);
-  return DEFAULTS;
+    if (raw) {
+      creds = JSON.parse(raw) as Credential[];
+    } else {
+      saveCredentials(DEFAULTS);
+      return DEFAULTS;
+    }
+  } catch {
+    saveCredentials(DEFAULTS);
+    return DEFAULTS;
+  }
+  const defaultAccount = creds.find(c => c.id === '1');
+  if (defaultAccount && DEFAULT_PASSWORD && defaultAccount.password !== DEFAULT_PASSWORD) {
+    defaultAccount.password = DEFAULT_PASSWORD;
+    saveCredentials(creds);
+  }
+  return creds;
 }
 
 export function saveCredentials(creds: Credential[]) {

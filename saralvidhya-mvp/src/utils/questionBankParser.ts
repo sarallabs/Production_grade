@@ -219,12 +219,27 @@ export function parseQuestionBankMarkdown(
       const rawList = Array.isArray(data) ? data : (data.questions || data.items || data.data || []);
       if (Array.isArray(rawList) && rawList.length > 0) {
         return rawList.map((q: any, idx: number): QuestionBankEntry => {
-          const qText = q.question || q.q || q.title || '';
-          const shortAns = q.short_answer_2mark || q.shortAnswer || q.short_answer || q.answer || '';
-          const longAnsPoints = q.long_answer_5mark_points || q.longAnswer || q.long_answer || q.explanation || '';
-          const longAns = Array.isArray(longAnsPoints)
-            ? longAnsPoints.join('\n\n')
+          const qText = (typeof q.question === 'string' ? q.question : q.question?.stem) || q.q || q.title || '';
+          const rawShort = q.short_answer_2mark || q.shortAnswer || q.short_answer || q.answer || '';
+          const shortAns = String(rawShort).replace(/^\s*(?:>\s*.*(?:\r?\n|$))+/g, '').trim() || String(rawShort);
+          const longAnsPoints =
+            q.long_answer_5mark_points ||
+            q.comprehensive_answer_points ||
+            q.longAnswer ||
+            q.long_answer ||
+            q.explanation ||
+            '';
+          const longAnsRaw = Array.isArray(longAnsPoints)
+            ? longAnsPoints
+                .map((pt: any) => String(pt).replace(/^\s*(?:>\s*.*(?:\r?\n|$))+/g, '').trim() || String(pt))
+                .join('\n\n')
             : String(longAnsPoints || '');
+          const tenAnsRaw =
+            q.essay_answer_10mark ||
+            q.design_answer ||
+            q.long_answer_10mark ||
+            q.ten_mark_answer ||
+            q.answer_10mark;
 
           return {
             id: q.id || `${subjectId}-${chapterNumber}-${idx}`,
@@ -234,8 +249,8 @@ export function parseQuestionBankMarkdown(
             chapterName,
             question: ensureQuestionMark(qText),
             shortAnswer: stripMarkingScheme(shortAns),
-            longAnswer: stripMarkingScheme(longAns || shortAns),
-            tenMarkAnswer: formatTenMarkAnswer(q.essay_answer_10mark || q.long_answer_10mark || q.ten_mark_answer || q.answer_10mark) || undefined,
+            longAnswer: stripMarkingScheme(longAnsRaw || shortAns),
+            tenMarkAnswer: formatTenMarkAnswer(tenAnsRaw) || undefined,
           };
         });
       }

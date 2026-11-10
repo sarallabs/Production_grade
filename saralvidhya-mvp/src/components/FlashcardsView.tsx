@@ -127,9 +127,11 @@ export default function FlashcardsView({
   // Strip embedded base64 <img> tags (they'll be shown in the infographic panel instead)
   rawBack = rawBack.replace(/<img[^>]+src=["']data:image\/[^;]+;base64,[^"']+["'][^>]*>/gi, '');
   // Strip markdown images (![alt](url) or ![alt](data:image/...))
+  // Strip markdown images (![alt](url) or ![alt](data:image/...))
   rawBack = rawBack.replace(/!\[.*?\]\([^\)]+\)/gi, '');
-  const safeBack = rawBack.trim();
-
+  // Strip leading verbatim textbook blockquotes (> "...") so only the concise answer displays
+  const withoutQuote = rawBack.replace(/^\s*(?:>\s*.*(?:\r?\n|$))+/g, '').trim();
+  const safeBack = withoutQuote || rawBack.replace(/^>\s*/gm, '').replace(/^["“]|["”]$/g, '').trim();
   // If card has no infographicUrl, try to extract an embedded base64 <img> or markdown image
   let extractedImgUrl: string | undefined;
   if (!currentCard?.infographicUrl) {
@@ -142,11 +144,11 @@ export default function FlashcardsView({
       const origText = (currentCard?.back || (currentCard as any)?.answer || (currentCard as any)?.definition || '');
       const imgMatch = origText.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["'][^>]*>/i);
       if (imgMatch) {
-        extractedImgUrl = imgMatch[1];
+        extractedImgUrl = imgMatch[1].replace(/\s+/g, '');
       } else {
         const mdMatch = origText.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
         if (mdMatch) {
-          extractedImgUrl = mdMatch[1];
+          extractedImgUrl = mdMatch[1].replace(/\s+/g, '');
         }
       }
     }

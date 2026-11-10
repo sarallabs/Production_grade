@@ -23,11 +23,13 @@ const LEVEL_2_BG = '#6E957E';
 const STUDIED_BG = '#BD7D52';
 
 const ROOT_BG = LEVEL_0_BG;
-const H_GAP = 165;
-const V_GAP = 64;
+const H_GAP = 280;
+const H_GAP_ROOT = 340;
+const V_GAP = 18;
+const V_GAP_L1 = 34;
 const UNIFORM_NODE_W = 248;
 const UNIFORM_NODE_H = 56;
-const MAX_LABEL_W = 216;
+const MAX_LABEL_W = 290;
 const MIN_Z = 0.2, MAX_Z = 3;
 const FONT = "'Inter','SF Pro Display',system-ui,sans-serif";
 const ICON_W = 22;
@@ -95,7 +97,7 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
     const lines = wrap(n.label, st.font, maxW);
     const textW = Math.max(...lines.map(s => measure(s, st.font)));
     const ic = icons[n.label] || icons[n.label.toLowerCase()] || {};
-    const hasVideo = depth > 0 && !!ic.hasVideo, hasPodcast = depth > 0 && (ic.hasPodcast !== undefined ? !!ic.hasPodcast : true);
+    const hasVideo = depth > 0 && !!ic.hasVideo, hasPodcast = depth === 1 && (ic.hasPodcast !== undefined ? !!ic.hasPodcast : true);
     // For depth 1: uniform size! Icons sit outside the box so they do not add to w.
     const w = depth === 1 ? UNIFORM_NODE_W : depth === 0 ? Math.max(216, Math.ceil(textW) + st.px * 2) : Math.ceil(textW) + st.px * 2;
     const h = depth === 1 ? UNIFORM_NODE_H : Math.ceil(lines.length * (depth === 0 ? 19 : 18)) + st.py * 2 + st.extra;
@@ -110,21 +112,23 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
   };
   walk(root, null, 0, 'r', ROOT_BG, 0);
 
-  const sumH = (ks: LNode[]) => ks.reduce((a, k) => a + k.sub, 0) + V_GAP * Math.max(0, ks.length - 1);
+  const sumH = (ks: LNode[], gap = V_GAP) => ks.reduce((a, k) => a + k.sub, 0) + gap * Math.max(0, ks.length - 1);
   const sub = (m: LNode): number => {
     const ks = kidsOf.get(m.id)!;
     ks.forEach(sub);
-    m.sub = Math.max(m.h, sumH(ks));
+    const childGap = m.depth === 0 ? V_GAP_L1 : V_GAP;
+    m.sub = Math.max(m.h, sumH(ks, childGap));
     return m.sub;
   };
   const place = (m: LNode, edge: number, cy: number, side: 'l' | 'r') => {
     m.x = side === 'r' ? edge : edge - m.w;
     m.y = cy - m.h / 2;
     const ks = kidsOf.get(m.id)!;
-    let y = cy - sumH(ks) / 2;
+    const childGap = m.depth === 0 ? V_GAP_L1 : V_GAP;
+    let y = cy - sumH(ks, childGap) / 2;
     ks.forEach(k => {
       place(k, side === 'r' ? m.x + m.w + H_GAP : m.x - H_GAP, y + k.sub / 2, side);
-      y += k.sub + V_GAP;
+      y += k.sub + childGap;
     });
   };
   const rm = map.get(root.id)!;
@@ -132,10 +136,10 @@ function computeLayout(root: TNode, collapsed: Set<string>, icons: NodeIcons) {
   for (const side of ['r', 'l'] as const) {
     const ks = kidsOf.get(root.id)!.filter(k => k.side === side);
     ks.forEach(sub);
-    let y = -sumH(ks) / 2;
+    let y = -sumH(ks, V_GAP_L1) / 2;
     ks.forEach(k => {
-      place(k, side === 'r' ? rm.x + rm.w + H_GAP : rm.x - H_GAP, y + k.sub / 2, side);
-      y += k.sub + V_GAP;
+      place(k, side === 'r' ? rm.x + rm.w + H_GAP_ROOT : rm.x - H_GAP_ROOT, y + k.sub / 2, side);
+      y += k.sub + V_GAP_L1;
     });
   }
 
@@ -258,7 +262,7 @@ export default function MindMapView({
   }, [zoomBy, tree]);
 
   const onDown = (e: React.PointerEvent) => {
-    if (e.button !== 0 || (e.target as HTMLElement).closest('[data-node]')) return;
+    if (e.button !== 0 || (e.target as HTMLElement).closest('[data-node], button, [data-no-pan]')) return;
     pan.current = { sx: e.clientX, sy: e.clientY, vx: viewRef.current.x, vy: viewRef.current.y, moved: false };
     setPanning(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
@@ -306,6 +310,8 @@ export default function MindMapView({
       >
         {/* Top-right unified zoom control pill */}
         <div
+          data-no-pan
+          onPointerDown={(e) => e.stopPropagation()}
           style={{
             position: 'absolute',
             top: 16,
@@ -321,11 +327,11 @@ export default function MindMapView({
             boxShadow: '0 2px 6px rgba(0,0,0,0.04)',
           }}
         >
-          <button style={tbBtn} onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>
-          <button style={{ ...tbBtn, padding: '0 10px', fontWeight: 700, color: '#1E2822' }} onClick={fit} aria-label="Fit to screen">
+          <button type="button" style={tbBtn} onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">−</button>
+          <button type="button" style={{ ...tbBtn, padding: '0 10px', fontWeight: 700, color: '#1E2822' }} onClick={fit} aria-label="Fit to screen">
             {Math.round(view.k * 100)}% · Fit
           </button>
-          <button style={tbBtn} onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
+          <button type="button" style={tbBtn} onClick={() => zoomBy(1.25)} aria-label="Zoom in">+</button>
         </div>
 
         {/* Bottom-left helper legend pill */}
@@ -438,7 +444,7 @@ export default function MindMapView({
                 </span>
 
                 {/* Top-right context podcast headphone badge */}
-                {!isRoot && m.hasPodcast && (
+                {m.depth === 1 && m.hasPodcast && (
                   <button
                     type="button"
                     title="Context podcast — tap to listen"

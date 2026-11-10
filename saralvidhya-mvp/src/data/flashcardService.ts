@@ -51,7 +51,7 @@ function mapRawCards(
         const m =
           field.match(/<img[^>]+src=["'](data:image\/[^;]+;base64,[^"']+)["']/i) ||
           field.match(/!\[.*?\]\((data:image\/[^)]+)\)/i);
-        if (m) infoUrl = m[1].trim();
+        if (m) infoUrl = m[1].replace(/\s+/g, '');
       }
     }
 

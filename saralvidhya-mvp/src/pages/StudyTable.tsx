@@ -179,6 +179,88 @@ const PERSONA_TO_LEVEL: Record<string, DifficultyLevel> = {
   advanced: "advanced",
 };
 
+const TOOL_TO_URL_SLUG: Record<string, string> = {
+  summary: "read",
+  quick_study: "read",
+  detailed: "read",
+  detailed_notes: "read",
+  podcasts: "listen",
+  videos: "watch",
+  revision_flashcards: "revise",
+  flashcards: "revise",
+  revise: "revise",
+  assessment: "assessment",
+  qbank: "question-bank",
+  pyq: "pyq",
+  prep_exam: "exam-prep",
+  prep_test: "exam-prep",
+  mocktest: "exam-prep",
+  pre_final_test: "exam-prep",
+  certification_exam: "exam-prep",
+  study_plan: "study-plan",
+  mindmap: "mindmaps",
+  foundation: "mindmaps",
+  key_takeaways: "takeaways",
+  ask: "ask-me",
+  swot: "swot",
+  deep_dive: "deep-dive",
+};
+
+const URL_SLUG_TO_TOOL: Record<string, ToolId> = {
+  "read": "summary",
+  "summary": "summary",
+  "detailed": "detailed",
+  "listen": "podcasts",
+  "podcasts": "podcasts",
+  "podcast": "podcasts",
+  "watch": "videos",
+  "videos": "videos",
+  "video": "videos",
+  "revise": "revision_flashcards",
+  "flashcards": "revision_flashcards",
+  "assessment": "assessment",
+  "assessments": "assessment",
+  "question-bank": "qbank",
+  "qbank": "qbank",
+  "pyq": "pyq",
+  "pyqs": "pyq",
+  "exam-prep": "prep_exam",
+  "prep-exam": "prep_exam",
+  "preparation-exam": "prep_exam",
+  "mocktest": "mocktest",
+  "mock-test": "mocktest",
+  "study-plan": "study_plan",
+  "study_plan": "study_plan",
+  "mindmaps": "mindmap",
+  "mindmap": "mindmap",
+  "takeaways": "key_takeaways",
+  "key-takeaways": "key_takeaways",
+  "key_takeaways": "key_takeaways",
+  "ask-me": "ask",
+  "ask": "ask",
+  "swot": "swot",
+  "deep-dive": "deep_dive",
+};
+
+function getToolFromPathname(pathname: string): ToolId | null {
+  const seg = pathname.replace(/\/+$/, "").split("/").filter(Boolean).pop()?.toLowerCase() || "";
+  return URL_SLUG_TO_TOOL[seg] || null;
+}
+
+function buildToolPathname(pathname: string, tool: string): string {
+  const slug = TOOL_TO_URL_SLUG[tool] || tool;
+  const parts = pathname.replace(/\/+$/, "").split("/").filter(Boolean);
+  if (parts.length <= 1) {
+    return `/${slug}`;
+  }
+  const last = parts[parts.length - 1].toLowerCase();
+  if (last === "study-table" || last in URL_SLUG_TO_TOOL) {
+    parts[parts.length - 1] = slug;
+    return `/${parts.join("/")}`;
+  }
+  return `/${slug}`;
+}
+
 function getChapterPrefix(subjectId: string): string {
   // MOOCs courses are organised into units, and the sidebar labels them that
   // way — keep the breadcrumb consistent with it.
@@ -324,16 +406,40 @@ const topicNotesCache = new Map<
   }
 >();
 
-export function buildMindmapMermaid(chapterTitle: string, topics: Array<{ label: string }>): string {
+export function buildMindmapMermaid(
+  chapterTitle: string,
+  topics: Array<{ label: string; subtopics?: Array<string | { code?: string; label?: string; title?: string }> }>
+): string {
   if (!chapterTitle && (!topics || topics.length === 0)) return '';
-  const lines = ['mindmap', `  root(("${chapterTitle || 'Chapter Overview'}"))`];
+  const lines = ['mindmap', `  root(("${(chapterTitle || 'Chapter Overview').replace(/"/g, "'")}"))`];
   for (const t of topics || []) {
-    lines.push(`    "${t.label}"`);
+    lines.push(`    "${t.label.replace(/"/g, "'")}"`);
+    if (Array.isArray(t.subtopics)) {
+      for (const st of t.subtopics) {
+        if (typeof st === 'string') {
+          const stText = st.trim();
+          if (stText) lines.push(`      "${stText.replace(/"/g, "'")}"`);
+        } else if (st && typeof st === 'object') {
+          const stText = (st.label || st.title || '').trim();
+          if (stText) {
+            const fullSt = st.code && !stText.startsWith(st.code) ? `${st.code} ${stText}` : stText;
+            lines.push(`      "${fullSt.replace(/"/g, "'")}"`);
+          }
+        }
+      }
+    }
   }
   return lines.join('\n');
 }
 
-type MindmapTopic = { label: string; topicNum?: number; folder?: string; podcastFile?: string; podcastTitle?: string };
+type MindmapTopic = {
+  label: string;
+  topicNum?: number;
+  folder?: string;
+  podcastFile?: string;
+  podcastTitle?: string;
+  subtopics?: Array<string | { id?: string; code?: string; label?: string; title?: string; duration?: string; mins?: number }>;
+};
 
 function getChapterTopicConfig(subjectId: string, chapterNumber: number, curCh?: Chapter): { chapterTitle: string; topics: MindmapTopic[] } | null {
   if (curCh?.topics && curCh.topics.length > 0) {
@@ -492,9 +598,14 @@ export default function StudyTable() {
       const current = JSON.parse(cloudStorage.getItem("sv_last_course_params") || "{}");
       const next = { ...current, ...patch };
       cloudStorage.setItem("sv_last_course_params", JSON.stringify(next));
-      if (typeof window !== "undefined" && window.history.state) {
-        const nextUsr = { ...(window.history.state.usr || {}), ...patch };
-        window.history.replaceState({ ...window.history.state, usr: nextUsr }, "", window.location.pathname);
+      if (typeof window !== "undefined") {
+        const nextPath = patch.tool
+          ? buildToolPathname(window.location.pathname, patch.tool)
+          : window.location.pathname;
+        const nextState = window.history.state
+          ? { ...window.history.state, usr: { ...(window.history.state.usr || {}), ...patch } }
+          : { usr: patch };
+        window.history.replaceState(nextState, "", nextPath);
       }
     } catch {}
   }, []);
@@ -726,7 +837,8 @@ export default function StudyTable() {
 
   // Persist activeTool in savedCourseParams so refresh restores the same tool without query strings.
   const [activeTool, setActiveToolState] = useState<ToolId>(() => {
-    const rawTool = (navState.tool || searchParams.get("tool") || savedCourseParams.tool) as ToolId | null;
+    const pathTool = typeof window !== "undefined" ? getToolFromPathname(window.location.pathname) : null;
+    const rawTool = (pathTool || navState.tool || searchParams.get("tool") || savedCourseParams.tool) as ToolId | null;
     if (rawTool === "foundation") return "mindmap";
     return rawTool || "summary";
   });
@@ -745,7 +857,8 @@ export default function StudyTable() {
         setVideoIndexState(vIdx);
       }
     }
-    if (!userModifiedToolRef.current && !navState.tool && !searchParams.get("tool") && savedCourseParams.tool) {
+    const hasPathTool = typeof window !== "undefined" && Boolean(getToolFromPathname(window.location.pathname));
+    if (!userModifiedToolRef.current && !hasPathTool && !navState.tool && !searchParams.get("tool") && savedCourseParams.tool) {
       const nextTool = (savedCourseParams.tool === "foundation" ? "mindmap" : savedCourseParams.tool) as ToolId;
       if (nextTool && nextTool !== activeTool) {
         setActiveToolState(nextTool);
@@ -1173,6 +1286,12 @@ export default function StudyTable() {
   const [qbankReadAloudText, setQbankReadAloudText] = useState("");
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const targetPath = buildToolPathname(window.location.pathname, activeTool);
+      if (window.location.pathname !== targetPath) {
+        window.history.replaceState(window.history.state, "", targetPath);
+      }
+    }
     // Stop reading whenever we switch tools to prevent overlapping audio
     googleTtsStop();
     // Default every tool to Beginner persona when entering/switching tools
@@ -1394,9 +1513,9 @@ export default function StudyTable() {
     // Pass the real subjectId for all tools — each tool handles subject routing itself
     const internalSubId = subjectId;
     const isCloudSubject =
+      Boolean(getRegistryTenantId()) ||
       GCS_BACKEND_SUBJECTS.has(internalSubId) ||
       GCS_BACKEND_SUBJECTS.has(resolveSubjectId(internalSubId));
-
     // SectionizedReadView manages its own fetch + cache for cloud summary/detailed
     // without needing videosLoaded or StudyTable's loading spinner
     const isSelfLoadingTool =
@@ -2132,27 +2251,59 @@ export default function StudyTable() {
         const curCh = subjectChapters.find((c) => c.number === chapterNumber);
         const dynamicTopicCfg = getChapterTopicConfig(subjectId, chapterNumber, curCh);
 
-        // Compute the final mermaid content:
-        const mermaidContent = dynamicTopicCfg
-          ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
-          : truncateMindmapToLevels(rawMermaid, 2);
+        // Compute the final mermaid content (supports 2-level L1+L2 mindmaps):
+        const rawMermaid3 = rawMermaid ? truncateMindmapToLevels(rawMermaid, 3) : '';
+        const rawMermaidTree = rawMermaid3 ? buildTree(rawMermaid3) : null;
+        const rawHasLevel2 = !!rawMermaidTree?.children?.some((c) => c.children && c.children.length > 0);
+        const cfgHasLevel2 = !!dynamicTopicCfg?.topics?.some((t) => Array.isArray(t.subtopics) && t.subtopics.length > 0);
+
+        const mermaidContent =
+          cfgHasLevel2 && dynamicTopicCfg
+            ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
+            : rawHasLevel2
+            ? rawMermaid3
+            : dynamicTopicCfg
+            ? buildMindmapMermaid(dynamicTopicCfg.chapterTitle, dynamicTopicCfg.topics)
+            : truncateMindmapToLevels(rawMermaid, 2);
 
         // Always parse mermaid tree so we can map Level-2 child nodes to their Level-1 parent branch
         const parsedMermaidTree = mermaidContent ? buildTree(mermaidContent) : null;
-        const rawMermaidTree = rawMermaid ? buildTree(truncateMindmapToLevels(rawMermaid, 2)) : null;
-        const treeForHierarchy = rawMermaidTree || parsedMermaidTree;
+        const treeForHierarchy = parsedMermaidTree || rawMermaidTree;
         const childToParentBranch: Record<string, string> = {};
-        const dynamicTreeSubtopics: Record<string, { code: string; title: string; duration: string; mins: number }[]> = {};
+        const subtopicLookup: Record<
+          string,
+          { parentLabel: string; topicNum: number; subNum: number; subId: string; code: string; label: string }
+        > = {};
+        const dynamicTreeSubtopics: Record<string, { code: string; title: string; fullLabel: string; duration: string; mins: number }[]> = {};
         if (treeForHierarchy?.children) {
           treeForHierarchy.children.forEach((branchNode, bIdx) => {
             const bClean = branchNode.label.trim();
             childToParentBranch[bClean.toLowerCase()] = bClean;
             if (branchNode.children && branchNode.children.length > 0) {
               dynamicTreeSubtopics[bClean.toLowerCase()] = branchNode.children.map((subNode, sIdx) => {
-                childToParentBranch[subNode.label.trim().toLowerCase()] = bClean;
+                const rawSub = subNode.label.trim();
+                const code = `${bIdx + 1}.${sIdx + 1}`;
+                const cleanTitle = rawSub.replace(/^\d+\.\d+\s*/, '').trim() || rawSub;
+                const fullLabel = rawSub.startsWith(code) ? rawSub : `${code} ${cleanTitle}`;
+                const subEntry = {
+                  parentLabel: bClean,
+                  topicNum: bIdx + 1,
+                  subNum: sIdx + 1,
+                  subId: `subtopic_${bIdx + 1}_${sIdx + 1}`,
+                  code,
+                  label: rawSub,
+                };
+                childToParentBranch[rawSub.toLowerCase()] = bClean;
+                childToParentBranch[cleanTitle.toLowerCase()] = bClean;
+                childToParentBranch[fullLabel.toLowerCase()] = bClean;
+                subtopicLookup[rawSub.toLowerCase()] = subEntry;
+                subtopicLookup[cleanTitle.toLowerCase()] = subEntry;
+                subtopicLookup[fullLabel.toLowerCase()] = subEntry;
+                subtopicLookup[code.toLowerCase()] = subEntry;
                 return {
-                  code: `${bIdx + 1}.${sIdx + 1}`,
-                  title: subNode.label.trim(),
+                  code,
+                  title: cleanTitle,
+                  fullLabel: rawSub,
                   duration: '8m',
                   mins: 8,
                 };
@@ -2177,6 +2328,11 @@ export default function StudyTable() {
             const bClean = branchNode.label.trim();
             dynamicMmIcons[bClean] = { hasRead: true, hasPodcast: true, hasVideo: true };
             dynamicMmIcons[bClean.toLowerCase()] = { hasRead: true, hasPodcast: true, hasVideo: true };
+            for (const subNode of branchNode.children || []) {
+              const sClean = subNode.label.trim();
+              dynamicMmIcons[sClean] = { hasRead: true, hasPodcast: false, hasVideo: false };
+              dynamicMmIcons[sClean.toLowerCase()] = { hasRead: true, hasPodcast: false, hasVideo: false };
+            }
           }
         }
 
@@ -2315,11 +2471,30 @@ export default function StudyTable() {
             return;
           }
 
-          // ── Dynamic / Multi-Tenant topic path (Works for all subjects) ───────
-          const match =
-            effectiveTopics.find((t: any) => t.label.toLowerCase() === lowerLabel) ||
-            ({ label, topicNum: Math.max(1, effectiveTopics.findIndex((t) => t.label.toLowerCase().includes(lowerLabel)) + 1) } as MindmapTopic);
+          // ── Dynamic / Multi-Tenant topic & sub-topic path (Works for L1 & L2) ──
+          const subMatch =
+            subtopicLookup[lowerLabel] ||
+            (() => {
+              const mCode = label.trim().match(/^(\d+)\.(\d+)\b/);
+              if (!mCode) return undefined;
+              const bNum = parseInt(mCode[1], 10);
+              const sNum = parseInt(mCode[2], 10);
+              return (
+                subtopicLookup[`${bNum}.${sNum}`] || {
+                  parentLabel: effectiveTopics[bNum - 1]?.label || label,
+                  topicNum: bNum,
+                  subNum: sNum,
+                  subId: `subtopic_${bNum}_${sNum}`,
+                  code: `${bNum}.${sNum}`,
+                  label: label.trim(),
+                }
+              );
+            })();
 
+          const match = subMatch
+            ? ({ label: subMatch.label, topicNum: subMatch.topicNum } as MindmapTopic)
+            : effectiveTopics.find((t: any) => t.label.toLowerCase() === lowerLabel) ||
+              ({ label, topicNum: Math.max(1, effectiveTopics.findIndex((t) => t.label.toLowerCase().includes(lowerLabel)) + 1) } as MindmapTopic);
           if (action === 'video') {
             setMindmapInlineType('video');
             const mappedMedia = MEDIA_MAPPING[lowerLabel];
@@ -2355,9 +2530,9 @@ export default function StudyTable() {
             ? targetPersona
             : 'intermediate';
           const topicNum = (match as any).topicNum ?? (effectiveTopics.indexOf(match) + 1);
-          const cacheKey = `${subjectId}_${chapterNumber}_${topicNum}_${normLevel}`;
+          const subId = subMatch?.subId || null;
+          const cacheKey = `${subjectId}_${chapterNumber}_${subId || `topic_${topicNum}`}_${normLevel}`;
           const cached = topicNotesCache.get(cacheKey);
-
           if (cached && cached.quick && cached.quickQc && cached.QuickQcLoaded) {
             setMindmapTopicContent(cached.quick);
             setMindmapDetailedContent(cached.detailed || cached.quick);
@@ -2390,54 +2565,90 @@ export default function StudyTable() {
               } catch { return ''; }
             };
 
-            const [secQuick, secDetailed] = await Promise.all([
-              getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel),
-              getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel),
-            ]);
+            let quickText = '';
+            let detailedText = '';
+            let foundSec: any = undefined;
+            let foundDet: any = undefined;
 
-            const foundSec =
-              secQuick?.sections.find((s) => s.sectionNumber === topicNum) ||
-              secQuick?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
-              secQuick?.sections[topicNum - 1];
-            const foundDet =
-              secDetailed?.sections.find((s) => s.sectionNumber === topicNum) ||
-              secDetailed?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
-              secDetailed?.sections[topicNum - 1];
+            if (subId) {
+              const subQuickSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/${subId}/${normLevel}.md`);
+              quickText = await fetchSafeMd(subQuickSigned || `${subBase}/${chDir}/learn/topics/${subId}/${normLevel}.md`);
+              if (!quickText) {
+                quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/${subId}/${normLevel}.md`);
+              }
 
-            let quickText = foundSec?.content || '';
+              const subDetailedSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/${subId}_detailed/${normLevel}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/${subId}/advanced.md`);
+              detailedText = await fetchSafeMd(
+                subDetailedSigned || `${subBase}/${chDir}/learn/topics/${subId}_detailed/${normLevel}.md`
+              );
+              if (!detailedText) {
+                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/${subId}_detailed/${normLevel}.md`);
+              }
+            }
+
             if (!quickText) {
-              const quickSigned =
-                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`) ||
-                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`);
-              quickText = await fetchSafeMd(quickSigned || `${subBase}/${chDir}/learn/topics/quick/topic_${topicNum}.md`);
+              const topicQuickSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/${normLevel}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/quick/topic_${topicNum}.md`);
+              quickText = await fetchSafeMd(
+                topicQuickSigned || `${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`
+              );
               if (!quickText) {
                 quickText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/${normLevel}.md`);
               }
             }
 
-            let detailedText = foundDet?.content || '';
             if (!detailedText) {
-              const detailedSigned =
-                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`) ||
-                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
-              detailedText = await fetchSafeMd(detailedSigned || `${subBase}/${chDir}/learn/topics/detailed/topic_${topicNum}.md`);
+              const topicDetailedSigned =
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}_detailed/${normLevel}.md`) ||
+                resolveAssetUrl(subjectId, chapterNumber, `learn/topics/detailed/topic_${topicNum}.md`);
+              detailedText = await fetchSafeMd(
+                topicDetailedSigned || `${subBase}/${chDir}/learn/topics/topic_${topicNum}_detailed/${normLevel}.md`
+              );
               if (!detailedText) {
-                detailedText = await fetchSafeMd(`${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
+                detailedText = await fetchSafeMd(
+                  `${subBase}/${chDir}/learn/topics/topic_${topicNum}_detailed/${normLevel}.md`
+                );
               }
+            }
+
+            if (!quickText || !detailedText) {
+              const [secQuick, secDetailed] = await Promise.all([
+                getSectionizedReadData(subjectId, chapterNumber, 'quick', normLevel as DifficultyLevel),
+                getSectionizedReadData(subjectId, chapterNumber, 'detailed', normLevel as DifficultyLevel),
+              ]);
+              foundSec =
+                secQuick?.sections.find((s) => s.sectionNumber === topicNum) ||
+                secQuick?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+                secQuick?.sections[topicNum - 1];
+              foundDet =
+                secDetailed?.sections.find((s) => s.sectionNumber === topicNum) ||
+                secDetailed?.sections.find((s) => s.title.toLowerCase().includes(lowerLabel)) ||
+                secDetailed?.sections[topicNum - 1];
+
+              if (!quickText) quickText = foundSec?.content || '';
+              if (!detailedText) detailedText = foundDet?.content || '';
+            }
+
+            if (!detailedText) {
+              const advSigned = resolveAssetUrl(subjectId, chapterNumber, `learn/topics/topic_${topicNum}/advanced.md`);
+              detailedText = await fetchSafeMd(advSigned || `${subBase}/${chDir}/learn/topics/topic_${topicNum}/advanced.md`);
             }
 
             const finalQuick = quickText || `Summary content for ${match.label}`;
             const finalDetailed = detailedText || finalQuick || `Detailed notes for ${match.label}`;
 
+            const qcPrefix = subMatch ? `M${subMatch.code}` : `M${topicNum}`;
             const quickQc =
-              foundSec?.quickChecks && foundSec.quickChecks.length > 0
+              foundSec?.quickChecks && foundSec.quickChecks.length >= 4
                 ? foundSec.quickChecks
-                : generateQuickCheckQuestionsFromMarkdown(match.label, finalQuick, `M${topicNum}`);
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalQuick, qcPrefix);
             const detailedQc =
-              foundDet?.quickChecks && foundDet.quickChecks.length > 0
+              foundDet?.quickChecks && foundDet.quickChecks.length >= 4
                 ? foundDet.quickChecks
-                : generateQuickCheckQuestionsFromMarkdown(match.label, finalDetailed, `M${topicNum}`);
-
+                : generateQuickCheckQuestionsFromMarkdown(match.label, finalDetailed, qcPrefix);
             setMindmapTopicContent(finalQuick);
             setMindmapDetailedContent(finalDetailed);
             setMindmapQuickChecks({ quick: quickQc, detailed: detailedQc });
@@ -2483,17 +2694,26 @@ export default function StudyTable() {
           return loadMindmapTopicForPersona(label, persona, action, false);
         };
 
-        // Compute next/prev topic for inline navigation (Multi-Tenant)
+        // Compute next/prev topic for inline navigation (Multi-Tenant, supports L1 + L2)
         const allTopicLabels: string[] = isNebBiologyChap6
           ? Object.keys(mmIcons).filter((k) => k !== 'ANIMAL TISSUE')
           : effectiveTopics.map((t) => t.label);
-        const currentTopicIdx = allTopicLabels.findIndex(
+        const navigableTopicLabels: string[] = isNebBiologyChap6
+          ? allTopicLabels
+          : treeForHierarchy?.children?.some((b) => b.children && b.children.length > 0)
+          ? treeForHierarchy.children.flatMap((b) => [
+              b.label.trim(),
+              ...(b.children || []).map((s) => s.label.trim()),
+            ])
+          : allTopicLabels;
+        const currentTopicIdx = navigableTopicLabels.findIndex(
           (l) => l.toLowerCase() === (mindmapTopicTitle ?? '').toLowerCase()
         );
-        const prevTopicLabel = currentTopicIdx > 0 ? allTopicLabels[currentTopicIdx - 1] : null;
-        const nextTopicLabel = currentTopicIdx >= 0 && currentTopicIdx < allTopicLabels.length - 1
-          ? allTopicLabels[currentTopicIdx + 1]
-          : null;
+        const prevTopicLabel = currentTopicIdx > 0 ? navigableTopicLabels[currentTopicIdx - 1] : null;
+        const nextTopicLabel =
+          currentTopicIdx >= 0 && currentTopicIdx < navigableTopicLabels.length - 1
+            ? navigableTopicLabels[currentTopicIdx + 1]
+            : null;
 
         const activeMmMarkdown = (
           (mindmapInlineTab === 'quick' ? mindmapTopicContent : mindmapDetailedContent) || ''
@@ -2997,8 +3217,13 @@ export default function StudyTable() {
                           handleTopicClick(lbl, 'read');
                           return;
                         }
+                        if ((depth && depth >= 2) || subtopicLookup[lbl.toLowerCase().trim()]) {
+                          if (mmAudioRef.current) mmAudioRef.current.pause();
+                          if (parentLbl) markMmBranchStudied(parentLbl);
+                          handleTopicClick(lbl.trim(), 'read');
+                          return;
+                        }
                         const candidate =
-                          (parentLbl && depth && depth >= 2 ? parentLbl : null) ||
                           childToParentBranch[lbl.toLowerCase().trim()] ||
                           lbl;
                         const canonical =
@@ -3156,13 +3381,18 @@ export default function StudyTable() {
                         SUB-TOPICS
                       </div>
 
-                      {branchMeta.subTopics.map((st) => (
+                      {branchMeta.subTopics.map((st: any) => (
                         <button
                           key={st.code}
                           type="button"
                           onClick={() => {
                             if (mmAudioRef.current) mmAudioRef.current.pause();
-                            handleTopicClick(activeSelectedBranch, 'read');
+                            const targetSubLabel =
+                              st.fullLabel ||
+                              subtopicLookup[st.code?.toLowerCase()]?.label ||
+                              subtopicLookup[st.title?.toLowerCase()?.trim()]?.label ||
+                              activeSelectedBranch;
+                            handleTopicClick(targetSubLabel, 'read');
                           }}
                           style={{
                             display: 'flex',

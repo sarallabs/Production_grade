@@ -43,6 +43,8 @@ export interface ChapterSummaryItem {
     durationSeconds?: number;
     topics?: string[];
     order?: number;
+    introEndTime?: number;
+    introEndTime?: number;
   }>;
   tools?: Record<string, any>;
 }

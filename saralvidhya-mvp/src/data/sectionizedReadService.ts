@@ -200,7 +200,7 @@ export function generateQuickCheckQuestionsFromMarkdown(
   const hashSeed = cleanTitle.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
   const questions: QuickCheckQuestion[] = [];
 
-  // Use termPairs first (up to 2), then keyStatements to reach 3 questions
+  // Use termPairs first (up to 2), then keyStatements to reach at least 4 questions
   for (let i = 0; i < Math.min(2, termPairs.length); i++) {
     const pair = termPairs[i];
     const otherDefs = termPairs
@@ -221,7 +221,7 @@ export function generateQuickCheckQuestionsFromMarkdown(
   }
 
   let stmtIdx = 0;
-  while (questions.length < 3 && stmtIdx < keyStatements.length) {
+  while (questions.length < 4 && stmtIdx < keyStatements.length) {
     const item = keyStatements[stmtIdx++];
     // Avoid duplicating a statement already used as a term definition
     if (questions.some((q) => q.options.some((o) => o.is_correct && o.text === item.statement))) {
@@ -229,7 +229,7 @@ export function generateQuickCheckQuestionsFromMarkdown(
     }
     const { options, correctKey } = buildOptions(
       item.statement,
-      genericDistractorPool.slice(questions.length),
+      genericDistractorPool.slice(questions.length % genericDistractorPool.length),
       hashSeed + questions.length + stmtIdx
     );
     const focusLabel =
@@ -246,7 +246,9 @@ export function generateQuickCheckQuestionsFromMarkdown(
           ? `Which of the following is a key concept or principle of ${focusLabel}?`
           : questions.length === 1
           ? `According to the notes on ${focusLabel}, which statement is accurate?`
-          : `Which of the following accurately summarizes a key takeaway from ${focusLabel}?`,
+          : questions.length === 2
+          ? `Which of the following accurately summarizes a key takeaway from ${focusLabel}?`
+          : `Which operational detail or rule applies to ${focusLabel}?`,
       options,
       correct_answer: correctKey,
       rationale: `As explained in the notes on ${focusLabel}: ${item.statement}`,
@@ -254,14 +256,16 @@ export function generateQuickCheckQuestionsFromMarkdown(
   }
 
   // Fallback if the markdown was extremely brief
-  while (questions.length < 3) {
+  while (questions.length < 4) {
     const qNum = questions.length + 1;
     const fallbackCorrect =
       qNum === 1
         ? `${cleanTitle} provides the foundational structure, mechanisms, and principles covered in this topic.`
         : qNum === 2
         ? `Understanding the core components and relationships within ${cleanTitle} is essential for applying this concept accurately.`
-        : `${cleanTitle} integrates key terminology, functional pathways, and practical applications within the chapter.`;
+        : qNum === 3
+        ? `${cleanTitle} integrates key terminology, functional pathways, and practical applications within the chapter.`
+        : `Applying the exact syntax and operational rules of ${cleanTitle} ensures reliable and predictable execution.`;
     const { options, correctKey } = buildOptions(fallbackCorrect, genericDistractorPool, hashSeed + qNum);
     questions.push({
       module_id: moduleId,
@@ -606,12 +610,18 @@ export async function getSectionizedReadData(
         sectionBody = `${part0Body}\n\n---\n\n${sectionBody}`;
       }
 
-      if (matchedQuestions.length === 0) {
-        matchedQuestions = generateQuickCheckQuestionsFromMarkdown(
+      if (matchedQuestions.length < 4) {
+        const generated = generateQuickCheckQuestionsFromMarkdown(
           cleanTitle,
           sectionBody,
           `M${secNumber}`
         );
+        for (const gq of generated) {
+          if (matchedQuestions.length >= 4) break;
+          if (!matchedQuestions.some((eq) => eq.stem === gq.stem)) {
+            matchedQuestions.push(gq);
+          }
+        }
       }
 
       sections.push({

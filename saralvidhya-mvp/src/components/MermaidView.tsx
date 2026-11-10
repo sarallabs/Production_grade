@@ -52,7 +52,8 @@ function cleanLabel(s: string) {
     .replace(/^root\[(.+?)\]$/i, '$1').replace(/^root$/i, '')
     .replace(/^\(\((.+?)\)\)$/, '$1').replace(/^\((.+?)\)$/, '$1')
     .replace(/^\[\[(.+?)\]\]$/, '$1').replace(/^\[(.+?)\]$/, '$1')
-    .replace(/^\{(.+?)\}$/, '$1').replace(/^"(.+?)"$/, '$1')
+    .replace(/^\{(.+?)\}$/, '$1').replace(/^"(.+)"$/, '$1')
+    .replace(/\\"/g, '"')
     .replace(/^[-*+]\s+/, '');
   return s.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"').trim();
 }
@@ -76,7 +77,12 @@ export function buildTree(raw: string): TNode | null {
         const root = mk(rootLabel);
         for (const b of parsed.branches) {
           const bLabel = String(b?.title || b?.label || b?.name || 'Topic').replace(/^\d+\.\s*/, '').trim();
-          root.children.push(mk(bLabel));
+          const bNode = mk(bLabel);
+          for (const sub of b?.subtopics ?? b?.children ?? []) {
+            const sLabel = String(sub?.title || sub?.label || sub?.name || '').trim();
+            if (sLabel) bNode.children.push(mk(sLabel));
+          }
+          root.children.push(bNode);
         }
         return root;
       }
@@ -92,7 +98,12 @@ export function buildTree(raw: string): TNode | null {
           const cLabel = String(child?.name ?? child?.label ?? child?.title ?? 'Topic')
             .replace(/^\d+\.\s*/, '')
             .trim();
-          root.children.push(mk(cLabel));
+          const cNode = mk(cLabel);
+          for (const sub of child?.children ?? child?.subtopics ?? []) {
+            const sLabel = String(sub?.name ?? sub?.label ?? sub?.title ?? '').trim();
+            if (sLabel) cNode.children.push(mk(sLabel));
+          }
+          root.children.push(cNode);
         }
         return root;
       }
