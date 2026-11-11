@@ -65,7 +65,7 @@ const DEFAULT_PUBLIC_IMAGES: Record<string, string> = {
   '/key_takeaways_icon_black.png': '_global/assets/key_takeaways_icon_black.png',
   '/logo-angrau.png': '_global/assets/logo-angrau.png',
   '/logo-clean.png': '_global/assets/logo-clean.png',
-  '/logo-mlrit.png': '_global/assets/logo-mlrit.png', '/logo-cu.png': '_global/assets/logo-cu.png',
+  '/logo-mlrit.png': '_global/assets/logo-mlrit.png',
   '/logo.jpg': '_global/assets/logo.jpg',
   '/metamorphosis-icon.png': '_global/assets/metamorphosis-icon.png',
   '/mindmap_brain.png': '_global/assets/mindmap_brain.png',
@@ -106,7 +106,7 @@ export async function getGlobalPlatformConfig(): Promise<GlobalPlatformConfig> {
   const rawBoardLogos: Record<string, string> = rawAssets.boardLogos || {
     angrau: '_global/assets/logo-angrau.png',
     angrau_university: '_global/assets/logo-angrau.png',
-    mlrit: '_global/assets/logo-mlrit.png', cu: '_global/assets/logo-cu.png', chalapathi: '_global/assets/logo-cu.png',
+    mlrit: '_global/assets/logo-mlrit.png',
   };
   const rawPublicImages: Record<string, string> = {
     ...DEFAULT_PUBLIC_IMAGES,
@@ -174,7 +174,7 @@ export async function getGlobalPlatformConfig(): Promise<GlobalPlatformConfig> {
       cloudRoutes: {
         ento_131: 'angrau/entomology',
         entomology: 'angrau/entomology',
-        dbms: 'mlrit/dbms', cns: 'cu/cns',
+        dbms: 'mlrit/dbms',
       },
       localSubjectMap: {
         ento_131: 'angrau/entomology',
@@ -184,14 +184,14 @@ export async function getGlobalPlatformConfig(): Promise<GlobalPlatformConfig> {
       boardNames: {
         angrau: 'Acharya N. G. Ranga Agricultural University',
         angrau_university: 'Acharya N. G. Ranga Agricultural University',
-        mlrit: 'MLR Institute of Technology', cu: 'Chalapathi University', chalapathi: 'Chalapathi University',
+        mlrit: 'MLR Institute of Technology',
       },
       boardTenantAliases: {
         angrau: 'angrau_university',
         angrau_university: 'angrau',
-        mlrit: 'mlrit', cu: 'cu', chalapathi: 'cu',
+        mlrit: 'mlrit',
       },
-      defaultVisibleBoards: ['angrau_university', 'mlrit', 'vvit', 'cu'],
+      defaultVisibleBoards: ['angrau_university', 'mlrit'],
     },
     resourceTabs: Array.isArray(data.resourceTabs)
       ? data.resourceTabs.map((item: any) =>
