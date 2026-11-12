@@ -149,10 +149,10 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
   const [isLongAnswer, setIsLongAnswer] = useState(true);
 
   return (
-    <div style={{ flexShrink: 0, display: 'flex', gap: '16px', background: '#fff', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', overflow: 'hidden', border: '1px solid #e2e8f0', position: 'relative' }}>
+    <div style={{ flexShrink: 0, display: 'flex', gap: '16px', background: '#FAF8F3', borderRadius: '12px', boxShadow: '0 2px 8px rgba(30, 40, 34, 0.04)', overflow: 'hidden', border: '1px solid #E2DDD3', position: 'relative' }}>
 
-      {/* Left red accent bar */}
-      <div style={{ width: '4px', background: '#fca5a5', position: 'absolute', left: 0, top: 0, bottom: 0 }} />
+      {/* Left terracotta accent bar */}
+      <div style={{ width: '4px', background: '#D9A382', position: 'absolute', left: 0, top: 0, bottom: 0 }} />
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: '20px', paddingLeft: '24px', display: 'flex', flexDirection: 'column' }}>
@@ -160,12 +160,12 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
         {/* Question Row (Inline Q1) + Marks) */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'baseline', flex: 1 }}>
-            <h2 style={{ fontSize: '16px', margin: 0, color: '#1e293b', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Q{question.id})</h2>
-            <div style={{ fontSize: '16px', color: '#0f172a', lineHeight: '1.5', fontWeight: 500 }}>
+            <h2 style={{ fontSize: '16px', margin: 0, color: '#1E2822', fontWeight: 'bold', whiteSpace: 'nowrap' }}>Q{question.id})</h2>
+            <div style={{ fontSize: '16px', color: '#1E2822', lineHeight: '1.5', fontWeight: 500 }}>
               {question.text}
             </div>
           </div>
-          <span style={{ background: '#e2e8f0', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', color: '#334155', fontSize: '13px', marginLeft: '16px', flexShrink: 0 }}>
+          <span style={{ background: '#ECF0E8', padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold', color: '#2D3E36', fontSize: '13px', marginLeft: '16px', flexShrink: 0 }}>
             {question.marks}M
           </span>
         </div>
@@ -173,17 +173,17 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
         {/* Hashtags and Actions Row (Directly under question) */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ background: '#e0e7ff', color: '#4f46e5', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.section}</span>
-            <span style={{ background: '#d1fae5', color: '#059669', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.chapter}</span>
+            <span style={{ background: '#EEF5F1', color: '#546C60', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.section}</span>
+            <span style={{ background: '#FBF5E8', color: '#8A6218', padding: '4px 12px', borderRadius: '16px', fontSize: '12px', fontWeight: 'bold' }}>#{question.chapter}</span>
           </div>
           
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
               onClick={() => setIsCompleted(!isCompleted)}
               style={{
-                background: isCompleted ? '#f0fdf4' : '#f8fafc',
-                color: isCompleted ? '#15803d' : '#475569',
-                border: `1px solid ${isCompleted ? '#86efac' : '#cbd5e1'}`,
+                background: isCompleted ? '#EEF6F1' : '#F4F1EA',
+                color: isCompleted ? '#2E6F4E' : '#5C6961',
+                border: `1px solid ${isCompleted ? '#A3C9B3' : '#D5DDD0'}`,
                 padding: '6px 12px',
                 borderRadius: '6px',
                 fontWeight: 'bold',
@@ -201,9 +201,9 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
               onClick={onSOS}
               title="Enter Focus Mode for this chapter"
               style={{
-                background: '#fee2e2',
-                color: '#b91c1c',
-                border: '1px solid #fca5a5',
+                background: '#FAF2E9',
+                color: '#B86B3D',
+                border: '1px solid #C88A5A',
                 padding: '6px 12px',
                 borderRadius: '6px',
                 fontWeight: 'bold',
@@ -213,13 +213,13 @@ export function QuestionCard({ question, onSOS }: { question: QuestionData; onSO
                 transition: 'all 0.2s',
               }}
             >
-              <span style={{ background: '#ef4444', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', letterSpacing: '0.5px' }}>SOS</span>
+              <span style={{ background: '#B86B3D', color: '#fff', padding: '2px 6px', borderRadius: '4px', fontSize: '11px', letterSpacing: '0.5px' }}>SOS</span>
             </button>
           </div>
         </div>
 
         {/* Answer Box */}
-        <div style={{ background: '#f8fafc', borderRadius: '8px', padding: '16px', border: '1px solid #e2e8f0', marginTop: 'auto' }}>
+        <div style={{ background: '#F4F1EA', borderRadius: '8px', padding: '16px', border: '1px solid #E2DDD3', marginTop: 'auto' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ margin: 0, fontSize: '13px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Answer</h3>
             
@@ -317,9 +317,9 @@ export default function PreviousYearQuestions() {
         ← Back
       </button>
 
-      <div style={{ background: '#d0e1f9', padding: '24px', borderRadius: '8px', textAlign: 'center', marginBottom: '24px' }}>
-        <h1 style={{ margin: 0, color: '#1e3a8a', fontSize: '28px' }}>{meta.title} PYQs</h1>
-        <p style={{ margin: '8px 0 0', color: '#1e40af', fontSize: '14px' }}>{meta.subtitle}</p>
+      <div style={{ background: '#ECF0E8', padding: '24px', borderRadius: '8px', textAlign: 'center', marginBottom: '24px', border: '1px solid #D5DDD0' }}>
+        <h1 style={{ margin: 0, color: '#1E2822', fontSize: '28px' }}>{meta.title} PYQs</h1>
+        <p style={{ margin: '8px 0 0', color: '#546C60', fontSize: '14px' }}>{meta.subtitle}</p>
       </div>
 
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', flexWrap: 'wrap' }}>

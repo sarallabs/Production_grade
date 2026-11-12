@@ -87,7 +87,7 @@ export default function FileTreeSidebar({
         <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
           <button 
             className="sv-btn" 
-            style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(236, 72, 153, 0.1)', color: '#EC4899' }}
+            style={{ flex: 1, padding: '8px', fontSize: '0.85rem', background: 'rgba(236, 72, 153, 0.1)', color: '#D9A382' }}
             onClick={() => onOpenCreateModal('directory', '')}
           >
             + Folder

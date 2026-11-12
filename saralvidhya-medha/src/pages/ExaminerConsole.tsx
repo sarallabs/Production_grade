@@ -651,7 +651,7 @@ export default function ExaminerConsole() {
                   width: '44px',
                   height: '44px',
                   borderRadius: '50%',
-                  background: activeSubjectInfo.professorAvatar ? 'transparent' : (selectedSubjectId.includes('physics') ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'linear-gradient(135deg, #c026d3 0%, #9333ea 100%)'),
+                  background: activeSubjectInfo.professorAvatar ? 'transparent' : (selectedSubjectId.includes('physics') ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)' : 'linear-gradient(135deg, #B86B3D 0%, #546C60 100%)'),
                   color: '#ffffff',
                   display: 'flex',
                   alignItems: 'center',
@@ -1280,8 +1280,8 @@ export default function ExaminerConsole() {
                         fontWeight: 800,
                         padding: '3px 10px',
                         borderRadius: '6px',
-                        background: q.type === 'msq' ? '#f3e8ff' : '#eff6ff',
-                        color: q.type === 'msq' ? '#7e22ce' : '#1d4ed8',
+                        background: q.type === 'msq' ? '#EEF5F1' : '#eff6ff',
+                        color: q.type === 'msq' ? '#2D3E36' : '#1d4ed8',
                         border: q.type === 'msq' ? '1px solid #d8b4fe' : '1px solid #bfdbfe',
                       }}
                     >

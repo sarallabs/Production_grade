@@ -8,24 +8,24 @@ const PERSONAS = [
     name: 'Beginner',
     desc: 'Focus on basics and clear fundamentals',
     imgSrc: '/personas/beginner.png',
-    gradient: 'linear-gradient(135deg, #10B981, #34D399)',
-    glow: 'rgba(16, 185, 129, 0.15)'
+    gradient: 'linear-gradient(135deg, #7BA88B, #96C1A4)',
+    glow: 'rgba(123, 168, 139, 0.22)'
   },
   {
     id: 'intermediate',
     name: 'Intermediate',
     desc: 'Standard pacing and explanations',
     imgSrc: '/personas/intermediate.png',
-    gradient: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
-    glow: 'rgba(59, 130, 246, 0.15)'
+    gradient: 'linear-gradient(135deg, #4F7B64, #6B9C82)',
+    glow: 'rgba(79, 123, 100, 0.22)'
   },
   {
     id: 'advanced',
     name: 'Advanced',
     desc: 'Advanced concepts and deeper dives',
     imgSrc: '/personas/advanced.png',
-    gradient: 'linear-gradient(135deg, #8B5CF6, #A78BFA)',
-    glow: 'rgba(139, 92, 246, 0.15)'
+    gradient: 'linear-gradient(135deg, #2D3E36, #415A4F)',
+    glow: 'rgba(45, 62, 54, 0.22)'
   },
 ];
 
@@ -93,18 +93,17 @@ export default function PersonaSelection() {
           </div>
           <div className="sv-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
             <button className="sv-logout-btn" onClick={logout} title="Log Out" aria-label="Log Out">
-              <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="44" stroke="#FF4D4D" strokeWidth="7" fill="none"/>
-                <path d="M48 30H30V70H48" stroke="#FF4D4D" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M42 50H74M74 50L60 36M74 50L60 64" stroke="#FF4D4D" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#546C60" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                <polyline points="15 8 19 12 15 16" />
+                <line x1="9" y1="12" x2="19" y2="12" />
               </svg>
             </button>
             <button className="sv-profile-btn" onClick={() => navigate('/profile')} title="Profile" aria-label="Profile">
-              <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="50" fill="#4285F4"/>
-                <circle cx="50" cy="40" r="18" fill="#FFFFFF"/>
-                <path d="M20 84C20 67 33.4 54 50 54C66.6 54 80 67 80 84H20Z" fill="#FFFFFF"/>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
               </svg>
+              Profile
             </button>
           </div>
         </header>

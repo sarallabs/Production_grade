@@ -145,7 +145,7 @@ export default function ConfigPage() {
         .sv-config-page {
           height: 100vh;
           overflow-y: auto;
-          background: linear-gradient(135deg, #F5F3FF, #FDF2F8, #FAF5FF);
+          background: linear-gradient(135deg, #F5F3FF, #FAF2E9, #FAF8F3);
           padding: ${view === 'examiner' ? '0' : '60px 20px 100px'};
           font-family: 'Inter', system-ui, sans-serif;
           position: relative;
@@ -209,8 +209,8 @@ export default function ConfigPage() {
           transition: all 0.3s ease;
         }
         .sv-menu-option:hover {
-          border-color: #A855F7;
-          background: #FAF5FF;
+          border-color: #7BA88B;
+          background: #FAF8F3;
           transform: translateY(-4px);
           box-shadow: 0 12px 24px rgba(168, 85, 247, 0.12);
         }
@@ -218,7 +218,7 @@ export default function ConfigPage() {
           width: 48px;
           height: 48px;
           border-radius: 12px;
-          background: linear-gradient(135deg, #7C3AED, #F472B6);
+          background: linear-gradient(135deg, #546C60, #F472B6);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -248,7 +248,7 @@ export default function ConfigPage() {
           font-size: 1.5rem;
           font-weight: 700;
           margin-bottom: 8px;
-          background: linear-gradient(135deg, #7C3AED, #EC4899);
+          background: linear-gradient(135deg, #546C60, #D9A382);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -276,14 +276,14 @@ export default function ConfigPage() {
           transform: scale(1.02) translateX(4px);
         }
         .sv-board-label.checked {
-          border-color: #A855F7;
-          background: #FAF5FF;
+          border-color: #7BA88B;
+          background: #FAF8F3;
           box-shadow: 0 4px 12px rgba(168, 85, 247, 0.08);
         }
         .sv-radio {
           width: 24px;
           height: 24px;
-          accent-color: #A855F7;
+          accent-color: #7BA88B;
           cursor: pointer;
           transition: transform 0.2s;
         }
@@ -304,13 +304,13 @@ export default function ConfigPage() {
           overflow: hidden;
         }
         .sv-upload-area.dragging {
-          border-color: #EC4899;
-          background: #FDF2F8;
+          border-color: #D9A382;
+          background: #FAF2E9;
           transform: scale(1.03);
         }
         .sv-upload-area:hover {
-          border-color: #A855F7;
-          background: #FAF5FF;
+          border-color: #7BA88B;
+          background: #FAF8F3;
         }
         .sv-logo-preview {
           width: 90px;
@@ -359,7 +359,7 @@ export default function ConfigPage() {
         }
         .sv-input:focus {
           outline: none;
-          border-color: #A855F7;
+          border-color: #7BA88B;
           box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.15);
         }
         .sv-live-preview {
@@ -375,7 +375,7 @@ export default function ConfigPage() {
         .sv-preview-text {
           font-size: 1.4rem;
           font-weight: 700;
-          background: linear-gradient(135deg, #7C3AED, #EC4899);
+          background: linear-gradient(135deg, #546C60, #D9A382);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
         }
@@ -401,7 +401,7 @@ export default function ConfigPage() {
           gap: 10px;
         }
         .sv-btn-primary {
-          background: linear-gradient(135deg, #7C3AED, #F472B6);
+          background: linear-gradient(135deg, #546C60, #F472B6);
           color: white;
           border: none;
           box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
@@ -411,7 +411,7 @@ export default function ConfigPage() {
         .sv-btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35);
-          background: linear-gradient(135deg, #8B5CF6, #F9A8D4);
+          background: linear-gradient(135deg, #546C60, #F9A8D4);
         }
         .sv-btn-primary:active { transform: translateY(1px); }
         
@@ -421,9 +421,9 @@ export default function ConfigPage() {
           border: 2px solid #E2E8F0;
         }
         .sv-btn-secondary:hover {
-          border-color: #A855F7;
-          color: #7C3AED;
-          background: #FAF5FF;
+          border-color: #7BA88B;
+          color: #546C60;
+          background: #FAF8F3;
           transform: translateY(-2px);
           box-shadow: 0 4px 12px rgba(168, 85, 247, 0.1);
         }
@@ -578,7 +578,7 @@ export default function ConfigPage() {
                 onClick={() => fileInputRef.current?.click()}
               >
                 <img src={logo} alt="Logo Preview" className="sv-logo-preview" style={{ width: 'auto', height: '90px', maxWidth: '200px' }} />
-                <div style={{ fontWeight: 600, color: '#7C3AED', marginBottom: '8px', fontSize: '1.1rem' }}>
+                <div style={{ fontWeight: 600, color: '#546C60', marginBottom: '8px', fontSize: '1.1rem' }}>
                   Click to upload or drag and drop
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#94A3B8' }}>

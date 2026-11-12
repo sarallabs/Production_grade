@@ -2,18 +2,31 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&display=swap");
 
+:root {
+  --sv-theme-menu: #2E3B33;
+  --sv-theme-learn: #9CC0B4;
+  --sv-theme-practice: #E7B864;
+  --sv-theme-prepare: #B5BA9B;
+  --sv-theme-resources: #D9A382;
+  --sv-theme-logout: #F5F2EB;
+  --primary: #546C60;
+  --primary-light: #EEF5F1;
+  --surface: #FAF8F3;
+  --border: #E2DDD3;
+  --text: #1E2822;
+  --text-secondary: #5C6961;
+}
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-
 * {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
-
 
 html,
 body {

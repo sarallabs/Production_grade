@@ -30,15 +30,16 @@ export interface ToolsMenuProps {
 
 // Full tools list
 const ALL_TOOLS: { id: ToolId; icon: string; label: string; desc: string }[] = [
-  { id: "videos", icon: "🎥", label: "Videos", desc: "Watch and learn" },
-  { id: "summary", icon: "📖", label: "Quick Study", desc: "Quick notes" },
-  { id: "detailed", icon: "📝", label: "Detailed Study", desc: "In-depth notes" },
+  { id: "videos", icon: "🎥", label: "Watch", desc: "Watch and learn" },
+  { id: "summary", icon: "📖", label: "Essentials", desc: "Quick notes" },
+  { id: "detailed", icon: "📝", label: "In-Depth", desc: "In-depth notes" },
   { id: "flashcards", icon: "🗂️", label: "Flashcards", desc: "Quick revision" },
   { id: "assessment", icon: "🎯", label: "Assessments", desc: "Test knowledge" },
   { id: "qbank", icon: "🏦", label: "Question Bank", desc: "Practice more" },
   { id: "pyq", icon: "📄", label: "PYQ", desc: "Past year questions" },
   { id: "mindmap", icon: "🧠", label: "Mindmap", desc: "Visualise concepts" },
   { id: "mocktest", icon: "📋", label: "Mock Test", desc: "Mock Test" },
+  { id: "prep_exam", icon: "📝", label: "Exam Prep.", desc: "Exam Prep." },
   { id: "pre_final_test", icon: "🎓", label: "Certification Exam", desc: "Certification Exam" },
 ];
 
@@ -53,7 +54,7 @@ export default function ToolsMenu({
   const [searchParams] = useSearchParams();
 
   const handleChaptersClick = () => {
-    navigate('/my-learning');
+    navigate('/');
   };
 
   return (
@@ -83,13 +84,14 @@ export default function ToolsMenu({
         <div className="st-sidebar-tools">
           {(sessionStorage.getItem('sv_moocs_mode') === 'true'
             ? [
-                { id: "videos" as ToolId, icon: "🎥", label: "Videos", desc: "Watch and learn" },
-                { id: "summary" as ToolId, icon: "📖", label: "Quick Study", desc: "Quick notes" },
-                { id: "detailed" as ToolId, icon: "📝", label: "Detailed Study", desc: "In-depth notes" },
+                { id: "videos" as ToolId, icon: "🎥", label: "Watch", desc: "Watch and learn" },
+                { id: "summary" as ToolId, icon: "📖", label: "Essentials", desc: "Quick notes" },
+                { id: "detailed" as ToolId, icon: "📝", label: "In-Depth", desc: "In-depth notes" },
                 { id: "flashcards" as ToolId, icon: "🗂️", label: "Flashcards", desc: "Quick revision" },
                 { id: "assessment" as ToolId, icon: "🎯", label: "Assessments", desc: "Test knowledge" },
                 { id: "mindmap" as ToolId, icon: "🧠", label: "Mindmap", desc: "Visualise concepts" },
                 { id: "mocktest" as ToolId, icon: "📋", label: "Mock Test", desc: "Mock Test" },
+                { id: "prep_exam" as ToolId, icon: "📝", label: "Exam Prep.", desc: "Exam Prep." },
                 { id: "pre_final_test" as ToolId, icon: "🎓", label: "Certification Exam", desc: "Certification Exam" },
               ]
             : ALL_TOOLS

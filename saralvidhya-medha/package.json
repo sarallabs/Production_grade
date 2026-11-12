@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "copy-resources": "node scripts/copy-resources.js",
     "generate-manifest": "node scripts/generate-manifest.js",
-    "deploy:cloudflare": "npm run build && node node_modules/wrangler/bin/wrangler.js pages deploy dist --project-name=saralvidhya-moocs",
     "deploy:anu": "npm run build && firebase deploy --only hosting:saralvidhya-anu"
   },
   "dependencies": {
@@ -46,7 +45,6 @@
     "@types/react-dom": "^18.2.19",
     "@vitejs/plugin-react": "^4.2.1",
     "concurrently": "^10.0.3",
-    "firebase-admin": "^12.1.0",
     "typescript": "^5.2.2",
     "vite": "^6.4.2",
     "wrangler": "^4.90.1"

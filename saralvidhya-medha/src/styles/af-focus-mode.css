@@ -175,7 +175,7 @@
 .fm-header-step {
   font-size: 14px;
   font-weight: 800;
-  color: #a78bfa;
+  color: #9CC0B4;
   white-space: nowrap;
 }
 
@@ -262,8 +262,8 @@
 
 .fm-markdown-wrapper .markdown-view blockquote,
 .fm-markdown-wrapper .markdown-body blockquote {
-  border-left-color: #7c3aed !important;
-  background: rgba(124, 58, 237, 0.08) !important;
+  border-left-color: #9CC0B4 !important;
+  background: rgba(156, 192, 180, 0.1) !important;
   color: #cbd5e1 !important;
 }
 
@@ -271,7 +271,7 @@
 .fm-markdown-wrapper .markdown-view code,
 .fm-markdown-wrapper .markdown-body code {
   background: rgba(255, 255, 255, 0.08) !important;
-  color: #c4b5fd !important;
+  color: #9CC0B4 !important;
   border-radius: 4px;
   padding: 1px 5px;
 }
@@ -361,7 +361,7 @@
 
 .fm-active-content .flashcard-speak-btn {
   background: rgba(255, 255, 255, 0.1);
-  color: #c4b5fd;
+  color: #9CC0B4;
   box-shadow: none;
 }
 
@@ -374,8 +374,8 @@
 /* Focus Mode overrides for Quiz */
 .fm-active-content .quiz-card {
   background: #1e1e1e;
-  border: 2px solid rgba(139, 92, 246, 0.35);
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.22), 0 16px 40px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(156, 192, 180, 0.35);
+  box-shadow: 0 0 25px rgba(156, 192, 180, 0.22), 0 16px 40px rgba(0, 0, 0, 0.4);
 }
 
 
@@ -530,7 +530,7 @@
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
-  background: var(--primary, linear-gradient(135deg, #7c3aed, #ec4899));
+  background: var(--primary, linear-gradient(135deg, #4F7B64, #2D3E36));
   color: #fff;
   font-weight: 600;
   cursor: pointer;

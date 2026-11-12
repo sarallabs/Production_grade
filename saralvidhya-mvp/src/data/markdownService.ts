@@ -429,21 +429,32 @@ export async function getResourceContent(
   const normSubject = resolveSubjectId(subject) || subject;
   const isGcs = GCS_BACKEND_SUBJECTS.has(normSubject) || GCS_BACKEND_SUBJECTS.has(subject);
 
+  // ── V2 Registry signed URLs: prefer direct signed GCS URLs when available ──
+  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
+
   const rewriteGcsRelativeImages = (mdText: string): string => {
+    let rewritten = mdText;
+    if (regCh?.files) {
+      rewritten = rewritten.replace(/!\[([^\]]*)\]\((?:\.\.\/)*(images\/[^)]+)\)/g, (full, alt, relImgPath) => {
+        const entry = regCh.files?.[relImgPath];
+        const signed = typeof entry === 'string' ? entry : (entry as any)?.url;
+        return signed ? `![${alt}](${signed})` : full;
+      });
+    }
     const subjectPath = GCS_SUBJECT_MAP[normSubject] || GCS_SUBJECT_MAP[subject];
-    if (!subjectPath) return mdText;
+    if (!subjectPath) return rewritten;
     const apiBase = `${GCS_API_BASE}/api/content/${subjectPath}/${chDir}`;
-    return mdText
+    return rewritten
       .replace(/!\[([^\]]*)\]\(\.\.\/\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`)
       .replace(/!\[([^\]]*)\]\(\.\.\/([^)]+)\)/g, (_, alt, path) => `![${alt}](${apiBase}/${path})`);
   };
 
-  // ── V2 Registry signed URLs: prefer direct signed GCS URLs when available ──
-  const regCh = await getRegistryChapterData(normSubject, chapterNumber);
   if (regCh?.files) {
     const regKeyCandidates: Record<string, string[]> = {
       'summary.md':         [`read/quick/${level}.md`],
-      'detailed_view.md':   [`read/detailed/${level}.md`],
+      'detailed_view.md':   [`read/detailed/${level}.md`, 'read/deep_dive.md'],
+      'deep_dive.md':       ['read/deep_dive.md', `read/detailed/${level}.md`],
+      'deep_dive':          ['read/deep_dive.md', `read/detailed/${level}.md`],
       'key_takeaways.md':   ['read/key_takeaways.md', 'read/key_takeaways.json', 'learn/key_takeaways.md', 'learn/key_takeaways.json', 'resources/key_takeaways.md', 'resources/key_takeaways.json'],
       'glossary.md':        ['read/glossary.md'],
       'mindmap.md':         ['learn/mindmap.md', 'learn/mindmap.json'],
@@ -451,6 +462,12 @@ export async function getResourceContent(
       'study_plan.md':      ['learn/study_plan.md', 'learn/study_plan.json', 'read/study_plan.md'],
       'study_plan.json':    ['learn/study_plan.json', 'learn/study_plan.md'],
       'study_plan':         ['learn/study_plan.md', 'learn/study_plan.json'],
+      'youtube_links.md':   ['youtube_links.md', 'learn/youtube_links.md', 'video_script.md', 'learn/video_script.md'],
+      'video_script.md':    ['video_script.md', 'learn/video_script.md', 'youtube_links.md', 'learn/youtube_links.md'],
+      'podcast_script.md':  ['podcasts/short_podcast.md', 'podcast_script.md', 'podcasts/long_podcast.md', 'podcasts/topicwise_bite_sized_podcast.md'],
+      'short_podcast.md':   ['podcasts/short_podcast.md', 'podcast_script.md'],
+      'long_podcast.md':    ['podcasts/long_podcast.md', 'podcasts/short_podcast.md'],
+      'topicwise_bite_sized_podcast.md': ['podcasts/topicwise_bite_sized_podcast.md', 'podcasts/short_podcast.md'],
       'question_bank.md':   ['practice/question_bank.json', 'practice/question_bank.md'],
       'question_bank.json': ['practice/question_bank.json', 'practice/question_bank.md'],
       'mock_test.md':       ['practice/mock_test.json', 'prepare/mock_test.json', 'prepare/pre_final_exam.json'],

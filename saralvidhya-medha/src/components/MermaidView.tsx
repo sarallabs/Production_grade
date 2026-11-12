@@ -84,10 +84,10 @@ const BRANCH_COLORS = [
   { line:'#3B82F6', nodeFill:'#DBEAFE', nodeStroke:'#3B82F6', nodeTxt:'#1E40AF', lvl1Fill:'#3B82F6', lvl1Txt:'#fff' },
   { line:'#10B981', nodeFill:'#D1FAE5', nodeStroke:'#10B981', nodeTxt:'#065F46', lvl1Fill:'#10B981', lvl1Txt:'#fff' },
   { line:'#F59E0B', nodeFill:'#FEF3C7', nodeStroke:'#F59E0B', nodeTxt:'#78350F', lvl1Fill:'#F59E0B', lvl1Txt:'#fff' },
-  { line:'#8B5CF6', nodeFill:'#EDE9FE', nodeStroke:'#8B5CF6', nodeTxt:'#4C1D95', lvl1Fill:'#8B5CF6', lvl1Txt:'#fff' },
+  { line:'#546C60', nodeFill:'#EDE9FE', nodeStroke:'#546C60', nodeTxt:'#4C1D95', lvl1Fill:'#546C60', lvl1Txt:'#fff' },
   { line:'#EF4444', nodeFill:'#FEE2E2', nodeStroke:'#EF4444', nodeTxt:'#7F1D1D', lvl1Fill:'#EF4444', lvl1Txt:'#fff' },
   { line:'#06B6D4', nodeFill:'#CFFAFE', nodeStroke:'#06B6D4', nodeTxt:'#164E63', lvl1Fill:'#06B6D4', lvl1Txt:'#fff' },
-  { line:'#EC4899', nodeFill:'#FCE7F3', nodeStroke:'#EC4899', nodeTxt:'#831843', lvl1Fill:'#EC4899', lvl1Txt:'#fff' },
+  { line:'#D9A382', nodeFill:'#FCE7F3', nodeStroke:'#D9A382', nodeTxt:'#831843', lvl1Fill:'#D9A382', lvl1Txt:'#fff' },
   { line:'#84CC16', nodeFill:'#ECFCCB', nodeStroke:'#84CC16', nodeTxt:'#3F6212', lvl1Fill:'#84CC16', lvl1Txt:'#fff' },
 ];
 

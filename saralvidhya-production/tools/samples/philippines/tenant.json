@@ -1,0 +1,35 @@
+{
+  "id": "philippines",
+  "name": "De La Salle University",
+  "shortName": "DLSU",
+  "academicTerm": "SY 2025–2026",
+  "branding": {
+    "appName": "De La Salle University Learning Portal",
+    "primaryColor": "#006F44",
+    "accentColor": "#C59B27",
+    "logoBlob": "assets/logo.png",
+    "faviconBlob": "assets/favicon.png",
+    "programLabel": "De La Salle University · Integrated School / SHS"
+  },
+  "assets": {
+    "logo": "assets/logo.png",
+    "favicon": "assets/favicon.png"
+  },
+  "features": {
+    "examinerConsole": false,
+    "expertPanel": false,
+    "pyq": true,
+    "ask": true,
+    "guidedFlow": true
+  },
+  "hierarchy": ["track", "semester", "subject"],
+  "nodes": [
+    { "id": "core_curriculum", "type": "track", "name": "DLSU Core Curriculum", "parentId": null, "order": 1 },
+    { "id": "grade_11_sem_1", "type": "semester", "name": "Term 1 · Core Subjects", "parentId": "core_curriculum", "order": 1 }
+  ],
+  "contractVersion": "1.1.0",
+  "storage": {
+    "bucket": "saralvidhya-artifacts",
+    "prefix": "philippines"
+  }
+}

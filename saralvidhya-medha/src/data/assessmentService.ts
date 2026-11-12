@@ -11,8 +11,13 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
-  getChapterVideos
+  getChapterVideos,
+  filterIndexedCandidates,
+  fetchCachedText
 } from './manifestService';
+
+const assessmentsCache = new Map<string, Promise<AssessmentQuestion[]>>();
+const chapterExamsCache = new Map<string, Promise<(MCQQuestion | MSQQuestion)[]>>();
 
 function mapBackendQuestions(data: any[]): AssessmentQuestion[] {
   return data.map((q: any, index: number) => {
@@ -49,14 +54,13 @@ export async function fetchAndParseFirst(
   urls: string[],
   prefix: string,
 ): Promise<AssessmentQuestion[]> {
-  for (const url of urls) {
+  const indexed = filterIndexedCandidates(urls);
+  const candidateUrls = indexed.length > 0 ? indexed : urls;
+
+  for (const url of candidateUrls) {
     try {
-      const res = await fetch(url, { cache: 'no-cache' });
-      if (!res.ok) continue;
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('text/html')) continue;
-      
-      const text = await res.text();
+      const text = await fetchCachedText(url);
+      if (!text) continue;
       
       try {
         const parsed = JSON.parse(text);
@@ -117,56 +121,67 @@ export async function getAssessments(
   level: DifficultyLevel = 'intermediate',
   videoDir?: string,
 ): Promise<AssessmentQuestion[]> {
-  if (BACKEND_SUBJECTS.has(subject)) {
-    try {
-      const diff = DIFFICULTY_MAP[level] || 'Medium';
-      const apiUrl = `${API_BASE_URL}/folders/${subject}/assessments?difficulty=${diff}`;
-      const res = await fetch(apiUrl);
+  const cacheKey = `${subject}:${chapterNumber}:${level}:${videoDir || ''}`;
+  const cached = assessmentsCache.get(cacheKey);
+  if (cached) return cached;
 
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return mapBackendQuestions(data);
+  const task = (async () => {
+    if (BACKEND_SUBJECTS.has(subject)) {
+      try {
+        const diff = DIFFICULTY_MAP[level] || 'Medium';
+        const apiUrl = `${API_BASE_URL}/folders/${subject}/assessments?difficulty=${diff}`;
+        const res = await fetch(apiUrl);
+
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            return mapBackendQuestions(data);
+          }
         }
+      } catch (e) {
+        console.warn("Failed to fetch assessments from API", e);
       }
-    } catch (e) {
-      console.warn("Failed to fetch assessments from API", e);
     }
-  }
 
-  await getManifest();
-  const chDir = getChapterDir(subject, chapterNumber);
-  const subjectBase = getSubjectBaseUrl(subject);
+    await getManifest();
+    const chDir = getChapterDir(subject, chapterNumber);
+    const subjectBase = getSubjectBaseUrl(subject);
 
-  const assessmentLevel = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
+    const assessmentLevel = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
 
-  let allQuestions: AssessmentQuestion[] = [];
+    const mcqPaths = [
+      ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`] : []),
+      `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.json`,
+      `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/${level}/mcq.md`,
+      `${subjectBase}/${chDir}/${level}/assessment.md`,
+      `${subjectBase}/${chDir}/assessment.md`,
+      `${subjectBase}/${chDir}/${level}/quiz.md`,
+      `${subjectBase}/${chDir}/quiz.md`
+    ];
 
-  const mcqPaths = [
-    ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`] : []),
-    `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/${level}/mcq.md`,
-    `${subjectBase}/${chDir}/${level}/assessment.md`,
-    `${subjectBase}/${chDir}/assessment.md`,
-    `${subjectBase}/${chDir}/${level}/quiz.md`,
-    `${subjectBase}/${chDir}/quiz.md`
-  ];
-  allQuestions = allQuestions.concat(await fetchAndParseFirst(mcqPaths, 'mcq_'));
+    const msqPaths = [
+      ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`] : []),
+      `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.json`,
+      `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.md`,
+      `${subjectBase}/${chDir}/${level}/msq.md`
+    ];
 
-  const msqPaths = [
-    ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`] : []),
-    `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.json`,
-    `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.md`,
-    `${subjectBase}/${chDir}/${level}/msq.md`
-  ];
-  allQuestions = allQuestions.concat(await fetchAndParseFirst(msqPaths, 'msq_'));
+    const [mcqQuestions, msqQuestions] = await Promise.all([
+      fetchAndParseFirst(mcqPaths, 'mcq_'),
+      fetchAndParseFirst(msqPaths, 'msq_'),
+    ]);
 
-  return allQuestions.length > 0 ? allQuestions : MOCK_ASSESSMENT_QUESTIONS;
+    const allQuestions = [...mcqQuestions, ...msqQuestions];
+    return allQuestions.length > 0 ? allQuestions : MOCK_ASSESSMENT_QUESTIONS;
+  })();
+
+  assessmentsCache.set(cacheKey, task);
+  return task;
 }
 
 export const CHAPTER_EXAM_FILES = {
@@ -202,48 +217,57 @@ export async function getChapterExamQuestions(
   chapterNumber: number,
   kind: ChapterExamKind,
 ): Promise<(MCQQuestion | MSQQuestion)[]> {
-  const videos = await getChapterVideos(subject, chapterNumber);
-  const chDir = getChapterDir(subject, chapterNumber);
-  const subjectBase = getSubjectBaseUrl(subject);
-  const fileName = CHAPTER_EXAM_FILES[kind];
+  const cacheKey = `${subject}:${chapterNumber}:${kind}`;
+  const cached = chapterExamsCache.get(cacheKey);
+  if (cached) return cached;
 
-  let rawQuestions: AssessmentQuestion[] = [];
+  const task = (async () => {
+    const videos = await getChapterVideos(subject, chapterNumber);
+    const chDir = getChapterDir(subject, chapterNumber);
+    const subjectBase = getSubjectBaseUrl(subject);
+    const fileName = CHAPTER_EXAM_FILES[kind];
 
-  if (videos.length > 0) {
-    const perVideo = await Promise.all(
-      videos.map((video) =>
-        fetchAndParseFirst([`${subjectBase}/${chDir}/${video.dir}/${fileName}`], `${kind}_v${video.index}_`),
-      ),
-    );
-    rawQuestions = perVideo.flat();
-  }
+    let rawQuestions: AssessmentQuestion[] = [];
 
-  if (rawQuestions.length === 0) {
-    const baseName = fileName.split('/').pop() || fileName;
-    const candidates = [
-      `${subjectBase}/${chDir}/${fileName}`,
-      `${subjectBase}/${chDir}/Examination/${baseName}`,
-      `${subjectBase}/${chDir}/Prepare/${baseName}`,
-      `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
-      `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
-      `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.json`,
-      `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.md`,
-      `${subjectBase}/${chDir}/${baseName}`,
-    ];
-    rawQuestions = await fetchAndParseFirst(candidates, `${kind}_ch_`);
-  }
+    if (videos.length > 0) {
+      const perVideo = await Promise.all(
+        videos.map((video) =>
+          fetchAndParseFirst([`${subjectBase}/${chDir}/${video.dir}/${fileName}`], `${kind}_v${video.index}_`),
+        ),
+      );
+      rawQuestions = perVideo.flat();
+    }
 
-  const seen = new Set<string>();
-  const merged: (MCQQuestion | MSQQuestion)[] = [];
-  for (const question of rawQuestions) {
-    if (question.type !== 'mcq' && question.type !== 'msq') continue;
-    const key = question.q.replace(/\s+/g, ' ').trim().toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    merged.push(question);
-  }
+    if (rawQuestions.length === 0) {
+      const baseName = fileName.split('/').pop() || fileName;
+      const candidates = [
+        `${subjectBase}/${chDir}/${fileName}`,
+        `${subjectBase}/${chDir}/Examination/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
+        `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.json`,
+        `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.md`,
+        `${subjectBase}/${chDir}/${baseName}`,
+      ];
+      rawQuestions = await fetchAndParseFirst(candidates, `${kind}_ch_`);
+    }
 
-  return seededShuffle(merged, `${subject}_${chapterNumber}_${kind}`);
+    const seen = new Set<string>();
+    const merged: (MCQQuestion | MSQQuestion)[] = [];
+    for (const question of rawQuestions) {
+      if (question.type !== 'mcq' && question.type !== 'msq') continue;
+      const key = question.q.replace(/\s+/g, ' ').trim().toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      merged.push(question);
+    }
+
+    return seededShuffle(merged, `${subject}_${chapterNumber}_${kind}`);
+  })();
+
+  chapterExamsCache.set(cacheKey, task);
+  return task;
 }
 
 const OPTION_LINE = /^[ \t]*[-*][ \t]*(?:\[[ xX]\][ \t]*)?([A-Z])\)[ \t]*(.+)$/gm;

@@ -17,14 +17,15 @@ export const GUIDED_FLOW: ToolId[] = [
 ];
 
 export const GUIDED_LABELS: Record<string, string> = {
-  videos: "Videos",
+  videos: "Watch",
   flashcards: "Flashcards",
-  summary: "Quick Study",
-  detailed: "Detailed Study",
+  summary: "Essentials",
+  detailed: "In-Depth",
   assessment: "Assessments",
   mindmap: "Mindmap",
   revision_flashcards: "Revision Flashcards",
   mocktest: "Mock Test",
+  prep_exam: "Exam Prep.",
   pre_final_test: "Certification Exam",
 };
 
@@ -136,27 +137,11 @@ export function getProgressIndex(completed: ToolId[], flow: ToolId[] = GUIDED_FL
 
 /** Every completed step, plus exactly the next one. Supplementary tools always. */
 export function isToolUnlocked(
-  tool: ToolId,
-  completed: ToolId[],
-  flow: ToolId[] = GUIDED_FLOW,
+  _tool: ToolId,
+  _completed: ToolId[],
+  _flow: ToolId[] = GUIDED_FLOW,
 ): boolean {
-  if (tool === "videos") {
-    return true;
-  }
-
-  // Once videos are watched, every tool in the chapter is automatically enabled!
-  if (completed.includes("videos")) {
-    return true;
-  }
-
-  const idx = flow.indexOf(tool);
-  if (idx === -1) return true;
-
-  if (["podcasts", "summary", "detailed", "mindmap", "course_offerings", "youtube_links", "podcast_script", "study_guide", "learning_path"].includes(tool)) {
-    return true;
-  }
-
-  return idx <= getProgressIndex(completed, flow);
+  return true;
 }
 
 /* ------------------------------------------------------------------------- *
@@ -214,12 +199,11 @@ export function markVideoWatched(
 
 /** Videos open in sequence: the first one, then whatever follows a watched video. */
 export function isVideoPlayable(
-  subjectId: string,
-  chapterNumber: number,
-  videoIndex: number,
+  _subjectId: string,
+  _chapterNumber: number,
+  _videoIndex: number,
 ): boolean {
-  if (videoIndex <= 1) return true;
-  return isVideoWatched(subjectId, chapterNumber, videoIndex - 1);
+  return true;
 }
 
 export function areAllVideosWatched(
@@ -242,20 +226,12 @@ export function areAllVideosWatched(
  * gate, which is what makes "skip them and move on to the next video" work.
  */
 export function isToolUnlockedForVideo(
-  tool: ToolId,
-  subjectId: string,
-  chapterNumber: number,
-  videoIndex: number,
-  videoCount: number,
+  _tool: ToolId,
+  _subjectId: string,
+  _chapterNumber: number,
+  _videoIndex: number,
+  _videoCount: number,
 ): boolean {
-  if (tool === "videos") return true;
-  if (CHAPTER_EXAM_TOOLS.includes(tool)) {
-    return areAllVideosWatched(subjectId, chapterNumber, videoCount);
-  }
-  if (VIDEO_SCOPED_TOOLS.includes(tool)) {
-    return isVideoWatched(subjectId, chapterNumber, videoIndex);
-  }
-  // Mindmap, Ask, PYQ, SWOT, leaderboard and friends stay open, as before.
   return true;
 }
 

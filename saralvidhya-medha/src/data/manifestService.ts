@@ -1,7 +1,14 @@
 import universityConfig from '@/config/university_config.json';
 
 export const BASE = '/generated_resources';
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/assets` : 'http://localhost:8000/api/v1/assets';
+export const CLOUD_API_BASE =
+  (import.meta as any).env?.VITE_API_BASE ||
+  'https://saralvidhya-api-193782571555.asia-south1.run.app';
+export const MEDHA_TENANT_ID =
+  (import.meta as any).env?.VITE_TENANT_ID || 'medha';
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/assets`
+  : 'http://localhost:8000/api/v1/assets';
 
 /**
  * Subjects whose live study content is served by the FastAPI backend
@@ -124,18 +131,197 @@ export const DEFAULT_RESOURCE_TABS: [string, string][] = [
 
 let cachedManifest: Manifest | null = null;
 let cachedCatalog: Catalog | null = null;
+let cachedCoursesJson: Record<string, CourseMeta> | null = null;
+let cachedFileIndexSet: Set<string> | null = null;
+let cloudHydrationPromise: Promise<void> | null = null;
+
+// ── High-Speed In-Memory Text & JSON Fetch Cache ──────────────────────────
+const textFetchCache = new Map<string, Promise<string | null>>();
+
+export function fetchCachedText(url: string): Promise<string | null> {
+  const existing = textFetchCache.get(url);
+  if (existing) return existing;
+
+  const p = (async () => {
+    try {
+      const res = await fetch(url, { cache: 'default' });
+      if (!res.ok) return null;
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('text/html')) return null;
+      return await res.text();
+    } catch {
+      return null;
+    }
+  })();
+
+  textFetchCache.set(url, p);
+  return p;
+}
+
+/**
+ * Normalizes a URL like `/generated_resources/Nagarjuna_University/...` into
+ * the relative path key stored in `fileIndex` (`Nagarjuna_University/...`).
+ */
+function toIndexRelPath(url: string): string {
+  const clean = url.split('?')[0];
+  const prefix = `${BASE}/`;
+  const idx = clean.indexOf(prefix);
+  const rel = idx >= 0 ? clean.slice(idx + prefix.length) : clean.replace(/^\/+/, '');
+  try {
+    return decodeURIComponent(rel);
+  } catch {
+    return rel;
+  }
+}
+
+/**
+ * Filters a list of candidate URLs down to ONLY the URLs that exist in the
+ * DB-driven `fileIndex` (O(1) lookup, eliminating waterfall 404 requests).
+ * Falls back to the full list if the index hasn't loaded or has no match.
+ */
+export function filterIndexedCandidates(urls: string[]): string[] {
+  if (!cachedFileIndexSet || cachedFileIndexSet.size === 0) return urls;
+  const matched = urls.filter((u) => cachedFileIndexSet!.has(toIndexRelPath(u)));
+  return matched.length > 0 ? matched : [];
+}
+
+const HIDDEN_SUBJECT_IDS = new Set<string>(['anu_characterization']);
+
+function sanitizeCatalog(cat: Catalog): Catalog {
+  return {
+    ...cat,
+    boards: (cat.boards || []).map((b) => ({
+      ...b,
+      classes: (b.classes || [])
+        .map((kl) => ({
+          ...kl,
+          subjects: (kl.subjects || []).filter((s) => !HIDDEN_SUBJECT_IDS.has(s.id)),
+        }))
+        .filter((kl) => kl.subjects.length > 0),
+    })),
+  };
+}
+
+function sanitizeManifest(m: Manifest): Manifest {
+  return {
+    ...m,
+    subjects: (m.subjects || []).filter((s) => !HIDDEN_SUBJECT_IDS.has(s.id)),
+  };
+}
+
+function sanitizeCoursesMeta(metas: Record<string, CourseMeta>): Record<string, CourseMeta> {
+  const next: Record<string, CourseMeta> = {};
+  for (const [k, v] of Object.entries(metas || {})) {
+    if (!HIDDEN_SUBJECT_IDS.has(k)) next[k] = v;
+  }
+  return next;
+}
+
+/**
+ * Hydrates `catalog`, `manifest`, `courses`, and `fileIndex` from the
+ * Firestore-backed Cloud Run tenant endpoint (`/v2/t/medha`) and local `file-index.json`.
+ */
+export function hydrateMedhaCloudConfig(): Promise<void> {
+  if (cloudHydrationPromise) return cloudHydrationPromise;
+
+  cloudHydrationPromise = (async () => {
+    // 1. Try instant hydration from sessionStorage cache first
+    try {
+      const cachedRaw = sessionStorage.getItem('sv_medha_cloud_portal_v1');
+      if (cachedRaw) {
+        const parsed = JSON.parse(cachedRaw);
+        if (parsed.catalog?.boards?.length) cachedCatalog = sanitizeCatalog(parsed.catalog);
+        if (parsed.manifest?.subjects?.length) cachedManifest = sanitizeManifest(parsed.manifest);
+        if (parsed.courses) cachedCoursesJson = sanitizeCoursesMeta(parsed.courses);
+        if (Array.isArray(parsed.fileIndex) && parsed.fileIndex.length > 0) {
+          cachedFileIndexSet = new Set<string>(parsed.fileIndex);
+        }
+      }
+    } catch {
+      // ignore storage parse error
+    }
+
+    // 2. Load local complete file-index.json + Cloud Run DB `/v2/t/medha` in parallel
+    const localIndexPromise = fetch(`${BASE}/file-index.json`, { cache: 'default' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((idxData) => {
+        if (Array.isArray(idxData?.files)) {
+          if (!cachedFileIndexSet) {
+            cachedFileIndexSet = new Set<string>(idxData.files);
+          } else {
+            for (const f of idxData.files) cachedFileIndexSet.add(f);
+          }
+        }
+      })
+      .catch(() => {});
+
+    const cloudPromise = fetch(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}`, {
+      cache: 'default',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const portal = data?.tenant?.uiCopy?.medhaPortal;
+        if (!portal) return;
+
+        if (portal.catalog?.boards?.length) {
+          cachedCatalog = sanitizeCatalog(portal.catalog as Catalog);
+        }
+        if (portal.manifest?.subjects?.length) {
+          const rawTabs = portal.manifest.resourceTabs || DEFAULT_RESOURCE_TABS;
+          const normalizedTabs: [string, string][] = rawTabs.map((t: any) =>
+            Array.isArray(t) ? [t[0], t[1]] : [t.file, t.label]
+          );
+          cachedManifest = sanitizeManifest({
+            ...portal.manifest,
+            resourceTabs: normalizedTabs,
+          } as Manifest);
+        }
+        if (portal.courses && Object.keys(portal.courses).length > 0) {
+          cachedCoursesJson = sanitizeCoursesMeta(portal.courses as Record<string, CourseMeta>);
+        }
+        if (Array.isArray(portal.fileIndex)) {
+          if (!cachedFileIndexSet) {
+            cachedFileIndexSet = new Set<string>(portal.fileIndex);
+          } else {
+            for (const f of portal.fileIndex) cachedFileIndexSet.add(f);
+          }
+        }
+
+        try {
+          sessionStorage.setItem(
+            'sv_medha_cloud_portal_v1',
+            JSON.stringify({
+              catalog: cachedCatalog,
+              manifest: cachedManifest,
+              courses: cachedCoursesJson,
+              fileIndex: portal.fileIndex || [],
+            })
+          );
+        } catch {
+          // ignore quota errors
+        }
+      })
+      .catch(() => {});
+
+    await Promise.all([localIndexPromise, cloudPromise]);
+  })();
+
+  return cloudHydrationPromise;
+}
 
 export async function getCatalog(): Promise<Catalog> {
   if (cachedCatalog) return cachedCatalog;
+  await hydrateMedhaCloudConfig();
+  if (cachedCatalog) return cachedCatalog;
   try {
-    const res = await fetch(`${BASE}/catalog.json`, { cache: 'no-cache' });
+    const res = await fetch(`${BASE}/catalog.json`, { cache: 'default' });
     const ct = res.headers.get('content-type') || '';
     if (!res.ok || ct.includes('text/html')) {
       return { version: 1, boards: [] };
     }
     const data = (await res.json()) as Catalog;
-    cachedCatalog = data;
-    return data;
+    cachedCatalog = sanitizeCatalog(data);
+    return cachedCatalog;
   } catch {
     return { version: 1, boards: [] };
   }
@@ -143,15 +329,17 @@ export async function getCatalog(): Promise<Catalog> {
 
 export async function getManifest(): Promise<Manifest> {
   if (cachedManifest) return cachedManifest;
+  await hydrateMedhaCloudConfig();
+  if (cachedManifest) return cachedManifest;
   try {
-    const res = await fetch(`${BASE}/manifest.json`, { cache: 'no-cache' });
+    const res = await fetch(`${BASE}/manifest.json`, { cache: 'default' });
     const ct = res.headers.get('content-type') || '';
     if (!res.ok || ct.includes('text/html')) {
       return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
     }
     const data = (await res.json()) as Manifest;
-    cachedManifest = data;
-    return data;
+    cachedManifest = sanitizeManifest(data);
+    return cachedManifest;
   } catch {
     return { subjects: [], resourceTabs: DEFAULT_RESOURCE_TABS };
   }
@@ -162,7 +350,6 @@ export function resolveSubjectId(id: string): string {
   const lower = id.toLowerCase();
   const aliases: Record<string, string> = {
     physics: 'anu_physics',
-    characterization: 'anu_characterization',
     mba: 'management',
     msc: 'anu_physics',
   };
@@ -236,12 +423,18 @@ export async function getChapterVideos(
   if (!cachedManifest) await getManifest();
   const url = `${getSubjectBaseUrl(subjectId)}/${getChapterDir(subjectId, chapterNumber)}/videos.json`;
 
+  // Fast O(1) index check before hitting the network
+  const candidates = filterIndexedCandidates([url]);
+  if (cachedFileIndexSet && cachedFileIndexSet.size > 0 && candidates.length === 0) {
+    chapterVideosCache[key] = [];
+    return [];
+  }
+
   let videos: ChapterVideo[] = [];
   try {
-    const res = await fetch(url, { cache: 'no-cache' });
-    const ct = res.headers.get('content-type') || '';
-    if (res.ok && !ct.includes('text/html')) {
-      const parsed = JSON.parse(await res.text());
+    const text = await fetchCachedText(url);
+    if (text) {
+      const parsed = JSON.parse(text);
       if (Array.isArray(parsed?.videos)) {
         videos = (parsed.videos as ChapterVideo[])
           .filter((v) => v && typeof v.dir === 'string' && v.dir.length > 0)
@@ -313,16 +506,16 @@ export interface Course {
   meta: CourseMeta;
 }
 
-let cachedCoursesJson: Record<string, CourseMeta> | null = null;
-
 async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
   if (cachedCoursesJson) return cachedCoursesJson;
+  await hydrateMedhaCloudConfig();
+  if (cachedCoursesJson) return cachedCoursesJson;
   try {
-    const res = await fetch(`${BASE}/courses.json`, { cache: 'no-cache' });
+    const res = await fetch(`${BASE}/courses.json`, { cache: 'default' });
     const ct = res.headers.get('content-type') || '';
     if (!res.ok || ct.includes('text/html')) return {};
     const data = await res.json();
-    cachedCoursesJson = data.courses || {};
+    cachedCoursesJson = sanitizeCoursesMeta(data.courses || {});
     return cachedCoursesJson || {};
   } catch {
     return {};
@@ -330,6 +523,7 @@ async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
 }
 
 export async function getCourses(): Promise<Course[]> {
+  await hydrateMedhaCloudConfig();
   const [catalog, manifest, metas] = await Promise.all([
     getCatalog(),
     getManifest(),
@@ -345,6 +539,7 @@ export async function getCourses(): Promise<Course[]> {
     }
     for (const klass of board.classes) {
       for (const subject of klass.subjects) {
+        if (HIDDEN_SUBJECT_IDS.has(subject.id)) continue;
         const manifestSubject = manifest.subjects.find((s) => s.id === subject.id);
         const chapterCount = manifestSubject?.chapters.length ?? subject.chapterNumbers?.length ?? 0;
         const meta = metas[subject.id];
@@ -361,7 +556,7 @@ export async function getCourses(): Promise<Course[]> {
           durationHours: chapterCount > 0 ? chapterCount * 4 : 30,
           credits: 3,
           language: 'English',
-          accent: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+          accent: 'linear-gradient(135deg, #546C60, #3E584B)',
           tags: [],
           enrolled: 0,
           featured: false,
@@ -394,7 +589,6 @@ export async function getCourseById(id: string): Promise<Course | null> {
 
   const aliases: Record<string, string> = {
     physics: 'anu_physics',
-    characterization: 'anu_characterization',
     mba: 'management',
     msc: 'anu_physics',
   };

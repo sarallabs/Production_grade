@@ -21,7 +21,7 @@ TOOLS = HERE.parent
 PROD = TOOLS.parent
 ROOT = PROD.parent
 MVP_PUBLIC = ROOT / "saralvidhya-mvp" / "public"
-SRC_GEN = MVP_PUBLIC / "generated resources" / "chalapathi university" / "cns"
+SRC_GEN = (MVP_PUBLIC / "generated_resources" / "chalapathi university" / "cns") if (MVP_PUBLIC / "generated_resources" / "chalapathi university" / "cns").exists() else (MVP_PUBLIC / "generated resources" / "chalapathi university" / "cns")
 SRC_CU = MVP_PUBLIC / "cu" / "cns" / "chapter 1"
 DEFAULT_OUT = TOOLS / "build" / "cu"
 
@@ -181,51 +181,69 @@ def generate_branded_images(out: Path) -> None:
             shutil.copy2(fallback, MVP_PUBLIC / "logo-cu.png")
         return
 
-    # 1. Tenant Logo (256x256 crest)
-    logo_img = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(logo_img)
-    draw.ellipse([12, 12, 244, 244], fill=(30, 58, 138, 255), outline=(189, 125, 82, 255), width=10)
-    draw.ellipse([28, 28, 228, 228], fill=(37, 53, 44, 255), outline=(255, 255, 255, 210), width=4)
+    # 1. Tenant Logo (prefer official sample asset if present)
     try:
         font_lg = ImageFont.truetype("arialbd.ttf", 76)
         font_sm = ImageFont.truetype("arialbd.ttf", 22)
     except Exception:
         font_lg = ImageFont.load_default()
         font_sm = ImageFont.load_default()
-    draw.text((128, 112), "CU", fill=(255, 255, 255, 255), font=font_lg, anchor="mm")
-    draw.text((128, 178), "CHALAPATHI", fill=(253, 190, 138, 255), font=font_sm, anchor="mm")
 
     (out / "assets").mkdir(parents=True, exist_ok=True)
-    logo_img.save(out / "assets" / "logo.png", "PNG")
-    logo_img.resize((64, 64)).save(out / "assets" / "favicon.png", "PNG")
-    logo_img.save(MVP_PUBLIC / "logo-cu.png", "PNG")
+    official_logo = TOOLS / "samples" / "cu" / "assets" / "logo.png"
+    official_fav = TOOLS / "samples" / "cu" / "assets" / "favicon.png"
+    if official_logo.exists():
+        shutil.copy2(official_logo, out / "assets" / "logo.png")
+        shutil.copy2(official_logo, MVP_PUBLIC / "logo-cu.png")
+        if official_fav.exists():
+            shutil.copy2(official_fav, out / "assets" / "favicon.png")
+        else:
+            Image.open(official_logo).resize((64, 64)).save(out / "assets" / "favicon.png", "PNG")
+    else:
+        logo_img = Image.new("RGBA", (256, 256), (0, 0, 0, 0))
+        draw = ImageDraw.Draw(logo_img)
+        draw.ellipse([12, 12, 244, 244], fill=(30, 58, 138, 255), outline=(189, 125, 82, 255), width=10)
+        draw.ellipse([28, 28, 228, 228], fill=(37, 53, 44, 255), outline=(255, 255, 255, 210), width=4)
+        draw.text((128, 112), "CU", fill=(255, 255, 255, 255), font=font_lg, anchor="mm")
+        draw.text((128, 178), "CHALAPATHI", fill=(253, 190, 138, 255), font=font_sm, anchor="mm")
+        logo_img.save(out / "assets" / "logo.png", "PNG")
+        logo_img.resize((64, 64)).save(out / "assets" / "favicon.png", "PNG")
+        logo_img.save(MVP_PUBLIC / "logo-cu.png", "PNG")
 
-    # 2. Subject Icon (256x256 shield/lock motif)
+    # 2. Subject Icon
     subj_assets = out / "cns" / "assets"
     subj_assets.mkdir(parents=True, exist_ok=True)
-    icon_img = Image.new("RGBA", (256, 256), (239, 246, 255, 255))
-    idraw = ImageDraw.Draw(icon_img)
-    idraw.rounded_rectangle([16, 16, 240, 240], radius=40, fill=(30, 58, 138, 255), outline=(189, 125, 82, 255), width=6)
-    idraw.text((128, 115), "CNS", fill=(255, 255, 255, 255), font=font_lg, anchor="mm")
-    idraw.text((128, 182), "CRYPTO & SEC", fill=(253, 190, 138, 255), font=font_sm, anchor="mm")
-    icon_img.save(subj_assets / "icon.png", "PNG")
+    sample_icon = TOOLS / "samples" / "cu" / "cns" / "icon.png"
+    if sample_icon.exists():
+        shutil.copy2(sample_icon, subj_assets / "icon.png")
+    else:
+        icon_img = Image.new("RGBA", (256, 256), (239, 246, 255, 255))
+        idraw = ImageDraw.Draw(icon_img)
+        idraw.rounded_rectangle([16, 16, 240, 240], radius=40, fill=(30, 58, 138, 255), outline=(189, 125, 82, 255), width=6)
+        idraw.text((128, 115), "CNS", fill=(255, 255, 255, 255), font=font_lg, anchor="mm")
+        idraw.text((128, 182), "CRYPTO & SEC", fill=(253, 190, 138, 255), font=font_sm, anchor="mm")
+        icon_img.save(subj_assets / "icon.png", "PNG")
 
     # 3. Chapter 1 Hero Image (800x450 banner)
     media_dir = out / "cns" / "chapter_01" / "media"
     media_dir.mkdir(parents=True, exist_ok=True)
-    hero_img = Image.new("RGB", (800, 450), (37, 53, 44))
-    hdraw = ImageDraw.Draw(hero_img)
-    hdraw.rectangle([24, 24, 776, 426], outline=(189, 125, 82), width=4)
-    try:
-        hfont_title = ImageFont.truetype("arialbd.ttf", 34)
-        hfont_sub = ImageFont.truetype("arial.ttf", 22)
-    except Exception:
-        hfont_title = ImageFont.load_default()
-        hfont_sub = ImageFont.load_default()
-    hdraw.text((400, 150), "CRYPTOGRAPHY & NETWORK SECURITY", fill=(253, 190, 138), font=hfont_sub, anchor="mm")
-    hdraw.text((400, 220), "Chapter 1: Security & Classical Encryption", fill=(255, 255, 255), font=hfont_title, anchor="mm")
-    hdraw.text((400, 290), "X.800 Framework • Symmetric Cipher Model • Substitution & Transposition", fill=(203, 213, 225), font=hfont_sub, anchor="mm")
-    hero_img.save(media_dir / "hero.png", "PNG")
+    sample_hero = TOOLS / "samples" / "cu" / "cns" / "hero.png"
+    if sample_hero.exists():
+        shutil.copy2(sample_hero, media_dir / "hero.png")
+    else:
+        hero_img = Image.new("RGB", (800, 450), (37, 53, 44))
+        hdraw = ImageDraw.Draw(hero_img)
+        hdraw.rectangle([24, 24, 776, 426], outline=(189, 125, 82), width=4)
+        try:
+            hfont_title = ImageFont.truetype("arialbd.ttf", 34)
+            hfont_sub = ImageFont.truetype("arial.ttf", 22)
+        except Exception:
+            hfont_title = ImageFont.load_default()
+            hfont_sub = ImageFont.load_default()
+        hdraw.text((400, 150), "CRYPTOGRAPHY & NETWORK SECURITY", fill=(253, 190, 138), font=hfont_sub, anchor="mm")
+        hdraw.text((400, 220), "Chapter 1: Security & Classical Encryption", fill=(255, 255, 255), font=hfont_title, anchor="mm")
+        hdraw.text((400, 290), "X.800 Framework • Symmetric Cipher Model • Substitution & Transposition", fill=(203, 213, 225), font=hfont_sub, anchor="mm")
+        hero_img.save(media_dir / "hero.png", "PNG")
 
 
 def normalize_mindmap(ch_dir: Path) -> None:
@@ -236,6 +254,11 @@ def normalize_mindmap(ch_dir: Path) -> None:
     mm_md_src = SRC_GEN / "mindmap.md"
     if mm_md_src.exists():
         shutil.copy2(mm_md_src, learn_dir / "mindmap.md")
+
+    for extra_mm in ("index.html", "mindmap.js"):
+        e_src = SRC_GEN / extra_mm
+        if e_src.exists():
+            shutil.copy2(e_src, learn_dir / extra_mm)
 
     mm_json_src = SRC_GEN / "mindmap.json"
     if not mm_json_src.exists():
@@ -412,6 +435,11 @@ def normalize_read_files(ch_dir: Path) -> None:
     kt_src = SRC_GEN / "intermediate" / "summary_view.md"
     if kt_src.exists():
         shutil.copy2(kt_src, ch_dir / "read" / "key_takeaways.md")
+
+    # Master textbook chapter markdown (with inline base64 diagrams) from public/cu/cns/chapter 1
+    master_md = SRC_CU / "Chapter_1_Introduction_to_Security_and_Classical_Encryption.md"
+    if master_md.exists():
+        shutil.copy2(master_md, ch_dir / "read" / "deep_dive.md")
 
 
 def normalize_flashcards(ch_dir: Path) -> None:

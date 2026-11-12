@@ -291,7 +291,7 @@ export default function Profile() {
           position: 'fixed',
           inset: 0,
           overflowY: 'auto',
-          background: 'linear-gradient(135deg, #FAF5FF 0%, #F3E8FF 100%)',
+          background: 'linear-gradient(135deg, #FAF8F3 0%, #ECF0E8 100%)',
           padding: '40px 20px',
           fontFamily: 'Inter, sans-serif',
           zIndex: 9999,
@@ -303,22 +303,22 @@ export default function Profile() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
               <img src={treeLogoSrc} alt="Saral Vidhya" className="sv-persona-tree-logo" style={{ flexShrink: 0 }} />
-              <h1 style={{ margin: 0, fontSize: 'clamp(1.6rem, 2.8vw, 2.5rem)', fontWeight: 800, background: 'linear-gradient(135deg, #6B21A8, #9333EA)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <h1 style={{ margin: 0, fontSize: 'clamp(1.6rem, 2.8vw, 2.5rem)', fontWeight: 800, background: 'linear-gradient(135deg, #1E2822, #546C60)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', letterSpacing: '-0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 Student Profile
               </h1>
             </div>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               <button
                 onClick={() => { setBackupData({ ...profileData }); setCurrentStep(1); setIsEditing(false); setAnimate(false); setMode('wizard'); }}
-                style={{ background: '#F3E8FF', border: '2px solid #A855F7', borderRadius: '16px', padding: '10px 20px', cursor: 'pointer', color: '#7E22CE', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.2s ease' }}
-                onMouseOver={e => { e.currentTarget.style.background = '#E9D5FF'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseOut={e => { e.currentTarget.style.background = '#F3E8FF'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                style={{ background: '#EEF5F1', border: '2px solid #546C60', borderRadius: '16px', padding: '10px 20px', cursor: 'pointer', color: '#2D3E36', fontWeight: 700, fontSize: '0.9rem', transition: 'all 0.2s ease' }}
+                onMouseOver={e => { e.currentTarget.style.background = '#DCEAE3'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                onMouseOut={e => { e.currentTarget.style.background = '#EEF5F1'; e.currentTarget.style.transform = 'translateY(0)'; }}
               >
                 ✏️ Edit Details
               </button>
               <button
                 onClick={() => navigate('/')}
-                style={{ background: '#fff', border: 'none', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 15px rgba(107, 33, 168, 0.15)', color: '#6B21A8', transition: 'all 0.3s ease' }}
+                style={{ background: '#fff', border: 'none', borderRadius: '50%', width: '48px', height: '48px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 15px rgba(84, 108, 96, 0.15)', color: '#546C60', transition: 'all 0.3s ease' }}
                 onMouseOver={e => { e.currentTarget.style.transform = 'scale(1.1) rotate(-5deg)'; }}
                 onMouseOut={e => { e.currentTarget.style.transform = 'scale(1) rotate(0deg)'; }}
                 title="Back to Dashboard"
@@ -334,17 +334,17 @@ export default function Profile() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: '30px' }}>
 
             {/* Identity Card */}
-            <div style={{ gridColumn: 'span 8', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 8px 32px rgba(107,33,168,0.05)', display: 'flex', alignItems: 'center', gap: '30px', transition: 'transform 0.3s ease' }}
+            <div style={{ gridColumn: 'span 8', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '32px', border: '1px solid #E2DDD3', boxShadow: '0 8px 32px rgba(84,108,96,0.06)', display: 'flex', alignItems: 'center', gap: '30px', transition: 'transform 0.3s ease' }}
               onMouseOver={e => e.currentTarget.style.transform = 'translateY(-4px)'}
               onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #A855F7, #EC4899)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontWeight: 800, boxShadow: '0 8px 20px rgba(236,72,153,0.3)', flexShrink: 0 }}>
+              <div style={{ width: '100px', height: '100px', borderRadius: '50%', background: 'linear-gradient(135deg, #546C60, #3E584B)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '3rem', fontWeight: 800, boxShadow: '0 8px 20px rgba(84,108,96,0.3)', flexShrink: 0 }}>
                 {username.charAt(0).toUpperCase()}
               </div>
               <div style={{ flex: 1 }}>
-                <h2 style={{ margin: '0 0 8px 0', fontSize: '2rem', fontWeight: 800, color: '#1E1B4B' }}>{username}</h2>
-                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', background: '#F3E8FF', color: '#7E22CE', borderRadius: '30px', fontSize: '0.95rem', fontWeight: 700 }}>
-                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#9333EA', display: 'inline-block' }}></span>
+                <h2 style={{ margin: '0 0 8px 0', fontSize: '2rem', fontWeight: 800, color: '#1E2822' }}>{username}</h2>
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '6px 16px', background: '#EEF5F1', color: '#2D3E36', borderRadius: '30px', fontSize: '0.95rem', fontWeight: 700 }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#546C60', display: 'inline-block' }}></span>
                   Persona: {persona}
                 </div>
               </div>
@@ -352,13 +352,13 @@ export default function Profile() {
 
             {/* Global Rank Card */}
             <div onClick={() => navigate('/leaderboard')}
-              style={{ gridColumn: 'span 4', background: 'linear-gradient(135deg, #FDF2F8 0%, #FFF5F8 100%)', borderRadius: '24px', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid #FBCFE8', boxShadow: '0 8px 32px rgba(236,72,153,0.08)', transition: 'all 0.3s ease' }}
-              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(236,72,153,0.15)'; }}
-              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(236,72,153,0.08)'; }}
+              style={{ gridColumn: 'span 4', background: 'linear-gradient(135deg, #FBF6EC 0%, #FAF2E9 100%)', borderRadius: '24px', padding: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', border: '1px solid #E7B864', boxShadow: '0 8px 32px rgba(184,107,61,0.08)', transition: 'all 0.3s ease' }}
+              onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(184,107,61,0.15)'; }}
+              onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 8px 32px rgba(184,107,61,0.08)'; }}
             >
-              <div style={{ fontSize: '0.9rem', color: '#BE185D', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '8px' }}>Global Rank</div>
-              <div style={{ fontSize: '4rem', fontWeight: 900, color: '#DB2777', lineHeight: 1, textShadow: '2px 4px 12px rgba(219,39,119,0.2)' }}>#{rank}</div>
-              <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#DB2777', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
+              <div style={{ fontSize: '0.9rem', color: '#8A5A3B', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '8px' }}>Global Rank</div>
+              <div style={{ fontSize: '4rem', fontWeight: 900, color: '#B86B3D', lineHeight: 1, textShadow: '2px 4px 12px rgba(184,107,61,0.2)' }}>#{rank}</div>
+              <div style={{ marginTop: '12px', fontSize: '0.85rem', color: '#B86B3D', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                 View Leaderboard
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
               </div>
@@ -366,14 +366,14 @@ export default function Profile() {
 
             {/* Learning Activity */}
             <div style={{ gridColumn: 'span 4', background: '#fff', borderRadius: '24px', padding: '32px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-              <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: 700, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: 700, color: '#1E2822', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.5rem' }}>📊</span> Activity
               </h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {[
-                  { label: 'Summaries Read', value: stats.summaries, color: '#3B82F6', bg: '#EFF6FF' },
-                  { label: 'Detailed Views', value: stats.detailed, color: '#8B5CF6', bg: '#F5F3FF' },
-                  { label: 'Quizzes Taken', value: stats.quizzes, color: '#EC4899', bg: '#FDF2F8' },
+                  { label: 'Summaries Read', value: stats.summaries, color: '#546C60', bg: '#EEF5F1' },
+                  { label: 'Detailed Views', value: stats.detailed, color: '#8A6B2D', bg: '#FBF6EC' },
+                  { label: 'Quizzes Taken', value: stats.quizzes, color: '#B86B3D', bg: '#FAF2E9' },
                 ].map((stat, i) => (
                   <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', background: stat.bg, borderRadius: '16px', border: `1px solid ${stat.color}20` }}>
                     <span style={{ fontSize: '0.95rem', fontWeight: 600, color: '#334155' }}>{stat.label}</span>
@@ -414,13 +414,13 @@ export default function Profile() {
             </div>
 
             {/* Preferences */}
-            <div style={{ gridColumn: 'span 12', background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '32px', border: '1px solid rgba(255,255,255,0.8)', boxShadow: '0 8px 32px rgba(107,33,168,0.05)' }}>
-              <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: 700, color: '#1E1B4B', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ gridColumn: 'span 12', background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(10px)', borderRadius: '24px', padding: '32px', border: '1px solid #E2DDD3', boxShadow: '0 8px 32px rgba(84,108,96,0.06)' }}>
+              <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: 700, color: '#1E2822', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ fontSize: '1.5rem' }}>⚙️</span> Preferences
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '48px' }}>
                 <div>
-                  <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: '#64748B', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Voice Style</h4>
+                  <h4 style={{ margin: '0 0 16px 0', fontSize: '0.95rem', fontWeight: 700, color: '#5C6961', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Voice Style</h4>
                   <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
                     {VOICES.map(voice => (
                       <button
@@ -429,14 +429,14 @@ export default function Profile() {
                         style={{
                           display: 'flex', alignItems: 'center', gap: '8px',
                           padding: '10px 24px',
-                          background: activeVoice === voice.id ? '#F3E8FF' : '#fff',
-                          border: `2px solid ${activeVoice === voice.id ? '#A855F7' : '#E2E8F0'}`,
+                          background: activeVoice === voice.id ? '#EEF5F1' : '#fff',
+                          border: `2px solid ${activeVoice === voice.id ? '#546C60' : '#E2DDD3'}`,
                           borderRadius: '16px', cursor: 'pointer',
                           fontWeight: activeVoice === voice.id ? 700 : 500,
-                          color: activeVoice === voice.id ? '#7E22CE' : '#475569',
+                          color: activeVoice === voice.id ? '#2D3E36' : '#5C6961',
                           fontSize: '1rem',
                           transition: 'all 0.2s ease',
-                          boxShadow: activeVoice === voice.id ? '0 4px 12px rgba(168,85,247,0.15)' : 'none'
+                          boxShadow: activeVoice === voice.id ? '0 4px 12px rgba(84,108,96,0.15)' : 'none'
                         }}
                         onMouseOver={e => { e.currentTarget.style.transform = 'translateY(-2px)'; }}
                         onMouseOut={e => { e.currentTarget.style.transform = 'translateY(0)'; }}

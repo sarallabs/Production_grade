@@ -267,7 +267,7 @@ export default function ExpertDashboard() {
 
         {/* ── Student card ── */}
         <div style={{
-          background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+          background: 'linear-gradient(135deg, #6366F1 0%, #546C60 100%)',
           borderRadius: '18px', padding: '24px 28px', marginBottom: '24px',
           color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           flexWrap: 'wrap', gap: '16px',
@@ -334,7 +334,7 @@ export default function ExpertDashboard() {
               <StatCard icon="📖" label="Chapters Studied" value={uniqueChapters} sub={`across ${uniqueSubjects} subject${uniqueSubjects !== 1 ? 's' : ''}`} color="#6366F1" />
               <StatCard icon="🔧" label="Tool Uses" value={totalToolUses} sub={topTools[0] ? `Most used: ${TOOL_LABELS[topTools[0][0]] || topTools[0][0]}` : 'No data yet'} color="#10B981" />
               <StatCard icon="⚡" label="Quizzes Taken" value={totalQuizzes} sub={avgScore !== null ? `Avg score: ${avgScore}%` : 'No quizzes yet'} color="#F59E0B" />
-              <StatCard icon="🔄" label="Persona Changes" value={data.personaHistory.length} sub={data.personaHistory.length ? `Latest: → ${capitalize(data.personaHistory[data.personaHistory.length-1].to)}` : 'No changes'} color="#8B5CF6" />
+              <StatCard icon="🔄" label="Persona Changes" value={data.personaHistory.length} sub={data.personaHistory.length ? `Latest: → ${capitalize(data.personaHistory[data.personaHistory.length-1].to)}` : 'No changes'} color="#546C60" />
             </div>
 
             {/* Persona history */}
@@ -489,7 +489,7 @@ export default function ExpertDashboard() {
               </div>
               {aError && <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: '8px', padding: '10px 14px', fontSize: '0.83rem', color: '#DC2626', marginBottom: '10px' }}>⚠️ {aError}</div>}
               {aSuccess && <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: '8px', padding: '10px 14px', fontSize: '0.83rem', color: '#15803D', marginBottom: '10px' }}>✅ {aSuccess}</div>}
-              <button onClick={handleAddAssignment} style={{ padding: '11px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)', color: 'white', fontWeight: 700, fontSize: '0.9rem', boxShadow: '0 3px 10px rgba(99,102,241,0.3)' }}>
+              <button onClick={handleAddAssignment} style={{ padding: '11px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #6366F1 0%, #546C60 100%)', color: 'white', fontWeight: 700, fontSize: '0.9rem', boxShadow: '0 3px 10px rgba(99,102,241,0.3)' }}>
                 Create Assignment
               </button>
             </Section>
@@ -586,7 +586,7 @@ export default function ExpertDashboard() {
                         <span style={{ fontSize: '0.82rem', color: '#6B7280' }}>{count} uses · {pct}%</span>
                       </div>
                       <div style={{ height: '10px', background: '#F3F4F6', borderRadius: '5px', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#6366F1,#8B5CF6)', borderRadius: '5px', transition: 'width 0.5s' }} />
+                        <div style={{ height: '100%', width: `${pct}%`, background: 'linear-gradient(90deg,#6366F1,#546C60)', borderRadius: '5px', transition: 'width 0.5s' }} />
                       </div>
                     </div>
                   );
@@ -799,7 +799,7 @@ export default function ExpertDashboard() {
                   onClick={handleAddUser}
                   style={{
                     padding: '11px 24px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+                    background: 'linear-gradient(135deg, #6366F1 0%, #546C60 100%)',
                     color: 'white', fontWeight: 700, fontSize: '0.9rem',
                     alignSelf: 'flex-start',
                     boxShadow: '0 3px 10px rgba(99,102,241,0.3)',

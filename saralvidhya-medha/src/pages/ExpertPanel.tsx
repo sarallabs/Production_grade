@@ -276,7 +276,7 @@ export default function ExpertPanel() {
         .sv-expert-layout {
           display: flex;
           height: 100vh;
-          background: linear-gradient(135deg, #F8FAFC, #FDF2F8, #FAF5FF);
+          background: linear-gradient(135deg, #F8FAFC, #FAF2E9, #FAF8F3);
           font-family: 'Inter', system-ui, sans-serif;
           color: #1E293B;
           overflow: hidden;
@@ -321,7 +321,7 @@ export default function ExpertPanel() {
           margin: 0;
           font-size: 1.3rem;
           font-weight: 800;
-          background: linear-gradient(135deg, #7C3AED, #EC4899);
+          background: linear-gradient(135deg, #546C60, #D9A382);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           letter-spacing: -0.02em;
@@ -347,11 +347,11 @@ export default function ExpertPanel() {
         }
         .sv-tree-item:hover {
           background: rgba(168, 85, 247, 0.08);
-          color: #7C3AED;
+          color: #546C60;
         }
         .sv-tree-item.selected {
           background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
-          color: #7C3AED;
+          color: #546C60;
           font-weight: 700;
         }
         .sv-tree-icon {
@@ -415,7 +415,7 @@ export default function ExpertPanel() {
           transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .sv-textarea:focus {
-          border-color: #A855F7;
+          border-color: #7BA88B;
           background: white;
           box-shadow: 0 10px 40px rgba(124, 58, 237, 0.08), inset 0 2px 10px rgba(124, 58, 237, 0.02);
           transform: translateY(-2px);
@@ -433,14 +433,14 @@ export default function ExpertPanel() {
           gap: 10px;
         }
         .sv-btn-primary {
-          background: linear-gradient(135deg, #7C3AED, #EC4899);
+          background: linear-gradient(135deg, #546C60, #D9A382);
           color: white;
           box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
         }
         .sv-btn-primary:hover {
           transform: translateY(-2px);
           box-shadow: 0 12px 28px rgba(124, 58, 237, 0.35);
-          background: linear-gradient(135deg, #8B5CF6, #F9A8D4);
+          background: linear-gradient(135deg, #546C60, #F9A8D4);
         }
         .sv-btn-primary:active {
           transform: translateY(1px);
@@ -464,7 +464,7 @@ export default function ExpertPanel() {
           box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
         }
         .sv-search:focus {
-          border-color: #A855F7;
+          border-color: #7BA88B;
           background: white;
           box-shadow: 0 0 0 4px rgba(168, 85, 247, 0.1);
         }

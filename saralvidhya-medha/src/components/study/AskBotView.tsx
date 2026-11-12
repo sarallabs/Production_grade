@@ -475,7 +475,7 @@ export default function AskBotView({
             ))}
           </div>
           <span
-            style={{ fontSize: "0.95rem", color: "#7c3aed", fontWeight: 700 }}
+            style={{ fontSize: "0.95rem", color: "#546C60", fontWeight: 700 }}
           >
             🎙️ Listening… speak now
           </span>

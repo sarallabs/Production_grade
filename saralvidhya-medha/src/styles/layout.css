@@ -51,13 +51,13 @@
 
 
 .sidebar-btn.subjects-theme {
-  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  background: linear-gradient(135deg, #546C60, #3E584B);
   color: #ffffff;
 }
 
 
 .sidebar-btn.ask-theme {
-  background: linear-gradient(135deg, #ec4899, #be185d);
+  background: linear-gradient(135deg, #D9A382, #be185d);
   color: #ffffff;
 }
 

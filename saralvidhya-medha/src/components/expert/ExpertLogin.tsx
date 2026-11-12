@@ -29,7 +29,7 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh',
-      background: 'linear-gradient(135deg, #F8FAFC, #FDF2F8, #FAF5FF)',
+      background: 'linear-gradient(135deg, #F8FAFC, #FAF2E9, #FAF8F3)',
       fontFamily: "'Inter', system-ui, sans-serif",
       position: 'relative',
       overflow: 'hidden'
@@ -58,7 +58,7 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
         width: '100%', maxWidth: '420px',
         textAlign: 'center'
       }}>
-        <div style={{ marginBottom: 24, color: '#A855F7', display: 'flex', justifyContent: 'center' }}>
+        <div style={{ marginBottom: 24, color: '#7BA88B', display: 'flex', justifyContent: 'center' }}>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -68,7 +68,7 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
           margin: '0 0 12px 0', 
           fontSize: '1.6rem', 
           fontWeight: 800,
-          background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+          background: 'linear-gradient(135deg, #546C60, #D9A382)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent'
         }}>Expert Access Required</h2>
@@ -111,7 +111,7 @@ export default function ExpertLogin({ onLogin }: ExpertLoginProps) {
               padding: '16px',
               borderRadius: '12px',
               border: 'none',
-              background: 'linear-gradient(135deg, #7C3AED, #EC4899)',
+              background: 'linear-gradient(135deg, #546C60, #D9A382)',
               color: 'white',
               fontSize: '1rem',
               fontWeight: 700,

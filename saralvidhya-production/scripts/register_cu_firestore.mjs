@@ -109,6 +109,8 @@ function collectChapterFiles(chDir, prefix = 'cns/chapter_01') {
   const mimeMap = {
     '.json': 'application/json',
     '.md': 'text/markdown',
+    '.html': 'text/html',
+    '.js': 'application/javascript',
     '.png': 'image/png',
     '.jpg': 'image/jpeg',
     '.jpeg': 'image/jpeg',
@@ -253,6 +255,7 @@ async function main() {
       tools: {
         'read.quick': { personas: ['beginner', 'intermediate', 'advanced'] },
         'read.detailed': { personas: ['beginner', 'intermediate', 'advanced'] },
+        'read.deep_dive': { available: true },
         'read.key_takeaways': { available: true },
         'learn.mindmap': { interactive: true, levels: 3 },
         'learn.study_plan': { available: true },

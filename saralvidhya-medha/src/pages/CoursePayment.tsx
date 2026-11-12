@@ -9,7 +9,7 @@ type PaymentMethod = 'credit' | 'debit' | 'upi';
 
 /** Extract the first solid hex/rgb color from a gradient or return a fallback */
 function extractColor(accent: string | undefined): string {
-  if (!accent) return '#7c3aed';
+  if (!accent) return '#546C60';
   // If it's already a solid color (no 'gradient' keyword)
   if (!accent.includes('gradient')) return accent;
   // Pull the first hex color from the gradient string
@@ -18,7 +18,7 @@ function extractColor(accent: string | undefined): string {
   // Pull the first rgb/hsl value
   const rgb = accent.match(/(rgb|hsl)[^)]+\)/);
   if (rgb) return rgb[0];
-  return '#7c3aed';
+  return '#546C60';
 }
 
 export default function CoursePayment() {
@@ -71,6 +71,10 @@ export default function CoursePayment() {
     if (!courseId) return;
     getCourseById(courseId)
       .then((data) => {
+        if (data) {
+          navigate(buildChapterUrl(data, 1), { replace: true });
+          return;
+        }
         setCourse(data);
         setLoading(false);
       })
@@ -181,7 +185,7 @@ export default function CoursePayment() {
   }
 
   const { name, boardShortName, className, meta } = course;
-  const accentGradient = meta.accent || '#7c3aed';
+  const accentGradient = meta.accent || '#546C60';
   // Use a solid color for borders / tab indicators (gradients can't be used there)
   const accentColor = extractColor(meta.accent);
 
@@ -353,7 +357,7 @@ export default function CoursePayment() {
                       padding: '8px 12px',
                       justifyContent: 'flex-start',
                       gap: '8px',
-                      background: paymentMethod === 'credit' ? 'rgba(230, 220, 255, 0.4)' : '#ffffff',
+                      background: paymentMethod === 'credit' ? '#EEF5F1' : '#ffffff',
                       color: paymentMethod === 'credit' ? accentColor : undefined
                     }}
                     onClick={() => setPaymentMethod('credit')}
@@ -375,7 +379,7 @@ export default function CoursePayment() {
                       padding: '8px 12px',
                       justifyContent: 'flex-start',
                       gap: '8px',
-                      background: paymentMethod === 'debit' ? 'rgba(230, 220, 255, 0.4)' : '#ffffff',
+                      background: paymentMethod === 'debit' ? '#EEF5F1' : '#ffffff',
                       color: paymentMethod === 'debit' ? accentColor : undefined
                     }}
                     onClick={() => setPaymentMethod('debit')}
@@ -397,7 +401,7 @@ export default function CoursePayment() {
                       padding: '8px 12px',
                       justifyContent: 'flex-start',
                       gap: '8px',
-                      background: paymentMethod === 'upi' ? 'rgba(230, 220, 255, 0.4)' : '#ffffff',
+                      background: paymentMethod === 'upi' ? '#EEF5F1' : '#ffffff',
                       color: paymentMethod === 'upi' ? accentColor : undefined
                     }}
                     onClick={() => setPaymentMethod('upi')}
@@ -570,8 +574,8 @@ export default function CoursePayment() {
                               left: 0,
                               right: 0,
                               height: '3px',
-                              background: '#22c55e',
-                              boxShadow: '0 0 10px #22c55e, 0 0 5px #22c55e',
+                              background: '#546C60',
+                              boxShadow: '0 0 10px #546C60, 0 0 5px #546C60',
                               animation: 'qr-scan 2.5s infinite linear',
                               pointerEvents: 'none'
                             }}
@@ -660,9 +664,9 @@ export default function CoursePayment() {
                     position: 'absolute',
                     inset: 0,
                     borderRadius: '50%',
-                    border: '4px solid #e2e8f0',
-                    borderTopColor: '#6366f1',
-                    borderRightColor: '#a855f7',
+                    border: '4px solid #E2DDD3',
+                    borderTopColor: '#546C60',
+                    borderRightColor: '#9CC0B4',
                     animation: 'svSpinRing 1.2s linear infinite',
                   }}
                 />
@@ -672,12 +676,12 @@ export default function CoursePayment() {
                     width: '72px',
                     height: '72px',
                     borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                    background: 'linear-gradient(135deg, #546C60, #2E6F4E)',
                     color: '#ffffff',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    boxShadow: '0 8px 20px rgba(34, 197, 94, 0.35)',
+                    boxShadow: '0 8px 20px rgba(84, 108, 96, 0.35)',
                   }}
                 >
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
@@ -718,7 +722,7 @@ export default function CoursePayment() {
                     width: '100%',
                     height: '6px',
                     borderRadius: '3px',
-                    background: '#e2e8f0',
+                    background: '#E2DDD3',
                     overflow: 'hidden',
                     marginBottom: '10px',
                   }}
@@ -726,13 +730,13 @@ export default function CoursePayment() {
                   <div
                     style={{
                       height: '100%',
-                      background: 'linear-gradient(90deg, #6366f1, #a855f7, #ec4899)',
+                      background: 'linear-gradient(90deg, #546C60, #9CC0B4, #E7B864)',
                       width: `${((4 - countdown) / 4) * 100}%`,
                       transition: 'width 1s linear',
                     }}
                   />
                 </div>
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#6366f1' }}>
+                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#546C60' }}>
                   {countdown > 0 ? `Launching workspace in ${countdown}s...` : 'Opening learning workspace...'}
                 </span>
               </div>

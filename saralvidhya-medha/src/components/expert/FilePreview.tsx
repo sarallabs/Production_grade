@@ -17,7 +17,7 @@ export default function FilePreview({ selectedFile }: FilePreviewProps) {
     const audioUrl = `${import.meta.env.BASE_URL}generated_resources/${selectedFile}`;
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'rgba(255, 255, 255, 0.5)', borderRadius: 16, border: '1px solid rgba(168, 85, 247, 0.15)' }}>
-        <div style={{ marginBottom: 20, color: '#A855F7', animation: 'float 6s ease-in-out infinite' }}>
+        <div style={{ marginBottom: 20, color: '#7BA88B', animation: 'float 6s ease-in-out infinite' }}>
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
         </div>
         <h3 style={{ margin: '0 0 24px 0', color: '#1E293B', fontWeight: 800 }}>Audio Preview</h3>

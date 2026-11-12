@@ -793,23 +793,23 @@ export function PodcastsView({
                 width: "40px",
                 height: "40px",
                 borderRadius: "50%",
-                background: "#7C3AED",
+                background: "#546C60",
                 color: "#fff",
                 border: "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
-                boxShadow: "0 4px 10px rgba(124, 58, 237, 0.3)",
+                boxShadow: "0 4px 10px rgba(84, 108, 96, 0.3)",
                 flexShrink: 0,
                 transition: "all 0.2s",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = "#6D28D9";
+                e.currentTarget.style.backgroundColor = "#3E584B";
                 e.currentTarget.style.transform = "scale(1.05)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = "#7C3AED";
+                e.currentTarget.style.backgroundColor = "#546C60";
                 e.currentTarget.style.transform = "scale(1)";
               }}
               title={

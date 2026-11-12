@@ -63,36 +63,36 @@ function SubjectHeaderIcon({ subjectId }: { subjectId: string }) {
 
 const BOOK_COLORS = [
   { 
-    cover: 'linear-gradient(135deg, #1A0B2E 0%, #91207A 50%, #E7469B 100%)',
-    accent: '#E7469B',
-    spine: '#4A1573', 
+    cover: 'linear-gradient(135deg, #1E2822 0%, #3E584B 50%, #546C60 100%)',
+    accent: '#9CC0B4',
+    spine: '#2D3E36', 
     text: '#FFFFFF', 
-    page: '#FDF7FA',
-    dark: '#4A113E'
+    page: '#FAF8F3',
+    dark: '#18221D'
   },
   { 
-    cover: 'linear-gradient(135deg, #2E0B3F 0%, #742296 50%, #C546C4 100%)',
-    accent: '#C546C4',
-    spine: '#5E1D82', 
+    cover: 'linear-gradient(135deg, #2D3E36 0%, #546C60 50%, #7BA88B 100%)',
+    accent: '#E7B864',
+    spine: '#3E584B', 
     text: '#FFFFFF', 
-    page: '#FCF5FC',
-    dark: '#3A114A'
+    page: '#F8F5EE',
+    dark: '#1E2822'
   },
   { 
-    cover: 'linear-gradient(135deg, #4A0D3E 0%, #A4225A 50%, #F27A8A 100%)',
-    accent: '#F27A8A',
-    spine: '#7A1848', 
+    cover: 'linear-gradient(135deg, #3A2E25 0%, #8A5A3B 50%, #D9A382 100%)',
+    accent: '#D9A382',
+    spine: '#5C3D28', 
     text: '#FFFFFF', 
-    page: '#FEF6F7',
-    dark: '#52102C'
+    page: '#FAF8F3',
+    dark: '#2C221B'
   },
   { 
-    cover: 'linear-gradient(135deg, #1A0B42 0%, #5E1D94 50%, #B73BA6 100%)',
-    accent: '#B73BA6',
-    spine: '#3D1063', 
+    cover: 'linear-gradient(135deg, #253028 0%, #4F7B64 50%, #B5BA9B 100%)',
+    accent: '#B5BA9B',
+    spine: '#35483D', 
     text: '#FFFFFF', 
-    page: '#FAF6FC',
-    dark: '#2F0E4A'
+    page: '#F8F5EE',
+    dark: '#1A241E'
   },
 ];
 
@@ -134,13 +134,6 @@ export default function ChapterList() {
   useEffect(() => {
     if (!sId) {
       navigate('/my-learning', { replace: true });
-      return;
-    }
-
-    // Check if the user has paid for this subject/course
-    const hasPaid = localStorage.getItem(`registered_${sId}`) === 'true';
-    if (!hasPaid) {
-      navigate(`/course/${sId}`, { replace: true });
       return;
     }
 
@@ -324,18 +317,17 @@ export default function ChapterList() {
           </div>
           <div className="sv-topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '14px', flexShrink: 0 }}>
             <button className="sv-logout-btn" onClick={() => navigate('/')} title="Log Out" aria-label="Log Out">
-              <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="44" stroke="#FF4D4D" strokeWidth="7" fill="none"/>
-                <path d="M48 30H30V70H48" stroke="#FF4D4D" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                <path d="M42 50H74M74 50L60 36M74 50L60 64" stroke="#FF4D4D" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#546C60" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8" />
+                <polyline points="15 8 19 12 15 16" />
+                <line x1="9" y1="12" x2="19" y2="12" />
               </svg>
             </button>
             <button className="sv-profile-btn" onClick={() => navigate('/profile')} title="Profile" aria-label="Profile">
-              <svg width="26" height="26" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="50" cy="50" r="50" fill="#4285F4"/>
-                <circle cx="50" cy="40" r="18" fill="#FFFFFF"/>
-                <path d="M20 84C20 67 33.4 54 50 54C66.6 54 80 67 80 84H20Z" fill="#FFFFFF"/>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0zM12 14a7 7 0 0 0-7 7h14a7 7 0 0 0-7-7z" />
               </svg>
+              Profile
             </button>
           </div>
         </header>

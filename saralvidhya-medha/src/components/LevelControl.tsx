@@ -39,7 +39,7 @@ export const LevelControl: React.FC<LevelControlProps> = ({ currentLevel, onLeve
           background: "transparent",
           border: "none",
           cursor: currentLevel === "beginner" ? "not-allowed" : "pointer",
-          color: currentLevel === "beginner" ? "#cbd5e1" : "#7c3aed",
+          color: currentLevel === "beginner" ? "#cbd5e1" : "#546C60",
           display: "flex",
           alignItems: "center",
           padding: "4px"
@@ -68,7 +68,7 @@ export const LevelControl: React.FC<LevelControlProps> = ({ currentLevel, onLeve
           background: "transparent",
           border: "none",
           cursor: currentLevel === "advanced" ? "not-allowed" : "pointer",
-          color: currentLevel === "advanced" ? "#cbd5e1" : "#7c3aed",
+          color: currentLevel === "advanced" ? "#cbd5e1" : "#546C60",
           display: "flex",
           alignItems: "center",
           padding: "4px"

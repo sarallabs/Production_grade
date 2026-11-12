@@ -7,7 +7,9 @@ import {
   getManifest,
   getChapterDir,
   getSubjectBaseUrl,
-  SHARED_RESOURCE_FILES 
+  SHARED_RESOURCE_FILES,
+  filterIndexedCandidates,
+  fetchCachedText
 } from './manifestService';
 
 export interface BackendStudyGuide {
@@ -16,6 +18,7 @@ export interface BackendStudyGuide {
 }
 
 const studyGuideCache: Record<string, BackendStudyGuide | null> = {};
+const resourceContentCache = new Map<string, Promise<string>>();
 
 /** Fetches (and caches) the backend study guide for a subject + persona. */
 export async function fetchBackendStudyGuide(
@@ -95,7 +98,7 @@ export function mindmapJsonToMermaid(text: string): string {
   const lines = ['```mermaid', 'mindmap'];
 
   const visit = (node: any, depth = 1) => {
-    const rawLabel = String(node?.name ?? node?.label ?? 'Topic').replace(/\\s+/g, ' ').trim();
+    const rawLabel = String(node?.name ?? node?.label ?? 'Topic').replace(/\s+/g, ' ').trim();
     const label = escapeMermaidLabel(rawLabel);
     const indent = '  '.repeat(depth);
     lines.push(depth === 1 ? `${indent}root(("${label}"))` : `${indent}${label}`);
@@ -106,7 +109,7 @@ export function mindmapJsonToMermaid(text: string): string {
 
   visit(root);
   lines.push('```');
-  return lines.join('\\n');
+  return lines.join('\n');
 }
 
 export function getResourceContentUrl(
@@ -169,79 +172,93 @@ export async function getResourceContent(
   level: DifficultyLevel = 'intermediate',
   videoDir?: string,
 ): Promise<string> {
-  await getManifest();
-  const chDir = getChapterDir(subject, chapterNumber);
-  const subjectBase = getSubjectBaseUrl(subject);
+  const cacheKey = `${subject}:${chapterNumber}:${resourceName}:${level}:${videoDir || ''}`;
+  const existing = resourceContentCache.get(cacheKey);
+  if (existing) return existing;
 
-  if (
-    BACKEND_SUBJECTS.has(subject) &&
-    (resourceName === 'summary.md' || resourceName === 'detailed_view.md')
-  ) {
-    const guide = await fetchBackendStudyGuide(subject, level);
-    const text = resourceName === 'summary.md' ? guide?.quick_study : guide?.detailed_notes;
-    if (text && text.trim()) return cleanAiPreamble(text);
-  }
+  const task = (async () => {
+    await getManifest();
+    const chDir = getChapterDir(subject, chapterNumber);
+    const subjectBase = getSubjectBaseUrl(subject);
 
-  const tryFetch = async (url: string, fileName: string): Promise<string | null> => {
-    try {
-      const fetchUrl = import.meta.env.DEV ? `${url}?t=${Date.now()}` : url;
-      const res = await fetch(fetchUrl, { cache: 'no-cache' });
-      if (!res.ok) return null;
-      const ct = res.headers.get('content-type') || '';
-      if (ct.includes('text/html')) return null;
-      let text = await res.text();
-      if (fileName === 'mindmap.json') {
-        return text;
-      }
-      
-      let isFirstImage = true;
-      text = text.replace(/!\[(.*?)\]\((?!http|\/)(.*?)\)/g, (match, alt, relPath) => {
-        const lowerAlt = alt.toLowerCase();
-        const lowerRel = relPath.toLowerCase();
-
-        const parts = lowerRel.split('/');
-        let isTopMindmapOverview = false;
-        if (parts.length >= 2) {
-          const fileName = parts[parts.length - 1].replace(/\.(png|jpg|jpeg|svg)$/, '');
-          if (
-            fileName === 'marketing_mind_map' ||
-            fileName === 'global_marketing' ||
-            fileName === 'service_marketing' ||
-            fileName.startsWith('pillar_001')
-          ) {
-            isTopMindmapOverview = true;
-          }
-        }
-        if (
-          isFirstImage ||
-          isTopMindmapOverview ||
-          lowerAlt.includes('mindmap overview') ||
-          lowerAlt.includes('mind map') ||
-          lowerAlt.endsWith('mindmap')
-        ) {
-          if (resourceName === 'summary.md' || resourceName === 'detailed_view.md') {
-            isFirstImage = false;
-            return ''; 
-          }
-        }
-
-        return `![${alt}](${resolveRelativeUrl(url, relPath)})`;
-      });
-      return cleanAiPreamble(text);
-    } catch {
-      return null;
+    if (
+      BACKEND_SUBJECTS.has(subject) &&
+      (resourceName === 'summary.md' || resourceName === 'detailed_view.md')
+    ) {
+      const guide = await fetchBackendStudyGuide(subject, level);
+      const text = resourceName === 'summary.md' ? guide?.quick_study : guide?.detailed_notes;
+      if (text && text.trim()) return cleanAiPreamble(text);
     }
-  };
 
-  for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
-    const leveledResult = await tryFetch(`${subjectBase}/${chDir}/${level}/${fileName}`, fileName);
-    if (leveledResult !== null) return leveledResult;
+    const tryFetch = async (url: string, fileName: string): Promise<string | null> => {
+      try {
+        let text = await fetchCachedText(url);
+        if (text === null) return null;
+        if (fileName === 'mindmap.json' || fileName.endsWith('/mindmap.json')) {
+          return text;
+        }
+        
+        let isFirstImage = true;
+        text = text.replace(/!\[(.*?)\]\((?!http|\/)(.*?)\)/g, (match, alt, relPath) => {
+          const lowerAlt = alt.toLowerCase();
+          const lowerRel = relPath.toLowerCase();
 
-    const rootResult = await tryFetch(`${subjectBase}/${chDir}/${fileName}`, fileName);
-    if (rootResult !== null) return rootResult;
-  }
+          const parts = lowerRel.split('/');
+          let isTopMindmapOverview = false;
+          if (parts.length >= 2) {
+            const fName = parts[parts.length - 1].replace(/\.(png|jpg|jpeg|svg)$/, '');
+            if (
+              fName === 'marketing_mind_map' ||
+              fName === 'global_marketing' ||
+              fName === 'service_marketing' ||
+              fName.startsWith('pillar_001')
+            ) {
+              isTopMindmapOverview = true;
+            }
+          }
+          if (
+            isFirstImage ||
+            isTopMindmapOverview ||
+            lowerAlt.includes('mindmap overview') ||
+            lowerAlt.includes('mind map') ||
+            lowerAlt.endsWith('mindmap')
+          ) {
+            if (resourceName === 'summary.md' || resourceName === 'detailed_view.md') {
+              isFirstImage = false;
+              return ''; 
+            }
+          }
 
-  return `Content not available.`;
+          return `![${alt}](${resolveRelativeUrl(url, relPath)})`;
+        });
+        return cleanAiPreamble(text);
+      } catch {
+        return null;
+      }
+    };
+
+    const candidateEntries: { url: string; fileName: string }[] = [];
+    for (const fileName of getResourceFileCandidates(resourceName, level, videoDir)) {
+      candidateEntries.push({ url: `${subjectBase}/${chDir}/${level}/${fileName}`, fileName });
+      candidateEntries.push({ url: `${subjectBase}/${chDir}/${fileName}`, fileName });
+    }
+
+    const indexedUrls = new Set(filterIndexedCandidates(candidateEntries.map((e) => e.url)));
+    const prioritized =
+      indexedUrls.size > 0
+        ? candidateEntries.filter((e) => indexedUrls.has(e.url))
+        : candidateEntries;
+
+    for (const entry of prioritized) {
+      const result = await tryFetch(entry.url, entry.fileName);
+      if (result !== null) return result;
+    }
+
+    return `Content not available.`;
+  })();
+
+  resourceContentCache.set(cacheKey, task);
+  return task;
 }
 
 export interface MastermindsMindmapEntry {

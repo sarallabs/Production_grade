@@ -4622,7 +4622,7 @@ export default function StudyTable() {
             gap: "0"
           }}
         >
-          {/* Study Toolbar (MVP Project) - Toggleable Dark (#546C60) / Bright Theme */}
+          {/* Study Toolbar (MVP Project) - Toggleable Dark (#2E3B33) / Bright Theme */}
           {activeTool !== 'mocktest' && activeTool !== 'pre_final_test' && (
             <div
               className='study-toolbar-wrapper'
@@ -4630,7 +4630,7 @@ export default function StudyTable() {
                 position: 'relative',
                 width: '100%',
                 flexShrink: 0,
-                background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                background: isDarkToolbar ? '#2E3B33' : '#FFFFFF',
                 borderBottom: isDarkToolbar ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid #E2E8F0',
                 boxShadow: isDarkToolbar ? '0 4px 24px rgba(0, 0, 0, 0.22)' : '0 2px 12px rgba(0, 0, 0, 0.05)',
                 zIndex: 100,
@@ -4641,7 +4641,7 @@ export default function StudyTable() {
               <div
                 style={{
                   padding: '2px 14px',
-                  background: isDarkToolbar ? '#546C60' : '#FFFFFF',
+                  background: isDarkToolbar ? '#2E3B33' : '#FFFFFF',
                   transition: 'background 0.25s ease',
                 }}
               >
@@ -4692,8 +4692,8 @@ export default function StudyTable() {
                     // Inactive icons (the other icons): disabled look, black & white only (no colors).
                     const iconColor = active ? color : (isDarkToolbar ? '#FFFFFF' : '#475569');
                     const iconMuted = active ? `${color}BB` : (isDarkToolbar ? 'rgba(255, 255, 255, 0.55)' : '#94A3B8');
-                    const innerBg = active ? '#FFFFFF' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
-                    const contrastBg = active ? '#546C60' : (isDarkToolbar ? '#546C60' : '#FFFFFF');
+                    const innerBg = active ? '#FFFFFF' : (isDarkToolbar ? '#2E3B33' : '#FFFFFF');
+                    const contrastBg = active ? '#2E3B33' : (isDarkToolbar ? '#2E3B33' : '#FFFFFF');
 
                     switch (toolId) {
                       case "summary":
@@ -5189,7 +5189,8 @@ export default function StudyTable() {
                           maxHeight: '84px',
                           boxSizing: 'border-box',
                           flex: '0 0 232px',
-                          cursor: 'pointer',
+                          cursor: 'default',
+                          // cursor: 'pointer', // Re-enable if toolbar collapse/hover effect is restored
                           transition: 'border-color 0.28s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.28s cubic-bezier(0.22, 1, 0.36, 1), background 0.28s ease',
                         });
 
@@ -5352,6 +5353,28 @@ export default function StudyTable() {
                               }
                               .sv-tool-group-card .sv-tool-group-title {
                                 position: relative;
+                                transform: none;
+                                z-index: 2;
+                                pointer-events: none;
+                              }
+                              .sv-tool-group-card .sv-tool-group-title-text {
+                                display: inline-block;
+                                letter-spacing: 0.01em;
+                              }
+                              .sv-tool-group-card .sv-tool-group-options {
+                                display: flex;
+                                align-items: center;
+                                gap: 4px;
+                                width: 100%;
+                                flex: 1 1 auto;
+                                opacity: 1;
+                                transform: none;
+                                pointer-events: auto;
+                              }
+
+                              /* [COMMENTED OUT: Section collapse & hover-reveal toolbar effect]
+                              .sv-tool-group-card .sv-tool-group-title {
+                                position: relative;
                                 transform: translate3d(var(--sv-title-idle-x, -74px), 2px, 0) scale3d(0.9, 0.9, 1);
                                 transform-origin: center center;
                                 transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), color 0.22s ease, opacity 0.22s ease;
@@ -5380,11 +5403,6 @@ export default function StudyTable() {
                                 -webkit-backface-visibility: hidden;
                                 transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
                                 filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.18));
-                              }
-                              .sv-tool-group-card .sv-tool-group-title-text {
-                                display: inline-block;
-                                letter-spacing: 0.01em;
-                                transform: translate3d(0, 0, 0);
                               }
                               .sv-tool-group-card .sv-tool-group-options {
                                 display: flex;
@@ -5419,9 +5437,11 @@ export default function StudyTable() {
                                 transform: translate3d(0, 0, 0) scale3d(1, 1, 1);
                                 pointer-events: auto;
                               }
+                              */
                             `}</style>
 
                             {(() => {
+                              /* [COMMENTED OUT: Collapsed card click-by-position helper for hover-reveal effect]
                               const selectCardToolByPosition = (
                                 e: React.MouseEvent<HTMLDivElement>,
                                 tools: [ToolId, ToolId, ToolId],
@@ -5436,6 +5456,8 @@ export default function StudyTable() {
                                 }
                                 setActiveTool(picked);
                               };
+                              */
+                              void getSectionLeadIcon;
 
                               return (
                                 <>
@@ -5444,9 +5466,9 @@ export default function StudyTable() {
                                     className={`sv-tool-group-card${isLearnActive ? ' is-active' : ''}`}
                                     style={{
                                       ...groupCardStyle(isLearnActive, '#9CC0B4'),
-                                      ['--sv-title-idle-x' as any]: isSegmented ? '-54px' : '-82px',
+                                      // ['--sv-title-idle-x' as any]: isSegmented ? '-54px' : '-82px',
                                     }}
-                                    onClick={(e) => selectCardToolByPosition(e, ['summary', 'podcasts', 'videos'])}
+                                    // onClick={(e) => selectCardToolByPosition(e, ['summary', 'podcasts', 'videos'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isLearnActive, '#9CC0B4')}>
                                       <span className="sv-tool-group-title-text">Learn</span>
@@ -5459,9 +5481,9 @@ export default function StudyTable() {
                                         </span>
                                       )}
                                     </div>
-                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                    {/* <div className="sv-tool-group-center-icon" aria-hidden="true">
                                       {getSectionLeadIcon('learn', '#9CC0B4')}
-                                    </div>
+                                    </div> */}
                                     <div className="sv-tool-group-options">
                                       {renderNode('summary', 'Read', '#9CC0B4')}
                                       {renderNode('podcasts', 'Listen', '#9CC0B4')}
@@ -5474,16 +5496,16 @@ export default function StudyTable() {
                                     className={`sv-tool-group-card${isPracticeActive ? ' is-active' : ''}`}
                                     style={{
                                       ...groupCardStyle(isPracticeActive, '#E7B864'),
-                                      ['--sv-title-idle-x' as any]: '-76px',
+                                      // ['--sv-title-idle-x' as any]: '-76px',
                                     }}
-                                    onClick={(e) => selectCardToolByPosition(e, ['revision_flashcards', 'assessment', 'qbank'])}
+                                    // onClick={(e) => selectCardToolByPosition(e, ['revision_flashcards', 'assessment', 'qbank'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isPracticeActive, '#E7B864')}>
                                       <span className="sv-tool-group-title-text">Practice</span>
                                     </div>
-                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                    {/* <div className="sv-tool-group-center-icon" aria-hidden="true">
                                       {getSectionLeadIcon('practice', '#E7B864')}
-                                    </div>
+                                    </div> */}
                                     <div className="sv-tool-group-options">
                                       {renderNode('revision_flashcards', 'Revise', '#E7B864')}
                                       {renderNode('assessment', 'Assessment', '#E7B864')}
@@ -5496,16 +5518,16 @@ export default function StudyTable() {
                                     className={`sv-tool-group-card${isPrepareActive ? ' is-active' : ''}`}
                                     style={{
                                       ...groupCardStyle(isPrepareActive, '#B5BA9B'),
-                                      ['--sv-title-idle-x' as any]: '-76px',
+                                      // ['--sv-title-idle-x' as any]: '-76px',
                                     }}
-                                    onClick={(e) => selectCardToolByPosition(e, ['pyq', 'prep_exam', 'study_plan'])}
+                                    // onClick={(e) => selectCardToolByPosition(e, ['pyq', 'prep_exam', 'study_plan'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isPrepareActive, '#B5BA9B')}>
                                       <span className="sv-tool-group-title-text">Prepare</span>
                                     </div>
-                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                    {/* <div className="sv-tool-group-center-icon" aria-hidden="true">
                                       {getSectionLeadIcon('prepare', '#B5BA9B')}
-                                    </div>
+                                    </div> */}
                                     <div className="sv-tool-group-options">
                                       {renderNode('pyq', 'PYQs', '#B5BA9B')}
                                       {renderNode('prep_exam', 'Exam Prep.', '#B5BA9B')}
@@ -5518,16 +5540,16 @@ export default function StudyTable() {
                                     className={`sv-tool-group-card${isResourcesActive ? ' is-active' : ''}`}
                                     style={{
                                       ...groupCardStyle(isResourcesActive, '#D9A382'),
-                                      ['--sv-title-idle-x' as any]: '-70px',
+                                      // ['--sv-title-idle-x' as any]: '-70px',
                                     }}
-                                    onClick={(e) => selectCardToolByPosition(e, ['mindmap', 'key_takeaways', 'ask'])}
+                                    // onClick={(e) => selectCardToolByPosition(e, ['mindmap', 'key_takeaways', 'ask'])}
                                   >
                                     <div className="sv-tool-group-title" style={groupTitleStyle(isResourcesActive, '#D9A382')}>
                                       <span className="sv-tool-group-title-text">Resources</span>
                                     </div>
-                                    <div className="sv-tool-group-center-icon" aria-hidden="true">
+                                    {/* <div className="sv-tool-group-center-icon" aria-hidden="true">
                                       {getSectionLeadIcon('resources', '#D9A382')}
-                                    </div>
+                                    </div> */}
                                     <div className="sv-tool-group-options">
                                       {renderNode('mindmap', 'Mindmaps', '#D9A382')}
                                       {renderNode('key_takeaways', 'Takeaways', '#D9A382')}
@@ -5567,7 +5589,7 @@ export default function StudyTable() {
                             justifyContent: 'center',
                             border: '1.5px solid #F5F2EB',
                             background: '#F5F2EB',
-                            color: '#546C60',
+                            color: '#2E3B33',
                             cursor: 'pointer',
                             flexShrink: 0,
                             boxShadow: '0 2px 6px rgba(0, 0, 0, 0.14)',
@@ -5582,7 +5604,7 @@ export default function StudyTable() {
                             (e.currentTarget as HTMLButtonElement).style.transform = 'none';
                           }}
                         >
-                          <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#546C60' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
+                          <svg width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='#2E3B33' strokeWidth='2.2' strokeLinecap='round' strokeLinejoin='round'>
                             <path d='M14 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8' />
                             <polyline points='15 8 19 12 15 16' />
                             <line x1='9' y1='12' x2='19' y2='12' />

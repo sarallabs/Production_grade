@@ -210,7 +210,7 @@ export default function JsMindView({ content, onTopicClick, toolbarHint }: Props
         style={{
           width: '100%',
           height: 'calc(100% - 40px)',
-          background:'#FAFBFF',
+          background:'#FAF8F3',
           borderRadius:'0 0 8px 8px',
         }}
       />

@@ -62,7 +62,7 @@ export default function UserMenu() {
       >
         <span style={{
           width: '36px', height: '36px', borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+          background: 'linear-gradient(135deg, #6366F1, #546C60)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: '1rem', color: 'white', fontWeight: 700, flexShrink: 0,
         }}>
@@ -90,7 +90,7 @@ export default function UserMenu() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{
                 width: '48px', height: '48px', borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+                background: 'linear-gradient(135deg, #6366F1, #546C60)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: '1.2rem', color: 'white', fontWeight: 800, flexShrink: 0,
               }}>
@@ -130,7 +130,7 @@ export default function UserMenu() {
                 >
                   <div style={{
                     width: '30px', height: '30px', borderRadius: '50%',
-                    background: c.role === 'expert' ? 'linear-gradient(135deg,#8B5CF6,#A78BFA)' : 'linear-gradient(135deg,#3B82F6,#60A5FA)',
+                    background: c.role === 'expert' ? 'linear-gradient(135deg,#546C60,#A78BFA)' : 'linear-gradient(135deg,#3B82F6,#60A5FA)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: '0.8rem', color: 'white', fontWeight: 700, flexShrink: 0,
                   }}>

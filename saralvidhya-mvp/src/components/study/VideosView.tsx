@@ -233,6 +233,8 @@ export default function VideosView({
 
   // Custom Player State
   const [watchMode, setWatchMode] = useState<"videos" | "clips">("videos");
+  const [activeClipIdx, setActiveClipIdx] = useState(0);
+  const [playingClipIdx, setPlayingClipIdx] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [volume, setVolume] = useState(100);
@@ -1793,6 +1795,236 @@ export default function VideosView({
   }, [subjectId, robustActive]);
 
   const totalVideos = Math.max(1, videos.length);
+
+  useEffect(() => {
+    setActiveClipIdx(0);
+    setPlayingClipIdx(null);
+  }, [subjectId, chapterNumber, robustActive, watchMode]);
+
+  const renderClipsMultiWindow = () => {
+    const thumbSrc =
+      currentVideo.ytId &&
+      (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
+        ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+        : currentVideo.thumbnailUrl ||
+          (currentVideo.ytId ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg` : "");
+
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: segmentsList.length === 1 ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))",
+          gap: "12px",
+          width: "100%",
+        }}
+      >
+        {segmentsList.map((seg, idx) => {
+          const isSelectedClip = idx === activeClipIdx;
+          const isClipPlaying = playingClipIdx === idx && Boolean(currentVideo.ytId);
+
+          return (
+            <div
+              key={`clip-win-${subjectId}-${chapterNumber}-${robustActive}-${seg.index}`}
+              onClick={() => {
+                setActiveClipIdx(idx);
+                if (!isClipPlaying && currentVideo.ytId) {
+                  setPlayingClipIdx(idx);
+                }
+              }}
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: "10px",
+                overflow: "hidden",
+                background: "#0F1713",
+                border: isSelectedClip ? "2px solid #5B8C72" : "1px solid #DED8CA",
+                boxShadow: isSelectedClip
+                  ? "0 6px 18px rgba(20, 32, 26, 0.14)"
+                  : "0 3px 10px rgba(20, 32, 26, 0.08)",
+                cursor: isClipPlaying ? "default" : "pointer",
+                transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+              }}
+            >
+              {isClipPlaying && currentVideo.ytId ? (
+                <iframe
+                  key={`clip-iframe-${subjectId}-${chapterNumber}-${robustActive}-${idx}`}
+                  title={`${displayTitle} - ${seg.title}`}
+                  src={`https://www.youtube.com/embed/${currentVideo.ytId}?autoplay=1&start=${seg.startSec}${
+                    seg.endSec > seg.startSec + 4 ? `&end=${seg.endSec}` : ""
+                  }&rel=0&modestbranding=1&playsinline=1&controls=1`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    border: 0,
+                  }}
+                />
+              ) : (
+                <>
+                  {thumbSrc && (
+                    <img
+                      src={thumbSrc}
+                      alt={seg.title}
+                      onError={(e) => {
+                        if (currentVideo.ytId) {
+                          const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
+                          if (e.currentTarget.src !== fallback) {
+                            e.currentTarget.src = fallback;
+                          }
+                        }
+                      }}
+                      style={{
+                        position: "absolute",
+                        inset: 0,
+                        width: "100%",
+                        height: "100%",
+                        objectFit: "cover",
+                        objectPosition: "center",
+                        display: "block",
+                        userSelect: "none",
+                      }}
+                    />
+                  )}
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(180deg, rgba(14, 22, 18, 0.48) 0%, rgba(14, 22, 18, 0.18) 45%, rgba(14, 22, 18, 0.86) 100%)",
+                    }}
+                  />
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      left: "9px",
+                      right: "9px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      zIndex: 2,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: isSelectedClip ? "#162A20" : "#E4EFE9",
+                        background: isSelectedClip ? "#9DC2AD" : "rgba(15, 23, 19, 0.74)",
+                        padding: "2.5px 7px",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {`Clip ${idx + 1}`}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        fontWeight: 600,
+                        color: "#E4EFE9",
+                        background: "rgba(15, 23, 19, 0.74)",
+                        padding: "2px 6px",
+                        borderRadius: "4px",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {`${formatTime(seg.startSec)} – ${formatTime(seg.endSec)}`}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    aria-label={`Play Clip ${idx + 1}: ${seg.title}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveClipIdx(idx);
+                      if (currentVideo.ytId) {
+                        setPlayingClipIdx(idx);
+                      }
+                    }}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      left: "50%",
+                      transform: "translate(-50%, -50%)",
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "50%",
+                      border: "none",
+                      background: "#9DC2AD",
+                      boxShadow: "0 6px 18px rgba(0, 0, 0, 0.36)",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 3,
+                    }}
+                  >
+                    <svg
+                      width="15"
+                      height="15"
+                      viewBox="0 0 24 24"
+                      fill="#162A20"
+                      style={{ marginLeft: "2px" }}
+                    >
+                      <polygon points="6,4 20,12 6,20" />
+                    </svg>
+                  </button>
+
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "10px",
+                      right: "10px",
+                      bottom: "8px",
+                      zIndex: 2,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "2px",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "12px",
+                        fontWeight: 600,
+                        color: "#F4F7F5",
+                        lineHeight: 1.3,
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        overflow: "hidden",
+                      }}
+                    >
+                      {seg.title}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 500,
+                        color: "#B6C9BE",
+                        fontVariantNumeric: "tabular-nums",
+                      }}
+                    >
+                      {seg.durationLabel}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
   // Video Player Component matching Screen 1 mockup
   const renderVideoPlayer = (_isFullWidth = false, _isStackedRow = false, rowIndex = robustActive) => (
     <div
@@ -2629,8 +2861,10 @@ export default function VideosView({
                       strokeLinecap="round"
                       strokeLinejoin="round"
                     >
-                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
-                      <polygon points="10 9 15 12 10 15 10 9" fill={active ? "#FFFFFF" : "#4A554E"} stroke="none" />
+                      <rect x="2.5" y="4" width="8" height="6.5" rx="1.2" />
+                      <rect x="13.5" y="4" width="8" height="6.5" rx="1.2" />
+                      <rect x="2.5" y="13.5" width="8" height="6.5" rx="1.2" />
+                      <rect x="13.5" y="13.5" width="8" height="6.5" rx="1.2" />
                     </svg>
                   ),
                 },
@@ -2662,7 +2896,7 @@ export default function VideosView({
                     borderRadius: "9999px",
                     border: "none",
                     outline: "none",
-                    background: isActive ? "#2D3E36" : "transparent",
+                    background: isActive ? "#2E3B33" : "transparent",
                     color: isActive ? "#FFFFFF" : "#4A554E",
                     fontSize: "13px",
                     fontWeight: isActive ? 700 : 600,
@@ -2684,182 +2918,7 @@ export default function VideosView({
         <div style={{ flex: 1, minWidth: 0 }} />
       </div>
 
-      {watchMode === "clips" ? (
-        /* ── Clips (Shorts) Placeholder View ── */
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "20px",
-            width: "100%",
-            padding: "8px 0 36px 0",
-            boxSizing: "border-box",
-          }}
-        >
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(195px, 1fr))",
-              gap: "16px",
-              width: "100%",
-            }}
-          >
-            {(videos.length > 0
-              ? videos.slice(0, 4).map((v, i) => ({
-                  title: v.title?.replace(/^Part\s*\d+\s*:\s*/i, "") || `Concept Short ${i + 1}`,
-                  subtitle: v.topics?.[0] || "Key exam concept & visual intuition",
-                  duration: ["0:45", "0:55", "0:50", "0:58"][i % 4],
-                }))
-              : [
-                  { title: "Core Concept Intuition", subtitle: "60-second visual walkthrough", duration: "0:45" },
-                  { title: "Architecture & Key Flow", subtitle: "Quick diagram breakdown", duration: "0:55" },
-                  { title: "Common Exam Pitfalls", subtitle: "Fast revision check", duration: "0:50" },
-                  { title: "Rapid Formula & Rule Recap", subtitle: "One-minute takeaway", duration: "0:58" },
-                ]
-            ).map((clip, idx) => (
-              <div
-                key={`clip-placeholder-${idx}`}
-                style={{
-                  aspectRatio: "9 / 15",
-                  borderRadius: "16px",
-                  border: "1px solid #DDD7C9",
-                  background:
-                    idx % 2 === 0
-                      ? "linear-gradient(165deg, #24352D 0%, #18241E 60%, #121B17 100%)"
-                      : "linear-gradient(165deg, #2B3D34 0%, #1B2922 60%, #141E19 100%)",
-                  position: "relative",
-                  overflow: "hidden",
-                  padding: "14px",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  boxShadow: "0 6px 18px rgba(20, 32, 26, 0.08)",
-                  userSelect: "none",
-                }}
-              >
-                {/* Top Row: Short number + duration */}
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", zIndex: 2 }}>
-                  <span
-                    style={{
-                      fontSize: "10px",
-                      fontWeight: 700,
-                      letterSpacing: "0.06em",
-                      textTransform: "uppercase",
-                      color: "#D3E4DA",
-                      background: "rgba(255, 255, 255, 0.1)",
-                      padding: "3px 8px",
-                      borderRadius: "999px",
-                      backdropFilter: "blur(4px)",
-                    }}
-                  >
-                    {`Short #${idx + 1}`}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: "10.5px",
-                      fontWeight: 600,
-                      color: "#E4EFE9",
-                      background: "rgba(0, 0, 0, 0.32)",
-                      padding: "2px 7px",
-                      borderRadius: "6px",
-                      fontVariantNumeric: "tabular-nums",
-                    }}
-                  >
-                    {clip.duration}
-                  </span>
-                </div>
-
-                {/* Center Placeholder Icon */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    zIndex: 2,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: "44px",
-                      height: "44px",
-                      borderRadius: "50%",
-                      background: "rgba(255, 255, 255, 0.1)",
-                      border: "1px solid rgba(255, 255, 255, 0.18)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#D8E8DF",
-                    }}
-                  >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="6" y="2" width="12" height="20" rx="2.5" />
-                      <polygon points="10 9 15 12 10 15 10 9" fill="currentColor" stroke="none" />
-                    </svg>
-                  </div>
-                  <span
-                    style={{
-                      fontSize: "10.5px",
-                      fontWeight: 600,
-                      letterSpacing: "0.04em",
-                      color: "rgba(216, 232, 223, 0.72)",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Placeholder
-                  </span>
-                </div>
-
-                {/* Bottom Clip Title & Topic */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "4px",
-                    zIndex: 2,
-                    background: "rgba(15, 23, 19, 0.55)",
-                    padding: "10px 11px",
-                    borderRadius: "11px",
-                    border: "1px solid rgba(255, 255, 255, 0.08)",
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: "12.5px",
-                      fontWeight: 700,
-                      color: "#F4F7F5",
-                      lineHeight: 1.3,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {clip.title}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 400,
-                      color: "#A7BBAE",
-                      lineHeight: 1.3,
-                      display: "-webkit-box",
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: "vertical",
-                      overflow: "hidden",
-                    }}
-                  >
-                    {clip.subtitle}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
-      /* ── Three-Column Watch Layout (Left: Watching Guide | Middle: Video | Right: Timestamps/Segments) ── */
+      {/* ── Three-Column Watch Layout (Shared across Videos & Clips) ── */}
       <div
         style={{
           display: "flex",
@@ -3104,7 +3163,7 @@ export default function VideosView({
           </div>
         </div>
 
-        {/* ── MIDDLE MAIN VIDEO COLUMN ── */}
+        {/* ── MIDDLE MAIN VIDEO / MULTI-CLIP COLUMN ── */}
         <div
           style={{
             flex: 1,
@@ -3114,11 +3173,19 @@ export default function VideosView({
             gap: "14px",
           }}
         >
-          {/* 16:9 Main Video Player in the Middle */}
-          {renderVideoPlayer(true, false, robustActive)}
+          <div
+            style={{
+              display: watchMode === "videos" ? "flex" : "none",
+              flexDirection: "column",
+              width: "100%",
+            }}
+          >
+            {renderVideoPlayer(true, false, robustActive)}
+          </div>
+          {watchMode === "clips" ? renderClipsMultiWindow() : null}
         </div>
 
-        {/* ── RIGHT SUBTLE TIMESTAMPS COLUMN ── */}
+        {/* ── RIGHT SUBTLE TIMESTAMPS / CLIPS COLUMN ── */}
         <div
           style={{
             width: "268px",
@@ -3157,7 +3224,7 @@ export default function VideosView({
                   textTransform: "uppercase",
                 }}
               >
-                Timestamps
+                {watchMode === "clips" ? `Clips · ${segmentsList.length}` : "Timestamps"}
               </span>
               <span
                 style={{
@@ -3166,7 +3233,7 @@ export default function VideosView({
                   color: "#9AA39D",
                 }}
               >
-                Click to jump
+                {watchMode === "clips" ? "Click to play" : "Click to jump"}
               </span>
             </div>
 
@@ -3178,12 +3245,22 @@ export default function VideosView({
               }}
             >
               {segmentsList.map((seg, idx) => {
-                const isNowPlaying = idx === activeSegmentIdx;
+                const isNowPlaying =
+                  watchMode === "clips" ? idx === activeClipIdx : idx === activeSegmentIdx;
 
                 return (
                   <div
                     key={seg.index}
-                    onClick={() => seekToSecond(seg.startSec)}
+                    onClick={() => {
+                      if (watchMode === "clips") {
+                        setActiveClipIdx(idx);
+                        if (currentVideo.ytId) {
+                          setPlayingClipIdx(idx);
+                        }
+                      } else {
+                        seekToSecond(seg.startSec);
+                      }
+                    }}
                     style={{
                       background: isNowPlaying ? "#F3F8F5" : "transparent",
                       border: isNowPlaying ? "1px solid #DCEAE2" : "1px solid transparent",
@@ -3262,7 +3339,6 @@ export default function VideosView({
           </div>
         </div>
       </div>
-      )}
     </div>
   );
 }

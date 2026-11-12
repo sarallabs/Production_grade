@@ -446,24 +446,24 @@ export default function QuestionBankView({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: flipped ? 'rgba(124, 58, 237, 0.08)' : '#f5f3ff',
-                      border: '1px solid rgba(124, 58, 237, 0.2)',
-                      color: '#7c3aed',
+                      background: flipped ? 'rgba(84, 108, 96, 0.1)' : '#EEF5F1',
+                      border: '1px solid rgba(84, 108, 96, 0.25)',
+                      color: '#546C60',
                       padding: '6px 14px',
                       borderRadius: '12px',
                       fontSize: '0.875rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 4px rgba(124, 58, 237, 0.04)',
+                      boxShadow: '0 2px 4px rgba(84, 108, 96, 0.06)',
                     }}
                     onMouseOver={(e) => {
-                      e.currentTarget.style.background = 'rgba(124, 58, 237, 0.12)';
-                      e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.3)';
+                      e.currentTarget.style.background = 'rgba(84, 108, 96, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(84, 108, 96, 0.35)';
                     }}
                     onMouseOut={(e) => {
-                      e.currentTarget.style.background = flipped ? 'rgba(124, 58, 237, 0.08)' : '#f5f3ff';
-                      e.currentTarget.style.borderColor = 'rgba(124, 58, 237, 0.2)';
+                      e.currentTarget.style.background = flipped ? 'rgba(84, 108, 96, 0.1)' : '#EEF5F1';
+                      e.currentTarget.style.borderColor = 'rgba(84, 108, 96, 0.25)';
                     }}
                   >
                     <span>{flipped ? 'Hide Solution' : 'View Solution'}</span>
@@ -487,8 +487,8 @@ export default function QuestionBankView({
                     style={{ 
                       marginTop: '12px', 
                       paddingTop: '12px', 
-                      borderTop: '1px dashed #ddd6fe', 
-                      color: '#334155' 
+                      borderTop: '1px dashed #D5DDD0', 
+                      color: '#2C3730' 
                     }}
                   >
                     <MarkdownView content={entry.longAnswer || entry.shortAnswer} />

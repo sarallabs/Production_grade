@@ -124,18 +124,18 @@
 
 /* Computer Science - Neon Purple */
 .particle.computer_science {
-  background: linear-gradient(135deg, #d946ef, #ec4899);
+  background: linear-gradient(135deg, #D9A382, #D9A382);
   border-color: #f81ce5;
   color: #ffffff;
   box-shadow: 
-    0 0 15px #d946ef,
-    0 0 30px #d946ef,
-    0 0 50px #d946ef,
+    0 0 15px #D9A382,
+    0 0 30px #D9A382,
+    0 0 50px #D9A382,
     0 0 80px rgba(217, 70, 239, 0.8),
     inset 0 0 20px rgba(255, 255, 255, 0.4);
   text-shadow: 
-    0 0 10px #d946ef,
-    0 0 20px #d946ef,
+    0 0 10px #D9A382,
+    0 0 20px #D9A382,
     0 0 30px #f81ce5;
 }
 

@@ -62,7 +62,7 @@ export default function SwotView({ subjectId, chapterNumber }: SwotViewProps) {
         }}
       >
         <div className="card swot-card">
-          <h3 style={{ color: "#4caf50" }}>💪 Strengths</h3>
+          <h3 style={{ color: "#2E6F4E" }}>💪 Strengths</h3>
           {swot.s.length > 0 ? (
             <ul>
               {swot.s.map((c, i) => (
@@ -74,7 +74,7 @@ export default function SwotView({ subjectId, chapterNumber }: SwotViewProps) {
           )}
         </div>
         <div className="card swot-card">
-          <h3 style={{ color: "#ff9800" }}>⚠️ Weaknesses</h3>
+          <h3 style={{ color: "#C89535" }}>⚠️ Weaknesses</h3>
           {swot.w.length > 0 ? (
             <ul>
               {swot.w.map((c, i) => (
@@ -86,7 +86,7 @@ export default function SwotView({ subjectId, chapterNumber }: SwotViewProps) {
           )}
         </div>
         <div className="card swot-card">
-          <h3 style={{ color: "#2196f3" }}>🚀 Opportunities</h3>
+          <h3 style={{ color: "#546C60" }}>🚀 Opportunities</h3>
           {swot.o.length > 0 ? (
             <ul>
               {swot.o.map((c, i) => (
@@ -98,7 +98,7 @@ export default function SwotView({ subjectId, chapterNumber }: SwotViewProps) {
           )}
         </div>
         <div className="card swot-card">
-          <h3 style={{ color: "#f44336" }}>🚨 Threats</h3>
+          <h3 style={{ color: "#B86B3D" }}>🚨 Threats</h3>
           {swot.t.length > 0 ? (
             <ul>
               {swot.t.map((c, i) => (

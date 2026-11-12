@@ -3,7 +3,8 @@
     "angrau_university",
     "mlrit",
     "vvit",
-    "cu"
+    "cu",
+    "dlsu"
   ],
   "boardTenantAliases": {
     "angrau": "angrau_university",
@@ -12,7 +13,12 @@
     "vvit": "vvit",
     "cu": "cu",
     "chalapathi": "cu",
-    "chalapathi_university": "cu"
+    "chalapathi_university": "cu",
+    "dlsu": "dlsu",
+    "de_la_salle": "dlsu",
+    "philippines": "dlsu",
+    "ph": "dlsu",
+    "deped": "dlsu"
   },
   "cloudSubjectRoutes": {
     "ento_131": "angrau/entomology",
@@ -21,7 +27,12 @@
     "mongodb": "vvit/mongodb",
     "cns": "cu/cns",
     "cu_cns": "cu/cns",
-    "cryptography_and_network_security": "cu/cns"
+    "cryptography_and_network_security": "cu/cns",
+    "filipino": "dlsu/filipino",
+    "oral_communication": "dlsu/oral_communication",
+    "oral communication": "dlsu/oral_communication",
+    "rw": "dlsu/rw",
+    "reading_and_writing": "dlsu/rw"
   },
   "localSubjectRoutes": {
     "ento_131": "angrau/entomology",
@@ -29,7 +40,11 @@
     "dbms": "mlrit/dbms",
     "mongodb": "vvit/mongodb",
     "cns": "cu/cns",
-    "cu_cns": "cu/cns"
+    "cu_cns": "cu/cns",
+    "filipino": "philippines/filipino",
+    "oral_communication": "philippines/oral_communication",
+    "oral communication": "philippines/oral_communication",
+    "rw": "philippines/rw"
   },
   "boardLogos": {
     "angrau": "logo-angrau.png",
@@ -38,7 +53,12 @@
     "vvit": "logo-vvit.png",
     "cu": "logo-cu.png",
     "chalapathi": "logo-cu.png",
-    "chalapathi_university": "logo-cu.png"
+    "chalapathi_university": "logo-cu.png",
+    "dlsu": "logo-dlsu.png",
+    "de_la_salle": "logo-dlsu.png",
+    "philippines": "logo-philippines.png",
+    "ph": "logo-philippines.png",
+    "deped": "logo-philippines.png"
   },
   "defaultBoardLogo": "logo-angrau.png"
 }

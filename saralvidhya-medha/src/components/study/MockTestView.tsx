@@ -530,7 +530,7 @@ export function MockTestView({
   const examTitle = isPreFinalTest
     ? "Certification Exam"
     : isPrepExam
-      ? "Preparation Exam"
+      ? "Exam Prep."
       : "Mock Test";
   const isGreenTheme = isPreFinalTest || isPrepExam;
 
@@ -549,21 +549,18 @@ export function MockTestView({
   }, [subjectChapters]);
 
   const completedUnitNumbers = useMemo(() => {
-    if (isPreFinalTest) {
-      return allUnits.map((c) => c.number);
-    }
-    const completed = allUnits
-      .map((c) => c.number)
-      .filter((num) => isChapterComplete(subjectId, num) || num <= chapterNumber);
-    return completed.length > 0 ? completed : [1];
-  }, [allUnits, subjectId, chapterNumber, isPreFinalTest]);
+    return allUnits.map((c) => c.number);
+  }, [allUnits]);
 
   const highestCompletedUnit = useMemo(() => {
     return Math.max(...completedUnitNumbers, 1);
   }, [completedUnitNumbers]);
 
   const [selectedUnitNumbers, setSelectedUnitNumbers] = useState<number[]>(() => {
-    return completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1];
+    if (isPreFinalTest) {
+      return completedUnitNumbers.length > 0 ? [...completedUnitNumbers] : [1];
+    }
+    return completedUnitNumbers.includes(chapterNumber) ? [chapterNumber] : [1];
   });
   const [selectedQuestionCount, setSelectedQuestionCount] = useState<number>(20);
   const numSelectedUnits = selectedUnitNumbers.length;
@@ -635,10 +632,6 @@ export function MockTestView({
   const [timerRunning, setTimerRunning] = useState(false);
 
   const toggleUnitSelection = (unitNum: number) => {
-    const isUnlocked =
-      completedUnitNumbers.includes(unitNum) || unitNum <= highestCompletedUnit;
-    if (!isUnlocked) return;
-
     if (selectedUnitNumbers.includes(unitNum)) {
       if (selectedUnitNumbers.length > 1) {
         setSelectedUnitNumbers((prev) => prev.filter((n) => n !== unitNum));
@@ -828,7 +821,7 @@ export function MockTestView({
                 explanation: (q as any).explanation || "",
                 marks: 1,
                 section: "Question Bank",
-                chapter: q.chapterName,
+                chapter: (q as any).chapterName,
               }));
             }
           } catch (err) {
@@ -987,12 +980,12 @@ export function MockTestView({
           justifyContent: "center",
           alignItems: "center",
           minHeight: "100vh",
-          background: "#faf8fb",
+          background: "#FAF8F3",
         }}
       >
         <p
           style={{
-            color: isGreenTheme ? "#16a34a" : "#c026d3",
+            color: "#546C60",
             fontWeight: 600,
             fontSize: "1.1rem",
           }}
@@ -1004,22 +997,18 @@ export function MockTestView({
   }
 
   if (showSetupScreen) {
-    const themeColor = isGreenTheme ? "#22c55e" : "#c026d3";
-    const themeDarkColor = isGreenTheme ? "#16a34a" : "#c026d3";
-    const themeLightBg = isGreenTheme ? "#f0fdf4" : "#fdf4ff";
-    const themeBorder = isGreenTheme ? "#86efac" : "#f0abfc";
+    const themeColor = isGreenTheme ? "#4A6B5C" : "#546C60";
+    const themeDarkColor = isGreenTheme ? "#2D3E36" : "#3E584B";
+    const themeLightBg = isGreenTheme ? "#EEF5F1" : "#FAF3E3";
+    const themeBorder = isGreenTheme ? "#9CC0B4" : "#E7B864";
     const themeShadow = isGreenTheme
-      ? "rgba(34, 197, 94, 0.08)"
-      : "rgba(192, 38, 211, 0.08)";
+      ? "rgba(74, 107, 92, 0.08)"
+      : "rgba(84, 108, 96, 0.08)";
     const themeBoxShadow = isGreenTheme
-      ? "rgba(34, 197, 94, 0.12)"
-      : "rgba(192, 38, 211, 0.12)";
-    const themeButtonGradient = isGreenTheme
-      ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-      : "linear-gradient(135deg, #d946ef 0%, #c026d3 100%)";
-    const themeButtonShadow = isGreenTheme
-      ? "0 4px 16px rgba(34, 197, 94, 0.35)"
-      : "0 4px 16px rgba(192, 38, 211, 0.35)";
+      ? "rgba(74, 107, 92, 0.14)"
+      : "rgba(231, 184, 100, 0.18)";
+    const themeButtonGradient = "linear-gradient(135deg, #546C60 0%, #3E584B 100%)";
+    const themeButtonShadow = "0 4px 16px rgba(84, 108, 96, 0.3)";
 
     return (
       <div
@@ -1028,7 +1017,7 @@ export function MockTestView({
           flexDirection: "column",
           alignItems: "center",
           minHeight: "100vh",
-          background: "#faf8fb",
+          background: "#FAF8F3",
           padding: "24px",
           fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
           boxSizing: "border-box",
@@ -1108,11 +1097,7 @@ export function MockTestView({
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  boxShadow: `0 2px 8px ${
-                    isPreFinalTest
-                      ? "rgba(34, 197, 94, 0.1)"
-                      : "rgba(192, 38, 211, 0.1)"
-                  }`,
+                  boxShadow: "0 2px 8px rgba(84, 108, 96, 0.12)",
                 }}
               >
                 {isPreFinalTest ? (
@@ -1207,10 +1192,7 @@ export function MockTestView({
               }}
             >
               {allUnits.map((unit) => {
-                const isUnlocked = isPreFinalTest
-                  ? true
-                  : completedUnitNumbers.includes(unit.number) ||
-                    unit.number <= highestCompletedUnit;
+                const isUnlocked = true;
                 const isSelected = isPreFinalTest
                   ? true
                   : selectedUnitNumbers.includes(unit.number);
@@ -1365,7 +1347,7 @@ export function MockTestView({
                   <div
                     style={{
                       background: "#ffffff",
-                      border: "1.5px solid #86efac",
+                      border: "1.5px solid #9CC0B4",
                       borderRadius: "14px",
                       padding: "14px 18px",
                       display: "flex",
@@ -1385,13 +1367,13 @@ export function MockTestView({
                         style={{
                           width: "38px",
                           height: "38px",
-                          background: "#f0fdf4",
-                          border: "1.5px solid #86efac",
+                          background: "#EEF5F1",
+                          border: "1.5px solid #9CC0B4",
                           borderRadius: "10px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "#16a34a",
+                          color: "#4A6B5C",
                           flexShrink: 0,
                         }}
                       >
@@ -1452,13 +1434,13 @@ export function MockTestView({
                         style={{
                           width: "38px",
                           height: "38px",
-                          background: "#f0fdf4",
-                          border: "1.5px solid #86efac",
+                          background: "#EEF5F1",
+                          border: "1.5px solid #9CC0B4",
                           borderRadius: "10px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          color: "#16a34a",
+                          color: "#4A6B5C",
                           flexShrink: 0,
                         }}
                       >
@@ -1503,7 +1485,7 @@ export function MockTestView({
                   <div
                     style={{
                       background: "#ffffff",
-                      border: "1.5px solid #86efac",
+                      border: "1.5px solid #9CC0B4",
                       borderRadius: "14px",
                       padding: "14px 18px",
                       display: "flex",
@@ -1515,13 +1497,13 @@ export function MockTestView({
                       style={{
                         width: "44px",
                         height: "44px",
-                        background: "#f0fdf4",
-                        border: "1.5px solid #86efac",
+                        background: "#EEF5F1",
+                        border: "1.5px solid #9CC0B4",
                         borderRadius: "10px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#16a34a",
+                        color: "#4A6B5C",
                         flexShrink: 0,
                       }}
                     >
@@ -1564,7 +1546,7 @@ export function MockTestView({
                   <div
                     style={{
                       background: "#ffffff",
-                      border: "1.5px solid #86efac",
+                      border: "1.5px solid #9CC0B4",
                       borderRadius: "14px",
                       padding: "14px 18px",
                       display: "flex",
@@ -1576,13 +1558,13 @@ export function MockTestView({
                       style={{
                         width: "44px",
                         height: "44px",
-                        background: "#f0fdf4",
-                        border: "1.5px solid #86efac",
+                        background: "#EEF5F1",
+                        border: "1.5px solid #9CC0B4",
                         borderRadius: "10px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#16a34a",
+                        color: "#4A6B5C",
                         flexShrink: 0,
                       }}
                     >
@@ -1947,36 +1929,24 @@ export function MockTestView({
   }
 
   // Active exam state
-  const activeHeaderBg = isGreenTheme ? "#f0fdf4" : "#fdf4ff";
+  const activeHeaderBg = isGreenTheme ? "#EEF5F1" : "#FAF3E3";
   const activeHeaderBorder = isGreenTheme
-    ? "1.5px solid #86efac"
-    : "1.5px solid #f0abfc";
-  const activeHeaderShadow = isGreenTheme
-    ? "rgba(34, 197, 94, 0.05)"
-    : "rgba(192, 38, 211, 0.05)";
-  const activeHeaderColor = isGreenTheme ? "#16a34a" : "#c026d3";
-  const activeHeaderBorderColor = isGreenTheme ? "#86efac" : "#f0abfc";
-  const activeCardBorderColor = isGreenTheme ? "#86efac" : "#f0abfc";
-  const activeCardAccentColor = isGreenTheme ? "#22c55e" : "#d946ef";
-  const activeCardShadow = isGreenTheme
-    ? "0 4px 16px rgba(34, 197, 94, 0.08)"
-    : "0 4px 16px rgba(192, 38, 211, 0.05)";
-  const activeOptionBg = isGreenTheme ? "#f0fdf4" : "#fdf4ff";
-  const activeOptionBorder = isGreenTheme
-    ? "2px solid #22c55e"
-    : "2px solid #d946ef";
-  const activeOptionColor = isGreenTheme ? "#14532d" : "#86198f";
-  const activeRadioBorder = isGreenTheme ? "#22c55e" : "#d946ef";
-  const activePageBg = isGreenTheme ? "#f8fafc" : "#faf8fb";
-  const activeFooterBorder = isGreenTheme
-    ? "1px solid #86efac"
-    : "1px solid #f0abfc";
-  const activeBtnGradient = isGreenTheme
-    ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-    : "linear-gradient(135deg, #d946ef 0%, #c026d3 100%)";
-  const activeBtnShadow = isGreenTheme
-    ? "0 4px 14px rgba(34, 197, 94, 0.35)"
-    : "0 4px 14px rgba(192, 38, 211, 0.3)";
+    ? "1.5px solid #9CC0B4"
+    : "1.5px solid #E7B864";
+  const activeHeaderShadow = "rgba(84, 108, 96, 0.06)";
+  const activeHeaderColor = isGreenTheme ? "#2D3E36" : "#546C60";
+  const activeHeaderBorderColor = isGreenTheme ? "#9CC0B4" : "#E7B864";
+  const activeCardBorderColor = isGreenTheme ? "#9CC0B4" : "#E7B864";
+  const activeCardAccentColor = isGreenTheme ? "#4A6B5C" : "#546C60";
+  const activeCardShadow = "0 4px 16px rgba(84, 108, 96, 0.1)";
+  const activeOptionBg = "#EEF5F1";
+  const activeOptionBorder = "2px solid #546C60";
+  const activeOptionColor = "#1E2822";
+  const activeRadioBorder = "#546C60";
+  const activePageBg = "#FAF8F3";
+  const activeFooterBorder = "1px solid #E2DDD3";
+  const activeBtnGradient = "linear-gradient(135deg, #546C60 0%, #3E584B 100%)";
+  const activeBtnShadow = "0 4px 14px rgba(84, 108, 96, 0.3)";
 
   return (
     <div
@@ -2058,9 +2028,9 @@ export function MockTestView({
               width: "36px",
               height: "36px",
               borderRadius: "10px",
-              background: "#fff1f2",
-              border: "1px solid #fecdd3",
-              color: "#e11d48",
+              background: "#FAF2E9",
+              border: "1px solid #C88A5A",
+              color: "#B86B3D",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -2073,7 +2043,7 @@ export function MockTestView({
               height="20"
               viewBox="0 0 24 24"
               fill="none"
-              stroke="#e11d48"
+              stroke="#B86B3D"
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -2139,18 +2109,18 @@ export function MockTestView({
                   borderRadius: "20px",
                   border: isSubmitted
                     ? isQCorrect
-                      ? "2px solid #10B981"
-                      : "2px solid #EF4444"
+                      ? "2px solid #2E6F4E"
+                      : "2px solid #B86B3D"
                     : isActive
                       ? `2px solid ${activeCardBorderColor}`
-                      : "1.5px solid #e2e8f0",
+                      : "1.5px solid #E2DDD3",
                   borderLeft: isSubmitted
                     ? isQCorrect
-                      ? "8px solid #10B981"
-                      : "8px solid #EF4444"
+                      ? "8px solid #2E6F4E"
+                      : "8px solid #B86B3D"
                     : isActive
                       ? `8px solid ${activeCardAccentColor}`
-                      : "1.5px solid #e2e8f0",
+                      : "1.5px solid #E2DDD3",
                   boxShadow: isActive
                     ? activeCardShadow
                     : "0 2px 8px rgba(0, 0, 0, 0.03)",
@@ -2208,20 +2178,20 @@ export function MockTestView({
 
                     if (isSubmitted) {
                       if (isOptCorrect) {
-                        optBg = "#ECFDF5";
-                        optBorder = "2px solid #10B981";
-                        optColor = "#065F46";
-                        radioBorder = "#10B981";
-                        radioBg = "#10B981";
-                        badgeBg = "#10B981";
+                        optBg = "#EEF6F1";
+                        optBorder = "2px solid #2E6F4E";
+                        optColor = "#1E2822";
+                        radioBorder = "#2E6F4E";
+                        radioBg = "#2E6F4E";
+                        badgeBg = "#2E6F4E";
                         badgeColor = "#ffffff";
                       } else if (isSelected) {
-                        optBg = "#FEF2F2";
-                        optBorder = "2px solid #EF4444";
-                        optColor = "#991B1B";
-                        radioBorder = "#EF4444";
-                        radioBg = "#EF4444";
-                        badgeBg = "#EF4444";
+                        optBg = "#FAF2E9";
+                        optBorder = "2px solid #B86B3D";
+                        optColor = "#7C3F1C";
+                        radioBorder = "#B86B3D";
+                        radioBg = "#B86B3D";
+                        badgeBg = "#B86B3D";
                         badgeColor = "#ffffff";
                       }
                     } else if (isSelected) {
@@ -2369,12 +2339,12 @@ export function MockTestView({
                           height: "38px",
                           borderRadius: "10px",
                           border: markedQuestions[q.id]
-                            ? "1.5px solid #f97316"
-                            : "1px solid #e2e8f0",
+                            ? "1.5px solid #C89535"
+                            : "1px solid #E2DDD3",
                           background: markedQuestions[q.id]
-                            ? "#fff7ed"
+                            ? "#FBF5E8"
                             : "#ffffff",
-                          color: markedQuestions[q.id] ? "#f97316" : "#64748b",
+                          color: markedQuestions[q.id] ? "#C89535" : "#5C6961",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -2385,7 +2355,7 @@ export function MockTestView({
                           width="18"
                           height="18"
                           viewBox="0 0 24 24"
-                          fill={markedQuestions[q.id] ? "#f97316" : "none"}
+                          fill={markedQuestions[q.id] ? "#C89535" : "none"}
                           stroke="currentColor"
                           strokeWidth="2.2"
                           strokeLinecap="round"
@@ -2541,7 +2511,7 @@ export function MockTestView({
                     width: "9px",
                     height: "9px",
                     borderRadius: "50%",
-                    background: "#22c55e",
+                    background: "#2E6F4E",
                   }}
                 />
                 Answered
@@ -2554,7 +2524,7 @@ export function MockTestView({
                     width: "9px",
                     height: "9px",
                     borderRadius: "50%",
-                    background: "#f97316",
+                    background: "#E7B864",
                   }}
                 />
                 Marked
@@ -2567,7 +2537,7 @@ export function MockTestView({
                     width: "9px",
                     height: "9px",
                     borderRadius: "50%",
-                    background: "#3b82f6",
+                    background: "#546C60",
                   }}
                 />
                 Current
@@ -2588,22 +2558,22 @@ export function MockTestView({
                 const isMarked = markedQuestions[q.id];
                 const isAns = (answers[q.id] || []).length > 0;
 
-                let btnBg = "#f8fafc";
-                let btnColor = "#334155";
-                let btnBorder = "1.5px solid #e2e8f0";
+                let btnBg = "#FAF8F3";
+                let btnColor = "#2C3730";
+                let btnBorder = "1.5px solid #E2DDD3";
 
                 if (isCurrent) {
-                  btnBg = "#3b82f6";
+                  btnBg = "#546C60";
                   btnColor = "#ffffff";
-                  btnBorder = "1.5px solid #2563eb";
+                  btnBorder = "1.5px solid #3E584B";
                 } else if (isMarked) {
-                  btnBg = "#f97316";
-                  btnColor = "#ffffff";
-                  btnBorder = "1.5px solid #ea580c";
+                  btnBg = "#E7B864";
+                  btnColor = "#18221D";
+                  btnBorder = "1.5px solid #C89535";
                 } else if (isAns) {
-                  btnBg = "#22c55e";
+                  btnBg = "#2E6F4E";
                   btnColor = "#ffffff";
-                  btnBorder = "1.5px solid #16a34a";
+                  btnBorder = "1.5px solid #24583D";
                 }
 
                 return (
@@ -2684,7 +2654,7 @@ export function MockTestView({
           {isSubmitted ? (
             <span
               style={{
-                color: "#10B981",
+                color: "#2E6F4E",
                 fontWeight: "bold",
                 fontSize: "0.95rem",
               }}

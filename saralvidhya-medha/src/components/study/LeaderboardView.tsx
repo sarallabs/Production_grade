@@ -49,7 +49,7 @@ export default function LeaderboardView({ subjectId }: LeaderboardViewProps) {
               display: "flex",
               alignItems: "center",
               gap: "12px",
-              background: u.isMe ? "#e8f0fe" : "var(--surface)",
+              background: u.isMe ? "#EEF5F1" : "var(--surface)",
               border: u.isMe
                 ? "2px solid var(--primary)"
                 : "1px solid var(--border)",

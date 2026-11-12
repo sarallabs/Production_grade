@@ -245,12 +245,12 @@ export default function ReadAloudBar({
                 type="button"
                 className="read-aloud-view-toggle-btn"
                 data-label={
-                  activeTool === "summary" ? "Detailed view" : "Summary"
+                  activeTool === "summary" ? "In-Depth" : "Essentials"
                 }
                 aria-label={
                   activeTool === "summary"
-                    ? "Switch to detailed view"
-                    : "Switch to summary"
+                    ? "Switch to In-Depth"
+                    : "Switch to Essentials"
                 }
                 onClick={() =>
                   onSwitchTool(

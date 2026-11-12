@@ -226,12 +226,12 @@ export default function FlashcardsView({
             width: "48px",
             height: "48px",
             borderRadius: "50%",
-            border: "none",
-            background: "#ffffff",
-            color: "#0f172a",
+            border: "1.5px solid #D5DDD0",
+            background: "#FAF8F3",
+            color: "#1E2822",
             fontWeight: "800",
             fontSize: "20px",
-            boxShadow: "0 6px 18px rgba(0, 0, 0, 0.1)",
+            boxShadow: "0 6px 18px rgba(30, 40, 34, 0.08)",
             cursor: currentIndex === 0 ? "default" : "pointer",
             opacity: currentIndex === 0 ? 0.4 : 1,
             display: "flex",
@@ -257,30 +257,22 @@ export default function FlashcardsView({
             marginTop: "16px",
             borderRadius: "20px",
             border: isPurpleTheme
-              ? (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "2px solid #CB30E080"
-                : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "2px solid #CB30E0A0"
-                  : "1.5px solid #CB30E04D"
-              : persona === "intermediate"
-                ? "2px solid #0088FF80"
-                : persona === "advanced"
-                  ? "2px solid #0088FFA0"
-                  : "1.5px solid #0088FF4D",
+              ? "1.5px solid #E7B864"
+              : "1.5px solid #D5DDD0",
             background: isPurpleTheme
               ? (cards[currentIndex]?.level || persona) === "intermediate"
-                ? "#CB30E04D"
+                ? "#F7EBD2"
                 : (cards[currentIndex]?.level || persona) === "advanced"
-                  ? "#CB30E066"
-                  : "#CB30E033"
+                  ? "#F4E4C3"
+                  : "#FAF3E3"
               : persona === "intermediate"
-                ? "#0088FF4D"
+                ? "#E4ECE7"
                 : persona === "advanced"
-                  ? "#0088FF66"
-                  : "#0088FF33",
+                  ? "#DCE6E0"
+                  : "#ECF0E8",
             boxShadow: isPurpleTheme
-              ? "0 16px 44px rgba(203, 48, 224, 0.20)"
-              : "0 16px 44px rgba(0, 136, 255, 0.20)",
+              ? "0 12px 32px rgba(231, 184, 100, 0.16)"
+              : "0 12px 32px rgba(30, 40, 34, 0.08)",
             padding: "36px 42px 36px 42px",
             display: "flex",
             flexDirection: "row",
@@ -300,13 +292,13 @@ export default function FlashcardsView({
               top: 0,
               left: 0,
               background: isPurpleTheme
-                ? "linear-gradient(135deg, #f5d0fe 0%, #e9d5ff 100%)"
-                : "linear-gradient(135deg, #bfdbfe 0%, #93c5fd 100%)",
-              borderRight: isPurpleTheme ? "2px solid #c026d3" : "2px solid #3b82f6",
-              borderBottom: isPurpleTheme ? "2px solid #c026d3" : "2px solid #3b82f6",
+                ? "linear-gradient(135deg, #FBF0D9 0%, #F5E0B7 100%)"
+                : "linear-gradient(135deg, #DDE7E1 0%, #C5D6CC 100%)",
+              borderRight: isPurpleTheme ? "2px solid #C89535" : "2px solid #546C60",
+              borderBottom: isPurpleTheme ? "2px solid #C89535" : "2px solid #546C60",
               borderTopLeftRadius: "18px",
               borderBottomRightRadius: "12px",
-              color: "#0f172a",
+              color: "#1E2822",
               fontWeight: "800",
               fontSize: "15px",
               padding: "6px 16px",
@@ -315,8 +307,8 @@ export default function FlashcardsView({
               alignItems: "center",
               justifyContent: "center",
               boxShadow: isPurpleTheme
-                ? "0 4px 12px rgba(192, 38, 211, 0.15)"
-                : "0 4px 12px rgba(59, 130, 246, 0.15)",
+                ? "0 4px 12px rgba(200, 149, 53, 0.15)"
+                : "0 4px 12px rgba(84, 108, 96, 0.15)",
               pointerEvents: "none",
             }}
           >
@@ -330,7 +322,7 @@ export default function FlashcardsView({
             style={{
               fontSize: "22px",
               fontWeight: "800",
-              color: "#0f172a",
+              color: "#1E2822",
               lineHeight: "1.32",
               width: "100%",
               marginTop: "16px",
@@ -344,7 +336,7 @@ export default function FlashcardsView({
             style={{
               fontSize: "15px",
               lineHeight: "1.55",
-              color: "#334155",
+              color: "#2C3730",
               width: "100%",
               marginBottom: "12px",
               minHeight: 0,
@@ -501,9 +493,9 @@ export default function FlashcardsView({
                 width: "42px",
                 height: "42px",
                 borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #0f172a",
-                boxShadow: "0 4px 12px rgba(15, 23, 42, 0.12)",
+                background: "#FAF8F3",
+                border: "1.5px solid #546C60",
+                boxShadow: "0 4px 12px rgba(84, 108, 96, 0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -529,9 +521,9 @@ export default function FlashcardsView({
                 width: "42px",
                 height: "42px",
                 borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
+                background: "#FAF8F3",
+                border: "1.5px solid #9CC0B4",
+                boxShadow: "0 4px 12px rgba(84, 108, 96, 0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -557,9 +549,9 @@ export default function FlashcardsView({
                 width: "42px",
                 height: "42px",
                 borderRadius: "50%",
-                background: "#ffffff",
-                border: "1.5px solid #fdba74",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.12)",
+                background: "#FAF8F3",
+                border: "1.5px solid #9CC0B4",
+                boxShadow: "0 4px 12px rgba(84, 108, 96, 0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -585,9 +577,9 @@ export default function FlashcardsView({
                 width: "42px",
                 height: "42px",
                 borderRadius: "50%",
-                background: "#ffffff",
-                border: "2px solid #f97316",
-                boxShadow: "0 4px 12px rgba(249, 115, 22, 0.16)",
+                background: "#FAF8F3",
+                border: "2px solid #E7B864",
+                boxShadow: "0 4px 12px rgba(231, 184, 100, 0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -596,8 +588,8 @@ export default function FlashcardsView({
               }}
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V10.5Z" stroke="#f97316" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M9 21V14H15V21" stroke="#f97316" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M3 10.5L12 3L21 10.5V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V10.5Z" stroke="#C89535" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 21V14H15V21" stroke="#C89535" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
           </div>
@@ -690,9 +682,9 @@ export default function FlashcardsView({
                   width: "40px",
                   height: "40px",
                   borderRadius: "50%",
-                  background: "#ffffff",
-                  border: "2px solid #0f172a",
-                  color: "#0f172a",
+                  background: "#FAF8F3",
+                  border: "2px solid #546C60",
+                  color: "#1E2822",
                   fontWeight: "900",
                   fontSize: "18px",
                   cursor: "pointer",
