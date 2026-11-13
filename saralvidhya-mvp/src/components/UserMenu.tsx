@@ -7,6 +7,7 @@ import { useTenant } from '@/tenant/TenantProvider';
 export default function UserMenu() {
   const navigate = useNavigate();
   const { tenantId, logout: tenantLogout } = useTenant();
+  const [open, setOpen] = useState(false);
   const [creds, setCreds] = useState<Credential[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
 

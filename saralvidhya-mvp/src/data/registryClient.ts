@@ -44,7 +44,6 @@ export interface ChapterSummaryItem {
     topics?: string[];
     order?: number;
     introEndTime?: number;
-    introEndTime?: number;
   }>;
   tools?: Record<string, any>;
 }

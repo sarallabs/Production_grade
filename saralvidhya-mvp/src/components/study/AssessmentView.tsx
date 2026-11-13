@@ -321,7 +321,7 @@ export function AssessmentView({
     if (submitted) return;
     if ((disabledMCQByStep[step] || []).includes(idx)) return;
     setSelectedMCQ(idx);
-    const correct = idx === currentQ.answer;
+    const correct = 'answer' in currentQ && idx === currentQ.answer;
     markQuestionAnswered(correct);
   };
 
@@ -349,7 +349,7 @@ export function AssessmentView({
     if (submitted) return;
     if ((disabledTFByStep[step] || []).includes(val)) return;
     setSelectedTF(val);
-    const correct = val === currentQ.answer;
+    const correct = 'answer' in currentQ && val === currentQ.answer;
     markQuestionAnswered(correct);
   };
 

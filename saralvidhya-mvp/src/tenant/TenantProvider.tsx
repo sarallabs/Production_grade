@@ -25,9 +25,11 @@ export interface TenantConfig {
     logoUrl?: string;
     faviconUrl?: string;
     loginBannerUrl?: string;
-  };
     publicImageUrls?: Record<string, string>;
     boardLogoUrls?: Record<string, string>;
+  };
+  publicImageUrls?: Record<string, string>;
+  boardLogoUrls?: Record<string, string>;
   branding: {
     appName: string;
     primaryColor: string;

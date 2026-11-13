@@ -134,8 +134,8 @@ export interface Chapter {
     topics?: string[];
     order?: number;
     introEndTime?: number;
-    introEndTime?: number;
   }>;
+  readingDurations?: Record<string, Record<string, number>>;
   tools?: Record<string, any>;
 }
 
@@ -931,7 +931,6 @@ export interface ChapterVideo {
   topics?: string[];
   introEndTime?: number;
   duration?: string;
-  introEndTime?: number;
 }
 
 const chapterVideosCache: Record<string, ChapterVideo[]> = {};

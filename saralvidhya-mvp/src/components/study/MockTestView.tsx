@@ -582,7 +582,7 @@ function DescriptiveQuestionCard({
               type="button"
               onClick={() => {
                 setInputMode(tab.id);
-                if (tab.id === "scan" || tab.id === "image") {
+                if (tab.id === "scan") {
                   fileInputRef.current?.click();
                 }
               }}
