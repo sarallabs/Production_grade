@@ -61,6 +61,57 @@ export const CHAPTER_TOPICS: ChapterTopics[] = [
       'Marketing Metrics, Ethics and Strategic Control',
     ],
   },
+  // ── Acharya Nagarjuna University - MP & OB (MBA) ─────────────────────────
+  {
+    subject: 'mp_ob',
+    chapterNumber: 1,
+    topics: [
+      'Levels, Skills, and Roles of Managers (Katz & Mintzberg)',
+      'Functions, Principles, and Nature of Management (POSDC & Fayol)',
+      'Management as Science, Art, and Profession',
+      'Social Responsibility (CSR) and Managerial Ethics',
+    ],
+  },
+  {
+    subject: 'mp_ob',
+    chapterNumber: 2,
+    topics: [
+      'Nature, Types of Plans, and the Planning Process',
+      'Decision Making and Management by Objectives (MBO)',
+      'Organizing, Span of Control (Graicunas), and Departmentation',
+      'Delegation of Authority, Centralization & Decentralization',
+    ],
+  },
+  {
+    subject: 'mp_ob',
+    chapterNumber: 3,
+    topics: [
+      'Staffing: Recruitment, Selection & HR Development',
+      'Directing and Frontline Supervision',
+      'Motivation Theories (Maslow, Herzberg, McClelland, Porter-Lawler)',
+      'Leadership Styles, Likert Systems 1–4 & Blake-Mouton Grid',
+      'Controlling Process, Break-Even Analysis & Modern Control Tools',
+    ],
+  },
+  {
+    subject: 'mp_ob',
+    chapterNumber: 4,
+    topics: [
+      'Nature, Scope & Four Models of Organisational Behaviour',
+      'Perceptual Process, Gestalt Grouping & Attribution Biases',
+      'Determinants of Personality, Big Five (OCEAN) & Myers-Briggs',
+      'Social-Cognitive Theory & Reciprocal Determinism',
+    ],
+  },
+  {
+    subject: 'mp_ob',
+    chapterNumber: 5,
+    topics: [
+      'Group Dynamics (Lewin, Homans, Newcomb) & Tuckman Stages',
+      'Transactional Analysis (Ego States, Life Positions) & Johari Window',
+      'Organizational Change, Force-Field Analysis & Overcoming Resistance',
+    ],
+  },
 
   // ── Acharya Nagarjuna University - M.Sc Physics (Quantum Mechanics) ──────
   {

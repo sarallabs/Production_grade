@@ -231,6 +231,10 @@ export async function getResourceContent(
 
           return `![${alt}](${resolveRelativeUrl(url, relPath)})`;
         });
+        text = text.replace(
+          /(<img\b[^>]*?\bsrc=(["']))(?!https?:|\/|data:)([^"']+)(\2)/gi,
+          (_m, prefix, _q, relPath, suffix) => `${prefix}${resolveRelativeUrl(url, relPath)}${suffix}`,
+        );
         return cleanAiPreamble(text);
       } catch {
         return null;

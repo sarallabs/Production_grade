@@ -73,6 +73,63 @@ const syllabusUnits: Record<string, Record<number, UnitSyllabusDetail>> = {
         'Integrate multi-channel brand communications with consultative sales execution and institute rigorous performance controls across the marketing organization.'
     }
   },
+  mp_ob: {
+    1: {
+      title: 'Introduction to Management Process & Organizational Behavior',
+      objectives: [
+        'Compare classical and modern definitions of management (Drucker, Weihrich & Koontz, McFarland, Keith Davis) alongside its dual identity as science, art, and profession.',
+        'Differentiate Top, Middle, and First-Line management hierarchies using Robert Katz’s three-skill pyramid (Conceptual, Human, Technical) and authority-responsibility dynamics.',
+        'Analyze Henry Mintzberg’s ten managerial roles across Interpersonal, Informational, and Decisional categories.',
+        'Trace the POSDC functional cycle and evaluate Corporate Social Responsibility (CSR) arguments and managerial ethics.'
+      ],
+      outcome:
+        'Synthesize classical principles, managerial skill profiles, executive roles, and ethical governance into a coherent management framework.'
+    },
+    2: {
+      title: 'Planning, Decision Making & Organizing',
+      objectives: [
+        'Formulate strategic, tactical, and operational plans across standing and single-use hierarchies using the systematic planning process.',
+        'Execute rational and bounded-rationality decision-making workflows and implement Peter Drucker’s Management by Objectives (MBO) cascade.',
+        'Design formal organizational structures, comparing narrow vs. wide spans of management using V.A. Graicunas’s mathematical relationship formula.',
+        'Balance centralization, decentralization, line-and-staff authority relationships, and effective delegation without abdicating accountability.'
+      ],
+      outcome:
+        'Translate organizational objectives into structured plans, rigorous executive decisions, and scalable authority architectures.'
+    },
+    3: {
+      title: 'Staffing, Directing, Leadership, Motivation & Controlling',
+      objectives: [
+        'Manage end-to-end human resource staffing—manpower planning, recruitment, selection, placement, training, appraisal, and career development.',
+        'Apply content and process motivation theories (Maslow, Herzberg Two-Factor, McClelland, Vroom Expectancy, and Porter–Lawler) to workplace performance.',
+        'Evaluate leadership styles across Rensis Likert’s Systems 1–4, Blake & Mouton’s (9, 9) Managerial Grid, and transformational vs. transactional paradigms.',
+        'Close the management loop through feedforward, concurrent, and feedback control systems, break-even analysis, ROI budgeting, and PERT/CPM.'
+      ],
+      outcome:
+        'Build high-capability teams, energize workforce performance through behavioral leadership, and govern execution using quantitative control tools.'
+    },
+    4: {
+      title: 'Organisational Behaviour, Perception & Personality',
+      objectives: [
+        'Examine the interdisciplinary foundations, socio-technical elements, and four core goals of Organisational Behaviour across Autocratic, Custodial, Supportive, and Collegial models.',
+        'Deconstruct the perceptual process—sensation, selection, organization (Gestalt principles), and interpretation—and mitigate attribution errors, halo effects, and stereotyping.',
+        'Assess biological, family, cultural, and situational determinants of personality alongside Big Five (OCEAN), MBTI, Type A/B, and locus-of-control traits.',
+        'Apply Albert Bandura’s social-cognitive and reciprocal determinism framework to workplace learning and self-efficacy.'
+      ],
+      outcome:
+        'Diagnose individual behavioral drivers, reduce perceptual bias in managerial judgments, and align personality strengths with organizational roles.'
+    },
+    5: {
+      title: 'Group Dynamics, Transactional Analysis & Organizational Change',
+      objectives: [
+        'Analyze Kurt Lewin’s group dynamics foundations, sociological group classifications, Homans’s interaction theory, Newcomb’s A-B-X balance model, and Tuckman’s five-stage team maturity cycle.',
+        'Diagnose interpersonal workplace communication using Eric Berne’s Parent–Adult–Child ego states, complementary vs. crossed/ulterior transactions, life positions, and the Johari Window.',
+        'Identify individual and organizational sources of resistance to planned change across structural, technological, and people dimensions.',
+        'Lead sustainable transformation using Kurt Lewin’s Unfreezing–Moving–Refreezing force-field model and targeted OD interventions.'
+      ],
+      outcome:
+        'Cultivate cohesive high-performing teams, foster Adult-to-Adult workplace communication, and guide organizations smoothly through strategic change.'
+    }
+  },
   anu_physics: {
     4: {
       title: 'Advanced Quantum Mechanics — Radiation-Matter Interaction',

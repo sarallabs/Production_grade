@@ -229,11 +229,11 @@ function scanSubject(subject, board, klass) {
 
       const defaultChapterName = `Chapter ${chapterNumber}`;
       const folderName = parsedFolder?.title || titleFromId(entryName);
-      const rawChapterName =
-        meta.chapter_name && meta.chapter_name !== defaultChapterName
-          ? meta.chapter_name
-          : meta.name || folderName || defaultChapterName;
-      const chapterName = toSentenceCase(rawChapterName);
+      const hasExplicitMetaName = Boolean(meta.chapter_name && meta.chapter_name !== defaultChapterName);
+      const rawChapterName = hasExplicitMetaName
+        ? meta.chapter_name
+        : meta.name || folderName || defaultChapterName;
+      const chapterName = hasExplicitMetaName ? rawChapterName : toSentenceCase(rawChapterName);
 
       chapters.push({
         number: parsedFolder ? chapterNumber : Number(meta.chapter_number ?? chapterNumber),

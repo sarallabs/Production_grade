@@ -90,7 +90,7 @@ function Login() {
       const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: trimmed }),
+        body: JSON.stringify({ password: isDirectMatch ? defaultPass : trimmed }),
       });
       if (res.ok) {
         const data = await res.json();

@@ -131,6 +131,32 @@ export const SUBJECT_METADATA: Record<string, SubjectInfo> = {
       'What is the primary goal of brand equity evaluation in modern marketing?',
     ],
   },
+  mp_ob: {
+    id: 'mp_ob',
+    name: 'Management Process & Organizational Behavior',
+    code: 'MBA-102',
+    professorName: 'Prof. Sivarama Prasad Ramineni',
+    professorTitle: "Hon'ble Rector & Professor, Dept. of Business Administration, ANU",
+    university: 'Acharya Nagarjuna University',
+    units: [
+      'Unit 1: Management Process & OB Foundations',
+      'Unit 2: Planning, Decision Making & Organizing',
+      'Unit 3: Staffing, Directing, Leadership & Controlling',
+      'Unit 4: OB Models, Perception & Personality',
+      'Unit 5: Group Dynamics, Transactional Analysis & Change',
+    ],
+    fallbackOptions: [
+      'Planning & Organizing',
+      'Staffing & Directing',
+      'Controlling & Feedback',
+      'Behavioral Integration',
+    ],
+    defaultQuestions: [
+      'How do Robert Katz’s three managerial skills vary across Top, Middle, and First-Line management?',
+      'How does V.A. Graicunas model direct and cross relationships under supervisory span of control?',
+      'How does Kurt Lewin’s Unfreezing–Moving–Refreezing model overcome organizational resistance to change?',
+    ],
+  },
   ento_131: {
     id: 'ento_131',
     name: 'Fundamentals of Entomology',
@@ -282,6 +308,7 @@ export default function ExaminerConsole() {
     if (sub === 'anu_physics') chaptersToFetch = [4, 1];
     else if (sub === 'anu_characterization') chaptersToFetch = [5];
     else if (sub === 'management') chaptersToFetch = [1, 2];
+    else if (sub === 'mp_ob') chaptersToFetch = [1, 2, 3, 4, 5];
     else if (sub === 'ento_131') chaptersToFetch = [1, 2];
     for (const cNum of chaptersToFetch) {
       const cert = await getChapterExamQuestions(sub, cNum, 'certification');

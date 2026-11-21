@@ -75,6 +75,7 @@ export async function getFlashcards(
             `${subjectBase}/${chDir}/${videoDir}/Prepare/Flashcards/flashcards_prep_master.md`,
           ]
         : []),
+      `${subjectBase}/${chDir}/Learn/Flashcards/flashcards_${normLevel}.json`,
       `${subjectBase}/${chDir}/Learn/Flashcards/flashcards_${normLevel}.md`,
       `${subjectBase}/${chDir}/unit_1/Learn/Flashcards/flashcards_${normLevel}.md`,
       `${subjectBase}/${chDir}/Prepare/Flashcards/prep_flashcards.md`,

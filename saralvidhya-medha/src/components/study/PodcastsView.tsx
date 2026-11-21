@@ -12,7 +12,14 @@ const SUBJECT_LANG: Record<string, string> = {};
 
 function stripMarkdown(text: string): string {
   if (!text) return "";
-  return text.replace(/[*_#`\[\]]/g, "");
+  return text
+    .replace(/```[\s\S]*?```/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/[*_#`~>]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
 }
 
 export interface PodcastsViewProps {

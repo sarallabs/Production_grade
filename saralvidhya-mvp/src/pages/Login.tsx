@@ -73,8 +73,11 @@ function Login() {
         };
       }
     }
+    const defaultBoardId =
+      Object.entries(boardLogos).find(([, file]) => file === defaultLogoFile)?.[0]?.toLowerCase() ||
+      "default";
     return {
-      id: "default",
+      id: defaultBoardId,
       src: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
       fallbackSrc: `${import.meta.env.BASE_URL}${defaultLogoFile}`,
       alt: tenant?.name || tenant?.shortName || "College Logo",
@@ -250,9 +253,12 @@ function Login() {
 
         {/* RIGHT SIDE: Pine Deep Card + Floating College Logo + Feature Pills */}
         <div className="sv-login-right">
-          <div className="sv-login-card-shell">
+          <div className={`sv-login-card-shell sv-login-card-shell--${resolvedCollege.id}`}>
             {/* College Logo Medallion upside the card */}
-            <div className="sv-college-logo-badge" title={resolvedCollege.alt}>
+            <div
+              className={`sv-college-logo-badge sv-college-logo-badge--${resolvedCollege.id}`}
+              title={resolvedCollege.alt}
+            >
               <img
                 src={resolvedCollege.src}
                 alt={resolvedCollege.alt}

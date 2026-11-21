@@ -145,6 +145,7 @@ import {
 } from "@/pages/PreviousYearQuestions";
 import ReadAloudBar from "@/components/study/ReadAloudBar";
 import ReadingHighlightView from "@/components/study/ReadingHighlightView";
+import { emitReadHighlight } from "@/utils/readAloudDom";
 import AskBotView from "@/components/study/AskBotView";
 import PodcastsView from "@/components/study/PodcastsView";
 import PYQView from "@/components/study/PYQView";
@@ -173,6 +174,8 @@ function getChapterPrefix(subjectId: string): string {
   const id = (subjectId || "").toLowerCase();
   if (
     id.includes("management") ||
+    id === "mp_ob" ||
+    id.includes("mp_ob") ||
     id.includes("financial") ||
     id.includes("pubadm") ||
     id === "social"
@@ -340,6 +343,7 @@ export default function StudyTable() {
   const setPersona = (level: DifficultyLevel) => {
     // Stop any active TTS/audio before switching persona
     googleTtsStop();
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     trackPersonaChange(persona, level);
     setPersonaState(level);
     updateMedhaStudySession({ persona: level });
@@ -492,6 +496,19 @@ export default function StudyTable() {
     [isSegmented],
   );
 
+  const chapterHasVideos = useMemo(() => {
+    if (isSegmented) return true;
+    if (subjectId === "management") return true;
+    if (subjectId === "anu_physics") return true;
+    if (subjectId === "pubadm_ur" && chapterNumber === 1) return true;
+    if (subjectId === "ento_131" && chapterNumber === 1) return true;
+
+    const currentChapter = subjectChapters.find((c) => c.number === chapterNumber);
+    if (currentChapter && currentChapter.completed && currentChapter.completed.includes("youtube_links")) return true;
+
+    return false;
+  }, [isSegmented, subjectId, chapterNumber, subjectChapters]);
+
   const lastSyncRef = useRef("");
 
   useEffect(() => {
@@ -503,14 +520,21 @@ export default function StudyTable() {
       return completed;
     });
 
-    const currentSyncKey = `${subjectId}-${chapterNumber}-${videoIndex}-${searchParams.toString()}-${videosLoaded}`;
+    const currentSyncKey = `${subjectId}-${chapterNumber}-${videoIndex}-${searchParams.toString()}-${videosLoaded}-${chapterHasVideos}`;
     if (lastSyncRef.current === currentSyncKey) return;
     lastSyncRef.current = currentSyncKey;
 
     // Sync active tool state for the new chapter/unit
     const fromUrl = (searchParams.get("tool") || getMedhaStudySession().tool) as ToolId | null;
     if (!videosLoaded) return;
-    setActiveToolState(fromUrl || "videos");
+    const resolvedTool: ToolId =
+      !chapterHasVideos && (!fromUrl || fromUrl === "videos")
+        ? "summary"
+        : (fromUrl || "videos");
+    if (resolvedTool !== fromUrl) {
+      updateMedhaStudySession({ tool: resolvedTool });
+    }
+    setActiveToolState(resolvedTool);
   }, [
     subjectId,
     chapterNumber,
@@ -522,6 +546,7 @@ export default function StudyTable() {
     resumeToolHere,
     completedToolsFor,
     videosLoaded,
+    chapterHasVideos,
   ]);
 
   // The tool the URL is asking for (may be locked — see the gate below).
@@ -642,19 +667,6 @@ export default function StudyTable() {
     });
   };
 
-  const chapterHasVideos = useMemo(() => {
-    if (isSegmented) return true;
-    if (subjectId === "management") return true;
-    if (subjectId === "anu_physics") return true;
-    if (subjectId === "pubadm_ur" && chapterNumber === 1) return true;
-    if (subjectId === "ento_131" && chapterNumber === 1) return true;
-    
-    const currentChapter = subjectChapters.find(c => c.number === chapterNumber);
-    if (currentChapter && currentChapter.completed && currentChapter.completed.includes("youtube_links")) return true;
-    
-    return false;
-  }, [isSegmented, subjectId, chapterNumber, subjectChapters]);
-
   useEffect(() => {
     if (subjectChapters.length > 0) {
       if (!subjectChapters.some((c) => c.number === chapterNumber)) {
@@ -729,6 +741,7 @@ export default function StudyTable() {
     if (!allowed) return;
 
     googleTtsStop();
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     setChapterNumber(ch.number);
     setCompletedTools(unitCompleted);
     setActiveToolState(tool);
@@ -747,6 +760,7 @@ export default function StudyTable() {
 
   const handleChapterChange = (num: number) => {
     googleTtsStop();
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     setChapterNumber(num);
     const unitCompleted = getCompletedTools(subjectId, num);
     setCompletedTools(unitCompleted);
@@ -900,6 +914,9 @@ export default function StudyTable() {
   useEffect(() => {
     // Stop reading whenever we switch tools to prevent overlapping audio
     googleTtsStop();
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
+    setReadingHighlight({ active: false, startWord: -1, endWord: -1 });
+    setFlashcardIsSpeaking(false);
 
     if (activeTool !== "qbank") {
       setQbankReadAloudText("");
@@ -909,7 +926,9 @@ export default function StudyTable() {
   // Stop TTS when persona changes — new content will load
   useEffect(() => {
     googleTtsStop();
+    emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     setReadingHighlight({ active: false, startWord: -1, endWord: -1 });
+    setFlashcardIsSpeaking(false);
   }, [persona]);
 
   // Reset masterminds concept panel when switching chapters, subjects, or tools
@@ -2607,6 +2626,46 @@ export default function StudyTable() {
                               viewBox="0 0 24 24"
                               fill="currentColor"
                             >
+                              <path d="M6 6h12v12H6z" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {(activeTool === "flashcards" || activeTool === "revision_flashcards") && (
+                    <div className="read-aloud-tool-pill read-aloud-tool-pill--transport">
+                      <div className="read-aloud-play-cluster">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFlashcardSpeakTrigger((t) => t + 1);
+                            if (!flashcardIsSpeaking) setIsSidebarOpen(false);
+                          }}
+                          className="read-aloud-play-btn"
+                          aria-label={flashcardIsSpeaking ? "Stop reading flashcard" : "Read flashcard aloud"}
+                          data-label={flashcardIsSpeaking ? "Pause" : "Read aloud"}
+                        >
+                          {flashcardIsSpeaking ? (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+                            </svg>
+                          ) : (
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: "2px" }}>
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          )}
+                        </button>
+                        {flashcardIsSpeaking && (
+                          <button
+                            type="button"
+                            onClick={() => setFlashcardStopTrigger((t) => t + 1)}
+                            className="read-aloud-action-btn"
+                            aria-label="Stop reading"
+                            data-label="Stop"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                               <path d="M6 6h12v12H6z" />
                             </svg>
                           </button>

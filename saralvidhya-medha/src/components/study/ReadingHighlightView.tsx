@@ -1,5 +1,13 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import MarkdownView from "@/components/MarkdownView";
+import {
+  registerReadRoot,
+  invalidateReadMap,
+  getReadSnapshot,
+  subscribeReadHighlight,
+  getCurrentReadHighlight,
+  type ReadHighlightState,
+} from "@/utils/readAloudDom";
 
 export interface ReadingHighlightViewProps {
   content: string;
@@ -8,139 +16,205 @@ export interface ReadingHighlightViewProps {
   endWord: number;
 }
 
-export default function ReadingHighlightView({
+/**
+ * Highlights the word currently being read aloud using the readAloudDom pub/sub
+ * bus, CSS Custom Highlight API, and a GPU-composited overlay without mutating DOM
+ * text nodes or re-rendering parent React trees.
+ */
+function ReadingHighlightViewInner({
   content,
   active,
   startWord,
   endWord,
 }: ReadingHighlightViewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const lastMarkRef = useRef<HTMLElement | null>(null);
-  // Pre-built map: wordIndex → { node, nodeOffset, length }
-  const wordMapRef = useRef<
-    Array<{ node: Text; offset: number; length: number }>
-  >([]);
-  const mapBuiltRef = useRef(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const lastScrollTimeRef = useRef<number>(0);
+  const lastScrollWordRef = useRef<number>(-1);
+  const userScrollPauseUntilRef = useRef<number>(0);
+  const rafRef = useRef<number | null>(null);
 
-  // Build the word map once after content renders
-  const buildWordMap = useCallback(() => {
+  useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-    wordMapRef.current = [];
-    mapBuiltRef.current = false;
-
-    // Collect all text nodes in document order
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    const textNodes: Text[] = [];
-    let n: Text | null;
-    while ((n = walker.nextNode() as Text | null)) textNodes.push(n);
-
-    // Walk through text nodes and split into words, recording exact position
-    const wordRegex = /\S+/g;
-    for (const node of textNodes) {
-      const text = node.textContent || "";
-      let m: RegExpExecArray | null;
-      wordRegex.lastIndex = 0;
-      while ((m = wordRegex.exec(text)) !== null) {
-        wordMapRef.current.push({ node, offset: m.index, length: m[0].length });
-      }
-    }
-    mapBuiltRef.current = true;
+    return registerReadRoot(el);
   }, []);
 
-  // Rebuild map when content changes (after MarkdownView re-renders)
   useEffect(() => {
-    // Small delay to let MarkdownView finish rendering
-    const timer = setTimeout(buildWordMap, 50);
-    return () => clearTimeout(timer);
-  }, [content, buildWordMap]);
+    invalidateReadMap();
+    const t = setTimeout(invalidateReadMap, 100);
+    const el = containerRef.current;
+    const onImgLoad = () => invalidateReadMap();
+    el?.addEventListener("load", onImgLoad, true);
+    return () => {
+      clearTimeout(t);
+      el?.removeEventListener("load", onImgLoad, true);
+    };
+  }, [content]);
 
-  // Highlight the current word range
   useEffect(() => {
-    if (!active) return;
-    if (!mapBuiltRef.current) {
-      buildWordMap();
-    }
+    const container = containerRef.current;
+    if (!container) return;
+    const scrollParent =
+      (container.closest(".st-mainview") as HTMLElement | null) || window;
+    const onUser = () => {
+      userScrollPauseUntilRef.current = Date.now() + 3000;
+    };
+    scrollParent.addEventListener("wheel", onUser, { passive: true });
+    scrollParent.addEventListener("touchmove", onUser, { passive: true });
+    return () => {
+      scrollParent.removeEventListener("wheel", onUser);
+      scrollParent.removeEventListener("touchmove", onUser);
+    };
+  }, []);
 
-    const map = wordMapRef.current;
-    if (!map.length || startWord < 0) return;
+  const drawHighlight = useCallback((state: ReadHighlightState) => {
+    const overlay = overlayRef.current;
+    const container = containerRef.current;
+    const HighlightCtor = (window as any).Highlight;
+    const cssHighlights = typeof CSS !== "undefined" ? (CSS as any).highlights : null;
+    const hide = () => {
+      if (overlay) overlay.style.display = "none";
+    };
 
-    // Remove previous mark
-    if (lastMarkRef.current) {
-      const m = lastMarkRef.current;
-      const parent = m.parentNode;
-      if (parent) {
-        // Restore original text node
-        const textNode = document.createTextNode(m.textContent || "");
-        parent.replaceChild(textNode, m);
-        parent.normalize();
-        // After normalize, the map is stale — rebuild on next call
-        mapBuiltRef.current = false;
+    if (!state.active || state.startWord < 0) {
+      hide();
+      if (cssHighlights) {
+        cssHighlights.delete("reading-active-word");
       }
-      lastMarkRef.current = null;
+      return;
     }
+    if (!container || !overlay) return;
 
-    // Rebuild map if stale (after previous mark removal)
-    if (!mapBuiltRef.current) buildWordMap();
-
-    const freshMap = wordMapRef.current;
-    const idx = Math.min(startWord, freshMap.length - 1);
-    if (idx < 0 || idx >= freshMap.length) return;
-
-    const startEntry = freshMap[idx];
-    if (!startEntry || !startEntry.node.parentNode) return;
-
-    // Span up to 3 words
-    const endIdx = Math.min(idx + 2, freshMap.length - 1);
-    const endEntry = freshMap[endIdx];
+    let snap = getReadSnapshot();
+    if (!snap.words.length) {
+      hide();
+      return;
+    }
+    const targetIdx = Math.min(state.startWord, snap.words.length - 1);
+    let entry = snap.words[targetIdx];
+    if (entry && !entry.node.isConnected) {
+      invalidateReadMap();
+      snap = getReadSnapshot();
+      entry = snap.words[Math.min(state.startWord, snap.words.length - 1)];
+    }
+    if (!entry || !container.contains(entry.node)) {
+      hide();
+      return;
+    }
 
     try {
-      // If all words are in the same text node, wrap them all in one mark
-      if (startEntry.node === endEntry.node) {
-        const range = document.createRange();
-        range.setStart(startEntry.node, startEntry.offset);
-        range.setEnd(endEntry.node, endEntry.offset + endEntry.length);
-        const mark = document.createElement("mark");
-        mark.className = "reading-mark reading-phrase-active";
-        range.surroundContents(mark);
-        lastMarkRef.current = mark;
-        mapBuiltRef.current = false;
-        mark.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      } else {
-        // Words span different nodes — wrap just the first word
-        const range = document.createRange();
-        range.setStart(startEntry.node, startEntry.offset);
-        range.setEnd(startEntry.node, startEntry.offset + startEntry.length);
-        const mark = document.createElement("mark");
-        mark.className = "reading-mark reading-phrase-active";
-        range.surroundContents(mark);
-        lastMarkRef.current = mark;
-        mapBuiltRef.current = false;
-        mark.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      const range = document.createRange();
+      range.setStart(entry.node, Math.min(entry.offset, entry.node.length));
+      range.setEnd(entry.node, Math.min(entry.offset + entry.length, entry.node.length));
+
+      if (HighlightCtor && cssHighlights) {
+        cssHighlights.set("reading-active-word", new HighlightCtor(range));
+      }
+
+      let rect = range.getBoundingClientRect();
+      if ((rect.width <= 0 || rect.height <= 0) && entry.node.parentElement) {
+        rect = entry.node.parentElement.getBoundingClientRect();
+      }
+      if (rect.width <= 0 || rect.height <= 0) {
+        hide();
+        return;
+      }
+
+      const cRect = container.getBoundingClientRect();
+      overlay.style.display = "block";
+      overlay.style.transform = `translate3d(${(rect.left - cRect.left - 2).toFixed(1)}px, ${(rect.top - cRect.top - 1).toFixed(1)}px, 0)`;
+      overlay.style.width = `${(rect.width + 4).toFixed(1)}px`;
+      overlay.style.height = `${(rect.height + 2).toFixed(1)}px`;
+
+      // Auto-scroll active word into view
+      const now = Date.now();
+      if (now < userScrollPauseUntilRef.current) return;
+
+      let scrollParent: HTMLElement | null = container.closest(".st-mainview") as HTMLElement | null;
+      if (!scrollParent) {
+        let p: HTMLElement | null = container.parentElement;
+        while (p && p !== document.body && p !== document.documentElement) {
+          const oy = window.getComputedStyle(p).overflowY;
+          if (oy === "auto" || oy === "scroll") {
+            scrollParent = p;
+            break;
+          }
+          p = p.parentElement;
+        }
+      }
+      if (!scrollParent) return;
+
+      const sRect = scrollParent.getBoundingClientRect();
+      const relY = rect.top - sRect.top;
+      const nearBottom = relY > sRect.height * 0.68;
+      const offTop = relY < sRect.height * 0.12;
+      if (
+        (nearBottom || offTop) &&
+        now - lastScrollTimeRef.current > 700 &&
+        targetIdx !== lastScrollWordRef.current
+      ) {
+        lastScrollTimeRef.current = now;
+        lastScrollWordRef.current = targetIdx;
+        scrollParent.scrollTo({
+          top: Math.max(0, scrollParent.scrollTop + relY - sRect.height * 0.32),
+          behavior: "smooth",
+        });
       }
     } catch {
-      // surroundContents can fail if range crosses element boundaries — skip
+      /* Next tick recovers cleanly if range spans transient DOM updates */
     }
-  }, [active, startWord, endWord, buildWordMap]);
+  }, []);
 
-  // Cleanup when inactive
   useEffect(() => {
-    if (active) return;
-    if (lastMarkRef.current) {
-      const m = lastMarkRef.current;
-      const parent = m.parentNode;
-      if (parent) {
-        parent.replaceChild(document.createTextNode(m.textContent || ""), m);
-        parent.normalize();
-      }
-      lastMarkRef.current = null;
-      mapBuiltRef.current = false;
+    const scheduleDraw = (state: ReadHighlightState) => {
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(() => {
+        rafRef.current = null;
+        drawHighlight(state);
+      });
+    };
+
+    const initial = getCurrentReadHighlight();
+    if (initial.active) {
+      scheduleDraw(initial);
     }
-  }, [active]);
+
+    const unsubscribe = subscribeReadHighlight(scheduleDraw);
+    return () => {
+      unsubscribe();
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [drawHighlight]);
+
+  useEffect(() => {
+    const busState = getCurrentReadHighlight();
+    if (busState.active) {
+      drawHighlight(busState);
+    } else {
+      drawHighlight({ active, startWord, endWord });
+    }
+  }, [active, startWord, endWord, drawHighlight]);
 
   return (
-    <div ref={containerRef}>
+    <div ref={containerRef} style={{ position: "relative" }}>
+      <div
+        ref={overlayRef}
+        className="reading-highlight-overlay"
+        style={{
+          display: "none",
+          willChange: "transform, width, height",
+          transition: "transform 65ms linear, width 65ms linear, height 65ms linear",
+        }}
+        aria-hidden="true"
+      />
       <MarkdownView content={content} />
     </div>
   );
 }
+
+const ReadingHighlightView = React.memo(ReadingHighlightViewInner);
+export default ReadingHighlightView;

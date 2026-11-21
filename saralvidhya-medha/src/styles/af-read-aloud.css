@@ -182,3 +182,24 @@
   color: #1E2822;
   font-size: 1.02rem;
 }
+
+
+::highlight(reading-active-word) {
+  background-color: rgba(84, 108, 96, 0.16);
+  color: inherit;
+}
+
+.reading-highlight-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  background: rgba(84, 108, 96, 0.16);
+  border: 1px solid rgba(84, 108, 96, 0.38);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(84, 108, 96, 0.08);
+  box-sizing: border-box;
+  z-index: 2;
+  contain: paint layout;
+  transform: translate3d(0, 0, 0);
+}

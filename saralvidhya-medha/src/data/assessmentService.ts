@@ -68,11 +68,11 @@ export async function fetchAndParseFirst(
         if (rawQuestions.length > 0) {
           return rawQuestions.map((q: any, i: number) => {
             const rawOptions = Array.isArray(q.options) ? q.options : [];
-            const cleanedOptions = rawOptions.map((opt: string) => opt.replace(/^[A-D]\)\s*/, ''));
+            const cleanedOptions = rawOptions.map((opt: string) => opt.replace(/^[A-F]\)\s*/, ''));
 
             const resolveIndex = (ans: string): number => {
-              const stripped = ans.replace(/^[A-D]\)\s*/, '').trim().toLowerCase();
-              const letterMatch = ans.trim().match(/^([A-D])\b/i);
+              const stripped = ans.replace(/^[A-F]\)\s*/, '').trim().toLowerCase();
+              const letterMatch = ans.trim().match(/^([A-F])\b/i);
               if (letterMatch) {
                 const idx = letterMatch[1].toUpperCase().charCodeAt(0) - 65; 
                 if (idx >= 0 && idx < cleanedOptions.length) return idx;
@@ -151,6 +151,7 @@ export async function getAssessments(
 
     const mcqPaths = [
       ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`] : []),
+      `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/Prepare/Question_Bank/MCQ/mcq_prep_${assessmentLevel}.json`,
@@ -164,6 +165,7 @@ export async function getAssessments(
 
     const msqPaths = [
       ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`] : []),
+      `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/Prepare/Question_Bank/MSQ/msq_prep_${assessmentLevel}.json`,
@@ -240,11 +242,18 @@ export async function getChapterExamQuestions(
 
     if (rawQuestions.length === 0) {
       const baseName = fileName.split('/').pop() || fileName;
+      const jsonFileName = fileName.replace(/\.md$/i, '.json');
+      const jsonBaseName = baseName.replace(/\.md$/i, '.json');
       const candidates = [
+        `${subjectBase}/${chDir}/${jsonFileName}`,
         `${subjectBase}/${chDir}/${fileName}`,
+        `${subjectBase}/${chDir}/Examination/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Examination/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Prepare/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/Mock_Test/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
+        `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.json`,
         `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
         `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.json`,
         `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.md`,

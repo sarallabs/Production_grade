@@ -39,6 +39,7 @@ export function QBankReadAloudToolbar({ text, subjectId, onPlay, onHighlightChan
   const [playbackState, setPlaybackState] = useState<'idle' | 'playing' | 'paused'>('idle');
   const playbackRef = useRef<'idle' | 'playing' | 'paused'>('idle');
   const cooldownRef = useRef(false);
+  const lastHighlightRef = useRef<{ startWord: number; endWord: number }>({ startWord: 0, endWord: 2 });
 
   const setPlayback = (state: 'idle' | 'playing' | 'paused') => {
     playbackRef.current = state;
@@ -62,7 +63,12 @@ export function QBankReadAloudToolbar({ text, subjectId, onPlay, onHighlightChan
     if (playbackRef.current === 'paused') {
       googleTtsResume();
       setPlayback('playing');
-      onHighlightChange?.({ active: true, startWord: 0, endWord: 2 }); // Placeholder for resume
+      onPlay?.();
+      onHighlightChange?.({
+        active: true,
+        startWord: lastHighlightRef.current.startWord,
+        endWord: lastHighlightRef.current.endWord,
+      });
       return;
     }
 
@@ -72,7 +78,10 @@ export function QBankReadAloudToolbar({ text, subjectId, onPlay, onHighlightChan
       cooldownRef.current = false;
       return;
     }
+    setPlayback('playing');
     onPlay?.();
+    lastHighlightRef.current = { startWord: 0, endWord: 2 };
+    onHighlightChange?.({ active: true, startWord: 0, endWord: 2 });
 
     const ranges: { start: number; end: number }[] = [];
     const re = /\S+/g;
@@ -93,10 +102,15 @@ export function QBankReadAloudToolbar({ text, subjectId, onPlay, onHighlightChan
       lang,
       () => {
         setPlayback('playing');
-        onHighlightChange?.({ active: true, startWord: 0, endWord: 2 });
+        onHighlightChange?.({
+          active: true,
+          startWord: lastHighlightRef.current.startWord,
+          endWord: lastHighlightRef.current.endWord,
+        });
       },
       () => {
         setPlayback('idle');
+        lastHighlightRef.current = { startWord: 0, endWord: 2 };
         onHighlightChange?.({ active: false, startWord: -1, endWord: -1 });
       },
       (charIndex) => {
@@ -109,11 +123,12 @@ export function QBankReadAloudToolbar({ text, subjectId, onPlay, onHighlightChan
           }
           idx = i;
         }
-        onHighlightChange?.({
-          active: true,
+        const nextHighlight = {
           startWord: Math.max(0, idx),
           endWord: Math.min(ranges.length - 1, idx + 2),
-        });
+        };
+        lastHighlightRef.current = nextHighlight;
+        onHighlightChange?.({ active: true, ...nextHighlight });
       }
     );
   };

@@ -309,7 +309,7 @@ export default function MermaidView({ content }: Props) {
   }
 
   return (
-    <div style={{ userSelect:'none' }}>
+    <div className="sv-no-read mermaid" style={{ userSelect:'none' }}>
       {/* Static Canvas */}
       <div
         style={{

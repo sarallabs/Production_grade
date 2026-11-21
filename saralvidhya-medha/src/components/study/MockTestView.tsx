@@ -808,9 +808,23 @@ export function MockTestView({
 
           let parsedQBank: MockQuestion[] = [];
           try {
-            const rawQBank = await getAssessments(subjectId, unitNum);
-            if (rawQBank.length > 0) {
-              parsedQBank = rawQBank.map((q, i) => ({
+            const [qMed, qBeg, qAdv] = await Promise.all([
+              getAssessments(subjectId, unitNum, "intermediate"),
+              getAssessments(subjectId, unitNum, "beginner"),
+              getAssessments(subjectId, unitNum, "advanced"),
+            ]);
+            const rawQBank = [...qMed, ...qBeg, ...qAdv];
+            const seenStems = new Set<string>(
+              mergedExam.map((m) => m.text.replace(/\s+/g, " ").trim().toLowerCase())
+            );
+            const dedupedQBank = rawQBank.filter((q) => {
+              const k = (q.q || "").replace(/\s+/g, " ").trim().toLowerCase();
+              if (!k || seenStems.has(k)) return false;
+              seenStems.add(k);
+              return true;
+            });
+            if (dedupedQBank.length > 0) {
+              parsedQBank = dedupedQBank.map((q, i) => ({
                 id: `qbank-${unitNum}-${i}`,
                 text: q.q,
                 options: (q as any).options,

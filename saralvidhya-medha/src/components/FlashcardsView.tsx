@@ -159,13 +159,15 @@ export default function FlashcardsView({
 
   const handleSpeak = useCallback(() => {
     if (speakingIdx === currentIndex) {
-      // currently playing → pause (toggle off)
+      // currently playing → stop (toggle off)
       googleTtsStop();
       setSpeakingIdx(null);
       onSpeakingChange?.(false);
       return;
     }
     googleTtsStop();
+    setSpeakingIdx(currentIndex);
+    onSpeakingChange?.(true);
     googleTtsSpeak(
       speakText,
       lang,

@@ -263,6 +263,7 @@ async function main() {
   const cloudRoutes = {
     ...(sr.cloudRoutes || {}),
     management: 'medha/management',
+    mp_ob: 'medha/mp_ob',
     anu_physics: 'medha/anu_physics',
     anu_characterization: 'medha/anu_characterization',
   };
