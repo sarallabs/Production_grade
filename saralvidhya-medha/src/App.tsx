@@ -1,11 +1,12 @@
 import React, { Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Layout from './components/Layout';
 import { FocusModeProvider } from './context/FocusModeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingSpinner from './components/LoadingSpinner';
 import branding from './config/branding.json';
+import { SLUG_TO_TOOL_ID, getPathForTool, getMoocsStudySession } from './utils/courseNavigation';
 
 const StudyTable = React.lazy(() => import('./pages/StudyTable'));
 const Onboarding = React.lazy(() => import('./pages/Onboarding'));
@@ -31,7 +32,8 @@ const ManagementMindmap = React.lazy(() => import('./pages/ManagementMindmap'));
 /** Returns true if the user has passed the login screen in this session */
 export function isAuthenticated() {
   return (
-    sessionStorage.getItem('sv_medha_session_v4') === 'true' &&
+    (sessionStorage.getItem('sv_moocs_session_v4') === 'true' ||
+      sessionStorage.getItem('sv_medha_session_v4') === 'true') &&
     localStorage.getItem('app_authenticated') === 'true'
   );
 }
@@ -43,6 +45,28 @@ function AuthGuard({ children }: { children: JSX.Element }) {
     return <Navigate to="/login" state={{ from: location.pathname + location.search }} replace />;
   }
   return children;
+}
+/** Maps clean tool-name routes (e.g. /watch, /essentials, /assessments, /ask) to StudyTable without remounting */
+function StudyToolRoute() {
+  const { toolSlug } = useParams<{ toolSlug: string }>();
+  const location = useLocation();
+  const slug = (toolSlug || '').toLowerCase();
+
+  if (slug === 'study-table') {
+    const sp = new URLSearchParams(location.search);
+    const targetTool = sp.get('tool') || getMoocsStudySession().tool || 'videos';
+    return <Navigate to={`${getPathForTool(targetTool)}${location.search}`} replace />;
+  }
+
+  if (!SLUG_TO_TOOL_ID[slug]) {
+    return <Navigate to="/" replace />;
+  }
+
+  return (
+    <AuthGuard>
+      <StudyTable />
+    </AuthGuard>
+  );
 }
 
 /** Enforce onboarding after authentication */
@@ -89,7 +113,7 @@ export default function App() {
   const [initDone, setInitDone] = useState(false);
 
   useEffect(() => {
-    document.title = `${branding.appName} – Student Learning`;
+    document.title = `${branding.appName} – MOOCs`;
     const savedTheme = localStorage.getItem('user_theme') || 'light-blue';
     const savedFont = localStorage.getItem('user_font') || 'sans-serif';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -115,7 +139,10 @@ export default function App() {
             <Route path="/examiner" element={<ExaminerConsole />} />
             <Route path="/x" element={<ExpertPanel />} />
 
-            {/* ── Public: Login (Default First Page for ANU) ── */}
+            {/* ── Public: Course Catalog (Default First Page), About Course & Login ── */}
+            <Route path="/" element={<CourseCatalog />} />
+            <Route path="/courses" element={<CourseCatalog />} />
+            <Route path="/course/:courseId" element={<CourseDetail />} />
             <Route path="/login" element={<Login />} />
 
             {/* ── Onboarding ── */}
@@ -126,32 +153,6 @@ export default function App() {
                   <ProtectedRoute>
                     <Onboarding />
                   </ProtectedRoute>
-                </AuthGuard>
-              }
-            />
-
-            {/* ── Authenticated Catalog & Course routes ── */}
-            <Route
-              path="/"
-              element={
-                <AuthGuard>
-                  <CourseCatalog />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/courses"
-              element={
-                <AuthGuard>
-                  <CourseCatalog />
-                </AuthGuard>
-              }
-            />
-            <Route
-              path="/course/:courseId"
-              element={
-                <AuthGuard>
-                  <CourseDetail />
                 </AuthGuard>
               }
             />
@@ -265,14 +266,7 @@ export default function App() {
                 }
               />
               <Route path="/chapters" element={<Navigate to="/" replace />} />
-              <Route
-                path="/study-table"
-                element={
-                  <AuthGuard>
-                    <StudyTable />
-                  </AuthGuard>
-                }
-              />
+              <Route path="/:toolSlug" element={<StudyToolRoute />} />
               <Route
                 path="/previous-year-questions"
                 element={

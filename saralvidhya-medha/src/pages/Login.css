@@ -64,6 +64,10 @@
   padding-top: 44px;
 }
 
+.sv-login-card-shell--anu {
+  padding-top: 88px;
+}
+
 /* Floating College Logo Medallion upside the password card */
 .sv-college-logo-badge {
   position: absolute;
@@ -84,6 +88,12 @@
   overflow: hidden;
   padding: 6px;
   box-sizing: border-box;
+}
+
+.sv-college-logo-badge--anu {
+  width: 176px;
+  height: 176px;
+  padding: 12px;
 }
 
 .sv-college-logo-img {
@@ -111,6 +121,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+.sv-login-card-shell--anu .sv-login-card {
+  padding-top: 104px;
 }
 
 .sv-login-title {

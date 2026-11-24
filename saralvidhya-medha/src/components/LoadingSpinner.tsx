@@ -17,8 +17,8 @@ export default function LoadingSpinner() {
     >
       <style>{`
         @keyframes logoPulseGlow {
-          0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 16px rgba(59, 130, 246, 0.25)); }
-          50% { transform: scale(1.06); filter: drop-shadow(0 8px 24px rgba(59, 130, 246, 0.45)); }
+          0%, 100% { transform: scale(1); filter: drop-shadow(0 4px 16px rgba(84, 108, 96, 0.25)); }
+          50% { transform: scale(1.06); filter: drop-shadow(0 8px 24px rgba(84, 108, 96, 0.45)); }
         }
         @keyframes spinnerRing {
           0% { transform: rotate(0deg); }
@@ -34,9 +34,9 @@ export default function LoadingSpinner() {
             position: "absolute",
             inset: 0,
             borderRadius: "50%",
-            border: "6px solid #eff6ff",
-            borderTopColor: "#2563eb",
-            borderRightColor: "#60a5fa",
+            border: "6px solid #EEF5F1",
+            borderTopColor: "#546C60",
+            borderRightColor: "#9CC0B4",
             animation: "spinnerRing 0.9s linear infinite",
           }}
         />

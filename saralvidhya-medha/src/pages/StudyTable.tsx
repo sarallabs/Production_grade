@@ -80,7 +80,7 @@ import {
   GlobalAudioProgress,
 } from "@/hooks/useAudioProgress";
 import { useFocusMode } from "@/context/FocusModeContext";
-import { getMedhaStudySession, updateMedhaStudySession } from "@/utils/courseNavigation";
+import { getMoocsStudySession, updateMoocsStudySession, getPathForTool, getToolFromPath } from "@/utils/courseNavigation";
 
 export function StudyToolLoadingWaitScreen() {
   const treeLogoSrc = `${import.meta.env.BASE_URL}brand-logo.png`;
@@ -304,11 +304,12 @@ const TOOL_TRANSITION_INFO: Record<string, { title: string; icon: React.ReactNod
 
 export default function StudyTable() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const treeLogoSrc = `${import.meta.env.BASE_URL}brand-logo.png`;
   const isMoocMode = sessionStorage.getItem('sv_moocs_mode') === 'true';
 
-  const storedSession = getMedhaStudySession();
+  const storedSession = getMoocsStudySession();
   const className = searchParams.get("className") || storedSession.className || "Class";
   const subjectName = searchParams.get("subjectName") || storedSession.subjectName || "Subject";
   const semesterName = searchParams.get("semesterName") || storedSession.semesterName || "";
@@ -322,7 +323,7 @@ export default function StudyTable() {
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.search) {
       const sp = new URLSearchParams(window.location.search);
-      updateMedhaStudySession({
+      updateMoocsStudySession({
         boardId: sp.get("boardId") || storedSession.boardId || "anu_university",
         boardName: sp.get("boardName") || storedSession.boardName || "ANU",
         cId: sp.get("cId") || storedSession.cId || "",
@@ -334,9 +335,12 @@ export default function StudyTable() {
         chapter: parseInt(sp.get("chapter") || String(storedSession.chapter || 1), 10) || 1,
         chapterName: sp.get("chapterName") || storedSession.chapterName,
         video: parseInt(sp.get("video") || String(storedSession.video || 1), 10) || 1,
-        tool: sp.get("tool") || storedSession.tool || "videos",
+        tool: sp.get("tool") || getToolFromPath(location.pathname) || storedSession.tool || "videos",
       });
-      window.history.replaceState(window.history.state, document.title, window.location.pathname);
+      const resolvedCleanPath = getPathForTool(
+        sp.get("tool") || getToolFromPath(location.pathname) || storedSession.tool || "videos",
+      );
+      navigate(resolvedCleanPath, { replace: true });
     }
   }, []);
 
@@ -346,7 +350,7 @@ export default function StudyTable() {
     emitReadHighlight({ active: false, startWord: -1, endWord: -1 });
     trackPersonaChange(persona, level);
     setPersonaState(level);
-    updateMedhaStudySession({ persona: level });
+    updateMoocsStudySession({ persona: level });
     if (typeof window !== "undefined" && window.location.search) {
       window.history.replaceState(window.history.state, document.title, window.location.pathname);
     }
@@ -368,7 +372,7 @@ export default function StudyTable() {
   const chapterNumber = chapterNumberState;
   const setChapterNumber = (num: number) => {
     setChapterNumberState(num);
-    updateMedhaStudySession({ chapter: num });
+    updateMoocsStudySession({ chapter: num });
   };
 
   const [subjectChapters, setSubjectChapters] = useState<Chapter[]>([]);
@@ -392,7 +396,6 @@ export default function StudyTable() {
       ? chapterTopics[0]
       : rawChapterName;
 
-  const location = useLocation();
   const navState = location.state as any;
 
   // Videos this chapter is split into. Empty for every chapter without a
@@ -435,7 +438,7 @@ export default function StudyTable() {
 
   const setVideoIndex = (index: number) => {
     setVideoIndexState(index);
-    updateMedhaStudySession({ video: index });
+    updateMoocsStudySession({ video: index });
     if (typeof window !== "undefined" && window.location.search) {
       window.history.replaceState(window.history.state, document.title, window.location.pathname);
     }
@@ -499,12 +502,14 @@ export default function StudyTable() {
   const chapterHasVideos = useMemo(() => {
     if (isSegmented) return true;
     if (subjectId === "management") return true;
+    if (subjectId === "mp_ob" && chapterNumber === 1) return true;
     if (subjectId === "anu_physics") return true;
     if (subjectId === "pubadm_ur" && chapterNumber === 1) return true;
     if (subjectId === "ento_131" && chapterNumber === 1) return true;
 
     const currentChapter = subjectChapters.find((c) => c.number === chapterNumber);
     if (currentChapter && currentChapter.completed && currentChapter.completed.includes("youtube_links")) return true;
+    if (currentChapter && currentChapter.videos && currentChapter.videos.length > 0) return true;
 
     return false;
   }, [isSegmented, subjectId, chapterNumber, subjectChapters]);
@@ -525,19 +530,25 @@ export default function StudyTable() {
     lastSyncRef.current = currentSyncKey;
 
     // Sync active tool state for the new chapter/unit
-    const fromUrl = (searchParams.get("tool") || getMedhaStudySession().tool) as ToolId | null;
+    const fromUrl = (getToolFromPath(location.pathname) || searchParams.get("tool") || getMoocsStudySession().tool) as ToolId | null;
     if (!videosLoaded) return;
     const resolvedTool: ToolId =
       !chapterHasVideos && (!fromUrl || fromUrl === "videos")
         ? "summary"
         : (fromUrl || "videos");
     if (resolvedTool !== fromUrl) {
-      updateMedhaStudySession({ tool: resolvedTool });
+      updateMoocsStudySession({ tool: resolvedTool });
+    }
+    const targetPath = getPathForTool(resolvedTool);
+    if (location.pathname !== targetPath) {
+      navigate(targetPath, { replace: true });
     }
     setActiveToolState(resolvedTool);
   }, [
     subjectId,
     chapterNumber,
+    location.pathname,
+    navigate,
     searchParams,
     isMoocMode,
     isSegmented,
@@ -551,14 +562,14 @@ export default function StudyTable() {
 
   // The tool the URL is asking for (may be locked — see the gate below).
   const toolFromUrl =
-    ((searchParams.get("tool") || getMedhaStudySession().tool) as ToolId) || "videos";
+    ((getToolFromPath(location.pathname) || searchParams.get("tool") || getMoocsStudySession().tool) as ToolId) || "videos";
 
   // Persist activeTool in URL so refresh restores the same tool.
   // The registry is still loading on first render, so this consults the cached
   // video count instead — without it a locked tool would render for one frame
   // before the sync effect corrects it.
   const [activeTool, setActiveToolState] = useState<ToolId>(() => {
-    const fromUrl = (searchParams.get("tool") || getMedhaStudySession().tool) as ToolId | null;
+    const fromUrl = (getToolFromPath(location.pathname) || searchParams.get("tool") || getMoocsStudySession().tool) as ToolId | null;
     return fromUrl || "videos";
   });
   const [isAskOpen, setIsAskOpen] = useState(false);
@@ -655,9 +666,10 @@ export default function StudyTable() {
       triggerToolTransition(tool);
     }
     setActiveToolState(tool);
-    updateMedhaStudySession({ tool });
-    if (typeof window !== "undefined" && window.location.search) {
-      window.history.replaceState(window.history.state, document.title, window.location.pathname);
+    updateMoocsStudySession({ tool });
+    const targetPath = getPathForTool(tool);
+    if (location.pathname !== targetPath || (typeof window !== "undefined" && window.location.search)) {
+      navigate(targetPath, { replace: true });
     }
     trackToolUsage({
       tool,
@@ -817,7 +829,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx > 0) {
             const prevCh = subjectChapters[currentIdx - 1];
-            updateMedhaStudySession({ chapter: prevCh.number, chapterName: prevCh.name });
+            updateMoocsStudySession({ chapter: prevCh.number, chapterName: prevCh.name });
             handleChapterChange(prevCh.number);
           }
         }
@@ -826,7 +838,7 @@ export default function StudyTable() {
           const currentIdx = subjectChapters.findIndex((c) => c.number === chapterNumber);
           if (currentIdx >= 0 && currentIdx < subjectChapters.length - 1) {
             const nextCh = subjectChapters[currentIdx + 1];
-            updateMedhaStudySession({ chapter: nextCh.number, chapterName: nextCh.name });
+            updateMoocsStudySession({ chapter: nextCh.number, chapterName: nextCh.name });
             handleChapterChange(nextCh.number);
           }
         }
@@ -1040,7 +1052,8 @@ export default function StudyTable() {
   };
 
   const handleAuthClick = () => {
-    sessionStorage.removeItem("sv_medha_session_v4");
+      sessionStorage.removeItem("sv_moocs_session_v4");
+      sessionStorage.removeItem("sv_medha_session_v4");
     localStorage.removeItem("app_authenticated");
     localStorage.removeItem("sv_login_verified");
     localStorage.removeItem("app_role");
@@ -1596,9 +1609,9 @@ export default function StudyTable() {
             difficulty={persona}
             className={className}
             subjectName={subjectName}
+            onNavigateTool={(tool) => setActiveTool(tool as any)}
           />
         );
-
       case "videos":
         return (
           <VideosView
@@ -1613,7 +1626,7 @@ export default function StudyTable() {
             onComplete={() => {
               setActiveTool("flashcards", markToolHere("videos"));
             }}
-            chapterVideos={chapterVideos}
+            chapterVideos={chapterVideos.length > 0 ? chapterVideos : subjectChapters.find((c) => c.number === chapterNumber)?.videos}
             activeVideoIndex={videoIndex}
             onSelectVideoIndex={(index) => {
               setVideoIndex(index);
@@ -1651,6 +1664,7 @@ export default function StudyTable() {
             markdownContent={typeof content === "string" ? content : ""}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
+            chapterName={chapterName}
             persona={persona}
             videoDir={activeVideoDir}
             onQuit={() => {
@@ -1663,6 +1677,7 @@ export default function StudyTable() {
       case "prep_exam":
         return (
           <MockTestView
+            key={`exam-${subjectId}-${chapterNumber}-prep_exam`}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             subjectName={subjectName}
@@ -1679,6 +1694,7 @@ export default function StudyTable() {
       case "mocktest":
         return (
           <MockTestView
+            key={`exam-${subjectId}-${chapterNumber}-mocktest`}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             subjectName={subjectName}
@@ -1695,6 +1711,7 @@ export default function StudyTable() {
       case "pre_final_test":
         return (
           <MockTestView
+            key={`exam-${subjectId}-${chapterNumber}-pre_final_test`}
             subjectId={subjectId}
             chapterNumber={chapterNumber}
             subjectName={subjectName}
@@ -2467,33 +2484,32 @@ export default function StudyTable() {
             style={{
               flex: 1,
               overflowY:
-                activeTool === "flashcards" || activeTool === "podcasts" || activeTool === "videos" || ["mocktest", "pre_final_test", "prep_exam", "prep_test", "certification_exam"].includes(activeTool)
+                activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "podcasts" || activeTool === "videos" || activeTool === "ask" || activeTool === "assessment" || ["mocktest", "pre_final_test", "prep_exam", "prep_test", "certification_exam"].includes(activeTool)
                   ? "hidden"
                   : "auto",
               padding:
-                activeTool === "videos" || ["mocktest", "pre_final_test", "prep_exam"].includes(activeTool)
+                activeTool === "videos" || activeTool === "ask" || activeTool === "assessment" || ["mocktest", "pre_final_test", "prep_exam"].includes(activeTool)
                   ? "0px"
                   : activeTool === "pyq" || activeTool === "mindmap" || activeTool === "deep_dive" || activeTool === "summary" || activeTool === "detailed"
                     ? "0px 12px 0 12px"
-                    : activeTool === "flashcards"
+                    : activeTool === "flashcards" || activeTool === "revision_flashcards"
                       ? "4px 12px 0 12px"
-                      : activeTool === "assessment" ||
-                        activeTool === "podcasts"
+                      : activeTool === "podcasts"
                         ? "12px 12px 0 12px"
                         : "16px 12px",
               display: "flex",
               flexDirection: "column",
               justifyContent: "flex-start",
               minHeight: 0,
-              background: "#FAF8F3",
+              background: ["assessment", "mocktest", "pre_final_test", "prep_exam"].includes(activeTool) ? "#F8F5EE" : "#FAF8F3",
               position: "relative",
             }}
           >
             {/* ── COMPACT TOP BAR ── */}
-            {!["mocktest", "pre_final_test", "prep_exam"].includes(activeTool) && (
+            {!["mocktest", "pre_final_test", "prep_exam", "ask"].includes(activeTool) && (
               <div
                 style={{
-                  display: activeTool === "videos" ? "none" : "flex",
+                  display: activeTool === "videos" || (isMoocMode && activeTool === "assessment") ? "none" : "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
                   position: "relative",
@@ -2501,7 +2517,7 @@ export default function StudyTable() {
                   marginTop: activeTool === "pyq" ? "-8px" : 0,
                   paddingTop: activeTool === "mindmap" ? "2px" : 0,
                   marginBottom:
-                    activeTool === "flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed"
+                    activeTool === "flashcards" || activeTool === "revision_flashcards" || activeTool === "assessment" || activeTool === "pyq" || activeTool === "mindmap" || activeTool === "videos" || activeTool === "summary" || activeTool === "detailed"
                       ? "2px"
                       : "12px",
                   flexShrink: 0,
@@ -2705,7 +2721,7 @@ export default function StudyTable() {
             )}
 
             <div
-              className={`st-mainview ${activeTool === "flashcards" || activeTool === "assessment" ? "st-mainview--flashcards" : ""}`}
+              className={`st-mainview ${activeTool === "flashcards" || activeTool === "revision_flashcards" ? "st-mainview--flashcards" : ""}`}
               style={{
                 flex: 1,
                 minHeight: 0,
@@ -2713,17 +2729,21 @@ export default function StudyTable() {
                 flexDirection: "column",
                 background:
                   activeTool === "flashcards" ||
+                    activeTool === "revision_flashcards" ||
                     activeTool === "assessment" ||
+                    activeTool === "ask" ||
                     activeTool === "videos"
                     ? "transparent"
                     : activeTool === "summary" || activeTool === "detailed"
                       ? "#FAF8F3"
                       : "#FAF8F3",
-                borderRadius: ["mocktest", "pre_final_test", "prep_exam", "videos"].includes(activeTool) ? "0px" : "16px",
+                borderRadius: ["mocktest", "pre_final_test", "prep_exam", "videos", "ask", "assessment"].includes(activeTool) ? "0px" : "16px",
                 border:
                   ["mocktest", "pre_final_test", "prep_exam", "videos"].includes(activeTool) ||
                     activeTool === "flashcards" ||
-                    activeTool === "assessment"
+                    activeTool === "revision_flashcards" ||
+                    activeTool === "assessment" ||
+                    activeTool === "ask"
                     ? "none"
                     : activeTool === "podcasts"
                       ? "none"
@@ -2733,30 +2753,27 @@ export default function StudyTable() {
                 overflowX: "hidden",
                 overflowY:
                   activeTool === "flashcards" ||
+                    activeTool === "revision_flashcards" ||
                     activeTool === "ask" ||
                     activeTool === "videos"
                     ? "hidden"
                     : "auto",
-                paddingTop: ["mocktest", "pre_final_test", "prep_exam"].includes(activeTool)
+                paddingTop: ["mocktest", "pre_final_test", "prep_exam", "ask", "assessment"].includes(activeTool)
                     ? "0px"
-                    : activeTool === "ask"
-                      ? "20px"
-                      : activeTool === "flashcards"
-                        ? "0px"
-                        : activeTool === "assessment"
-                          ? "18px"
-                          : activeTool === "podcasts"
-                            ? "16px"
-                            : activeTool === "deep_dive"
-                              ? "8px"
-                              : activeTool === "videos"
-                                ? "8px"
-                                : activeTool === "summary" || activeTool === "detailed"
-                                  ? "0px"
-                                  : "20px",
-                paddingRight: activeTool === "videos" ? "16px" : activeTool === "ask" ? "20px" : "16px",
-                paddingBottom: activeTool === "videos" ? "8px" : activeTool === "assessment" ? "24px" : "16px",
-                paddingLeft: activeTool === "videos" ? "16px" : activeTool === "ask" ? "20px" : "16px",
+                    : activeTool === "flashcards" || activeTool === "revision_flashcards"
+                      ? "0px"
+                      : activeTool === "podcasts"
+                        ? "16px"
+                        : activeTool === "deep_dive"
+                          ? "8px"
+                          : activeTool === "videos"
+                            ? "8px"
+                            : activeTool === "summary" || activeTool === "detailed"
+                              ? "0px"
+                              : "20px",
+                paddingRight: ["ask", "assessment", "mocktest", "pre_final_test", "prep_exam"].includes(activeTool) ? "0px" : activeTool === "videos" ? "16px" : "16px",
+                paddingBottom: ["ask", "assessment", "mocktest", "pre_final_test", "prep_exam"].includes(activeTool) ? "0px" : activeTool === "videos" ? "8px" : "16px",
+                paddingLeft: ["ask", "assessment", "mocktest", "pre_final_test", "prep_exam"].includes(activeTool) ? "0px" : activeTool === "videos" ? "16px" : "16px",
                 transition: "padding-top 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
               }}
             >
@@ -2890,15 +2907,15 @@ export default function StudyTable() {
         <aside
           className="ask-sidebar-drawer"
           style={{
-            width: "380px",
-            minWidth: "320px",
-            borderLeft: "1px solid var(--border, #E2E8F0)",
-            background: "var(--background, #fff)",
+            width: "410px",
+            minWidth: "340px",
+            borderLeft: "1px solid #EAE4D7",
+            background: "#FAF8F3",
             display: "flex",
             flexDirection: "column",
             height: "100%",
             zIndex: 50,
-            boxShadow: "-4px 0 16px rgba(0,0,0,0.06)",
+            boxShadow: "-6px 0 24px rgba(30, 40, 34, 0.08)",
             animation: "slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)",
           }}
         >
@@ -2913,37 +2930,51 @@ export default function StudyTable() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              padding: "16px 20px",
-              borderBottom: "1px solid var(--border, #E2E8F0)",
-              background: "var(--surface, #fafafa)",
+              padding: "14px 18px",
+              borderBottom: "1px solid #EAE4D7",
+              background: "#FAF8F3",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "1.3rem" }}>🤖</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "50%",
+                  background: "#FBF4EE",
+                  border: "1px solid #EBD5C3",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#BD7D52",
+                  fontSize: "14px",
+                  flexShrink: 0,
+                }}
+              >
+                ✦
+              </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 600, color: "var(--text, #333)" }}>
-                  AI Study Tutor
+                <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 800, color: "#1E2822" }}>
+                  Saral · 24/7 Learning Assistant
                 </h3>
-                <span style={{ fontSize: "0.75rem", color: "#666" }}>
-                  Ask questions about this chapter
-                </span>
               </div>
             </div>
             <button
               onClick={() => setIsAskOpen(false)}
               style={{
-                background: "none",
-                border: "none",
+                background: "#FFFFFF",
+                border: "1px solid #E5DFD2",
                 cursor: "pointer",
-                fontSize: "1.2rem",
-                color: "#666",
-                padding: "4px 8px",
-                borderRadius: "4px",
+                fontSize: "13px",
+                color: "#5C6660",
+                width: "28px",
+                height: "28px",
+                borderRadius: "8px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
-              title="Close Tutor"
+              title="Close Saral Assistant"
             >
               ✕
             </button>
@@ -2956,11 +2987,15 @@ export default function StudyTable() {
               difficulty={persona}
               className={className}
               subjectName={subjectName}
+              isCompactDrawer={true}
+              onNavigateTool={(tool) => {
+                setIsAskOpen(false);
+                setActiveTool(tool as any);
+              }}
             />
           </div>
         </aside>
       )}
-
     </div>
   );
 }

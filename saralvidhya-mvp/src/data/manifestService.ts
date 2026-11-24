@@ -927,6 +927,7 @@ export interface ChapterVideo {
   ytId: string;
   videoUrl?: string;
   thumbnailUrl?: string;
+  clipThumbnails?: string[];
   dir: string;
   topics?: string[];
   introEndTime?: number;

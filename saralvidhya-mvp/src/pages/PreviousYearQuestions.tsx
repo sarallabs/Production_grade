@@ -521,23 +521,11 @@ export function QuestionCard({
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
+                justifyContent: "flex-end",
                 alignItems: "center",
                 marginBottom: "12px",
               }}
             >
-              <span
-                style={{
-                  fontSize: "10.5px",
-                  fontWeight: 800,
-                  color: "#6E766E",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                MODEL ANSWER
-              </span>
-
               <div
                 style={{
                   display: "inline-flex",

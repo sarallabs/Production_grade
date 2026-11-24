@@ -141,7 +141,7 @@ export default function ChapterList() {
     if (!p.has("chapterNumber")) p.set("chapterNumber", "1");
     if (!p.has("tool")) p.set("tool", "videos");
     if (!p.has("sId") && sId) p.set("sId", sId);
-    navigate(`/study-table?${p.toString()}`, { replace: true });
+    navigate(`/watch?${p.toString()}`, { replace: true });
   }, [sId, searchParams, navigate]);
 
   // Trigger the book-open animation shortly after data loads
@@ -211,7 +211,7 @@ export default function ChapterList() {
       params.set('chapter', ch.number.toString());
       params.set('chapterName', toTitleCase(ch.name));
       params.set('tool', 'videos');
-      navigate(`/study-table?${params.toString()}`);
+      navigate(`/watch?${params.toString()}`);
     }, 800);
   };
 

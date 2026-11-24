@@ -7,7 +7,7 @@
  * chunked `window.speechSynthesis`).
  */
 
-import { CLOUD_API_BASE, MEDHA_TENANT_ID } from '@/data/manifestService';
+import { CLOUD_API_BASE, MOOCS_TENANT_ID } from '@/data/manifestService';
 
 const GOOGLE_API_KEY: string =
   (import.meta as any).env?.VITE_GOOGLE_API_KEY ??
@@ -139,10 +139,10 @@ let tokenRefreshPromise: Promise<string | null> | null = null;
 let lastTokenRefreshFailedAt = 0;
 const TOKEN_REFRESH_COOLDOWN_MS = 60_000;
 
-async function getOrRefreshMedhaToken(forceRefresh = false): Promise<string | null> {
+async function getOrRefreshMoocsToken(forceRefresh = false): Promise<string | null> {
   try {
     if (!forceRefresh) {
-      const existing = localStorage.getItem('sv_medha_token');
+      const existing = localStorage.getItem('sv_moocs_token');
       if (existing && existing.trim()) return existing.trim();
     }
     if (localStorage.getItem('app_authenticated') !== 'true') {
@@ -161,7 +161,7 @@ async function getOrRefreshMedhaToken(forceRefresh = false): Promise<string | nu
   tokenRefreshPromise = (async () => {
     try {
       const defaultPass = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Ekam@2026';
-      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}/login`, {
+      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password: defaultPass }),
@@ -174,7 +174,7 @@ async function getOrRefreshMedhaToken(forceRefresh = false): Promise<string | nu
       const data = await res.json();
       if (data?.token && typeof data.token === 'string') {
         try {
-          localStorage.setItem('sv_medha_token', data.token);
+          localStorage.setItem('sv_moocs_token', data.token);
         } catch {
           /* ignore storage quota */
         }
@@ -359,9 +359,9 @@ async function synthesizeChunk(
 
   // 1. Primary: Cloud Run v2 TTS endpoint (/v2/t/:tenant/ai/tts) with GCS + LRU caching
   try {
-    let token = await getOrRefreshMedhaToken();
+    let token = await getOrRefreshMoocsToken();
     if (token && !isStopped) {
-      let v2Res = await fetchWithTimeout(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}/ai/tts`, {
+      let v2Res = await fetchWithTimeout(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/ai/tts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -373,13 +373,13 @@ async function synthesizeChunk(
 
       if (v2Res.status === 401 && !isStopped) {
         try {
-          localStorage.removeItem('sv_medha_token');
+          localStorage.removeItem('sv_moocs_token');
         } catch {
           /* ignore */
         }
-        token = await getOrRefreshMedhaToken(true);
+        token = await getOrRefreshMoocsToken(true);
         if (token && !isStopped) {
-          v2Res = await fetchWithTimeout(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}/ai/tts`, {
+          v2Res = await fetchWithTimeout(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/ai/tts`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

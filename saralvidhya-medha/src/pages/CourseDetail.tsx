@@ -4,229 +4,44 @@ import { getCourseById, getManifest, getChapters, type Course, type Chapter } fr
 import { buildChapterUrl } from '@/utils/courseNavigation';
 import SiteHeader from '@/components/SiteHeader';
 
-interface UnitSyllabusDetail {
-  title: string;
-  objectives: string[];
-  outcome: string;
-}
-
-const syllabusUnits: Record<string, Record<number, UnitSyllabusDetail>> = {
-  management: {
-    1: {
-      title: 'Nature, Scope & Strategic Foundations of Marketing',
-      objectives: [
-        'Define core marketing constructs—needs, wants, demands, customer value, satisfaction, and relational exchange—within contemporary market structures.',
-        'Compare the five competing company orientations toward the marketplace: Production, Product, Selling, Marketing, and Holistic (Societal & Relationship) concepts.',
-        'Evaluate the distinctive characteristics of services (intangibility, inseparability, variability, perishability) and apply the extended 7Ps Services Marketing mix.',
-        'Analyze micro- and macro-environmental forces shaping marketing strategy, customer lifetime value (CLV), and customer acquisition economics.',
-        'Examine global marketing imperatives, international market-entry modes, and standardization versus adaptation decisions across borders.'
-      ],
-      outcome:
-        'Formulate market-oriented business philosophies and evaluate domestic, service, and international market opportunities using structured strategic frameworks.'
-    },
-    2: {
-      title: 'Marketing Intelligence, Research, Consumer Behaviour & STP',
-      objectives: [
-        'Design an enterprise Marketing Information System (MIS) integrating internal records, competitive marketing intelligence engines, and decision support systems (MDSS).',
-        'Execute the 6-step scientific Marketing Research process spanning problem definition, research design, sampling, instrumentation, field data collection, and analysis.',
-        'Evaluate cultural, social, personal, and psychological determinants of consumer behaviour alongside cognitive processing frameworks (Assael Matrix and 5-Stage Buyer Decision Journey).',
-        'Differentiate organizational (B2B) buying centers, procurement situations, and institutional vendor-evaluation criteria from B2C markets.',
-        'Apply the STP (Segmentation, Targeting, Positioning) framework to partition heterogeneous markets, assess segment attractiveness, and craft defensible value positioning.'
-      ],
-      outcome:
-        'Translate empirical market research and buyer behaviour insights into data-backed market segmentation, target selection, and competitive positioning strategies.'
-    },
-    3: {
-      title: 'Product Strategy, Brand Equity & New Product Development',
-      objectives: [
-        'Deconstruct market offerings across Kotler’s Five Product Levels (Core Benefit, Basic, Expected, Augmented, and Potential Product) and classify consumer and industrial goods.',
-        'Manage multi-line product portfolios across assortment width, length, depth, and consistency, including up-market/down-market line stretching and line-filling decisions.',
-        'Build and measure brand equity using Keller’s Customer-Based Brand Equity (CBBE) pyramid and Aaker’s brand identity dimensions, alongside line, brand, and co-branding extensions.',
-        'Guide offerings through the 8-stage New Product Development (NPD) pipeline—from idea generation and screening (mitigating GO/DROP errors) to concept testing, business ROI analysis, and commercialization.',
-        'Adapt strategic marketing mix priorities across Introduction, Growth, Maturity, and Decline stages of the Product Life Cycle (PLC).'
-      ],
-      outcome:
-        'Architect differentiated product assortments, manage brand equity portfolios, and govern new-product commercialization across the complete product life cycle.'
-    },
-    4: {
-      title: 'Pricing Strategies, Value Networks & Distribution Channels',
-      objectives: [
-        'Implement Kotler’s 6-Step Pricing Framework aligning survival, current profit, market-share penetration, market skimming, and product-quality leadership objectives.',
-        'Quantify demand schedules, price elasticity of demand, fixed/variable cost floors, and Experience Curve cost reductions to bound viable pricing corridors.',
-        'Select optimal pricing methodologies using the 3 Cs model (Cost-Plus/Markup, Target-Return, Perceived-Value, Value, and Going-Rate pricing).',
-        'Calibrate final price structures using psychological reference anchors, promotional/segmented price adjustments, geographical pricing, and international countertrade (barter, buyback, offset).',
-        'Design multi-tier marketing channels and value networks, managing wholesaling/retailing intermediaries, channel power, conflict resolution, and physical logistics.'
-      ],
-      outcome:
-        'Establish profitable, value-aligned pricing architectures and coordinate resilient multi-channel distribution networks from manufacturer to end customer.'
-    },
-    5: {
-      title: 'Integrated Marketing Communications, Sales Force & Strategic Control',
-      objectives: [
-        'Orchestrate the 8-element Integrated Marketing Communications (IMC) mix across macro communication models and consumer response hierarchies (AIDA and Hierarchy-of-Effects).',
-        'Plan and evaluate advertising campaigns using the 5 Ms framework—Mission, Money, Message creative strategy, Media (reach, frequency, impact), and Measurement.',
-        'Deploy targeted consumer, trade, and sales-force promotional incentives alongside high-credibility Public Relations (PR), events, and corporate crisis communications.',
-        'Structure and manage a consultative sales force across territory design, quota setting, compensation, and the 6-step Personal Selling process (prospecting with MAN criteria to follow-up).',
-        'Exercise strategic marketing control through annual-plan analysis, profitability diagnostics, efficiency tracking, and comprehensive marketing audits.'
-      ],
-      outcome:
-        'Integrate multi-channel brand communications with consultative sales execution and institute rigorous performance controls across the marketing organization.'
-    }
-  },
-  mp_ob: {
-    1: {
-      title: 'Introduction to Management Process & Organizational Behavior',
-      objectives: [
-        'Compare classical and modern definitions of management (Drucker, Weihrich & Koontz, McFarland, Keith Davis) alongside its dual identity as science, art, and profession.',
-        'Differentiate Top, Middle, and First-Line management hierarchies using Robert Katz’s three-skill pyramid (Conceptual, Human, Technical) and authority-responsibility dynamics.',
-        'Analyze Henry Mintzberg’s ten managerial roles across Interpersonal, Informational, and Decisional categories.',
-        'Trace the POSDC functional cycle and evaluate Corporate Social Responsibility (CSR) arguments and managerial ethics.'
-      ],
-      outcome:
-        'Synthesize classical principles, managerial skill profiles, executive roles, and ethical governance into a coherent management framework.'
-    },
-    2: {
-      title: 'Planning, Decision Making & Organizing',
-      objectives: [
-        'Formulate strategic, tactical, and operational plans across standing and single-use hierarchies using the systematic planning process.',
-        'Execute rational and bounded-rationality decision-making workflows and implement Peter Drucker’s Management by Objectives (MBO) cascade.',
-        'Design formal organizational structures, comparing narrow vs. wide spans of management using V.A. Graicunas’s mathematical relationship formula.',
-        'Balance centralization, decentralization, line-and-staff authority relationships, and effective delegation without abdicating accountability.'
-      ],
-      outcome:
-        'Translate organizational objectives into structured plans, rigorous executive decisions, and scalable authority architectures.'
-    },
-    3: {
-      title: 'Staffing, Directing, Leadership, Motivation & Controlling',
-      objectives: [
-        'Manage end-to-end human resource staffing—manpower planning, recruitment, selection, placement, training, appraisal, and career development.',
-        'Apply content and process motivation theories (Maslow, Herzberg Two-Factor, McClelland, Vroom Expectancy, and Porter–Lawler) to workplace performance.',
-        'Evaluate leadership styles across Rensis Likert’s Systems 1–4, Blake & Mouton’s (9, 9) Managerial Grid, and transformational vs. transactional paradigms.',
-        'Close the management loop through feedforward, concurrent, and feedback control systems, break-even analysis, ROI budgeting, and PERT/CPM.'
-      ],
-      outcome:
-        'Build high-capability teams, energize workforce performance through behavioral leadership, and govern execution using quantitative control tools.'
-    },
-    4: {
-      title: 'Organisational Behaviour, Perception & Personality',
-      objectives: [
-        'Examine the interdisciplinary foundations, socio-technical elements, and four core goals of Organisational Behaviour across Autocratic, Custodial, Supportive, and Collegial models.',
-        'Deconstruct the perceptual process—sensation, selection, organization (Gestalt principles), and interpretation—and mitigate attribution errors, halo effects, and stereotyping.',
-        'Assess biological, family, cultural, and situational determinants of personality alongside Big Five (OCEAN), MBTI, Type A/B, and locus-of-control traits.',
-        'Apply Albert Bandura’s social-cognitive and reciprocal determinism framework to workplace learning and self-efficacy.'
-      ],
-      outcome:
-        'Diagnose individual behavioral drivers, reduce perceptual bias in managerial judgments, and align personality strengths with organizational roles.'
-    },
-    5: {
-      title: 'Group Dynamics, Transactional Analysis & Organizational Change',
-      objectives: [
-        'Analyze Kurt Lewin’s group dynamics foundations, sociological group classifications, Homans’s interaction theory, Newcomb’s A-B-X balance model, and Tuckman’s five-stage team maturity cycle.',
-        'Diagnose interpersonal workplace communication using Eric Berne’s Parent–Adult–Child ego states, complementary vs. crossed/ulterior transactions, life positions, and the Johari Window.',
-        'Identify individual and organizational sources of resistance to planned change across structural, technological, and people dimensions.',
-        'Lead sustainable transformation using Kurt Lewin’s Unfreezing–Moving–Refreezing force-field model and targeted OD interventions.'
-      ],
-      outcome:
-        'Cultivate cohesive high-performing teams, foster Adult-to-Adult workplace communication, and guide organizations smoothly through strategic change.'
-    }
-  },
-  anu_physics: {
-    4: {
-      title: 'Advanced Quantum Mechanics — Radiation-Matter Interaction',
-      objectives: [
-        'Formulate the total Hamiltonian of a charged particle coupled to an electromagnetic field in the Coulomb gauge.',
-        'Quantize the electromagnetic radiation field into photon number states and interpret zero-point vacuum energy.',
-        'Derive transition rates for absorption, stimulated emission, and spontaneous emission using time-dependent perturbation theory.',
-        'Analyze Thomson, Rayleigh, and Compton photon-electron scattering cross-sections and selection rules.'
-      ],
-      outcome:
-        'Model quantized light-matter interactions, radiative transitions, and photon scattering phenomena analytically.'
-    },
-    5: {
-      title: 'Relativistic Quantum Mechanics — Klein-Gordon & Dirac Formalism',
-      objectives: [
-        'Derive the Klein-Gordon equation from the relativistic energy-momentum relation and evaluate its probability-density limitations.',
-        'Construct Dirac’s first-order relativistic wave equation, 4x4 alpha/beta gamma matrices, and four-component bispinor solutions.',
-        'Demonstrate positive-definite probability density, conserved four-current continuity, and Lorentz covariance in the Dirac theory.',
-        'Interpret intrinsic spin-1/2 angular momentum, magnetic moment, and negative-energy sea / antiparticle states.'
-      ],
-      outcome:
-        'Reconcile quantum mechanics with special relativity to solve spin-1/2 fermion dynamics and relativistic wave equations.'
-    }
-  },
-  ento_131: {
-    1: {
-      title: 'Insect Digestive & Excretory Physiology',
-      objectives: [
-        'Examine the structural anatomy and regional differentiation of the Foregut (Stomodeum), Midgut (Mesenteron), and Hindgut (Proctodeum).',
-        'Analyze specialized alimentary adaptations including the peritrophic membrane, filter chamber, and microbial endosymbiosis.',
-        'Explain nitrogenous waste excretion via Malpighian tubules and cryptonephridial rectal water conservation.'
-      ],
-      outcome:
-        'Relate insect alimentary and excretory physiology to feeding guild adaptations and pest management targets.'
-    },
-    2: {
-      title: 'Insect Development, Molting & Metamorphosis',
-      objectives: [
-        'Differentiate ametabolous, hemimetabolous, and holometabolous post-embryonic developmental pathways.',
-        'Trace endocrine regulation of ecdysis and metamorphosis mediated by PTTH, ecdysteroids, and juvenile hormone (JH).',
-        'Evaluate ecological niche partitioning between larval and adult life stages.'
-      ],
-      outcome:
-        'Diagnose developmental stages and hormonal checkpoints governing insect life cycles.'
-    }
-  },
-  entomology: {
-    1: {
-      title: 'Insect Digestive & Excretory Physiology',
-      objectives: [
-        'Examine the structural anatomy and regional differentiation of the Foregut, Midgut, and Hindgut.',
-        'Analyze specialized alimentary adaptations including the filter chamber and symbiotic digestion.',
-        'Explain nitrogenous waste excretion via Malpighian tubules and rectal water conservation.'
-      ],
-      outcome:
-        'Relate insect alimentary and excretory physiology to feeding guild adaptations.'
-    },
-    11: {
-      title: 'Insect Development, Molting & Metamorphosis',
-      objectives: [
-        'Differentiate ametabolous, hemimetabolous, and holometabolous post-embryonic life cycles.',
-        'Trace hormonal control mechanisms regulating insect molting and metamorphosis.',
-        'Evaluate ecological advantages of complex insect life cycles.'
-      ],
-      outcome:
-        'Diagnose developmental stages and hormonal checkpoints governing insect life cycles.'
-    }
-  }
-};
-
-const syllabusVideos: Record<string, Record<number, string>> = {
-  management: {
-    1: 'https://www.youtube.com/embed/SwcmRNZhlyo',
-    2: 'https://www.youtube.com/embed/SwcmRNZhlyo',
-    3: 'https://www.youtube.com/embed/SwcmRNZhlyo',
-    4: 'https://www.youtube.com/embed/SwcmRNZhlyo',
-    5: 'https://www.youtube.com/embed/SwcmRNZhlyo'
-  },
-  anu_physics: {
-    4: 'https://www.youtube.com/embed/wla3hcd1S68',
-    5: 'https://www.youtube.com/embed/wla3hcd1S68'
-  },
-  ento_131: {
-    1: 'https://www.youtube.com/embed/K6TcM8Q-V3w'
-  },
-  entomology: {
-    1: 'https://www.youtube.com/embed/K6TcM8Q-V3w'
-  }
-};
-
-function getCleanUnitTitle(ch: Chapter, idx: number, detail?: UnitSyllabusDetail): string {
-  if (detail?.title) return detail.title;
-  const raw = (ch.name || '').trim();
-  if (!raw || /^(unit|chapter)\s*[-–:]?\s*\d+$/i.test(raw)) {
+function getCleanUnitTitle(ch: Chapter, idx: number): string {
+  const preferred = (ch.title || ch.name || '').trim();
+  if (!preferred || /^(unit|chapter)\s*[-–:]?\s*\d+$/i.test(preferred)) {
     return `Unit ${idx + 1}`;
   }
-  return raw;
+  return preferred;
+}
+
+function toYoutubeEmbedUrl(raw?: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\/(?:www\.)?youtube\.com\/embed\/[A-Za-z0-9_-]{11}/i.test(trimmed)) {
+    return trimmed;
+  }
+  const m = trimmed.match(
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([A-Za-z0-9_-]{11})/,
+  );
+  if (m?.[1]) {
+    return `https://www.youtube.com/embed/${m[1]}`;
+  }
+  return trimmed;
+}
+
+function resolveUnitPreviewVideoUrl(ch?: Chapter): string {
+  if (!ch) return '';
+  if (ch.previewVideoUrl && ch.previewVideoUrl.trim()) {
+    return toYoutubeEmbedUrl(ch.previewVideoUrl);
+  }
+  const firstVideo = ch.videos?.find((v) => v?.ytId || (v as any)?.videoUrl || (v as any)?.url);
+  if (firstVideo?.ytId) {
+    return `https://www.youtube.com/embed/${firstVideo.ytId}`;
+  }
+  const rawUrl = (firstVideo as any)?.videoUrl || (firstVideo as any)?.url;
+  if (rawUrl) {
+    return toYoutubeEmbedUrl(rawUrl);
+  }
+  return '';
 }
 
 export default function CourseDetail() {
@@ -246,7 +61,7 @@ export default function CourseDetail() {
       .then(([courseData, manifestData]) => {
         if (courseData) {
           setCourse(courseData);
-          const syllabus = getChapters(manifestData, courseId);
+          const syllabus = getChapters(manifestData, courseData.id);
           setChapters(syllabus);
           if (syllabus.length > 0) {
             const requestedUnit = Number(searchParams.get('unit'));
@@ -311,19 +126,44 @@ export default function CourseDetail() {
   }
 
   const { name, className, chapterCount, meta } = course;
-  const { subtitle, description, discipline, instructor, durationHours, credits, language } = meta;
+  const {
+    subtitle,
+    discipline,
+    instructor,
+    durationHours,
+    hoursPerWeek,
+    credits,
+    language,
+    code,
+    regulation,
+    semester,
+    structureCode,
+    structureLabel,
+    evaluation,
+    courseOutcomes,
+    prerequisites,
+    textbooks,
+  } = meta;
   const unitCount = chapters.length || chapterCount || 0;
   const hours = durationHours || (unitCount ? unitCount * 4 : 30);
-  const creditCount = credits || 3;
+  const creditCount = credits ?? 3;
+  const formattedCode = code ? (regulation ? `${code} (${regulation})` : code) : undefined;
+  const structureText =
+    structureLabel && structureCode
+      ? `${structureLabel} (${structureCode})`
+      : structureLabel || structureCode;
 
   const activeChapterIndex = chapters.findIndex((ch) => `unit-${ch.number}` === activeSection);
   const resolvedIndex = activeChapterIndex !== -1 ? activeChapterIndex : 0;
   const activeChapter = chapters[resolvedIndex];
-  const unitDetail = activeChapter ? syllabusUnits[course.id]?.[activeChapter.number] : undefined;
-  const unitTitle = activeChapter ? getCleanUnitTitle(activeChapter, resolvedIndex, unitDetail) : '';
-  const videoUrl = activeChapter
-    ? syllabusVideos[course.id]?.[activeChapter.number] || 'https://www.youtube.com/embed/SwcmRNZhlyo'
-    : '';
+  const unitTitle = activeChapter ? getCleanUnitTitle(activeChapter, resolvedIndex) : '';
+  const unitObjectives = activeChapter?.objectives || [];
+  const unitOutcome = activeChapter?.outcome;
+  const videoUrl = resolveUnitPreviewVideoUrl(activeChapter);
+
+  const evalTotal = evaluation?.totalMarks || (evaluation ? evaluation.internalMarks + evaluation.externalMarks : 0);
+  const internalPct = evalTotal > 0 && evaluation ? Math.round((evaluation.internalMarks / evalTotal) * 100) : 0;
+  const externalPct = evalTotal > 0 && evaluation ? 100 - internalPct : 0;
 
   return (
     <div className="sv-catalog sv-catalog--detail">
@@ -334,8 +174,21 @@ export default function CourseDetail() {
         <div className="sv-detail-header-inner">
           <div className="sv-detail-header-top">
             <div className="sv-detail-title-block">
+              {(formattedCode || structureText) && (
+                <div className="sv-detail-academic-chips">
+                  {formattedCode && <span className="sv-course-code-badge">{formattedCode}</span>}
+                  {semester && <span className="sv-course-meta-tag">{semester}</span>}
+                  {structureText && (
+                    <span className="sv-course-meta-tag sv-course-meta-tag--structure">
+                      {structureText}
+                    </span>
+                  )}
+                </div>
+              )}
               <div className="sv-detail-eyebrow">
-                {[className, discipline, instructor?.name].filter(Boolean).join(' · ')}
+                {[className, !formattedCode ? semester : undefined, discipline, instructor?.name]
+                  .filter(Boolean)
+                  .join(' · ')}
               </div>
               <h1 className="sv-detail-title">{name}</h1>
               {subtitle && <p className="sv-detail-subtitle">{subtitle}</p>}
@@ -347,14 +200,27 @@ export default function CourseDetail() {
                   <dt>Units</dt>
                   <dd>{unitCount}</dd>
                 </div>
-                <div className="sv-detail-metric">
-                  <dt>Duration</dt>
-                  <dd>{hours}h</dd>
-                </div>
+                {hoursPerWeek ? (
+                  <div className="sv-detail-metric">
+                    <dt>HPW</dt>
+                    <dd>{hoursPerWeek} hrs/wk</dd>
+                  </div>
+                ) : (
+                  <div className="sv-detail-metric">
+                    <dt>Duration</dt>
+                    <dd>{hours}h</dd>
+                  </div>
+                )}
                 <div className="sv-detail-metric">
                   <dt>Credits</dt>
                   <dd>{creditCount}</dd>
                 </div>
+                {evaluation && (
+                  <div className="sv-detail-metric">
+                    <dt>Max Marks</dt>
+                    <dd>{evalTotal}</dd>
+                  </div>
+                )}
                 <div className="sv-detail-metric">
                   <dt>Language</dt>
                   <dd>{language || 'English'}</dd>
@@ -424,10 +290,69 @@ export default function CourseDetail() {
                 </div>
 
                 <div className="sv-detail-course-brief">
-                  {description && (
+                  {evaluation && evalTotal > 0 && (
+                    <div className="sv-detail-eval-card">
+                      <div className="sv-detail-eval-header">
+                        <h2 className="sv-detail-label">
+                          Evaluation Scheme{regulation ? ` (${regulation})` : ''}
+                        </h2>
+                        <span className="sv-detail-eval-total">
+                          Max. Marks: {evalTotal}
+                        </span>
+                      </div>
+                      <div className="sv-detail-eval-bar" aria-hidden="true">
+                        <div
+                          className="sv-detail-eval-seg--ie"
+                          style={{ width: `${internalPct}%` }}
+                        />
+                        <div
+                          className="sv-detail-eval-seg--see"
+                          style={{ width: `${externalPct}%` }}
+                        />
+                      </div>
+                      <div className="sv-detail-eval-legend">
+                        <span className="sv-detail-eval-legend-item">
+                          <span className="sv-detail-eval-dot sv-detail-eval-dot--ie" />
+                          <strong>{evaluation.internalLabel || 'IE'}:</strong> {evaluation.internalMarks} Marks
+                        </span>
+                        <span className="sv-detail-eval-legend-item">
+                          <span className="sv-detail-eval-dot sv-detail-eval-dot--see" />
+                          <strong>{evaluation.externalLabel || 'SEE'}:</strong> {evaluation.externalMarks} Marks
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {courseOutcomes && courseOutcomes.length > 0 && (
                     <div className="sv-detail-brief-block">
-                      <h2 className="sv-detail-label">About This Course</h2>
-                      <p className="sv-detail-brief-text">{description}</p>
+                      <h2 className="sv-detail-label">Course Outcomes</h2>
+                      <ul className="sv-detail-extra-list">
+                        {courseOutcomes.map((co, idx) => (
+                          <li key={idx}>{co}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {prerequisites && prerequisites.length > 0 && (
+                    <div className="sv-detail-brief-block">
+                      <h2 className="sv-detail-label">Prerequisites</h2>
+                      <ul className="sv-detail-extra-list">
+                        {prerequisites.map((pre, idx) => (
+                          <li key={idx}>{pre}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {textbooks && textbooks.length > 0 && (
+                    <div className="sv-detail-brief-block">
+                      <h2 className="sv-detail-label">Recommended References</h2>
+                      <ul className="sv-detail-extra-list">
+                        {textbooks.map((book, idx) => (
+                          <li key={idx}>{book}</li>
+                        ))}
+                      </ul>
                     </div>
                   )}
 
@@ -437,6 +362,7 @@ export default function CourseDetail() {
                       <div className="sv-detail-faculty-meta">
                         <strong>{instructor.name}</strong>
                         {instructor.title && <span>{instructor.title}</span>}
+                        {instructor.department && <span>{instructor.department}</span>}
                       </div>
                     </div>
                   )}
@@ -452,9 +378,9 @@ export default function CourseDetail() {
 
                 <div className="sv-detail-objectives-block">
                   <h3 className="sv-detail-label">Unit Objectives</h3>
-                  {unitDetail && unitDetail.objectives.length > 0 ? (
+                  {unitObjectives.length > 0 ? (
                     <ul className="sv-detail-objectives-list">
-                      {unitDetail.objectives.map((obj, idx) => (
+                      {unitObjectives.map((obj, idx) => (
                         <li key={idx}>{obj}</li>
                       ))}
                     </ul>
@@ -465,10 +391,10 @@ export default function CourseDetail() {
                   )}
                 </div>
 
-                {unitDetail?.outcome && (
+                {unitOutcome && (
                   <div className="sv-detail-outcome-box">
                     <span className="sv-detail-label">Learning Outcome</span>
-                    <p>{unitDetail.outcome}</p>
+                    <p>{unitOutcome}</p>
                   </div>
                 )}
 

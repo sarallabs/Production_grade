@@ -10,7 +10,7 @@ export interface NavigationCourseInput {
   className: string;
 }
 
-export interface MedhaStudySession {
+export interface MoocsStudySession {
   boardId: string;
   boardName: string;
   cId: string;
@@ -25,20 +25,58 @@ export interface MedhaStudySession {
   tool: string;
 }
 
-const STUDY_SESSION_KEY = 'sv_medha_study_session';
+export const TOOL_ID_TO_SLUG: Record<string, string> = {
+  videos: 'watch',
+  summary: 'essentials',
+  detailed: 'in-depth',
+  flashcards: 'flashcards',
+  assessment: 'assessments',
+  revision_flashcards: 'revise',
+  mocktest: 'mock-test',
+  prep_exam: 'exam-prep',
+  pre_final_test: 'certification-exam',
+  ask: 'ask',
+  mindmap: 'mindmap',
+  podcasts: 'podcasts',
+  pyq: 'pyq',
+  qbank: 'question-bank',
+  deep_dive: 'deep-dive',
+};
 
-export function getMedhaStudySession(): Partial<MedhaStudySession> {
+export const SLUG_TO_TOOL_ID: Record<string, string> = Object.fromEntries(
+  Object.entries(TOOL_ID_TO_SLUG).map(([toolId, slug]) => [slug, toolId]),
+);
+
+export function getPathForTool(toolId?: string | null): string {
+  const slug = (toolId && TOOL_ID_TO_SLUG[toolId]) || 'watch';
+  return `/${slug}`;
+}
+
+export function getToolFromPath(pathname: string): string | null {
+  const slug = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!slug) return null;
+  return SLUG_TO_TOOL_ID[slug] || null;
+}
+
+const STUDY_SESSION_KEY = 'sv_moocs_study_session';
+const LEGACY_STUDY_SESSION_KEY = 'sv_medha_study_session';
+
+export function getMoocsStudySession(): Partial<MoocsStudySession> {
   try {
-    const raw = sessionStorage.getItem(STUDY_SESSION_KEY) || localStorage.getItem(STUDY_SESSION_KEY);
+    const raw =
+      sessionStorage.getItem(STUDY_SESSION_KEY) ||
+      localStorage.getItem(STUDY_SESSION_KEY) ||
+      sessionStorage.getItem(LEGACY_STUDY_SESSION_KEY) ||
+      localStorage.getItem(LEGACY_STUDY_SESSION_KEY);
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
   }
 }
 
-export function updateMedhaStudySession(patch: Partial<MedhaStudySession>): void {
+export function updateMoocsStudySession(patch: Partial<MoocsStudySession>): void {
   try {
-    const current = getMedhaStudySession();
+    const current = getMoocsStudySession();
     const next = { ...current, ...patch };
     const serialized = JSON.stringify(next);
     sessionStorage.setItem(STUDY_SESSION_KEY, serialized);
@@ -82,7 +120,7 @@ export function buildChapterUrl(course: NavigationCourseInput, chapterNumber: nu
     setStudentPersona(username, userPersona);
   }
 
-  updateMedhaStudySession({
+  updateMoocsStudySession({
     boardId: course.boardId,
     boardName: boardShortName,
     cId,
@@ -95,5 +133,5 @@ export function buildChapterUrl(course: NavigationCourseInput, chapterNumber: nu
     tool: 'videos',
   });
 
-  return '/study-table';
+  return getPathForTool('videos');
 }

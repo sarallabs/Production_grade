@@ -19,10 +19,10 @@
 .quiz-card {
   padding: 20px 28px 16px 28px;
   margin-bottom: 0;
-  border-radius: 28px;
-  background: #FAFBF9;
-  border: 1.5px solid #2D3E36;
-  box-shadow: 0 8px 30px rgba(45, 62, 54, 0.06);
+  border-radius: 20px;
+  background: #FFFFFF;
+  border: 1px solid #E6E0D4;
+  box-shadow: 0 4px 20px rgba(30, 40, 34, 0.04);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;

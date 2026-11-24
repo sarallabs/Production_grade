@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { loadCredentials } from "@/utils/credentialsStore";
-import { CLOUD_API_BASE, MEDHA_TENANT_ID, hydrateMedhaCloudConfig } from "@/data/manifestService";
+import { CLOUD_API_BASE, MOOCS_TENANT_ID, hydrateMoocsCloudConfig } from "@/data/manifestService";
 import branding from "@/config/branding.json";
 import "./Login.css";
 
@@ -22,7 +22,7 @@ function Login() {
 
   useEffect(() => {
     // Warm up the DB-driven catalog, manifest, and fileIndex while the user is on the Login screen
-    hydrateMedhaCloudConfig();
+    hydrateMoocsCloudConfig();
 
     const profileCompleted = !!localStorage.getItem("saral_student_profile");
     const questionnaireCompleted = localStorage.getItem("questionnaire_completed") === "true";
@@ -31,18 +31,19 @@ function Login() {
       localStorage.removeItem("sv_login_verified");
       localStorage.removeItem("app_role");
       localStorage.removeItem("username");
+      sessionStorage.removeItem("sv_moocs_session_v4");
       sessionStorage.removeItem("sv_medha_session_v4");
     }
   }, []);
 
   const completeLoginSession = (displayName: string, token?: string) => {
-    sessionStorage.setItem("sv_medha_session_v4", "true");
+    sessionStorage.setItem("sv_moocs_session_v4", "true");
     localStorage.setItem("app_authenticated", "true");
     localStorage.setItem("sv_login_verified", "true");
     localStorage.setItem("app_role", "student");
     localStorage.setItem("username", displayName);
     if (token) {
-      localStorage.setItem("sv_medha_token", token);
+      localStorage.setItem("sv_moocs_token", token);
     }
 
     localStorage.setItem(
@@ -79,15 +80,15 @@ function Login() {
       trimmed === defaultPass ||
       trimmed.toLowerCase() === "anu@2026" ||
       trimmed.toLowerCase() === "ekam@2026" ||
-      trimmed.toLowerCase() === "medha@2026";
+      trimmed.toLowerCase() === "moocs@2026";
 
     const match = creds.find(
       (c) => c.role === "student" && (c.password === trimmed || isDirectMatch)
     );
 
-    // 2. Authenticate against Cloud Run DB (`POST /v2/t/medha/login`)
+    // 2. Authenticate against Cloud Run DB (`POST /v2/t/:tenant/login`)
     try {
-      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}/login`, {
+      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password: isDirectMatch ? defaultPass : trimmed }),
@@ -125,9 +126,9 @@ function Login() {
 
         {/* RIGHT SIDE: Pine Deep Card + Floating ANU Logo + Feature Pills */}
         <div className="sv-login-right">
-          <div className="sv-login-card-shell">
+          <div className="sv-login-card-shell sv-login-card-shell--anu">
             {/* ANU Logo Medallion upside the card */}
-            <div className="sv-college-logo-badge" title={branding.appName}>
+            <div className="sv-college-logo-badge sv-college-logo-badge--anu" title={branding.appName}>
               <img
                 src={anuLogo}
                 alt={branding.appName}

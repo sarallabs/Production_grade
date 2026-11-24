@@ -126,11 +126,19 @@ export interface TenantAuth {
   updatedAt: string;
 }
 
+export interface VideoTimestampSegment {
+  title: string;
+  startSec: number;
+  endSec?: number;
+}
+
 export interface VideoManifestItem {
   id: string;
   title: string;
   provider?: 'youtube' | 'gcs' | 'external';
   videoId?: string;
+  ytId?: string;
+  dir?: string;
   gcsPath?: string | null;
   url?: string;
   videoUrl?: string;
@@ -139,7 +147,16 @@ export interface VideoManifestItem {
   duration?: string;
   durationSeconds?: number;
   topics?: string[];
+  timestamps?: VideoTimestampSegment[];
   order?: number;
+}
+
+export interface EvaluationScheme {
+  internalMarks: number;
+  externalMarks: number;
+  totalMarks: number;
+  internalLabel?: string;
+  externalLabel?: string;
 }
 
 export interface CatalogChapterSummary {
@@ -148,6 +165,12 @@ export interface CatalogChapterSummary {
   title: string;
   shortTitle?: string;
   description?: string;
+  objectives?: string[];
+  outcome?: string;
+  previewVideoUrl?: string;
+  dir?: string;
+  completed?: string[];
+  resourceCount?: number;
   estimatedMinutes?: number;
   status?: string;
   heroImageBlob?: string;
@@ -155,6 +178,7 @@ export interface CatalogChapterSummary {
   thumbnailUrl?: string;
   topics?: any[];
   topicCount: number;
+  videos?: VideoManifestItem[];
   videoCount: number;
   tools?: Record<string, any>;
 }
@@ -162,15 +186,42 @@ export interface CatalogChapterSummary {
 export interface SubjectItem {
   id: string;
   name: string;
+  officialTitle?: string;
   code?: string;
+  regulation?: string;
+  semester?: string;
+  structureCode?: string;
+  structureLabel?: string;
+  boardId?: string;
+  boardName?: string;
+  boardShortName?: string;
+  programId?: string;
+  programName?: string;
+  classId?: string;
+  className?: string;
+  discipline?: string;
+  level?: 'beginner' | 'intermediate' | 'advanced';
   subtitle?: string;
   programLabel?: string;
   description?: string;
   credits?: number;
+  hoursPerWeek?: number;
+  durationHours?: number;
+  evaluation?: EvaluationScheme;
+  language?: string;
+  courseOutcomes?: string[];
+  prerequisites?: string[];
+  textbooks?: string[];
+  tags?: string[];
+  aliases?: string[];
+  path?: string;
+  enrolled?: number;
+  featured?: boolean;
   parentNodeId?: string | null;
   iconBlob?: string;
   iconUrl?: string;
   bannerUrl?: string;
+  thumbnail?: string;
   assets?: {
     icon?: string;
     iconUrl?: string;
@@ -188,8 +239,15 @@ export interface SubjectItem {
   faculty?: {
     name?: string;
     title?: string;
+    department?: string;
     avatarBlob?: string;
     avatarUrl?: string;
+  };
+  instructor?: {
+    name?: string;
+    title?: string;
+    department?: string;
+    avatar?: string;
   };
   units?: string[];
   order: number;
@@ -204,6 +262,12 @@ export interface ChapterItem {
   title: string;
   shortTitle?: string;
   description?: string;
+  objectives?: string[];
+  outcome?: string;
+  previewVideoUrl?: string;
+  dir?: string;
+  completed?: string[];
+  resourceCount?: number;
   estimatedMinutes?: number;
   heroImageBlob?: string;
   heroImageUrl?: string;
@@ -425,6 +489,14 @@ export async function getCatalog(tenantId: string): Promise<{
               title: cd.title || cid,
               shortTitle: cd.shortTitle || cd.title || cid,
               description: cd.description,
+              objectives: Array.isArray(cd.objectives) ? cd.objectives : undefined,
+              outcome: typeof cd.outcome === 'string' ? cd.outcome : undefined,
+              previewVideoUrl:
+                typeof cd.previewVideoUrl === 'string' ? cd.previewVideoUrl : undefined,
+              dir: typeof cd.dir === 'string' ? cd.dir : undefined,
+              completed: Array.isArray(cd.completed) ? cd.completed : undefined,
+              resourceCount:
+                typeof cd.resourceCount === 'number' ? cd.resourceCount : undefined,
               estimatedMinutes,
               status: cd.status || 'published',
               heroImageBlob: heroRef,
@@ -432,29 +504,47 @@ export async function getCatalog(tenantId: string): Promise<{
               thumbnailUrl: thumbnailUrl || heroImageUrl,
               topics,
               topicCount: topics.length,
+              videos: videos.length > 0 ? videos : undefined,
               videoCount: videos.length,
               tools: cd.tools || {},
             };
           })
         );
 
+        const rawFaculty = sdata.faculty || sdata.instructor;
         const iconRef = normalizeAssetPath(sid, sdata.assets?.icon || sdata.iconBlob);
         const bannerRef = normalizeAssetPath(sid, sdata.assets?.banner);
-        const thumbRef = normalizeAssetPath(sid, sdata.assets?.thumbnail);
-        const facultyAvatarRef = normalizeAssetPath(sid, sdata.faculty?.avatarBlob);
+        const rawThumbAsset = sdata.assets?.thumbnail;
+        const thumbRef =
+          typeof rawThumbAsset === 'string' && !rawThumbAsset.startsWith('/')
+            ? normalizeAssetPath(sid, rawThumbAsset)
+            : undefined;
+        const facultyAvatarRef = normalizeAssetPath(
+          sid,
+          rawFaculty?.avatarBlob || rawFaculty?.avatar
+        );
 
-        const [iconUrl, bannerUrl, thumbnailUrl, avatarUrl] = await Promise.all([
+        const [iconUrl, bannerUrl, signedThumbUrl, avatarUrl] = await Promise.all([
           resolveStorageAssetUrl(livePrefix, iconRef, 60),
           resolveStorageAssetUrl(livePrefix, bannerRef, 60),
           resolveStorageAssetUrl(livePrefix, thumbRef, 60),
           resolveStorageAssetUrl(livePrefix, facultyAvatarRef, 60),
         ]);
 
+        const resolvedThumbnailUrl =
+          signedThumbUrl ||
+          (typeof rawThumbAsset === 'string' && rawThumbAsset.startsWith('/')
+            ? rawThumbAsset
+            : undefined) ||
+          (typeof sdata.thumbnail === 'string' ? sdata.thumbnail : undefined);
+
         return {
           id: sid,
           ...(sdata as Omit<SubjectItem, 'id'>),
           subtitle: sdata.subtitle || sdata.programLabel || tenant?.branding?.programLabel,
           programLabel: sdata.programLabel || sdata.subtitle || tenant?.branding?.programLabel,
+          programId: sdata.programId || sdata.classId,
+          programName: sdata.programName || sdata.className,
           iconBlob: iconRef,
           iconUrl,
           bannerUrl,
@@ -462,12 +552,12 @@ export async function getCatalog(tenantId: string): Promise<{
             ...(sdata.assets || {}),
             iconUrl,
             bannerUrl,
-            thumbnailUrl,
+            thumbnailUrl: resolvedThumbnailUrl,
           },
-          faculty: sdata.faculty
+          faculty: rawFaculty
             ? {
-                ...sdata.faculty,
-                avatarUrl,
+                ...rawFaculty,
+                avatarUrl: avatarUrl || rawFaculty.avatarUrl || rawFaculty.avatar || undefined,
               }
             : undefined,
           chapters,
@@ -789,16 +879,44 @@ export async function approvePublishRequest(
       if (meta.name) doc.name = meta.name;
       else if (!exists) doc.name = sid;
       for (const k of [
+        'officialTitle',
         'code',
+        'regulation',
+        'semester',
+        'structureCode',
+        'structureLabel',
+        'boardId',
+        'boardName',
+        'boardShortName',
+        'programId',
+        'programName',
+        'classId',
+        'className',
+        'discipline',
+        'level',
         'subtitle',
         'programLabel',
         'description',
         'credits',
+        'hoursPerWeek',
+        'durationHours',
+        'evaluation',
+        'language',
+        'courseOutcomes',
+        'prerequisites',
+        'textbooks',
+        'tags',
+        'aliases',
+        'path',
+        'enrolled',
+        'featured',
+        'thumbnail',
         'parentNodeId',
         'order',
         'status',
         'cardStyle',
         'faculty',
+        'instructor',
         'units',
       ]) {
         if (meta[k] !== undefined) doc[k] = meta[k];
@@ -840,11 +958,16 @@ export async function approvePublishRequest(
       else if (!chSnap.exists) chDoc.title = group.chapterId;
       if (meta.shortTitle !== undefined) chDoc.shortTitle = meta.shortTitle;
       if (meta.description !== undefined) chDoc.description = meta.description;
+      if (Array.isArray(meta.objectives)) chDoc.objectives = meta.objectives;
+      if (meta.outcome !== undefined) chDoc.outcome = meta.outcome;
+      if (meta.previewVideoUrl !== undefined) chDoc.previewVideoUrl = meta.previewVideoUrl;
+      if (meta.dir !== undefined) chDoc.dir = meta.dir;
+      if (Array.isArray(meta.completed)) chDoc.completed = meta.completed;
+      if (meta.resourceCount !== undefined) chDoc.resourceCount = meta.resourceCount;
       if (meta.estimatedMinutes !== undefined) chDoc.estimatedMinutes = meta.estimatedMinutes;
       if (meta.number !== undefined) chDoc.number = meta.number;
       else if (!chSnap.exists) chDoc.number = numMatch ? parseInt(numMatch[1], 10) : 0;
       if (meta.topics) chDoc.topics = meta.topics;
-
       if (meta.heroImageBlob || meta.assets?.heroImage) {
         chDoc.heroImageBlob = normalizeAssetPath(
           chScope,

@@ -127,6 +127,9 @@ async function main() {
   const passwordHash = bcrypt.hashSync(defaultPassword, 10);
 
   for (const tid of ['medha', 'anu']) {
+    const existingTenantDoc = await getDoc(`tenants/${tid}`, token);
+    const existingTenant = existingTenantDoc ? fromFirestoreDoc(existingTenantDoc) : {};
+    const existingAuth = existingTenant.auth?.passwordHash ? existingTenant.auth : null;
     console.log(`Writing tenants/${tid}...`);
     await writeDoc(
       `tenants/${tid}`,
@@ -181,6 +184,13 @@ async function main() {
           'saralvidhya-medha.firebaseapp.com',
         ],
         uiCopy: {
+          moocsPortal: {
+            catalog,
+            manifest: safeManifest,
+            courses: coursesJson.courses || {},
+            fileIndex: compactFileIndex,
+            updatedAt: now,
+          },
           medhaPortal: {
             catalog,
             manifest: safeManifest,
@@ -189,7 +199,7 @@ async function main() {
             updatedAt: now,
           },
         },
-        auth: {
+        auth: existingAuth || {
           passwordHash,
           sessionVersion: 1,
           updatedAt: now,
@@ -202,24 +212,50 @@ async function main() {
     // Register subjects and chapters under tenants/{tid}/subjects/*
     for (const [idx, sub] of (manifest.subjects || []).entries()) {
       const meta = (coursesJson.courses || {})[sub.id] || {};
+      const faculty = meta.faculty || meta.instructor || {};
+      const unitMap = meta.units || {};
       console.log(`Writing tenants/${tid}/subjects/${sub.id}...`);
       await writeDoc(
         `tenants/${tid}/subjects/${sub.id}`,
         toFirestoreFields({
           id: sub.id,
           name: sub.name,
+          officialTitle: meta.officialTitle,
+          code: meta.code,
+          regulation: meta.regulation,
+          semester: meta.semester,
+          structureCode: meta.structureCode,
+          structureLabel: meta.structureLabel,
           path: sub.path,
           boardId: sub.boardId || 'anu_university',
           boardName: sub.boardName || 'Acharya Nagarjuna University',
+          boardShortName: 'ANU',
+          programId: sub.classId || 'mba',
+          programName: sub.className || 'MBA',
           classId: sub.classId || 'mba',
           className: sub.className || 'MBA',
           subtitle: meta.subtitle || `Learn about ${sub.name}`,
           description: meta.description || '',
           discipline: meta.discipline || 'General',
-          credits: meta.credits || 3,
-          durationHours: meta.durationHours || 30,
-          instructor: meta.instructor || {},
-          order: idx + 1,
+          level: meta.level || 'intermediate',
+          credits: meta.credits ?? 3,
+          hoursPerWeek: meta.hoursPerWeek,
+          durationHours: meta.durationHours ?? 30,
+          evaluation: meta.evaluation,
+          language: meta.language || 'English',
+          courseOutcomes: meta.courseOutcomes,
+          prerequisites: meta.prerequisites,
+          textbooks: meta.textbooks,
+          tags: meta.tags || [],
+          aliases: meta.aliases || [],
+          thumbnail: meta.thumbnail,
+          assets: meta.thumbnail ? { thumbnail: meta.thumbnail } : undefined,
+          cardStyle: meta.accent ? { gradient: meta.accent } : undefined,
+          faculty,
+          instructor: faculty,
+          enrolled: meta.enrolled ?? 0,
+          featured: meta.featured ?? true,
+          order: meta.order ?? idx + 1,
           status: 'active',
           updatedAt: now,
         }),
@@ -228,13 +264,19 @@ async function main() {
 
       for (const ch of sub.chapters || []) {
         const cid = `chapter_${String(ch.number).padStart(2, '0')}`;
+        const uMeta = unitMap[String(ch.number)] || {};
         await writeDoc(
           `tenants/${tid}/subjects/${sub.id}/chapters/${cid}`,
           toFirestoreFields({
             id: cid,
             number: ch.number,
-            title: ch.name || `Chapter ${ch.number}`,
+            title: uMeta.title || ch.name || `Chapter ${ch.number}`,
             shortTitle: ch.name || `Chapter ${ch.number}`,
+            description: uMeta.description,
+            objectives: Array.isArray(uMeta.objectives) ? uMeta.objectives : undefined,
+            outcome: uMeta.outcome,
+            previewVideoUrl: uMeta.previewVideoUrl,
+            videos: Array.isArray(uMeta.videos) ? uMeta.videos : undefined,
             dir: ch.dir,
             completed: ch.completed || [],
             resourceCount: ch.resourceCount || 0,
@@ -242,6 +284,19 @@ async function main() {
             currentVersion: 1,
             updatedAt: now,
           }),
+          token
+        );
+      }
+    }
+
+    // Archive deprecated subjects in Firestore instead of relying on hardcoded client ignore lists
+    for (const archivedId of ['anu_characterization']) {
+      const existing = await getDoc(`tenants/${tid}/subjects/${archivedId}`, token);
+      if (existing) {
+        console.log(`Archiving tenants/${tid}/subjects/${archivedId}...`);
+        await writeDoc(
+          `tenants/${tid}/subjects/${archivedId}`,
+          toFirestoreFields({ status: 'archived', updatedAt: now }),
           token
         );
       }

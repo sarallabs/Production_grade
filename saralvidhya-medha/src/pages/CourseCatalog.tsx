@@ -3,6 +3,7 @@ import {
   getCourses,
   getManifest,
   getChapters,
+  getSubjectDisplayOrder,
   type Course,
   type Chapter,
 } from '@/data/contentRepository';
@@ -18,6 +19,8 @@ export default function CourseCatalog() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProgrammes, setSelectedProgrammes] = useState<string[]>([]);
   const [selectedDisciplines, setSelectedDisciplines] = useState<string[]>([]);
+  const [selectedSemesters, setSelectedSemesters] = useState<string[]>([]);
+  const [selectedStructures, setSelectedStructures] = useState<string[]>([]);
 
   // Toggle filter drawer on mobile
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -51,9 +54,20 @@ export default function CourseCatalog() {
         seen.add(c.name);
         results.push({ text: c.name, category: 'Course' });
       }
+      if (c.meta.code) {
+        const fullCode = c.meta.regulation ? `${c.meta.code} (${c.meta.regulation})` : c.meta.code;
+        if (fullCode.toLowerCase().includes(q) && !seen.has(fullCode)) {
+          seen.add(fullCode);
+          results.push({ text: fullCode, category: 'Code' });
+        }
+      }
       if (c.meta.discipline && c.meta.discipline.toLowerCase().includes(q) && !seen.has(c.meta.discipline)) {
         seen.add(c.meta.discipline);
         results.push({ text: c.meta.discipline, category: 'Discipline' });
+      }
+      if (c.meta.semester && c.meta.semester.toLowerCase().includes(q) && !seen.has(c.meta.semester)) {
+        seen.add(c.meta.semester);
+        results.push({ text: c.meta.semester, category: 'Semester' });
       }
       if (c.className && c.className.toLowerCase().includes(q) && !seen.has(c.className)) {
         seen.add(c.className);
@@ -80,6 +94,13 @@ export default function CourseCatalog() {
   // can be unchecked — which makes incompatible combinations unselectable.
 
 
+  const getStructureDisplay = (c: Course): string | undefined => {
+    if (c.meta.structureLabel && c.meta.structureCode) {
+      return `${c.meta.structureLabel} (${c.meta.structureCode})`;
+    }
+    return c.meta.structureLabel || c.meta.structureCode || undefined;
+  };
+
   const matchesSearch = (c: Course) => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
@@ -87,6 +108,12 @@ export default function CourseCatalog() {
     return words.every(
       (w) =>
         c.name.toLowerCase().includes(w) ||
+        !!c.meta.officialTitle?.toLowerCase().includes(w) ||
+        !!c.meta.code?.toLowerCase().includes(w) ||
+        !!c.meta.regulation?.toLowerCase().includes(w) ||
+        !!c.meta.semester?.toLowerCase().includes(w) ||
+        !!c.meta.structureCode?.toLowerCase().includes(w) ||
+        !!c.meta.structureLabel?.toLowerCase().includes(w) ||
         c.className?.toLowerCase().includes(w) ||
         !!c.meta.discipline?.toLowerCase().includes(w) ||
         !!c.meta.tags?.some((t) => t.toLowerCase().includes(w)) ||
@@ -101,19 +128,40 @@ export default function CourseCatalog() {
     selectedDisciplines.length === 0 ||
     (!!c.meta.discipline && selectedDisciplines.includes(c.meta.discipline));
 
+  const matchesSemesters = (c: Course) =>
+    selectedSemesters.length === 0 ||
+    (!!c.meta.semester && selectedSemesters.includes(c.meta.semester));
+
+  const matchesStructures = (c: Course) => {
+    if (selectedStructures.length === 0) return true;
+    const label = getStructureDisplay(c);
+    return !!label && selectedStructures.includes(label);
+  };
+
   const facets = useMemo(() => {
     const programmeCounts = new Map<string, number>();
     const disciplineCounts = new Map<string, number>();
+    const semesterCounts = new Map<string, number>();
+    const structureCounts = new Map<string, number>();
     courses.forEach((c) => {
       if (!matchesSearch(c)) return;
       const prog = matchesProgrammes(c);
       const disc = matchesDisciplines(c);
+      const sem = matchesSemesters(c);
+      const struct = matchesStructures(c);
+      const structLabel = getStructureDisplay(c);
 
-      if (disc && c.className) {
+      if (disc && sem && struct && c.className) {
         programmeCounts.set(c.className, (programmeCounts.get(c.className) || 0) + 1);
       }
-      if (prog && c.meta.discipline) {
+      if (prog && sem && struct && c.meta.discipline) {
         disciplineCounts.set(c.meta.discipline, (disciplineCounts.get(c.meta.discipline) || 0) + 1);
+      }
+      if (prog && disc && struct && c.meta.semester) {
+        semesterCounts.set(c.meta.semester, (semesterCounts.get(c.meta.semester) || 0) + 1);
+      }
+      if (prog && disc && sem && structLabel) {
+        structureCounts.set(structLabel, (structureCounts.get(structLabel) || 0) + 1);
       }
     });
 
@@ -130,10 +178,12 @@ export default function CourseCatalog() {
     return {
       programmes: toOptions(programmeCounts, selectedProgrammes),
       disciplines: toOptions(disciplineCounts, selectedDisciplines),
+      semesters: toOptions(semesterCounts, selectedSemesters),
+      structures: toOptions(structureCounts, selectedStructures),
     };
     // The match helpers close over exactly these states.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courses, searchQuery, selectedProgrammes, selectedDisciplines]);
+  }, [courses, searchQuery, selectedProgrammes, selectedDisciplines, selectedSemesters, selectedStructures]);
 
   // Handle checking/unchecking filters
   const toggleFilter = (value: string, list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>) => {
@@ -148,12 +198,16 @@ export default function CourseCatalog() {
     setSearchQuery('');
     setSelectedProgrammes([]);
     setSelectedDisciplines([]);
+    setSelectedSemesters([]);
+    setSelectedStructures([]);
   };
 
   const hasActiveFilters =
     searchQuery !== '' ||
     selectedProgrammes.length > 0 ||
-    selectedDisciplines.length > 0;
+    selectedDisciplines.length > 0 ||
+    selectedSemesters.length > 0 ||
+    selectedStructures.length > 0;
 
   // Filtered & Sorted Courses — the same predicates the facets use.
   const processedCourses = useMemo(() => {
@@ -161,10 +215,15 @@ export default function CourseCatalog() {
       (c) =>
         matchesSearch(c) &&
         matchesProgrammes(c) &&
-        matchesDisciplines(c),
+        matchesDisciplines(c) &&
+        matchesSemesters(c) &&
+        matchesStructures(c),
     );
 
     result.sort((a, b) => {
+      const orderA = a.meta.order ?? getSubjectDisplayOrder(a.id);
+      const orderB = b.meta.order ?? getSubjectDisplayOrder(b.id);
+      if (orderA !== orderB) return orderA - orderB;
       const featA = a.meta.featured ? 1 : 0;
       const featB = b.meta.featured ? 1 : 0;
       return featB - featA;
@@ -172,7 +231,7 @@ export default function CourseCatalog() {
 
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [courses, searchQuery, selectedProgrammes, selectedDisciplines]);
+  }, [courses, searchQuery, selectedProgrammes, selectedDisciplines, selectedSemesters, selectedStructures]);
 
   return (
     <div className="sv-catalog sv-catalog--explore">
@@ -244,6 +303,46 @@ export default function CourseCatalog() {
             </div>
           )}
 
+          {/* Facet: Semester (DB-driven — renders when courses specify semester) */}
+          {facets.semesters.length > 0 && (
+            <div className="sv-catalog-filter-group">
+              <h4>Semester</h4>
+              <div className="sv-catalog-filter-options">
+                {facets.semesters.map(({ value, count }) => (
+                  <label key={value} className="sv-catalog-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedSemesters.includes(value)}
+                      onChange={() => toggleFilter(value, selectedSemesters, setSelectedSemesters)}
+                    />
+                    <span className="sv-catalog-filter-name">{value}</span>
+                    <span className="sv-catalog-filter-count">({count})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Facet: Course Type / Structure Code (DB-driven) */}
+          {facets.structures.length > 0 && (
+            <div className="sv-catalog-filter-group">
+              <h4>Course Type</h4>
+              <div className="sv-catalog-filter-options">
+                {facets.structures.map(({ value, count }) => (
+                  <label key={value} className="sv-catalog-filter-label">
+                    <input
+                      type="checkbox"
+                      checked={selectedStructures.includes(value)}
+                      onChange={() => toggleFilter(value, selectedStructures, setSelectedStructures)}
+                    />
+                    <span className="sv-catalog-filter-name">{value}</span>
+                    <span className="sv-catalog-filter-count">({count})</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
 
 
         </aside>
@@ -280,6 +379,18 @@ export default function CourseCatalog() {
                     <span key={disc} className="sv-catalog-chip">
                       {disc}
                       <button type="button" onClick={() => toggleFilter(disc, selectedDisciplines, setSelectedDisciplines)}>&times;</button>
+                    </span>
+                  ))}
+                  {selectedSemesters.map((sem) => (
+                    <span key={sem} className="sv-catalog-chip">
+                      {sem}
+                      <button type="button" onClick={() => toggleFilter(sem, selectedSemesters, setSelectedSemesters)}>&times;</button>
+                    </span>
+                  ))}
+                  {selectedStructures.map((st) => (
+                    <span key={st} className="sv-catalog-chip">
+                      {st}
+                      <button type="button" onClick={() => toggleFilter(st, selectedStructures, setSelectedStructures)}>&times;</button>
                     </span>
                   ))}
                   <button type="button" className="sv-catalog-chip-clear-all" onClick={clearAllFilters}>

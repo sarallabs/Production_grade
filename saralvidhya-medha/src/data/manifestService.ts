@@ -4,8 +4,8 @@ export const BASE = '/generated_resources';
 export const CLOUD_API_BASE =
   (import.meta as any).env?.VITE_API_BASE ||
   'https://saralvidhya-api-193782571555.asia-south1.run.app';
-export const MEDHA_TENANT_ID =
-  (import.meta as any).env?.VITE_TENANT_ID || 'medha';
+export const MOOCS_TENANT_ID =
+  (import.meta as any).env?.VITE_TENANT_ID || 'anu';
 export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/assets`
   : 'http://localhost:8000/api/v1/assets';
@@ -67,6 +67,11 @@ export interface Chapter {
   number: number;
   name: string;
   title?: string;
+  description?: string;
+  objectives?: string[];
+  outcome?: string;
+  previewVideoUrl?: string;
+  videos?: ChapterVideo[];
   dir?: string;
   completed?: string[];
   resourceCount?: number;
@@ -187,6 +192,16 @@ export function filterIndexedCandidates(urls: string[]): string[] {
 
 const HIDDEN_SUBJECT_IDS = new Set<string>(['anu_characterization']);
 
+const SUBJECT_DISPLAY_ORDER: Record<string, number> = {
+  mp_ob: 1,
+  management: 2,
+  anu_physics: 3,
+};
+
+export function getSubjectDisplayOrder(subjectId: string): number {
+  return SUBJECT_DISPLAY_ORDER[subjectId] ?? Number.MAX_SAFE_INTEGER;
+}
+
 function sanitizeCatalog(cat: Catalog): Catalog {
   return {
     ...cat,
@@ -195,7 +210,9 @@ function sanitizeCatalog(cat: Catalog): Catalog {
       classes: (b.classes || [])
         .map((kl) => ({
           ...kl,
-          subjects: (kl.subjects || []).filter((s) => !HIDDEN_SUBJECT_IDS.has(s.id)),
+          subjects: (kl.subjects || [])
+            .filter((s) => !HIDDEN_SUBJECT_IDS.has(s.id))
+            .sort((a, b) => getSubjectDisplayOrder(a.id) - getSubjectDisplayOrder(b.id)),
         }))
         .filter((kl) => kl.subjects.length > 0),
     })),
@@ -217,17 +234,239 @@ function sanitizeCoursesMeta(metas: Record<string, CourseMeta>): Record<string, 
   return next;
 }
 
+function mergeCourseMetaWithSeed(
+  dbMeta: CourseMeta | undefined,
+  seedMeta: CourseMeta | undefined,
+): CourseMeta {
+  if (!dbMeta) return { ...(seedMeta || {}) };
+  if (!seedMeta) return { ...dbMeta };
+  const hasV2DbFields = Boolean(
+    dbMeta.code ||
+      dbMeta.regulation ||
+      dbMeta.semester ||
+      dbMeta.structureCode ||
+      dbMeta.evaluation ||
+      typeof dbMeta.hoursPerWeek === 'number',
+  );
+  const seedHasV2Fields = Boolean(
+    seedMeta.code ||
+      seedMeta.regulation ||
+      seedMeta.semester ||
+      seedMeta.structureCode ||
+      seedMeta.evaluation ||
+      typeof seedMeta.hoursPerWeek === 'number',
+  );
+  const merged: CourseMeta = {
+    ...seedMeta,
+    ...dbMeta,
+    instructor:
+      dbMeta.instructor?.name
+        ? dbMeta.instructor
+        : seedMeta.instructor,
+    tags: dbMeta.tags && dbMeta.tags.length > 0 ? dbMeta.tags : seedMeta.tags,
+    aliases: dbMeta.aliases && dbMeta.aliases.length > 0 ? dbMeta.aliases : seedMeta.aliases,
+    units: {
+      ...(seedMeta.units || {}),
+      ...(dbMeta.units || {}),
+    },
+  };
+  // Before Firestore is backfilled with v2 academic metadata, adopt seed v2 credits/order
+  if (!hasV2DbFields && seedHasV2Fields) {
+    if (typeof seedMeta.credits === 'number') merged.credits = seedMeta.credits;
+    if (typeof seedMeta.order === 'number') merged.order = seedMeta.order;
+  }
+  return merged;
+}
+
+function buildPortalFromDbCatalog(
+  dbCatalog: any,
+  fallbackManifest: Manifest | null,
+  seedCourses: Record<string, CourseMeta>,
+): {
+  catalog: Catalog;
+  manifest: Manifest;
+  courses: Record<string, CourseMeta>;
+} | null {
+  const rawSubjects: any[] = Array.isArray(dbCatalog?.subjects) ? dbCatalog.subjects : [];
+  const activeSubjects = rawSubjects.filter(
+    (s) => s && s.id && s.status !== 'archived' && !HIDDEN_SUBJECT_IDS.has(s.id),
+  );
+  if (activeSubjects.length === 0) return null;
+
+  const boardMap = new Map<string, CatalogBoard>();
+  const manifestSubjects: Subject[] = [];
+  const coursesMap: Record<string, CourseMeta> = {};
+
+  const sortedSubjects = [...activeSubjects].sort((a, b) => {
+    const seedA = seedCourses[a.id];
+    const seedB = seedCourses[b.id];
+    const aHasV2 = Boolean(a.code || a.evaluation || a.semester);
+    const bHasV2 = Boolean(b.code || b.evaluation || b.semester);
+    const ordA =
+      (aHasV2 ? a.order : seedA?.order ?? a.order) ?? getSubjectDisplayOrder(a.id);
+    const ordB =
+      (bHasV2 ? b.order : seedB?.order ?? b.order) ?? getSubjectDisplayOrder(b.id);
+    return ordA - ordB;
+  });
+
+  for (const s of sortedSubjects) {
+    const sid = String(s.id);
+    const seedMeta = seedCourses[sid];
+    const fallbackSub = fallbackManifest?.subjects?.find((fs) => fs.id === sid);
+    const boardId = s.boardId || fallbackSub?.boardId || 'anu_university';
+    const boardName = s.boardName || fallbackSub?.boardName || 'Acharya Nagarjuna University';
+    const boardShortName = s.boardShortName || 'ANU';
+    const classId = s.programId || s.classId || fallbackSub?.classId || 'general';
+    const className = s.programName || s.className || fallbackSub?.className || s.programLabel || 'Courses';
+    const subPath = s.path || fallbackSub?.path || sid;
+
+    let board = boardMap.get(boardId);
+    if (!board) {
+      board = {
+        id: boardId,
+        name: boardName,
+        shortName: boardShortName,
+        logo: dbCatalog?.branding?.logoUrl || '/logo-anu.webp',
+        classes: [],
+      };
+      boardMap.set(boardId, board);
+    }
+    let klass = board.classes.find((c) => c.id === classId);
+    if (!klass) {
+      klass = { id: classId, name: className, subjects: [] };
+      board.classes.push(klass);
+    }
+
+    const dbChapters: any[] = Array.isArray(s.chapters) ? s.chapters : [];
+    const mergedChapters: Chapter[] = (dbChapters.length > 0 ? dbChapters : fallbackSub?.chapters || []).map(
+      (ch: any) => {
+        const chNum = Number(ch.number || 0);
+        const fbCh = fallbackSub?.chapters?.find((c) => c.number === chNum);
+        const seedUnit = seedMeta?.units?.[String(chNum)];
+        const completed =
+          Array.isArray(ch.completed) && ch.completed.length > 0
+            ? ch.completed
+            : fbCh?.completed || [];
+        const resourceCount =
+          typeof ch.resourceCount === 'number' && ch.resourceCount > 0
+            ? ch.resourceCount
+            : fbCh?.resourceCount ?? completed.length;
+        return {
+          number: chNum,
+          name: ch.shortTitle || ch.name || fbCh?.name || ch.title || `Unit ${chNum}`,
+          title: ch.title || seedUnit?.title || fbCh?.title || ch.name || `Unit ${chNum}`,
+          description: ch.description || seedUnit?.description,
+          objectives:
+            Array.isArray(ch.objectives) && ch.objectives.length > 0
+              ? ch.objectives
+              : seedUnit?.objectives,
+          outcome: ch.outcome || seedUnit?.outcome,
+          previewVideoUrl: ch.previewVideoUrl || seedUnit?.previewVideoUrl,
+          videos:
+            Array.isArray(ch.videos) && ch.videos.length > 0
+              ? ch.videos
+              : seedUnit?.videos,
+          dir: ch.dir || fbCh?.dir,
+          completed,
+          resourceCount,
+        };
+      },
+    );
+
+    klass.subjects.push({
+      id: sid,
+      name: s.name || fallbackSub?.name || sid,
+      path: subPath,
+      chapterNumbers: mergedChapters.map((c) => c.number),
+    });
+
+    manifestSubjects.push({
+      id: sid,
+      name: s.name || fallbackSub?.name || sid,
+      path: subPath,
+      boardId,
+      boardName,
+      classId,
+      className,
+      chapters: mergedChapters,
+    });
+
+    const rawFac = s.faculty || s.instructor;
+    const dbCourseMeta: CourseMeta = {
+      officialTitle: s.officialTitle,
+      code: s.code,
+      regulation: s.regulation,
+      semester: s.semester,
+      structureCode: s.structureCode,
+      structureLabel: s.structureLabel,
+      subtitle: s.subtitle,
+      description: s.description,
+      discipline: s.discipline,
+      level: s.level,
+      instructor: rawFac?.name
+        ? {
+            name: rawFac.name,
+            title: rawFac.title || '',
+            department: rawFac.department,
+            avatar: rawFac.avatarUrl || rawFac.avatar,
+          }
+        : undefined,
+      durationHours: typeof s.durationHours === 'number' ? s.durationHours : undefined,
+      hoursPerWeek: typeof s.hoursPerWeek === 'number' ? s.hoursPerWeek : undefined,
+      credits: typeof s.credits === 'number' ? s.credits : undefined,
+      evaluation: s.evaluation,
+      language: s.language,
+      courseOutcomes: Array.isArray(s.courseOutcomes) ? s.courseOutcomes : undefined,
+      prerequisites: Array.isArray(s.prerequisites) ? s.prerequisites : undefined,
+      textbooks: Array.isArray(s.textbooks) ? s.textbooks : undefined,
+      thumbnail: s.assets?.thumbnailUrl || s.thumbnail || s.bannerUrl || s.iconUrl,
+      accent: s.cardStyle?.gradient || s.accent,
+      tags: Array.isArray(s.tags) ? s.tags : undefined,
+      aliases: Array.isArray(s.aliases) ? s.aliases : undefined,
+      enrolled: typeof s.enrolled === 'number' ? s.enrolled : undefined,
+      featured: typeof s.featured === 'boolean' ? s.featured : undefined,
+      order: typeof s.order === 'number' ? s.order : undefined,
+    };
+
+    coursesMap[sid] = mergeCourseMetaWithSeed(dbCourseMeta, seedMeta);
+  }
+
+  return {
+    catalog: sanitizeCatalog({ version: 2, boards: Array.from(boardMap.values()) }),
+    manifest: sanitizeManifest({
+      subjects: manifestSubjects,
+      resourceTabs: fallbackManifest?.resourceTabs || DEFAULT_RESOURCE_TABS,
+    }),
+    courses: sanitizeCoursesMeta(coursesMap),
+  };
+}
+
+export function clearMoocsCatalogCache(): void {
+  cachedCatalog = null;
+  cachedManifest = null;
+  cachedCoursesJson = null;
+  cloudHydrationPromise = null;
+  try {
+    sessionStorage.removeItem('sv_moocs_cloud_portal_v2');
+    sessionStorage.removeItem('sv_medha_cloud_portal_v2');
+    sessionStorage.removeItem('sv_medha_cloud_portal_v1');
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Hydrates `catalog`, `manifest`, `courses`, and `fileIndex` from the
- * Firestore-backed Cloud Run tenant endpoint (`/v2/t/medha`) and local `file-index.json`.
+ * normalized Firestore-backed Cloud Run catalog endpoint (`/v2/t/:tenant/catalog`),
+ * falling back cleanly to `/v2/t/:tenant` and local generated resources when offline.
  */
-export function hydrateMedhaCloudConfig(): Promise<void> {
+export function hydrateMoocsCloudConfig(): Promise<void> {
   if (cloudHydrationPromise) return cloudHydrationPromise;
 
   cloudHydrationPromise = (async () => {
     // 1. Try instant hydration from sessionStorage cache first
     try {
-      const cachedRaw = sessionStorage.getItem('sv_medha_cloud_portal_v1');
+      const cachedRaw = sessionStorage.getItem('sv_moocs_cloud_portal_v2');
       if (cachedRaw) {
         const parsed = JSON.parse(cachedRaw);
         if (parsed.catalog?.boards?.length) cachedCatalog = sanitizeCatalog(parsed.catalog);
@@ -241,7 +480,15 @@ export function hydrateMedhaCloudConfig(): Promise<void> {
       // ignore storage parse error
     }
 
-    // 2. Load local complete file-index.json + Cloud Run DB `/v2/t/medha` in parallel
+    const token =
+      typeof localStorage !== 'undefined'
+        ? localStorage.getItem('sv_moocs_token') || localStorage.getItem('sv_medha_token')
+        : null;
+    const authHeaders: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
+
+    // 2. Load local index/seed + Cloud Run `/v2/t/:tenant/catalog` & `/v2/t/:tenant` in parallel
     const localIndexPromise = fetch(`${BASE}/file-index.json`, { cache: 'default' })
       .then((r) => (r.ok ? r.json() : null))
       .then((idxData) => {
@@ -255,55 +502,105 @@ export function hydrateMedhaCloudConfig(): Promise<void> {
       })
       .catch(() => {});
 
-    const cloudPromise = fetch(`${CLOUD_API_BASE}/v2/t/${MEDHA_TENANT_ID}`, {
+    const localSeedCoursesPromise: Promise<Record<string, CourseMeta>> = fetch(
+      `${BASE}/courses.json`,
+      { cache: 'no-cache' },
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => sanitizeCoursesMeta((d?.courses || {}) as Record<string, CourseMeta>))
+      .catch(() => ({}));
+
+    const localManifestPromise: Promise<Manifest | null> = fetch(`${BASE}/manifest.json`, {
       cache: 'default',
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        const portal = data?.tenant?.uiCopy?.medhaPortal;
-        if (!portal) return;
+      .then((d) => (d?.subjects ? sanitizeManifest(d as Manifest) : null))
+      .catch(() => null);
 
-        if (portal.catalog?.boards?.length) {
-          cachedCatalog = sanitizeCatalog(portal.catalog as Catalog);
-        }
-        if (portal.manifest?.subjects?.length) {
-          const rawTabs = portal.manifest.resourceTabs || DEFAULT_RESOURCE_TABS;
-          const normalizedTabs: [string, string][] = rawTabs.map((t: any) =>
-            Array.isArray(t) ? [t[0], t[1]] : [t.file, t.label]
-          );
-          cachedManifest = sanitizeManifest({
-            ...portal.manifest,
-            resourceTabs: normalizedTabs,
-          } as Manifest);
-        }
-        if (portal.courses && Object.keys(portal.courses).length > 0) {
-          cachedCoursesJson = sanitizeCoursesMeta(portal.courses as Record<string, CourseMeta>);
-        }
-        if (Array.isArray(portal.fileIndex)) {
-          if (!cachedFileIndexSet) {
-            cachedFileIndexSet = new Set<string>(portal.fileIndex);
-          } else {
-            for (const f of portal.fileIndex) cachedFileIndexSet.add(f);
-          }
-        }
+    const dbCatalogPromise = fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/catalog`, {
+      cache: 'default',
+      credentials: 'include',
+      headers: authHeaders,
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
 
-        try {
-          sessionStorage.setItem(
-            'sv_medha_cloud_portal_v1',
-            JSON.stringify({
-              catalog: cachedCatalog,
-              manifest: cachedManifest,
-              courses: cachedCoursesJson,
-              fileIndex: portal.fileIndex || [],
-            })
-          );
-        } catch {
-          // ignore quota errors
-        }
-      })
-      .catch(() => {});
+    const tenantPortalPromise = fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}`, {
+      cache: 'default',
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
 
-    await Promise.all([localIndexPromise, cloudPromise]);
+    const [, seedCourses, localManifest, dbCatalog, tenantPayload] = await Promise.all([
+      localIndexPromise,
+      localSeedCoursesPromise,
+      localManifestPromise,
+      dbCatalogPromise,
+      tenantPortalPromise,
+    ]);
+
+    const portal = tenantPayload?.tenant?.uiCopy?.moocsPortal || tenantPayload?.tenant?.uiCopy?.medhaPortal;
+    if (Array.isArray(portal?.fileIndex)) {
+      if (!cachedFileIndexSet) {
+        cachedFileIndexSet = new Set<string>(portal.fileIndex);
+      } else {
+        for (const f of portal.fileIndex) cachedFileIndexSet.add(f);
+      }
+    }
+
+    let portalManifest: Manifest | null = localManifest;
+    if (portal?.manifest?.subjects?.length) {
+      const rawTabs = portal.manifest.resourceTabs || DEFAULT_RESOURCE_TABS;
+      const normalizedTabs: [string, string][] = rawTabs.map((t: any) =>
+        Array.isArray(t) ? [t[0], t[1]] : [t.file, t.label],
+      );
+      portalManifest = sanitizeManifest({
+        ...portal.manifest,
+        resourceTabs: normalizedTabs,
+      } as Manifest);
+    }
+
+    const fromDb = buildPortalFromDbCatalog(dbCatalog, portalManifest, seedCourses);
+    if (fromDb) {
+      cachedCatalog = fromDb.catalog;
+      cachedManifest = fromDb.manifest;
+      cachedCoursesJson = fromDb.courses;
+    } else if (portal) {
+      if (portal.catalog?.boards?.length) {
+        cachedCatalog = sanitizeCatalog(portal.catalog as Catalog);
+      }
+      if (portalManifest) {
+        cachedManifest = portalManifest;
+      }
+      const portalCourses = sanitizeCoursesMeta(
+        (portal.courses || {}) as Record<string, CourseMeta>,
+      );
+      const mergedCourses: Record<string, CourseMeta> = {};
+      const allIds = new Set([...Object.keys(seedCourses), ...Object.keys(portalCourses)]);
+      for (const id of allIds) {
+        mergedCourses[id] = mergeCourseMetaWithSeed(portalCourses[id], seedCourses[id]);
+      }
+      cachedCoursesJson = mergedCourses;
+    } else if (Object.keys(seedCourses).length > 0) {
+      cachedCoursesJson = seedCourses;
+      if (localManifest) cachedManifest = localManifest;
+    }
+
+    if (cachedCatalog || cachedManifest || cachedCoursesJson) {
+      try {
+        sessionStorage.setItem(
+          'sv_moocs_cloud_portal_v2',
+          JSON.stringify({
+            catalog: cachedCatalog,
+            manifest: cachedManifest,
+            courses: cachedCoursesJson,
+            fileIndex: portal?.fileIndex || [],
+          }),
+        );
+      } catch {
+        // ignore quota errors
+      }
+    }
   })();
 
   return cloudHydrationPromise;
@@ -311,7 +608,7 @@ export function hydrateMedhaCloudConfig(): Promise<void> {
 
 export async function getCatalog(): Promise<Catalog> {
   if (cachedCatalog) return cachedCatalog;
-  await hydrateMedhaCloudConfig();
+  await hydrateMoocsCloudConfig();
   if (cachedCatalog) return cachedCatalog;
   try {
     const res = await fetch(`${BASE}/catalog.json`, { cache: 'default' });
@@ -329,7 +626,7 @@ export async function getCatalog(): Promise<Catalog> {
 
 export async function getManifest(): Promise<Manifest> {
   if (cachedManifest) return cachedManifest;
-  await hydrateMedhaCloudConfig();
+  await hydrateMoocsCloudConfig();
   if (cachedManifest) return cachedManifest;
   try {
     const res = await fetch(`${BASE}/manifest.json`, { cache: 'default' });
@@ -348,24 +645,43 @@ export async function getManifest(): Promise<Manifest> {
 export function resolveSubjectId(id: string): string {
   if (!id) return '';
   const lower = id.toLowerCase();
-  const aliases: Record<string, string> = {
+  if (cachedCoursesJson) {
+    if (cachedCoursesJson[id]) return id;
+    for (const [subId, meta] of Object.entries(cachedCoursesJson)) {
+      if (subId.toLowerCase() === lower) return subId;
+      if (meta.code && meta.code.toLowerCase() === lower) return subId;
+      if (meta.aliases?.some((a) => a.toLowerCase() === lower)) return subId;
+    }
+  }
+  const fallbackAliases: Record<string, string> = {
     physics: 'anu_physics',
     mba: 'management',
     msc: 'anu_physics',
+    mpob: 'mp_ob',
   };
-  return aliases[lower] || id;
+  return fallbackAliases[lower] || id;
 }
 
 export function getChapters(manifest: Manifest, subjectId: string): Chapter[] {
   const targetId = resolveSubjectId(subjectId);
   const subject = manifest.subjects.find((s) => s.id === targetId || s.id === subjectId);
   if (!subject?.chapters) return [];
+  const unitMetaMap = cachedCoursesJson?.[subject.id]?.units || {};
   // Deduplicate by chapter number, prioritizing entries with resources
   const map = new Map<number, Chapter>();
   for (const ch of subject.chapters) {
     const existing = map.get(ch.number);
     if (!existing || ((ch.resourceCount ?? 0) > (existing.resourceCount ?? 0))) {
-      map.set(ch.number, ch);
+      const uMeta = unitMetaMap[String(ch.number)];
+      map.set(ch.number, {
+        ...ch,
+        title: ch.title || uMeta?.title || ch.name,
+        description: ch.description || uMeta?.description,
+        objectives: ch.objectives && ch.objectives.length > 0 ? ch.objectives : uMeta?.objectives,
+        outcome: ch.outcome || uMeta?.outcome,
+        previewVideoUrl: ch.previewVideoUrl || uMeta?.previewVideoUrl,
+        videos: ch.videos && ch.videos.length > 0 ? ch.videos : uMeta?.videos,
+      });
     }
   }
   return Array.from(map.values()).sort((a, b) => a.number - b.number);
@@ -400,6 +716,22 @@ export function getSubjectBaseUrl(subjectId: string): string {
   return `${BASE}/${getSubjectResourcePath(subjectId)}`;
 }
 
+export interface VideoTimestampSegment {
+  title: string;
+  startSec: number;
+  endSec?: number;
+}
+
+export interface VideoClipItem {
+  id?: string;
+  title: string;
+  ytId: string;
+  duration?: string;
+  durationSec?: number;
+  thumbnailUrl?: string;
+  actLabel?: string;
+}
+
 export interface ChapterVideo {
   index: number;
   id: string;
@@ -409,6 +741,9 @@ export interface ChapterVideo {
   dir: string;
   topics?: string[];
   duration?: string;
+  thumbnailUrl?: string;
+  timestamps?: VideoTimestampSegment[];
+  clips?: VideoClipItem[];
 }
 
 const chapterVideosCache: Record<string, ChapterVideo[]> = {};
@@ -473,7 +808,30 @@ export function getResourceTabs(manifest: Manifest): [string, string][] {
   return manifest.resourceTabs ?? DEFAULT_RESOURCE_TABS;
 }
 
+export interface CourseEvaluationScheme {
+  internalMarks: number;
+  externalMarks: number;
+  totalMarks: number;
+  internalLabel?: string;
+  externalLabel?: string;
+}
+
+export interface UnitSyllabusMeta {
+  title?: string;
+  description?: string;
+  objectives?: string[];
+  outcome?: string;
+  previewVideoUrl?: string;
+  videos?: ChapterVideo[];
+}
+
 export interface CourseMeta {
+  officialTitle?: string;
+  code?: string;
+  regulation?: string;
+  semester?: string;
+  structureCode?: string;
+  structureLabel?: string;
   subtitle?: string;
   description?: string;
   discipline?: string;
@@ -481,16 +839,25 @@ export interface CourseMeta {
   instructor?: {
     name: string;
     title: string;
+    department?: string;
     avatar?: string;
   };
   durationHours?: number;
+  hoursPerWeek?: number;
   credits?: number;
+  evaluation?: CourseEvaluationScheme;
   language?: string;
+  courseOutcomes?: string[];
+  prerequisites?: string[];
+  textbooks?: string[];
   thumbnail?: string;
   accent?: string;
   tags?: string[];
+  aliases?: string[];
   enrolled?: number;
   featured?: boolean;
+  order?: number;
+  units?: Record<string, UnitSyllabusMeta>;
 }
 
 export interface Course {
@@ -508,7 +875,7 @@ export interface Course {
 
 async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
   if (cachedCoursesJson) return cachedCoursesJson;
-  await hydrateMedhaCloudConfig();
+  await hydrateMoocsCloudConfig();
   if (cachedCoursesJson) return cachedCoursesJson;
   try {
     const res = await fetch(`${BASE}/courses.json`, { cache: 'default' });
@@ -523,7 +890,7 @@ async function getCoursesMeta(): Promise<Record<string, CourseMeta>> {
 }
 
 export async function getCourses(): Promise<Course[]> {
-  await hydrateMedhaCloudConfig();
+  await hydrateMoocsCloudConfig();
   const [catalog, manifest, metas] = await Promise.all([
     getCatalog(),
     getManifest(),
@@ -579,6 +946,12 @@ export async function getCourses(): Promise<Course[]> {
     }
   }
 
+  courses.sort(
+    (a, b) =>
+      (a.meta.order ?? getSubjectDisplayOrder(a.id)) -
+      (b.meta.order ?? getSubjectDisplayOrder(b.id)),
+  );
+
   return courses;
 }
 
@@ -587,14 +960,12 @@ export async function getCourseById(id: string): Promise<Course | null> {
   const found = courses.find((c) => c.id === id);
   if (found) return found;
 
-  const aliases: Record<string, string> = {
-    physics: 'anu_physics',
-    mba: 'management',
-    msc: 'anu_physics',
-  };
-  const targetId = aliases[id?.toLowerCase()];
-  if (targetId) {
-    return courses.find((c) => c.id === targetId) || null;
-  }
-  return null;
+  const lower = (id || '').toLowerCase();
+  const byAliasOrCode = courses.find(
+    (c) =>
+      c.id.toLowerCase() === lower ||
+      c.meta.code?.toLowerCase() === lower ||
+      c.meta.aliases?.some((a) => a.toLowerCase() === lower),
+  );
+  return byAliasOrCode || null;
 }

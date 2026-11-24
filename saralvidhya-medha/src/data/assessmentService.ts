@@ -83,17 +83,25 @@ export async function fetchAndParseFirst(
               return textIdx; 
             };
 
-            const isMSQ = Array.isArray(q.answer) || (typeof q.answer === 'string' && q.answer.includes(',') && !q.answer.startsWith('A)'));
+            const isMSQ =
+              String(q.type || '').toLowerCase() === 'msq' ||
+              Array.isArray(q.answer) ||
+              (typeof q.answer === 'string' && q.answer.includes(',') && !q.answer.startsWith('A)')) ||
+              prefix.startsWith('msq');
 
             let answerIndices: number | number[];
             if (Array.isArray(q.answer)) {
               const indices = q.answer.map((a: string) => resolveIndex(String(a))).filter((idx: number) => idx !== -1);
-              answerIndices = indices.length === 1 ? indices[0] : indices;
+              answerIndices = isMSQ ? indices : (indices[0] ?? 0);
+            } else if (isMSQ && typeof q.answer === 'string' && q.answer.includes(',')) {
+              answerIndices = q.answer
+                .split(',')
+                .map((a: string) => resolveIndex(a.trim()))
+                .filter((idx: number) => idx !== -1);
             } else {
               const idx = resolveIndex(String(q.answer ?? ''));
               answerIndices = isMSQ ? (idx === -1 ? [] : [idx]) : (idx === -1 ? 0 : idx);
             }
-
             return {
               id: q.id || `${prefix}${i + 1}`,
               type: isMSQ ? 'msq' : 'mcq',

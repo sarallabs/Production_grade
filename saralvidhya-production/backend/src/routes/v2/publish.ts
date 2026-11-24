@@ -12,6 +12,7 @@ import {
   setTenantPassword,
   getTenant,
   markPublishRequestPending,
+  invalidateCache,
 } from '../../services/registry.js';
 import { getSignedUploadUrl, findMissingFiles } from '../../services/storage.js';
 import { Firestore } from '@google-cloud/firestore';
@@ -361,4 +362,139 @@ router.post('/register-tenant', requireApprover, async (req: AuthenticatedReques
   }
 });
 
+
+const SUBJECT_MUTABLE_FIELDS = [
+  'name',
+  'officialTitle',
+  'code',
+  'regulation',
+  'semester',
+  'structureCode',
+  'structureLabel',
+  'boardId',
+  'boardName',
+  'boardShortName',
+  'programId',
+  'programName',
+  'classId',
+  'className',
+  'discipline',
+  'level',
+  'subtitle',
+  'programLabel',
+  'description',
+  'credits',
+  'hoursPerWeek',
+  'durationHours',
+  'evaluation',
+  'language',
+  'courseOutcomes',
+  'prerequisites',
+  'textbooks',
+  'tags',
+  'aliases',
+  'path',
+  'enrolled',
+  'featured',
+  'thumbnail',
+  'assets',
+  'cardStyle',
+  'faculty',
+  'units',
+  'order',
+  'status',
+] as const;
+
+const CHAPTER_MUTABLE_FIELDS = [
+  'number',
+  'title',
+  'shortTitle',
+  'description',
+  'objectives',
+  'outcome',
+  'previewVideoUrl',
+  'videos',
+  'topics',
+  'dir',
+  'completed',
+  'resourceCount',
+  'estimatedMinutes',
+  'status',
+  'assets',
+] as const;
+
+/**
+ * PATCH /v2/publish/tenants/:tenantId/subjects/:subjectId
+ * Updates DB-driven course listing & About Course metadata without redeploying the frontend.
+ */
+router.patch(
+  '/tenants/:tenantId/subjects/:subjectId',
+  requireApprover,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { tenantId, subjectId } = req.params;
+      const body = req.body || {};
+      const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
+      for (const field of SUBJECT_MUTABLE_FIELDS) {
+        if (body[field] !== undefined) updates[field] = body[field];
+      }
+      if (Object.keys(updates).length <= 1) {
+        return res.status(400).json({ error: 'No valid subject metadata fields provided.' });
+      }
+      await firestore
+        .collection('tenants')
+        .doc(tenantId)
+        .collection('subjects')
+        .doc(subjectId)
+        .set({ id: subjectId, ...updates }, { merge: true });
+      invalidateCache(`catalog:${tenantId}`);
+      return res.json({ success: true, tenantId, subjectId, updatedFields: Object.keys(updates) });
+    } catch (error: any) {
+      console.error('[Publish Patch Subject Error]', error);
+      return res.status(500).json({ error: error.message || 'Failed to update subject metadata' });
+    }
+  }
+);
+
+/**
+ * PATCH /v2/publish/tenants/:tenantId/subjects/:subjectId/chapters/:chapterId
+ * Updates DB-driven unit syllabus metadata (title, objectives, outcome, previewVideoUrl, videos/timestamps).
+ */
+router.patch(
+  '/tenants/:tenantId/subjects/:subjectId/chapters/:chapterId',
+  requireApprover,
+  async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { tenantId, subjectId, chapterId } = req.params;
+      const body = req.body || {};
+      const updates: Record<string, any> = { updatedAt: new Date().toISOString() };
+      for (const field of CHAPTER_MUTABLE_FIELDS) {
+        if (body[field] !== undefined) updates[field] = body[field];
+      }
+      if (Object.keys(updates).length <= 1) {
+        return res.status(400).json({ error: 'No valid chapter metadata fields provided.' });
+      }
+      await firestore
+        .collection('tenants')
+        .doc(tenantId)
+        .collection('subjects')
+        .doc(subjectId)
+        .collection('chapters')
+        .doc(chapterId)
+        .set({ id: chapterId, ...updates }, { merge: true });
+      invalidateCache(`catalog:${tenantId}`);
+      invalidateCache(`chapter:${tenantId}:${subjectId}`);
+      return res.json({
+        success: true,
+        tenantId,
+        subjectId,
+        chapterId,
+        updatedFields: Object.keys(updates),
+      });
+    } catch (error: any) {
+      console.error('[Publish Patch Chapter Error]', error);
+      return res.status(500).json({ error: error.message || 'Failed to update chapter metadata' });
+    }
+  }
+);
 export default router;

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { type Chapter, type ChapterVideo, type DifficultyLevel } from "@/data/contentRepository";
+import { flushSync } from "react-dom";
+import { type Chapter, type ChapterVideo, type DifficultyLevel, type VideoTimestampSegment, type VideoClipItem } from "@/data/contentRepository";
 
 const WATCHED_THRESHOLD_PCT = 90;
 
@@ -30,7 +31,129 @@ interface WatchVideoItem {
   duration?: string;
   thumbnailUrl?: string;
   introEndTime?: number;
+  timestamps?: VideoTimestampSegment[];
+  clips?: VideoClipItem[];
 }
+
+const MP_OB_UNIT1_CLIPS: VideoClipItem[] = [
+  {
+    id: "mp_ob_u1_a1_t1",
+    actLabel: "Act 1 · Topic 1",
+    title: "Definitions of Management — Four Great Minds",
+    ytId: "LpuF6fTQL4k",
+    duration: "1:31",
+    durationSec: 91,
+    thumbnailUrl: "/mp_ob_clips/clip_01_LpuF6fTQL4k.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t2",
+    actLabel: "Act 1 · Topic 2",
+    title: "Significance of Management — Ten Reasons",
+    ytId: "SUDAI1VN1DQ",
+    duration: "1:23",
+    durationSec: 83,
+    thumbnailUrl: "/mp_ob_clips/clip_02_SUDAI1VN1DQ.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t3",
+    actLabel: "Act 1 · Topic 3",
+    title: "Significance — Bharat Biotech: Management in a White Coat",
+    ytId: "AAbYxfD3rW0",
+    duration: "0:32",
+    durationSec: 32,
+    thumbnailUrl: "/mp_ob_clips/clip_03_AAbYxfD3rW0.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t4",
+    actLabel: "Act 1 · Topic 4",
+    title: "Significance — Toyota: The Quiet Power of Kaizen",
+    ytId: "gEEPc-JHKH4",
+    duration: "0:20",
+    durationSec: 20,
+    thumbnailUrl: "/mp_ob_clips/clip_04_gEEPc-JHKH4.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t5",
+    actLabel: "Act 1 · Topic 5",
+    title: "Levels of Management — The Pyramid",
+    ytId: "_zc7lZ3Q5Mg",
+    duration: "0:45",
+    durationSec: 45,
+    thumbnailUrl: "/mp_ob_clips/clip_05__zc7lZ3Q5Mg.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t6",
+    actLabel: "Act 1 · Topic 6",
+    title: "Levels — RINL & Walmart: One Ladder, Two Scales",
+    ytId: "OQkPVPbnLS0",
+    duration: "1:05",
+    durationSec: 65,
+    thumbnailUrl: "/mp_ob_clips/clip_06_OQkPVPbnLS0.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t7",
+    actLabel: "Act 1 · Part 2 · Topic 7",
+    title: "Skills of Management — Katz's Three Skills",
+    ytId: "-bBzmViRt28",
+    duration: "0:57",
+    durationSec: 57,
+    thumbnailUrl: "/mp_ob_clips/clip_07_-bBzmViRt28.jpg",
+  },
+  {
+    id: "mp_ob_u1_a1_t8",
+    actLabel: "Act 1 · Part 2 · Topic 8",
+    title: "Skills — Apollo & Microsoft: Climbing the Ladder",
+    ytId: "wQe0a1xtnPk",
+    duration: "1:25",
+    durationSec: 85,
+    thumbnailUrl: "/mp_ob_clips/clip_08_wQe0a1xtnPk.jpg",
+  },
+  {
+    id: "mp_ob_u1_a2_p2_c1",
+    actLabel: "Act 2 · Part 2 · Clip 1",
+    title: "Fayol's Principles 6–12",
+    ytId: "SrBll-2JsAY",
+    duration: "1:40",
+    durationSec: 100,
+    thumbnailUrl: "/mp_ob_clips/clip_09_SrBll-2JsAY.jpg",
+  },
+  {
+    id: "mp_ob_u1_a2_p2_c2",
+    actLabel: "Act 2 · Part 2 · Clip 2",
+    title: "Boeing 737 MAX — When Principles Fail",
+    ytId: "U0gicj0xdTQ",
+    duration: "1:26",
+    durationSec: 86,
+    thumbnailUrl: "/mp_ob_clips/clip_10_U0gicj0xdTQ.jpg",
+  },
+  {
+    id: "mp_ob_u1_a2_p3_t18",
+    actLabel: "Act 2 · Part 3 · Topic 18",
+    title: "Fayol's Principles 13–14 — Initiative & Esprit de Corps",
+    ytId: "WuwHwPjVqAk",
+    duration: "1:31",
+    durationSec: 91,
+    thumbnailUrl: "/mp_ob_clips/clip_11_WuwHwPjVqAk.jpg",
+  },
+  {
+    id: "mp_ob_u1_a3_p1_t21",
+    actLabel: "Act 3 · Part 1 · Topic 21",
+    title: "Management as a Science & Profession",
+    ytId: "iKtEctKsALg",
+    duration: "4:31",
+    durationSec: 271,
+    thumbnailUrl: "/mp_ob_clips/clip_12_iKtEctKsALg.jpg",
+  },
+  {
+    id: "mp_ob_u1_a3_t23",
+    actLabel: "Act 3 · Topic 23",
+    title: "Arguments For Social Involvement",
+    ytId: "Z0qzmPXDwtg",
+    duration: "1:24",
+    durationSec: 84,
+    thumbnailUrl: "/mp_ob_clips/clip_13_Z0qzmPXDwtg.jpg",
+  },
+];
 
 const KNOWN_VIDEOS_METADATA: Record<
   string,
@@ -128,6 +251,15 @@ export default function VideosView({
   const [watchMode, setWatchMode] = useState<"videos" | "clips">("videos");
   const [activeClipIdx, setActiveClipIdx] = useState(0);
   const [playingClipIdx, setPlayingClipIdx] = useState<number | null>(null);
+  const [isWatchExpanded, setIsWatchExpanded] = useState(false);
+  const clipModalRef = useRef<HTMLDivElement | null>(null);
+  const clipOpenedInFullscreenRef = useRef(false);
+  const watchModeRef = useRef(watchMode);
+  const playingClipIdxRef = useRef<number | null>(playingClipIdx);
+  const isWatchExpandedRef = useRef(isWatchExpanded);
+  watchModeRef.current = watchMode;
+  playingClipIdxRef.current = playingClipIdx;
+  isWatchExpandedRef.current = isWatchExpanded;
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasStartedVideo, setHasStartedVideo] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -213,6 +345,13 @@ export default function VideosView({
           title: v.title || `Part ${idx + 1}`,
           ytId: resolvedYt,
           topics: v.topics,
+          timestamps: v.timestamps,
+          clips:
+            v.clips && v.clips.length > 0
+              ? v.clips
+              : subjectId === "mp_ob" && chapterNumber === 1 && idx === 0
+                ? MP_OB_UNIT1_CLIPS
+                : undefined,
           duration: v.duration,
           thumbnailUrl: !isHeroThumb
             ? candidateThumb
@@ -332,6 +471,154 @@ export default function VideosView({
             "Multinational Case Studies & Foundational Competitive Benefits",
             "Critical International Challenges & Cultural Adaptations",
             "Global Supply Chain Alignment & Standardization vs Localization",
+          ],
+        },
+      ];
+    } else if (subjectId === "mp_ob" && chapterNumber === 1) {
+      list = [
+        {
+          title: "Introduction to Management Process & Organizational Behavior",
+          ytId: "jVa1UZeKKzE",
+          duration: "61:02",
+          thumbnailUrl: "/mp_ob_unit1_thumb.jpg",
+          topics: [
+            "Unit 1 Roadmap & Concept Preview",
+            "Definitions & Importance of Management",
+            "Levels of Management & Katz's Managerial Skills",
+            "Mintzberg's 10 Managerial Roles & Section Recap",
+            "Five Core Functions of Management (POSDC)",
+            "Henri Fayol's 14 Principles & Gang Plank Rule",
+            "Nature of Management: Art, Science & Profession",
+            "Corporate Social Responsibility (CSR) & Business Ethics",
+          ],
+          timestamps: [
+            { title: "Unit 1 Roadmap & Concept Preview", startSec: 0, endSec: 442 },
+            { title: "Definitions & Importance of Management", startSec: 442, endSec: 650 },
+            { title: "Levels of Management & Katz's Managerial Skills", startSec: 650, endSec: 857 },
+            { title: "Mintzberg's 10 Managerial Roles & Section Recap", startSec: 857, endSec: 1350 },
+            { title: "Five Core Functions of Management (POSDC)", startSec: 1350, endSec: 1479 },
+            { title: "Henri Fayol's 14 Principles & Gang Plank Rule", startSec: 1479, endSec: 2627 },
+            { title: "Nature of Management: Art, Science & Profession", startSec: 2627, endSec: 2763 },
+            { title: "Corporate Social Responsibility (CSR) & Business Ethics", startSec: 2763, endSec: 3662 },
+          ],
+          clips: MP_OB_UNIT1_CLIPS,
+        },
+      ];
+    } else if (subjectId === "mp_ob" && chapterNumber === 2) {
+      list = [
+        {
+          title: "Planning, Decision Making & Organizing",
+          ytId: "r5uShCEMbRg",
+          duration: "61:03",
+          thumbnailUrl: "/mp_ob_unit2_thumb.jpg",
+          topics: [
+            "Unit 2 Roadmap & Lecture Overview",
+            "Foundations, Definitions & Types of Planning",
+            "Decision Making: Characteristics & 7-Step Process",
+            "Management by Objectives (MBO) & Industrial Cases",
+            "Organizing: Process, Principles & Structures",
+            "Departmentalization & Formal vs. Informal Organization",
+            "Span of Management, Delegation & Decentralization",
+            "Line & Staff Relationships, Conflict Resolution & Recap",
+          ],
+          timestamps: [
+            { title: "Unit 2 Roadmap & Lecture Overview", startSec: 0, endSec: 301 },
+            { title: "Foundations, Definitions & Types of Planning", startSec: 301, endSec: 775 },
+            { title: "Decision Making: Characteristics & 7-Step Process", startSec: 775, endSec: 975 },
+            { title: "Management by Objectives (MBO) & Industrial Cases", startSec: 975, endSec: 1335 },
+            { title: "Organizing: Process, Principles & Structures", startSec: 1335, endSec: 1798 },
+            { title: "Departmentalization & Formal vs. Informal Organization", startSec: 1798, endSec: 2424 },
+            { title: "Span of Management, Delegation & Decentralization", startSec: 2424, endSec: 2899 },
+            { title: "Line & Staff Relationships, Conflict Resolution & Recap", startSec: 2899, endSec: 3663 },
+          ],
+        },
+      ];
+    } else if (subjectId === "mp_ob" && chapterNumber === 3) {
+      list = [
+        {
+          title: "Staffing, Directing, Leadership, Motivation & Controlling",
+          ytId: "0ebk2Zx1PA0",
+          duration: "59:39",
+          thumbnailUrl: "/mp_ob_unit3_thumb.jpg",
+          topics: [
+            "Unit 3 Roadmap & Concept Preview",
+            "Staffing: Manpower Planning, Recruitment & Selection",
+            "Directing & Supervision: Elements, Skills & Shop-Floor Cases",
+            "Motivation Theories: Maslow, McGregor, Herzberg, McClelland & Porter–Lawler",
+            "Leadership Styles & Blake–Mouton Managerial Grid",
+            "Managerial Communication & Transactional Dynamics",
+            "Controlling: Process, Feedback Loop, Six-Sigma & PERT/CPM",
+            "Unit 3 Executive Synthesis & Exam Master Recap",
+          ],
+          timestamps: [
+            { title: "Unit 3 Roadmap & Concept Preview", startSec: 0, endSec: 370 },
+            { title: "Staffing: Manpower Planning, Recruitment & Selection", startSec: 370, endSec: 800 },
+            { title: "Directing & Supervision: Elements, Skills & Shop-Floor Cases", startSec: 800, endSec: 1350 },
+            { title: "Motivation Theories: Maslow, McGregor, Herzberg, McClelland & Porter–Lawler", startSec: 1350, endSec: 1800 },
+            { title: "Leadership Styles & Blake–Mouton Managerial Grid", startSec: 1800, endSec: 2340 },
+            { title: "Managerial Communication & Transactional Dynamics", startSec: 2340, endSec: 2790 },
+            { title: "Controlling: Process, Feedback Loop, Six-Sigma & PERT/CPM", startSec: 2790, endSec: 3280 },
+            { title: "Unit 3 Executive Synthesis & Exam Master Recap", startSec: 3280, endSec: 3579 },
+          ],
+        },
+      ];
+    } else if (subjectId === "mp_ob" && chapterNumber === 4) {
+      list = [
+        {
+          title: "Organisational Behaviour, Perception & Personality",
+          ytId: "25lAlkNBSzI",
+          duration: "52:05",
+          thumbnailUrl: "/mp_ob_unit4_thumb.jpg",
+          topics: [
+            "Unit 4 Roadmap & Concept Preview",
+            "Organizational Behavior: Nature, Goals & Disciplines",
+            "Four Classic Models of Organizational Behavior",
+            "Human Perception: Definitions, Factors & Subjective Filters",
+            "Perceptual Process, Triadic Framework & Perceptual Errors",
+            "Personality: Foundations, Jung Types, Cattell & Big Five",
+            "Psychoanalytic Theory: Freud's Mind Model & Defense Mechanisms",
+            "Social Cognitive, Humanistic & Behavioral Theories",
+            "Unit 4 Master Recap & Exam Synthesis",
+          ],
+          timestamps: [
+            { title: "Unit 4 Roadmap & Concept Preview", startSec: 0, endSec: 361 },
+            { title: "Organizational Behavior: Nature, Goals & Disciplines", startSec: 361, endSec: 529 },
+            { title: "Four Classic Models of Organizational Behavior", startSec: 529, endSec: 739 },
+            { title: "Human Perception: Definitions, Factors & Subjective Filters", startSec: 739, endSec: 1194 },
+            { title: "Perceptual Process, Triadic Framework & Perceptual Errors", startSec: 1194, endSec: 1569 },
+            { title: "Personality: Foundations, Jung Types, Cattell & Big Five", startSec: 1569, endSec: 2050 },
+            { title: "Psychoanalytic Theory: Freud's Mind Model & Defense Mechanisms", startSec: 2050, endSec: 2465 },
+            { title: "Social Cognitive, Humanistic & Behavioral Theories", startSec: 2465, endSec: 2821 },
+            { title: "Unit 4 Master Recap & Exam Synthesis", startSec: 2821, endSec: 3125 },
+          ],
+        },
+      ];
+    } else if (subjectId === "mp_ob" && chapterNumber === 5) {
+      list = [
+        {
+          title: "Group Dynamics, Transactional Analysis & Organizational Change",
+          ytId: "bfe6k_JKsbU",
+          duration: "53:02",
+          thumbnailUrl: "/mp_ob_unit5_thumb.jpg",
+          topics: [
+            "Unit 5 Roadmap & Lecture Overview",
+            "Formal vs. Informal Groups & Tuckman's 5-Stage Model",
+            "Group Cohesiveness, Team Performance & Act 1 Recap",
+            "Transactional Analysis: Ego States, Transactions & Life Positions",
+            "The Johari Window: Open, Blind, Hidden & Unknown Panes",
+            "Organizational Change: Forces & Kurt Lewin's 3-Step Model",
+            "Resistance to Change & Six Strategies to Overcome It",
+            "Unit 5 Master Recap & Exam Synthesis",
+          ],
+          timestamps: [
+            { title: "Unit 5 Roadmap & Lecture Overview", startSec: 0, endSec: 307 },
+            { title: "Formal vs. Informal Groups & Tuckman's 5-Stage Model", startSec: 307, endSec: 720 },
+            { title: "Group Cohesiveness, Team Performance & Act 1 Recap", startSec: 720, endSec: 1211 },
+            { title: "Transactional Analysis: Ego States, Transactions & Life Positions", startSec: 1211, endSec: 1576 },
+            { title: "The Johari Window: Open, Blind, Hidden & Unknown Panes", startSec: 1576, endSec: 1996 },
+            { title: "Organizational Change: Forces & Kurt Lewin's 3-Step Model", startSec: 1996, endSec: 2532 },
+            { title: "Resistance to Change & Six Strategies to Overcome It", startSec: 2532, endSec: 2950 },
+            { title: "Unit 5 Master Recap & Exam Synthesis", startSec: 2950, endSec: 3182 },
           ],
         },
       ];
@@ -955,17 +1242,36 @@ export default function VideosView({
     recordVideoOpen(targetYtId || currentVideo?.ytId);
     try {
       if (container.requestFullscreen) {
-        container.requestFullscreen().catch(() => {});
+        const req = container.requestFullscreen();
+        if (req && typeof (req as Promise<void>).catch === "function") {
+          (req as Promise<void>).catch(() => {
+            setIsFullscreen(false);
+            isFullscreenRef.current = false;
+            setIsWatchExpanded(true);
+          });
+        }
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
       } else if ((container as any).webkitRequestFullscreen) {
         (container as any).webkitRequestFullscreen();
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
       } else if ((container as any).mozRequestFullScreen) {
         (container as any).mozRequestFullScreen();
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
       } else if ((container as any).msRequestFullscreen) {
         (container as any).msRequestFullscreen();
+        setIsFullscreen(true);
+        isFullscreenRef.current = true;
+      } else {
+        setIsWatchExpanded(true);
       }
-      setIsFullscreen(true);
-      isFullscreenRef.current = true;
-    } catch {}
+    } catch {
+      setIsFullscreen(false);
+      isFullscreenRef.current = false;
+      setIsWatchExpanded(true);
+    }
   };
 
   const exitFullscreen = () => {
@@ -1004,14 +1310,21 @@ export default function VideosView({
 
   useEffect(() => {
     const handler = () => {
-      const fs = !!(
+      const fsEl =
         document.fullscreenElement ||
         (document as any).webkitFullscreenElement ||
         (document as any).mozFullScreenElement ||
-        (document as any).msFullscreenElement
-      );
-      setIsFullscreen(fs);
-      isFullscreenRef.current = fs;
+        (document as any).msFullscreenElement;
+      const isWatchFs = Boolean(fsEl && playerContainerRef.current && fsEl === playerContainerRef.current);
+      setIsFullscreen(isWatchFs);
+      isFullscreenRef.current = isWatchFs;
+      if (!fsEl) {
+        setIsWatchExpanded(false);
+        if (playingClipIdxRef.current !== null && clipOpenedInFullscreenRef.current) {
+          clipOpenedInFullscreenRef.current = false;
+          setPlayingClipIdx(null);
+        }
+      }
     };
     document.addEventListener("fullscreenchange", handler);
     document.addEventListener("webkitfullscreenchange", handler);
@@ -1162,10 +1475,17 @@ export default function VideosView({
 
   const handleVideoClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isCurrentlyFullscreen()) {
-      handlePlayPause();
+      enterFullscreen();
+      if (!isPlaying) {
+        handlePlayPause();
+      }
       return;
     }
 
+    if (!isCurrentlyFullscreen()) {
+      handlePlayPause();
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const clickX = e.clientX - rect.left;
     const ratio = clickX / rect.width;
@@ -1213,6 +1533,26 @@ export default function VideosView({
           return;
         }
       }
+      if (e.key === "Escape") {
+        if (playingClipIdxRef.current !== null) {
+          e.preventDefault();
+          if (document.fullscreenElement) {
+            document.exitFullscreen?.().catch(() => {});
+          }
+          setPlayingClipIdx(null);
+          return;
+        }
+        if (isWatchExpandedRef.current && !document.fullscreenElement) {
+          e.preventDefault();
+          setIsWatchExpanded(false);
+          return;
+        }
+      }
+
+      // Do not intercept hotkeys when watching a clip in Clips mode
+      if (watchModeRef.current === "clips") {
+        return;
+      }
 
       if (e.code === "Space" || e.key === " " || e.key === "k" || e.key === "K") {
         e.preventDefault();
@@ -1239,7 +1579,6 @@ export default function VideosView({
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
@@ -1322,6 +1661,40 @@ export default function VideosView({
   }, [currentVideo, displayTitle, chapterName]);
 
   const segmentsList = useMemo(() => {
+    const formatDurationLabel = (segSec: number) => {
+      const mins = Math.floor(segSec / 60);
+      const secs = segSec % 60;
+      return mins > 0 && secs > 0
+        ? `${mins} min ${secs} sec`
+        : mins > 0
+          ? `${mins} min`
+          : `${secs} sec`;
+    };
+
+    if (currentVideo.timestamps && currentVideo.timestamps.length > 0) {
+      return currentVideo.timestamps.map((seg, idx, arr) => {
+        const startSec = Math.max(0, Math.round(seg.startSec));
+        const nextStart = arr[idx + 1]?.startSec;
+        const fallbackEnd =
+          typeof nextStart === "number"
+            ? Math.round(nextStart)
+            : Math.max(effectiveDurationSec, startSec + 1);
+        const endSec =
+          typeof seg.endSec === "number" && seg.endSec > startSec
+            ? Math.round(seg.endSec)
+            : Math.max(startSec + 1, fallbackEnd);
+        const segSec = Math.max(1, endSec - startSec);
+        return {
+          index: idx,
+          title: seg.title,
+          startSec,
+          endSec,
+          timeRangeStr: `${formatTime(startSec)} – ${formatTime(endSec)}`,
+          durationLabel: formatDurationLabel(segSec),
+        };
+      });
+    }
+
     const count = Math.max(1, topicsList.length);
     return topicsList.map((topic, idx) => {
       const startSec = Math.round((idx / count) * effectiveDurationSec);
@@ -1330,24 +1703,16 @@ export default function VideosView({
           ? effectiveDurationSec
           : Math.round(((idx + 1) / count) * effectiveDurationSec);
       const segSec = Math.max(1, endSec - startSec);
-      const mins = Math.floor(segSec / 60);
-      const secs = segSec % 60;
-      const durationLabel =
-        mins > 0 && secs > 0
-          ? `${mins} min ${secs} sec`
-          : mins > 0
-            ? `${mins} min`
-            : `${secs} sec`;
       return {
         index: idx,
         title: topic,
         startSec,
         endSec,
         timeRangeStr: `${formatTime(startSec)} – ${formatTime(endSec)}`,
-        durationLabel,
+        durationLabel: formatDurationLabel(segSec),
       };
     });
-  }, [topicsList, effectiveDurationSec]);
+  }, [currentVideo.timestamps, topicsList, effectiveDurationSec]);
 
   const activeSegmentIdx = useMemo(() => {
     for (let i = segmentsList.length - 1; i >= 0; i--) {
@@ -1484,79 +1849,119 @@ export default function VideosView({
   useEffect(() => {
     setActiveClipIdx(0);
     setPlayingClipIdx(null);
+    setIsWatchExpanded(false);
   }, [subjectId, chapterNumber, robustActive, watchMode]);
+  const standaloneClips =
+    currentVideo.clips && currentVideo.clips.length > 0 ? currentVideo.clips : null;
+
+  const openClipEnlarged = (idx: number) => {
+    const hasTarget = standaloneClips ? Boolean(standaloneClips[idx]?.ytId) : Boolean(currentVideo.ytId);
+    if (!hasTarget) {
+      setActiveClipIdx(idx);
+      return;
+    }
+    flushSync(() => {
+      setActiveClipIdx(idx);
+      setPlayingClipIdx(idx);
+    });
+    const el = clipModalRef.current;
+    if (el && !document.fullscreenElement) {
+      try {
+        if (el.requestFullscreen) {
+          el.requestFullscreen()
+            .then(() => {
+              clipOpenedInFullscreenRef.current = true;
+            })
+            .catch(() => {
+              clipOpenedInFullscreenRef.current = false;
+            });
+        } else if ((el as any).webkitRequestFullscreen) {
+          (el as any).webkitRequestFullscreen();
+          clipOpenedInFullscreenRef.current = true;
+        } else if ((el as any).mozRequestFullScreen) {
+          (el as any).mozRequestFullScreen();
+          clipOpenedInFullscreenRef.current = true;
+        } else if ((el as any).msRequestFullscreen) {
+          (el as any).msRequestFullscreen();
+          clipOpenedInFullscreenRef.current = true;
+        }
+      } catch {
+        clipOpenedInFullscreenRef.current = false;
+      }
+    }
+  };
+
+  const toggleClipModalFullscreen = () => {
+    const el = clipModalRef.current;
+    if (!el) return;
+    try {
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      } else if (el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      } else if ((el as any).webkitRequestFullscreen) {
+        (el as any).webkitRequestFullscreen();
+      }
+    } catch {}
+  };
 
   const renderClipsMultiWindow = () => {
-    const thumbSrc =
-      currentVideo.ytId &&
-      (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
-        ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
-        : currentVideo.thumbnailUrl ||
-          (currentVideo.ytId ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg` : "");
+    if (standaloneClips) {
+      return (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              standaloneClips.length === 1
+                ? "minmax(0, 1fr)"
+                : "repeat(auto-fill, minmax(340px, 1fr))",
+            gap: "16px",
+            width: "100%",
+          }}
+        >
+          {standaloneClips.map((clip, idx) => {
+            const isSelectedClip = idx === activeClipIdx;
+            const clipThumb =
+              clip.thumbnailUrl ||
+              (clip.ytId ? `https://i.ytimg.com/vi/${clip.ytId}/maxresdefault.jpg` : "");
 
-    return (
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: segmentsList.length === 1 ? "minmax(0, 1fr)" : "repeat(2, minmax(0, 1fr))",
-          gap: "12px",
-          width: "100%",
-        }}
-      >
-        {segmentsList.map((seg, idx) => {
-          const isSelectedClip = idx === activeClipIdx;
-          const isClipPlaying = playingClipIdx === idx && Boolean(currentVideo.ytId);
-
-          return (
-            <div
-              key={`clip-win-${subjectId}-${chapterNumber}-${robustActive}-${seg.index}`}
-              onClick={() => {
-                setActiveClipIdx(idx);
-                if (!isClipPlaying && currentVideo.ytId) {
-                  setPlayingClipIdx(idx);
-                }
-              }}
-              style={{
-                position: "relative",
-                width: "100%",
-                aspectRatio: "16 / 9",
-                borderRadius: "10px",
-                overflow: "hidden",
-                background: "#0F1713",
-                border: isSelectedClip ? "2px solid #5B8C72" : "1px solid #DED8CA",
-                boxShadow: isSelectedClip
-                  ? "0 6px 18px rgba(20, 32, 26, 0.14)"
-                  : "0 3px 10px rgba(20, 32, 26, 0.08)",
-                cursor: isClipPlaying ? "default" : "pointer",
-                transition: "border-color 0.18s ease, box-shadow 0.18s ease",
-              }}
-            >
-              {isClipPlaying && currentVideo.ytId ? (
-                <iframe
-                  key={`clip-iframe-${subjectId}-${chapterNumber}-${robustActive}-${idx}`}
-                  title={`${displayTitle} - ${seg.title}`}
-                  src={`https://www.youtube.com/embed/${currentVideo.ytId}?autoplay=1&start=${seg.startSec}${
-                    seg.endSec > seg.startSec + 4 ? `&end=${seg.endSec}` : ""
-                  }&rel=0&modestbranding=1&playsinline=1&controls=1`}
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
+            return (
+              <div
+                id={`clip-card-${idx}`}
+                key={clip.id || `clip-standalone-${subjectId}-${chapterNumber}-${idx}`}
+                onClick={() => openClipEnlarged(idx)}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  width: "100%",
+                  borderRadius: "12px",
+                  overflow: "hidden",
+                  background: "#FFFFFF",
+                  border: isSelectedClip ? "2px solid #5B8C72" : "1px solid #DED8CA",
+                  boxShadow: isSelectedClip
+                    ? "0 6px 18px rgba(20, 32, 26, 0.14)"
+                    : "0 3px 10px rgba(20, 32, 26, 0.06)",
+                  cursor: "pointer",
+                  transition: "transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease",
+                }}
+              >
+                {/* 16:9 Unobstructed Title-Card Thumbnail */}
+                <div
                   style={{
-                    position: "absolute",
-                    inset: 0,
+                    position: "relative",
                     width: "100%",
-                    height: "100%",
-                    border: 0,
+                    aspectRatio: "16 / 9",
+                    background: "#F4EDDA",
+                    overflow: "hidden",
                   }}
-                />
-              ) : (
-                <>
-                  {thumbSrc && (
+                >
+                  {clipThumb && (
                     <img
-                      src={thumbSrc}
-                      alt={seg.title}
+                      src={clipThumb}
+                      alt={clip.title}
                       onError={(e) => {
-                        if (currentVideo.ytId) {
-                          const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
+                        if (clip.ytId) {
+                          const fallback = `https://i.ytimg.com/vi/${clip.ytId}/hqdefault.jpg`;
                           if (e.currentTarget.src !== fallback) {
                             e.currentTarget.src = fallback;
                           }
@@ -1574,16 +1979,8 @@ export default function VideosView({
                       }}
                     />
                   )}
-                  <div
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      background:
-                        "linear-gradient(180deg, rgba(14, 22, 18, 0.48) 0%, rgba(14, 22, 18, 0.18) 45%, rgba(14, 22, 18, 0.86) 100%)",
-                    }}
-                  />
 
-                  {/* Top Row: Clip index + Time Range */}
+                  {/* Top Row: Clip index + Duration pill */}
                   <div
                     style={{
                       position: "absolute",
@@ -1603,51 +2000,49 @@ export default function VideosView({
                         fontWeight: 700,
                         letterSpacing: "0.06em",
                         textTransform: "uppercase",
-                        color: isSelectedClip ? "#162A20" : "#E4EFE9",
-                        background: isSelectedClip ? "#9DC2AD" : "rgba(15, 23, 19, 0.74)",
+                        color: isSelectedClip ? "#162A20" : "#F4F7F5",
+                        background: isSelectedClip ? "#9DC2AD" : "rgba(30, 40, 34, 0.84)",
                         padding: "2.5px 7px",
                         borderRadius: "4px",
                       }}
                     >
                       {`Clip ${idx + 1}`}
                     </span>
-                    <span
-                      style={{
-                        fontSize: "10px",
-                        fontWeight: 600,
-                        color: "#E4EFE9",
-                        background: "rgba(15, 23, 19, 0.74)",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {`${formatTime(seg.startSec)} – ${formatTime(seg.endSec)}`}
-                    </span>
+                    {clip.duration && (
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          color: "#F4F7F5",
+                          background: "rgba(30, 40, 34, 0.84)",
+                          padding: "2px 7px",
+                          borderRadius: "4px",
+                          fontVariantNumeric: "tabular-nums",
+                        }}
+                      >
+                        {clip.duration}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Center Sage Play Button */}
+                  {/* Bottom-Right Play Button (keeps center title card 100% unobstructed) */}
                   <button
                     type="button"
-                    aria-label={`Play Clip ${idx + 1}: ${seg.title}`}
+                    aria-label={`Play Clip ${idx + 1}: ${clip.title}`}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setActiveClipIdx(idx);
-                      if (currentVideo.ytId) {
-                        setPlayingClipIdx(idx);
-                      }
+                      openClipEnlarged(idx);
                     }}
                     style={{
                       position: "absolute",
-                      top: "50%",
-                      left: "50%",
-                      transform: "translate(-50%, -50%)",
-                      width: "42px",
-                      height: "42px",
+                      right: "10px",
+                      bottom: "10px",
+                      width: "38px",
+                      height: "38px",
                       borderRadius: "50%",
-                      border: "none",
-                      background: "#9DC2AD",
-                      boxShadow: "0 6px 18px rgba(0, 0, 0, 0.36)",
+                      border: "1.5px solid rgba(255, 255, 255, 0.78)",
+                      background: "#2D3E36",
+                      boxShadow: "0 4px 12px rgba(20, 32, 26, 0.32)",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -1656,60 +2051,578 @@ export default function VideosView({
                     }}
                   >
                     <svg
-                      width="15"
-                      height="15"
+                      width="13"
+                      height="13"
                       viewBox="0 0 24 24"
-                      fill="#162A20"
+                      fill="#FAF8F3"
                       style={{ marginLeft: "2px" }}
                     >
                       <polygon points="6,4 20,12 6,20" />
                     </svg>
                   </button>
+                </div>
 
-                  {/* Bottom Clip Title & Duration */}
+                {/* Clean Caption Strip Below Title Card */}
+                <div
+                  style={{
+                    padding: "9px 12px 10px",
+                    background: isSelectedClip ? "#F3F8F5" : "#FAF8F4",
+                    borderTop: "1px solid #ECE7DC",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
+                  }}
+                >
+                  {clip.actLabel && (
+                    <span
+                      style={{
+                        fontSize: "9.5px",
+                        fontWeight: 700,
+                        letterSpacing: "0.05em",
+                        textTransform: "uppercase",
+                        color: "#5C6D63",
+                      }}
+                    >
+                      {clip.actLabel}
+                    </span>
+                  )}
                   <div
                     style={{
-                      position: "absolute",
-                      left: "10px",
-                      right: "10px",
-                      bottom: "8px",
-                      zIndex: 2,
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "2px",
-                      pointerEvents: "none",
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      color: "#1E2822",
+                      lineHeight: 1.32,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
                     }}
                   >
-                    <div
-                      style={{
-                        fontSize: "12px",
-                        fontWeight: 600,
-                        color: "#F4F7F5",
-                        lineHeight: 1.3,
-                        display: "-webkit-box",
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: "vertical",
-                        overflow: "hidden",
-                      }}
-                    >
-                      {seg.title}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: "10.5px",
-                        fontWeight: 500,
-                        color: "#B6C9BE",
-                        fontVariantNumeric: "tabular-nums",
-                      }}
-                    >
-                      {seg.durationLabel}
-                    </div>
+                    {clip.title}
                   </div>
-                </>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      );
+    }
+
+    const thumbSrc =
+      currentVideo.ytId &&
+      (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
+        ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
+        : currentVideo.thumbnailUrl ||
+          (currentVideo.ytId ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg` : "");
+
+    return (
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            segmentsList.length === 1
+              ? "minmax(0, 1fr)"
+              : "repeat(auto-fill, minmax(340px, 1fr))",
+          gap: "14px",
+          width: "100%",
+        }}
+      >
+        {segmentsList.map((seg, idx) => {
+          const isSelectedClip = idx === activeClipIdx;
+
+          return (
+            <div
+              id={`clip-card-${idx}`}
+              key={`clip-win-${subjectId}-${chapterNumber}-${robustActive}-${seg.index}`}
+              onClick={() => openClipEnlarged(idx)}
+              style={{
+                position: "relative",
+                width: "100%",
+                aspectRatio: "16 / 9",
+                borderRadius: "10px",
+                overflow: "hidden",
+                background: "#0F1713",
+                border: isSelectedClip ? "2px solid #5B8C72" : "1px solid #DED8CA",
+                boxShadow: isSelectedClip
+                  ? "0 6px 18px rgba(20, 32, 26, 0.14)"
+                  : "0 3px 10px rgba(20, 32, 26, 0.08)",
+                cursor: "pointer",
+                transition: "border-color 0.18s ease, box-shadow 0.18s ease",
+              }}
+            >
+              {thumbSrc && (
+                <img
+                  src={thumbSrc}
+                  alt={seg.title}
+                  onError={(e) => {
+                    if (currentVideo.ytId) {
+                      const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
+                      if (e.currentTarget.src !== fallback) {
+                        e.currentTarget.src = fallback;
+                      }
+                    }
+                  }}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                    display: "block",
+                    userSelect: "none",
+                  }}
+                />
               )}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(14, 22, 18, 0.48) 0%, rgba(14, 22, 18, 0.18) 45%, rgba(14, 22, 18, 0.86) 100%)",
+                }}
+              />
+
+              {/* Top Row: Clip index + Time Range */}
+              <div
+                style={{
+                  position: "absolute",
+                  top: "8px",
+                  left: "9px",
+                  right: "9px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  zIndex: 2,
+                  pointerEvents: "none",
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: "9.5px",
+                    fontWeight: 700,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: isSelectedClip ? "#162A20" : "#E4EFE9",
+                    background: isSelectedClip ? "#9DC2AD" : "rgba(15, 23, 19, 0.74)",
+                    padding: "2.5px 7px",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {`Clip ${idx + 1}`}
+                </span>
+                <span
+                  style={{
+                    fontSize: "10px",
+                    fontWeight: 600,
+                    color: "#E4EFE9",
+                    background: "rgba(15, 23, 19, 0.74)",
+                    padding: "2px 6px",
+                    borderRadius: "4px",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {`${formatTime(seg.startSec)} – ${formatTime(seg.endSec)}`}
+                </span>
+              </div>
+
+              {/* Center Sage Play Button */}
+              <button
+                type="button"
+                aria-label={`Play Clip ${idx + 1}: ${seg.title}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openClipEnlarged(idx);
+                }}
+                style={{
+                  position: "absolute",
+                  top: "50%",
+                  left: "50%",
+                  transform: "translate(-50%, -50%)",
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "50%",
+                  border: "none",
+                  background: "#9DC2AD",
+                  boxShadow: "0 6px 18px rgba(0, 0, 0, 0.36)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 3,
+                }}
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="#162A20"
+                  style={{ marginLeft: "2px" }}
+                >
+                  <polygon points="6,4 20,12 6,20" />
+                </svg>
+              </button>
+
+              {/* Bottom Clip Title & Duration */}
+              <div
+                style={{
+                  position: "absolute",
+                  left: "10px",
+                  right: "10px",
+                  bottom: "8px",
+                  zIndex: 2,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "2px",
+                  pointerEvents: "none",
+                }}
+              >
+                <div
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    color: "#F4F7F5",
+                    lineHeight: 1.3,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {seg.title}
+                </div>
+                <div
+                  style={{
+                    fontSize: "10.5px",
+                    fontWeight: 500,
+                    color: "#B6C9BE",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {seg.durationLabel}
+                </div>
+              </div>
             </div>
           );
         })}
+      </div>
+    );
+  };
+
+  const renderExpandedClipOverlay = () => {
+    if (watchMode !== "clips" || playingClipIdx === null) return null;
+
+    const totalClipsCount = standaloneClips ? standaloneClips.length : segmentsList.length;
+    if (totalClipsCount === 0) return null;
+
+    const safeIdx = Math.min(Math.max(0, playingClipIdx), totalClipsCount - 1);
+    const activeStandalone = standaloneClips ? standaloneClips[safeIdx] : null;
+    const activeSeg = !standaloneClips ? segmentsList[safeIdx] : null;
+
+    const clipYtId = activeStandalone ? activeStandalone.ytId : currentVideo.ytId;
+    if (!clipYtId) return null;
+
+    const clipTitle = activeStandalone ? activeStandalone.title : activeSeg?.title || `Clip ${safeIdx + 1}`;
+    const clipMeta = activeStandalone
+      ? [activeStandalone.actLabel, activeStandalone.duration].filter(Boolean).join(" · ")
+      : activeSeg
+        ? `${formatTime(activeSeg.startSec)} – ${formatTime(activeSeg.endSec)} · ${activeSeg.durationLabel}`
+        : "";
+
+    const iframeSrc = activeStandalone
+      ? `https://www.youtube.com/embed/${clipYtId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1`
+      : `https://www.youtube.com/embed/${clipYtId}?autoplay=1&start=${activeSeg?.startSec || 0}${
+          activeSeg && activeSeg.endSec > activeSeg.startSec + 4 ? `&end=${activeSeg.endSec}` : ""
+        }&rel=0&modestbranding=1&playsinline=1&controls=1`;
+
+    const closeOverlay = () => {
+      clipOpenedInFullscreenRef.current = false;
+      if (document.fullscreenElement) {
+        document.exitFullscreen?.().catch(() => {});
+      }
+      setPlayingClipIdx(null);
+    };
+
+    const goToClip = (nextIdx: number) => {
+      if (nextIdx < 0 || nextIdx >= totalClipsCount) return;
+      setActiveClipIdx(nextIdx);
+      setPlayingClipIdx(nextIdx);
+    };
+
+    return (
+      <div
+        ref={clipModalRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={clipTitle}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) closeOverlay();
+        }}
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9600,
+          background: "rgba(11, 17, 14, 0.96)",
+          backdropFilter: "blur(10px)",
+          WebkitBackdropFilter: "blur(10px)",
+          display: "flex",
+          flexDirection: "column",
+          color: "#F4F7F5",
+        }}
+      >
+        {/* Top Cinema Bar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "16px",
+            padding: "12px 24px",
+            background: "rgba(18, 28, 23, 0.92)",
+            borderBottom: "1px solid rgba(255, 255, 255, 0.09)",
+            flexShrink: 0,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", minWidth: 0, flex: 1 }}>
+            <span
+              style={{
+                background: "#9DC2AD",
+                color: "#162A20",
+                fontSize: "11px",
+                fontWeight: 800,
+                letterSpacing: "0.05em",
+                textTransform: "uppercase",
+                padding: "4px 10px",
+                borderRadius: "999px",
+                flexShrink: 0,
+              }}
+            >
+              {`Clip ${safeIdx + 1} / ${totalClipsCount}`}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <div
+                style={{
+                  fontSize: "14.5px",
+                  fontWeight: 700,
+                  color: "#FFFFFF",
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {clipTitle}
+              </div>
+              {clipMeta && (
+                <div style={{ fontSize: "11.5px", color: "#A9BDB1", fontWeight: 500 }}>
+                  {clipMeta}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              disabled={safeIdx <= 0}
+              onClick={() => goToClip(safeIdx - 1)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.16)",
+                background: "rgba(255, 255, 255, 0.06)",
+                color: safeIdx <= 0 ? "rgba(255,255,255,0.3)" : "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: safeIdx <= 0 ? "not-allowed" : "pointer",
+              }}
+            >
+              ← Prev
+            </button>
+            <button
+              type="button"
+              disabled={safeIdx >= totalClipsCount - 1}
+              onClick={() => goToClip(safeIdx + 1)}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.16)",
+                background: "rgba(255, 255, 255, 0.06)",
+                color: safeIdx >= totalClipsCount - 1 ? "rgba(255,255,255,0.3)" : "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: safeIdx >= totalClipsCount - 1 ? "not-allowed" : "pointer",
+              }}
+            >
+              Next →
+            </button>
+            <button
+              type="button"
+              onClick={toggleClipModalFullscreen}
+              title="Toggle browser fullscreen"
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(157, 194, 173, 0.4)",
+                background: "rgba(157, 194, 173, 0.14)",
+                color: "#E4EFE9",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+                <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+                <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+                <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+              </svg>
+              Fullscreen
+            </button>
+            <button
+              type="button"
+              onClick={closeOverlay}
+              title="Close (Esc)"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                background: "#2D3E36",
+                color: "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              ✕ Close
+            </button>
+          </div>
+        </div>
+
+        {/* Center Full-Stage 16:9 Clip Player */}
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) closeOverlay();
+          }}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px 28px",
+            boxSizing: "border-box",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "min(100%, calc((100dvh - 154px) * 16 / 9))",
+              aspectRatio: "16 / 9",
+              borderRadius: "12px",
+              overflow: "hidden",
+              background: "#000000",
+              boxShadow: "0 20px 60px rgba(0, 0, 0, 0.65)",
+              border: "1px solid rgba(255, 255, 255, 0.12)",
+            }}
+          >
+            <iframe
+              key={`clip-enlarged-iframe-${subjectId}-${chapterNumber}-${safeIdx}-${clipYtId}`}
+              title={clipTitle}
+              src={iframeSrc}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                border: 0,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Bottom Quick-Switch Clip Strip */}
+        {totalClipsCount > 1 && (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "10px 24px 14px",
+              overflowX: "auto",
+              background: "rgba(18, 28, 23, 0.85)",
+              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+              flexShrink: 0,
+            }}
+          >
+            {(standaloneClips || segmentsList).map((item, idx) => {
+              const isCurrent = idx === safeIdx;
+              const labelTitle = item.title;
+              const dur = "duration" in item ? item.duration : item.durationLabel;
+              return (
+                <button
+                  key={`cinema-pill-${idx}`}
+                  type="button"
+                  onClick={() => goToClip(idx)}
+                  style={{
+                    flexShrink: 0,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    padding: "6px 12px",
+                    borderRadius: "999px",
+                    border: isCurrent
+                      ? "1.5px solid #9DC2AD"
+                      : "1px solid rgba(255, 255, 255, 0.14)",
+                    background: isCurrent ? "#2D473B" : "rgba(255, 255, 255, 0.05)",
+                    color: isCurrent ? "#FFFFFF" : "#C4D1C9",
+                    fontSize: "11.5px",
+                    fontWeight: isCurrent ? 700 : 500,
+                    cursor: "pointer",
+                    maxWidth: "240px",
+                  }}
+                  title={labelTitle}
+                >
+                  <span
+                    style={{
+                      color: isCurrent ? "#9DC2AD" : "#8CA396",
+                      fontWeight: 800,
+                      fontSize: "10.5px",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    {`${idx + 1}.`}
+                  </span>
+                  <span
+                    style={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
+                    {labelTitle}
+                  </span>
+                  {dur && (
+                    <span
+                      style={{
+                        fontSize: "10px",
+                        opacity: 0.72,
+                        fontVariantNumeric: "tabular-nums",
+                        flexShrink: 0,
+                      }}
+                    >
+                      {dur}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
@@ -1726,20 +2639,101 @@ export default function VideosView({
       onMouseMove={handlePlayerMouseMove}
       onMouseLeave={handlePlayerMouseLeave}
       style={{
-        position: "relative",
-        width: "100%",
-        height: isFullscreen ? "100%" : "clamp(300px, calc(100vh - 230px), 470px)",
+        position: isWatchExpanded && !isFullscreen ? "fixed" : "relative",
+        inset: isWatchExpanded && !isFullscreen ? 0 : undefined,
+        zIndex: isWatchExpanded && !isFullscreen ? 9500 : undefined,
+        width: isWatchExpanded && !isFullscreen ? "100vw" : "100%",
+        height: isFullscreen
+          ? "100%"
+          : isWatchExpanded
+            ? "100dvh"
+            : "clamp(300px, calc(100vh - 230px), 470px)",
         flexShrink: 0,
-        background: "#0F1713",
-        borderRadius: isFullscreen ? "0px" : "12px",
+        background: "#0B110E",
+        borderRadius: isFullscreen || isWatchExpanded ? "0px" : "12px",
         overflow: "hidden",
-        boxShadow: isFullscreen ? "none" : "0 8px 26px rgba(20, 32, 26, 0.14)",
+        boxShadow: isFullscreen || isWatchExpanded ? "none" : "0 8px 26px rgba(20, 32, 26, 0.14)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "flex-end",
-        cursor: isFullscreen && isPlaying && !showControls ? "none" : "default",
+        cursor: (isFullscreen || isWatchExpanded) && isPlaying && !showControls ? "none" : "default",
       }}
     >
+      {/* Floating Top Bar while in Expanded Watch Theater View */}
+      {isWatchExpanded && !isFullscreen && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            zIndex: 14,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            padding: "14px 20px",
+            background: "linear-gradient(180deg, rgba(11, 17, 14, 0.86) 0%, rgba(11, 17, 14, 0) 100%)",
+            opacity: showControls || !isPlaying ? 1 : 0,
+            transition: "opacity 0.22s ease",
+            pointerEvents: showControls || !isPlaying ? "auto" : "none",
+          }}
+        >
+          <span
+            style={{
+              color: "#FFFFFF",
+              fontSize: "14px",
+              fontWeight: 700,
+              textShadow: "0 1px 4px rgba(0,0,0,0.6)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {displayTitle}
+          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                enterFullscreen();
+              }}
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(157, 194, 173, 0.45)",
+                background: "rgba(20, 32, 26, 0.82)",
+                color: "#E4EFE9",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              ⤢ Fullscreen
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsWatchExpanded(false);
+              }}
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255, 255, 255, 0.22)",
+                background: "rgba(20, 32, 26, 0.88)",
+                color: "#FFFFFF",
+                fontSize: "12px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              ✕ Minimize
+            </button>
+          </div>
+        </div>
+      )}
       {/* YouTube Player target wrapped in keyed container so React cleanly unmounts on video switch */}
       <div
         key={`yt-wrap-${subjectId}-${chapterNumber}-${robustActive}-${currentVideo.ytId}`}
@@ -1882,6 +2876,9 @@ export default function VideosView({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
+            if (!isCurrentlyFullscreen()) {
+              enterFullscreen();
+            }
             handlePlayPause();
           }}
           aria-label="Play Video"
@@ -2696,10 +3693,10 @@ export default function VideosView({
           alignItems: "flex-start",
         }}
       >
-          {/* ── LEFT NAVIGATION SIDEBAR (IN THIS CHAPTER · N VIDEOS) ── */}
+          {/* ── LEFT NAVIGATION SIDEBAR (VIDEOS IN WATCH MODE · CLIPS SWITCHER IN CLIPS MODE) ── */}
           <div
             style={{
-              width: "256px",
+              width: watchMode === "clips" ? "274px" : "256px",
               flexShrink: 0,
               display: "flex",
               flexDirection: "column",
@@ -2718,218 +3715,422 @@ export default function VideosView({
                 gap: "10px",
               }}
             >
-              <div
-                style={{
-                  fontSize: "10.5px",
-                  fontWeight: 800,
-                  letterSpacing: "0.07em",
-                  color: "#6E7B73",
-                  textTransform: "uppercase",
-                  padding: "0 4px 4px 4px",
-                }}
-              >
-                {`IN THIS CHAPTER · ${totalVideos} ${totalVideos === 1 ? "VIDEO" : "VIDEOS"}`}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                {videos.map((vid, idx) => {
-                  const isSelected = idx === robustActive;
-                  const isWatched = isVideoDone(idx);
-                  let savedVidDur = 0;
-                  if (!isSelected) {
-                    const tKey = getVideoTimeKey(idx, vid.ytId);
-                    if (tKey) {
-                      try {
-                        const raw = safeGetItem(tKey);
-                        if (raw) {
-                          const parsed = JSON.parse(raw);
-                          if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
-                            savedVidDur = Math.round(parsed.duration);
-                          }
-                        }
-                      } catch {}
-                    }
-                  }
-                  const vidSec =
-                    isSelected && duration > 0
-                      ? Math.round(duration)
-                      : savedVidDur > 0
-                        ? savedVidDur
-                        : parseDurationSec(vid.duration, 210);
-                  const vidDurFormatted = formatTime(vidSec);
-
-                  let statusBadge = "";
-                  if (isSelected) {
-                    statusBadge = "HERE";
-                  } else if (isWatched) {
-                    statusBadge = "DONE";
-                  } else {
-                    const queueOffset =
-                      idx > robustActive ? idx - robustActive : totalVideos - robustActive + idx;
-                    if (queueOffset === 1) statusBadge = "UP NEXT";
-                    else if (queueOffset === 2) statusBadge = "2ND";
-                    else if (queueOffset === 3) statusBadge = "3RD";
-                    else statusBadge = `${queueOffset}TH`;
-                  }
-
-                  return (
-                    <div
-                      key={`video-item-${idx}-${vid.ytId || idx}`}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => handleSelectVideo(idx)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          handleSelectVideo(idx);
-                        }
+              {watchMode === "clips" ? (
+                <>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      padding: "0 4px 6px 4px",
+                      borderBottom: "1px solid #F2EFE9",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 800,
+                        letterSpacing: "0.07em",
+                        color: "#6E7B73",
+                        textTransform: "uppercase",
                       }}
+                    >
+                      {`CLIPS · ${standaloneClips ? standaloneClips.length : segmentsList.length}`}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        fontWeight: 500,
+                        color: "#9AA39D",
+                      }}
+                    >
+                      Click to watch
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "4px",
+                      maxHeight: "calc(100vh - 230px)",
+                      overflowY: "auto",
+                      paddingRight: "2px",
+                    }}
+                  >
+                    {standaloneClips
+                      ? standaloneClips.map((clip, idx) => {
+                          const isNowPlaying = idx === activeClipIdx;
+                          return (
+                            <div
+                              key={clip.id || `clip-left-${idx}`}
+                              onClick={() => openClipEnlarged(idx)}
+                              style={{
+                                background: isNowPlaying ? "#EFF5F1" : "transparent",
+                                border: isNowPlaying ? "1px solid #C5D9CD" : "1px solid transparent",
+                                borderRadius: "10px",
+                                padding: "9px 10px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px",
+                                transition: "background 0.15s ease, border-color 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isNowPlaying) {
+                                  e.currentTarget.style.background = "#FAF8F4";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isNowPlaying) {
+                                  e.currentTarget.style.background = "transparent";
+                                }
+                              }}
+                            >
+                              <span
+                                style={{
+                                  background: isNowPlaying ? "#DCECE3" : "#F4F1EA",
+                                  color: isNowPlaying ? "#244D39" : "#6E7B73",
+                                  fontSize: "10.5px",
+                                  fontWeight: 700,
+                                  padding: "3px 7px",
+                                  borderRadius: "5px",
+                                  fontVariantNumeric: "tabular-nums",
+                                  flexShrink: 0,
+                                  marginTop: "1px",
+                                }}
+                              >
+                                {clip.duration || `#${idx + 1}`}
+                              </span>
+
+                              <div
+                                style={{
+                                  flex: 1,
+                                  minWidth: 0,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "2px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    fontWeight: isNowPlaying ? 700 : 500,
+                                    color: isNowPlaying ? "#1E2822" : "#3E4A43",
+                                    lineHeight: 1.35,
+                                  }}
+                                >
+                                  {clip.title}
+                                </div>
+                                {clip.actLabel && (
+                                  <div
+                                    style={{
+                                      fontSize: "10px",
+                                      fontWeight: 500,
+                                      color: "#8F9993",
+                                    }}
+                                  >
+                                    {clip.actLabel}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      : segmentsList.map((seg, idx) => {
+                          const isNowPlaying = idx === activeClipIdx;
+                          return (
+                            <div
+                              key={`clip-seg-left-${seg.index}`}
+                              onClick={() => openClipEnlarged(idx)}
+                              style={{
+                                background: isNowPlaying ? "#EFF5F1" : "transparent",
+                                border: isNowPlaying ? "1px solid #C5D9CD" : "1px solid transparent",
+                                borderRadius: "10px",
+                                padding: "9px 10px",
+                                cursor: "pointer",
+                                display: "flex",
+                                alignItems: "flex-start",
+                                gap: "10px",
+                                transition: "background 0.15s ease, border-color 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => {
+                                if (!isNowPlaying) {
+                                  e.currentTarget.style.background = "#FAF8F4";
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (!isNowPlaying) {
+                                  e.currentTarget.style.background = "transparent";
+                                }
+                              }}
+                            >
+                              <span
+                                style={{
+                                  background: isNowPlaying ? "#DCECE3" : "#F4F1EA",
+                                  color: isNowPlaying ? "#244D39" : "#6E7B73",
+                                  fontSize: "10.5px",
+                                  fontWeight: 700,
+                                  padding: "3px 7px",
+                                  borderRadius: "5px",
+                                  fontVariantNumeric: "tabular-nums",
+                                  flexShrink: 0,
+                                  marginTop: "1px",
+                                }}
+                              >
+                                {formatTime(seg.startSec)}
+                              </span>
+
+                              <div
+                                style={{
+                                  flex: 1,
+                                  minWidth: 0,
+                                  display: "flex",
+                                  flexDirection: "column",
+                                  gap: "2px",
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontSize: "12px",
+                                    fontWeight: isNowPlaying ? 700 : 500,
+                                    color: isNowPlaying ? "#1E2822" : "#3E4A43",
+                                    lineHeight: 1.35,
+                                  }}
+                                >
+                                  {seg.title}
+                                </div>
+                                <div
+                                  style={{
+                                    fontSize: "10px",
+                                    fontWeight: 500,
+                                    color: "#8F9993",
+                                  }}
+                                >
+                                  {seg.durationLabel}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 800,
+                      letterSpacing: "0.07em",
+                      color: "#6E7B73",
+                      textTransform: "uppercase",
+                      padding: "0 4px 4px 4px",
+                    }}
+                  >
+                    {`IN THIS CHAPTER · ${totalVideos} ${totalVideos === 1 ? "VIDEO" : "VIDEOS"}`}
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                    {videos.map((vid, idx) => {
+                      const isSelected = idx === robustActive;
+                      const isWatched = isVideoDone(idx);
+                      let savedVidDur = 0;
+                      if (!isSelected) {
+                        const tKey = getVideoTimeKey(idx, vid.ytId);
+                        if (tKey) {
+                          try {
+                            const raw = safeGetItem(tKey);
+                            if (raw) {
+                              const parsed = JSON.parse(raw);
+                              if (parsed && typeof parsed.duration === "number" && parsed.duration > 0) {
+                                savedVidDur = Math.round(parsed.duration);
+                              }
+                            }
+                          } catch {}
+                        }
+                      }
+                      const vidSec =
+                        isSelected && duration > 0
+                          ? Math.round(duration)
+                          : savedVidDur > 0
+                            ? savedVidDur
+                            : parseDurationSec(vid.duration, 210);
+                      const vidDurFormatted = formatTime(vidSec);
+
+                      let statusBadge = "";
+                      if (isSelected) {
+                        statusBadge = "HERE";
+                      } else if (isWatched) {
+                        statusBadge = "DONE";
+                      } else {
+                        const queueOffset =
+                          idx > robustActive ? idx - robustActive : totalVideos - robustActive + idx;
+                        if (queueOffset === 1) statusBadge = "UP NEXT";
+                        else if (queueOffset === 2) statusBadge = "2ND";
+                        else if (queueOffset === 3) statusBadge = "3RD";
+                        else statusBadge = `${queueOffset}TH`;
+                      }
+
+                      return (
+                        <div
+                          key={`video-item-${idx}-${vid.ytId || idx}`}
+                          role="button"
+                          tabIndex={0}
+                          onClick={() => handleSelectVideo(idx)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              handleSelectVideo(idx);
+                            }
+                          }}
+                          style={{
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "10px",
+                            padding: "10px 10px",
+                            borderRadius: "12px",
+                            cursor: "pointer",
+                            border: isSelected ? "1px solid #C5D9CD" : "1px solid transparent",
+                            background: isSelected ? "#EFF5F1" : "transparent",
+                            transition: "all 0.18s ease",
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: "16px",
+                              height: "16px",
+                              borderRadius: "50%",
+                              marginTop: "2px",
+                              flexShrink: 0,
+                              border: isSelected
+                                ? "1.5px solid #5B8C72"
+                                : isWatched
+                                  ? "1.5px solid #5B8C72"
+                                  : "1.5px solid #C5C0B6",
+                              background: isWatched && !isSelected ? "#5B8C72" : "transparent",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {isSelected ? (
+                              <div
+                                style={{
+                                  width: "6px",
+                                  height: "6px",
+                                  borderRadius: "50%",
+                                  background: "#5B8C72",
+                                }}
+                              />
+                            ) : isWatched ? (
+                              <svg
+                                width="10"
+                                height="10"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#FFFFFF"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            ) : null}
+                          </div>
+
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                justifyContent: "space-between",
+                                gap: "6px",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "12.5px",
+                                  fontWeight: isSelected ? 700 : 600,
+                                  color: isSelected ? "#1E2822" : "#37423B",
+                                  lineHeight: 1.35,
+                                }}
+                              >
+                                {vid.title || `Part ${idx + 1}`}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "9.5px",
+                                  fontWeight: 800,
+                                  letterSpacing: "0.04em",
+                                  color: isSelected ? "#4F7D65" : "#88938B",
+                                  flexShrink: 0,
+                                  marginTop: "2px",
+                                }}
+                              >
+                                {statusBadge}
+                              </span>
+                            </div>
+
+                            <div
+                              style={{
+                                fontSize: "11px",
+                                fontWeight: 500,
+                                color: isSelected ? "#586B60" : "#88938B",
+                                marginTop: "4px",
+                              }}
+                            >
+                              {`• ${vidDurFormatted}`}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Chapter Progress Footer */}
+                  <div
+                    style={{
+                      borderTop: "1px solid #EFECE6",
+                      paddingTop: "12px",
+                      marginTop: "2px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "7px",
+                    }}
+                  >
+                    <div
                       style={{
                         display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        padding: "10px 10px",
-                        borderRadius: "12px",
-                        cursor: "pointer",
-                        border: isSelected ? "1px solid #C5D9CD" : "1px solid transparent",
-                        background: isSelected ? "#EFF5F1" : "transparent",
-                        transition: "all 0.18s ease",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        fontSize: "11.5px",
+                      }}
+                    >
+                      <span style={{ color: "#6E7B73", fontWeight: 600 }}>Chapter progress</span>
+                      <span style={{ color: "#2D3E36", fontWeight: 800 }}>{`${watchProgressPercent}%`}</span>
+                    </div>
+                    <div
+                      style={{
+                        width: "100%",
+                        height: "5px",
+                        background: "#EAE5DC",
+                        borderRadius: "999px",
+                        overflow: "hidden",
                       }}
                     >
                       <div
                         style={{
-                          width: "16px",
-                          height: "16px",
-                          borderRadius: "50%",
-                          marginTop: "2px",
-                          flexShrink: 0,
-                          border: isSelected
-                            ? "1.5px solid #5B8C72"
-                            : isWatched
-                              ? "1.5px solid #5B8C72"
-                              : "1.5px solid #C5C0B6",
-                          background: isWatched && !isSelected ? "#5B8C72" : "transparent",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
+                          width: `${watchProgressPercent}%`,
+                          height: "100%",
+                          background: "#9CC0B4",
+                          borderRadius: "999px",
+                          transition: "width 0.3s ease",
                         }}
-                      >
-                        {isSelected ? (
-                          <div
-                            style={{
-                              width: "6px",
-                              height: "6px",
-                              borderRadius: "50%",
-                              background: "#5B8C72",
-                            }}
-                          />
-                        ) : isWatched ? (
-                          <svg
-                            width="10"
-                            height="10"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#FFFFFF"
-                            strokeWidth="3"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                        ) : null}
-                      </div>
-
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "flex-start",
-                            justifyContent: "space-between",
-                            gap: "6px",
-                          }}
-                        >
-                          <span
-                            style={{
-                              fontSize: "12.5px",
-                              fontWeight: isSelected ? 700 : 600,
-                              color: isSelected ? "#1E2822" : "#37423B",
-                              lineHeight: 1.35,
-                            }}
-                          >
-                            {vid.title || `Part ${idx + 1}`}
-                          </span>
-                          <span
-                            style={{
-                              fontSize: "9.5px",
-                              fontWeight: 800,
-                              letterSpacing: "0.04em",
-                              color: isSelected ? "#4F7D65" : "#88938B",
-                              flexShrink: 0,
-                              marginTop: "2px",
-                            }}
-                          >
-                            {statusBadge}
-                          </span>
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize: "11px",
-                            fontWeight: 500,
-                            color: isSelected ? "#586B60" : "#88938B",
-                            marginTop: "4px",
-                          }}
-                        >
-                          {`• ${vidDurFormatted}`}
-                        </div>
-                      </div>
+                      />
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Chapter Progress Footer */}
-              <div
-                style={{
-                  borderTop: "1px solid #EFECE6",
-                  paddingTop: "12px",
-                  marginTop: "2px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "7px",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    fontSize: "11.5px",
-                  }}
-                >
-                  <span style={{ color: "#6E7B73", fontWeight: 600 }}>Chapter progress</span>
-                  <span style={{ color: "#2D3E36", fontWeight: 800 }}>{`${watchProgressPercent}%`}</span>
-                </div>
-                <div
-                  style={{
-                    width: "100%",
-                    height: "5px",
-                    background: "#EAE5DC",
-                    borderRadius: "999px",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${watchProgressPercent}%`,
-                      height: "100%",
-                      background: "#9CC0B4",
-                      borderRadius: "999px",
-                      transition: "width 0.3s ease",
-                    }}
-                  />
-                </div>
-              </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -2948,158 +4149,154 @@ export default function VideosView({
               : renderVideoPlayer(true, false, robustActive)}
           </div>
 
-          {/* ── RIGHT SUBTLE TIMESTAMPS / CLIPS COLUMN ── */}
-          <div
-            style={{
-              width: "268px",
-              flexShrink: 0,
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
+          {/* ── RIGHT SUBTLE TIMESTAMPS COLUMN (VIDEOS MODE ONLY — CLIPS USES LEFT SIDEBAR) ── */}
+          {watchMode === "videos" && (
             <div
               style={{
-                background: "#FFFFFF",
-                borderRadius: "14px",
-                padding: "14px 14px",
-                border: "1px solid #EAE5DC",
-                boxShadow: "0 1px 6px rgba(30, 40, 34, 0.02)",
+                width: "268px",
+                flexShrink: 0,
                 display: "flex",
                 flexDirection: "column",
-                gap: "8px",
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  padding: "0 4px 6px 4px",
-                  borderBottom: "1px solid #F2EFE9",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    color: "#7C8780",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  {watchMode === "clips" ? `Clips · ${segmentsList.length}` : "Timestamps"}
-                </span>
-                <span
-                  style={{
-                    fontSize: "10.5px",
-                    fontWeight: 500,
-                    color: "#9AA39D",
-                  }}
-                >
-                  {watchMode === "clips" ? "Click to play" : "Click to jump"}
-                </span>
-              </div>
-
-              <div
-                style={{
+                  background: "#FFFFFF",
+                  borderRadius: "14px",
+                  padding: "14px 14px",
+                  border: "1px solid #EAE5DC",
+                  boxShadow: "0 1px 6px rgba(30, 40, 34, 0.02)",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "4px",
+                  gap: "8px",
                 }}
               >
-                {segmentsList.map((seg, idx) => {
-                  const isNowPlaying =
-                    watchMode === "clips" ? idx === activeClipIdx : idx === activeSegmentIdx;
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "0 4px 6px 4px",
+                    borderBottom: "1px solid #F2EFE9",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      color: "#7C8780",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Timestamps
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10.5px",
+                      fontWeight: 500,
+                      color: "#9AA39D",
+                    }}
+                  >
+                    Click to jump
+                  </span>
+                </div>
 
-                  return (
-                    <div
-                      key={seg.index}
-                      onClick={() => {
-                        if (watchMode === "clips") {
-                          setActiveClipIdx(idx);
-                          if (currentVideo.ytId) {
-                            setPlayingClipIdx(idx);
-                          }
-                        } else {
-                          seekToSecond(seg.startSec);
-                        }
-                      }}
-                      style={{
-                        background: isNowPlaying ? "#F3F8F5" : "transparent",
-                        border: isNowPlaying ? "1px solid #DCEAE2" : "1px solid transparent",
-                        borderRadius: "10px",
-                        padding: "9px 10px",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "10px",
-                        transition: "background 0.15s ease, border-color 0.15s ease",
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isNowPlaying) {
-                          e.currentTarget.style.background = "#FAF8F4";
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isNowPlaying) {
-                          e.currentTarget.style.background = "transparent";
-                        }
-                      }}
-                    >
-                      <span
-                        style={{
-                          background: isNowPlaying ? "#E2EFE8" : "#F4F1EA",
-                          color: isNowPlaying ? "#2F5944" : "#6E7B73",
-                          fontSize: "10.5px",
-                          fontWeight: 600,
-                          padding: "3px 7px",
-                          borderRadius: "5px",
-                          fontVariantNumeric: "tabular-nums",
-                          flexShrink: 0,
-                          marginTop: "1px",
-                        }}
-                      >
-                        {formatTime(seg.startSec)}
-                      </span>
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "4px",
+                  }}
+                >
+                  {segmentsList.map((seg, idx) => {
+                    const isNowPlaying = idx === activeSegmentIdx;
 
+                    return (
                       <div
+                        key={seg.index}
+                        onClick={() => {
+                          seekToSecond(seg.startSec);
+                        }}
                         style={{
-                          flex: 1,
-                          minWidth: 0,
+                          background: isNowPlaying ? "#F3F8F5" : "transparent",
+                          border: isNowPlaying ? "1px solid #DCEAE2" : "1px solid transparent",
+                          borderRadius: "10px",
+                          padding: "9px 10px",
+                          cursor: "pointer",
                           display: "flex",
-                          flexDirection: "column",
-                          gap: "3px",
+                          alignItems: "flex-start",
+                          gap: "10px",
+                          transition: "background 0.15s ease, border-color 0.15s ease",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isNowPlaying) {
+                            e.currentTarget.style.background = "#FAF8F4";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isNowPlaying) {
+                            e.currentTarget.style.background = "transparent";
+                          }
                         }}
                       >
-                        <div
+                        <span
                           style={{
-                            fontSize: "12px",
-                            fontWeight: isNowPlaying ? 600 : 500,
-                            color: isNowPlaying ? "#1E2822" : "#3E4A43",
-                            lineHeight: 1.38,
+                            background: isNowPlaying ? "#E2EFE8" : "#F4F1EA",
+                            color: isNowPlaying ? "#2F5944" : "#6E7B73",
+                            fontSize: "10.5px",
+                            fontWeight: 600,
+                            padding: "3px 7px",
+                            borderRadius: "5px",
+                            fontVariantNumeric: "tabular-nums",
+                            flexShrink: 0,
+                            marginTop: "1px",
                           }}
                         >
-                          {seg.title}
-                        </div>
+                          {formatTime(seg.startSec)}
+                        </span>
 
                         <div
                           style={{
-                            fontSize: "10.5px",
-                            fontWeight: 400,
-                            color: "#8F9993",
-                            fontVariantNumeric: "tabular-nums",
+                            flex: 1,
+                            minWidth: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "3px",
                           }}
                         >
-                          {seg.durationLabel}
+                          <div
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: isNowPlaying ? 600 : 500,
+                              color: isNowPlaying ? "#1E2822" : "#3E4A43",
+                              lineHeight: 1.38,
+                            }}
+                          >
+                            {seg.title}
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "10.5px",
+                              fontWeight: 400,
+                              color: "#8F9993",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {seg.durationLabel}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
+          )}
       </div>
+
+      {renderExpandedClipOverlay()}
     </div>
   );
 }

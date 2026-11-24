@@ -514,11 +514,11 @@ export default function FlashcardsView({
               />
             </button>
 
-            {/* 2. Quick Study Button */}
+            {/* 2. Essentials Button */}
             <button
               type="button"
               onClick={() => onSelectTool?.("summary")}
-              title="Quick Study"
+              title="Essentials"
               style={{
                 width: "42px",
                 height: "42px",
@@ -537,16 +537,16 @@ export default function FlashcardsView({
             >
               <img
                 src={`${import.meta.env.BASE_URL}icon-quick-study.png`}
-                alt="Quick Study"
+                alt="Essentials"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             </button>
 
-            {/* 3. Detailed Study Button */}
+            {/* 3. In-Depth Button */}
             <button
               type="button"
               onClick={() => onSelectTool?.("detailed")}
-              title="Detailed Study"
+              title="In-Depth"
               style={{
                 width: "42px",
                 height: "42px",
@@ -565,7 +565,7 @@ export default function FlashcardsView({
             >
               <img
                 src={`${import.meta.env.BASE_URL}icon-detailed-study.png`}
-                alt="Detailed Study"
+                alt="In-Depth"
                 style={{ width: "100%", height: "100%", objectFit: "contain" }}
               />
             </button>

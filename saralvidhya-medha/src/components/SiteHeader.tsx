@@ -23,7 +23,8 @@ export default function SiteHeader({
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const isAuthenticated =
-    sessionStorage.getItem('sv_medha_session_v4') === 'true' &&
+    (sessionStorage.getItem('sv_moocs_session_v4') === 'true' ||
+      sessionStorage.getItem('sv_medha_session_v4') === 'true') &&
     localStorage.getItem('app_authenticated') === 'true';
   const defaultLogo = branding.logoPrimary.startsWith('/')
     ? `${import.meta.env.BASE_URL}${branding.logoPrimary.substring(1)}`
@@ -44,8 +45,8 @@ export default function SiteHeader({
   };
 
   const handleLogoutClick = () => {
+    sessionStorage.removeItem('sv_moocs_session_v4');
     sessionStorage.removeItem('sv_medha_session_v4');
-    localStorage.removeItem('app_authenticated');
     localStorage.removeItem('sv_login_verified');
     localStorage.removeItem('app_role');
     localStorage.removeItem('username');

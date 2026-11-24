@@ -47,12 +47,27 @@ function getUnitProgressPercent(subjectId: string, chapterNumber: number): { isD
 export default function CourseCard({ course, chapters = [], index }: CourseCardProps) {
   const navigate = useNavigate();
   const { id, name, className, chapterCount, meta } = course;
-  const { subtitle, discipline, durationHours, credits, instructor, thumbnail } = meta;
+  const {
+    subtitle,
+    discipline,
+    durationHours,
+    hoursPerWeek,
+    credits,
+    instructor,
+    thumbnail,
+    code,
+    regulation,
+    semester,
+    structureCode,
+    structureLabel,
+    evaluation,
+  } = meta;
 
   const bgImage = thumbnail || '/management_banner.png';
   const unitCount = chapters.length || chapterCount || 0;
   const hours = durationHours || (unitCount ? unitCount * 4 : 30);
-  const creditCount = credits || 3;
+  const creditCount = credits ?? 3;
+  const formattedCode = code ? (regulation ? `${code} (${regulation})` : code) : undefined;
 
   const unitStats = chapters.map((ch, idx) => {
     const { isDone, percent } = getUnitProgressPercent(id, ch.number);
@@ -113,7 +128,19 @@ export default function CourseCard({ course, chapters = [], index }: CourseCardP
         <div className="sv-course-card-info">
           <div className="sv-course-title-row">
             <div className="sv-course-heading-group">
-              {discipline && <span className="sv-course-discipline">{discipline}</span>}
+              <div className="sv-course-eyebrow-row">
+                {discipline && <span className="sv-course-discipline">{discipline}</span>}
+                {formattedCode && <span className="sv-course-code-badge">{formattedCode}</span>}
+                {semester && <span className="sv-course-meta-tag">{semester}</span>}
+                {structureCode && (
+                  <span
+                    className="sv-course-meta-tag sv-course-meta-tag--structure"
+                    title={structureLabel || structureCode}
+                  >
+                    {structureCode}
+                  </span>
+                )}
+              </div>
               <h3 className="sv-course-title">{name}</h3>
               <p className="sv-course-subtitle">{subtitle || `Structured university curriculum in ${name}`}</p>
             </div>
@@ -167,13 +194,26 @@ export default function CourseCard({ course, chapters = [], index }: CourseCardP
               {unitCount} {unitCount === 1 ? 'Unit' : 'Units'}
             </span>
 
-            <span className="sv-course-stat-pill">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
-              </svg>
-              {hours} Hours
-            </span>
+            {hoursPerWeek ? (
+              <span
+                className="sv-course-stat-pill"
+                title={`${hoursPerWeek} Hours Per Week${hours ? ` · ${hours} Total Hours` : ''}`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                {hoursPerWeek} HPW
+              </span>
+            ) : (
+              <span className="sv-course-stat-pill">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                {hours} Hours
+              </span>
+            )}
 
             <span className="sv-course-stat-pill">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
@@ -183,6 +223,19 @@ export default function CourseCard({ course, chapters = [], index }: CourseCardP
               </svg>
               {creditCount} {creditCount === 1 ? 'Credit' : 'Credits'}
             </span>
+
+            {evaluation && (
+              <span
+                className="sv-course-stat-pill"
+                title={`${evaluation.internalLabel || 'IE'} ${evaluation.internalMarks} + ${evaluation.externalLabel || 'SEE'} ${evaluation.externalMarks} = ${evaluation.totalMarks} Marks`}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 11l3 3L22 4" />
+                  <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+                </svg>
+                {evaluation.totalMarks} Marks ({evaluation.internalMarks}+{evaluation.externalMarks})
+              </span>
+            )}
           </div>
         </div>
       </div>

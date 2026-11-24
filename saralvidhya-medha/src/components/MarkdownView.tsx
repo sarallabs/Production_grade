@@ -8,6 +8,8 @@ import 'katex/dist/katex.min.css';
 
 interface Props {
   content: string;
+  isPurpleTheme?: boolean;
+  disableGlossary?: boolean;
 }
 
 export default function MarkdownView({ content }: Props) {

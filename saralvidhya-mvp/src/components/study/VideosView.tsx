@@ -35,6 +35,73 @@ const VIDEO_SKIP_INTRO_SECONDS: Record<string, number> = {
   "g37gQCAyKf8": 70, // VVIT MongoDB Complete Video -> 1:10
 };
 
+type YouTubeThumbSlot = "default" | "1" | "2" | "3";
+
+const CLIP_THUMB_SLOTS: readonly YouTubeThumbSlot[] = ["default", "1", "2", "3"];
+
+function buildYouTubeThumbCandidates(
+  ytId?: string,
+  slot: YouTubeThumbSlot = "default",
+  preferredCustomUrl?: string,
+): string[] {
+  const list: string[] = [];
+  if (
+    preferredCustomUrl &&
+    !/i\.ytimg\.com/i.test(preferredCustomUrl) &&
+    !/\/hero\.|\/cover\./i.test(preferredCustomUrl)
+  ) {
+    list.push(preferredCustomUrl);
+  }
+  if (ytId) {
+    if (slot === "default") {
+      list.push(
+        `https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/sddefault.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`,
+      );
+    } else {
+      list.push(
+        `https://i.ytimg.com/vi/${ytId}/maxres${slot}.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/sd${slot}.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/hq${slot}.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/mq${slot}.jpg`,
+        `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`,
+      );
+    }
+  }
+  return Array.from(new Set(list));
+}
+
+const VideoThumbImg: React.FC<{
+  candidates: string[];
+  alt: string;
+  style?: React.CSSProperties;
+}> = ({ candidates, alt, style }) => {
+  const [idx, setIdx] = useState(0);
+  const src = candidates[idx];
+  if (!src) return null;
+
+  const advance = () => {
+    setIdx((prev) => (prev + 1 < candidates.length ? prev + 1 : prev));
+  };
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      onError={advance}
+      onLoad={(e) => {
+        // YouTube returns a 120x90 grey placeholder when a high-res frame is unavailable
+        if (e.currentTarget.naturalWidth <= 120 && idx + 1 < candidates.length) {
+          advance();
+        }
+      }}
+      style={style}
+    />
+  );
+};
+
 /** Faint green insect outline watermark matching Figma */
 const InsectWatermark = ({ width = "165px", height = "165px", opacity = 0.22 }: { width?: string; height?: string; opacity?: number }) => (
   <svg
@@ -214,6 +281,7 @@ export default function VideosView({
                   : resolvedYtId
                     ? `https://i.ytimg.com/vi/${resolvedYtId}/hqdefault.jpg`
                     : undefined,
+                clipThumbnails: Array.isArray(v.clipThumbnails) ? v.clipThumbnails : undefined,
                 dir: v.id || `vid_${idx + 1}`,
                 topics: Array.isArray(v.topics) && v.topics.length > 0 ? v.topics : dbSubtopics,
                 introEndTime: typeof v.introEndTime === "number" ? v.introEndTime : VIDEO_SKIP_INTRO_SECONDS[resolvedYtId],
@@ -326,6 +394,7 @@ export default function VideosView({
       topics: v.topics,
       duration: v.duration,
       thumbnailUrl: v.thumbnailUrl || v.thumbnail,
+      clipThumbnails: Array.isArray((v as any).clipThumbnails) ? (v as any).clipThumbnails : undefined,
       introEndTime: typeof (v as any).introEndTime === "number" ? (v as any).introEndTime : undefined,
     }));
     const primarySource =
@@ -360,6 +429,14 @@ export default function VideosView({
             : resolvedYt
               ? `https://i.ytimg.com/vi/${resolvedYt}/hqdefault.jpg`
               : undefined,
+          clipThumbnails:
+            (Array.isArray((v as any).clipThumbnails) && (v as any).clipThumbnails.length > 0
+              ? (v as any).clipThumbnails
+              : Array.isArray((regMatch as any)?.clipThumbnails) && (regMatch as any).clipThumbnails.length > 0
+                ? (regMatch as any).clipThumbnails
+                : Array.isArray((chMatch as any)?.clipThumbnails) && (chMatch as any).clipThumbnails.length > 0
+                  ? (chMatch as any).clipThumbnails
+                  : undefined) as string[] | undefined,
           introEndTime:
             typeof (v as any).introEndTime === "number"
               ? (v as any).introEndTime
@@ -371,7 +448,7 @@ export default function VideosView({
         };
       });
     }
-    let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string; introEndTime?: number }[] = [];
+    let list: { title: string; ytId: string; topics?: string[]; duration?: string; thumbnailUrl?: string; clipThumbnails?: string[]; introEndTime?: number }[] = [];
     if (subjectId === "anu_physics") {
       list = [
         {
@@ -1802,13 +1879,6 @@ export default function VideosView({
   }, [subjectId, chapterNumber, robustActive, watchMode]);
 
   const renderClipsMultiWindow = () => {
-    const thumbSrc =
-      currentVideo.ytId &&
-      (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
-        ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
-        : currentVideo.thumbnailUrl ||
-          (currentVideo.ytId ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg` : "");
-
     return (
       <div
         style={{
@@ -1821,7 +1891,16 @@ export default function VideosView({
         {segmentsList.map((seg, idx) => {
           const isSelectedClip = idx === activeClipIdx;
           const isClipPlaying = playingClipIdx === idx && Boolean(currentVideo.ytId);
-
+          const clipSlot = CLIP_THUMB_SLOTS[idx % CLIP_THUMB_SLOTS.length];
+          const explicitClipThumb = (currentVideo as any).clipThumbnails?.[idx];
+          const baseThumbCandidates = buildYouTubeThumbCandidates(
+            currentVideo.ytId,
+            clipSlot,
+            idx === 0 ? currentVideo.thumbnailUrl : undefined,
+          );
+          const clipThumbCandidates = explicitClipThumb
+            ? Array.from(new Set([explicitClipThumb, ...baseThumbCandidates]))
+            : baseThumbCandidates;
           return (
             <div
               key={`clip-win-${subjectId}-${chapterNumber}-${robustActive}-${seg.index}`}
@@ -1865,18 +1944,11 @@ export default function VideosView({
                 />
               ) : (
                 <>
-                  {thumbSrc && (
-                    <img
-                      src={thumbSrc}
+                  {clipThumbCandidates.length > 0 && (
+                    <VideoThumbImg
+                      key={`clip-thumb-${subjectId}-${chapterNumber}-${robustActive}-${idx}-${clipThumbCandidates[0]}`}
+                      candidates={clipThumbCandidates}
                       alt={seg.title}
-                      onError={(e) => {
-                        if (currentVideo.ytId) {
-                          const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
-                          if (e.currentTarget.src !== fallback) {
-                            e.currentTarget.src = fallback;
-                          }
-                        }
-                      }}
                       style={{
                         position: "absolute",
                         inset: 0,
@@ -2092,33 +2164,28 @@ export default function VideosView({
             overflow: "hidden",
           }}
         >
-          {(currentVideo.thumbnailUrl || currentVideo.ytId) && (
-            <img
-              key={`vid-thumb-${robustActive}-${currentVideo.ytId}`}
-              src={
-                currentVideo.ytId && (!currentVideo.thumbnailUrl || /\/hero\.|\/cover\./i.test(currentVideo.thumbnailUrl))
-                  ? `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
-                  : currentVideo.thumbnailUrl || `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`
-              }
-              onError={(e) => {
-                if (currentVideo.ytId) {
-                  const fallback = `https://i.ytimg.com/vi/${currentVideo.ytId}/hqdefault.jpg`;
-                  if (e.currentTarget.src !== fallback) {
-                    e.currentTarget.src = fallback;
-                  }
-                }
-              }}
-              alt={displayTitle}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                objectPosition: "center",
-                display: "block",
-                userSelect: "none",
-              }}
-            />
-          )}
+          {(currentVideo.thumbnailUrl || currentVideo.ytId) && (() => {
+            const coverCandidates = buildYouTubeThumbCandidates(
+              currentVideo.ytId,
+              "default",
+              currentVideo.thumbnailUrl,
+            );
+            return (
+              <VideoThumbImg
+                key={`vid-thumb-${robustActive}-${currentVideo.ytId}-${coverCandidates[0] || ""}`}
+                candidates={coverCandidates}
+                alt={displayTitle}
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  objectPosition: "center",
+                  display: "block",
+                  userSelect: "none",
+                }}
+              />
+            );
+          })()}
           <div
             style={{
               position: "absolute",
