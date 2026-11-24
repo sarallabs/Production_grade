@@ -910,7 +910,7 @@ export default function AskBotView({
     // Build contextual prompt if user clicked a follow-up pill (e.g. "Show me a 2-mark answer version", "Quiz me on this")
     const lastBotMsg = [...messages].reverse().find((m) => m.role === "bot" && m.text);
     const isFollowUpPill =
-      /^(show me a \d+-mark|quiz me|summarize key points|give me a \d+-mark|give me another)/i.test(
+      /^(show me a \d+-mark|quiz me|summarize key points|give me a real-world example|give me a \d+-mark|give me another)/i.test(
         textToSend.trim(),
       );
     const promptForAi =
@@ -978,24 +978,28 @@ export default function AskBotView({
         });
         startTypingForBotAnswer(newBotIdx, structured);
       } else {
-        const fallbackText = `**${textToSend.replace(/\?+$/, "")}** is a core concept in **${unitPrefix} ${_chapterNumber} (${cleanChapterTitle})**.\n\nIt connects the foundational definitions in your course syllabus with practical application scenarios. Review the key structural properties and standard examples in the In-Depth notes for complete exam coverage.`;
-        const structured = parseBotResponseToStructured(
-          textToSend,
-          fallbackText,
-          subjectId,
-          _chapterNumber,
-          chapterName,
-        );
+        const errText =
+          "Saral's AI service is temporarily busy and couldn't answer right now. Please try asking again in a moment.";
+        const structured: StructuredBotAnswer = {
+          title: "Temporarily unavailable",
+          paragraphs: [errText],
+          examTipPrefix: "",
+          examTipHighlight: "",
+          examTipSuffix: "",
+          groundedTopic: `${unitPrefix} ${_chapterNumber} · ${cleanChapterTitle}`,
+          groundedSection: `§${_chapterNumber}.1`,
+          groundedNode: `node ${_chapterNumber}.2`,
+          followUps: [],
+        };
         setMessages((prev) => {
           const updated = [...prev];
           updated[updated.length - 1] = {
             role: "bot",
-            text: fallbackText,
+            text: errText,
             structured,
           };
           return updated;
         });
-        startTypingForBotAnswer(newBotIdx, structured);
       }
     } finally {
       setIsSending(false);

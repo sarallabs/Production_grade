@@ -10,7 +10,13 @@
  * - Language support: English, Hindi, Telugu, Urdu, Odia
  */
 
-import { getCourseById, getResourceContent, type DifficultyLevel } from '@/data/contentRepository';
+import {
+  CLOUD_API_BASE,
+  MOOCS_TENANT_ID,
+  getCourseById,
+  getResourceContent,
+  type DifficultyLevel,
+} from '@/data/contentRepository';
 import branding from '@/config/branding.json';
 import {
   GoogleGenerativeAI,
@@ -30,12 +36,11 @@ const hasApiKey = Boolean(
     (trimmedKey.startsWith('AIzaSy') && trimmedKey.length >= 35))
 );
 
-// Active Gemini models ordered by verified speed + reliability
+// Active Gemini models ordered by verified availability + speed (client-side fallback only)
 const FALLBACK_MODELS = [
-  'gemini-3.5-flash-lite',
   'gemini-flash-lite-latest',
+  'gemini-3.5-flash-lite',
   'gemini-3.5-flash',
-  'gemini-3.1-flash-lite',
   'gemini-3-flash-preview',
   'gemini-flash-latest',
   'gemini-pro-latest',
@@ -44,6 +49,49 @@ const FALLBACK_MODELS = [
 // ── Performance & Fallback Config ─────────────────────────────────────────────
 const REQUEST_TIMEOUT_MS = 22000; // 22 seconds
 const COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes
+
+let askTokenPromise: Promise<string | null> | null = null;
+async function getMoocsSessionToken(forceRefresh = false): Promise<string | null> {
+  try {
+    if (!forceRefresh) {
+      const existing =
+        localStorage.getItem('sv_moocs_token') ||
+        localStorage.getItem('sv_medha_token');
+      if (existing && existing.trim()) return existing.trim();
+    }
+  } catch {
+    // ignore storage errors
+  }
+
+  if (askTokenPromise) return askTokenPromise;
+  askTokenPromise = (async () => {
+    try {
+      const defaultPass = (import.meta as any).env?.VITE_DEFAULT_PASSWORD || 'Ekam@2026';
+      const res = await fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: defaultPass }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data?.token && typeof data.token === 'string') {
+        try {
+          localStorage.setItem('sv_moocs_token', data.token);
+        } catch {
+          // ignore
+        }
+        return data.token;
+      }
+      return null;
+    } catch {
+      return null;
+    } finally {
+      askTokenPromise = null;
+    }
+  })();
+  return askTokenPromise;
+}
 
 let lastSuccessfulModel: string | null = null;
 const modelCooldowns = new Map<string, number>();
@@ -276,42 +324,63 @@ export async function askGemini(
     getCourseSyllabusAndRelatedContext(subject, chapterNumber, question, level),
   ]);
   const courseLabel = courseInfo.courseTitle || subject;
+  const trimmedChapterContext = chapterContext ? chapterContext.slice(0, 14000) : '';
+  const trimmedRelatedContext = courseInfo.relatedUnitContext ? courseInfo.relatedUnitContext.slice(0, 9000) : '';
+  const combinedContext = [
+    courseInfo.syllabusOverview ? `=== COURSE SYLLABUS (${courseLabel}) ===\n${courseInfo.syllabusOverview}` : '',
+    trimmedChapterContext ? `=== UNIT ${chapterNumber} NOTES (${chapterName}) ===\n${trimmedChapterContext}` : '',
+    trimmedRelatedContext,
+  ]
+    .filter(Boolean)
+    .join('\n\n');
 
-  // 3. Only hit legacy backend proxy when no direct Gemini key is configured
-  if (!hasApiKey) {
-    try {
-      const API_BASE =
-        (import.meta as any).env?.VITE_API_BASE ||
-        (import.meta as any).env?.VITE_API_BASE_URL ||
-        'https://saralvidhya-api-193782571555.asia-south1.run.app';
-      const proxyRes = await fetch(`${API_BASE}/api/gemini/ask`, {
+  // 3. Primary: Cloud Run Vertex AI endpoint (/v2/t/:tenant/ai/ask) — enterprise SLA, zero 503 free-tier spikes
+  try {
+    let token = await getMoocsSessionToken(false);
+    const callV2Ask = async (bearer: string) =>
+      fetch(`${CLOUD_API_BASE}/v2/t/${MOOCS_TENANT_ID}/ai/ask`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bearer}`,
+        },
         body: JSON.stringify({
           question,
-          context: [courseInfo.syllabusOverview, chapterContext, courseInfo.relatedUnitContext].filter(Boolean).join('\n\n'),
+          subjectId: subject,
+          subjectName: courseLabel,
+          chapterNumber,
+          chapterName,
+          context: combinedContext,
           level,
+          languageCode,
+          className,
         }),
+        signal: AbortSignal.timeout(25000),
       });
-      if (proxyRes.ok) {
-        const proxyData = await proxyRes.json();
-        if (proxyData?.answer) {
+
+    if (token) {
+      let v2Res = await callV2Ask(token);
+      if (v2Res.status === 401) {
+        token = await getMoocsSessionToken(true);
+        if (token) v2Res = await callV2Ask(token);
+      }
+      if (v2Res.ok) {
+        const v2Data = await v2Res.json();
+        if (v2Data?.answer && typeof v2Data.answer === 'string' && v2Data.answer.trim()) {
           return {
-            answer: proxyData.answer,
-            model: proxyData.model || 'cloud-gemini',
+            answer: v2Data.answer.trim(),
+            model: v2Data.model || 'vertex-gemini',
           };
         }
       }
-    } catch (backendErr) {
-      console.warn('[AskService] Backend proxy call failed:', backendErr);
     }
-
-    return {
-      answer: 'AI service is temporarily unavailable. Please try again in a moment.',
-      model: 'config',
-    };
+  } catch (v2Err) {
+    console.warn('[AskService] Cloud Run Vertex AI call failed, checking direct fallback:', v2Err);
   }
 
+  if (!hasApiKey) {
+    throw new Error('AI service is temporarily unavailable.');
+  }
   // 4. Build university MOOCs tutor system prompt
   const systemPrompt = `\
 You are ${branding.appName}, an expert, supportive university academic tutor for the MOOC course "${courseLabel}" (${className}).
@@ -395,10 +464,24 @@ ${courseInfo.relatedUnitContext}
     console.log(`[Gemini] 🚀 Attempting model: ${model}`);
 
     try {
-      const modelClient = genAI.getGenerativeModel({ model });
-      const request = buildGeminiRequest(question, systemPrompt);
+      const modelClient = genAI.getGenerativeModel({
+        model,
+        systemInstruction: systemPrompt,
+      });
+      const request = {
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: question }],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 4096,
+          temperature: 0.3,
+        },
+      };
 
-      // Wrapper with 15-second Timeout
+      // Wrapper with timeout
       const response = await fetchWithTimeout(modelClient, request as any, REQUEST_TIMEOUT_MS);
       const text = response?.response?.text?.();
 
