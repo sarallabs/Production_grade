@@ -508,7 +508,7 @@ export default function VideosView({
       list = [
         {
           title: "Planning, Decision Making & Organizing",
-          ytId: "r5uShCEMbRg",
+          ytId: "m41A_Fjh5I4",
           duration: "61:03",
           thumbnailUrl: "/mp_ob_unit2_thumb.jpg",
           topics: [
@@ -566,8 +566,8 @@ export default function VideosView({
       list = [
         {
           title: "Organisational Behaviour, Perception & Personality",
-          ytId: "xRVwo2mpuJA",
-          duration: "52:51",
+          ytId: "ZEWytgXIxgU",
+          duration: "55:51",
           thumbnailUrl: "/mp_ob_unit4_thumb.jpg",
           topics: [
             "Unit 4 Roadmap & Concept Preview",
@@ -584,12 +584,12 @@ export default function VideosView({
             { title: "Unit 4 Roadmap & Concept Preview", startSec: 0, endSec: 351 },
             { title: "Organizational Behavior: Nature, Goals & Disciplines", startSec: 351, endSec: 519 },
             { title: "Four Classic Models of Organizational Behavior", startSec: 519, endSec: 729 },
-            { title: "Human Perception: Definitions, Factors & Subjective Filters", startSec: 729, endSec: 1184 },
-            { title: "Perceptual Process, Triadic Framework & Perceptual Errors", startSec: 1184, endSec: 1559 },
-            { title: "Personality: Foundations, Jung Types, Cattell & Big Five", startSec: 1559, endSec: 2039 },
-            { title: "Psychoanalytic Theory: Freud's Mind Model & Defense Mechanisms", startSec: 2039, endSec: 2515 },
-            { title: "Social Cognitive, Humanistic & Behavioral Theories", startSec: 2515, endSec: 2931 },
-            { title: "Unit 4 Master Recap & Exam Synthesis", startSec: 2931, endSec: 3171 },
+            { title: "Human Perception: Definitions, Factors & Subjective Filters", startSec: 729, endSec: 1233 },
+            { title: "Perceptual Process, Triadic Framework & Perceptual Errors", startSec: 1233, endSec: 1619 },
+            { title: "Personality: Foundations, Jung Types, Cattell & Big Five", startSec: 1619, endSec: 2179 },
+            { title: "Psychoanalytic Theory: Freud's Mind Model & Defense Mechanisms", startSec: 2179, endSec: 2635 },
+            { title: "Social Cognitive, Humanistic & Behavioral Theories", startSec: 2635, endSec: 3051 },
+            { title: "Unit 4 Master Recap & Exam Synthesis", startSec: 3051, endSec: 3351 },
           ],
         },
       ];

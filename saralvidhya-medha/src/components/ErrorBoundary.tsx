@@ -61,6 +61,35 @@ export class ErrorBoundary extends Component<Props, State> {
   };
   render() {
     if (this.state.hasError) {
+      const msg = String(this.state.error?.message || '');
+      const isChunkError =
+        /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk/i.test(
+          msg,
+        );
+      if (isChunkError) {
+        return (
+          <div style={{ padding: '3rem 1.5rem', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
+            <h2 style={{ color: '#2D3E36', marginBottom: '0.5rem' }}>Updating to the latest version…</h2>
+            <p style={{ color: '#5F6F67', marginBottom: '1.25rem' }}>
+              A fresh update was just published. Reload the page to load the newest content.
+            </p>
+            <button
+              onClick={this.handleRetry}
+              style={{
+                padding: '0.6rem 1.25rem',
+                backgroundColor: '#546C60',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              Refresh Now
+            </button>
+          </div>
+        );
+      }
       return (
         <div style={{ padding: '2rem', textAlign: 'center', fontFamily: 'sans-serif' }}>
           <h2 style={{ color: '#d32f2f' }}>Something went wrong.</h2>

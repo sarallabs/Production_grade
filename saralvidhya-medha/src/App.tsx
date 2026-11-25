@@ -38,11 +38,16 @@ function lazyWithRetry<T extends React.ComponentType<any>>(
   });
 }
 
+import Login from './pages/Login';
+import CourseCatalog from './pages/CourseCatalog';
+import CourseDetail from './pages/CourseDetail';
+import CourseRegister from './pages/CourseRegister';
+import CoursePayment from './pages/CoursePayment';
+
 const StudyTable = lazyWithRetry(() => import('./pages/StudyTable'));
 const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'));
 const Profile = lazyWithRetry(() => import('./pages/Profile'));
 const GlobalLeaderboard = lazyWithRetry(() => import('./pages/GlobalLeaderboard'));
-const Login = lazyWithRetry(() => import('./pages/Login'));
 const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
 const ConfigPage = lazyWithRetry(() => import('./pages/ConfigPage'));
 const ExaminerConsole = lazyWithRetry(() => import('./pages/ExaminerConsole'));
@@ -53,10 +58,6 @@ const Questionnaire2 = lazyWithRetry(() => import('./pages/Questionnaire2'));
 const Questionnaire3 = lazyWithRetry(() => import('./pages/Questionnaire3'));
 const AssessmentComplete = lazyWithRetry(() => import('./pages/AssessmentComplete'));
 const PreviousYearQuestions = lazyWithRetry(() => import('./pages/PreviousYearQuestions'));
-const CourseCatalog = lazyWithRetry(() => import('./pages/CourseCatalog'));
-const CourseDetail = lazyWithRetry(() => import('./pages/CourseDetail'));
-const CourseRegister = lazyWithRetry(() => import('./pages/CourseRegister'));
-const CoursePayment = lazyWithRetry(() => import('./pages/CoursePayment'));
 const ManagementMindmap = lazyWithRetry(() => import('./pages/ManagementMindmap'));
 /** Returns true if the user has passed the login screen in this session */
 export function isAuthenticated() {
