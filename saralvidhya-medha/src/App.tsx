@@ -8,27 +8,56 @@ import LoadingSpinner from './components/LoadingSpinner';
 import branding from './config/branding.json';
 import { SLUG_TO_TOOL_ID, getPathForTool, getMoocsStudySession } from './utils/courseNavigation';
 
-const StudyTable = React.lazy(() => import('./pages/StudyTable'));
-const Onboarding = React.lazy(() => import('./pages/Onboarding'));
-const Profile = React.lazy(() => import('./pages/Profile'));
-const GlobalLeaderboard = React.lazy(() => import('./pages/GlobalLeaderboard'));
-const Login = React.lazy(() => import('./pages/Login'));
-const Dashboard = React.lazy(() => import('./pages/Dashboard'));
-const ConfigPage = React.lazy(() => import('./pages/ConfigPage'));
-const ExaminerConsole = React.lazy(() => import('./pages/ExaminerConsole'));
-const ExpertPanel = React.lazy(() => import('./pages/ExpertPanel'));
-const ResourceTabs = React.lazy(() => import('./pages/ResourceTabs'));
-const Questionnaire = React.lazy(() => import('./pages/Questionnaire'));
-const Questionnaire2 = React.lazy(() => import('./pages/Questionnaire2'));
-const Questionnaire3 = React.lazy(() => import('./pages/Questionnaire3'));
-const AssessmentComplete = React.lazy(() => import('./pages/AssessmentComplete'));
-const PreviousYearQuestions = React.lazy(() => import('./pages/PreviousYearQuestions'));
-const CourseCatalog = React.lazy(() => import('./pages/CourseCatalog'));
-const CourseDetail = React.lazy(() => import('./pages/CourseDetail'));
-const CourseRegister = React.lazy(() => import('./pages/CourseRegister'));
-const CoursePayment = React.lazy(() => import('./pages/CoursePayment'));
-const ManagementMindmap = React.lazy(() => import('./pages/ManagementMindmap'));
+function lazyWithRetry<T extends React.ComponentType<any>>(
+  factory: () => Promise<{ default: T }>,
+) {
+  return React.lazy(async () => {
+    try {
+      return await factory();
+    } catch (err: any) {
+      const msg = String(err?.message || err || '');
+      const isChunkError =
+        /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk/i.test(
+          msg,
+        );
+      if (isChunkError && typeof window !== 'undefined') {
+        try {
+          const last = Number(sessionStorage.getItem('sv_chunk_reload_at') || '0');
+          if (Date.now() - last > 15_000) {
+            sessionStorage.setItem('sv_chunk_reload_at', String(Date.now()));
+            window.location.reload();
+            return new Promise<never>(() => {});
+          }
+        } catch {
+          window.location.reload();
+          return new Promise<never>(() => {});
+        }
+      }
+      throw err;
+    }
+  });
+}
 
+const StudyTable = lazyWithRetry(() => import('./pages/StudyTable'));
+const Onboarding = lazyWithRetry(() => import('./pages/Onboarding'));
+const Profile = lazyWithRetry(() => import('./pages/Profile'));
+const GlobalLeaderboard = lazyWithRetry(() => import('./pages/GlobalLeaderboard'));
+const Login = lazyWithRetry(() => import('./pages/Login'));
+const Dashboard = lazyWithRetry(() => import('./pages/Dashboard'));
+const ConfigPage = lazyWithRetry(() => import('./pages/ConfigPage'));
+const ExaminerConsole = lazyWithRetry(() => import('./pages/ExaminerConsole'));
+const ExpertPanel = lazyWithRetry(() => import('./pages/ExpertPanel'));
+const ResourceTabs = lazyWithRetry(() => import('./pages/ResourceTabs'));
+const Questionnaire = lazyWithRetry(() => import('./pages/Questionnaire'));
+const Questionnaire2 = lazyWithRetry(() => import('./pages/Questionnaire2'));
+const Questionnaire3 = lazyWithRetry(() => import('./pages/Questionnaire3'));
+const AssessmentComplete = lazyWithRetry(() => import('./pages/AssessmentComplete'));
+const PreviousYearQuestions = lazyWithRetry(() => import('./pages/PreviousYearQuestions'));
+const CourseCatalog = lazyWithRetry(() => import('./pages/CourseCatalog'));
+const CourseDetail = lazyWithRetry(() => import('./pages/CourseDetail'));
+const CourseRegister = lazyWithRetry(() => import('./pages/CourseRegister'));
+const CoursePayment = lazyWithRetry(() => import('./pages/CoursePayment'));
+const ManagementMindmap = lazyWithRetry(() => import('./pages/ManagementMindmap'));
 /** Returns true if the user has passed the login screen in this session */
 export function isAuthenticated() {
   return (

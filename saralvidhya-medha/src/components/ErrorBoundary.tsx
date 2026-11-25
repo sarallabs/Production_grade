@@ -22,6 +22,23 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught an error:', error, errorInfo);
+    const msg = String(error?.message || '');
+    if (
+      /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk/i.test(
+        msg,
+      ) &&
+      typeof window !== 'undefined'
+    ) {
+      try {
+        const last = Number(sessionStorage.getItem('sv_chunk_reload_at') || '0');
+        if (Date.now() - last > 15_000) {
+          sessionStorage.setItem('sv_chunk_reload_at', String(Date.now()));
+          window.location.reload();
+        }
+      } catch {
+        window.location.reload();
+      }
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
@@ -31,9 +48,17 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   handleRetry = () => {
+    const msg = String(this.state.error?.message || '');
+    if (
+      /failed to fetch dynamically imported module|importing a module script failed|chunkloaderror|loading chunk/i.test(
+        msg,
+      )
+    ) {
+      window.location.reload();
+      return;
+    }
     this.setState({ hasError: false, error: null });
   };
-
   render() {
     if (this.state.hasError) {
       return (

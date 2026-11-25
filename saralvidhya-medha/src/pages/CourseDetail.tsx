@@ -202,8 +202,8 @@ export default function CourseDetail() {
                 </div>
                 {hoursPerWeek ? (
                   <div className="sv-detail-metric">
-                    <dt>HPW</dt>
-                    <dd>{hoursPerWeek} hrs/wk</dd>
+                    <dt>Duration</dt>
+                    <dd>{hoursPerWeek} hr / week</dd>
                   </div>
                 ) : (
                   <div className="sv-detail-metric">

@@ -103,6 +103,15 @@ async function writeDoc(docPath, data, token) {
 }
 
 async function main() {
+  const medhaRepoDir = path.resolve('../saralvidhya-medha');
+  if (!process.argv.includes('--skip-validate')) {
+    console.log('Running canonical v1.0 content schema validation before Firestore sync...');
+    execSync('node scripts/validate-content-schema.mjs', {
+      cwd: medhaRepoDir,
+      stdio: 'inherit',
+    });
+  }
+
   const token = getAccessToken();
   const catalog = JSON.parse(fs.readFileSync(path.join(MEDHA_GEN_DIR, 'catalog.json'), 'utf8'));
   const manifest = JSON.parse(fs.readFileSync(path.join(MEDHA_GEN_DIR, 'manifest.json'), 'utf8'));
@@ -173,6 +182,7 @@ async function main() {
         },
         hierarchy: ['program', 'subject'],
         contractVersion: '1.1.0',
+        contentSchemaVersion: '1.0',
         storage: {
           bucket: 'saralvidhya-artifacts',
           prefix: 'medha',
@@ -189,6 +199,7 @@ async function main() {
             manifest: safeManifest,
             courses: coursesJson.courses || {},
             fileIndex: compactFileIndex,
+            schemaVersion: '1.0',
             updatedAt: now,
           },
           medhaPortal: {
@@ -196,6 +207,7 @@ async function main() {
             manifest: safeManifest,
             courses: coursesJson.courses || {},
             fileIndex: compactFileIndex,
+            schemaVersion: '1.0',
             updatedAt: now,
           },
         },
@@ -257,6 +269,7 @@ async function main() {
           featured: meta.featured ?? true,
           order: meta.order ?? idx + 1,
           status: 'active',
+          schemaVersion: '1.0',
           updatedAt: now,
         }),
         token
@@ -282,6 +295,7 @@ async function main() {
             resourceCount: ch.resourceCount || 0,
             status: 'published',
             currentVersion: 1,
+            schemaVersion: '1.0',
             updatedAt: now,
           }),
           token

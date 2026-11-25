@@ -105,10 +105,18 @@ function hasFile(chapterDir, fileName) {
     return levels.some((level) => existsInAny(`Learn/Detailed_Summary/detailed_summary_${level}.md`));
   }
   if (fileName === 'flashcards.json' || fileName === 'flashcards.md') {
-    return levels.some((level) => existsInAny(`Learn/Flashcards/flashcards_${level}.md`));
+    return levels.some(
+      (level) =>
+        existsInAny(`Learn/Flashcards/flashcards_${level}.json`) ||
+        existsInAny(`Learn/Flashcards/flashcards_${level}.md`),
+    );
   }
   if (fileName === 'quiz.md' || fileName === 'assessment.md') {
-    return easyMedHard.some((level) => existsInAny(`Learn/Assessments/MCQ/mcq_${level}.md`));
+    return easyMedHard.some(
+      (level) =>
+        existsInAny(`Learn/Assessments/MCQ/mcq_${level}.json`) ||
+        existsInAny(`Learn/Assessments/MCQ/mcq_${level}.md`),
+    );
   }
   if (fileName === 'mindmap.json' || fileName === 'mindmap.md') {
     return (
@@ -122,6 +130,9 @@ function hasFile(chapterDir, fileName) {
 }
 
 function readChapterMetadata(chapterDir, chapterNumber) {
+  const rootMeta = readJson(path.join(chapterDir, 'metadata.json'));
+  if (rootMeta) return rootMeta;
+
   const genManifest = readJson(path.join(chapterDir, 'generation_manifest.json'));
   if (genManifest) {
     return {
@@ -130,9 +141,6 @@ function readChapterMetadata(chapterDir, chapterNumber) {
       completed: []
     };
   }
-
-  const rootMeta = readJson(path.join(chapterDir, 'metadata.json'));
-  if (rootMeta) return rootMeta;
 
   const leveledMeta = readJson(path.join(chapterDir, 'metadata_leveled.json'));
   if (leveledMeta) return leveledMeta;
@@ -290,6 +298,32 @@ fs.writeFileSync(
 
 console.log(`Generated ${MANIFEST_PATH} with ${subjects.length} subjects.`);
 
+// Always regenerate file-index.json alongside manifest.json so moved/new files stay indexed
+const FILE_INDEX_PATH = path.join(RESOURCE_ROOT, 'file-index.json');
+const allRelPaths = [];
+function collectIndex(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      collectIndex(full);
+    } else if (entry.isFile()) {
+      const rel = path.relative(RESOURCE_ROOT, full).replace(/\\/g, '/');
+      if (rel !== 'file-index.json') allRelPaths.push(rel);
+    }
+  }
+}
+collectIndex(RESOURCE_ROOT);
+allRelPaths.sort();
+const fileIndexPayload = JSON.stringify({
+  version: 1,
+  schemaVersion: '1.0',
+  generatedAt: new Date().toISOString(),
+  count: allRelPaths.length,
+  files: allRelPaths,
+});
+fs.writeFileSync(FILE_INDEX_PATH, fileIndexPayload, 'utf8');
+console.log(`Generated ${FILE_INDEX_PATH} with ${allRelPaths.length} indexed files.`);
+
 // Write to dist directory if it exists
 const distManifestPath = path.resolve('dist/generated_resources/manifest.json');
 if (fs.existsSync(path.dirname(distManifestPath))) {
@@ -298,5 +332,10 @@ if (fs.existsSync(path.dirname(distManifestPath))) {
     JSON.stringify({ subjects, resourceTabs }, null, 2),
     'utf8',
   );
-  console.log(`Also saved to ${distManifestPath}`);
+  fs.writeFileSync(
+    path.resolve('dist/generated_resources/file-index.json'),
+    fileIndexPayload,
+    'utf8',
+  );
+  console.log(`Also saved manifest.json and file-index.json to ${path.dirname(distManifestPath)}`);
 }

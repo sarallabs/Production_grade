@@ -597,8 +597,8 @@ export default function VideosView({
       list = [
         {
           title: "Group Dynamics, Transactional Analysis & Organizational Change",
-          ytId: "bfe6k_JKsbU",
-          duration: "53:02",
+          ytId: "yclrOoS1D8s",
+          duration: "51:44",
           thumbnailUrl: "/mp_ob_unit5_thumb.jpg",
           topics: [
             "Unit 5 Roadmap & Lecture Overview",
@@ -611,14 +611,14 @@ export default function VideosView({
             "Unit 5 Master Recap & Exam Synthesis",
           ],
           timestamps: [
-            { title: "Unit 5 Roadmap & Lecture Overview", startSec: 0, endSec: 307 },
-            { title: "Formal vs. Informal Groups & Tuckman's 5-Stage Model", startSec: 307, endSec: 720 },
-            { title: "Group Cohesiveness, Team Performance & Act 1 Recap", startSec: 720, endSec: 1211 },
-            { title: "Transactional Analysis: Ego States, Transactions & Life Positions", startSec: 1211, endSec: 1576 },
-            { title: "The Johari Window: Open, Blind, Hidden & Unknown Panes", startSec: 1576, endSec: 1996 },
-            { title: "Organizational Change: Forces & Kurt Lewin's 3-Step Model", startSec: 1996, endSec: 2532 },
-            { title: "Resistance to Change & Six Strategies to Overcome It", startSec: 2532, endSec: 2950 },
-            { title: "Unit 5 Master Recap & Exam Synthesis", startSec: 2950, endSec: 3182 },
+            { title: "Unit 5 Roadmap & Lecture Overview", startSec: 0, endSec: 270 },
+            { title: "Formal vs. Informal Groups & Tuckman's 5-Stage Model", startSec: 270, endSec: 620 },
+            { title: "Group Cohesiveness, Team Performance & Act 1 Recap", startSec: 620, endSec: 1140 },
+            { title: "Transactional Analysis: Ego States, Transactions & Life Positions", startSec: 1140, endSec: 1500 },
+            { title: "The Johari Window: Open, Blind, Hidden & Unknown Panes", startSec: 1500, endSec: 2040 },
+            { title: "Organizational Change: Forces & Kurt Lewin's 3-Step Model", startSec: 2040, endSec: 2460 },
+            { title: "Resistance to Change & Six Strategies to Overcome It", startSec: 2460, endSec: 2880 },
+            { title: "Unit 5 Master Recap & Exam Synthesis", startSec: 2880, endSec: 3104 },
           ],
         },
       ];

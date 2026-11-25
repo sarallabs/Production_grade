@@ -50,6 +50,191 @@ const DIFFICULTY_MAP: Record<string, string> = {
   advanced: 'Hard',
 };
 
+function extractRawQuestionsFromJson(parsed: any): any[] {
+  if (!parsed) return [];
+  if (Array.isArray(parsed)) return parsed;
+  if (typeof parsed !== 'object') return [];
+
+  if (Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+    return parsed.questions;
+  }
+  if (Array.isArray(parsed.items) && parsed.items.length > 0) {
+    return parsed.items;
+  }
+
+  const collected: any[] = [];
+  const pushSection = (sec: any) => {
+    if (!sec || typeof sec !== 'object') return;
+    const secTitle = sec.section_title || sec.title || sec.section || '';
+    const list = Array.isArray(sec.questions)
+      ? sec.questions
+      : Array.isArray(sec.items)
+        ? sec.items
+        : Array.isArray(sec)
+          ? sec
+          : [];
+    for (const item of list) {
+      if (item && typeof item === 'object') {
+        collected.push(secTitle && !item.section ? { ...item, section: secTitle } : item);
+      }
+    }
+  };
+
+  if (Array.isArray(parsed.sections)) {
+    for (const sec of parsed.sections) pushSection(sec);
+  } else if (parsed.sections && typeof parsed.sections === 'object') {
+    for (const sec of Object.values(parsed.sections)) pushSection(sec);
+  }
+
+  for (const [k, v] of Object.entries(parsed)) {
+    if (k === 'sections' || k === 'questions' || k === 'items') continue;
+    if (/section/i.test(k) && v && typeof v === 'object') {
+      pushSection(v);
+    }
+  }
+
+  return collected;
+}
+
+function normalizeJsonQuestion(q: any, i: number, prefix: string): AssessmentQuestion | null {
+  if (!q || typeof q !== 'object') return null;
+  const inner =
+    q.question_data && typeof q.question_data === 'object' ? q.question_data : q;
+
+  const rawText =
+    inner.stem ||
+    inner.question ||
+    inner.question_text ||
+    q.stem ||
+    q.question ||
+    q.question_text ||
+    '';
+  const questionText = String(rawText).replace(/^\[.*?\]\s*/, '').trim();
+  if (!questionText) return null;
+
+  const rawOpts = inner.options ?? q.options;
+  const optionEntries: Array<{ letter: string; text: string }> = [];
+
+  if (Array.isArray(rawOpts)) {
+    rawOpts.forEach((opt: any, idx: number) => {
+      if (typeof opt === 'string') {
+        const letterMatch = opt.trim().match(/^([A-F])[).:\]]\s*/i);
+        const letter = letterMatch ? letterMatch[1].toUpperCase() : String.fromCharCode(65 + idx);
+        const text = opt.replace(/^[A-F][).:\]]\s*/i, '').trim();
+        if (text) optionEntries.push({ letter, text });
+      } else if (opt && typeof opt === 'object') {
+        const letter = String(opt.key || opt.letter || opt.label || String.fromCharCode(65 + idx))
+          .trim()
+          .toUpperCase()
+          .replace(/[^A-Z]/g, '') || String.fromCharCode(65 + idx);
+        const text = String(opt.text ?? opt.value ?? opt.label ?? '')
+          .replace(/^[A-F][).:\]]\s*/i, '')
+          .trim();
+        if (text) optionEntries.push({ letter, text });
+      }
+    });
+  } else if (rawOpts && typeof rawOpts === 'object') {
+    const entries = Object.entries(rawOpts);
+    entries.sort(([a], [b]) => a.localeCompare(b));
+    entries.forEach(([k, v], idx) => {
+      const letter = k.trim().toUpperCase().replace(/[^A-Z]/g, '') || String.fromCharCode(65 + idx);
+      const text = String(v ?? '').replace(/^[A-F][).:\]]\s*/i, '').trim();
+      if (text) optionEntries.push({ letter, text });
+    });
+  }
+
+  if (optionEntries.length === 0) return null;
+
+  const cleanedOptions = optionEntries.map((o) => o.text);
+  const letterToIdx = new Map(optionEntries.map((o, idx) => [o.letter, idx]));
+
+  const resolveIndex = (ans: unknown): number => {
+    if (typeof ans === 'number' && Number.isInteger(ans)) {
+      return ans >= 0 && ans < cleanedOptions.length ? ans : -1;
+    }
+    const str = String(ans ?? '').trim();
+    if (!str) return -1;
+    const stripped = str.replace(/^[A-F][).:\]]\s*/i, '').trim().toLowerCase();
+    const letterMatch = str.match(/^([A-F])(?:[).:\]\s]|$)/i);
+    if (letterMatch) {
+      const L = letterMatch[1].toUpperCase();
+      if (letterToIdx.has(L)) return letterToIdx.get(L)!;
+      const codeIdx = L.charCodeAt(0) - 65;
+      if (codeIdx >= 0 && codeIdx < cleanedOptions.length) return codeIdx;
+    }
+    return cleanedOptions.findIndex((opt) => opt.trim().toLowerCase() === stripped);
+  };
+
+  const rawAnswer =
+    inner.answer ??
+    inner.correct_answers ??
+    inner.correct_answer ??
+    inner.correct_answer_string ??
+    inner.right_answers ??
+    q.answer ??
+    q.correct_answers ??
+    q.correct_answer ??
+    q.correct_answer_string ??
+    q.right_answers;
+
+  const explicitType = String(
+    inner.type || inner.question_type || q.type || q.question_type || '',
+  ).toLowerCase();
+
+  const isCommaLetterList = (val: unknown): boolean =>
+    typeof val === 'string' && /^[A-F](\s*,\s*[A-F])+$/i.test(val.trim());
+
+  let resolvedList: number[] = [];
+  if (Array.isArray(rawAnswer)) {
+    resolvedList = rawAnswer
+      .map((a) => resolveIndex(a))
+      .filter((idx) => idx !== -1);
+  } else if (isCommaLetterList(rawAnswer)) {
+    resolvedList = String(rawAnswer)
+      .split(',')
+      .map((a) => resolveIndex(a.trim()))
+      .filter((idx) => idx !== -1);
+  } else {
+    const idx = resolveIndex(rawAnswer);
+    if (idx !== -1) resolvedList = [idx];
+  }
+
+  const dedupedIndices = Array.from(new Set(resolvedList));
+  const isMSQ =
+    explicitType === 'msq' ||
+    (explicitType !== 'mcq' &&
+      (Array.isArray(rawAnswer) ||
+        inner.correct_answers !== undefined ||
+        q.correct_answers !== undefined ||
+        isCommaLetterList(rawAnswer) ||
+        prefix.startsWith('msq') ||
+        dedupedIndices.length > 1));
+
+  const answerIndices: number | number[] = isMSQ
+    ? dedupedIndices
+    : (dedupedIndices[0] ?? 0);
+
+  const explanation = String(
+    inner.explanation ||
+      inner.rationale ||
+      inner.descriptive_answer?.rationale ||
+      inner.descriptive_answer?.summary ||
+      q.explanation ||
+      q.rationale ||
+      '',
+  ).trim();
+
+  return {
+    id: q.id || q.question_id || inner.id || `${prefix}${i + 1}`,
+    type: isMSQ ? 'msq' : 'mcq',
+    q: questionText,
+    options: cleanedOptions,
+    answer: answerIndices,
+    explanation,
+    videoTime: 0,
+  } as AssessmentQuestion;
+}
+
 export async function fetchAndParseFirst(
   urls: string[],
   prefix: string,
@@ -61,63 +246,30 @@ export async function fetchAndParseFirst(
     try {
       const text = await fetchCachedText(url);
       if (!text) continue;
-      
-      try {
-        const parsed = JSON.parse(text);
-        let rawQuestions = Array.isArray(parsed) ? parsed : (parsed.questions || parsed.items || []);
-        if (rawQuestions.length > 0) {
-          return rawQuestions.map((q: any, i: number) => {
-            const rawOptions = Array.isArray(q.options) ? q.options : [];
-            const cleanedOptions = rawOptions.map((opt: string) => opt.replace(/^[A-F]\)\s*/, ''));
 
-            const resolveIndex = (ans: string): number => {
-              const stripped = ans.replace(/^[A-F]\)\s*/, '').trim().toLowerCase();
-              const letterMatch = ans.trim().match(/^([A-F])\b/i);
-              if (letterMatch) {
-                const idx = letterMatch[1].toUpperCase().charCodeAt(0) - 65; 
-                if (idx >= 0 && idx < cleanedOptions.length) return idx;
-              }
-              const textIdx = cleanedOptions.findIndex(
-                (opt: string) => opt.trim().toLowerCase() === stripped,
-              );
-              return textIdx; 
-            };
-
-            const isMSQ =
-              String(q.type || '').toLowerCase() === 'msq' ||
-              Array.isArray(q.answer) ||
-              (typeof q.answer === 'string' && q.answer.includes(',') && !q.answer.startsWith('A)')) ||
-              prefix.startsWith('msq');
-
-            let answerIndices: number | number[];
-            if (Array.isArray(q.answer)) {
-              const indices = q.answer.map((a: string) => resolveIndex(String(a))).filter((idx: number) => idx !== -1);
-              answerIndices = isMSQ ? indices : (indices[0] ?? 0);
-            } else if (isMSQ && typeof q.answer === 'string' && q.answer.includes(',')) {
-              answerIndices = q.answer
-                .split(',')
-                .map((a: string) => resolveIndex(a.trim()))
-                .filter((idx: number) => idx !== -1);
-            } else {
-              const idx = resolveIndex(String(q.answer ?? ''));
-              answerIndices = isMSQ ? (idx === -1 ? [] : [idx]) : (idx === -1 ? 0 : idx);
-            }
-            return {
-              id: q.id || `${prefix}${i + 1}`,
-              type: isMSQ ? 'msq' : 'mcq',
-              q: (q.stem || q.question || '').replace(/^\[.*?\]\s*/, ''),
-              options: cleanedOptions,
-              answer: answerIndices,
-              explanation: q.explanation || '',
-              videoTime: 0,
-            };
-          });
+      const trimmed = text.trim();
+      if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          const rawQuestions = extractRawQuestionsFromJson(parsed);
+          const normalized = rawQuestions
+            .map((q: any, i: number) => normalizeJsonQuestion(q, i, prefix))
+            .filter((q): q is AssessmentQuestion => q !== null);
+          if (normalized.length > 0) {
+            return normalized;
+          }
+        } catch {
+          // fall through to next candidate
         }
-      } catch (e) {
+        continue;
       }
-      
-      return parseAssessmentMarkdown(text, prefix);
+
+      const mdQuestions = parseAssessmentMarkdown(text, prefix);
+      if (mdQuestions.length > 0) {
+        return mdQuestions;
+      }
     } catch {
+      // try next candidate
     }
   }
   return [];
@@ -158,7 +310,12 @@ export async function getAssessments(
     const assessmentLevel = level === 'beginner' ? 'easy' : level === 'advanced' ? 'hard' : 'medium';
 
     const mcqPaths = [
-      ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`] : []),
+      ...(videoDir
+        ? [
+            `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
+            `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
+          ]
+        : []),
       `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MCQ/mcq_${assessmentLevel}.md`,
@@ -172,7 +329,12 @@ export async function getAssessments(
     ];
 
     const msqPaths = [
-      ...(videoDir ? [`${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`] : []),
+      ...(videoDir
+        ? [
+            `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
+            `${subjectBase}/${chDir}/${videoDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
+          ]
+        : []),
       `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.json`,
       `${subjectBase}/${chDir}/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
       `${subjectBase}/${chDir}/unit_1/Learn/Assessments/MSQ/msq_${assessmentLevel}.md`,
@@ -240,9 +402,16 @@ export async function getChapterExamQuestions(
     let rawQuestions: AssessmentQuestion[] = [];
 
     if (videos.length > 0) {
+      const jsonFileName = fileName.replace(/\.md$/i, '.json');
       const perVideo = await Promise.all(
         videos.map((video) =>
-          fetchAndParseFirst([`${subjectBase}/${chDir}/${video.dir}/${fileName}`], `${kind}_v${video.index}_`),
+          fetchAndParseFirst(
+            [
+              `${subjectBase}/${chDir}/${video.dir}/${jsonFileName}`,
+              `${subjectBase}/${chDir}/${video.dir}/${fileName}`,
+            ],
+            `${kind}_v${video.index}_`,
+          ),
         ),
       );
       rawQuestions = perVideo.flat();
@@ -257,12 +426,30 @@ export async function getChapterExamQuestions(
         `${subjectBase}/${chDir}/${fileName}`,
         `${subjectBase}/${chDir}/Examination/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Examination/${baseName}`,
+        `${subjectBase}/${chDir}/Exam/${jsonBaseName}`,
+        `${subjectBase}/${chDir}/Exam/${baseName}`,
+        ...(kind === 'pre_final'
+          ? [
+              `${subjectBase}/${chDir}/Exam/Pre_Final_Exam/${jsonBaseName}`,
+              `${subjectBase}/${chDir}/Exam/Pre_Final_Exam/${baseName}`,
+            ]
+          : []),
+        ...(kind === 'certification'
+          ? [
+              `${subjectBase}/${chDir}/Exam/Certification_Exam/${jsonBaseName}`,
+              `${subjectBase}/${chDir}/Exam/Certification_Exam/${baseName}`,
+            ]
+          : []),
         `${subjectBase}/${chDir}/Prepare/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Prepare/${baseName}`,
         `${subjectBase}/${chDir}/Prepare/Mock_Test/${jsonBaseName}`,
         `${subjectBase}/${chDir}/Prepare/Mock_Test/${baseName}`,
-        `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.json`,
-        `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
+        ...(kind === 'mock'
+          ? [
+              `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.json`,
+              `${subjectBase}/${chDir}/Prepare/Mock_Test/mock_test_chapter_${chapterNumber}.md`,
+            ]
+          : []),
         `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.json`,
         `${subjectBase}/${chDir}/Prepare/Practice_Exam/practice_exam_50_questions.md`,
         `${subjectBase}/${chDir}/${baseName}`,

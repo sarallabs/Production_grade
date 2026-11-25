@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "concurrently \"vite\" \"node server/index.js\"",
-    "build": "node scripts/generate-manifest.js && vite build && node scripts/build-large-files-manifest.cjs && node scripts/cleanup-large-files.cjs",
+    "build": "node scripts/generate-manifest.js && node scripts/validate-content-schema.mjs && vite build && node scripts/build-large-files-manifest.cjs && node scripts/cleanup-large-files.cjs",
     "preview": "vite preview",
     "copy-resources": "node scripts/copy-resources.js",
     "generate-manifest": "node scripts/generate-manifest.js",
+    "normalize-schema": "node scripts/normalize-content-schema.mjs",
+    "validate-schema": "node scripts/validate-content-schema.mjs",
     "deploy:anu": "npm run build && firebase deploy --only hosting:saralvidhya-anu"
   },
   "dependencies": {

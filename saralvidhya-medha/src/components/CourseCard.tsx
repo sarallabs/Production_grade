@@ -203,7 +203,7 @@ export default function CourseCard({ course, chapters = [], index }: CourseCardP
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
-                {hoursPerWeek} HPW
+                {hoursPerWeek} hr / week
               </span>
             ) : (
               <span className="sv-course-stat-pill">
